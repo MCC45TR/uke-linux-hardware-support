@@ -3,6 +3,7 @@
 | ID | Date | Finding | Validation |
 |---|---|---|---|
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
+| [UKE-DELIVERY-001](2026-10-04-DELIVERY.md) | 2026-10-04 | Pinned alpha image delivery, actual DNF upgrade and signed SCM publication passed | Host/package/userspace acceptance; physical acceptance remains open |
 
 ## UKE-INITIAL-001
 
@@ -14,3 +15,5 @@
 - Consequence: package admission requires Uke sources and isolated payload tests.
 - Uncertainty: no functional package exists at this initial scaffold stage.
 - Next validation: complete the manifest's component-specific gates.
+- Superseded scope: UKE-DELIVERY-001 completes the delivery package gates;
+  the original scaffold observation remains historical.

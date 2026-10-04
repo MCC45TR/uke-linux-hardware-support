@@ -13,5 +13,8 @@
 6. Publish accepted development candidates to COPR, then collect distinct physical
    results using a preserved stock/recovery route.
 
-The initial repository validates structure and intent only. It claims no build,
-boot, peripheral or physical acceptance.
+The initial alpha delivery now has real RPM/SRPM, extracted payload, AArch64
+DNF install/upgrade/removal and signed COPR repository records. The SCM source
+build and stable polling workflow also passed. A fresh complete OrangeFox source
+build, the first positive stable advancement and physical boot/rollback remain
+separate next gates. See `reports/RECOVERY-RAWHIDE-2026-10-04.json`.

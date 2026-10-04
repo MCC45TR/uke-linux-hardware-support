@@ -33,7 +33,12 @@
     "build_id": 11074344,
     "state": "succeeded",
     "remote_payload_audit": "passed for first 1.fc46 build",
-    "signature_verification": "passed"
+    "signature_verification": "passed",
+    "scm_build_id": 11074373,
+    "scm_state": "succeeded",
+    "repository_dnf": "Signed repository install, verification, Python closure and removal passed",
+    "automatic_rebuild": true,
+    "github_webhook_http": 200
   },
   "rpm_release": "1.1.fc46",
   "stable_tracker": {
@@ -42,7 +47,8 @@
     "invalid_tag": "rejected",
     "missing_assets": "rejected",
     "disguised_alpha": "rejected",
-    "failed_trial_pin_unchanged": true
+    "failed_trial_pin_unchanged": true,
+    "live_workflow": "manual dispatch passed"
   },
   "standard_licenses": "SPDX-pinned GPL2/GPL3/Apache/MIT/BSD texts included"
 }
