@@ -7,8 +7,8 @@
   "release_tag": "r12.0-uke.20260930-alpha1",
   "channel": "alpha",
   "firmware_profile": "global-os3.0.303.0",
-  "binary_rpm_sha256": "3c0376762d5a39acb0a8f27702f2c67f81dc3ef7d3317256e55690010e79c303",
-  "source_rpm_sha256": "1d220ee4534649b6bff1f530a00343b6539b248e29b54e06c1452a98e7a7d334",
+  "binary_rpm_sha256": "ddc38ba9017e959fd1f0931fc3f815cfcfb25dda4618e7e53258423b53a90d7f",
+  "source_rpm_sha256": "902baabf434782b2785ed6b08fb76db2c0bcebe0c7b18b71181a4afbbf2935f8",
   "source_generation": "passed",
   "rpm_build": "passed",
   "embedded_ramdisk_audit": {
@@ -21,7 +21,7 @@
   "aarch64_dnf": {
     "install": "passed",
     "rpm_verify": "passed",
-    "release_upgrade": "1.fc46 to 2.fc46 passed",
+    "release_upgrade": "1.fc46 to 1.1.fc46 passed",
     "remove": "passed",
     "python_dependency_closure": false
   },
@@ -32,6 +32,17 @@
     "project": "mcc45tr/uke-linux-test",
     "build_id": 11074344,
     "state": "succeeded",
-    "remote_payload_audit": "pending"
-  }
+    "remote_payload_audit": "passed for first 1.fc46 build",
+    "signature_verification": "passed"
+  },
+  "rpm_release": "1.1.fc46",
+  "stable_tracker": {
+    "live_latest_stable": "none published",
+    "alpha_only": "skipped",
+    "invalid_tag": "rejected",
+    "missing_assets": "rejected",
+    "disguised_alpha": "rejected",
+    "failed_trial_pin_unchanged": true
+  },
+  "standard_licenses": "SPDX-pinned GPL2/GPL3/Apache/MIT/BSD texts included"
 }
