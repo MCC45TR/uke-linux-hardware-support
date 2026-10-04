@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "record_id": "UKE-RECOVERY-RPM-20261004",
+  "date": "2026-10-04",
+  "package": "uke-orangefox-recovery",
+  "rpm_version": "12.0~alpha1.20260930",
+  "release_tag": "r12.0-uke.20260930-alpha1",
+  "channel": "alpha",
+  "firmware_profile": "global-os3.0.303.0",
+  "binary_rpm_sha256": "3c0376762d5a39acb0a8f27702f2c67f81dc3ef7d3317256e55690010e79c303",
+  "source_rpm_sha256": "1d220ee4534649b6bff1f530a00343b6539b248e29b54e06c1452a98e7a7d334",
+  "source_generation": "passed",
+  "rpm_build": "passed",
+  "embedded_ramdisk_audit": {
+    "files": 3708,
+    "nonempty": true,
+    "python_payload": false,
+    "private_build_paths": false,
+    "shared_ramdisk_hash_verified_in_both_images": true
+  },
+  "aarch64_dnf": {
+    "install": "passed",
+    "rpm_verify": "passed",
+    "release_upgrade": "1.fc46 to 2.fc46 passed",
+    "remove": "passed",
+    "python_dependency_closure": false
+  },
+  "fresh_recovery_source_build": "not-performed-by-packaging",
+  "physical_device": false,
+  "rollback_rehearsal": false,
+  "copr": {
+    "project": "mcc45tr/uke-linux-test",
+    "build_id": 11074344,
+    "state": "succeeded",
+    "remote_payload_audit": "pending"
+  }
+}
