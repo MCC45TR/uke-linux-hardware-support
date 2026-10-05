@@ -30,15 +30,28 @@ future verified UEFI RAM fixup needs independent evidence. This host audit is
 excluded from the binary package. Synthetic fixtures also reject firmware
 requests below disabled parents and foreign device trees.
 
-The first Core image targets CDC ACM serial debugging. The package provides an
-inactive `uke-cdc-acm.service` and a host-applied override for the distribution's
-original `debug-shell.service`. The Core debug composer explicitly enables them
-and sets `senemos.debug=cdc-acm`. This development profile exposes a local root
-shell over USB once Linux, its UDC and `g_serial` work; normal package installation
-does not enable it. Native `--cdc` inspection rejects foreign devices, missing
-or ambiguous controllers, and missing ttyGS0 before the corresponding stage.
-No Type-C role, security firmware, EFI variable or partition is changed.
+The first Core development profile uses the **tablet as USB host**, with an
+ESP32-S3 bridge exposing CDC and HID interfaces. `uke-esp32-cdc` supplies a native
+raw 115200 TTY forwarder and inactive `uke-esp32-cdc-log.service`. The explicitly
+configured port defaults to `/dev/ttyACM0`; change `UKE_ESP32_CDC_DEVICE` in
+`/etc/senemos/esp32-cdc.conf` if enumeration differs. An interface pathname is
+configuration, not verified ESP32 identity.
 
-Compiled CDC modules do not establish a working Uke USB controller. The current
-minimal DTB has no enabled USB controller, so physical CDC acceptance is still
-open. See the [upstream serial-gadget protocol](https://docs.kernel.org/usb/gadget_serial.html).
+The compositor applies `debug-shell-esp32.conf` to the distribution's original
+`debug-shell.service`, enables the real-root log forwarder and sets
+`senemos.debug=esp32-cdc`. HID selects VT2 and enters shell commands; stdout and
+stderr go through journald to the single CDC writer. This is an explicit local
+root development shell. The selected bridge firmware and physical HID/CDC
+behavior still need separate validation. Journal forwarding stays out of the
+initramfs, as in the inspected Nabu process. No Python utility is used.
+
+The optional `uke-cdc-acm.service` and `debug-shell-cdc.conf` describe the
+opposite tablet-gadget mode (`ttyGS0` / `senemos.debug=cdc-acm`). They remain
+inactive in the ESP32-S3 host profile. Native `--cdc` checks belong to that
+optional mode; `--identity` checks the Uke/kernel prerequisite for the host
+profile. Neither package installation nor native inspection changes Type-C
+roles, security firmware, EFI variables or partitions.
+
+The current minimal DTB has no enabled USB controller. Compiled host/HID/ACM or
+gadget modules therefore do not establish physical bridge connectivity. The
+USB platform/PHY/clock and firmware handoff remain source prerequisites.

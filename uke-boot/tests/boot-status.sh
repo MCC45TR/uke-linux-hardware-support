@@ -13,8 +13,10 @@ printf 'root=PARTLABEL=uke_linux rw rootwait\n' > "$fixture/proc/cmdline"
 build/tests/uke-boot-status --root "$fixture" > build/tests/accepted.json
 jq -e '.efi_present and .uke_compatible and .selected_kernel_release and .uke_root_command_line and (.hardware_acceptance_granted|not)' build/tests/accepted.json >/dev/null
 cp -a "$fixture" "$baseline"
+build/tests/uke-boot-status --identity --root "$fixture" > build/tests/identity.json
 printf 'xiaomi,nabu\0qcom,sm8150\0' > "$fixture/sys/firmware/devicetree/base/compatible"
 if build/tests/uke-boot-status --root "$fixture" > build/tests/foreign.json; then exit 1; else test "$?" -eq 2; fi
+if build/tests/uke-boot-status --identity --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
 printf 'xiaomi,uke\0qcom,sm7675\0' > "$fixture/sys/firmware/devicetree/base/compatible"
 printf 'root=PARTLABEL=uke_linux root=PARTLABEL=foreign rw\n' > "$fixture/proc/cmdline"
 if build/tests/uke-boot-status --root "$fixture" > build/tests/foreign-root.json; then exit 1; else test "$?" -eq 2; fi

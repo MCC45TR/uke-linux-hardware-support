@@ -34,10 +34,10 @@ bool present(const fs::path& root, const char* path) {
 int main(int argc, char** argv) {
     try {
         fs::path root = "/";
-        bool cdc = false, require_tty = false;
+        bool cdc = false, require_tty = false, identity = false;
         unsigned wait_seconds = 0;
         if (argc == 2 && std::string(argv[1]) == "--help") {
-            std::cout << "Usage: uke-boot-status [--root EXTRACTED_ROOT] [--cdc] [--require-tty] [--wait SECONDS]\n"
+            std::cout << "Usage: uke-boot-status [--root EXTRACTED_ROOT] [--identity | --cdc] [--require-tty] [--wait SECONDS]\n"
                          "Read-only Uke EFI/kernel/root command-line inspection.\n"
                          "Exit 0: all prerequisites observed; 2: prerequisites missing; 1: input error.\n";
             return 0;
@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
             const std::string option = argv[i];
             if (option == "--root" && i + 1 < argc) root = argv[++i];
             else if (option == "--cdc") cdc = true;
+            else if (option == "--identity") identity = true;
             else if (option == "--require-tty") require_tty = true;
             else if (option == "--wait" && i + 1 < argc) {
                 const std::string value = argv[++i];
@@ -56,6 +57,7 @@ int main(int argc, char** argv) {
             } else throw std::runtime_error("Invalid arguments; use --help");
         }
         if (!cdc && (require_tty || wait_seconds)) throw std::runtime_error("CDC mode required");
+        if (cdc && identity) throw std::runtime_error("Choose one inspection mode");
         if (!fs::is_directory(root)) throw std::runtime_error("Inspection root is missing");
         const auto dt = read(root / "sys/firmware/devicetree/base/compatible");
         auto release = read(root / "proc/sys/kernel/osrelease");
@@ -65,6 +67,12 @@ int main(int argc, char** argv) {
         const bool uke = compatible(dt, "xiaomi,uke") && compatible(dt, "qcom,sm7675");
         const bool kernel = release == "7.2.9-senemos-uke";
         auto boolean = [](bool value) { return value ? "true" : "false"; };
+        if (identity) {
+            std::cout << "{\"schema_version\":1,\"scope\":\"read-only-kernel-device-identity\",\"uke_compatible\":"
+                      << boolean(uke) << ",\"selected_kernel_release\":" << boolean(kernel)
+                      << ",\"hardware_acceptance_granted\":false}\n";
+            return uke && kernel ? 0 : 2;
+        }
         if (cdc) {
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(wait_seconds);
             unsigned controllers = 0;

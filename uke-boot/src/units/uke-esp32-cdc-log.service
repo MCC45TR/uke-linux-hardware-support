@@ -1,0 +1,34 @@
+[Unit]
+Description=Uke ESP32-S3 real-root CDC boot journal stream
+After=systemd-journald.service systemd-udevd.service
+ConditionKernelCommandLine=senemos.debug=esp32-cdc
+ConditionPathExists=/sys/firmware/devicetree/base/compatible
+ConditionPathExists=!/etc/initrd-release
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Environment=UKE_ESP32_CDC_DEVICE=/dev/ttyACM0
+EnvironmentFile=-/etc/senemos/esp32-cdc.conf
+ExecStartPre=/usr/bin/uke-boot-status --identity
+ExecStart=/usr/libexec/senemos-uke/uke-esp32-cdc --device ${UKE_ESP32_CDC_DEVICE}
+Restart=always
+RestartSec=2
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
