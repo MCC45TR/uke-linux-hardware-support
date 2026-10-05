@@ -27,7 +27,7 @@ their current Python payloads prevent complete graphical admission. A scaffold
 does not establish a published RPM or device support.
 
 The kernel, Fedora builder, OrangeFox device tree and Project Aloha keep their
-independent repositories. See the [package hub](https://github.com/MCC45TR/uke-linux/blob/main/docs/PACKAGE-HUB.md)
+independent repositories. See the [package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
 for build readiness. No physical support is inferred from this consolidation.
 
 Run `make validate` to check all component contracts and `make test-native` for
@@ -37,3 +37,8 @@ workflow checks Material Decoration and the eligible recovery release daily;
 the independent kernel repository retains its own reviewed stable automation.
 Original repository workflows remain under each component as historical source
 records; active workflows are in this repository's root `.github/workflows/`.
+
+COPR's GitHub hook follows changes in each configured source subdirectory.
+The common-rule workflow also requests builds when shared source rules or
+parent-directory inputs change, and offers a manual reviewed-package selector.
+The private package hub requires access to the documentation repository.
