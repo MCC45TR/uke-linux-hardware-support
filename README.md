@@ -4,7 +4,7 @@ One repository owns twelve Uke/SM7675 package components. Each component is an
 ordinary directory with its own sources, rules, license and acceptance gates.
 Their original project histories are preserved as Git merge ancestry;
 [SOURCE-IMPORTS.json](SOURCE-IMPORTS.json) records all twelve exact import pins.
-The workspace checks out this repository at `packages/`.
+The workspace checks out this repository at `uke-linux-hardware-support/`.
 
 | Source | Purpose |
 |---|---|

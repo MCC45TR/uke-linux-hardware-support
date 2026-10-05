@@ -4,7 +4,9 @@ SHELL := /bin/bash
 .PHONY: srpm
 # COPR reads this root rule, with cwd set to the configured source subdirectory.
 srpm:
-	root="$$(git rev-parse --show-toplevel)"
+	# Git is absent from COPR's initial source chroot. This rule's location is
+	# already supplied by COPR, so root discovery needs no additional tool.
+	root="$(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)"
 	subdir="$$(realpath --relative-to="$$root" .)"
 	case "$$subdir" in
 		uke-core-meta|uke-desktop-metas|uke-orangefox-packaging) component="$$subdir"; package=;;
