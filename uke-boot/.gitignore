@@ -1,0 +1,12 @@
+/referances/*
+!/referances/README.md
+/build/
+/artifacts/
+/reports/private/
+*.rpm
+*.img
+*.zip
+*.part
+.env*
+*.key
+*.pem
