@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "device": "uke",
+  "soc": "SM7675",
+  "profile": "upstream-desktop-policy-metadata",
+  "desktop_package": "not-admitted",
+  "default_desktop": "console-first",
+  "boot_tested": false,
+  "hardware_tested": false,
+  "display_gpu_touch": "not-qualified",
+  "automatic_session_or_display_configuration": false,
+  "runtime_policy": "native-and-shell-only-no-Python",
+  "native_runtime_capabilities": [
+    "senemos-native-runtime(libstdc++)"
+  ],
+  "kde_application_policy": "Use original distribution packages; never clone, fork or rebuild KDE applications as Uke variants",
+  "graphical_admission": "blocked: original KDE packages contain Python components incompatible with the target policy"
+}
