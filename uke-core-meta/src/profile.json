@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "device": "uke",
+  "soc": "SM7675",
+  "profile": "console-package-candidate",
+  "kernel_family": "senemos-uke-linux-kernel-mainline",
+  "minimum_kernel_evr": "7.2.9-1.3",
+  "boot_tested": false,
+  "hardware_tested": false,
+  "firmware_delivery": "not-admitted",
+  "boot_selection": "external-independent-qualification",
+  "runtime_policy": "native-and-shell-only-no-Python",
+  "native_runtime_capabilities": [
+    "senemos-native-runtime(libstdc++)"
+  ]
+}
