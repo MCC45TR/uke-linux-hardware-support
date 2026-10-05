@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "device": "uke",
+  "repository": "MCC45TR/orangefox_device_xiaomi_uke",
+  "tag": "r12.0-uke.20260930-alpha1",
+  "channel": "alpha",
+  "prerelease": true,
+  "published_at": "2026-09-30T05:21:24Z",
+  "rpm_version": "12.0~alpha1.20260930",
+  "firmware_profile": "global-os3.0.303.0",
+  "physical_device": false,
+  "assets": [
+    {
+      "name": "ARTIFACT-MANIFEST.json",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/ARTIFACT-MANIFEST.json",
+      "sha256": "917a688312633deccc7bb4b238e6ecc412637eac1dde30890e10bc6b3b06989f",
+      "bytes": 1533
+    },
+    {
+      "name": "INSTALL.md",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/INSTALL.md",
+      "sha256": "700ad34b6b60e04988106f1a2f9f428a56c1586ab9811255bb1d6d29fdffe119",
+      "bytes": 5950
+    },
+    {
+      "name": "ORANGEFOX-SOURCE-PINS.xml",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/ORANGEFOX-SOURCE-PINS.xml",
+      "sha256": "a070c25b23cf69660ef525608f5d8a93c2df7886c7869c037f09362fcc096f07",
+      "bytes": 90835
+    },
+    {
+      "name": "OrangeFox-uke-fastboot-boot.img",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/OrangeFox-uke-fastboot-boot.img",
+      "sha256": "87bca37e57eae1e1779d55f1db401086d5ee9b913c4ba2f378ee0bebd6e9bdbf",
+      "bytes": 100663296
+    },
+    {
+      "name": "OrangeFox-uke-flashable.zip",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/OrangeFox-uke-flashable.zip",
+      "sha256": "b4876973d373109994dc984228e955ffadcd15d9f4d98ed2f56e6b1941fb8c1c",
+      "bytes": 29639861
+    },
+    {
+      "name": "OrangeFox-uke-recovery.img",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/OrangeFox-uke-recovery.img",
+      "sha256": "86dd42d807900ccbd134c5101c35419a89f737e4e2aea462562c67115e73b2b4",
+      "bytes": 104857600
+    },
+    {
+      "name": "PAYLOAD-FILES.tsv",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/PAYLOAD-FILES.tsv",
+      "sha256": "4c18b06abef7cd28d58ec4550f40ab8daf1bddb93a3f26e30fcbbdcbe0f44722",
+      "bytes": 403269
+    },
+    {
+      "name": "RECOVERY-AVB.txt",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/RECOVERY-AVB.txt",
+      "sha256": "28486fb5520724e9f2bde7a0801eaab96374f8bb6b6a6ed5b618b4524d0c40d5",
+      "bytes": 1088
+    },
+    {
+      "name": "STOCK-KERNEL-SOURCE.json",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/STOCK-KERNEL-SOURCE.json",
+      "sha256": "9b8f40301591df9e9360c1f8837c5fa7ff2ac9744778379507b79e5e6528c780",
+      "bytes": 840
+    },
+    {
+      "name": "TEMPORARY-BOOT-AVB.txt",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/TEMPORARY-BOOT-AVB.txt",
+      "sha256": "cb4e9935822d98e48a9954b49d8ba5aec9952c3ba11881708faf666cf9610de3",
+      "bytes": 847
+    }
+  ],
+  "source_snapshots": [
+    {
+      "name": "RECOVERY-UTILITY-SOURCES.tar.gz",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/RECOVERY-UTILITY-SOURCES.tar.gz",
+      "sha256": "adb0a1ba413480abb9526f1669f83491eed4c2c1fb43f37c7d1f631063e5cffc",
+      "bytes": 488847417
+    },
+    {
+      "name": "STOCK-GKI-SOURCE.tar.gz",
+      "url": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/STOCK-GKI-SOURCE.tar.gz",
+      "sha256": "a0cb69da36f5ca2399c7e7f3c109258594e2fb597bc56290d92723a0ab5500f3",
+      "bytes": 283127181
+    }
+  ]
+}
