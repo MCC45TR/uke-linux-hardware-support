@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Senemos Uke
+Description=Optional display-independent Senemos Uke development theme
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/senemos-uke
+ScriptFile=/usr/share/plymouth/themes/senemos-uke/plymouth-uke.script

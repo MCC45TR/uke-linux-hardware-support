@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/guiodic/material-decoration",
+  "tag": "26-09-18",
+  "commit": "7bf62f142c17902f4afe04d0be408b5dfef27982",
+  "version": "20260918.151422",
+  "sha256": "06450723b575cf848576fe0f65960d2e7a876c41241fe0a289f244eab96ef328",
+  "license": "GPL-2.0-or-later AND LGPL-2.0-or-later",
+  "channel": "published-upstream-release",
+  "hardware_specific": false,
+  "hardware_tested": false,
+  "reference_spec_commit": "152980fa9a4fd2d71a2825efe10411c5a8a74da7"
+}

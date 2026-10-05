@@ -1,0 +1,16 @@
+From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] cmake: declare Qt QML imports exported by current KF6 I18n
+
+KF6 I18n 6.31 exports I18nQml with a Qt6::QmlIntegration interface. Declare
+the QML targets before importing KF6 instead of relying on another dependency
+to create them incidentally. Observed on Fedora Rawhide AArch64 COPR 11075055.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -27,4 +27,6 @@ find_package(Qt6 CONFIG REQUIRED COMPONENTS
+     Widgets
+     DBus
++    Qml
++    QmlIntegration
+ )
+ find_package(KF6 REQUIRED COMPONENTS I18n)

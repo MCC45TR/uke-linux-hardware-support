@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: MIT
+# Layout follows the current renderer size; no Uke panel/scale is assumed.
+Window.SetBackgroundTopColor(0.025, 0.04, 0.07);
+Window.SetBackgroundBottomColor(0.025, 0.04, 0.07);
+label = Sprite(Image.Text("SENEMOS Uke", 0.9, 0.95, 1.0));
+status = Sprite();
+message = Sprite();
+
+fun center(sprite, image, offset)
+{
+    sprite.SetImage(image);
+    sprite.SetX(Window.GetWidth() / 2 - image.GetWidth() / 2);
+    sprite.SetY(Window.GetHeight() / 2 + offset);
+}
+fun refresh()
+{
+    center(label, Image.Text("SENEMOS Uke", 0.9, 0.95, 1.0), -40);
+}
+fun boot_progress(time, progress)
+{
+    center(status, Image.Text(Math.Int(progress * 100) + "%", 0.6, 0.8, 1.0), 0);
+}
+fun system_update(progress)
+{
+    center(status, Image.Text("Updating " + Math.Int(progress) + "%", 0.6, 0.8, 1.0), 0);
+}
+fun display_message(text)
+{
+    message.SetOpacity(1);
+    center(message, Image.Text(text, 0.9, 0.95, 1.0), 40);
+}
+fun hide_message(text)
+{
+    message.SetOpacity(0);
+}
+fun display_password(prompt, count)
+{
+    text = prompt + " ";
+    for (i = 0; i < count; i++) text += "*";
+    message.SetOpacity(1);
+    display_message(text);
+}
+fun display_question(prompt, entry)
+{
+    message.SetOpacity(1);
+    display_message(prompt + " " + entry);
+}
+fun display_normal()
+{
+    message.SetOpacity(0);
+}
+refresh();
+Plymouth.SetRefreshFunction(refresh);
+Plymouth.SetBootProgressFunction(boot_progress);
+Plymouth.SetSystemUpdateFunction(system_update);
+Plymouth.SetDisplayMessageFunction(display_message);
+Plymouth.SetHideMessageFunction(hide_message);
+Plymouth.SetDisplayPasswordFunction(display_password);
+Plymouth.SetDisplayQuestionFunction(display_question);
+Plymouth.SetDisplayNormalFunction(display_normal);
