@@ -3,7 +3,7 @@
 Image input templates and a native read-only boot prerequisite inspector for
 Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 
-`uke-boot-integration` supplies the `uke_esp`/`uke_linux` role contract, EXT4/FAT
+`uke-boot-integration` supplies the fastboot `esp`/`linux` role contract, EXT4/FAT
 fstab template, kernel command line and portable dracut settings. A host image
 composer must apply them explicitly. Package installation does not change
 fstab, generate an initramfs, select a boot entry, modify EFI variables or write
@@ -14,8 +14,14 @@ selected kernel release and root command line without writing. `--root` supports
 an extracted inspection fixture. Exit 2 reports missing prerequisites. Positive
 observations do not grant storage, peripheral or physical acceptance.
 
-The independent Uke UEFI port, exact firmware RAM handoff, UFS DT/binding support,
-measured partition geometry and Android return remain separate prerequisites.
+Images use filesystem labels `UKE_ESP` and `UKE_LINUX`, with composer-selected
+sizes and no fixed GPT offsets. Target fastboot capacity, sector size and UEFI
+partition visibility still require inspection before installation. The native
+inspector accepts `root=LABEL=UKE_LINUX` and the legacy `PARTLABEL=uke_linux`
+selector; a later foreign root argument overrides either one and is rejected.
+
+The independent Uke UEFI port, exact firmware RAM handoff, UFS DT/binding support
+and Android return remain separate prerequisites.
 Nabu binary/geometry defaults cannot supply them. Detailed records are in
 [private engineering documentation](https://github.com/MCC45TR/uke-linux-docs).
 
@@ -42,8 +48,11 @@ The compositor applies `debug-shell-esp32.conf` to the distribution's original
 `senemos.debug=esp32-cdc`. HID selects VT2 and enters shell commands; stdout and
 stderr go through journald to the single CDC writer. This is an explicit local
 root development shell. The selected bridge firmware and physical HID/CDC
-behavior still need separate validation. Journal forwarding stays out of the
-initramfs, as in the inspected Nabu process. No Python utility is used.
+behavior still need separate validation. The image builder can additionally
+include its gated `uke-bringup` dracut module for VT2 and the single CDC writer
+before mounting the Linux root filesystem. The real-root service excludes
+initramfs execution; installation alone enables neither stage. No Python
+utility is used.
 
 The optional `uke-cdc-acm.service` and `debug-shell-cdc.conf` describe the
 opposite tablet-gadget mode (`ttyGS0` / `senemos.debug=cdc-acm`). They remain

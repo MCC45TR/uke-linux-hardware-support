@@ -1,1 +1,1 @@
-root=PARTLABEL=uke_linux rw rootfstype=ext4 rootwait
+root=LABEL=UKE_LINUX rw rootfstype=ext4 rootwait console=tty0

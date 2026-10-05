@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
         while (begin < cmdline.size()) {
             const auto end = cmdline.find_first_of(" \t\r\n", begin);
             const auto argument = cmdline.substr(begin, end - begin);
-            if (argument == "root=PARTLABEL=uke_linux") root_selected = true;
+            if (argument == "root=LABEL=UKE_LINUX" || argument == "root=PARTLABEL=uke_linux") root_selected = true;
             else if (argument.rfind("root=", 0) == 0) root_selected = false;
             if (end == std::string::npos) break;
             begin = end + 1;
