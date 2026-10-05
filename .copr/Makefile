@@ -9,7 +9,7 @@ srpm:
 	root="$(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)"
 	subdir="$$(realpath --relative-to="$$root" .)"
 	case "$$subdir" in
-		uke-core-meta|uke-desktop-metas|uke-orangefox-packaging) component="$$subdir"; package=;;
+		uke-core-meta|uke-desktop-metas|uke-orangefox-packaging|uke-boot) component="$$subdir"; package=;;
 		uke-desktop-packaging/packaging/*)
 			component=uke-desktop-packaging; package="$${subdir##*/}"
 			case "$$package" in material-decoration|plymouth-uke|at-spi2-core|gstreamer1|libaccounts-glib|libwacom|libstdcxx-uke-runtime) ;; *) echo 'Unreviewed or withdrawn source package' >&2; exit 1;; esac;;

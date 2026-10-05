@@ -1,0 +1,3 @@
+# Apply only while composing an image with a reviewed Uke partition contract.
+PARTLABEL=uke_linux / ext4 defaults 0 1
+PARTLABEL=uke_esp /boot/efi vfat umask=0077,nofail 0 2

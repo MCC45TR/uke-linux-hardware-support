@@ -16,6 +16,7 @@ on:
         type: choice
         options:
           - uke-core-meta
+          - uke-boot-integration
           - uke-desktop-metas
           - uke-orangefox-recovery
           - material-decoration
@@ -43,10 +44,10 @@ jobs:
         run: |
           set -Eeuo pipefail
           test -n "$COPR_SUPPORT_BUILD_HOOK_BASE"
-          packages=(uke-core-meta uke-desktop-metas uke-orangefox-recovery material-decoration plymouth-uke at-spi2-core gstreamer1 libaccounts-glib libwacom libstdcxx-uke-runtime)
+          packages=(uke-core-meta uke-desktop-metas uke-orangefox-recovery uke-boot-integration material-decoration plymouth-uke at-spi2-core gstreamer1 libaccounts-glib libwacom libstdcxx-uke-runtime)
           if [[ $EVENT == workflow_dispatch && $REQUESTED != all ]]; then
             case " $REQUESTED " in
-              ' uke-core-meta '|' uke-desktop-metas '|' uke-orangefox-recovery '|' material-decoration '|' plymouth-uke '|' at-spi2-core '|' gstreamer1 '|' libaccounts-glib '|' libwacom '|' libstdcxx-uke-runtime ') packages=("$REQUESTED");;
+              ' uke-core-meta '|' uke-desktop-metas '|' uke-orangefox-recovery '|' uke-boot-integration '|' material-decoration '|' plymouth-uke '|' at-spi2-core '|' gstreamer1 '|' libaccounts-glib '|' libwacom '|' libstdcxx-uke-runtime ') packages=("$REQUESTED");;
               *) echo 'Unreviewed COPR source package' >&2; exit 1;;
             esac
           fi

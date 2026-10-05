@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "device": "uke",
+  "soc": "SM7675",
+  "kernel_profile": "linux-7.2.9",
+  "kernel_dtb": "qcom/sm7675-xiaomi-uke.dtb",
+  "source_inventory": {
+    "repository": "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git",
+    "commit": "d091548b0825f449581e4f58f94fb793d03cdf3e"
+  },
+  "admitted_files": [],
+  "excluded_categories": ["stock-early-firmware", "security-firmware", "persist", "unit-calibration", "foreign-device-board-data"],
+  "redistribution_review_complete": false,
+  "firmware_blob_package_ready": false,
+  "hardware_tested": false
+}

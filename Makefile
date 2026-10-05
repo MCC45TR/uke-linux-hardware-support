@@ -8,3 +8,5 @@ validate:
 	for component in $(components); do $(MAKE) -C "$$component" validate; done
 test-native:
 	$(MAKE) -C uke-desktop-packaging test-native
+	$(MAKE) -C uke-boot test-native
+	$(MAKE) -C xiaomi-uke-firmware test-admission

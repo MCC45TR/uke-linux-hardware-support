@@ -11,5 +11,5 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install official host validation tools
-        run: sudo apt-get update && sudo apt-get install -y jq g++ pkg-config qt6-base-dev
+        run: sudo apt-get update && sudo apt-get install -y jq g++ pkg-config qt6-base-dev device-tree-compiler
       - run: make validate && make test-native
