@@ -28,7 +28,7 @@ No Python enters target payloads or the accepted dependency closure. Official
 Fedora RPM policy and upstream build dependencies may use host tools only.
 Neither decoration compilation nor theme installation proves Uke graphics or boot.
 
-[Uke package hub](https://github.com/MCC45TR/uke-linux/blob/main/docs/PACKAGE-HUB.md)
+[Uke package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
 · [Development COPR](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-test/)
 
 Five admitted [native runtime source variants](docs/NATIVE-RUNTIME.md) are owned here:

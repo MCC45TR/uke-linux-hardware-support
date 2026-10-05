@@ -15,7 +15,7 @@ The package itself ships no runtime script or service and does not activate a
 session. Fedora owns the dependencies' ordinary installation policies.
 
 The [development COPR](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-test/)
-and [package hub](https://github.com/MCC45TR/uke-linux/blob/main/docs/PACKAGE-HUB.md)
+and [package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
 separate packaging readiness from physical platform readiness. Nabu's reference
 specification at `98188b595b42ba975f5bc238e596f330d3994ed8` contains panel-specific
 profiles, runtime services and session choices; these are not Uke evidence.
