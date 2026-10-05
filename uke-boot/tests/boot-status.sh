@@ -23,5 +23,14 @@ rmdir "$fixture/sys/firmware/efi"
 if build/tests/uke-boot-status --root "$fixture" > build/tests/missing-efi.json; then exit 1; else test "$?" -eq 2; fi
 mkdir "$fixture/sys/firmware/efi"
 diff -r "$fixture" "$baseline" >/dev/null
+if build/tests/uke-boot-status --cdc --root "$fixture" > build/tests/cdc-missing.json; then exit 1; else test "$?" -eq 2; fi
+mkdir -p "$fixture/sys/class/udc/fixture-controller"
+build/tests/uke-boot-status --cdc --root "$fixture" > build/tests/cdc-controller.json
+jq -e '.single_udc_present and .usb_enumeration_tested==false and .hardware_acceptance_granted==false' build/tests/cdc-controller.json >/dev/null
+if build/tests/uke-boot-status --cdc --require-tty --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
+mkdir "$fixture/sys/class/udc/second-controller"
+if build/tests/uke-boot-status --cdc --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
+if build/tests/uke-boot-status --cdc --wait 31 --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 1; fi
+if build/tests/uke-boot-status --cdc --wait 4294967296 --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 1; fi
 build/tests/uke-boot-status --help >/dev/null
 printf '%s\n' 'Boot prerequisite fixtures passed; foreign devices/root overrides rejected; inspection made no writes'

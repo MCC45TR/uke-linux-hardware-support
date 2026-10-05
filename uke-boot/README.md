@@ -29,3 +29,16 @@ device-tree-compiler utilities. Exit 2 records incomplete static inputs; a
 future verified UEFI RAM fixup needs independent evidence. This host audit is
 excluded from the binary package. Synthetic fixtures also reject firmware
 requests below disabled parents and foreign device trees.
+
+The first Core image targets CDC ACM serial debugging. The package provides an
+inactive `uke-cdc-acm.service` and a host-applied override for the distribution's
+original `debug-shell.service`. The Core debug composer explicitly enables them
+and sets `senemos.debug=cdc-acm`. This development profile exposes a local root
+shell over USB once Linux, its UDC and `g_serial` work; normal package installation
+does not enable it. Native `--cdc` inspection rejects foreign devices, missing
+or ambiguous controllers, and missing ttyGS0 before the corresponding stage.
+No Type-C role, security firmware, EFI variable or partition is changed.
+
+Compiled CDC modules do not establish a working Uke USB controller. The current
+minimal DTB has no enabled USB controller, so physical CDC acceptance is still
+open. See the [upstream serial-gadget protocol](https://docs.kernel.org/usb/gadget_serial.html).
