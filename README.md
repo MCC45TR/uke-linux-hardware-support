@@ -1,9 +1,10 @@
-# Uke packages
+# Uke Linux hardware support
 
-This directory groups the platform's package sources in the workspace and on
-GitHub. Each entry is a pinned Git submodule with its own license, history and
-COPR source URL. Grouping the checkout does not rename its upstream repository
-or interrupt automatic builds.
+One repository owns twelve Uke/SM7675 package components. Each component is an
+ordinary directory with its own sources, rules, license and acceptance gates.
+Their original project histories are preserved as Git merge ancestry;
+[SOURCE-IMPORTS.json](SOURCE-IMPORTS.json) records all twelve exact import pins.
+The workspace checks out this repository at `packages/`.
 
 | Source | Purpose |
 |---|---|
@@ -25,7 +26,14 @@ distribution KDE applications remain the only eligible application sources;
 their current Python payloads prevent complete graphical admission. A scaffold
 does not establish a published RPM or device support.
 
-The kernel, Fedora builder, OrangeFox device tree and Project Aloha remain at
-the workspace root because they own independent platform sources and archives.
-See the [package hub](../docs/PACKAGE-HUB.md) and
-[catalog](../manifests/package-catalog.json) for current build readiness.
+The kernel, Fedora builder, OrangeFox device tree and Project Aloha keep their
+independent repositories. See the [package hub](https://github.com/MCC45TR/uke-linux/blob/main/docs/PACKAGE-HUB.md)
+for build readiness. No physical support is inferred from this consolidation.
+
+Run `make validate` to check all component contracts and `make test-native` for
+the existing C++ configuration migration fixtures. The root COPR rule dispatches
+only the ten already admitted support source families. The stable-source
+workflow checks Material Decoration and the eligible recovery release daily;
+the independent kernel repository retains its own reviewed stable automation.
+Original repository workflows remain under each component as historical source
+records; active workflows are in this repository's root `.github/workflows/`.

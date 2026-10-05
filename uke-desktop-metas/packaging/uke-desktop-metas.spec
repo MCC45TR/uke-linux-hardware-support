@@ -4,7 +4,7 @@ Version: 1.0.0
 Release: 3%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
-URL: https://github.com/MCC45TR/uke-desktop-metas
+URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz

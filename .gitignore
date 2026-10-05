@@ -1,0 +1,6 @@
+/build/
+/artifacts/
+/reports/private/
+*.key
+*.pem
+.env*

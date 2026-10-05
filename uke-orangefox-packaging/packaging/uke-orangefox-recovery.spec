@@ -7,7 +7,7 @@ Version: 12.0~alpha1.20260930
 Release: 1.1%{?dist}
 Summary: Verified OrangeFox Uke recovery images for explicit device evaluation
 License: GPL-2.0-only AND GPL-3.0-or-later AND Apache-2.0 AND MIT AND BSD-2-Clause
-URL: https://github.com/MCC45TR/uke-orangefox-packaging
+URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-orangefox-packaging
 Source0: %{name}-%{version}.tar.gz
 ExclusiveArch: aarch64
 BuildRequires: bash tar gzip coreutils jq

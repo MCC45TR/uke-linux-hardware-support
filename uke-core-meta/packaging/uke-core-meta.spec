@@ -4,7 +4,7 @@ Version: 1.0.0
 Release: 3%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
-URL: https://github.com/MCC45TR/uke-core-meta
+URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-meta
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz

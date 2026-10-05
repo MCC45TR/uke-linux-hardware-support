@@ -2,7 +2,7 @@
   "schema_version": 1,
   "device": "uke",
   "soc": "SM7675",
-  "repository": "https://github.com/MCC45TR/uke-desktop-metas",
+  "repository": "https://github.com/MCC45TR/uke-linux-hardware-support",
   "version": "1.0.0",
   "status": "rpm-package-candidate",
   "package_build_ready": true,
@@ -37,5 +37,6 @@
   },
   "hardware_tested": false,
   "boot_tested": false,
-  "python_target_payload": false
+  "python_target_payload": false,
+  "source_directory": "uke-desktop-metas"
 }

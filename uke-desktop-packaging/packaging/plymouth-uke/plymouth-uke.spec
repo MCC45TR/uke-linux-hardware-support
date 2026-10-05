@@ -4,7 +4,7 @@ Version: 1.0.0
 Release: 1%{?dist}
 Summary: Optional Senemos Uke Plymouth theme
 License: MIT
-URL: https://github.com/MCC45TR/uke-desktop-packaging
+URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-packaging
 Source0: %{name}-%{version}.tar.xz
 BuildArch: noarch
 BuildRequires: tar xz
