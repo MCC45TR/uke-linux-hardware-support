@@ -28,6 +28,11 @@ Nabu binary/geometry defaults cannot supply them. Detailed records are in
 Run `make validate`, `make test-native` or `make srpm`. Source archives remain in
 `referances/`; package/host output is ignored under `build/`.
 
+Release 7 disables readline editing and systemd terminal reset/hangup for the
+development ACM shell. A production-equivalent runtime override stopped in
+42 ms in two physical trials while retaining the bounded identity/TTY gate.
+Startup still takes about 15 seconds; bidirectional ACM data remains unqualified.
+
 Release 6 removes the system-wide Python conflicts from both native packages.
 The owner authorized Python only in the signed, original Fedora KDE dependency
 closure. Neither package contains or requires Python, and project startup,

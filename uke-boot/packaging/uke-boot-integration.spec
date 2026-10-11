@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Uke image configuration and read-only boot prerequisite inspection
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -62,6 +62,9 @@ install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-e
 %{_unitdir}/uke-esp32-cdc-log.service
 
 %changelog
+* Mon Oct 12 2026 Mürşit Can Cihan <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
+- Avoid blocking readline and terminal resets on the development gadget shell.
+- Preserve the bounded Uke identity and USB TTY prerequisite check.
 * Sun Oct 11 2026 Mürşit Can Cihan <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
 - Allow native boot helpers to coexist with original Fedora KDE dependencies.
 - Keep the Core image's independent no-Python payload audit unchanged.
