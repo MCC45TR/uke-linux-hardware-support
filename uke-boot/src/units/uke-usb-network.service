@@ -1,0 +1,19 @@
+[Unit]
+Description=Uke owner-enabled USB ACM and Ethernet debug transport
+Requires=sys-kernel-config.mount
+Wants=NetworkManager.service sshd.socket
+After=sys-kernel-config.mount NetworkManager.service
+Conflicts=uke-cdc-acm.service uke-cdc-shell.service
+OnFailure=uke-cdc-acm.service uke-cdc-shell.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+ConditionPathExists=/etc/NetworkManager/system-connections/uke-usb-debug.nmconnection
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/senemos-uke/uke-usb-network start
+ExecStop=/usr/libexec/senemos-uke/uke-usb-network stop
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

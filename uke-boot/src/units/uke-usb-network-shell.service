@@ -1,0 +1,23 @@
+[Unit]
+Description=Uke owner development shell on the USB network gadget's ACM port
+Requires=uke-usb-network.service
+PartOf=uke-usb-network.service
+After=uke-usb-network.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+
+[Service]
+ExecStartPre=/usr/bin/uke-boot-status --cdc --require-tty --wait 15
+ExecStart=-/usr/bin/bash --noprofile --norc -i
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/ttyGS0
+TTYReset=yes
+TTYVHangup=yes
+Environment=TERM=vt100
+Restart=always
+RestartSec=3
+KillSignal=SIGHUP
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Uke image configuration and read-only boot prerequisite inspection
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
 Requires: senemos-native-runtime(libstdc++)
-Requires: kmod bash systemd
+Requires: kmod bash systemd NetworkManager openssh-server
 Conflicts: python(abi) python3-libs pypy pypy3
 
 %description
@@ -41,6 +41,10 @@ install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -d %{buildroot}%{_datadir}/senemos/boot/uke
 install -m644 src/profiles/* %{buildroot}%{_datadir}/senemos/boot/uke/
 install -Dm644 src/units/uke-cdc-acm.service %{buildroot}%{_unitdir}/uke-cdc-acm.service
+install -Dm755 src/uke-usb-network.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-usb-network
+install -Dm644 src/units/uke-usb-network.service %{buildroot}%{_unitdir}/uke-usb-network.service
+install -Dm644 src/units/uke-usb-network-shell.service %{buildroot}%{_unitdir}/uke-usb-network-shell.service
+install -Dm644 src/profiles/uke-coresight-bringup.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
 install -Dm755 uke-esp32-cdc %{buildroot}%{_libexecdir}/senemos-uke/uke-esp32-cdc
 install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-esp32-cdc-log.service
 %files
@@ -49,6 +53,10 @@ install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-e
 %{_bindir}/uke-boot-status
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
+%{_libexecdir}/senemos-uke/uke-usb-network
+%{_unitdir}/uke-usb-network.service
+%{_unitdir}/uke-usb-network-shell.service
+%{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
 
 %files -n uke-esp32-cdc
 %license LICENSE
@@ -56,6 +64,10 @@ install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-e
 %{_unitdir}/uke-esp32-cdc-log.service
 
 %changelog
+* Sun Oct 11 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Contain unqualified CoreSight autoload during initial stock-ABL bring-up.
+- Add opt-in USB ACM/ECM units and explicit identity/image input templates.
+- Accept the physical linux partition name in read-only root inspection.
 * Tue Oct 06 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Accept the filesystem label used by dynamically sized Core images.
 - Preserve rejection of a later foreign root command-line override.

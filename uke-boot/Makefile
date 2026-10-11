@@ -10,6 +10,8 @@ validate:
 	! grep -Eq '^%(post|pre|trigger|transfiletrigger)' packaging/uke-boot-integration.spec
 	! grep -Eq '^Requires:.*(python|pypy|nabu)' packaging/uke-boot-integration.spec
 	bash -n src/audit-kernel-inputs.sh
+	sh -n src/uke-usb-network.sh
+	jq -e . src/profiles/fastfetch.jsonc >/dev/null
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh

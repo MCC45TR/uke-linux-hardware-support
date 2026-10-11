@@ -16,6 +16,11 @@ cp -a "$fixture" "$baseline"
 printf 'root=LABEL=UKE_LINUX rw rootwait\n' > "$fixture/proc/cmdline"
 build/tests/uke-boot-status --root "$fixture" > build/tests/filesystem-label.json
 jq -e '.uke_root_command_line' build/tests/filesystem-label.json >/dev/null
+printf 'root=PARTLABEL=linux rw rootwait\n' > "$fixture/proc/cmdline"
+build/tests/uke-boot-status --root "$fixture" > build/tests/physical-partition-name.json
+jq -e '.uke_root_command_line' build/tests/physical-partition-name.json >/dev/null
+printf 'root=PARTLABEL=linux root=LABEL=foreign rw\n' > "$fixture/proc/cmdline"
+if build/tests/uke-boot-status --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
 printf 'root=LABEL=UKE_LINUX root=LABEL=foreign rw\n' > "$fixture/proc/cmdline"
 if build/tests/uke-boot-status --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
 printf 'root=LABEL=foreign root=LABEL=UKE_LINUX rw\n' > "$fixture/proc/cmdline"

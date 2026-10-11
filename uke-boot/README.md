@@ -17,7 +17,7 @@ observations do not grant storage, peripheral or physical acceptance.
 Images use filesystem labels `UKE_ESP` and `UKE_LINUX`, with composer-selected
 sizes and no fixed GPT offsets. Target fastboot capacity, sector size and UEFI
 partition visibility still require inspection before installation. The native
-inspector accepts `root=LABEL=UKE_LINUX` and the legacy `PARTLABEL=uke_linux`
+inspector accepts `root=PARTLABEL=linux`, `root=LABEL=UKE_LINUX` and the legacy `PARTLABEL=uke_linux`
 selector; a later foreign root argument overrides either one and is rejected.
 
 The independent Uke UEFI port, exact firmware RAM handoff, UFS DT/binding support
@@ -36,7 +36,7 @@ future verified UEFI RAM fixup needs independent evidence. This host audit is
 excluded from the binary package. Synthetic fixtures also reject firmware
 requests below disabled parents and foreign device trees.
 
-The first Core development profile uses the **tablet as USB host**, with an
+The earlier ESP32 Core development profile uses the **tablet as USB host**, with an
 ESP32-S3 bridge exposing CDC and HID interfaces. `uke-esp32-cdc` supplies a native
 raw 115200 TTY forwarder and inactive `uke-esp32-cdc-log.service`. The explicitly
 configured port defaults to `/dev/ttyACM0`; change `UKE_ESP32_CDC_DEVICE` in
@@ -64,3 +64,36 @@ roles, security firmware, EFI variables or partitions.
 The current minimal DTB has no enabled USB controller. Compiled host/HID/ACM or
 gadget modules therefore do not establish physical bridge connectivity. The
 USB platform/PHY/clock and firmware handoff remain source prerequisites.
+
+The stock-ABL development Image is a separate boot profile. On 2026-10-11 the
+owner observed a real-root screen TTY, and direct-PC CDC/ECM commands and SSH
+completed on the same physical boot. This does not qualify the standalone
+mainline DTB, USB host power, GPU acceleration or Wi-Fi.
+
+Release 5 contains an active `modprobe.d` containment for unqualified OEM
+CoreSight autoload. The same Image previously reset after CoreSight probes;
+the scoped blacklist allowed the first sustained terminal. The precise failing
+CoreSight register access and repeated cold-boot acceptance remain open.
+
+`uke-usb-network.service` and `uke-usb-network-shell.service` are inactive until
+an owner/composer installs `usb-network.nmconnection` as
+`/etc/NetworkManager/system-connections/uke-usb-debug.nmconnection` (root, 0600)
+and `usb-network-managed.conf` as
+`/etc/NetworkManager/conf.d/90-uke-usb-debug.conf` (root, 0644), then reloads
+NetworkManager and explicitly enables them with `senemos.debug=cdc-acm`.
+The device override is required after re-enumeration because Fedora's udev
+policy otherwise leaves the newly created gadget interface unmanaged. They replace the
+serial-only gadget with ACM plus ECM, retain `ttyGS0`, and use an isolated
+`10.77.0.2/30` link without a default route. Configure the computer as
+`10.77.0.1/30`. Authorize an SSH key through the existing terminal and verify the
+server host key before connecting. Package installation enables no service and
+contains no passwords, authorized keys or private host keys.
+
+The `machine-info` and `fastfetch.jsonc` profiles provide the owner-requested
+Xiaomi Pad 7 presentation. Revision 1.1 is configured presentation metadata,
+not a measured board-revision result. The Adreno 732 hardware label explicitly
+retains the missing DRM qualification. Disk size always comes from the mounted
+filesystem; grow an existing EXT4 root only after verifying its physical
+`linux` partition. The systemd `reboot bootloader` command already accepts the
+argument, but a matching kernel reboot-reason backend and physical fastboot
+transition must be qualified before claiming it works.
