@@ -28,6 +28,15 @@ Nabu binary/geometry defaults cannot supply them. Detailed records are in
 Run `make validate`, `make test-native` or `make srpm`. Source archives remain in
 `referances/`; package/host output is ignored under `build/`.
 
+Release 6 removes the system-wide Python conflicts from both native packages.
+The owner authorized Python only in the signed, original Fedora KDE dependency
+closure. Neither package contains or requires Python, and project startup,
+service and test helpers remain native or shell. The default Core image and
+early initramfs retain their independent no-Python audits. A KDE composer must
+record the original signed package closure and audit its extracted payload;
+this packaging change alone does not authorize arbitrary Python applications
+or establish a working graphical session.
+
 The host-only `src/audit-kernel-inputs.sh EXTRACTED_ROOT REPORT_JSON` checks the
 installed kernel configuration and exact Uke DTB, traverses enabled nodes and
 records static RAM, UFS and firmware requests. It requires Bash, jq and the

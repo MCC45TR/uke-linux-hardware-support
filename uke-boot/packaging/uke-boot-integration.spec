@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary: Uke image configuration and read-only boot prerequisite inspection
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -10,7 +10,6 @@ ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
 Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server
-Conflicts: python(abi) python3-libs pypy pypy3
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -24,7 +23,6 @@ does not establish RAM/UFS/firmware handoff or physical tablet boot.
 Summary: Native ESP32-S3 CDC journal forwarding for the Uke Core debug profile
 Requires: %{name} = %{version}-%{release}
 Requires: systemd senemos-native-runtime(libstdc++)
-Conflicts: python(abi) python3-libs pypy pypy3
 %description -n uke-esp32-cdc
 Native raw-TTY configuration and real-root journal forwarding to an explicitly
 configured ttyACM USB-host port. Core composition may apply the separate original
@@ -64,6 +62,9 @@ install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-e
 %{_unitdir}/uke-esp32-cdc-log.service
 
 %changelog
+* Sun Oct 11 2026 Mürşit Can Cihan <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
+- Allow native boot helpers to coexist with original Fedora KDE dependencies.
+- Keep the Core image's independent no-Python payload audit unchanged.
 * Sun Oct 11 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
 - Contain unqualified CoreSight autoload during initial stock-ABL bring-up.
 - Add opt-in USB ACM/ECM units and explicit identity/image input templates.
