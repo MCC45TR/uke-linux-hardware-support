@@ -6,14 +6,15 @@ After=uke-usb-network.service
 ConditionKernelCommandLine=senemos.debug=cdc-acm
 
 [Service]
+Type=exec
 ExecStartPre=/usr/bin/uke-boot-status --cdc --require-tty --wait 15
-ExecStart=-/usr/bin/bash --noprofile --norc -i
+ExecStart=-/usr/bin/bash --noediting --noprofile --norc -i
 StandardInput=tty-force
 StandardOutput=tty
 StandardError=tty
 TTYPath=/dev/ttyGS0
-TTYReset=yes
-TTYVHangup=yes
+TTYReset=no
+TTYVHangup=no
 Environment=TERM=vt100
 Restart=always
 RestartSec=3
