@@ -38,6 +38,13 @@ path must match an enabled Uke driver request from the selected kernel profile.
 Security firmware, device calibration, persist files and foreign-board guesses
 are excluded.
 
+The [OEM Wi-Fi source inventory](manifests/oem-wifi-source.json) records verified
+OS3.0.304.0 modem extraction, WPSS split-file hashes and O82 board candidates.
+It grants no firmware admission or redistribution permission. The ELF32 WPSS
+image fits the OEM reserved region, but exact board selection, Linux power/DMA
+bindings and physical firmware startup still require validation. Candidate
+bytes remain below this component's ignored `referances/` directory.
+
 On the build host, run `make test-admission` for synthetic acceptance/rejection
 fixtures. For real candidate bytes, run:
 
