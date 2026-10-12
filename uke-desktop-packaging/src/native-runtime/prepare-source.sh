@@ -28,6 +28,40 @@ if [[ $name == libstdcxx-uke-runtime ]]; then
 fi
 spec="$top/SOURCES/$name.spec"
 [[ -s $spec ]]
+if [[ $name == mesa ]]; then
+    cp "$project/packaging/mesa/"*.patch "$project/packaging/mesa/mesa-host-features.cpp" "$top/SOURCES/"
+    awk -v release="$native_release" '
+        BEGIN { print "%global debug_package %{nil}" }
+        /^Release:/ { print "Release: " release "%{?dist}"; next }
+        /^License:/ { print; print "ExclusiveArch: aarch64"; next }
+        /^Source0:/ { print; print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9999: mesa-host-features.cpp"; next }
+        /^BuildRequires:.*meson/ { print "BuildRequires: meson = 1.12.1-2.fc46"; next }
+        /^BuildRequires:.*python3-devel/ { print "BuildRequires: python3-devel = 3.15.0-1.fc46"; next }
+        /^BuildRequires:.*python3-mako/ { print "BuildRequires: python3-mako = 1.4.1-2.fc46"; next }
+        /^BuildRequires:.*python3-pycparser/ { print "BuildRequires: python3-pycparser = 3.00-4.fc45"; next }
+        /^BuildRequires:.*python3-pyyaml/ { print "BuildRequires: python3-pyyaml = 6.0.3-6.fc45"; next }
+        /^BuildRequires:.*llvm-devel/ { print "BuildRequires: llvm-devel = 23.1.2-1.fc46"; next }
+        /^%files filesystem/ {
+            print "# No build tool or Python payload may reach a binary subpackage."
+            print "if find %{buildroot} -type f \\( -name \"*.py\" -o -name \"*.pyc\" -o -name \"*.pyo\" -o -name \"python[0-9]*\" \\) -print | grep .; then exit 1; fi"
+            print "while IFS= read -r -d \"\" file; do if head -c 256 \"$file\" | LC_ALL=C grep -aE \"^#!.*(python|pypy)\"; then exit 1; fi; done < <(find %{buildroot} -type f -print0)"
+            print "%check"
+            print "awk '\''/^lp_build_fill_mattrs\\(/{copy=1; print \"void\"} copy {print} copy && /^}/ {exit}'\'' src/gallium/auxiliary/gallivm/lp_bld_misc.cpp > mesa-host-features.inc"
+            print "%{__cxx} $(llvm-config --cxxflags) -I. %{SOURCE9999} -o mesa-host-features $(llvm-config --ldflags --libs --system-libs)"
+            print "./mesa-host-features"
+            print ""
+        }
+        /^%changelog/ {
+            print; print "* Mon Oct 12 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print "- Honor available AArch64 CPU features in Gallivm JIT code generation."
+            exit
+        }
+        { print }
+    ' "$spec" > "$top/SPECS/mesa.spec"
+    mv "$spec" "$top/SPECS/mesa.fedora-original.spec"
+    rpmbuild -bs --nodeps --target aarch64 --define "_topdir $top" "$top/SPECS/mesa.spec"
+    exit 0
+fi
 case $name in
     at-spi2-core) cleanup='rm -rf %{buildroot}%{_libdir}/python*';;
     libaccounts-glib) cleanup='rm -rf %{buildroot}%{_libdir}/python*';;
