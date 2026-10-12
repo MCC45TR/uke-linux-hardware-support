@@ -2,10 +2,13 @@
 
 **Current policy:** Never clone, fork or rebuild KDE desktop applications as Uke
 variants. Plasma/Dolphin recipes described in older evidence below are withdrawn
-from the active source allowlist and automatic COPR publication. Five non-KDE
-source families remain admitted for build evaluation. Use original distribution
-KDE applications; complete graphical admission remains blocked while their
-Python payloads conflict with the target policy.
+from the active source allowlist and automatic COPR publication. Six non-KDE
+source families remain admitted for build evaluation, including the separately
+qualified [Mesa host-feature candidate](../packaging/mesa/README.md).
+Use original distribution KDE applications. The owner permits unavoidable
+Python dependencies only in these original Fedora KDE packages; the builder
+audits their exact original payload. This does not relax native runtime or
+early-boot policy and does not establish graphical operation.
 
 The first complete Plasma dependency transaction pulled Python through optional
 GI bindings, installed documentation utilities and configuration migrations.
@@ -13,7 +16,7 @@ An extracted official-RPM inventory also found Dolphin migration scripts even
 though they did not declare a Python dependency. That transaction failed the
 project's target acceptance gate; it is not an accepted tablet environment.
 
-`manifests/native-runtime.json` pins seven complete official Fedora Koji source
+`manifests/native-runtime.json` pins six active and two withdrawn official Fedora Koji source
 RPMs by exact NEVRA and SHA-256. Sources remain under this component's ignored
 `referances/fedora-srpms/`. The section-aware host adapter derives inspectable
 specifications in `build/`; native C/C++ applications and libraries are actually

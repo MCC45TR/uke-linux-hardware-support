@@ -43,6 +43,12 @@ is held only in an encrypted repository secret. Healthy COPR jobs are preserved.
 These sources use reviewed Fedora pins; automatic builds do not silently admit
 arbitrary new Fedora source recipes or assert physical hardware support.
 
+A sixth source candidate, [Mesa](packaging/mesa/README.md), corrects an observed
+AArch64 llvmpipe SIGILL by passing Linux-reported CPU features to Gallivm.
+It uses the complete pinned Fedora recipe with one source conditional changed;
+KDE applications are untouched. Its native COPR regression, signed package and
+physical Wayland gates remain separate from the five existing automatic builds.
+
 The [package testing procedure](docs/PACKAGE-TESTING.md) requires both the
 selected RPM closure and the complete installed root. The original 603-input
 transaction passed its input audit and lifecycle fixtures, but its base image
@@ -57,7 +63,8 @@ accepted gates and excluded failed trials separately.
 The owner forbids cloning, forking or rebuilding KDE desktop applications as Uke
 variants. Plasma and Dolphin source targets are withdrawn, their automatic
 COPR jobs are disabled, and the source allowlist rejects them before download.
-Use original distribution KDE applications. Those applications currently have
-Python payloads incompatible with the target policy, so complete KDE admission
-is blocked rather than bypassing either requirement. Earlier source, helper
+Use original distribution KDE applications. On 12 October the owner authorized
+Python only for unavoidable original Fedora KDE dependencies; the image builder
+audits those exact original files. Project runtime and early boot retain the
+Python prohibition. Earlier source, helper
 and package test records are historical evidence, not admitted runtime recipes.

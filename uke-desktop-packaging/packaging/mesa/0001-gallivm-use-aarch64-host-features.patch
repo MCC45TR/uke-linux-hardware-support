@@ -1,0 +1,19 @@
+From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] gallivm: honor host CPU features on AArch64
+
+An Arm CPU name can imply SVE even when Linux does not expose it. Pass
+LLVM's kernel-aware host feature map, including disabled features, just as
+on 32-bit Arm. A physical llvmpipe core stopped at an SVE index instruction
+on a system without HWCAP_SVE. This does not qualify native GPU support.
+
+--- a/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp
++++ b/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp
+@@ -316,7 +316,7 @@
+ lp_build_fill_mattrs(std::vector<std::string> &MAttrs)
+ {
+ 
+-#if DETECT_ARCH_ARM
++#if DETECT_ARCH_ARM || DETECT_ARCH_AARCH64
+    /* llvm-3.3+ implements sys::getHostCPUFeatures for Arm,
+     * which allows us to enable/disable code generation based
+     * on the results of cpuid on these architectures.
