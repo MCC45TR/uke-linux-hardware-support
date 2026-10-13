@@ -10,9 +10,9 @@
       "name": "mesa",
       "version": "26.2.4",
       "release": "1.fc46",
-      "native_release": "1.uke1",
+      "native_release": "1.uke2",
       "sha256": "fef94c6e88df2b9b1495b71d421a0dd021cf4de8337263350d559b7a33ce9451",
-      "delta": "Pass kernel-reported AArch64 CPU features to Gallivm; prevent llvmpipe from assuming unavailable SVE from the CPU name"
+      "delta": "Preserve AArch64 JIT feature detection; name exact Adreno 732 chips and accept their fuse-ID wildcard without changing GPU properties"
     },
     {
       "name": "at-spi2-core",

@@ -34,7 +34,7 @@ if [[ $name == mesa ]]; then
         BEGIN { print "%global debug_package %{nil}" }
         /^Release:/ { print "Release: " release "%{?dist}"; next }
         /^License:/ { print; print "ExclusiveArch: aarch64"; next }
-        /^Source0:/ { print; print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9999: mesa-host-features.cpp"; next }
+        /^Source0:/ { print; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9999: mesa-host-features.cpp"; next }
         /^BuildRequires:.*meson/ { print "BuildRequires: meson = 1.12.1-2.fc46"; next }
         /^BuildRequires:.*python3-devel/ { print "BuildRequires: python3-devel = 3.15.0-1.fc46"; next }
         /^BuildRequires:.*python3-mako/ { print "BuildRequires: python3-mako = 1.4.1-2.fc46"; next }
@@ -52,7 +52,8 @@ if [[ $name == mesa ]]; then
             print ""
         }
         /^%changelog/ {
-            print; print "* Mon Oct 12 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print; print "* Tue Oct 13 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print "- Identify exact Adreno 732 chips without changing their existing profile."
             print "- Honor available AArch64 CPU features in Gallivm JIT code generation."
             exit
         }
