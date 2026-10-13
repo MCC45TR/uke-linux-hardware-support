@@ -1,0 +1,23 @@
+{
+  "repository": "https://github.com/linux-msm/hexagonrpc",
+  "commit": "da7a3742ab8d5273a281b70ee11f16fb2cb6a690",
+  "archive_url": "https://api.github.com/repos/linux-msm/hexagonrpc/tarball/da7a3742ab8d5273a281b70ee11f16fb2cb6a690",
+  "archive_sha256": "7714edc602057b4ad40b7d350acf6cef0167551e3c2876c0ed77486ab188690a",
+  "license": "GPL-3.0-or-later",
+  "scope": "Native sensor file-service research baseline; no package or startup unit admitted",
+  "write_candidate": {
+    "repository": "https://github.com/linux-msm/hexagonrpc",
+    "commit": "510c87e5c89026ee2bd2034776fc4d15994f353d",
+    "archive_url": "https://api.github.com/repos/linux-msm/hexagonrpc/tarball/510c87e5c89026ee2bd2034776fc4d15994f353d",
+    "archive_sha256": "ed7b0e704a5e8c20b77b013b4b34f3cddbe41d4cf546edc73f029501f7ebdec5",
+    "scope": "Unmerged write-backend comparison; RAM registry only, no OEM persist writes"
+  },
+  "oem_registry_config": {
+    "repository": "https://github.com/uke-resources/vendor_xiaomi_uke",
+    "commit": "51ecce187b180e1df9230ff50b604af535b8e116",
+    "path": "proprietary/vendor/etc/sensors/sns_reg_config",
+    "version": 14,
+    "sha256": "1955666f46427f102b2bf19a0018123fbc27cf6951d531a5e623823a0ed1ea35",
+    "scope": "Source provenance only; no redistribution permission inferred"
+  }
+}

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <bit>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -81,7 +83,7 @@ static View one(const std::vector<Field> &items, unsigned number, unsigned wire)
     return result;
 }
 static bool datatype(std::string_view type) {
-    static constexpr std::array allowed{"", "accel", "gyro", "mag", "ambient_light", "proximity", "sar", "hall", "sensor_temperature"};
+    static constexpr std::array allowed{"", "accel", "gyro", "mag", "ambient_light", "ambient_light_back", "ambient_light_back_strm", "proximity", "sar", "hall", "sensor_temperature"};
     return std::find(allowed.begin(), allowed.end(), type) != allowed.end();
 }
 struct Uid {
@@ -89,13 +91,14 @@ struct Uid {
     bool operator==(const Uid &) const = default;
 };
 static constexpr Uid lookup_uid{0xababababababababULL, 0xababababababababULL};
-static Bytes request(std::string_view type, Uid sensor = lookup_uid, unsigned message = 512) {
-    require((message == 512 && datatype(type) && sensor == lookup_uid) ||
-            (message == 1 && type.empty()), "Unsupported metadata request");
-    Bytes lookup;
-    length_field(lookup, 1, View(reinterpret_cast<const std::uint8_t *>(type.data()), type.size()));
-    lookup.insert(lookup.end(), {0x10, 0, 0x18, 0}); // No updates, all matching SUIDs.
-    Bytes standard; length_field(standard, 2, message == 512 ? View(lookup) : View{});
+static Bytes client_request(Uid sensor, unsigned message, View payload, bool batch_motion = false) {
+    require(!batch_motion || message == 513, "Batching is restricted to sensor streams");
+    Bytes standard;
+    if (batch_motion) {
+        const Bytes batch{8, 0xa0, 0x86, 6}; // 100,000 us; preserve the 64-packet bound while settling.
+        length_field(standard, 1, batch);
+    }
+    length_field(standard, 2, payload);
     Bytes uid{0x09}; put(uid, sensor.low, 8);
     uid.push_back(0x11); put(uid, sensor.high, 8);
     Bytes client; length_field(client, 1, uid);
@@ -108,6 +111,14 @@ static Bytes request(std::string_view type, Uid sensor = lookup_uid, unsigned me
     Bytes packet{0}; put(packet, 1, 2); put(packet, 0x20, 2); put(packet, body.size(), 2);
     packet.insert(packet.end(), body.begin(), body.end());
     return packet;
+}
+static Bytes request(std::string_view type, Uid sensor = lookup_uid, unsigned message = 512) {
+    require((message == 512 && datatype(type) && sensor == lookup_uid) ||
+            (message == 1 && type.empty()), "Unsupported metadata request");
+    Bytes lookup;
+    length_field(lookup, 1, View(reinterpret_cast<const std::uint8_t *>(type.data()), type.size()));
+    lookup.insert(lookup.end(), {0x10, 0, 0x18, 0}); // No updates, all matching SUIDs.
+    return client_request(sensor, message, message == 512 ? View(lookup) : View{});
 }
 struct Tlv { unsigned type; View data; };
 static std::vector<Tlv> tlvs(View packet) {
@@ -216,7 +227,8 @@ static Bytes receive(int fd, sockaddr_qrtr &peer, std::chrono::steady_clock::tim
 static void send(int fd, const sockaddr_qrtr &peer, View bytes) {
     require(sendto(fd, bytes.data(), bytes.size(), 0, reinterpret_cast<const sockaddr *>(&peer), sizeof(peer)) == ssize_t(bytes.size()), "QRTR send failed");
 }
-static Bytes rpc(int fd, const Bytes &packet) {
+static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool settle_motion = false) {
+    require(!settle_motion || wanted_event == 1025, "Settling is restricted to sensor data");
     sockaddr_qrtr local{};
     socklen_t size = sizeof(local);
     require(getsockname(fd, reinterpret_cast<sockaddr *>(&local), &size) == 0 && size == sizeof(local), "QRTR local address unavailable");
@@ -241,6 +253,7 @@ static Bytes rpc(int fd, const Bytes &packet) {
     }
     require(found, "SSC service lookup exceeded packet limit");
     send(fd, server, packet);
+    const auto settled = std::chrono::steady_clock::now() + std::chrono::seconds(3);
     bool accepted = false; std::uint64_t client = 0;
     for (unsigned i = 0; i < 64; ++i) {
         auto data = receive(fd, peer, deadline);
@@ -259,7 +272,19 @@ static Bytes rpc(int fd, const Bytes &packet) {
             auto id = tlv(items, 1); require(id.size() == 8 && little(id) == client, "Foreign SSC client event");
             auto payload = tlv(items, 2);
             require(payload.size() >= 2 && little(payload.first(2)) == payload.size() - 2, "SSC payload length mismatch");
-            return Bytes(payload.begin()+2, payload.end());
+            auto event = payload.subspan(2);
+            if (wanted_event) {
+                bool matching = false;
+                for (auto &entry : fields(event)) if (entry.number == 2) {
+                    require(entry.wire == 2, "Invalid client event");
+                    auto id = little(one(fields(entry.data), 1, 5));
+                    require(id != 130, "SSC returned a sensor error event");
+                    matching |= id == wanted_event;
+                }
+                if (!matching) continue;
+                if (settle_motion && std::chrono::steady_clock::now() < settled) continue;
+            }
+            return Bytes(event.begin(), event.end());
         } else throw std::runtime_error("Unexpected SSC discovery message");
     }
     throw std::runtime_error("SSC discovery exceeded packet limit");

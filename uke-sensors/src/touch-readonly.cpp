@@ -34,7 +34,7 @@ static bool compatible(const char *path, const std::string &expected) {
     return matches(data,expected);
 }
 static std::array<std::uint8_t,3> page(std::uint32_t address) {
-    require(address == 0x1fb104 || address == 0x125878, "Address outside fixed identity-read scope");
+    require(address == 0x1fb104 || address == 0x1fb12c || address == 0x125878, "Address outside fixed identity-read scope");
     return {0xff, std::uint8_t(address >> 15), std::uint8_t(address >> 7)};
 }
 static bool nt36532(const std::array<std::uint8_t,6> &id) {
@@ -76,6 +76,7 @@ int main() {
         std::cout << "Trim family bytes: " << std::hex << unsigned(id[3]) << ' '
                   << unsigned(id[4]) << ' ' << unsigned(id[5]) << std::dec << '\n';
         require(nt36532(id), "NT36532 trim identity did not match; no reset attempted");
+        std::cout << "NT36532 topology: " << ((read<1>(fd,0x1fb12c)[0] & 1) ? "single" : "cascade") << '\n';
         firmware(read<16>(fd,0x125878));
         close(fd); return 0;
     } catch (const std::exception &e) {
