@@ -34,11 +34,14 @@ static bool compatible(const char *path, const std::string &expected) {
     return matches(data,expected);
 }
 static std::array<std::uint8_t,3> page(std::uint32_t address) {
-    require(address == 0x1fb104 || address == 0x1fb12c || address == 0x125878, "Address outside fixed identity-read scope");
+    require(address == 0x1fb104 || address == 0x1fb12c || address == 0x125878 || address == 0x11c478, "Address outside fixed identity-read scope");
     return {0xff, std::uint8_t(address >> 15), std::uint8_t(address >> 7)};
 }
 static bool nt36532(const std::array<std::uint8_t,6> &id) {
     return id[3] == 0x32 && id[4] == 0x65 && id[5] == 3;
+}
+static std::uint32_t firmware_address(std::uint8_t topology) {
+    return (topology & 1) ? 0x125878 : 0x11c478;
 }
 static void firmware(const std::array<std::uint8_t,16> &info) {
     require(unsigned(info[0]) + info[1] == 255, "Firmware-info complement check failed");
@@ -76,8 +79,9 @@ int main() {
         std::cout << "Trim family bytes: " << std::hex << unsigned(id[3]) << ' '
                   << unsigned(id[4]) << ' ' << unsigned(id[5]) << std::dec << '\n';
         require(nt36532(id), "NT36532 trim identity did not match; no reset attempted");
-        std::cout << "NT36532 topology: " << ((read<1>(fd,0x1fb12c)[0] & 1) ? "single" : "cascade") << '\n';
-        firmware(read<16>(fd,0x125878));
+        const auto topology = read<1>(fd,0x1fb12c)[0];
+        std::cout << "NT36532 topology: " << ((topology & 1) ? "single" : "cascade") << '\n';
+        firmware(read<16>(fd,firmware_address(topology)));
         close(fd); return 0;
     } catch (const std::exception &e) {
         if(fd >= 0) close(fd);
