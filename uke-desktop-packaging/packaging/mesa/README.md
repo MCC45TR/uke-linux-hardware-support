@@ -1,4 +1,4 @@
-# Mesa AArch64 host-feature correction
+# Mesa AArch64 and Adreno 732 corrections
 
 The exact Fedora `mesa-26.2.4-1.fc46` source RPM is pinned in
 `manifests/native-runtime.json`. One upstream C++ conditional admits AArch64 to
@@ -10,8 +10,14 @@ APIs and build flags are unchanged.
 The build worker runs the exact patched feature function against LLVM's actual
 feature map, checking every enabled and disabled attribute. The unpatched
 AArch64 branch must fail this fixture. Signed payload, offline DNF rollback,
-physical Wayland stability and camera-observed output remain separate gates.
-This is a software-rendering correction; native Adreno is still unqualified.
+physical Wayland stability and observed output remain separate gates.
+
+The Adreno 732 correction keeps Mesa's existing `0x43030b00` three-CCU profile,
+changes its label from `FD735` to `FD732`, and admits the kernel's fuse-ID
+wildcard. It does not alias another GPU or change shader properties. Native
+shader/readback and KWin hardware rendering were observed with the experimental
+kernel at 255 MHz on 13 October. This Mesa revision still needs its own package
+and tablet tests; Vulkan, higher GPU frequencies and suspend remain unqualified.
 
 Unavoidable upstream host tools: Meson `1.12.1-2.fc46`, Python development/runtime
 `3.15.0-1.fc46`, and LLVM development libraries `23.1.2-1.fc46` are pinned in
