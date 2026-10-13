@@ -5,7 +5,8 @@ variants. Plasma/Dolphin recipes described in older evidence below are withdrawn
 from the active source allowlist and automatic COPR publication. Six non-KDE
 source families remain admitted for build evaluation, including the separately
 qualified [Mesa host-feature candidate](../packaging/mesa/README.md).
-Use original distribution KDE applications. The owner permits unavoidable
+Use original distribution KDE applications. The development exception covers
+unavoidable
 Python dependencies only in these original Fedora KDE packages; the builder
 audits their exact original payload. This does not relax native runtime or
 early-boot policy and does not establish graphical operation.

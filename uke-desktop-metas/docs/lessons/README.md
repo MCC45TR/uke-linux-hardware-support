@@ -61,7 +61,7 @@
 
 - Date: 2026-10-05.
 - Environment: explicit owner instruction, source profile/spec and COPR policy.
-- Evidence: the owner prohibits cloning KDE desktop applications. Plasma and
+- Evidence: project policy prohibits cloning KDE desktop applications. Plasma and
   Dolphin variant source records and seven completed builds were removed after
   exact local archival. Both source targets now fail before archive retrieval.
 - Superseding correction: release 3 no longer requires seven runtime

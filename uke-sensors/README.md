@@ -25,7 +25,7 @@ a device result.
   not bind or remove drivers itself. A qualified trial must restore the binding.
 
 On 13 October 2026, the bounded SSC protocol and six service metadata replies
-were observed on the owner's matched Fedora session. Physical motion/light/
+were observed in the matched Fedora test session. Physical motion/light/
 compass/SAR type lookups returned no SUIDs in their first events; no samples
 were acquired. The DT-corrected SPI trial identifies NT36532 family bytes, but
 resident firmware-info validation fails. These are bring-up results, not usable

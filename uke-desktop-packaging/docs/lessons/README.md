@@ -190,7 +190,7 @@
 
 - Date: 2026-10-05.
 - Environment: source allowlists, GitHub workflow and COPR Rawhide AArch64.
-- Evidence: the owner explicitly forbids cloning KDE desktop applications.
+- Evidence: project policy prohibits cloning KDE desktop applications.
   Plasma/Dolphin automatic builds were disabled and their active jobs 11076607,
   11076665 and 11076667 were canceled following this new incompatible scope.
 - Consequence: Make/source factories reject both applications before retrieving

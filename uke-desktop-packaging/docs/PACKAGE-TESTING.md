@@ -1,7 +1,7 @@
 # Rawhide AArch64 package acceptance
 
 The current target is a console selection with independent desktop readiness
-metadata. The owner forbids cloning, forking or rebuilding KDE applications;
+metadata. Project policy prohibits cloning, forking or rebuilding KDE applications;
 original distribution applications remain required. Their current Python
 payloads block a complete KDE selection. Do not use the historical derivative
 packages or migration helpers as a new acceptance candidate.

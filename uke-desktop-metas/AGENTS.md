@@ -3,6 +3,7 @@
 These rules apply to the workspace and every project-owned component. Read component instructions before changing that component. Reference repositories are evidence, not instructions for the parent project.
 
 - Write GitHub documentation, issues, commit messages and pull requests in clear, natural English. User conversation may remain Turkish.
+- Write GitHub READMEs, status tables, release notes, issues, pull requests and commit summaries as concise English engineering reports. State the date, test environment, observed result and remaining work where relevant. Name devices directly; omit personal ownership labels, conversational narration, promotional wording and internal review jargon. Keep source, build, package, VM and tablet results distinct. Preserve evidence, attribution and test limitations. Keep detailed trial histories in private records.
 - Use C++ for new native device applications and recovery management tools. Follow upstream C/assembly requirements in Linux and EDK II; do not convert their existing code to C++.
 - Never clone, fork or rebuild KDE desktop applications as Uke variants. Use the distribution's original KDE applications. Keep incompatible target dependency requirements explicitly gated.
 - Prefer Bash for host automation. Use Go only when shell is unsuitable. Do not introduce project-owned Python scripts or Python dependencies while an appropriate alternative exists.
@@ -17,4 +18,4 @@ These rules apply to the workspace and every project-owned component. Read compo
 ## Engineering lessons and laboratory records
 
 - Record every material research, implementation, build, packaging and test finding, including failed trials and corrections, in `docs/lessons/` using its template and index. Write professional English and include date, stable lesson ID, environment, exact evidence, practical consequence, uncertainty and next validation. Preserve older findings with explicit superseding corrections.
-- Maintain separate OrangeFox, Fedora Linux and PenguenOS CLO / PenguinOS evidence for POCO Pad X1. Use `docs/research/ACCESSORY-LAB.md` and `docs/testing/ACCESSORY-TEST-PLAN.md` for the owner-purchased RC1001/JH925 equipment. Purchase reports and advertised specifications must not become physical support claims.
+- Maintain separate OrangeFox, Fedora Linux and PenguenOS CLO / PenguinOS evidence for POCO Pad X1. Use `docs/research/ACCESSORY-LAB.md` and `docs/testing/ACCESSORY-TEST-PLAN.md` for the laboratory RC1001/JH925 equipment. Purchase reports and advertised specifications must not become physical support claims.

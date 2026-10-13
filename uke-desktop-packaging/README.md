@@ -60,11 +60,12 @@ upgrade, complete inherited-root audits and removal. KDE variants remain
 withdrawn and graphical admission blocked. The builder records exact identities,
 accepted gates and excluded failed trials separately.
 
-The owner forbids cloning, forking or rebuilding KDE desktop applications as Uke
-variants. Plasma and Dolphin source targets are withdrawn, their automatic
+Project policy prohibits cloning, forking or rebuilding KDE desktop applications
+as Uke variants. Plasma and Dolphin source targets are withdrawn, their automatic
 COPR jobs are disabled, and the source allowlist rejects them before download.
-Use original distribution KDE applications. On 12 October the owner authorized
-Python only for unavoidable original Fedora KDE dependencies; the image builder
+Use original distribution KDE applications. A development exception recorded
+on 12 October covers
+Python only in unavoidable original Fedora KDE dependencies; the image builder
 audits those exact original files. Project runtime and early boot retain the
 Python prohibition. Earlier source, helper
 and package test records are historical evidence, not admitted runtime recipes.

@@ -34,8 +34,8 @@ development ACM shell. A production-equivalent runtime override stopped in
 Startup still takes about 15 seconds; bidirectional ACM data remains unqualified.
 
 Release 6 removes the system-wide Python conflicts from both native packages.
-The owner authorized Python only in the signed, original Fedora KDE dependency
-closure. Neither package contains or requires Python, and project startup,
+A development exception covers Python in signed, original Fedora KDE
+dependencies. A compliant Python-free KDE release remains blocked. Neither package contains or requires Python, and project startup,
 service and test helpers remain native or shell. The default Core image and
 early initramfs retain their independent no-Python audits. A KDE composer must
 record the original signed package closure and audit its extracted payload;
@@ -79,8 +79,8 @@ The current minimal DTB has no enabled USB controller. Compiled host/HID/ACM or
 gadget modules therefore do not establish physical bridge connectivity. The
 USB platform/PHY/clock and firmware handoff remain source prerequisites.
 
-The stock-ABL development Image is a separate boot profile. On 2026-10-11 the
-owner observed a real-root screen TTY, and direct-PC CDC/ECM commands and SSH
+The stock-ABL development Image is a separate boot profile. On 2026-10-11 a local TTY was visible on the Fedora root. Direct-PC CDC/ECM
+commands and SSH
 completed on the same physical boot. This does not qualify the standalone
 mainline DTB, USB host power, GPU acceleration or Wi-Fi.
 
@@ -90,7 +90,7 @@ the scoped blacklist allowed the first sustained terminal. The precise failing
 CoreSight register access and repeated cold-boot acceptance remain open.
 
 `uke-usb-network.service` and `uke-usb-network-shell.service` are inactive until
-an owner/composer installs `usb-network.nmconnection` as
+the image composer installs `usb-network.nmconnection` as
 `/etc/NetworkManager/system-connections/uke-usb-debug.nmconnection` (root, 0600)
 and `usb-network-managed.conf` as
 `/etc/NetworkManager/conf.d/90-uke-usb-debug.conf` (root, 0644), then reloads
@@ -103,7 +103,7 @@ serial-only gadget with ACM plus ECM, retain `ttyGS0`, and use an isolated
 server host key before connecting. Package installation enables no service and
 contains no passwords, authorized keys or private host keys.
 
-The `machine-info` and `fastfetch.jsonc` profiles provide the owner-requested
+The `machine-info` and `fastfetch.jsonc` profiles provide the configured
 Xiaomi Pad 7 presentation. Revision 1.1 is configured presentation metadata,
 not a measured board-revision result. The Adreno 732 hardware label explicitly
 retains the missing DRM qualification. Disk size always comes from the mounted

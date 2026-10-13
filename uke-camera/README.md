@@ -2,9 +2,9 @@
 
 Uke camera source, media graph and userspace pipeline bring-up for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 
-This is an initial project-owned source and packaging repository. The manifest
-lists the intended packages, Uke evidence gates and current build readiness.
-There is no functional hardware payload or device acceptance at this checkpoint.
+Status, 13 October 2026: this component contains package definitions and source
+plans. It provides no working device feature. The manifest lists the proposed
+packages and the checks required before release.
 
 ## Package scope
 
