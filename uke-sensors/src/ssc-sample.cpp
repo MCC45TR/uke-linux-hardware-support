@@ -36,9 +36,9 @@ int main(int argc, char **argv) {
     (void)&attributes;
     int fd = -1;
     try {
-        require(argc == 2, "Usage: uke-sensor-sample accel|gyro|ambient_light|ambient_light_back|ambient_light_back_strm");
+        require(argc == 2, "Usage: uke-sensor-sample accel|gyro|mag|ambient_light|ambient_light_back|ambient_light_back_strm");
         std::string_view type = argv[1];
-        const bool xyz = type == "accel" || type == "gyro";
+        const bool xyz = type == "accel" || type == "gyro" || type == "mag";
         require(xyz || type == "ambient_light" || type == "ambient_light_back" || type == "ambient_light_back_strm", "Unsupported sample type");
         fd = socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
         require(fd >= 0, "QRTR socket unavailable");

@@ -19,7 +19,7 @@ a device result.
   it prints names/types and availability, excluding IDs and calibration data.
   Each socket has a five-second deadline and packet/size limits. No sensor rate,
   updates subscription, factory mode, arbitrary message ID or calibration write.
-- `uke-sensor-sample accel|gyro|ambient_light|ambient_light_back|ambient_light_back_strm`
+- `uke-sensor-sample accel|gyro|mag|ambient_light|ambient_light_back|ambient_light_back_strm`
   requests one bounded data event. Streaming types request 1 Hz, subject to the
   DSP's supported minimum rate; on-change light requests have no rate payload.
   Motion requests batch for 100 ms and settle for three seconds within the
@@ -33,24 +33,14 @@ a device result.
   address; it sends no reset, firmware download, GPIO or rail command. It does
   not bind or remove drivers itself. A qualified trial must restore the binding.
 
-Earlier on 13 October 2026, the bounded SSC protocol and six service metadata replies
-were observed on the owner's matched Fedora session. Physical motion/light/
-compass/SAR type lookups returned no SUIDs in their first events; no samples
-were acquired. The DT-corrected SPI trial identifies NT36532 family bytes, but
-resident firmware-info validation fails. These are bring-up results, not usable
-sensor or touchscreen support. Native AArch64/QEMU checks and ASan/UBSan pass;
-physical calibration and input acceptance remain open.
-
-Later copr40 RAM tests with the native registry cache, measured SoC profile and
-unit DSP library return LSM6DSO acceleration/gyro XYZ data and SIP1328 rear-light
-channel data. First motion samples report accuracy 0 (unreliable); rear light
-reports 3, with channel units still unverified. Front light/proximity lookups
-remain empty. A later settled, batched motion trial reaches status 3, with
-plausible stationary gravity and near-zero gyro readings. Controlled movement,
-drift and calibrated accuracy remain unqualified. All 36 existing factory-calibration group files remain unchanged
-after cache initialization. These results do not provide automatic brightness,
-desktop rotation, calibrated accuracy or touch input. No experimental daemon is
-permanently enabled and no sensor RPM is admitted.
+13 October 2026: bounded RAM tests return LSM6DSO acceleration/gyro samples and
+SIP1328 rear-light channels. Upstream SensorProxy also reports stationary
+orientation with SELinux enforcing after startup and QRTR permission fixes.
+Front light, proximity and compass remain unavailable. Rear-light units,
+controlled movement, calibrated axes, automatic desktop controls and permanent
+startup still need testing. Factory sensor files remain unchanged. No permanent
+sensor daemon or complete sensor RPM is released.
+See [the desktop integration notes](docs/SSC-DESKTOP.md).
 
 Protocol provenance: [Qualcomm sensinghub](https://github.com/qualcomm/sensinghub/tree/329551963bcc063f6a89f6cbca259c5b5c9c4e0b).
 The trim/event register evidence is cross-checked between a retained direct-Uke

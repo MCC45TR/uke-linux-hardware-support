@@ -30,7 +30,7 @@ int main() {
     rejects([&]{ samples(bad_packed, {1,2}, 3); });
     event[41] = 0xc0; event[42] = 0x7f; // NaN.
     rejects([&]{ samples(event, {1,2}, 3); });
-    assert(datatype("ambient_light_back") && datatype("ambient_light_back_strm"));
+    assert(datatype("mag") && datatype("ambient_light_back") && datatype("ambient_light_back_strm"));
     rejects([]{ rpc(-1, {}, 0, true); });
     rejects([]{ client_request({1,2}, 1, {}, true); });
     const Bytes batched_wire{0,1,0,0x20,0,51,0,1,48,0,46,0,

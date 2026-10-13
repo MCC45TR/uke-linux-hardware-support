@@ -35,7 +35,8 @@
   },
   "hardware_tested": false,
   "metadata_transport_observed": true,
-  "physical_sensor_samples_observed": false,
+  "physical_sensor_samples_observed": true,
+  "stationary_orientation_dbus_observed": true,
   "boot_tested": false,
   "python_target_payload": false,
   "source_directory": "uke-sensors"
