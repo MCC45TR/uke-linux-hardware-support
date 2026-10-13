@@ -21,6 +21,10 @@ int main() {
     firmware(info); info[1]=0;
     rejected=false; try{firmware(info);}catch(const std::exception&){rejected=true;}
     assert(rejected);
+    info={0x11,0xee,60,40,0x7d,0,0x53,0x70}; firmware(info);
+    info[6]=info[7]=0;
+    rejected=false; try{firmware(info);}catch(const std::exception&){rejected=true;}
+    assert(rejected);
     (void)&compatible; (void)&read<6>;
     std::cout << "Fixed touch identity reads, reset rejection and firmware-info guards passed\n";
 }

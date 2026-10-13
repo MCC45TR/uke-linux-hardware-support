@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: validate srpm test-native test-hexagonrpc
+.PHONY: validate srpm test-native test-hexagonrpc test-touch-normal
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | length > 0)' manifests/component.json >/dev/null
 srpm:
@@ -33,3 +33,11 @@ test-hexagonrpc:
 	cd build/hexagonrpc-source && for name in hexagonfs hexagonfs_mapped hexagonfs_virt_dir rpcd_builder; do $(CC) -std=gnu11 -O2 -Wall -Wextra -Werror -Wno-unused-parameter -I include -c "hexagonrpcd/$$name.c" -o "../hexagonrpc/$$name.o" || exit; done
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror -I build/hexagonrpc-source/hexagonrpcd tests/hexagon-registry.cpp build/hexagonrpc/{hexagonfs,hexagonfs_mapped,hexagonfs_virt_dir,rpcd_builder}.o -o build/hexagonrpc/test-registry
 	./build/hexagonrpc/test-registry
+
+# Host qualification needs the privately retained normal CSOT image; never an MP image.
+test-touch-normal:
+	test -n "$(TOUCH_NORMAL_FIRMWARE)"
+	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-normal-probe.cpp -lcrypto -o build/touch-normal-contract
+	./build/touch-normal-contract "$(TOUCH_NORMAL_FIRMWARE)"
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-normal-probe.cpp -lcrypto -o build/uke-touch-normal-probe

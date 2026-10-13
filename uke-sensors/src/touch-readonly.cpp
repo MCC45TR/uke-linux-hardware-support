@@ -47,8 +47,8 @@ static void firmware(const std::array<std::uint8_t,16> &info) {
     require(unsigned(info[0]) + info[1] == 255, "Firmware-info complement check failed");
     auto x = (unsigned(info[4]) << 8) | info[5];
     auto y = (unsigned(info[6]) << 8) | info[7];
-    require(x && y && x <= 8192 && y <= 8192, "Firmware dimensions unavailable or implausible");
-    std::cout << "NT36532 family, firmware " << unsigned(info[0]) << ", coordinates " << x << 'x' << y << '\n';
+    require(x && y, "Firmware raw dimensions unavailable");
+    std::cout << "NT36532 family, firmware " << unsigned(info[0]) << ", raw coordinates " << x << 'x' << y << '\n';
 }
 static void transfer(int fd, const void *tx, void *rx, unsigned size) {
     spi_ioc_transfer message{};

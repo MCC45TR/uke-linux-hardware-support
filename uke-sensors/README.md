@@ -104,3 +104,28 @@ actual registry create/write/rename/read contracts without Python.
 Original `persist` stays read-only; SEE writes belong in a separate runtime cache
 seeded from it. Android inode labels must not be copied into that native cache.
 No sensor RPM, automatic daemon activation or physical sample acceptance follows.
+
+## Normal touch firmware laboratory probe
+
+`touch-normal-probe.cpp` is a separate, gated C++ laboratory tool, not a shipped
+driver or startup service. It admits only the pinned normal O82 CSOT image and
+the measured Uke cascade controller. `manifests/touch-normal-probe-source.json`
+records protocol, image and host SDK provenance; firmware redistribution is not
+admitted. `make test-touch-normal TOUCH_NORMAL_FIRMWARE=PATH` uses a privately
+retained image to check exact bytes, every transfer failure, factory-command
+refusal, pre-boot bank readback, bounded waits and resident metadata.
+
+An authorized RAM trial now programs and reads back all four banks byte for byte,
+then reaches firmware version 17 with 60×40 channels and raw bounds 32000×21360.
+The OEM configuration specifies super_resolution=10; those raw bounds are not
+Linux screen pixels. Earlier post-boot result-slot CRC comparison and a generic
+8192 coordinate limit were rejected assumptions. Complete pre-boot byte equality
+and exact resident metadata replace those assumptions; post-boot result values
+remain diagnostic. No touch input is accepted by this progress.
+
+The reviewed coordinate-mode command is restricted to subcommand 0x15 and values
+zero/one. Its bounded probe captures raw prefixes only and restores raw mode on
+success or transfer failure. Factory calibration subcommands remain forbidden.
+Coordinate packet decoding, IRQ/input integration and a kernel driver remain
+separate physical gates. The laboratory tool uses the existing native OpenSSL
+runtime and adds no Python or firmware blob to a tablet package.
