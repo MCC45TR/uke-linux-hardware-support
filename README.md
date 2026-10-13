@@ -1,44 +1,57 @@
 # Uke Linux hardware support
 
-One repository owns twelve Uke/SM7675 package components. Each component is an
-ordinary directory with its own sources, rules, license and acceptance gates.
-Their original project histories are preserved as Git merge ancestry;
-[SOURCE-IMPORTS.json](SOURCE-IMPORTS.json) records all twelve exact import pins.
-The workspace checks out this repository at `uke-linux-hardware-support/`.
+Platform packages and device integration for Xiaomi Pad 7 and POCO Pad X1
+(`uke`, SM7675). All twelve components live in this repository as ordinary
+folders, with their own sources and packaging rules.
 
-| Source | Purpose |
+## Status — 13 October 2026
+
+Boot and USB debug packages are available through the development COPR. The
+Fedora development installation reaches a software KDE desktop and Wi-Fi SSH.
+Experimental native tools return motion and rear-light samples. Touch firmware
+starts, but finger input and permanent desktop sensor support do not work yet.
+See the [hardware table](https://github.com/MCC45TR/uke-linux#hardware-support)
+for tested functions and limitations. Experimental changes remain on separate
+branches until reviewed; a folder in this repository does not imply a working
+package or device feature.
+
+## Components
+
+| Folder | Purpose |
 |---|---|
-| [uke-core-meta](uke-core-meta) | Reviewed console package selection |
-| [uke-desktop-metas](uke-desktop-metas) | Desktop policy metadata; graphical admission remains blocked |
-| [uke-desktop-packaging](uke-desktop-packaging) | Reviewed non-KDE native libraries, theme and requested decoration plugin |
-| [uke-orangefox-packaging](uke-orangefox-packaging) | DNF-managed, versioned recovery image data |
-| [uke-boot](uke-boot) | Future independent Uke boot integration |
-| [uke-platform-runtime](uke-platform-runtime) | Future native platform runtime |
-| [uke-sensors](uke-sensors) | Sensor source and hardware admission |
-| [uke-camera](uke-camera) | Camera source and hardware admission |
-| [xiaomi-uke-firmware](xiaomi-uke-firmware) | File-level firmware provenance and redistribution gates |
-| [uke-desktop-integration](uke-desktop-integration) | Measured Uke desktop integration |
-| [plasma-uke-kcm](plasma-uke-kcm) | Future native Uke capability panel |
-| [uke-hardware-provenance](uke-hardware-provenance) | Public hardware evidence records |
+| [uke-core-meta](uke-core-meta) | Console package selection |
+| [uke-desktop-metas](uke-desktop-metas) | Desktop package policy |
+| [uke-desktop-packaging](uke-desktop-packaging) | Native libraries, theme and decoration plugin |
+| [uke-orangefox-packaging](uke-orangefox-packaging) | Versioned recovery images managed by DNF |
+| [uke-boot](uke-boot) | Boot and USB debug integration |
+| [uke-platform-runtime](uke-platform-runtime) | Native platform runtime |
+| [uke-sensors](uke-sensors) | Sensor discovery and native tools |
+| [uke-camera](uke-camera) | Camera integration work |
+| [xiaomi-uke-firmware](xiaomi-uke-firmware) | Firmware sources, licenses and file identities |
+| [uke-desktop-integration](uke-desktop-integration) | Desktop integration |
+| [plasma-uke-kcm](plasma-uke-kcm) | Planned device settings panel |
+| [uke-hardware-provenance](uke-hardware-provenance) | Hardware source records |
 
-Never clone, fork or rebuild KDE desktop applications as Uke variants. Original
-distribution KDE applications remain the only eligible application sources;
-their current Python payloads prevent complete graphical admission. A scaffold
-does not establish a published RPM or device support.
+KDE applications come from the distribution. They are not cloned, forked or
+rebuilt as Uke applications. Current upstream desktop dependencies conflict
+with the Python-free tablet policy; a compliant desktop release is still blocked.
 
-The kernel, Fedora builder, OrangeFox device tree and Project Aloha keep their
-independent repositories. See the [package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
-for build readiness. No physical support is inferred from this consolidation.
+## Checks and builds
 
-Run `make validate` to check all component contracts and `make test-native` for
-the existing C++ configuration migration fixtures. The root COPR rule dispatches
-only the ten already admitted support source families. The stable-source
-workflow checks Material Decoration and the eligible recovery release daily;
-the independent kernel repository retains its own reviewed stable automation.
-Original repository workflows remain under each component as historical source
-records; active workflows are in this repository's root `.github/workflows/`.
+```sh
+make validate
+make test-native
+```
 
-COPR's GitHub hook follows changes in each configured source subdirectory.
-The common-rule workflow also requests builds when shared source rules or
-parent-directory inputs change, and offers a manual reviewed-package selector.
-The private package hub requires access to the documentation repository.
+These commands check component rules and existing native tests. They do not
+test tablet hardware. [SOURCE-IMPORTS.json](SOURCE-IMPORTS.json) records the
+original source imports and their Git history.
+
+COPR builds configured package sources after GitHub changes. Shared-rule changes
+request the affected builds through the root workflow. The daily stable workflow
+checks Material Decoration and eligible recovery releases. Active workflows
+live in [`.github/workflows/`](.github/workflows/).
+
+The kernel, image builder, recovery device tree and UEFI port have separate
+repositories linked from [Uke Linux](https://github.com/MCC45TR/uke-linux#project-repositories).
+Detailed build readiness is in the [private package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md).
