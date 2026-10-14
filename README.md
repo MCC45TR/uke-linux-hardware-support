@@ -4,12 +4,13 @@ Platform packages and device integration for Xiaomi Pad 7 and POCO Pad X1
 (`uke`, SM7675). All twelve components live in this repository as ordinary
 folders, with their own sources and packaging rules.
 
-## Status — 13 October 2026
+## Status — 14 October 2026
 
 Boot and USB debug packages are available through the development COPR. The
 Fedora development installation reaches a software KDE desktop and Wi-Fi SSH.
-Experimental native tools return motion and rear-light samples. Touch firmware
-starts, but finger input and permanent desktop sensor support do not work yet.
+Experimental native tools return motion and rear-light samples. Finger input
+and ten simultaneous touch contacts worked in the 14 October tablet test.
+Permanent desktop sensor support remains incomplete.
 See the [hardware table](https://github.com/MCC45TR/uke-linux#hardware-support)
 for tested functions and limitations. Experimental changes remain on separate
 branches until reviewed; a folder in this repository does not imply a working
