@@ -51,7 +51,16 @@
     "python_runtime_payload": false,
     "tablet_installed": false,
     "persistent_startup_accepted": false,
-    "copr_status": "pending"
+    "copr_status": "published-preview",
+    "copr_builds": {
+      "libssc": 11122170,
+      "iio_sensor_proxy": 11122171,
+      "fileservice": 11122172,
+      "adaptive_display": 11122177
+    },
+    "verified_binary_subpackages": 11,
+    "isolated_sdk_install_remove": true,
+    "no_new_python_packages": true
   },
   "remaining": [
     "Matched firmware and persistent fileservice lifecycle",
