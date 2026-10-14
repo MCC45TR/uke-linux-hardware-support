@@ -52,6 +52,9 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
     allowed |= address==0x1fb50d && data.size()==1;
     allowed |= address==0x11c450 && data.size()==5 && data[0]==0xbf && data[1]==0x15 &&
                data[2]==0 && data[3]<=1 && data[4]==0;
+    allowed |= address==0x11c450 && data.size()==3 && data[0]==0xbf && data[2]==1 &&
+               (data[1]==1 || data[1]==4 || data[1]==5 || data[1]==6 ||
+                data[1]==0x0d || data[1]==0x0e || data[1]==0x15);
     require(allowed && !data.empty() && data.size()<=1024, "Write outside normal RAM-download scope");
     auto select=select_page(address); transfer(fd,select.data(),nullptr,select.size());
     Bytes tx(data.size()+1); tx[0]=(address&0x7f)|0x80;
@@ -60,6 +63,10 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
 template<std::size_t N> static std::array<std::uint8_t,N> normal_read(int fd,unsigned address) {
     require((N==1 && (address==0x1fc925 || address==0x11c460 || address==0x11c450)) ||
             (N==4 && (address==0x1fb520 || address==0x1fb524)) ||
+            (N==5 && address==0x11c450) ||
+            (N==6 && address==0x11c460) ||
+            (N==64 && (address==0x121afc || address==0x121b3c)) ||
+            (N==66 && address==0x125800) ||
             (N==39 && address==0x1093d8), "Read outside normal status scope");
     auto select=select_page(address); transfer(fd,select.data(),nullptr,select.size());
     std::array<std::uint8_t,N+2> tx{},rx{}; tx[0]=address&0x7f;
@@ -79,6 +86,7 @@ static void verify_bank(int fd,unsigned address,std::span<const std::uint8_t> ex
     transfer(fd,tx.data(),rx.data(),tx.size());
     require(std::equal(expected.begin(),expected.end(),rx.begin()+2),"Normal firmware bank readback mismatch");
 }
+static unsigned custom_read(int fd,unsigned subcommand);
 static void inspect_normal(int fd) {
     std::cout<<"Reset state="<<std::hex<<unsigned(normal_read<1>(fd,0x11c460)[0])
              <<" Auto-copy="<<unsigned(normal_read<1>(fd,0x1fc925)[0])
@@ -89,16 +97,50 @@ static void inspect_normal(int fd) {
     for(unsigned i=0;i<8;i++) std::cout<<' '<<unsigned(info[i]);
     std::cout<<std::dec<<'\n';
     firmware(info);
+    for(unsigned sample=0;sample<3;sample++) {
+        std::cout<<"Reset details:"<<std::hex;
+        for(auto byte:normal_read<6>(fd,0x11c460)) std::cout<<' '<<unsigned(byte);
+        std::cout<<std::dec<<'\n'; pause_ms(50);
+    }
+    for(unsigned address: {0x121afcU,0x121b3cU}) {
+        std::cout<<"History "<<std::hex<<address<<':';
+        for(auto byte:normal_read<64>(fd,address)) std::cout<<' '<<unsigned(byte);
+        std::cout<<std::dec<<'\n';
+    }
+    for(const auto &[subcommand,name]:std::array<std::pair<unsigned,const char *>,6>{{
+        {1,"op-mode"},{4,"stylus-enable"},{5,"stylus-only"},{6,"raw-data-type"},
+        {0x0d,"interrupt-state"},{0x0e,"single-step"}}})
+        std::cout<<name<<'='<<custom_read(fd,subcommand)<<'\n';
+}
+static unsigned custom_read(int fd,unsigned subcommand) {
+    normal_write(fd,0x11c450,Bytes{0xbf,std::uint8_t(subcommand),1});
+    for(unsigned attempt=0;attempt<10;attempt++) {
+        pause_ms(10);
+        const auto status=normal_read<5>(fd,0x11c450);
+        if(status[0]==0) {
+            return unsigned(status[3])|(unsigned(status[4])<<8);
+        }
+    }
+    throw std::runtime_error("Coordinate-mode readback timed out");
+}
+static bool coordinate_mode_read(int fd) {
+    const unsigned mode=custom_read(fd,0x15);
+    require(mode<=1,"Unexpected coordinate-mode response");
+    return mode;
 }
 static void coordinate_mode(int fd,bool enabled) {
     normal_write(fd,0x11c450,Bytes{0xbf,0x15,0,std::uint8_t(enabled),0});
     for(unsigned attempt=0;attempt<10;attempt++) {
         pause_ms(10);
-        if(normal_read<1>(fd,0x11c450)[0]==0) return;
+        if(normal_read<1>(fd,0x11c450)[0]==0) {
+            require(coordinate_mode_read(fd)==enabled,"Coordinate-mode readback mismatch");
+            return;
+        }
     }
     throw std::runtime_error("Reviewed coordinate-mode command timed out");
 }
-static void probe_coordinates(int fd) {
+static void probe_coordinates(int fd,unsigned samples=8,unsigned delay_ms=100,int capture=-1) {
+    require(samples>0 && samples<=300 && delay_ms<=100,"Unbounded coordinate capture");
     const auto info=read<16>(fd,firmware_address(0));
     require(info[0]==0x11 && info[1]==0xee && info[2]==60 && info[3]==40 &&
             info[4]==0x7d && info[5]==0 && info[6]==0x53 && info[7]==0x70,
@@ -107,25 +149,34 @@ static void probe_coordinates(int fd) {
     const unsigned frame_length=unsigned(poll_info[2])|(unsigned(poll_info[3])<<8);
     require(frame_length==5176,"Unqualified THP frame length");
     std::cout<<"THP frame length="<<frame_length<<'\n';
+    const bool previous=coordinate_mode_read(fd);
+    std::cout<<"Coordinate-mode before="<<previous<<'\n';
     try {
         coordinate_mode(fd,true);
-        for(unsigned sample=0;sample<8;sample++) {
+        for(unsigned sample=0;sample<samples;sample++) {
             auto select=select_page(0x11c400); transfer(fd,select.data(),nullptr,select.size());
             Bytes tx(256+frame_length+2),rx(tx.size());
-            transfer(fd,tx.data(),rx.data(),tx.size());
+            transfer(fd,tx.data(),rx.data(),tx.size(),19200000);
+            if(capture>=0) require(::write(capture,rx.data()+2,rx.size()-2)==ssize_t(rx.size()-2),"Frame capture write failed");
             std::array<unsigned char,SHA256_DIGEST_LENGTH> digest{};
             require(SHA256(rx.data()+2,rx.size()-2,digest.data())!=nullptr,"Frame digest unavailable");
             unsigned checksum=0; for(unsigned i=2;i<67;i++) checksum+=rx[i];
             std::cout<<"frame "<<sample<<" standard-checksum="<<((checksum&255)==0)<<" prefix:"<<std::hex;
             for(unsigned i=2;i<98;i++) std::cout<<' '<<unsigned(rx[i]);
+            std::cout<<" thp-header:";
+            for(unsigned i=258;i<322;i++) std::cout<<' '<<unsigned(rx[i]);
+            const auto legacy=normal_read<66>(fd,0x125800);
+            std::cout<<" legacy:";
+            for(auto byte:legacy) std::cout<<' '<<unsigned(byte);
             std::cout<<" full-sha256=";
             for(auto byte : digest) { static constexpr char hex[]="0123456789abcdef"; std::cout<<hex[byte>>4]<<hex[byte&15]; }
-            std::cout<<std::dec<<'\n'; pause_ms(100);
+            std::cout<<std::dec<<'\n'; pause_ms(delay_ms);
         }
     } catch(...) {
-        coordinate_mode(fd,false); throw;
+        coordinate_mode(fd,previous); throw;
     }
-    coordinate_mode(fd,false);
+    coordinate_mode(fd,previous);
+    std::cout<<"Coordinate-mode restored="<<previous<<'\n';
 }
 static void load_normal(int fd, std::span<const std::uint8_t> data) {
     normal_image(data);
@@ -190,7 +241,18 @@ int main(int argc,char **argv) {
         require(ioctl(fd,SPI_IOC_RD_MODE,&mode)==0 && mode==SPI_MODE_0,"Unexpected SPI mode");
         require(nt36532(read<6>(fd,0x1fb104)) && !(read<1>(fd,0x1fb12c)[0]&1),"Foreign chip/topology");
         if(std::string(argv[1])=="--inspect") { inspect_normal(fd); close(fd); return 0; }
-        if(std::string(argv[1])=="--probe-coordinates") { probe_coordinates(fd); close(fd); return 0; }
+        if(std::string(argv[1])=="--probe-coordinates") {
+            std::ifstream speed_file("/sys/bus/spi/devices/spi0.0/of_node/spi-max-frequency",std::ios::binary);
+            std::array<unsigned char,4> speed{};
+            require(bool(speed_file.read(reinterpret_cast<char *>(speed.data()),speed.size())) &&
+                    speed==std::array<unsigned char,4>{1,0x24,0xf8,0},"Unqualified Uke SPI clock ceiling");
+            const int capture=open("/run/uke-touch-frames.bin",O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);
+            require(capture>=0,"Fresh private frame capture path unavailable");
+            try { probe_coordinates(fd,300,100,capture); }
+            catch(...) { close(capture); throw; }
+            require(close(capture)==0,"Frame capture close failed");
+            close(fd); return 0;
+        }
         load_normal(fd,data); close(fd); fd=-1;
         std::cout<<"Normal RAM bank readback, reset state and resident firmware metadata passed; input remains unqualified\n";
         return 0;

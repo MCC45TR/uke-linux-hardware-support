@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: validate srpm test-native test-hexagonrpc test-touch-normal
+.PHONY: validate srpm test-native test-hexagonrpc test-touch-normal test-touch-thp
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | length > 0)' manifests/component.json >/dev/null
 srpm:
@@ -41,3 +41,16 @@ test-touch-normal:
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-normal-probe.cpp -lcrypto -o build/touch-normal-contract
 	./build/touch-normal-contract "$(TOUCH_NORMAL_FIRMWARE)"
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-normal-probe.cpp -lcrypto -o build/uke-touch-normal-probe
+
+# Laboratory only: private OEM calibration/reference packets are not RPM payloads.
+test-touch-thp:
+	test -n "$(TOUCH_CORE_REFERENCE)" -a -n "$(TOUCH_FRAME_REFERENCE)" -a -n "$(TOUCH_CONFIG)"
+	bash src/prepare-touch-core.sh "$(TOUCH_CORE_REFERENCE)"
+	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-thp.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -o build/touch-thp-contract
+	./build/touch-thp-contract "$(TOUCH_FRAME_REFERENCE)" "$(TOUCH_CONFIG)"
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-input.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -o build/touch-input-contract
+	./build/touch-input-contract
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-replay.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -o build/touch-replay
+	bash tests/touch-replay.sh ./build/touch-replay "$(TOUCH_CONFIG)" "$(TOUCH_FRAME_REFERENCE)"
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-thp.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -o build/uke-touch-thp

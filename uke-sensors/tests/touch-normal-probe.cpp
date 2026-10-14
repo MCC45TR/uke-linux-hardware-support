@@ -11,6 +11,7 @@ unsigned operations,fail_at=~0U,selected,status_reads;
 bool never_copy,never_reset,bad_crc;
 bool bad_bank;
 bool bad_metadata;
+bool coordinate_enabled,bad_mode;
 std::array<std::uint8_t,0x120000> ram{};
 std::vector<std::pair<unsigned,Bytes>> writes;
 int mock_ioctl(int,unsigned long request,...) noexcept {
@@ -19,11 +20,13 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
     va_list args; va_start(args,request); auto *m=va_arg(args,spi_ioc_transfer *); va_end(args);
     auto *tx=reinterpret_cast<const std::uint8_t *>(m->tx_buf);
     auto *rx=reinterpret_cast<std::uint8_t *>(m->rx_buf);
-    if(m->speed_hz!=1000000 || m->bits_per_word!=8) return -1;
+    if((m->speed_hz!=1000000 && !(m->len==5434 && m->speed_hz==19200000)) || m->bits_per_word!=8) return -1;
     if(!rx && m->len==3 && tx[0]==0xff) selected=(unsigned(tx[1])<<15)|(unsigned(tx[2])<<7);
     else if(!rx) {
         auto address=selected+(tx[0]&0x7f);
         writes.emplace_back(address,Bytes(tx+1,tx+m->len));
+        if(address==0x11c450 && m->len==6 && tx[1]==0xbf && tx[2]==0x15 && tx[3]==0)
+            coordinate_enabled=tx[4];
         if(address<ram.size() && m->len-1<=ram.size()-address)
             std::copy(tx+1,tx+m->len,ram.begin()+address);
     }
@@ -35,7 +38,9 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
         }
         else if(address==0x1fc925) { rx[2]=never_copy ? 1 : 0; status_reads++; }
         else if(address==0x11c460) { rx[2]=never_reset ? 0 : 0xa0; status_reads++; }
-        else if(address==0x11c450) rx[2]=0;
+        else if((address==0x121afc || address==0x121b3c) && m->len==66) { }
+        else if(address==0x125800 && m->len==68) { }
+        else if(address==0x11c450) { rx[2]=0; if(m->len==7) rx[5]=bad_mode ? 2 : coordinate_enabled; }
         else if(address==0x1093d8 && m->len==41) { rx[4]=0x38; rx[5]=0x14; }
         else if(address==0x11c400 && m->len==5434) rx[2]=0xff;
         else if(address==0x1fb520) {
@@ -49,7 +54,7 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
     }
     return m->len;
 }
-void reset() { operations=status_reads=selected=0; fail_at=~0U; never_copy=never_reset=bad_crc=bad_bank=bad_metadata=false; writes.clear(); }
+void reset() { operations=status_reads=selected=0; fail_at=~0U; never_copy=never_reset=bad_crc=bad_bank=bad_metadata=coordinate_enabled=bad_mode=false; writes.clear(); }
 template<class F> void reject(F f) { bool refused=false; try{f();}catch(const std::exception&){refused=true;} assert(refused); }
 int main(int argc,char **argv) {
     assert(argc==2);
@@ -86,12 +91,16 @@ int main(int argc,char **argv) {
     reset(); bad_metadata=true; reject([&]{load_normal(0,data);});
     reset(); never_copy=true; reject([&]{load_normal(0,data);}); assert(status_reads==200);
     reset(); never_reset=true; reject([&]{load_normal(0,data);}); assert(status_reads==51);
-    reset(); inspect_normal(0); assert(writes.empty());
-    reset(); probe_coordinates(0);
-    assert(writes.size()==2 && writes[0].second==Bytes({0xbf,0x15,0,1,0}) &&
-           writes[1].second==Bytes({0xbf,0x15,0,0,0}));
-    reset(); fail_at=10; reject([&]{probe_coordinates(0);});
-    assert(writes.back().second==Bytes({0xbf,0x15,0,0,0}));
+    reset(); inspect_normal(0); assert(writes.size()==6);
+    for(const auto &[address,bytes]:writes) assert(address==0x11c450 && bytes.size()==3 && bytes[0]==0xbf && bytes[2]==1);
+    reset(); probe_coordinates(0,2,0);
+    assert(writes.size()==5 && writes[1].second==Bytes({0xbf,0x15,0,1,0}) &&
+           writes[3].second==Bytes({0xbf,0x15,0,0,0}) && !coordinate_enabled);
+    reset(); coordinate_enabled=true; probe_coordinates(0,1,0); assert(coordinate_enabled);
+    reset(); bad_mode=true; reject([&]{probe_coordinates(0,1,0);});
+    reset(); reject([&]{probe_coordinates(0,301,0);}); assert(operations==0);
+    reset(); fail_at=17; reject([&]{probe_coordinates(0,1,0);});
+    assert(!coordinate_enabled && writes[writes.size()-2].second==Bytes({0xbf,0x15,0,0,0}));
     (void)&compatible; (void)&nt36532;
     std::cout<<"Pinned normal image, exact bank bytes, all transfer faults, CRC and bounded timeout guards passed\n";
 }

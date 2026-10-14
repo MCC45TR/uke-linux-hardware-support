@@ -119,3 +119,24 @@ success or transfer failure. Factory calibration subcommands remain forbidden.
 Coordinate packet decoding, IRQ/input integration and a kernel driver remain
 separate physical gates. The laboratory tool uses the existing native OpenSSL
 runtime and adds no Python or firmware blob to a tablet package.
+
+## IRQ touch trial — 14 October 2026
+
+The bounded `uke-touch-thp --live-lab` trial publishes the native
+`Novatek NT36532 Uke Touchscreen` through Linux type-B slots. It requires the
+measured supplier admission, resident normal firmware and a separately qualified
+private reference. It is not enabled at startup. No reference or calibration is
+included in a package.
+
+`make test-touch-thp` checks the actual publisher with ten simultaneous contacts,
+stable tracking IDs, independent release, replacement and malformed-contact
+rejection. `BTN_TOUCH` precedes coordinates as required by legacy mousedev.
+These host fixtures do not establish physical ten-finger operation. The same
+target builds `touch-replay`, which consumes a private reference, OEM configuration
+and a bounded retained capture. Historical polling captures contain rejected
+packets and repeated counters; their filenames do not establish finger count.
+
+Physical multi-contact tracking, cold startup, sensor/display lifecycle and
+refresh-rate integration remain open. The laboratory processor still has a
+100-ms missing-frame release policy; stationary contacts and low-rate operation
+need a timed IRQ trace before changing that policy.

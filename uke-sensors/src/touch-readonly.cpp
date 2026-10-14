@@ -50,11 +50,12 @@ static void firmware(const std::array<std::uint8_t,16> &info) {
     require(x && y, "Firmware raw dimensions unavailable");
     std::cout << "NT36532 family, firmware " << unsigned(info[0]) << ", raw coordinates " << x << 'x' << y << '\n';
 }
-static void transfer(int fd, const void *tx, void *rx, unsigned size) {
+static void transfer(int fd, const void *tx, void *rx, unsigned size,unsigned speed=1000000) {
+    require(speed==1000000 || (size==5434 && speed==19200000),"Unreviewed SPI transfer speed");
     spi_ioc_transfer message{};
     message.tx_buf = reinterpret_cast<std::uintptr_t>(tx);
     message.rx_buf = reinterpret_cast<std::uintptr_t>(rx);
-    message.len = size; message.speed_hz = 1000000; message.bits_per_word = 8;
+    message.len = size; message.speed_hz = speed; message.bits_per_word = 8;
     require(ioctl(fd, SPI_IOC_MESSAGE(1), &message) == int(size), "SPI identity transfer failed");
 }
 template<std::size_t N> static std::array<std::uint8_t,N> read(int fd, std::uint32_t address) {
