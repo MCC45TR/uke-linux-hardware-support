@@ -1,0 +1,3 @@
+FROM sha256:bd8083b65020395b6b94ea4c26df66564dfc404dfba55b34bbdb872b80c4dc56
+RUN dnf -y install --setopt=install_weak_deps=False rpm-build systemd-rpm-macros \
+    && rpm -qa | sort > /sensor-rpm-host-packages.txt && dnf clean all
