@@ -10,7 +10,9 @@ Boot and USB debug packages are available through the development COPR. The
 Fedora development installation reaches a software KDE desktop and Wi-Fi SSH.
 Experimental native tools return motion and rear-light samples. Finger input
 and ten simultaneous touch contacts worked in the 14 October tablet test.
-Permanent desktop sensor support remains incomplete.
+Power and volume buttons and manual backlight control also worked in that test.
+Backlight adjustment is linear and difficult to use comfortably; a logarithmic
+curve is planned. Permanent desktop sensor support remains incomplete.
 See the [hardware table](https://github.com/MCC45TR/uke-linux#hardware-support)
 for tested functions and limitations. Experimental changes remain on separate
 branches until reviewed; a folder in this repository does not imply a working
