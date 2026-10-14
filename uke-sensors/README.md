@@ -140,3 +140,16 @@ Physical multi-contact tracking, cold startup, sensor/display lifecycle and
 refresh-rate integration remain open. The laboratory processor still has a
 100-ms missing-frame release policy; stationary contacts and low-rate operation
 need a timed IRQ trace before changing that policy.
+
+The follow-up trial reads pending GPIO edges in one bounded batch before the
+current SPI matrix read. Its summary reports coalesced edges. Equal THP counter
+values remain valid inputs: retained packets with equal counters can contain
+different matrices, so the counter is not used as a duplicate-packet filter.
+
+All three native touch tools acquire the same nonblocking advisory lock on the
+SPI device before transfers. Use the updated tools together and stop unrelated
+or older SPI clients; advisory locking cannot exclude clients that ignore it.
+Device identity reads are bounded to 4 KiB and validate the complete string
+list, including its final terminator. Host fixtures cover lock contention,
+reacquisition, malformed identity and partial/empty IRQ reads. Tablet acceptance
+of the revised transport remains pending.

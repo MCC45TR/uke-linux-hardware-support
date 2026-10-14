@@ -6,6 +6,18 @@
 #include <cassert>
 int main() {
     int pipefd[2]; assert(pipe2(pipefd,O_NONBLOCK|O_CLOEXEC)==0);
+    std::array<gpio_v2_line_event,16> edges{};
+    assert(::write(pipefd[1],edges.data(),sizeof(edges))==sizeof(edges));
+    assert(consume_touch_irq(pipefd[0])==edges.size());
+    gpio_v2_line_event edge{};
+    assert(::read(pipefd[0],&edge,sizeof(edge))==-1 && errno==EAGAIN);
+    assert(::write(pipefd[1],&edge,1)==1);
+    bool partial_rejected=false;
+    try{consume_touch_irq(pipefd[0]);}catch(const std::exception&){partial_rejected=true;}
+    assert(partial_rejected);
+    bool empty_rejected=false;
+    try{consume_touch_irq(pipefd[0]);}catch(const std::exception&){empty_rejected=true;}
+    assert(empty_rejected);
     std::array<int,nvt::kFingerSlots> ids; ids.fill(-1);
     nvt::Geometry geometry; geometry.width=32000; geometry.height=21360;
     std::vector<nvt::Slot> slots;
@@ -53,5 +65,5 @@ int main() {
         assert(std::all_of(ids.begin(),ids.end(),[](int id){return id==-1;}));
     }
     close(pipefd[0]); close(pipefd[1]);
-    std::cout<<"Actual type-B publisher: ten contacts, stable IDs, independent lift, replacement, release and invalid input passed (host only)\n";
+    std::cout<<"Actual type-B publisher and IRQ batch: ten contacts, stable IDs, independent lift, replacement, release and invalid input passed (host only)\n";
 }

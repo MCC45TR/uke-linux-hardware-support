@@ -101,6 +101,6 @@ int main(int argc,char **argv) {
     reset(); reject([&]{probe_coordinates(0,301,0);}); assert(operations==0);
     reset(); fail_at=17; reject([&]{probe_coordinates(0,1,0);});
     assert(!coordinate_enabled && writes[writes.size()-2].second==Bytes({0xbf,0x15,0,0,0}));
-    (void)&compatible; (void)&nt36532;
+    (void)&compatible; (void)&nt36532; (void)&lock_touch;
     std::cout<<"Pinned normal image, exact bank bytes, all transfer faults, CRC and bounded timeout guards passed\n";
 }

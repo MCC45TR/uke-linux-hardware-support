@@ -11,7 +11,7 @@ inline unsigned le16(const std::uint8_t *p) { return unsigned(p[0])|(unsigned(p[
 inline unsigned le32(const std::uint8_t *p) { return le16(p)|(le16(p+2)<<16); }
 struct Frame {
     std::array<int,2400> matrix{};
-    std::uint16_t counter{};
+    std::uint16_t counter{}; // Equal values can carry different matrices; not a packet identity.
     std::uint8_t scan_mode{};
 };
 inline int display_y(int coordinate,int height) {

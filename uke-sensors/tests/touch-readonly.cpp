@@ -1,10 +1,29 @@
 // SPDX-License-Identifier: MIT
 #define UKE_TOUCH_TEST
 #include "../src/touch-readonly.cpp"
+#include <cstdlib>
 int main() {
     assert(matches(std::string("other\0xiaomi,uke\0",17),"xiaomi,uke"));
     assert(!matches(std::string("not-xiaomi,uke\0",15),"xiaomi,uke"));
     assert(!matches("xiaomi,uke","xiaomi,uke"));
+    assert(!matches(std::string("xiaomi,uke\0unterminated",23),"xiaomi,uke"));
+    char path[]="/tmp/uke-touch-identity.XXXXXX";
+    const int first=mkstemp(path); assert(first>=0);
+    {
+        std::string value(4084,'a'); value.push_back('\0'); value.append("xiaomi,uke"); value.push_back('\0');
+        assert(value.size()==4096);
+        std::ofstream file(path,std::ios::binary); file.write(value.data(),value.size()); file.close();
+        assert(compatible(path,"xiaomi,uke"));
+        std::ofstream extra(path,std::ios::binary|std::ios::app); extra.put('\0'); extra.close();
+        assert(!compatible(path,"xiaomi,uke"));
+    }
+    lock_touch(first);
+    const int second=open(path,O_RDWR|O_CLOEXEC); assert(second>=0);
+    bool busy=false; try{lock_touch(second);}catch(const std::exception&){busy=true;}
+    assert(busy);
+    assert(close(first)==0);
+    lock_touch(second);
+    assert(close(second)==0 && unlink(path)==0);
     assert((page(0x1fb104)==std::array<std::uint8_t,3>{0xff,0x3f,0x62}));
     assert((page(0x125878)==std::array<std::uint8_t,3>{0xff,0x24,0xb0}));
     assert((page(0x1fb12c)==std::array<std::uint8_t,3>{0xff,0x3f,0x62}));
@@ -25,6 +44,6 @@ int main() {
     info[6]=info[7]=0;
     rejected=false; try{firmware(info);}catch(const std::exception&){rejected=true;}
     assert(rejected);
-    (void)&compatible; (void)&read<6>;
-    std::cout << "Fixed touch identity reads, reset rejection and firmware-info guards passed\n";
+    (void)&read<6>;
+    std::cout << "Fixed touch identity, bounded full-list validation, exclusive cooperative transport, reset rejection and firmware-info guards passed\n";
 }

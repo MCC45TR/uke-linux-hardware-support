@@ -25,6 +25,13 @@ static int touch_irq() {
     const int result=ioctl(chip,GPIO_V2_GET_LINE_IOCTL,&request); close(chip);
     require(result==0,"Touch IRQ input request failed"); return request.fd;
 }
+static unsigned consume_touch_irq(int fd) {
+    // SPI exposes the latest matrix, so queued edges must not trigger repeated stale reads.
+    std::array<gpio_v2_line_event,16> edges{};
+    const auto bytes=::read(fd,edges.data(),sizeof(edges));
+    require(bytes>0 && bytes%sizeof(edges[0])==0,"Touch IRQ batch read failed");
+    return bytes/sizeof(edges[0]);
+}
 static void input_setup(int fd,const nvt::Geometry &geometry) {
     require(ioctl(fd,UI_SET_EVBIT,EV_ABS)==0 && ioctl(fd,UI_SET_EVBIT,EV_KEY)==0 &&
             ioctl(fd,UI_SET_KEYBIT,BTN_TOUCH)==0 && ioctl(fd,UI_SET_PROPBIT,INPUT_PROP_DIRECT)==0,
@@ -98,6 +105,7 @@ int main(int argc,char **argv) {
         std::ifstream admission("/run/uke-touch-csot-admitted"); std::string token;
         require(bool(std::getline(admission,token)) && token=="uke-gpio26-input-high-cascade","Supplier preflight missing");
         spi=open("/dev/spidev0.0",O_RDWR|O_CLOEXEC); require(spi>=0,"Reviewed SPI leaf unavailable");
+        lock_touch(spi);
         std::uint8_t mode=255;
         require(ioctl(spi,SPI_IOC_RD_MODE,&mode)==0 && mode==SPI_MODE_0,"Unexpected SPI mode");
         require(nt36532(read<6>(spi,0x1fb104)) && !(read<1>(spi,0x1fb12c)[0]&1),"Foreign chip/topology");
@@ -116,7 +124,7 @@ int main(int argc,char **argv) {
         std::signal(SIGTERM,stop_touch); std::signal(SIGINT,stop_touch);
         const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(600);
         auto last_valid=std::chrono::steady_clock::now();
-        unsigned frames=0,rejected=0,contacts=0;
+        unsigned frames=0,rejected=0,contacts=0,coalesced_edges=0;
         std::size_t previous_contacts=0;
         while(running && std::chrono::steady_clock::now()<deadline) {
             pollfd ready{irq,POLLIN,0};
@@ -127,8 +135,7 @@ int main(int argc,char **argv) {
                 input_report(input,{},ids,geometry); previous_contacts=0;
                 continue;
             }
-            gpio_v2_line_event edge{};
-            require(::read(irq,&edge,sizeof(edge))==sizeof(edge),"Touch IRQ read failed");
+            coalesced_edges+=consume_touch_irq(irq)-1;
             auto page_select=select_page(0x11c400); transfer(spi,page_select.data(),nullptr,page_select.size());
             std::array<std::uint8_t,5434> tx{},rx{};
             transfer(spi,tx.data(),rx.data(),rx.size(),19200000);
@@ -156,7 +163,7 @@ int main(int argc,char **argv) {
         input_report(input,{},ids,geometry);
         require(ioctl(input,UI_DEV_DESTROY)==0,"Touch input cleanup failed");
         close(input); input=-1; close(spi); spi=-1; close(irq); irq=-1;
-        std::cout<<"valid="<<frames<<" rejected="<<rejected<<" contact_frames="<<contacts<<'\n';
+        std::cout<<"valid="<<frames<<" rejected="<<rejected<<" contact_frames="<<contacts<<" coalesced_edges="<<coalesced_edges<<'\n';
         (void)&load_normal; (void)&normal_image; (void)&inspect_normal; (void)&probe_coordinates;
         return 0;
     } catch(const std::exception &e) {

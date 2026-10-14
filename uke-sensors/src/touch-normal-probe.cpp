@@ -237,6 +237,7 @@ int main(int argc,char **argv) {
         std::ifstream admission("/run/uke-touch-csot-admitted"); std::string token;
         require(bool(std::getline(admission,token)) && token=="uke-gpio26-input-high-cascade", "Supplier preflight missing");
         fd=open("/dev/spidev0.0",O_RDWR|O_CLOEXEC); require(fd>=0,"Reviewed SPI leaf unavailable");
+        lock_touch(fd);
         std::uint8_t mode=255;
         require(ioctl(fd,SPI_IOC_RD_MODE,&mode)==0 && mode==SPI_MODE_0,"Unexpected SPI mode");
         require(nt36532(read<6>(fd,0x1fb104)) && !(read<1>(fd,0x1fb12c)[0]&1),"Foreign chip/topology");
