@@ -28,3 +28,8 @@ The optional `uke-adaptive-display` integration target supplies an explicit
 activation path. See its [device trial guide](../../uke-desktop-integration/docs/ADAPTIVE-DISPLAY.md).
 Physical orientation, front-light discovery, lux response, cold boot and
 suspend/resume remain unqualified by package builds.
+
+`make test-native` runs the unprivileged protocol/source fixtures. The separate
+`make test-cache` needs root inside a disposable user namespace or container to
+check root-owned tmpfiles semantics; it never mounts or accesses a real persist
+partition. An ordinary user cannot perform those ownership operations.

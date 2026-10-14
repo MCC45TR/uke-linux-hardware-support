@@ -8,7 +8,7 @@ FastRPC file service. It provides the standard `net.hadess.SensorProxy` D-Bus
 interface used by original KDE and other compatible desktop environments.
 No KDE application, private firmware or calibration data is included.
 
-The current KWin sources consume accelerometer orientation and ambient light.
+KWin 6.7.91 sources consume accelerometer orientation and ambient light.
 Automatic brightness requires a valid light reading in **lux**, a supported
 brightness device and the corresponding output capability. Raw SIP1328 channel
 values are not a substitute. The front-light path and measured axes remain
@@ -78,9 +78,9 @@ integration package does not delete device-local firmware or factory calibration
 
 ## Source references
 
-- [KWin orientation client](https://invent.kde.org/plasma/kwin/-/blob/master/src/utils/orientationsensor.cpp)
-- [KWin light client](https://invent.kde.org/plasma/kwin/-/blob/master/src/utils/lightsensor.cpp)
-- [KWin output capabilities](https://invent.kde.org/plasma/kwin/-/blob/master/src/backends/drm/drm_output.cpp)
+- [KWin orientation client](https://invent.kde.org/plasma/kwin/-/blob/a5731ff896da3ccc34b00677a4ab435807031671/src/utils/orientationsensor.cpp)
+- [KWin light client](https://invent.kde.org/plasma/kwin/-/blob/a5731ff896da3ccc34b00677a4ab435807031671/src/utils/lightsensor.cpp)
+- [KWin output capabilities](https://invent.kde.org/plasma/kwin/-/blob/a5731ff896da3ccc34b00677a4ab435807031671/src/backends/drm/drm_output.cpp)
 - [libssc](https://codeberg.org/DylanVanAssche/libssc)
 - [SensorProxy](https://gitlab.freedesktop.org/hadess/iio-sensor-proxy)
 
