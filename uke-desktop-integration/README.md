@@ -1,36 +1,19 @@
-# uke-desktop-integration
+# Uke desktop integration
 
-Uke rotation, cover, brightness, power and audio desktop policies for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
+14 October 2026. `uke-adaptive-display` prepares the standard sensor interface
+for automatic rotation and ambient brightness on Fedora Rawhide AArch64.
+It uses SSC-enabled SensorProxy and original desktop applications. No KDE
+application is rebuilt.
 
-Status, 13 October 2026: this component contains package definitions and source
-plans. It provides no working device feature. The manifest lists the proposed
-packages and the checks required before release.
+Activation is explicit. Device-local firmware and a read-only factory
+calibration mount are required; neither is published in COPR. Physical axes,
+front-light discovery, lux response and desktop behavior remain evening tests.
+Read the [installation and test guide](docs/ADAPTIVE-DISPLAY.md) before enabling.
 
-## Package scope
+```sh
+sudo dnf install uke-adaptive-display
+```
 
-- `uke-desktop-integration`
-
-Nabu reference families: `nabu-desktop-integration`.
-These are process references; Uke wiring, firmware and runtime behavior require
-independent implementation and validation.
-
-## Required validation
-
-- Use measured Uke input and sensor paths.
-- Require physical suspend, charger and routing evidence.
-- Keep generic distribution defaults until behavior is measured.
-
-The first packaging target is Fedora Rawhide AArch64 in
-[uke-linux-test COPR](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-test/).
-DEB and Alpine APK targets require their own native rules later.
-Unimplemented targets fail explicitly rather than producing placeholder RPMs.
-
-Use `make validate` to check this repository's manifest contract. Native device
-applications use C++; upstream C/assembly interfaces retain their original
-languages. Host automation uses Bash or Make. Python does not enter tablet
-payloads. Source archives belong in `referances/`, development in `src/`.
-Public records exclude personal paths, unit identifiers and calibration data.
-
-See [the roadmap](docs/ROADMAP.md), [source policy](docs/SOURCE-POLICY.md) and
-[manifest](manifests/component.json). New material findings are recorded in
-`docs/lessons/`; source, package, emulation and physical evidence stay distinct.
+Source and host checks are separate from tablet acceptance. The package does
+not flash partitions, change refresh rates or claim support for other desktop
+policies. RPM Version/Release fields use numeric versions and release counters.

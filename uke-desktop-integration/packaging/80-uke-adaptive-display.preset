@@ -1,0 +1,4 @@
+# Preview activation follows device-local firmware and calibration checks.
+disable uke-adaptive-display.target
+disable uke-ssc-root.service
+disable uke-ssc-sensors.service

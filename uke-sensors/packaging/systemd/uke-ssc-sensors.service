@@ -1,0 +1,28 @@
+[Unit]
+Description=Uke SSC file service
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/dev/fastrpc-adsp
+Requires=uke-ssc-root.service
+After=uke-ssc-root.service
+PartOf=uke-ssc-root.service
+Before=iio-sensor-proxy.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/uke-hexagonrpcd -f /dev/fastrpc-adsp -d adsp -s -R /run/uke-ssc
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/mnt/vendor/persist
+ReadWritePaths=/run/uke-ssc
+DevicePolicy=closed
+DeviceAllow=/dev/fastrpc-adsp rw
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_QIPCRTR
+MemoryDenyWriteExecute=yes
