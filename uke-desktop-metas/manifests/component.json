@@ -15,7 +15,7 @@
     "kde-plasma-nabu-meta"
   ],
   "reference_project": "mcc45tr/nabu-linux",
-  "scope": "Console-first, dependency-audited Uke desktop package selections",
+  "scope": "Console-first policy metadata and an optional original-Fedora Plasma application selection",
   "acceptance_gates": [
     "Validate kernel/boot and console before desktop admission",
     "Resolve closure on target AArch64",
