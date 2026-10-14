@@ -7,7 +7,7 @@ outdir ?= $(CURDIR)/build/srpm
 releases_file ?=
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .python_target_payload == false' manifests/component.json >/dev/null
-	jq -e '.device == "uke" and .rpm_version == "$(version)" and .physical_device == false and (.assets|length == 10) and all(.assets[]; .sha256|test("^[a-f0-9]{64}$$"))' manifests/release-lock.json >/dev/null
+	jq -e '.device == "uke" and .rpm_version == "$(version)" and (.rpm_version|test("uke";"i")|not) and .physical_device == false and (.assets|length == 6) and (.source_snapshots|length == 2) and all(.assets[],.source_snapshots[]; (.sha256|test("^[a-f0-9]{64}$$")) and (.name|test("^[A-Za-z0-9][A-Za-z0-9._-]*$$")) and (.url|startswith("https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/")))' manifests/release-lock.json >/dev/null
 	test "$$(awk '/^Version:/ {print $$2}' packaging/uke-orangefox-recovery.spec)" = "$(version)"
 srpm: validate
 	tag=$$(jq -er .tag manifests/release-lock.json)
@@ -24,7 +24,7 @@ srpm: validate
 		test "$$(sha256sum "$$cache/$$name" | cut -d ' ' -f1)" = "$$expected"
 		cp "$$cache/$$name" "$$payload/"
 	done < <(jq -r '.assets[]|[.name,.url,.sha256]|@tsv' manifests/release-lock.json)
-	jq -e '.device == "uke" and .firmware_profile == "global-os3.0.303.0" and .validation.no_python_payload == true and .validation.payload_privacy == true and .validation.compile == true and .validation.physical_device == false' "$$payload/ARTIFACT-MANIFEST.json" >/dev/null
+	jq -e --arg profile "$$(jq -er .firmware_profile manifests/release-lock.json)" '.device == "uke" and .firmware_profile == $$profile and .validation.no_python_payload == true and .validation.payload_privacy == true and .validation.compile == true and .validation.physical_device == false' "$$payload/ARTIFACT-MANIFEST.json" >/dev/null
 	cp manifests/release-lock.json "$$payload/"
 	cp docs/{DELIVERY,SOURCE-OFFER}.md LICENSE "$$payload/"
 	cp -r licenses "$$payload/"
@@ -46,7 +46,7 @@ track-stable:
 	fi
 	jq '[.[]|select(.draft == false and .prerelease == false)]|sort_by(.published_at)|last' build/tracking/releases.json > build/tracking/candidate.json
 	if test "$$(jq -r 'type' build/tracking/candidate.json)" = null; then
-		printf '%s\n' 'No stable Uke recovery release is published; the explicit alpha pin is retained.'
+		printf '%s\n' 'No stable Uke recovery release is published; the explicit preview pin is retained.'
 		exit 0
 	fi
 	tag=$$(jq -er .tag_name build/tracking/candidate.json)
@@ -58,11 +58,11 @@ track-stable:
 	    tag:.tag_name, channel:"stable", prerelease:false, rpm_version:$$v,
 	    published_at:.published_at, firmware_profile:$$old[0].firmware_profile,
 	    physical_device:false,
-	    assets:[$$old[0].assets[].name as $$n | $$r.assets[]|select(.name == $$n)|
+	    assets:[$$r.assets[]|select(.name == "ARTIFACT-MANIFEST.json" or .name == "INSTALL.md" or .name == "ORANGEFOX-SOURCE-PINS.xml" or .name == "STOCK-KERNEL-SOURCE.json" or (.name|test("^[A-Za-z0-9][A-Za-z0-9._-]*[.](img|zip)$$")))|
 	      {name, url:.browser_download_url, sha256:(.digest|ltrimstr("sha256:")), bytes:.size}],
 	    source_snapshots:[$$old[0].source_snapshots[].name as $$n | $$r.assets[]|select(.name == $$n)|
 	      {name, url:.browser_download_url, sha256:(.digest|ltrimstr("sha256:")), bytes:.size}]}' build/tracking/candidate.json > build/tracking/release-lock.json
-	jq -e '(.assets|length == 10) and (.source_snapshots|length == 2) and all(.assets[], .source_snapshots[]; (.sha256|test("^[a-f0-9]{64}$$")) and (.url|startswith("https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/")))' build/tracking/release-lock.json >/dev/null
+	jq -e '(.assets|length == 6) and (.source_snapshots|length == 2) and all(.assets[], .source_snapshots[]; (.sha256|test("^[a-f0-9]{64}$$")) and (.url|startswith("https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/")))' build/tracking/release-lock.json >/dev/null
 	url=$$(jq -er '.assets[]|select(.name == "ARTIFACT-MANIFEST.json")|.url' build/tracking/release-lock.json)
 	curl -fL --retry 3 "$$url" -o build/tracking/artifact-manifest.json
 	test "$$(sha256sum build/tracking/artifact-manifest.json|cut -d ' ' -f1)" = "$$(jq -er '.assets[]|select(.name == "ARTIFACT-MANIFEST.json")|.sha256' build/tracking/release-lock.json)"
@@ -76,7 +76,7 @@ audit: srpm
 	cache="$(CURDIR)/referances/releases/$$tag"
 	mkdir -p build/audit
 	# Android boot header v4 has a 4096-byte page and a kernel-size field at 8.
-	for image in OrangeFox-uke-recovery.img OrangeFox-uke-fastboot-boot.img; do
+	while IFS= read -r image; do
 		test "$$(head -c8 "$$cache/$$image")" = 'ANDROID!'
 		test "$$(od -An -tu4 -j40 -N4 "$$cache/$$image"|tr -d ' ')" = 4
 		kernel=$$(od -An -tu4 -j8 -N4 "$$cache/$$image"|tr -d ' ')
@@ -86,7 +86,7 @@ audit: srpm
 		offset=$$((4096 + ((kernel + 4095) / 4096) * 4096))
 		dd if="$$cache/$$image" of=build/audit/ramdisk.lz4 iflag=skip_bytes,count_bytes skip="$$offset" count="$$ramdisk" status=none
 		test "$$(sha256sum build/audit/ramdisk.lz4|cut -d ' ' -f1)" = "$$(jq -er .recovery_ramdisk.sha256 "$$cache/ARTIFACT-MANIFEST.json")"
-	done
+	done < <(jq -r '.assets[].name|select(endswith(".img"))' manifests/release-lock.json)
 	rm -rf build/audit/extracted; mkdir -p build/audit/extracted
 	lz4 -dc build/audit/ramdisk.lz4 | cpio -it --quiet > build/audit/files.txt
 	if rg '(^/|(^|/)\.\.(/|$$))' build/audit/files.txt; then exit 1; fi
@@ -99,5 +99,5 @@ audit: srpm
 			if readelf -d "$$file" 2>/dev/null | grep -F 'NEEDED' | grep -F libpython >/dev/null; then exit 1; fi
 		fi
 	done
-	unzip -t "$$cache/OrangeFox-uke-flashable.zip"
-	printf '%s\n' 'Both image ramdisks, nonempty extracted payload, Python/privacy and ZIP integrity passed.'
+	while IFS= read -r archive; do unzip -t "$$cache/$$archive"; done < <(jq -r '.assets[].name|select(endswith(".zip"))' manifests/release-lock.json)
+	printf '%s\n' 'Pinned image ramdisk, nonempty extracted payload, Python/privacy and ZIP integrity passed.'

@@ -2,7 +2,7 @@
 
 Name:           material-decoration
 Version:        20261006.094154
-Release:        2.uke%{?dist}
+Release:        3%{?dist}
 Summary:        Material window decoration and configuration for KWin 6
 License:        GPL-2.0-or-later AND LGPL-2.0-or-later
 URL:            https://github.com/guiodic/material-decoration
@@ -71,6 +71,9 @@ test -f %{buildroot}%{_libdir}/qt6/plugins/org.kde.kdecoration3.kcm/materialdeco
 %{_datadir}/applications/*material*desktop
 
 %changelog
+* Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 20261006.094154-3
+- Use a numeric RPM release while preserving the upstream package identity.
+
 * Mon Oct 05 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 20260918.151422-2.uke
 - Declare Qt QML imports required by Rawhide KF6 I18n's exported targets.
 

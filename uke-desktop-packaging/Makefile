@@ -9,7 +9,8 @@ validate:
 	jq -e '(.commit|test("^[a-f0-9]{40}$$")) and (.sha256|test("^[a-f0-9]{64}$$")) and (.version|test("^[0-9]+[.][0-9]+$$")) and .hardware_specific==false and .hardware_tested==false' manifests/material-decoration.json >/dev/null
 	test "$$(sed -n 's/^%global upstream_commit //p' packaging/material-decoration/material-decoration.spec)" = "$$(jq -r .commit manifests/material-decoration.json)"
 	! grep -Eq '^(Requires|Recommends):.*(python|pypy|libpython|nabu)' packaging/*/*.spec
-	jq -e '.hardware_tested==false and (.packages|length==6) and all(.packages[]; (.sha256|test("^[a-f0-9]{64}$$")) and .name!="plasma-workspace" and .name!="dolphin")' manifests/native-runtime.json >/dev/null
+	jq -e '.hardware_tested==false and (.packages|length==6) and all(.packages[]; (.sha256|test("^[a-f0-9]{64}$$")) and (.native_release|test("^[0-9]+([.][0-9]+)*$$")) and (.version|test("uke";"i")|not) and .name!="plasma-workspace" and .name!="dolphin")' manifests/native-runtime.json >/dev/null
+	test "$$(awk '/^Release:/ {print $$2}' packaging/libstdcxx-uke-runtime/libstdcxx-uke-runtime.spec)" = "$$(jq -r '.packages[]|select(.name=="libstdcxx-uke-runtime")|.native_release' manifests/native-runtime.json)%{?dist}"
 	test "$$(sha256sum src/native-runtime/fedora-exported-symbols.txt | cut -d ' ' -f1)" = "$$(jq -er .baseline.symbol_sha256 manifests/native-runtime.json)"
 	test "$$(wc -l < src/native-runtime/fedora-exported-symbols.txt)" = "$$(jq -er .baseline.symbol_count manifests/native-runtime.json)"
 	bash -n src/native-runtime/prepare-source.sh

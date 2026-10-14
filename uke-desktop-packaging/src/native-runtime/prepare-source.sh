@@ -116,11 +116,11 @@ awk -v name="$name" -v release="$native_release" -v cleanup="$cleanup" '
     /^License:/ && name!="plasma-workspace" {
         print; print "Provides: senemos-native-runtime(" name ") = %{version}-%{release}"
         print "ExclusiveArch: aarch64"
-        print "BuildRequires: python3 = 3.15.0~rc2-1.fc46"
+        print "BuildRequires: python3 = 3.15.0-1.fc46"
         if (name=="libwacom") print "BuildRequires: gcc"
         next
     }
-    /^License:/ && name=="plasma-workspace" { print; print "ExclusiveArch: aarch64"; print "BuildRequires: python3 = 3.15.0~rc2-1.fc46"; next }
+    /^License:/ && name=="plasma-workspace" { print; print "ExclusiveArch: aarch64"; print "BuildRequires: python3 = 3.15.0-1.fc46"; next }
     /^BuildRequires:.*meson/ { print; print "BuildRequires: meson = 1.12.1-2.fc46"; next }
     /^BuildRequires:.*gobject-introspection-devel/ { print; print "BuildRequires: gobject-introspection-devel = 1.86.0-12.fc46"; next }
     name=="at-spi2-core" && /%\{python3_sitearch\}/ { next }

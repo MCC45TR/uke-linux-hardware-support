@@ -54,7 +54,7 @@ The inspected Rawhide host pins are:
 
 | Tool | Pin | Purpose |
 |---|---|---|
-| python3 | 3.15.0~rc2-1.fc46 | Upstream build engine/runtime |
+| python3 | 3.15.0-1.fc46 | Upstream build engine/runtime |
 | meson | 1.12.1-2.fc46 | Mandatory upstream native build descriptions |
 | gobject-introspection-devel | 1.86.0-12.fc46 | Generate native typelib metadata |
 | gcc-c++ | 16.2.1-2.fc46.1 | Compile the exact reviewed GNU C++ runtime source |
@@ -63,6 +63,11 @@ These pins are added to the appropriate generated BuildRequires. A missing pin
 stops a build and requires an explicit reviewed host-tool update. COPR logs
 retain the actual worker dependency NEVRAs. All binary subpackage payloads and
 the complete selected runtime must independently pass the no-Python audit.
+On 14 October 2026, five Rawhide AArch64 builds failed before compilation
+because the earlier Python release candidate had left the repository. The final
+3.15.0 pin and the other listed tools were confirmed in the target repository.
+RPM versions and releases use upstream versions and numeric rebuild counters;
+device identifiers belong in device package names, not release suffixes.
 The Qt/KF6 source factory resolves Plasma's inherited minimum Breeze version to
 the inspected 6.7.91 literal because the factory may lack KF6 macro packages
 before dependency parsing; the binary build still requires official KF6 macros.

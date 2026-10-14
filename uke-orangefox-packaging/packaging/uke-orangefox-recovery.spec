@@ -3,9 +3,9 @@
 %global _build_id_links none
 
 Name: uke-orangefox-recovery
-Version: 12.0~alpha1.20260930
-Release: 1.1%{?dist}
-Summary: Verified OrangeFox Uke recovery images for explicit device evaluation
+Version: 12.0~preview3.20261010
+Release: 1%{?dist}
+Summary: OrangeFox recovery preview images for Xiaomi Pad 7 and POCO Pad X1
 License: GPL-2.0-only AND GPL-3.0-or-later AND Apache-2.0 AND MIT AND BSD-2-Clause
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-orangefox-packaging
 Source0: %{name}-%{version}.tar.gz
@@ -15,10 +15,11 @@ Provides: uke-recovery-image
 # No installer, boot hook or firmware/runtime dependency is attached.
 
 %description
-DNF-managed, checksum-verified image delivery from the pinned OrangeFox Uke
-GitHub release, retaining its declared release channel. Installs images and manifests as data without flashing,
-unlocking, running an installer or changing boot selection. Published firmware
-scope is Global OS3.0.303.0; physical boot and rollback are not accepted.
+DNF-managed, checksum-verified delivery of the existing OrangeFox v003 preview.
+Installs images and records as data without flashing, unlocking, running an
+installer or changing boot selection. The IMG requires the installed Android
+boot stack; it is not a temporary fastboot boot image. ZIP installation is
+unavailable. Firmware compatibility and physical rollback require separate tests.
 The source snapshots and exact upstream revisions are listed in SOURCE-OFFER.
 
 %prep
@@ -33,17 +34,14 @@ jq -e '.device == "uke" and .validation.no_python_payload == true and .validatio
 %install
 destination=%{buildroot}%{_datadir}/senemos/recovery/uke/%{version}
 mkdir -p "$destination"
-install -m644 OrangeFox-uke-recovery.img OrangeFox-uke-fastboot-boot.img \
-    OrangeFox-uke-flashable.zip ARTIFACT-MANIFEST.json release-lock.json \
-    PACKAGE-SHA256SUMS PAYLOAD-FILES.tsv ORANGEFOX-SOURCE-PINS.xml \
-    STOCK-KERNEL-SOURCE.json RECOVERY-AVB.txt TEMPORARY-BOOT-AVB.txt "$destination/"
+install -m644 *.img *.zip ARTIFACT-MANIFEST.json release-lock.json \
+    PACKAGE-SHA256SUMS ORANGEFOX-SOURCE-PINS.xml STOCK-KERNEL-SOURCE.json "$destination/"
 # Source/license records describe the complete artifact; no tablet script runs.
 install -m644 DELIVERY.md SOURCE-OFFER.md INSTALL.md LICENSE "$destination/"
 cp -r licenses "$destination/"
 
 %check
-test "$(head -c8 OrangeFox-uke-recovery.img)" = 'ANDROID!'
-test "$(head -c8 OrangeFox-uke-fastboot-boot.img)" = 'ANDROID!'
+for image in *.img; do test "$(head -c8 "$image")" = 'ANDROID!'; done
 sha256sum -c PACKAGE-SHA256SUMS
 
 %files
@@ -53,5 +51,9 @@ sha256sum -c PACKAGE-SHA256SUMS
 %{_datadir}/senemos/recovery/uke/%{version}/
 
 %changelog
+* Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 12.0~preview3.20261010-1
+- Deliver the published v003 preview and matching source records.
+- Remove the dependency on the withdrawn Alpha 1 release.
+
 * Sun Oct 04 2026 Senemos Maintainers <MCC45TR@users.noreply.github.com> - 12.0~alpha1.20260930-1
 - Deliver the pinned Uke alpha images and evidence without device writes.

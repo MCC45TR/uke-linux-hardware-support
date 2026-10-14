@@ -1,27 +1,24 @@
-# Exact recovery source and attribution
+# Recovery source and attribution
 
-Initial alpha device source:
-https://github.com/MCC45TR/orangefox_device_xiaomi_uke/tree/96e49e0e602de7b3b734bc07e305efca7bcab0e5
+Delivery checkpoint: 14 October 2026. Image bytes are from the published
+[v003 source tag](https://github.com/MCC45TR/orangefox_device_xiaomi_uke/tree/02d1431dffc2921797017d9ef7304d4eaf6685a7).
+`ORANGEFOX-SOURCE-PINS.xml` retains the OrangeFox/AOSP revisions. The image
+build and extracted-payload receipts are identified by SHA-256 in the artifact
+manifest; they do not establish binary reproducibility or physical acceptance.
 
-The delivered `ORANGEFOX-SOURCE-PINS.xml` lists the exact OrangeFox/AOSP revisions.
-The release `ARTIFACT-MANIFEST.json` and `STOCK-KERNEL-SOURCE.json` identify
-kernel and utility sources. Corresponding public source snapshots are:
+Corresponding source snapshots from the same archived v003 output:
 
-- [RECOVERY-UTILITY-SOURCES.tar.gz](https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/RECOVERY-UTILITY-SOURCES.tar.gz), SHA-256 `adb0a1ba413480abb9526f1669f83491eed4c2c1fb43f37c7d1f631063e5cffc`.
-- [STOCK-GKI-SOURCE.tar.gz](https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/r12.0-uke.20260930-alpha1/STOCK-GKI-SOURCE.tar.gz), SHA-256 `a0cb69da36f5ca2399c7e7f3c109258594e2fb597bc56290d92723a0ab5500f3`.
+- [RECOVERY-UTILITY-SOURCES.tar.gz](https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/R12.0-uke-modded-v003/RECOVERY-UTILITY-SOURCES.tar.gz), SHA-256 `89ee7f588fdcc739edcf53f0362038bd08569a732cc83f813bc3129bc9eb8862`.
+- [STOCK-GKI-SOURCE.tar.gz](https://github.com/MCC45TR/orangefox_device_xiaomi_uke/releases/download/R12.0-uke-modded-v003/STOCK-GKI-SOURCE.tar.gz), SHA-256 `49917981e2f300aaa33b02855e3e87673b67280cc2105860d8bba08f4f6728fd`.
 
-OrangeFox/TWRP, Linux, recovery utilities and AOSP files retain their own
-copyrights and licenses. Device integration and original delivery documentation
-use MIT. The source offer accompanies the data package; upstream source archives
-are not installed on the tablet and remain available through the pinned release.
+The IMG uses the installed Android boot stack; the stock GKI source record
+identifies the archived build input, not a kernel embedded in the recovery IMG.
+Recovery, utility, Linux and AOSP sources retain their original notices. MIT
+covers original delivery documentation. Standard GPL, Apache, MIT and BSD
+texts and their SPDX source identity are included in `licenses/`.
 
-The alpha release documentation records no redistributed vendor HAL blobs,
-stock vendor_boot or proprietary firmware. This packaging does not introduce
-additional blobs or calibration. Source files are evidence and are not executed
-as donor shortcuts. The source RPM reproduces the image delivery package from
-the pinned artifacts; a fresh complete OrangeFox source build is a separate job.
-
-For each later package, `release-lock.json` gives the exact current source
-snapshot URLs, sizes and SHA-256 values. The links above retain the historical
-alpha offer. Standard GPL, Apache, MIT and BSD license texts are included in
-`licenses/`, with their SPDX source commit recorded in `licenses/SOURCE.json`.
+Source archives are host inputs and are not installed on the tablet. The SRPM
+rebuilds the delivery package from pinned release artifacts; it does not compile
+OrangeFox. `release-lock.json` records each asset URL, size and SHA-256. The
+withdrawn Alpha 1 artifacts are historical evidence and are not redistributed
+by this updated package.
