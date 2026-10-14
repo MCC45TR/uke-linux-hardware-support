@@ -1,13 +1,14 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 7%{?dist}
+Release: 9%{?dist}
 Summary: Uke image configuration and read-only boot prerequisite inspection
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
+BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
 Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server
 
@@ -29,11 +30,27 @@ configured ttyACM USB-host port. Core composition may apply the separate origina
 systemd debug-shell override for HID-driven VT2 commands and journal output.
 Installation activates no service, gadget, boot entry or partition write.
 
+%package -n uke-boot-recovery
+Summary: Native Uke reboot commands and a three-minute startup recovery guard
+Requires: %{name} = %{version}-%{release}
+Requires: systemd systemd-udev
+%description -n uke-boot-recovery
+C++ recovery/bootloader commands and a native readiness observer. Installing
+this optional development package enables the guard on subsequent boots and
+provides local reboot aliases without replacing Fedora-owned executables.
+The host composer must include its dracut module to cover initramfs stalls.
+No Android, boot, EFI or partition data is written by package installation.
+
 %prep
 %setup -q
 %build
 %{__cxx} %{optflags} -std=c++17 -ffile-prefix-map=$PWD=. src/boot-status.cpp -o uke-boot-status %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -ffile-prefix-map=$PWD=. src/esp32-cdc.cpp -o uke-esp32-cdc %{build_ldflags}
+%{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/boot-guard.cpp -o uke-boot-guard $(pkg-config --cflags --libs libsystemd wayland-client) %{build_ldflags}
+%{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
+%check
+bash tests/startup-contract.sh
+bash tests/startup-native.sh
 %install
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -d %{buildroot}%{_datadir}/senemos/boot/uke
@@ -45,6 +62,15 @@ install -Dm644 src/units/uke-usb-network-shell.service %{buildroot}%{_unitdir}/u
 install -Dm644 src/profiles/uke-coresight-bringup.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
 install -Dm755 uke-esp32-cdc %{buildroot}%{_libexecdir}/senemos-uke/uke-esp32-cdc
 install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-esp32-cdc-log.service
+install -Dm755 uke-reboot %{buildroot}%{_bindir}/uke-reboot
+install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
+install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
+install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-reboot.conf
+install -Dm755 src/dracut/93uke-boot-guard/module-setup.sh %{buildroot}%{_prefix}/lib/dracut/modules.d/93uke-boot-guard/module-setup.sh
+install -d %{buildroot}%{_unitdir}/sysinit.target.wants %{buildroot}/usr/local/{bin,sbin}
+ln -s ../uke-boot-guard.service %{buildroot}%{_unitdir}/sysinit.target.wants/uke-boot-guard.service
+ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/bin/reboot
+ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %files
 %license LICENSE
 %doc README.md
@@ -61,7 +87,24 @@ install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-e
 %{_libexecdir}/senemos-uke/uke-esp32-cdc
 %{_unitdir}/uke-esp32-cdc-log.service
 
+%files -n uke-boot-recovery
+%license LICENSE
+%{_bindir}/uke-reboot
+/usr/local/bin/reboot
+/usr/local/sbin/reboot
+%{_libexecdir}/senemos-uke/uke-boot-guard
+%{_unitdir}/uke-boot-guard.service
+%{_unitdir}/sysinit.target.wants/uke-boot-guard.service
+%{_prefix}/lib/modules-load.d/uke-reboot.conf
+%{_prefix}/lib/dracut/modules.d/93uke-boot-guard
+
 %changelog
+* Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
+- Add native reboot routing and a three-minute initramfs/real-root readiness guard.
+- Keep Fedora reboot executables and the stock Uke reboot-mode mapping intact.
+* Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
+- Recognize the reviewed 7.2.10 kernel while retaining the 7.2.9 fallback.
+- Keep foreign and unreviewed kernel releases outside the identity check.
 * Mon Oct 12 2026 Mürşit Can Cihan <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
 - Avoid blocking readline and terminal resets on the development gadget shell.
 - Preserve the bounded Uke identity and USB TTY prerequisite check.

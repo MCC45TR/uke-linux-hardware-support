@@ -28,6 +28,39 @@ Nabu binary/geometry defaults cannot supply them. Detailed records are in
 Run `make validate`, `make test-native` or `make srpm`. Source archives remain in
 `referances/`; package/host output is ignored under `build/`.
 
+On 2026-10-14, native AArch64 fixtures passed for the optional
+`uke-boot-recovery` development package. Its C++ observer measures 180 seconds
+from kernel startup, including initramfs time. It accepts the physical EXT4
+`PARTLABEL=linux` root only after finding a foreground local TTY or a responsive
+local Wayland login/desktop session. An enabled service or a socket file alone
+does not qualify. The observer exits after success; it is not a runtime desktop
+watchdog. The deadline requests fastboot through PID 1's `reboot-force` action.
+Full kernel lockups and a failed kernel reboot backend remain outside its
+coverage. A fresh physical timeout trial remains required.
+
+The same package provides the C++ `uke-reboot` application and local executable
+aliases for `sudo reboot recovery` and `sudo reboot bootloader`. `recovey` is
+accepted as a spelling alias. Fedora's packaged reboot executables are retained;
+ordinary reboot options are delegated to them. The native application checks the
+exact Uke identity, the bound NVMEM driver and the reviewed recovery/bootloader
+mode values. It calls the standard
+[logind reboot interface](https://github.com/systemd/systemd/blob/v262/man/org.freedesktop.login1.xml)
+to retain orderly filesystem shutdown. No shell script performs reboot routing.
+If shutdown is refused, the previous reboot parameter is restored.
+
+Install this optional package only after checking that `/usr/local/bin/reboot`
+and `/usr/local/sbin/reboot` contain no unrelated local commands. Its vendor
+`sysinit.target.wants` link enables the observer on subsequent boots; installation
+does not start it in the current session. The host composer must add
+`--add uke-boot-guard` to dracut and regenerate the embedded stock-ABL Image and
+matched kernel package. Installing a real-root RPM alone does not protect the
+old embedded initramfs. No Python runtime is required by these helpers.
+
+Run `make test-startup` in the pinned guard SDK to exercise the actual native
+readiness functions and a private, in-process fake logind connection. These
+fixtures never send a reboot request to the host. They are package evidence,
+not a tablet recovery test.
+
 Release 7 disables readline editing and systemd terminal reset/hangup for the
 development ACM shell. A production-equivalent runtime override stopped in
 42 ms in two physical trials while retaining the bounded identity/TTY gate.

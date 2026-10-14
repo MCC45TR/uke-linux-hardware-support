@@ -8,7 +8,8 @@
   "package_build_ready": true,
   "expected_packages": [
     "uke-boot-integration",
-    "uke-esp32-cdc"
+    "uke-esp32-cdc",
+    "uke-boot-recovery"
   ],
   "nabu_reference_packages": [
     "nabu-boot"
@@ -37,5 +38,17 @@
   "hardware_tested": false,
   "boot_tested": false,
   "python_target_payload": false,
+  "startup_recovery": {
+    "package": "uke-boot-recovery",
+    "timeout_seconds_from_kernel_boot": 180,
+    "ready": "PARTLABEL=linux EXT4 root plus foreground local TTY or responsive local Wayland session",
+    "failure_target": "bootloader",
+    "initramfs_module": "uke-boot-guard",
+    "implementation": "C++",
+    "host_sdk": "sha256:6c5ff5cd50c0b823fe486d75deebfd6f55d013fd8e12f0210b12b73535170401",
+    "runtime_api": "systemd 262 logind and Wayland client 1.26",
+    "physical_tested": false,
+    "kernel_hardlock_covered": false
+  },
   "source_directory": "uke-boot"
 }
