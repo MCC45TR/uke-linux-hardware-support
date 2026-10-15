@@ -5,6 +5,9 @@ File-level firmware provenance, acquisition and redistribution policy for Xiaomi
 This component owns the file-level admission rules for the shared hardware
 support repository. The current lock admits no firmware bytes, so `make srpm`
 fails explicitly. A metadata-only RPM cannot substitute for device firmware.
+The [15 October publication review](docs/COPR-PUBLICATION.md) identifies the
+local WPSS, ADSP and Adreno package families and the remaining source and
+redistribution checks. No local OEM firmware was uploaded by that review.
 
 ## Package scope
 
