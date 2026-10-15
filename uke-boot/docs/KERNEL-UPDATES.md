@@ -1,8 +1,11 @@
 # Stock-ABL kernel updates
 
 15 October 2026. Fedora Rawhide AArch64 stock-ABL update implementation.
-Package builds, regular-file tests and physical update tests are recorded
-separately. Physical DNF installation and first reboot remain unqualified.
+On Uke, COPR kernel 7.2.9-1.40 and updater 0.1.0-12 passed DNF installation,
+complete boot B write/readback and an ordinary reboot to Fedora/KDE. The new
+kernel uses an independent module directory and retains the previous tuple.
+The firmware framebuffer produced an image; native DPU/DSI remains unqualified.
+Early ADSP firmware ordering needs a separate correction before general use.
 
 `uke-kernel-update` accepts an installed package bundle under
 `/usr/lib/senemos/kernel-updates/RELEASE`. It checks the exact Uke/SM7675 device,
@@ -11,13 +14,13 @@ physical EXT4 root selected by `PARTLABEL=linux`, a unique physical
 every matching installed module. Android A, GPT, ESP, misc and userdata are
 never update targets. The tool does not reboot or select a slot.
 
-Each bundle has `linux.img`, `userdata.img`, `modules.sha256` and a strict
+Each Linux-only bundle has `linux.img`, `modules.sha256` and a strict
 key/value `manifest` containing `format=1`, `kernel_release`,
 `linux_image_sha256`, `userdata_image_sha256`, `linux_kernel_sha256`,
 `userdata_kernel_sha256` and `modules_sha256`. The module inventory contains
 SHA-256 rows relative to `/usr/lib/modules/KERNEL_RELEASE`, limited to the exact
 `kernel/` module file set. The installed core Image must match the Linux variant;
-the userdata variant must come from the same separately validated module ABI.
+both userdata manifest values must be `unsupported` for this supported layout.
 Payloads must be root-owned and not group/world-writable.
 
 The first update path supports the physical `linux` root. A `userdata` boot
@@ -60,20 +63,24 @@ correct its cause, then retry `uke-kernel-update apply` with the installed bundl
 path before rebooting. A successful RPM transaction alone does not prove the
 boot partition changed or the new kernel started.
 
-## Legacy package limit
+## Legacy package migration
 
-The existing COPR kernel provides a raw Image and uses a shared module directory
-for package revisions. It does not yet provide these stock-ABL bundles. This
-helper therefore **does not make legacy `dnf upgrade` update boot_b**. Image
-recipes must keep the kernel exclusion until versioned kernel/module packaging,
-complete public boot payload generation and the DNF transaction hook are ready.
-Do not add a hook that writes the raw Image or remove that exclusion early.
+Packages before 1.40 use a shared module directory and broad Obsoletes rules.
+They require a bounded metadata migration before coexistence with the new
+versioned tuples. Do not remove running modules or globally change installonly
+policy as a shortcut. The tested migration preserved every payload byte and
+removed only the incompatible package relationships.
+
+The 1.40 source-only COPR build supplies the matched stock-ABL bundle and DNF
+hook. Image recipes retain the kernel exclusion until the early ADSP correction
+and subsequent update qualification pass. Never write a raw Image to boot B.
 
 Regular-file fixtures cover root-selector refusal, partition ambiguity, module
 mismatch, same-release rejection, low/unknown power, malformed boot payloads,
 backup/readback and write-error handling. They open no block device. Real
-storage/power-loss behavior, SELinux permission for the writer, DNF upgrade and
-rollback, first reboot and recovery acceptance remain separate validation.
+power-loss behavior, repeated upgrades, automatic rollback after faults and
+external recovery remain separate validation. The first physical write ran
+with SELinux enforcing; exact readback and an idempotent no-write check passed.
 
 The v4 layout follows the [AOSP boot image header specification](https://source.android.com/docs/core/architecture/bootloader/boot-image-header).
 Package admission follows the [DNF5 signature configuration](https://dnf5.readthedocs.io/en/latest/dnf5.conf.5.html).
