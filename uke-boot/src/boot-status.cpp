@@ -8,6 +8,19 @@
 #include <thread>
 namespace fs = std::filesystem;
 namespace {
+bool selected_kernel(const std::string& release) {
+    for (const std::string version : {"7.2.9", "7.2.10"}) {
+        if (release == version + "-senemos-uke") return true;
+        const auto prefix = version + "-senemos.";
+        if (release.rfind(prefix, 0) != 0) continue;
+        const auto revision = release.substr(prefix.size());
+        return !revision.empty() && release.size() < 128 &&
+            revision.front() != '.' && revision.back() != '.' &&
+            revision.find("..") == std::string::npos &&
+            revision.find_first_not_of("0123456789.") == std::string::npos;
+    }
+    return false;
+}
 std::string read(const fs::path& path) {
     std::ifstream stream(path, std::ios::binary);
     if (!stream) return {};
@@ -65,7 +78,7 @@ int main(int argc, char** argv) {
         const auto cmdline = read(root / "proc/cmdline");
         const bool efi = present(root, "sys/firmware/efi");
         const bool uke = compatible(dt, "xiaomi,uke") && compatible(dt, "qcom,sm7675");
-        const bool kernel = release == "7.2.9-senemos-uke" || release == "7.2.10-senemos-uke";
+        const bool kernel = selected_kernel(release);
         auto boolean = [](bool value) { return value ? "true" : "false"; };
         if (identity) {
             std::cout << "{\"schema_version\":1,\"scope\":\"read-only-kernel-device-identity\",\"uke_compatible\":"

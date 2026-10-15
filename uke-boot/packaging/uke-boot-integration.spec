@@ -1,14 +1,15 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 11%{?dist}
-Summary: Uke image configuration and read-only boot prerequisite inspection
+Release: 12%{?dist}
+Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
 BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
+BuildRequires: openssl-devel
 Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server
 
@@ -59,6 +60,16 @@ read-only persist partition. Publishes a private runtime NetworkManager default
 before network startup. No device address or factory record is redistributed.
 The image must provide the protected persist mount and enable the service.
 
+%package -n uke-kernel-update
+Summary: Native checked installation of matched Uke stock-ABL kernel bundles
+Requires: senemos-native-runtime(libstdc++) openssl-libs systemd rpm
+%description -n uke-kernel-update
+Validates an installed matched boot-v4 payload and module inventory before
+updating only the physical boot_b partition. Retains the running kernel modules
+and a synced backup, then verifies the complete partition after writing.
+Automatic updates require explicit local enablement and compatible boot-bundle
+RPMs. Installation alone does not activate partition writes or reboot.
+
 %prep
 %setup -q
 %build
@@ -67,11 +78,14 @@ The image must provide the protected persist mount and enable the service.
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/wifi-factory.cpp -o uke-wifi-factory %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/boot-guard.cpp -o uke-boot-guard $(pkg-config --cflags --libs libsystemd wayland-client) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
+%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs openssl libsystemd) %{build_ldflags}
 %check
 %{__cxx} -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o wifi-factory-contract
 ./wifi-factory-contract
 bash tests/startup-contract.sh
 bash tests/startup-native.sh
+%{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs openssl libsystemd)
+./kernel-update-contract
 %install
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-wifi-factory %{buildroot}%{_libexecdir}/senemos-uke/uke-wifi-factory
@@ -87,6 +101,8 @@ install -Dm644 src/profiles/uke-coresight-bringup.conf %{buildroot}%{_prefix}/li
 install -Dm755 uke-esp32-cdc %{buildroot}%{_libexecdir}/senemos-uke/uke-esp32-cdc
 install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-esp32-cdc-log.service
 install -Dm755 uke-reboot %{buildroot}%{_bindir}/uke-reboot
+install -Dm755 uke-kernel-update %{buildroot}%{_bindir}/uke-kernel-update
+install -Dm644 src/profiles/kernel-update.conf %{buildroot}%{_sysconfdir}/senemos/kernel-update.conf
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
 install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
 install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-reboot.conf
@@ -119,6 +135,13 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_libexecdir}/senemos-uke/uke-wifi-factory
 %{_unitdir}/uke-wifi-factory.service
 
+%files -n uke-kernel-update
+%license LICENSE
+%doc docs/KERNEL-UPDATES.md
+%{_bindir}/uke-kernel-update
+%dir %{_sysconfdir}/senemos
+%config(noreplace) %{_sysconfdir}/senemos/kernel-update.conf
+
 %files -n uke-boot-recovery
 %license LICENSE
 %{_bindir}/uke-reboot
@@ -131,6 +154,10 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 15 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
+- Add a native matched-boot updater with module, root, partition, power and durable backup checks.
+- Require explicit local enablement for matching boot-bundle transaction hooks.
+
 * Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
 - Read the local factory WLAN identity from protected persist before NetworkManager.
 - Validate unicast records without shipping device-specific addresses.
