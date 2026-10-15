@@ -12,6 +12,8 @@ bool never_copy,never_reset,bad_crc;
 bool bad_bank;
 bool bad_metadata;
 bool coordinate_enabled,bad_mode;
+unsigned custom_writes,custom_reads,custom_busy_reads,scan_pending_reads;
+bool scan_never_ready;
 std::array<std::uint8_t,0x120000> ram{};
 std::vector<std::pair<unsigned,Bytes>> writes;
 int mock_ioctl(int,unsigned long request,...) noexcept {
@@ -25,6 +27,7 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
     else if(!rx) {
         auto address=selected+(tx[0]&0x7f);
         writes.emplace_back(address,Bytes(tx+1,tx+m->len));
+        if(address==0x11c450 && m->len==4 && tx[1]==0xbf && tx[3]==1) custom_writes++;
         if(address==0x11c450 && m->len==6 && tx[1]==0xbf && tx[2]==0x15 && tx[3]==0)
             coordinate_enabled=tx[4];
         if(address<ram.size() && m->len-1<=ram.size()-address)
@@ -37,10 +40,19 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
             std::copy(ram.begin()+address,ram.begin()+address+m->len-2,rx+2); if(bad_bank) rx[2]^=1;
         }
         else if(address==0x1fc925) { rx[2]=never_copy ? 1 : 0; status_reads++; }
-        else if(address==0x11c460) { rx[2]=never_reset ? 0 : 0xa0; status_reads++; }
+        else if(address==0x11c460) {
+            rx[2]=never_reset ? 0 : scan_never_ready || status_reads<scan_pending_reads ? 0xa0 : 0xa1;
+            status_reads++;
+        }
         else if((address==0x121afc || address==0x121b3c) && m->len==66) { }
         else if(address==0x125800 && m->len==68) { }
-        else if(address==0x11c450) { rx[2]=0; if(m->len==7) rx[5]=bad_mode ? 2 : coordinate_enabled; }
+        else if(address==0x11c450) {
+            rx[2]=0;
+            if(m->len==7) {
+                rx[2]=custom_reads++<custom_busy_reads ? 0xbf : 0;
+                rx[5]=bad_mode ? 2 : coordinate_enabled;
+            }
+        }
         else if(address==0x1093d8 && m->len==41) { rx[4]=0x38; rx[5]=0x14; }
         else if(address==0x11c400 && m->len==5434) rx[2]=0xff;
         else if(address==0x1fb520) {
@@ -54,9 +66,22 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
     }
     return m->len;
 }
-void reset() { operations=status_reads=selected=0; fail_at=~0U; never_copy=never_reset=bad_crc=bad_bank=bad_metadata=coordinate_enabled=bad_mode=false; writes.clear(); }
+void reset() {
+    operations=status_reads=selected=custom_writes=custom_reads=custom_busy_reads=scan_pending_reads=0;
+    fail_at=~0U;
+    never_copy=never_reset=bad_crc=bad_bank=bad_metadata=coordinate_enabled=bad_mode=scan_never_ready=false;
+    writes.clear();
+}
 template<class F> void reject(F f) { bool refused=false; try{f();}catch(const std::exception&){refused=true;} assert(refused); }
 int main(int argc,char **argv) {
+    reset(); normal_scan_ready(0); assert(status_reads==1);
+    reset(); scan_pending_reads=4; normal_scan_ready(0); assert(status_reads==5);
+    reset(); scan_never_ready=true; reject([&]{normal_scan_ready(0);}); assert(status_reads==50);
+    reset(); fail_at=0; reject([&]{normal_scan_ready(0);}); assert(operations==1);
+    reset(); custom_busy_reads=2; assert(custom_read(0,1)==0 && custom_reads==3 && custom_writes==3);
+    reset(); custom_busy_reads=5; reject([&]{custom_read(0,1);}); assert(custom_reads==5 && custom_writes==5);
+    std::cout<<"Uke command resubmission, five-attempt timeout and baseline readiness guards passed\n";
+    if(argc==1) return 0;
     assert(argc==2);
     std::ifstream input(argv[1],std::ios::binary);
     Bytes data{std::istreambuf_iterator<char>(input),{}};

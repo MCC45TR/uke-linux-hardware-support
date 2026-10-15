@@ -3,8 +3,27 @@
 Uke sensor discovery, typed evidence and native userspace integration for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 
 Native metadata and bounded sample diagnostics are available in source. The packaging scaffold is
-still gated: these tools do not provide IIO sensor streams, touch input or a
+still gated: these diagnostics do not provide IIO sensor streams or a
 calibrated desktop sensor interface.
+
+## Persistent touch candidate
+
+14 October 2026: `make touchscreen-rpm` builds a separate AArch64
+`uke-touchscreen` candidate from the reviewed native NT36532 processor. It
+uses standard Linux direct multitouch input and starts as a foreground service.
+The service resolves GPIO/SPI resources through DT and validates the normal
+firmware, panel-ID and geometry before publishing events. Original KDE packages
+consume the input device through libinput.
+
+Provision the qualified normal firmware, OEM config and private reference packet
+locally under `/var/lib/uke-touch/` using the local-only data spec. Their binary
+RPM, source RPM and inputs must never be uploaded to COPR or GitHub. The public
+touch source package contains no firmware or per-device reference data.
+
+Host fixtures cover ten published contacts, contact identity/lift, malformed
+reports and GPIO provider renumbering/ambiguity. Persistent physical startup,
+multi-finger tracking and power-profile/report-rate integration remain unqualified.
+An installed package is not proof of working touch.
 
 ## Metadata diagnostics
 
