@@ -1,0 +1,22 @@
+[Unit]
+Description=Read the Uke factory WLAN address from protected persist
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+RequiresMountsFor=/mnt/vendor/persist
+Before=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/senemos-uke/uke-wifi-factory
+RemainAfterExit=yes
+TimeoutStartSec=5
+RuntimeDirectory=NetworkManager/conf.d
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ReadWritePaths=/run/NetworkManager/conf.d
+
+[Install]
+WantedBy=NetworkManager.service

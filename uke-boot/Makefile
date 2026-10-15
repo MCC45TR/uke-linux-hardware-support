@@ -16,6 +16,8 @@ validate:
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh
+	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o build/tests/wifi-factory
+	build/tests/wifi-factory
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 src/esp32-cdc.cpp -o build/tests/uke-esp32-cdc
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/esp32-tty.cpp -o build/tests/esp32-tty -lutil
 	build/tests/esp32-tty

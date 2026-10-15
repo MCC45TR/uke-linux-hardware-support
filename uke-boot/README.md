@@ -28,6 +28,21 @@ Nabu binary/geometry defaults cannot supply them. Detailed records are in
 Run `make validate`, `make test-native` or `make srpm`. Source archives remain in
 `referances/`; package/host output is ignored under `build/`.
 
+On 2026-10-14, `uke-wifi-factory` passed host parser and wrong-partition rejection
+checks. Its C++ helper reads each tablet's own `persist/wlan/wlan_mac.bin` before
+NetworkManager starts. It requires the physical persist partition to be mounted
+read-only with `nodev,nosuid,noexec`, validates a single unicast address and writes
+only a private runtime NetworkManager default. No address is compiled into the
+package. Explicit per-network MAC choices still take precedence.
+
+The image composer must apply the reviewed `fstab-auxiliary.template` and enable
+`uke-wifi-factory.service`. Persist is mounted read-only without journal replay.
+Modem, DSP and Bluetooth A/B filesystems remain separate, protected automounts;
+accessing them does not select a firmware slot or change driver firmware paths.
+Mount-only SELinux contexts preserve the original Android file labels. Do not
+mount security, boot or encrypted data partitions as ordinary data directories.
+Repeated normal-boot address checks remain a separate physical acceptance gate.
+
 On 2026-10-14, native AArch64 fixtures passed for the optional
 `uke-boot-recovery` development package. Its C++ observer measures 180 seconds
 from kernel startup, including initramfs time. It accepts the physical EXT4
