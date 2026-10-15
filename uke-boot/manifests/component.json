@@ -9,7 +9,8 @@
   "expected_packages": [
     "uke-boot-integration",
     "uke-esp32-cdc",
-    "uke-boot-recovery"
+    "uke-boot-recovery",
+    "uke-kernel-update"
   ],
   "nabu_reference_packages": [
     "nabu-boot"

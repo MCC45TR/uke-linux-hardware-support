@@ -28,6 +28,11 @@ Nabu binary/geometry defaults cannot supply them. Detailed records are in
 Run `make validate`, `make test-native` or `make srpm`. Source archives remain in
 `referances/`; package/host output is ignored under `build/`.
 
+The optional `uke-kernel-update` package installs a native, checked `boot_b`
+writer. Automatic use requires a matching versioned kernel boot bundle and
+explicit local enablement. See [kernel updates](docs/KERNEL-UPDATES.md) for
+the package contract, recovery limits and validation status.
+
 On 2026-10-14, `uke-wifi-factory` passed host parser and wrong-partition rejection
 checks. Its C++ helper reads each tablet's own `persist/wlan/wlan_mac.bin` before
 NetworkManager starts. It requires the physical persist partition to be mounted
