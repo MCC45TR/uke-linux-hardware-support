@@ -1,0 +1,24 @@
+[Unit]
+Description=Uke development shell over USB CDC ACM
+Requires=uke-cdc-acm.service
+PartOf=uke-cdc-acm.service
+After=uke-cdc-acm.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+
+[Service]
+Type=exec
+ExecStartPre=/usr/bin/uke-boot-status --cdc --require-tty --wait 15
+ExecStart=-/usr/bin/bash --noediting --noprofile --norc -i
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/ttyGS0
+TTYReset=no
+TTYVHangup=no
+Environment=TERM=dumb
+Restart=always
+RestartSec=3
+KillSignal=SIGHUP
+
+[Install]
+WantedBy=multi-user.target

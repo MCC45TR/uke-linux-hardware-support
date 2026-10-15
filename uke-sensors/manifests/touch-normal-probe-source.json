@@ -1,0 +1,43 @@
+{
+  "device": "uke",
+  "scope": "Bounded normal-RAM-download laboratory probe; no input or RPM admission",
+  "firmware": {
+    "repository": "https://github.com/uke-resources/vendor_xiaomi_uke",
+    "commit": "51ecce187b180e1df9230ff50b604af535b8e116",
+    "filename": "novatek_nt36532_o82_fw_csot.bin",
+    "sha256": "a4f949fb89c7eaad9da85a5885cd2dcc1fffbf08bc1e7ffe9f0bb97c1769b310",
+    "bytes": 245760,
+    "redistribution": "not-admitted",
+    "config": {
+      "path": "proprietary/odm/firmware/o82_nova_thp_config.ini",
+      "sha256": "c02d1956da3714bbd9a19f14ca814731cffd4e2442677a83d5e071ea547a0616",
+      "normal_super_resolution": 10,
+      "channels": [
+        60,
+        40
+      ]
+    }
+  },
+  "protocol_sources": [
+    {
+      "repository": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+      "commit": "77dc8e2290f3f5f15861821564f68d30ea193449",
+      "path": "drivers/input/touchscreen/nt36532",
+      "class": "adjacent-device, loader checked against Uke OEM ELF"
+    },
+    {
+      "repository": "https://github.com/MiCode/vendor_xiaomi_proprietary_touch-driver",
+      "commit": "6957f6b646d1c919e175e6f9000eb50c8635273c",
+      "path": "p81/nt36532",
+      "class": "adjacent-device THP source; extra map fields excluded by explicit comparison"
+    }
+  ],
+  "native_sdk": {
+    "base_image_sha256": "f2b40c9f88815ad82d4246d46edb172df8715f9d5eedf02bb5eb5c5bb142ece8",
+    "probe_image_sha256": "fe771c4a3ed38d2a26e359811c6c53fb8bec2b9c4f47e840dca9888c26b40d78",
+    "added_host_package": "openssl-devel-4.0.3-1.fc46.aarch64",
+    "headers_sha256": "421555f9b78004cc100432a4aea8930c02d82c30589316fcf03fd86e9db4e53b",
+    "target_dependency": "existing openssl-libs-4.0.3-1.fc46.aarch64; no package added",
+    "python_target_payload": false
+  }
+}

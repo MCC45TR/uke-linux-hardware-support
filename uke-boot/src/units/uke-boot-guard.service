@@ -1,0 +1,17 @@
+[Unit]
+Description=Return an inaccessible Uke startup to fastboot after three minutes
+DefaultDependencies=no
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+IgnoreOnIsolate=yes
+Conflicts=shutdown.target initrd-switch-root.target
+Before=shutdown.target initrd-switch-root.target
+FailureAction=reboot-force
+RebootArgument=bootloader
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/senemos-uke/uke-boot-guard --monitor
+RuntimeMaxSec=185
+TimeoutStopSec=3
+StandardOutput=journal+console
+StandardError=journal+console

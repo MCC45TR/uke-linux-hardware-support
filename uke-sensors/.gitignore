@@ -1,6 +1,7 @@
 /referances/*
 !/referances/README.md
 /build/
+/src/upstream/
 /artifacts/
 /reports/private/
 *.rpm

@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
         const auto cmdline = read(root / "proc/cmdline");
         const bool efi = present(root, "sys/firmware/efi");
         const bool uke = compatible(dt, "xiaomi,uke") && compatible(dt, "qcom,sm7675");
-        const bool kernel = release == "7.2.9-senemos-uke";
+        const bool kernel = release == "7.2.9-senemos-uke" || release == "7.2.10-senemos-uke";
         auto boolean = [](bool value) { return value ? "true" : "false"; };
         if (identity) {
             std::cout << "{\"schema_version\":1,\"scope\":\"read-only-kernel-device-identity\",\"uke_compatible\":"

@@ -1,0 +1,23 @@
+{
+  "device": "uke",
+  "status": "bounded laboratory trial; permanent startup not admitted",
+  "processor": {
+    "repository": "https://github.com/ianchb/xiaomi-sheng-thp",
+    "commit": "34046210932d654a4c0df0121ecc31c008f8148c",
+    "license": "Apache-2.0",
+    "class": "adjacent-device host-touch algorithm; Uke calibration loaded separately",
+    "files": ["src/nvt_touch_core.cpp", "src/nvt_touch_core.hpp"],
+    "patch": "patches/nt36532-thp-runtime-geometry.patch",
+    "patch_sha256": "9f2a0b03e9ca59df095a36e3c314d16e67273735328348f1213848b7988f40c7"
+  },
+  "input": {
+    "name": "Novatek NT36532 Uke Touchscreen",
+    "transport": "SPI THP, userspace laboratory processor, kernel uinput",
+    "protocol": "Linux multitouch protocol B",
+    "slots": 12,
+    "physical_multitouch_acceptance": false,
+    "private_calibration_payload": false,
+    "python_payload": false
+  },
+  "remaining": ["packaged kernel IRQ transport", "physical coordinate and multitouch acceptance", "cold boot", "display and suspend lifecycle", "refresh-rate and power-profile integration"]
+}

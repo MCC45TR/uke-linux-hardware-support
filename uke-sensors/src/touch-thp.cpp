@@ -1,0 +1,265 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#define UKE_TOUCH_NORMAL_TEST
+#include "touch-normal-probe.cpp"
+#include "touch-thp-geometry.hpp"
+#include "touch-thp-packet.hpp"
+#include <csignal>
+#include <filesystem>
+#include <linux/gpio.h>
+#include <linux/uinput.h>
+#include <poll.h>
+
+static volatile std::sig_atomic_t running=1;
+static void stop_touch(int) { running=0; }
+static void touch_buffer_ready(const std::filesystem::path &path="/sys/module/spidev/parameters/bufsiz") {
+    std::ifstream file(path); unsigned bytes=0;
+    require(bool(file>>bytes) && bytes>=uke_touch::frame_size+2,
+            "spidev buffer too small: load spidev with bufsiz=8192 before touch startup");
+}
+static std::string touch_gpio(const std::filesystem::path &device,
+                              const std::filesystem::path &root="/sys/bus/gpio/devices") {
+    std::ifstream pin(device/"of_node/novatek,irq-gpio",std::ios::binary);
+    std::array<unsigned char,12> cells{};
+    require(bool(pin.read(reinterpret_cast<char *>(cells.data()),cells.size())) &&
+            pin.peek()==EOF &&
+            cells[4]==0 && cells[5]==0 && cells[6]==0 && cells[7]==54 &&
+            cells[8]==0 && cells[9]==0 && cells[10]==0x20 && cells[11]==1,"Unqualified touch IRQ mapping");
+    std::ifstream id(device/"of_node/novatek,lcd_id-gpio",std::ios::binary);
+    std::array<unsigned char,12> id_cells{};
+    require(bool(id.read(reinterpret_cast<char *>(id_cells.data()),id_cells.size())) && id.peek()==EOF &&
+            std::equal(cells.begin(),cells.begin()+4,id_cells.begin()) &&
+            id_cells[4]==0 && id_cells[5]==0 && id_cells[6]==0 && id_cells[7]==26 &&
+            id_cells[8]==0 && id_cells[9]==0 && id_cells[10]==0 && id_cells[11]==0,
+            "Unqualified panel-ID mapping");
+    std::string selected;
+    for(const auto &entry:std::filesystem::directory_iterator(root)) {
+        const auto node=entry.path()/"of_node";
+        if(!entry.path().filename().string().starts_with("gpiochip") ||
+           !compatible((node/"compatible").c_str(),"qcom,cliffs-pinctrl")) continue;
+        std::ifstream input(node/"phandle",std::ios::binary);
+        std::array<unsigned char,4> handle{};
+        if(!input.read(reinterpret_cast<char *>(handle.data()),handle.size()) || input.peek()!=EOF ||
+           !std::equal(handle.begin(),handle.end(),cells.begin())) continue;
+        require(selected.empty(),"Ambiguous touch GPIO controller");
+        selected="/dev/"+entry.path().filename().string();
+    }
+    require(!selected.empty(),"Touch GPIO controller unavailable");
+    return selected;
+}
+static void touch_panel_id_ready(const std::string &controller) {
+    const int chip=open(controller.c_str(),O_RDONLY|O_CLOEXEC);
+    require(chip>=0,"Touch panel-ID controller unavailable");
+    gpio_v2_line_info info{}; info.offset=26;
+    const bool safe=ioctl(chip,GPIO_V2_GET_LINEINFO_IOCTL,&info)==0 &&
+        (info.flags&GPIO_V2_LINE_FLAG_INPUT) && !(info.flags&GPIO_V2_LINE_FLAG_OUTPUT);
+    gpio_v2_line_request request{}; request.offsets[0]=26; request.num_lines=1;
+    request.config.flags=GPIO_V2_LINE_FLAG_INPUT;
+    const int result=safe ? ioctl(chip,GPIO_V2_GET_LINE_IOCTL,&request) : -1;
+    close(chip); require(result==0,"Touch panel-ID must already be an available input");
+    gpio_v2_line_values values{}; values.mask=1;
+    const bool high=ioctl(request.fd,GPIO_V2_LINE_GET_VALUES_IOCTL,&values)==0 && (values.bits&1);
+    close(request.fd); require(high,"Touch panel-ID must be high; no output is driven");
+}
+static int touch_irq(const std::string &controller) {
+    const int chip=open(controller.c_str(),O_RDONLY|O_CLOEXEC); require(chip>=0,"GPIO controller unavailable");
+    gpio_v2_line_request request{}; request.offsets[0]=54; request.num_lines=1;
+    request.config.flags=GPIO_V2_LINE_FLAG_INPUT|GPIO_V2_LINE_FLAG_EDGE_RISING;
+    const char name[]="uke-nt36532-thp"; std::copy(std::begin(name),std::end(name),request.consumer);
+    const int result=ioctl(chip,GPIO_V2_GET_LINE_IOCTL,&request); close(chip);
+    require(result==0,"Touch IRQ input request failed"); return request.fd;
+}
+static unsigned consume_touch_irq(int fd) {
+    // SPI exposes the latest matrix, so queued edges must not trigger repeated stale reads.
+    std::array<gpio_v2_line_event,16> edges{};
+    const auto bytes=::read(fd,edges.data(),sizeof(edges));
+    require(bytes>0 && bytes%sizeof(edges[0])==0,"Touch IRQ batch read failed");
+    return bytes/sizeof(edges[0]);
+}
+static void input_setup(int fd,const nvt::Geometry &geometry) {
+    require(ioctl(fd,UI_SET_EVBIT,EV_ABS)==0 && ioctl(fd,UI_SET_EVBIT,EV_KEY)==0 &&
+            ioctl(fd,UI_SET_KEYBIT,BTN_TOUCH)==0 && ioctl(fd,UI_SET_PROPBIT,INPUT_PROP_DIRECT)==0,
+            "Touch input capabilities failed");
+    for(const auto &[code,maximum]:std::array<std::pair<unsigned,int>,4>{{
+        {ABS_MT_SLOT,nvt::kFingerSlots-1},{ABS_MT_TRACKING_ID,65535},
+        {ABS_MT_POSITION_X,geometry.width-1},{ABS_MT_POSITION_Y,geometry.height-1}}}) {
+        require(ioctl(fd,UI_SET_ABSBIT,code)==0,"Touch axis capability failed");
+        uinput_abs_setup axis{}; axis.code=code; axis.absinfo.maximum=maximum;
+        if(code==ABS_MT_POSITION_X) axis.absinfo.resolution=geometry.width/237;
+        if(code==ABS_MT_POSITION_Y) axis.absinfo.resolution=geometry.height/158;
+        require(ioctl(fd,UI_ABS_SETUP,&axis)==0,"Touch axis setup failed");
+    }
+    uinput_setup device{};
+    device.id.bustype=BUS_SPI;
+    const char name[]="Novatek NT36532 Uke Touchscreen";
+    std::copy(std::begin(name),std::end(name),device.name);
+    require(ioctl(fd,UI_DEV_SETUP,&device)==0 && ioctl(fd,UI_SET_PHYS,"spi0.0/nt36532-uke-thp")==0 &&
+            ioctl(fd,UI_DEV_CREATE)==0,"Touch input registration failed");
+}
+static void input_report(int fd,const std::vector<nvt::Slot> &slots,std::array<int,nvt::kFingerSlots> &ids,const nvt::Geometry &geometry) {
+    std::array<bool,nvt::kFingerSlots> seen{};
+    for(const auto &slot:slots) {
+        require(slot.number>=0 && slot.number<int(ids.size()) && !seen[slot.number],"Invalid or duplicate touch slot");
+        seen[slot.number]=true;
+        require(slot.tracking_id>=0 && slot.tracking_id<=65535 &&
+                slot.contact.x>=0 && slot.contact.x<geometry.width &&
+                slot.contact.y>=0 && slot.contact.y<geometry.height,"Touch contact outside admitted range");
+        require(std::count_if(slots.begin(),slots.end(),[&](const auto &other){return other.tracking_id==slot.tracking_id;})==1,
+                "Duplicate touch tracking ID");
+    }
+    std::vector<input_event> events;
+    const auto event=[&](unsigned type,unsigned code,int value) {
+        input_event e{}; e.type=type; e.code=code; e.value=value; events.push_back(e);
+    };
+    // Legacy mousedev requires BTN_TOUCH before the coordinate events.
+    event(EV_KEY,BTN_TOUCH,!slots.empty());
+    for(unsigned index=0;index<ids.size();index++) {
+        const auto found=std::find_if(slots.begin(),slots.end(),[&](const auto &s){return s.number==int(index);});
+        const int id=found==slots.end() ? -1 : found->tracking_id;
+        require(id>=-1 && id<=65535,"Touch tracking ID outside admitted range");
+        if(id==ids[index] && id<0) continue;
+        event(EV_ABS,ABS_MT_SLOT,index);
+        if(id!=ids[index]) event(EV_ABS,ABS_MT_TRACKING_ID,id);
+        if(found!=slots.end()) {
+            event(EV_ABS,ABS_MT_POSITION_X,found->contact.x);
+            // The stock framebuffer route is mirrored against the O82 electrode row axis.
+            event(EV_ABS,ABS_MT_POSITION_Y,uke_touch::display_y(found->contact.y,geometry.height));
+        }
+        ids[index]=id;
+    }
+    event(EV_SYN,SYN_REPORT,0);
+    require(::write(fd,events.data(),events.size()*sizeof(input_event))==ssize_t(events.size()*sizeof(input_event)),
+            "Touch event publication failed");
+}
+int main(int argc,char **argv) {
+    int spi=-1,input=-1,irq=-1;
+    const auto started=std::chrono::steady_clock::now();
+    std::array<int,nvt::kFingerSlots> ids; ids.fill(-1);
+    nvt::Geometry geometry;
+    try {
+        const bool daemon=argc==2 && std::string(argv[1])=="--daemon";
+        require(argc==2 && (daemon || std::string(argv[1])=="--live-lab"),
+                "Usage: uke-touch-thp --daemon | --live-lab (600-second trial)");
+        require(compatible("/sys/firmware/devicetree/base/compatible","xiaomi,uke"),"Foreign board");
+        std::filesystem::path device;
+        for(const auto &entry:std::filesystem::directory_iterator("/sys/bus/spi/devices")) {
+            if(!compatible((entry.path()/"of_node/compatible").c_str(),"novatek,NVT-ts-spi")) continue;
+            require(device.empty(),"Ambiguous Uke touch SPI leaf"); device=entry.path();
+        }
+        require(!device.empty(),"Uke touch SPI leaf unavailable");
+        std::ifstream ceiling(device/"of_node/spi-max-frequency",std::ios::binary);
+        std::array<unsigned char,4> speed{};
+        require(bool(ceiling.read(reinterpret_cast<char *>(speed.data()),speed.size())) && ceiling.peek()==EOF &&
+                speed==std::array<unsigned char,4>{1,0x24,0xf8,0},"Unqualified SPI ceiling");
+        const auto controller=touch_gpio(device);
+        const auto data=std::filesystem::path(daemon ? "/var/lib/uke-touch" : "/run");
+        geometry=touch_geometry((data/(daemon ? "config.ini" : "uke-touch-config.ini")).c_str());
+        nvt::TouchCore core(geometry);
+        std::ifstream reference(data/(daemon ? "reference.bin" : "uke-touch-reference.bin"),std::ios::binary);
+        std::array<std::uint8_t,uke_touch::frame_size> reference_data{};
+        require(bool(reference.read(reinterpret_cast<char *>(reference_data.data()),reference_data.size())) &&
+                reference.peek()==EOF,"No qualified reference packet");
+        const auto reference_frame=uke_touch::decode(reference_data);
+        require(bool(reference_frame),"Reference packet is corrupt");
+        core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);
+        Bytes image;
+        if(daemon) {
+            image.resize(245760); std::ifstream file(data/"normal.bin",std::ios::binary);
+            require(bool(file.read(reinterpret_cast<char *>(image.data()),image.size())) && file.peek()==EOF,
+                    "Pinned private normal firmware unavailable");
+            normal_image(image);
+            touch_panel_id_ready(controller);
+            if(std::filesystem::exists(device/"driver")) {
+                require(std::filesystem::canonical(device/"driver").filename()=="spidev",
+                        "Touch transport already belongs to another driver");
+            } else {
+                std::ofstream override(device/"driver_override"); override<<"spidev\n";
+                override.flush(); require(bool(override),"Touch SPI override failed"); override.close();
+                std::ofstream bind("/sys/bus/spi/drivers/spidev/bind"); bind<<device.filename().string()<<'\n';
+                bind.flush(); require(bool(bind),"Touch SPI bind failed");
+            }
+        } else {
+            std::ifstream admission("/run/uke-touch-csot-admitted"); std::string token;
+            require(bool(std::getline(admission,token)) && token=="uke-gpio26-input-high-cascade","Supplier preflight missing");
+        }
+        const auto transport="/dev/spidev"+device.filename().string().substr(3);
+        for(unsigned attempt=0;attempt<40;++attempt) {
+            spi=open(transport.c_str(),O_RDWR|O_CLOEXEC);
+            if(spi>=0 || errno!=ENOENT) break;
+            pause_ms(50);
+        }
+        require(spi>=0,"Reviewed SPI leaf unavailable");
+        lock_touch(spi);
+        touch_buffer_ready();
+        std::uint8_t mode=255;
+        require(ioctl(spi,SPI_IOC_RD_MODE,&mode)==0 && mode==SPI_MODE_0,"Unexpected SPI mode");
+        require(nt36532(read<6>(spi,0x1fb104)) && !(read<1>(spi,0x1fb12c)[0]&1),"Foreign chip/topology");
+        if(daemon) { load_normal(spi,image); normal_scan_ready(spi); }
+        const auto info=read<16>(spi,firmware_address(0));
+        require(info[0]==0x11 && info[1]==0xee && info[2]==60 && info[3]==40 &&
+                info[4]==0x7d && info[5]==0 && info[6]==0x53 && info[7]==0x70,"Resident normal firmware unavailable");
+        const auto operating_mode=custom_read(spi,1);
+        const auto stylus_only=custom_read(spi,5);
+        const auto single_step=custom_read(spi,0x0e);
+        std::cout<<"Touch operating modes: op="<<operating_mode<<" stylus-only="<<stylus_only
+                 <<" single-step="<<single_step<<std::endl;
+        require(operating_mode==1 && stylus_only==0 && single_step==0,
+                "Touch operating mode unavailable");
+        irq=touch_irq(controller);
+        input=open("/dev/uinput",O_WRONLY|O_CLOEXEC); require(input>=0,"Kernel uinput is unavailable");
+        input_setup(input,geometry);
+        std::cout<<"Touch input ready in "
+                 <<std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::steady_clock::now()-started).count()
+                 <<" ms; slots="<<nvt::kFingerSlots<<std::endl;
+        std::signal(SIGTERM,stop_touch); std::signal(SIGINT,stop_touch);
+        const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(600);
+        auto last_valid=std::chrono::steady_clock::now();
+        unsigned frames=0,rejected=0,contacts=0,coalesced_edges=0;
+        std::size_t previous_contacts=0;
+        while(running && (daemon || std::chrono::steady_clock::now()<deadline)) {
+            pollfd ready{irq,POLLIN,0};
+            const int status=poll(&ready,1,100);
+            if(status<0 && !running) break;
+            require(status>=0,"Touch IRQ wait failed");
+            if(!status) {
+                input_report(input,{},ids,geometry); previous_contacts=0;
+                continue;
+            }
+            coalesced_edges+=consume_touch_irq(irq)-1;
+            auto page_select=select_page(0x11c400); transfer(spi,page_select.data(),nullptr,page_select.size());
+            std::array<std::uint8_t,5434> tx{},rx{};
+            transfer(spi,tx.data(),rx.data(),rx.size(),19200000);
+            const auto frame=uke_touch::decode(std::span(rx).subspan(2));
+            const auto now=std::chrono::steady_clock::now();
+            if(frame) {
+                last_valid=now; frames++;
+                const auto result=core.process(frame->matrix,frame->counter,frame->scan_mode);
+                input_report(input,result.slots,ids,geometry);
+                contacts+=!result.slots.empty();
+                if(result.slots.size()!=previous_contacts || (!result.slots.empty() && frames%30==0)) {
+                    std::cout<<"frame="<<frames<<" contacts="<<result.slots.size();
+                    for(const auto &s:result.slots) std::cout<<" [slot="<<s.number<<" id="<<s.tracking_id<<" x="<<s.contact.x<<" y="<<s.contact.y<<']';
+                    std::cout<<std::endl; previous_contacts=result.slots.size();
+                }
+            } else {
+                rejected++;
+                if(now-last_valid>std::chrono::milliseconds(100)) {
+                    input_report(input,{},ids,geometry); core.reset();
+                    core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);
+                    previous_contacts=0;
+                }
+            }
+        }
+        input_report(input,{},ids,geometry);
+        require(ioctl(input,UI_DEV_DESTROY)==0,"Touch input cleanup failed");
+        close(input); input=-1; close(spi); spi=-1; close(irq); irq=-1;
+        std::cout<<"valid="<<frames<<" rejected="<<rejected<<" contact_frames="<<contacts<<" coalesced_edges="<<coalesced_edges<<'\n';
+        (void)&load_normal; (void)&normal_image; (void)&inspect_normal; (void)&probe_coordinates;
+        return 0;
+    } catch(const std::exception &e) {
+        if(input>=0) { try{input_report(input,{},ids,geometry);}catch(...){} ioctl(input,UI_DEV_DESTROY); close(input); }
+        if(spi>=0) close(spi);
+        if(irq>=0) close(irq);
+        std::cerr<<e.what()<<'\n'; return 1;
+    }
+}

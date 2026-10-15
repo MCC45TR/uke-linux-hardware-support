@@ -13,6 +13,14 @@ printf 'root=PARTLABEL=uke_linux rw rootwait\n' > "$fixture/proc/cmdline"
 build/tests/uke-boot-status --root "$fixture" > build/tests/accepted.json
 jq -e '.efi_present and .uke_compatible and .selected_kernel_release and .uke_root_command_line and (.hardware_acceptance_granted|not)' build/tests/accepted.json >/dev/null
 cp -a "$fixture" "$baseline"
+printf '7.2.10-senemos-uke\n' > "$fixture/proc/sys/kernel/osrelease"
+build/tests/uke-boot-status --identity --root "$fixture" > build/tests/identity-7.2.10.json
+jq -e '.selected_kernel_release and (.hardware_acceptance_granted|not)' build/tests/identity-7.2.10.json >/dev/null
+for release in 7.2.11-senemos-uke 7.2.10 7.2.10-senemos-nabu; do
+    printf '%s\n' "$release" > "$fixture/proc/sys/kernel/osrelease"
+    if build/tests/uke-boot-status --identity --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
+done
+printf '7.2.9-senemos-uke\n' > "$fixture/proc/sys/kernel/osrelease"
 printf 'root=LABEL=UKE_LINUX rw rootwait\n' > "$fixture/proc/cmdline"
 build/tests/uke-boot-status --root "$fixture" > build/tests/filesystem-label.json
 jq -e '.uke_root_command_line' build/tests/filesystem-label.json >/dev/null
