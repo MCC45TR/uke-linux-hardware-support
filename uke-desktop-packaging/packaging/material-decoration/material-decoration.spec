@@ -1,7 +1,7 @@
-%global upstream_commit 0b778253ad6c8eb7fc227bd9d486515c00cdf377
+%global upstream_commit d9c4db544164677758e0ff885ee681f30577cead
 
 Name:           material-decoration
-Version:        20261006.094154
+Version:        20261016.162401
 Release:        3%{?dist}
 Summary:        Material window decoration and configuration for KWin 6
 License:        GPL-2.0-or-later AND LGPL-2.0-or-later
