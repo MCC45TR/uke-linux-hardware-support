@@ -55,11 +55,12 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
     // The stock Uke probe clears the trim latch after its bootstrap reset.
     allowed |= address==0x1fb104 && data.size()==6 &&
                std::all_of(data.begin(),data.end(),[](auto byte){return byte==0;});
-    allowed |= address==0x11c450 && data.size()==5 && data[0]==0xbf && data[1]==0x15 &&
+    allowed |= address==0x11c450 && data.size()==5 && data[0]==0xbf && (data[1]==0x15 || data[1]==0x0f) &&
                data[2]==0 && data[3]<=1 && data[4]==0;
     allowed |= address==0x11c450 && data.size()==3 && data[0]==0xbf && data[2]==1 &&
                (data[1]==1 || data[1]==4 || data[1]==5 || data[1]==6 ||
-                data[1]==0x0d || data[1]==0x0e || data[1]==0x15);
+                data[1]==0x0a || data[1]==0x0b || data[1]==0x0d || data[1]==0x0e ||
+                data[1]==0x0f || data[1]==0x15);
     require(allowed && !data.empty() && data.size()<=1024, "Write outside normal RAM-download scope");
     auto select=select_page(address); transfer(fd,select.data(),nullptr,select.size());
     Bytes tx(data.size()+1); tx[0]=(address&0x7f)|0x80;
@@ -140,6 +141,34 @@ static unsigned custom_read(int fd,unsigned subcommand) {
     }
     throw std::runtime_error("Touch command "+std::to_string(subcommand)+
         " timed out; status="+std::to_string(last_status));
+}
+static void touch_game_mode(int fd,unsigned value) {
+    require(value<=1,"Invalid touch game mode");
+    pause_ms(35);
+    for(unsigned attempt=0;attempt<5;attempt++) {
+        normal_write(fd,0x11c450,Bytes{0xbf,0x0f,0,std::uint8_t(value),0});
+        pause_ms(20);
+        if(normal_read<1>(fd,0x11c450)[0]==0) {
+            require(custom_read(fd,0x0f)==value,"Touch game-mode readback failed");
+            return;
+        }
+    }
+    throw std::runtime_error("Touch game-mode acknowledgement timed out");
+}
+static void touch_probe_game_rates(int fd) {
+    const auto previous=custom_read(fd,0x0f);
+    require(previous<=1,"Unqualified resident touch game mode");
+    try {
+        for(unsigned mode:{0U,1U}) {
+            touch_game_mode(fd,mode);
+            std::cout<<"Touch rate probe: game="<<mode<<" hand-scan-Hz="<<custom_read(fd,0x0a)
+                     <<" pen-scan-Hz="<<custom_read(fd,0x0b)<<std::endl;
+        }
+    } catch(...) {
+        touch_game_mode(fd,previous);
+        throw;
+    }
+    touch_game_mode(fd,previous);
 }
 static void normal_scan_ready(int fd) {
     // Uke nvt_ts_resume waits for RESET_STATE_REK (0xa1), beyond loader INIT (0xa0).

@@ -9,6 +9,7 @@
 #include <linux/gpio.h>
 #include <linux/uinput.h>
 #include <poll.h>
+#include <systemd/sd-daemon.h>
 
 static volatile std::sig_atomic_t running=1;
 static void stop_touch(int) { running=0; }
@@ -241,8 +242,10 @@ int main(int argc,char **argv) {
     nvt::Geometry geometry;
     try {
         const bool daemon=argc==2 && std::string(argv[1])=="--daemon";
-        require(argc==2 && (daemon || std::string(argv[1])=="--live-lab"),
-                "Usage: uke-touch-thp --daemon | --live-lab (600-second trial)");
+        const bool probe_rates=argc==2 && std::string(argv[1])=="--probe-game-rates";
+        const bool installed=daemon || probe_rates;
+        require(argc==2 && (installed || std::string(argv[1])=="--live-lab"),
+                "Usage: uke-touch-thp --daemon | --live-lab | --probe-game-rates");
         require(compatible("/sys/firmware/devicetree/base/compatible","xiaomi,uke"),"Foreign board");
         std::filesystem::path device;
         for(const auto &entry:std::filesystem::directory_iterator("/sys/bus/spi/devices")) {
@@ -255,10 +258,10 @@ int main(int argc,char **argv) {
         require(bool(ceiling.read(reinterpret_cast<char *>(speed.data()),speed.size())) && ceiling.peek()==EOF &&
                 speed==std::array<unsigned char,4>{1,0x24,0xf8,0},"Unqualified SPI ceiling");
         const auto controller=touch_gpio(device);
-        const auto data=std::filesystem::path(daemon ? "/var/lib/uke-touch" : "/run");
-        geometry=touch_geometry((data/(daemon ? "config.ini" : "uke-touch-config.ini")).c_str());
+        const auto data=std::filesystem::path(installed ? "/var/lib/uke-touch" : "/run");
+        geometry=touch_geometry((data/(installed ? "config.ini" : "uke-touch-config.ini")).c_str());
         nvt::TouchCore core(geometry);
-        std::ifstream reference(data/(daemon ? "reference.bin" : "uke-touch-reference.bin"),std::ios::binary);
+        std::ifstream reference(data/(installed ? "reference.bin" : "uke-touch-reference.bin"),std::ios::binary);
         std::array<std::uint8_t,uke_touch::frame_size> reference_data{};
         require(bool(reference.read(reinterpret_cast<char *>(reference_data.data()),reference_data.size())) &&
                 reference.peek()==EOF,"No qualified reference packet");
@@ -266,7 +269,7 @@ int main(int argc,char **argv) {
         require(bool(reference_frame),"Reference packet is corrupt");
         core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);
         Bytes image;
-        if(daemon) {
+        if(installed) {
             image.resize(245760); std::ifstream file(data/"normal.bin",std::ios::binary);
             require(bool(file.read(reinterpret_cast<char *>(image.data()),image.size())) && file.peek()==EOF,
                     "Pinned private normal firmware unavailable");
@@ -298,7 +301,7 @@ int main(int argc,char **argv) {
         require(ioctl(spi,SPI_IOC_RD_MODE,&mode)==0 && mode==SPI_MODE_0,"Unexpected SPI mode");
         std::filesystem::path panel_provider;
         TouchPanelState admitted_panel{0,true};
-        if(daemon) {
+        if(installed) {
             for(unsigned attempt=0;attempt<100;attempt++) {
                 panel_provider=touch_panel_provider();
                 if(!panel_provider.empty()) {
@@ -310,6 +313,13 @@ int main(int argc,char **argv) {
             require(!panel_provider.empty() && admitted_panel.ready,"O82 kernel panel-reset provider is not ready");
             panel_event=open(panel_provider.c_str(),O_RDONLY|O_CLOEXEC);
             require(panel_event>=0,"O82 panel event provider unavailable");
+        }
+        if(probe_rates) {
+            TouchPanelGuard guard(panel_provider,admitted_panel);
+            require(nt36532(read<6>(spi,0x1fb104)) && !(read<1>(spi,0x1fb12c)[0]&1),"Foreign chip/topology");
+            touch_probe_game_rates(spi);
+            close(panel_event); close(spi);
+            return 0;
         }
         if(daemon) {
             TouchPanelGuard guard(panel_provider,admitted_panel);
@@ -336,6 +346,7 @@ int main(int argc,char **argv) {
                        std::chrono::steady_clock::now()-started).count()
                  <<" ms; slots="<<nvt::kFingerSlots<<std::endl;
         std::signal(SIGTERM,stop_touch); std::signal(SIGINT,stop_touch);
+        if(daemon) require(sd_notify(0,"READY=1")>=0,"Touch readiness notification failed");
         const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(600);
         auto last_valid=std::chrono::steady_clock::now();
         unsigned frames=0,rejected=0,contacts=0,coalesced_edges=0;
