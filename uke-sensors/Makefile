@@ -24,8 +24,8 @@ srpm: validate
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
 	cp "$$archive" "$$top/SOURCES/$$name"
 	case '$(PACKAGE)' in
-	libssc) cp patches/libssc/*.patch "$$top/SOURCES/";;
-	iio-sensor-proxy) cp patches/iio-sensor-proxy/*.patch packaging/selinux/uke-ssc.cil "$$top/SOURCES/";;
+	libssc) cp patches/libssc/*.patch tests/libssc-light-constructor.cpp "$$top/SOURCES/";;
+	iio-sensor-proxy) cp patches/iio-sensor-proxy/*.patch packaging/selinux/uke-ssc.cil src/dual-light.h tests/dual-light.cpp "$$top/SOURCES/";;
 	uke-ssc-fileservice) cp patches/hexagonrpc/*.patch packaging/systemd/*.service packaging/systemd/iio-ssc-order.conf packaging/systemd/70-uke-ssc.rules src/ssc-cache.cpp tests/hexagon-registry.cpp tests/hexagon-shell.c tests/hexagon-readiness.c "$$top/SOURCES/"; cp tests/ssc-cache.cpp "$$top/SOURCES/ssc-cache-test.cpp";;
 	esac
 	cp packaging/$(PACKAGE)/$(PACKAGE).spec "$$top/SPECS/"
@@ -51,6 +51,8 @@ test-native:
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/ssc-discovery.cpp -o build/uke-sensor-discovery
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/ssc-sample.cpp -o build/ssc-sample-contract
 	./build/ssc-sample-contract
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/dual-light.cpp -o build/dual-light-contract
+	./build/dual-light-contract
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/ssc-sample.cpp -o build/uke-sensor-sample
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-readonly.cpp -o build/touch-contract
 	./build/touch-contract

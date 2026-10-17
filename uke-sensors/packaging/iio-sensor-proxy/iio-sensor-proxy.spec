@@ -1,19 +1,25 @@
 Name: iio-sensor-proxy
 Version: 3.9
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary: Standard desktop sensor proxy with Qualcomm SSC support
 License: GPL-3.0-or-later
 URL: https://gitlab.freedesktop.org/hadess/iio-sensor-proxy
 Source0: %{name}-%{version}.tar.bz2
 Source1: uke-ssc.cil
+Source2: dual-light.h
+Source3: dual-light.cpp
 Patch0: 0001-initialize-before-dbus-name.patch
-BuildRequires: gcc meson ninja-build pkgconf-pkg-config systemd-rpm-macros
+Patch1: 0002-uke-dual-light.patch
+BuildRequires: gcc gcc-c++ meson ninja-build pkgconf-pkg-config systemd-rpm-macros
 BuildRequires: python3 = 3.15.0-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
 BuildRequires: pkgconfig(udev) pkgconfig(systemd) pkgconfig(gio-2.0)
 BuildRequires: pkgconfig(gudev-1.0) pkgconfig(polkit-gobject-1) pkgconfig(libssc)
+BuildRequires: libssc-devel >= 0.4.4-3
 Requires: dbus
+Requires: libssc >= 0.4.4-3
 Provides: iio-sensor-proxy(ssc) = 1
+Provides: iio-sensor-proxy(uke-dual-light) = 1
 ExclusiveArch: aarch64
 Requires(post): /usr/bin/semodule /usr/bin/selinuxenabled
 Requires(postun): /usr/bin/semodule /usr/bin/selinuxenabled
@@ -27,6 +33,9 @@ only the proxy's own QRTR socket. No firmware or calibration data is included.
 %prep
 echo '19a4ae99b1b8af603fc789841025f9747bf445418d69ec7389e75adb6c8186bf  %{SOURCE0}' | sha256sum -c -
 %autosetup -p1
+cp %{SOURCE2} src/dual-light.h
+mkdir -p native-contract
+cp %{SOURCE3} native-contract/dual-light.cpp
 
 %build
 %set_build_flags
@@ -35,6 +44,8 @@ meson setup build --prefix=%{_prefix} --libdir=%{_lib} --libexecdir=%{_libexecdi
 meson compile -C build
 
 %check
+g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror native-contract/dual-light.cpp -o dual-light-test
+./dual-light-test
 meson test -C build --print-errorlogs
 grep -q '^#define HAS_LIBSSC "1"' build/src/config.h
 
@@ -70,6 +81,9 @@ fi
 %{_datadir}/selinux/packages/uke-ssc.cil
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 3.9-6
+- Combine calibrated Uke front/rear light through the existing SSC backend.
+
 * Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 3.9-5
 - Publish the reviewed SSC preview with numeric RPM release metadata.
 

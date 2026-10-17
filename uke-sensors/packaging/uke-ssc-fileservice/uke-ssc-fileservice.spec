@@ -1,6 +1,6 @@
 Name: uke-ssc-fileservice
 Version: 2026.09.21
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: Native Uke SSC file service with a disposable registry
 License: GPL-3.0-or-later
 URL: https://github.com/linux-msm/hexagonrpc
@@ -25,6 +25,7 @@ BuildRequires: gcc gcc-c++ systemd-rpm-macros
 BuildRequires: pkgconfig(libsystemd)
 ExclusiveArch: aarch64
 Requires: iio-sensor-proxy(ssc) >= 1
+Requires: iio-sensor-proxy(uke-dual-light) >= 1
 Requires: /usr/share/uke-sensors/odm/json.lst
 Requires: /usr/share/uke-sensors/sns_reg.conf
 Requires: /usr/lib/firmware/qcom/uke/sensors/sns_tppe.so
@@ -101,6 +102,9 @@ install -Dm644 %{SOURCE7} %{buildroot}%{_udevrulesdir}/70-uke-ssc.rules
 %{_udevrulesdir}/70-uke-ssc.rules
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-8
+- Select dual-light acquisition only for the exact Uke device-tree identity.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-7
 - Expose the existing upstream SSC proximity backend through udev.
 
