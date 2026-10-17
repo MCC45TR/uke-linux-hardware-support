@@ -167,3 +167,12 @@ filesystem; grow an existing EXT4 root only after verifying its physical
 `linux` partition. The systemd `reboot bootloader` command already accepts the
 argument, but a matching kernel reboot-reason backend and physical fastboot
 transition must be qualified before claiming it works.
+
+On 17 October 2026, the CDC shell was removed from the synchronous boot path.
+Opening its gadget TTY can wait for USB carrier before the pre-start inspector
+runs. The console now uses `Type=simple` without that pre-start command; the
+standard Bash console and explicit debug-command-line gate are retained. The
+original inspection command remains available for manual diagnostics. Host
+native fixtures and the installed unit verifier pass. One USB-connected normal
+boot reaches userspace in 4.7 seconds; an unplugged cold-boot console test remains
+separate evidence.

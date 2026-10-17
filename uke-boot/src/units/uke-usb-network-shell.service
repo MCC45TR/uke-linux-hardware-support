@@ -6,8 +6,8 @@ After=uke-usb-network.service
 ConditionKernelCommandLine=senemos.debug=cdc-acm
 
 [Service]
-Type=exec
-ExecStartPre=/usr/bin/uke-boot-status --cdc --require-tty --wait 15
+# Opening the gadget TTY can wait for USB carrier; do not hold up boot.
+Type=simple
 ExecStart=-/usr/bin/bash --noediting --noprofile --norc -i
 StandardInput=tty-force
 StandardOutput=tty
