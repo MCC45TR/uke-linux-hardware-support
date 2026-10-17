@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -44,6 +44,7 @@ Requires: kde-connect
 Requires: kde-gtk-config
 Requires: kdeplasma-addons
 Requires: kdialog
+Requires: kcm-plasmalogin
 Requires: kinfocenter
 Requires: kio-admin
 Requires: konsole
@@ -64,6 +65,7 @@ Requires: plasma-discover-notifier
 Requires: plasma-discover-offline-updates
 Requires: plasma-discover-packagekit
 Requires: plasma-keyboard
+Requires: plasma-login-manager
 Requires: plasma-milou
 Requires: plasma-nm
 Requires: plasma-pa
@@ -88,8 +90,9 @@ Requires: xsettingsd
 An optional application selection for Fedora Rawhide AArch64. All desktop
 applications remain the original Fedora packages, including their original
 distribution-provided helpers. The selection installs no Uke desktop fork,
-login-manager preset, display configuration or hardware startup service.
-The existing login manager is retained. Hardware support is tested separately.
+display configuration or hardware startup service. Original Fedora Plasma Login
+Manager and its settings module are selected without activation scriptlets.
+Hardware support is tested separately.
 
 %prep
 %setup -q
@@ -110,6 +113,9 @@ bash tests/plasma-profile.sh
 %{_datadir}/senemos/uke/desktops/plasma.json
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-5
+- Select the original Fedora Plasma Login Manager and settings module.
+
 * Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-4
 - Add an optional original-Fedora Plasma application selection with PackageKit and Dolphin administration support.
 - Keep the strict console policy and the installed login manager unchanged.

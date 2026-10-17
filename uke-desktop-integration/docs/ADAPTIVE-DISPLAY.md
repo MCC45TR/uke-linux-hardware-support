@@ -45,15 +45,11 @@ failure backoff only bound failed attempts. ADSP/charger startup remains the
 kernel remoteproc, PDR and PMIC-GLINK dependency path; these units never restart
 the DSP or rebind the battery driver.
 
-Release 4 orders user managers after an existing SDDM service. Systemd reverses
-that relation at shutdown, so user services finish before SDDM releases the
-session. The dependency does not pull in a display manager or alter timeouts.
-On the first .4056 lifecycle trial, the shutdown journal reaches its end in
-approximately 2.1 seconds instead of the preceding 42-second plasmashell timeout.
-The second trial from a fresh session still waits 40 seconds for plasmashell,
-even with SDDM ordered after user shutdown. The first trial had a restarted shell;
-the ordering alone is therefore not a fix for the Plasma shutdown regression.
-Root-cause, repeated clean-session and power-off tests remain open.
+Release 5 removes the SDDM user-manager ordering introduced in release 4.
+A fresh-session shutdown still reproduced the Plasma clipboard deadlock with
+that ordering, so it did not resolve the regression. Sensor startup remains
+independent of the display manager. The original Fedora Plasma Login Manager
+is the selected login manager; repeated lifecycle testing remains separate.
 
 ## Install for a controlled trial
 
@@ -124,7 +120,7 @@ alone can identify the wrong table.
 KWin loads the curve from its output configuration at session startup. Preserve
 the full original configuration and change only the internal output's curve.
 Stop the complete graphical session before an atomic configuration update; merely
-restarting SDDM can leave a lingering compositor without DRM master. A normal
+restarting the display manager can leave a lingering compositor without DRM master. A normal
 fresh session must confirm the imported curve, automatic-brightness capability,
 actual backlight and both light samples. Do not replace the desktop configuration
 with a template or import factory data from another tablet.

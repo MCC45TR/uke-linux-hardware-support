@@ -13,7 +13,7 @@ jq -e '
   (.packages | length == (unique | length)) and
   all(.packages[]; test("^[A-Za-z0-9][A-Za-z0-9+_.-]*$") and
       (test("nabu|uke|python|pypy"; "i") | not)) and
-  (["plasma-discover-packagekit", "PackageKit", "kio-admin", "dolphin-plugins", "chromium"] - .packages | length == 0)
+  (["plasma-discover-packagekit", "PackageKit", "kio-admin", "dolphin-plugins", "chromium", "plasma-login-manager", "kcm-plasmalogin"] - .packages | length == 0)
 ' "$profile" >/dev/null
 diff -u <(jq -r '.packages[]' "$profile" | LC_ALL=C sort) \
   <(awk '/^# BEGIN ORIGINAL FEDORA PLASMA PACKAGES$/ {selection=1; next}
@@ -31,4 +31,4 @@ if grep -Eq '^%(pre|post|preun|postun|pretrans|posttrans|trigger[a-z]*|transfile
   echo 'Desktop selection must not contain activation scriptlets' >&2
   exit 1
 fi
-printf '%s\n' 'Plasma selection, dependency policy and login-manager preservation checks passed'
+printf '%s\n' 'Original Fedora Plasma and login-manager selection checks passed'

@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Sensor integration for automatic display rotation and brightness
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -25,7 +25,6 @@ It includes no firmware, calibration, desktop replacement or brightness daemon.
 %install
 install -Dm644 packaging/uke-adaptive-display.target %{buildroot}%{_unitdir}/uke-adaptive-display.target
 install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir}/80-uke-adaptive-display.preset
-install -Dm644 packaging/50-uke-sddm-order.conf %{buildroot}%{_unitdir}/user@.service.d/50-uke-sddm-order.conf
 
 %post
 %systemd_post uke-adaptive-display.target
@@ -41,9 +40,11 @@ install -Dm644 packaging/50-uke-sddm-order.conf %{buildroot}%{_unitdir}/user@.se
 %doc docs/ADAPTIVE-DISPLAY.md
 %{_unitdir}/uke-adaptive-display.target
 %{_presetdir}/80-uke-adaptive-display.preset
-%{_unitdir}/user@.service.d/50-uke-sddm-order.conf
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Remove the ineffective SDDM shutdown ordering from sensor integration.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Require the dual-light backend and stop user managers before SDDM.
 
