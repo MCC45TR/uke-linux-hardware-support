@@ -16,12 +16,13 @@ cp -a "$fixture" "$baseline"
 printf '7.2.10-senemos-uke\n' > "$fixture/proc/sys/kernel/osrelease"
 build/tests/uke-boot-status --identity --root "$fixture" > build/tests/identity-7.2.10.json
 jq -e '.selected_kernel_release and (.hardware_acceptance_granted|not)' build/tests/identity-7.2.10.json >/dev/null
-for release in 7.2.9-senemos.1.40 7.2.10-senemos.1.41; do
+for release in 7.2.9-senemos.1.40 7.2.10-senemos.1.41 7.2.10-1 7.2.10-2 7.2.11-1; do
     printf '%s\n' "$release" > "$fixture/proc/sys/kernel/osrelease"
     build/tests/uke-boot-status --identity --root "$fixture" > build/tests/identity-versioned.json
     jq -e '.selected_kernel_release and (.hardware_acceptance_granted|not)' build/tests/identity-versioned.json >/dev/null
 done
 for release in 7.2.11-senemos-uke 7.2.10 7.2.10-senemos-nabu 7.2.11-senemos.1.40 \
+    7.2.10-0 7.2.10-01 7.2.10-1.2 7.2.010-1 7.2.-1 7.2.11-1-other \
     7.2.9-senemos. 7.2.9-senemos..1 7.2.9-senemos.1..40 7.2.9-senemos.1.40. 7.2.9-senemos.1.40-foreign; do
     printf '%s\n' "$release" > "$fixture/proc/sys/kernel/osrelease"
     if build/tests/uke-boot-status --identity --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi

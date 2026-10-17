@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 14%{?dist}
+Release: 15%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot

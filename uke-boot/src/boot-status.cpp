@@ -9,6 +9,14 @@
 namespace fs = std::filesystem;
 namespace {
 bool selected_kernel(const std::string& release) {
+    const auto dash = release.find('-');
+    if (release.size() < 128 && release.rfind("7.2.", 0) == 0 && dash > 4 && dash != std::string::npos) {
+        const auto patch = release.substr(4, dash - 4);
+        const auto revision = release.substr(dash + 1);
+        if (!revision.empty() && patch.front() != '0' && revision.front() != '0' &&
+            patch.find_first_not_of("0123456789") == std::string::npos &&
+            revision.find_first_not_of("0123456789") == std::string::npos) return true;
+    }
     for (const std::string version : {"7.2.9", "7.2.10"}) {
         if (release == version + "-senemos-uke") return true;
         const auto prefix = version + "-senemos.";
