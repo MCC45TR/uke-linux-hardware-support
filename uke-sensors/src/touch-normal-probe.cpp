@@ -45,11 +45,15 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
     bool allowed = false;
     for(const auto &b : banks)
         allowed |= address>=b.address && address-b.address<=b.size && data.size()<=b.size-(address-b.address);
-    for(const auto &[reg,size] : std::array<std::pair<unsigned,unsigned>,10>{{
-        {0x1fb43e,1},{0x1fb528,3},{0x1fb518,3},{0x1fb500,4},{0x1fb52c,3},
+    for(const auto &[reg,size] : std::array<std::pair<unsigned,unsigned>,9>{{
+        {0x1fb528,3},{0x1fb518,3},{0x1fb500,4},{0x1fb52c,3},
         {0x1fb530,3},{0x1fb504,4},{0x1fc925,1},{0x11c460,6},{0x11c450,2}}})
         allowed |= address==reg && data.size()==size;
     allowed |= address==0x1fb50d && data.size()==1;
+    allowed |= address==0x1fb43e && data.size()==1 && data[0]==0x69;
+    // The stock Uke probe clears the trim latch after its bootstrap reset.
+    allowed |= address==0x1fb104 && data.size()==6 &&
+               std::all_of(data.begin(),data.end(),[](auto byte){return byte==0;});
     allowed |= address==0x11c450 && data.size()==5 && data[0]==0xbf && data[1]==0x15 &&
                data[2]==0 && data[3]<=1 && data[4]==0;
     allowed |= address==0x11c450 && data.size()==3 && data[0]==0xbf && data[2]==1 &&
@@ -75,6 +79,13 @@ template<std::size_t N> static std::array<std::uint8_t,N> normal_read(int fd,uns
 }
 static void pause_ms(unsigned milliseconds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+}
+static void bootstrap_touch_chip(int fd) {
+    // Uke OEM nt36532_touch.ko performs this sequence before reading chip trim.
+    normal_write(fd,0x1fb43e,Bytes{0x69}); pause_ms(5);
+    normal_write(fd,0x1fb104,Bytes(6,0));
+    require(nt36532(read<6>(fd,0x1fb104)) && !(read<1>(fd,0x1fb12c)[0]&1),
+            "Foreign chip/topology after stock bootstrap; RAM download refused");
 }
 static void verify_bank(int fd,unsigned address,std::span<const std::uint8_t> expected) {
     bool allowed=false;

@@ -4,6 +4,7 @@
 #include "touch-thp-geometry.hpp"
 #include "touch-thp-packet.hpp"
 #include <csignal>
+#include <charconv>
 #include <filesystem>
 #include <linux/gpio.h>
 #include <linux/uinput.h>
@@ -11,6 +12,62 @@
 
 static volatile std::sig_atomic_t running=1;
 static void stop_touch(int) { running=0; }
+struct TouchPanelState {
+    std::uint64_t generation{};
+    bool ready{};
+    bool operator==(const TouchPanelState &) const = default;
+};
+struct TouchPanelTransition : std::runtime_error {
+    TouchPanelTransition():std::runtime_error("Panel reset changed during touch initialization"){}
+};
+static std::filesystem::path touch_panel_provider(const std::filesystem::path &root="/sys/bus/mipi-dsi/devices") {
+    std::filesystem::path selected;
+    if(!std::filesystem::exists(root)) return selected;
+    for(const auto &entry:std::filesystem::directory_iterator(root)) {
+        const auto state=entry.path()/"touch_reset_state";
+        if(!std::filesystem::exists(state) ||
+           !compatible((entry.path()/"of_node/compatible").c_str(),"xiaomi,o82-42-02-0b")) continue;
+        require(selected.empty(),"Ambiguous O82 panel reset provider");
+        selected=state;
+    }
+    return selected;
+}
+static TouchPanelState touch_panel_state(const std::filesystem::path &path) {
+    std::ifstream file(path);
+    std::string generation,ready,extra;
+    require(bool(file>>generation>>ready) && !(file>>extra) && generation.size()<=20 &&
+            (ready=="0" || ready=="1"),"Invalid O82 panel reset state");
+    std::uint64_t value=0;
+    const auto parsed=std::from_chars(generation.data(),generation.data()+generation.size(),value);
+    require(parsed.ec==std::errc{} && parsed.ptr==generation.data()+generation.size() &&
+            value<=UINT64_MAX/2,"Invalid O82 panel generation");
+    return {value,ready=="1"};
+}
+struct TouchPanelGuard {
+    TouchPanelGuard(const std::filesystem::path &path,TouchPanelState expected) {
+        if(path.empty()) return;
+        require(expected.ready && !touch_transfer_guard,"Panel is not ready for touch initialization");
+        if(touch_panel_state(path)!=expected) throw TouchPanelTransition();
+        touch_transfer_guard=[path,expected] {
+            if(touch_panel_state(path)!=expected) throw TouchPanelTransition();
+        };
+    }
+    ~TouchPanelGuard() { touch_transfer_guard={}; }
+};
+static void touch_start_normal(int fd,const Bytes &image) {
+    bootstrap_touch_chip(fd);
+    load_normal(fd,image); normal_scan_ready(fd);
+    const auto info=read<16>(fd,firmware_address(0));
+    require(info[0]==0x11 && info[1]==0xee && info[2]==60 && info[3]==40 &&
+            info[4]==0x7d && info[5]==0 && info[6]==0x53 && info[7]==0x70,
+            "Resident normal firmware unavailable");
+    const auto operating_mode=custom_read(fd,1);
+    const auto stylus_only=custom_read(fd,5);
+    const auto single_step=custom_read(fd,0x0e);
+    std::cout<<"Touch operating modes: op="<<operating_mode<<" stylus-only="<<stylus_only
+             <<" single-step="<<single_step<<std::endl;
+    require(operating_mode==1 && stylus_only==0 && single_step==0,"Touch operating mode unavailable");
+}
 static void touch_buffer_ready(const std::filesystem::path &path="/sys/module/spidev/parameters/bufsiz") {
     std::ifstream file(path); unsigned bytes=0;
     require(bool(file>>bytes) && bytes>=uke_touch::frame_size+2,
@@ -67,6 +124,53 @@ static int touch_irq(const std::string &controller) {
     const char name[]="uke-nt36532-thp"; std::copy(std::begin(name),std::end(name),request.consumer);
     const int result=ioctl(chip,GPIO_V2_GET_LINE_IOCTL,&request); close(chip);
     require(result==0,"Touch IRQ input request failed"); return request.fd;
+}
+static void discard_touch_irqs(int fd) {
+    for(unsigned batch=0;batch<64;batch++) {
+        pollfd ready{fd,POLLIN,0};
+        if(poll(&ready,1,0)<=0) return;
+        std::array<gpio_v2_line_event,16> edges{};
+        require(::read(fd,edges.data(),sizeof(edges))>0,"Touch IRQ drain failed");
+    }
+}
+static bool touch_reload_required(TouchPanelState admitted,TouchPanelState observed) {
+    return observed.ready && observed.generation!=admitted.generation;
+}
+struct TouchRecovery {
+    std::uint64_t generation{};
+    unsigned failures{};
+    std::chrono::steady_clock::time_point next{};
+};
+template<class Release,class Reset,class Drain,class Reload>
+static bool recover_touch_panel(const std::filesystem::path &path,TouchPanelState &admitted,
+                                TouchRecovery &recovery,Release release,Reset reset,Drain drain,
+                                Reload reload,std::chrono::steady_clock::time_point now) {
+    const auto observed=touch_panel_state(path);
+    if(observed.ready && observed==admitted) return true;
+    release();
+    if(observed.generation!=recovery.generation) {
+        recovery={observed.generation,0,{}};
+        reset();
+    }
+    drain();
+    if(!touch_reload_required(admitted,observed) || recovery.failures>=3 || now<recovery.next) return false;
+    try {
+        TouchPanelGuard guard(path,observed);
+        reload();
+        touch_transfer_guard();
+        drain();
+        admitted=observed;recovery.failures=0;
+        std::cout<<"Touch recovered after panel reset generation "<<observed.generation
+                 <<"; input device retained"<<std::endl;
+        return true;
+    } catch(const TouchPanelTransition &) {
+        return false;
+    } catch(const std::exception &error) {
+        std::cerr<<"Touch generation "<<observed.generation<<" recovery failed: "<<error.what()<<std::endl;
+        recovery.failures++;
+        recovery.next=now+std::chrono::seconds(1);
+        return false;
+    }
 }
 static unsigned consume_touch_irq(int fd) {
     // SPI exposes the latest matrix, so queued edges must not trigger repeated stale reads.
@@ -192,18 +296,36 @@ int main(int argc,char **argv) {
         touch_buffer_ready();
         std::uint8_t mode=255;
         require(ioctl(spi,SPI_IOC_RD_MODE,&mode)==0 && mode==SPI_MODE_0,"Unexpected SPI mode");
-        require(nt36532(read<6>(spi,0x1fb104)) && !(read<1>(spi,0x1fb12c)[0]&1),"Foreign chip/topology");
-        if(daemon) { load_normal(spi,image); normal_scan_ready(spi); }
-        const auto info=read<16>(spi,firmware_address(0));
-        require(info[0]==0x11 && info[1]==0xee && info[2]==60 && info[3]==40 &&
+        std::filesystem::path panel_provider;
+        TouchPanelState admitted_panel{0,true};
+        if(daemon) {
+            for(unsigned attempt=0;attempt<100;attempt++) {
+                panel_provider=touch_panel_provider();
+                if(!panel_provider.empty()) {
+                    admitted_panel=touch_panel_state(panel_provider);
+                    if(admitted_panel.ready) break;
+                }
+                pause_ms(100);
+            }
+            require(!panel_provider.empty() && admitted_panel.ready,"O82 kernel panel-reset provider is not ready");
+        }
+        if(daemon) {
+            TouchPanelGuard guard(panel_provider,admitted_panel);
+            touch_start_normal(spi,image);
+            if(touch_transfer_guard)touch_transfer_guard();
+        } else {
+            require(nt36532(read<6>(spi,0x1fb104)) && !(read<1>(spi,0x1fb12c)[0]&1),"Foreign chip/topology");
+            const auto info=read<16>(spi,firmware_address(0));
+            require(info[0]==0x11 && info[1]==0xee && info[2]==60 && info[3]==40 &&
                 info[4]==0x7d && info[5]==0 && info[6]==0x53 && info[7]==0x70,"Resident normal firmware unavailable");
-        const auto operating_mode=custom_read(spi,1);
-        const auto stylus_only=custom_read(spi,5);
-        const auto single_step=custom_read(spi,0x0e);
-        std::cout<<"Touch operating modes: op="<<operating_mode<<" stylus-only="<<stylus_only
+            const auto operating_mode=custom_read(spi,1);
+            const auto stylus_only=custom_read(spi,5);
+            const auto single_step=custom_read(spi,0x0e);
+            std::cout<<"Touch operating modes: op="<<operating_mode<<" stylus-only="<<stylus_only
                  <<" single-step="<<single_step<<std::endl;
-        require(operating_mode==1 && stylus_only==0 && single_step==0,
+            require(operating_mode==1 && stylus_only==0 && single_step==0,
                 "Touch operating mode unavailable");
+        }
         irq=touch_irq(controller);
         input=open("/dev/uinput",O_WRONLY|O_CLOEXEC); require(input>=0,"Kernel uinput is unavailable");
         input_setup(input,geometry);
@@ -216,7 +338,17 @@ int main(int argc,char **argv) {
         auto last_valid=std::chrono::steady_clock::now();
         unsigned frames=0,rejected=0,contacts=0,coalesced_edges=0;
         std::size_t previous_contacts=0;
+        TouchRecovery recovery{admitted_panel.generation,0,{}};
         while(running && (daemon || std::chrono::steady_clock::now()<deadline)) {
+            if(!panel_provider.empty()) {
+                if(!recover_touch_panel(panel_provider,admitted_panel,recovery,
+                    [&]{input_report(input,{},ids,geometry);previous_contacts=0;},
+                    [&]{core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);},
+                    [&]{discard_touch_irqs(irq);},[&]{touch_start_normal(spi,image);},
+                    std::chrono::steady_clock::now())) {
+                    pause_ms(100);continue;
+                }
+            }
             pollfd ready{irq,POLLIN,0};
             const int status=poll(&ready,1,100);
             if(status<0 && !running) break;
@@ -226,9 +358,18 @@ int main(int argc,char **argv) {
                 continue;
             }
             coalesced_edges+=consume_touch_irq(irq)-1;
-            auto page_select=select_page(0x11c400); transfer(spi,page_select.data(),nullptr,page_select.size());
             std::array<std::uint8_t,5434> tx{},rx{};
-            transfer(spi,tx.data(),rx.data(),rx.size(),19200000);
+            try {
+                // Recheck after the IRQ wait and before each SPI transfer. A panel reset
+                // invalidates the whole matrix; the next iteration releases its contacts.
+                TouchPanelGuard guard(panel_provider,admitted_panel);
+                auto page_select=select_page(0x11c400); transfer(spi,page_select.data(),nullptr,page_select.size());
+                transfer(spi,tx.data(),rx.data(),rx.size(),19200000);
+                if(touch_transfer_guard)touch_transfer_guard();
+            } catch(const TouchPanelTransition &) {
+                input_report(input,{},ids,geometry);previous_contacts=0;
+                discard_touch_irqs(irq);continue;
+            }
             const auto frame=uke_touch::decode(std::span(rx).subspan(2));
             const auto now=std::chrono::steady_clock::now();
             if(frame) {
@@ -260,6 +401,7 @@ int main(int argc,char **argv) {
         if(input>=0) { try{input_report(input,{},ids,geometry);}catch(...){} ioctl(input,UI_DEV_DESTROY); close(input); }
         if(spi>=0) close(spi);
         if(irq>=0) close(irq);
-        std::cerr<<e.what()<<'\n'; return 1;
+        std::cerr<<e.what()<<'\n';
+        return 1;
     }
 }

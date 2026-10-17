@@ -37,6 +37,16 @@ reports and GPIO provider renumbering/ambiguity. Persistent physical startup,
 multi-finger tracking and power-profile/report-rate integration remain unqualified.
 An installed package is not proof of working touch.
 
+17 October 2026: the native-panel candidate requires the O82 driver's
+`touch_reset_state` generation/ready interface. It waits for panel initialization,
+releases contacts during a reset and restores the qualified normal firmware
+before retaining the same input device. Failed recovery is limited to three
+attempts per generation; another panel generation permits a fresh attempt.
+Known-unready transfers and frames spanning a state change are rejected.
+Host and AArch64 package fixtures cover these recovery paths. Refresh transitions
+and suspend/resume require separate tablet tests; the package is gated on the
+matching native kernel and is not a generic replacement for older kernels.
+
 ## Metadata diagnostics
 
 `make test-native` builds the tools and runs host wire-format and malformed-input

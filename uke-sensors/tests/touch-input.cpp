@@ -43,7 +43,66 @@ int main() {
     auto wrong_id=id_cells; wrong_id[7]=27;
     write_file(device/"of_node/novatek,lcd_id-gpio",wrong_id);
     refused=false; try{touch_gpio(device,controllers);}catch(const std::exception&){refused=true;}
-    assert(refused); std::filesystem::remove_all(root);
+    assert(refused);
+    const auto panels=root/"panels",panel=panels/"dsi-primary",state=panel/"touch_reset_state";
+    assert(touch_panel_provider(panels).empty());
+    std::filesystem::create_directories(panel/"of_node");
+    const std::string panel_name("xiaomi,o82-42-02-0b\0",20);
+    write_file(panel/"of_node/compatible",panel_name);
+    write_file(state,std::string("7 1\n"));
+    assert(touch_panel_provider(panels)==state);
+    assert((touch_panel_state(state)==TouchPanelState{7,true}));
+    for(const auto *invalid:{"-1 1", "1 2", "1 1 trailing", "18446744073709551615 1", "1", "x 1"}) {
+        write_file(state,std::string(invalid));
+        bool rejected=false;try{touch_panel_state(state);}catch(const std::exception&){rejected=true;}
+        assert(rejected);
+    }
+    write_file(state,std::string("7 1\n"));
+    std::filesystem::copy(panel,panels/"dsi-other",std::filesystem::copy_options::recursive);
+    refused=false;try{touch_panel_provider(panels);}catch(const std::exception&){refused=true;}
+    assert(refused);std::filesystem::remove_all(panels/"dsi-other");
+    {
+        TouchPanelGuard guard(state,{7,true});
+        touch_transfer_guard();
+        write_file(state,std::string("8 0\n"));
+        bool blocked=false;
+        try{transfer(-1,nullptr,nullptr,1);}catch(const TouchPanelTransition&){blocked=true;}
+        assert(blocked); // State change must reject before even an invalid ioctl.
+    }
+    assert(!touch_transfer_guard);
+    TouchPanelState admitted{7,true};TouchRecovery recovery{7,0,{}};
+    unsigned release_count=0,reset_count=0,drained=0,reloaded=0;
+    bool load_failure=false,reset_during_load=false;
+    const auto now=std::chrono::steady_clock::now();
+    const auto recover=[&](auto time) {
+        return recover_touch_panel(state,admitted,recovery,[&]{release_count++;},[&]{reset_count++;},
+            [&]{drained++;},[&]{
+                reloaded++;
+                if(reset_during_load)write_file(state,std::string("9 0\n"));
+                if(load_failure)throw std::runtime_error("injected loader failure");
+            },time);
+    };
+    write_file(state,std::string("7 1\n"));
+    assert(recover(now) && !release_count && !reset_count && !drained && !reloaded); // Healthy idle.
+    write_file(state,std::string("7 0\n"));
+    assert(!recover(now) && release_count==1 && !reset_count && drained==1 && !reloaded); // DPMS off.
+    write_file(state,std::string("8 0\n"));
+    assert(!recover(now) && reset_count==1 && !reloaded); // Reset still in progress.
+    write_file(state,std::string("8 1\n"));reset_during_load=true;
+    assert(!recover(now) && reloaded==1 && recovery.failures==0 && admitted.generation==7);
+    assert(!touch_transfer_guard);
+    assert(!recover(now) && reset_count==2 && reloaded==1);
+    reset_during_load=false;write_file(state,std::string("9 1\n"));load_failure=true;
+    assert(!recover(now) && reloaded==2 && recovery.failures==1);
+    assert(!recover(now) && reloaded==2); // Cooldown does not touch SPI.
+    assert(!recover(now+std::chrono::seconds(1)) && reloaded==3 && recovery.failures==2);
+    assert(!recover(now+std::chrono::seconds(2)) && reloaded==4 && recovery.failures==3);
+    assert(!recover(now+std::chrono::seconds(10)) && reloaded==4); // Quiescent until a new generation.
+    write_file(state,std::string("10 1\n"));load_failure=false;
+    assert(recover(now+std::chrono::seconds(11)) && reloaded==5 && recovery.failures==0);
+    assert((admitted==TouchPanelState{10,true}) && !touch_transfer_guard);
+    assert(recover(now+std::chrono::seconds(12)) && reloaded==5); // No healthy reload loop.
+    std::filesystem::remove_all(root);
     int pipefd[2]; assert(pipe2(pipefd,O_NONBLOCK|O_CLOEXEC)==0);
     std::array<gpio_v2_line_event,16> edges{};
     assert(::write(pipefd[1],edges.data(),sizeof(edges))==sizeof(edges));

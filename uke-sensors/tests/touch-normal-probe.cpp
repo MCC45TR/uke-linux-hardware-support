@@ -12,6 +12,7 @@ bool never_copy,never_reset,bad_crc;
 bool bad_bank;
 bool bad_metadata;
 bool coordinate_enabled,bad_mode;
+bool foreign_chip,single_chip;
 unsigned custom_writes,custom_reads,custom_busy_reads,scan_pending_reads;
 bool scan_never_ready;
 std::array<std::uint8_t,0x120000> ram{};
@@ -39,6 +40,12 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
         if(address<0x1142a0 && address!=0x11c478 && m->len-2<=ram.size()-address) {
             std::copy(ram.begin()+address,ram.begin()+address+m->len-2,rx+2); if(bad_bank) rx[2]^=1;
         }
+        else if(address==0x1fb104 && m->len==8) {
+            if(!foreign_chip) {
+                const Bytes trim{0x0e,0,4,0x32,0x65,3};std::copy(trim.begin(),trim.end(),rx+2);
+            }
+        }
+        else if(address==0x1fb12c && m->len==3) rx[2]=single_chip ? 1:2;
         else if(address==0x1fc925) { rx[2]=never_copy ? 1 : 0; status_reads++; }
         else if(address==0x11c460) {
             rx[2]=never_reset ? 0 : scan_never_ready || status_reads<scan_pending_reads ? 0xa0 : 0xa1;
@@ -70,10 +77,23 @@ void reset() {
     operations=status_reads=selected=custom_writes=custom_reads=custom_busy_reads=scan_pending_reads=0;
     fail_at=~0U;
     never_copy=never_reset=bad_crc=bad_bank=bad_metadata=coordinate_enabled=bad_mode=scan_never_ready=false;
+    foreign_chip=single_chip=false;
     writes.clear();
 }
 template<class F> void reject(F f) { bool refused=false; try{f();}catch(const std::exception&){refused=true;} assert(refused); }
 int main(int argc,char **argv) {
+    reset();bootstrap_touch_chip(0);const unsigned bootstrap_operations=operations;
+    assert(writes.size()==2 && writes[0]==std::make_pair(0x1fb43eU,Bytes{0x69}) &&
+           writes[1]==std::make_pair(0x1fb104U,Bytes(6,0)));
+    reset();foreign_chip=true;reject([&]{bootstrap_touch_chip(0);});assert(writes.size()==2);
+    reset();single_chip=true;reject([&]{bootstrap_touch_chip(0);});assert(writes.size()==2);
+    for(unsigned fault=0;fault<bootstrap_operations;fault++) {
+        reset();fail_at=fault;reject([&]{bootstrap_touch_chip(0);});assert(operations==fault+1);
+        assert(writes.size()<=2); // Neither a foreign ID nor a transfer fault can download RAM.
+    }
+    reset();reject([&]{normal_write(0,0x1fb43e,Bytes{0x68});});
+    reject([&]{normal_write(0,0x1fb104,Bytes(6,1));});
+    reject([&]{normal_write(0,0x1fb104,Bytes(5,0));});assert(operations==0);
     reset(); normal_scan_ready(0); assert(status_reads==1);
     reset(); scan_pending_reads=4; normal_scan_ready(0); assert(status_reads==5);
     reset(); scan_never_ready=true; reject([&]{normal_scan_ready(0);}); assert(status_reads==50);

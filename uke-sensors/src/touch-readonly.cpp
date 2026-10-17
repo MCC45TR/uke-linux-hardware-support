@@ -8,6 +8,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <linux/spi/spidev.h>
@@ -20,6 +21,7 @@
 static void require(bool ok, const char *message) {
     if (!ok) throw std::runtime_error(message);
 }
+static std::function<void()> touch_transfer_guard;
 static void lock_touch(int fd) {
     // Advisory ownership coordinates these tools; unrelated SPI clients must still be stopped.
     require(flock(fd,LOCK_EX|LOCK_NB)==0,"Touch SPI transport is already owned or cannot be locked");
@@ -60,6 +62,7 @@ static void firmware(const std::array<std::uint8_t,16> &info) {
     std::cout << "NT36532 family, firmware " << unsigned(info[0]) << ", raw coordinates " << x << 'x' << y << '\n';
 }
 static void transfer(int fd, const void *tx, void *rx, unsigned size,unsigned speed=1000000) {
+    if(touch_transfer_guard) touch_transfer_guard();
     require(speed==1000000 || (size==5434 && speed==19200000),"Unreviewed SPI transfer speed");
     spi_ioc_transfer message{};
     message.tx_buf = reinterpret_cast<std::uintptr_t>(tx);
