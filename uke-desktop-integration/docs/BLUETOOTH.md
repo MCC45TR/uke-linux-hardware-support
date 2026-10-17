@@ -17,7 +17,10 @@ Explicitly enable `uke-bluetooth-address.service` after device-local inputs are
 admitted. Its standard `bluetooth.target` dependency also covers controllers
 enumerated in the initramfs before the root udev rule is available.
 
-The .4055 RAM laboratory trial completes firmware transfer at 3 Mbit/s, admits
-the actual factory address and supports a 5.2 LE mouse after UHID is loaded.
-Movement, clicks and wheel operation are physically confirmed. Packaged helper,
-cold boot, reconnect and the separate .4056 tuple require their own evidence.
+The .4055 RAM laboratory trial physically confirms 5.2 LE mouse movement, clicks
+and wheel operation. A fresh .4056 RAM boot with COPR helper release 5 completes
+factory setup automatically at 7.5 seconds and reconnects that mouse through
+the normal kernel UHID module. No manual module load or service restart is used.
+Release 5 handles Linux's zero-length management send result during HCI setup
+by consuming the queued status and waiting for the controller's index event.
+Repeated cold power cycles and full system suspend remain unqualified.

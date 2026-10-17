@@ -70,7 +70,9 @@ struct Reply { unsigned status; Bytes data; };
 static Reply command(int fd,unsigned opcode,std::span<const std::uint8_t> payload,Deadline deadline,bool &index_changed) {
     Bytes request;append16(request,opcode);append16(request,0);append16(request,payload.size());
     request.insert(request.end(),payload.begin(),payload.end());
-    check(send(fd,request.data(),request.size(),MSG_NOSIGNAL)==static_cast<ssize_t>(request.size()),
+    const auto sent=send(fd,request.data(),request.size(),MSG_NOSIGNAL);
+    // Linux can queue Command Status and return zero while HCI setup is in progress.
+    check(sent==0 || sent==static_cast<ssize_t>(request.size()),
           "Bluetooth management command failed");
     for(;;) {
         auto packet=receive(fd,deadline);

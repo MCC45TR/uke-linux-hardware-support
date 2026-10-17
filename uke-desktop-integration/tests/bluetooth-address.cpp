@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include <sys/socket.h>
+static ssize_t fixture_send(int,const void *,size_t,int);
+#define send fixture_send
 #define UKE_BLUETOOTH_TEST
 #include "../src/bluetooth-address.cpp"
+#undef send
 #include <cassert>
+static bool zero_send_result=false;
+static ssize_t fixture_send(int fd,const void *bytes,size_t size,int flags) {
+    auto result=send(fd,bytes,size,flags);
+    if(result>=0 && zero_send_result) { zero_send_result=false;return 0; }
+    return result;
+}
 template<class F> static void refuses(F f) { bool refused=false;try{f();}catch(const std::exception&){refused=true;}assert(refused); }
 static void packet(int fd,unsigned event,unsigned index,const Bytes &payload) {
     Bytes bytes;append16(bytes,event);append16(bytes,index);append16(bytes,payload.size());
@@ -26,6 +36,7 @@ int main() {
     response(fd[1],4,0x11); // Readiness during a command must not be lost.
     const Bytes missing_address{1,0,2,0,0,0,2,0,0,0};
     response(fd[1],0x37,0,missing_address);response(fd[1],0x39,0);
+    zero_send_result=true; // Actual HCI setup returns zero and queues Invalid Index status.
     configure(fd[0],address,deadline);
     for(auto opcode:{0x37,4,0x37,0x39}) {
         auto sent=receive(fd[1],deadline);assert(sent.event==unsigned(opcode)&&sent.index==0);

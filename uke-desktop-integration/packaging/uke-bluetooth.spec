@@ -1,6 +1,6 @@
 Name: uke-bluetooth
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Native factory-address integration for the Uke Bluetooth controller
 License: GPL-3.0-or-later AND MIT
 Source0: %{name}-%{version}.tar.gz
@@ -50,6 +50,9 @@ install -Dm644 packaging/70-uke-bluetooth.rules %{buildroot}%{_udevrulesdir}/70-
 %{_udevrulesdir}/70-uke-bluetooth.rules
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Process Linux Command Status when an early management send returns zero.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Attach explicitly enabled factory setup to the standard Bluetooth target.
 
