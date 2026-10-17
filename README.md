@@ -4,19 +4,23 @@ Platform packages and device integration for Xiaomi Pad 7 and POCO Pad X1
 (`uke`, SM7675). All twelve components live in this repository as ordinary
 folders, with their own sources and packaging rules.
 
-## Status — 14 October 2026
+## Status — 18 October 2026
 
-Boot and USB debug packages are available through the development COPR. The
-Fedora development installation reaches a software KDE desktop and Wi-Fi SSH.
-Experimental native tools return motion and rear-light samples. Finger input
-and ten simultaneous touch contacts worked in the 14 October tablet test.
-Power and volume buttons and manual backlight control also worked in that test.
-Backlight adjustment is linear and difficult to use comfortably; a logarithmic
-curve is planned. Permanent desktop sensor support remains incomplete.
-See the [hardware table](https://github.com/MCC45TR/uke-linux#hardware-support)
-for tested functions and limitations. Experimental changes remain on separate
-branches until reviewed; a folder in this repository does not imply a working
-package or device feature.
+On POCO Pad X1, Fedora Rawhide AArch64 and persistent Linux
+`7.2.10-senemos.1.4056`, normal boot restores four-pose rotation and dual-light
+automatic brightness in original KDE. Bluetooth 5.2 mouse movement, clicks and
+wheel input pass physical tests. Native CPU/GPU profiles operate through PPD;
+touchscreen readiness follows actual input publication. Signed COPR packages
+are installed through DNF. Factory firmware and calibration remain separate,
+device-local inputs. The downloadable Alpha 1 image is not accepted by these
+results.
+
+Compass accuracy, proximity transitions, hall mapping, remaining PMIC scalers,
+full thermal policy and lifecycle endurance remain incomplete. Full shutdown
+can hang in the original KDE clipboard worker. See the
+[hardware table](https://github.com/MCC45TR/uke-linux#hardware-support) for the
+exact tested functions and limits. Package success alone does not establish
+hardware support.
 
 ## Components
 
@@ -36,8 +40,9 @@ package or device feature.
 | [uke-hardware-provenance](uke-hardware-provenance) | Hardware source records |
 
 KDE applications come from the distribution. They are not cloned, forked or
-rebuilt as Uke applications. Current upstream desktop dependencies conflict
-with the Python-free tablet policy; a compliant desktop release is still blocked.
+rebuilt as Uke applications. Unmodified original Fedora desktop packages may retain their distribution
+Python dependencies under the documented exception. Project tools, recovery
+and initramfs do not ship project Python or a Python runtime.
 
 ## Checks and builds
 
