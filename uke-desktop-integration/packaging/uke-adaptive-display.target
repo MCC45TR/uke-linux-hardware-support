@@ -5,4 +5,4 @@ Requires=uke-ssc-sensors.service iio-sensor-proxy.service
 After=uke-ssc-sensors.service iio-sensor-proxy.service
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=dev-fastrpc\x2dadsp.device

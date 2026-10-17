@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Sensor integration for automatic display rotation and brightness
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -8,7 +8,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRequires: systemd-rpm-macros
 Requires: iio-sensor-proxy(ssc) >= 1
-Requires: uke-ssc-fileservice >= 2026.09.21-3
+Requires: uke-ssc-fileservice >= 2026.09.21-4
 %{?systemd_requires}
 
 %description
@@ -42,6 +42,9 @@ install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir
 %{_presetdir}/80-uke-adaptive-display.preset
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
+- Start an explicitly enabled target when its FastRPC device appears.
+
 * Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1
 - Package standard desktop sensor integration for controlled device tests.
 - Keep activation explicit and preserve read-only calibration inputs.

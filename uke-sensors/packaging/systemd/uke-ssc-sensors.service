@@ -10,7 +10,8 @@ StartLimitIntervalSec=60
 StartLimitBurst=3
 
 [Service]
-Type=exec
+Type=notify
+TimeoutStartSec=30
 ExecStart=/usr/libexec/uke-hexagonrpcd -f /dev/fastrpc-adsp -d adsp -s -R /run/uke-ssc
 Restart=on-failure
 RestartSec=5

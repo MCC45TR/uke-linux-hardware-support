@@ -1,6 +1,6 @@
 Name: uke-ssc-fileservice
 Version: 2026.09.21
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Native Uke SSC file service with a disposable registry
 License: GPL-3.0-or-later
 URL: https://github.com/linux-msm/hexagonrpc
@@ -11,12 +11,16 @@ Source3: uke-ssc.conf
 Source4: iio-ssc-order.conf
 Source5: hexagon-registry.cpp
 Source6: hexagon-shell.c
+Source7: 70-uke-ssc.rules
+Source8: hexagon-readiness.c
 Patch0: 0001-select-sequence-type.patch
 Patch1: 0002-verbose-native-u64.patch
 Patch2: 0003-map-oem-odm-sensor-config.patch
 Patch3: 0004-reject-mapped-symlinks.patch
 Patch4: 0005-reject-incomplete-shell-images.patch
+Patch5: 0006-notify-listener-readiness.patch
 BuildRequires: gcc gcc-c++ systemd-rpm-macros
+BuildRequires: pkgconfig(libsystemd)
 ExclusiveArch: aarch64
 Requires: iio-sensor-proxy(ssc) >= 1
 Requires: /usr/share/uke-sensors/odm/json.lst
@@ -41,7 +45,7 @@ tar -xf %{SOURCE0} --strip-components=1
 %set_build_flags
 gcc $CFLAGS $LDFLAGS -std=gnu11 -Wall -Wextra -Werror -Wno-unused-parameter \
     -I include libhexagonrpc/*.c libhexagonrpc/interface/*.c hexagonrpcd/*.c \
-    hexagonrpcd/interface/*.c -o uke-hexagonrpcd
+    hexagonrpcd/interface/*.c -lsystemd -o uke-hexagonrpcd
 
 %check
 mkdir contract
@@ -54,6 +58,9 @@ g++ -std=c++20 -O2 -Wall -Wextra -Werror -I hexagonrpcd %{SOURCE5} contract/*.o 
 sed -n '/^static int create_shell_pd(/,/^}/p' hexagonrpcd/rpcd.c > contract/shell-function.h
 gcc -std=gnu11 -O2 -Wall -Wextra -Werror -I contract %{SOURCE6} -o contract/shell
 ./contract/shell
+sed -n '/^static void \*start_reverse_tunnel(/,/^}/p' hexagonrpcd/rpcd.c > contract/listener-function.h
+gcc -std=gnu11 -O2 -Wall -Wextra -Werror -I contract %{SOURCE8} -o contract/readiness
+./contract/readiness
 
 %install
 install -Dm755 uke-hexagonrpcd %{buildroot}/usr/libexec/uke-hexagonrpcd
@@ -61,6 +68,7 @@ install -Dm644 %{SOURCE1} %{buildroot}%{_unitdir}/uke-ssc-root.service
 install -Dm644 %{SOURCE2} %{buildroot}%{_unitdir}/uke-ssc-sensors.service
 install -Dm644 %{SOURCE3} %{buildroot}%{_tmpfilesdir}/uke-ssc.conf
 install -Dm644 %{SOURCE4} %{buildroot}%{_unitdir}/iio-sensor-proxy.service.d/uke-ssc.conf
+install -Dm644 %{SOURCE7} %{buildroot}%{_udevrulesdir}/70-uke-ssc.rules
 
 %post
 %systemd_post uke-ssc-root.service uke-ssc-sensors.service
@@ -78,8 +86,12 @@ install -Dm644 %{SOURCE4} %{buildroot}%{_unitdir}/iio-sensor-proxy.service.d/uke
 %{_unitdir}/uke-ssc-sensors.service
 %{_unitdir}/iio-sensor-proxy.service.d/uke-ssc.conf
 %{_tmpfilesdir}/uke-ssc.conf
+%{_udevrulesdir}/70-uke-ssc.rules
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-4
+- Order sensor startup by the FastRPC device and registered listeners.
+
 * Wed Oct 14 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-3
 - Publish the reviewed SSC preview with numeric RPM release metadata.
 

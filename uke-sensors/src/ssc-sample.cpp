@@ -2,6 +2,7 @@
 // Bounded physical samples; no factory tests, calibration writes or persistent client.
 #define UKE_SSC_TEST
 #include "ssc-discovery.cpp"
+#include <limits>
 struct Sample { std::uint64_t timestamp, status; std::vector<float> values; };
 static std::vector<Sample> samples(View event, Uid sensor, unsigned dimensions) {
     auto root = fields(event), uid = fields(one(root, 1, 2));
@@ -52,7 +53,8 @@ int main(int argc, char **argv) {
         auto event = rpc(fd, client_request(found[0], streaming ? 513 : 514, streaming ? View(rate) : View{}, xyz), 1025, xyz);
         close(fd); fd = -1; // QRTR disconnect removes this client's sensor requests.
         // shortcut: OEM rear-light channels remain raw until vendor channel units are verified.
-        for (const auto &sample : samples(event, found[0], xyz ? 3 : type == "ambient_light" ? 1 : 0)) {
+        std::cout << std::setprecision(std::numeric_limits<float>::max_digits10);
+        for (const auto &sample : samples(event, found[0], xyz ? 3 : 0)) {
             std::cout << type << " timestamp_ticks=" << sample.timestamp << " status=" << sample.status << " data=";
             for (float number : sample.values) std::cout << number << ' ';
             std::cout << '\n';

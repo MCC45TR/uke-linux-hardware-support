@@ -1,5 +1,13 @@
 # SSC desktop integration
 
+17 October 2026: fileservice release 4 adds systemd readiness after successful
+FastRPC listener registration. Device presence and the read-only mount precede
+the root listener; the sensor listener precedes the original SensorProxy D-Bus
+service. Adaptive-display release 2 attaches its explicitly enabled target to
+the FastRPC device. No fixed delay establishes readiness. Native54 lacks the
+upstream FastRPC DT binding; use a separately qualified matched candidate before
+activation. The accepted .4054 boot and its module fallback remain preserved.
+
 13 October 2026. A bounded Xiaomi Pad 7 test received stationary orientation
 through the upstream SensorProxy D-Bus interface with SELinux enforcing.
 No permanent sensor service or complete sensor RPM is released.

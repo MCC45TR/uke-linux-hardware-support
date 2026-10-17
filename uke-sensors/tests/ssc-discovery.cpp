@@ -52,6 +52,7 @@ int main() {
         0x0a,15,8,2,0x12,11,0x0a,9,0x12,7,'v','i','r','t','u','a','l'
     };
     assert(attributes(metadata,{1,2}) == "name=not returned; type=virtual; available=not returned; physical=not returned");
+    assert(attributes(metadata,{1,2},true).ends_with("\nattribute_id=2 protobuf_hex=0a0912077669727475616c"));
     rejects([&]{attributes(metadata,{2,1});});
     rejects([]{request("",{1,2},3);});
     rejects([]{request("accel",{1,2},1);});

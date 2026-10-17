@@ -2,13 +2,16 @@
 Description=Uke ADSP file service with a disposable sensor registry
 ConditionFirmware=device-tree-compatible(xiaomi,uke)
 ConditionPathExists=/dev/fastrpc-adsp
+BindsTo=dev-fastrpc\x2dadsp.device
+After=dev-fastrpc\x2dadsp.device
 RequiresMountsFor=/mnt/vendor/persist
 Before=uke-ssc-sensors.service iio-sensor-proxy.service
 StartLimitIntervalSec=60
 StartLimitBurst=3
 
 [Service]
-Type=exec
+Type=notify
+TimeoutStartSec=30
 ExecCondition=/usr/bin/findmnt --mountpoint /mnt/vendor/persist --options ro --noheadings
 ExecStartPre=/usr/bin/systemd-tmpfiles --create /usr/lib/tmpfiles.d/uke-ssc.conf
 ExecStart=/usr/libexec/uke-hexagonrpcd -f /dev/fastrpc-adsp -d adsp -R /run/uke-ssc

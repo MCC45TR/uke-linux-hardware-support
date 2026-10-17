@@ -1,6 +1,6 @@
 # Automatic rotation and ambient brightness preview
 
-14 October 2026. Target: Fedora Rawhide AArch64 on Xiaomi Pad 7 / POCO Pad X1
+17 October 2026. Target: Fedora Rawhide AArch64 on Xiaomi Pad 7 / POCO Pad X1
 (`uke`, SM7675). Package: `uke-adaptive-display`.
 
 The package selects SSC-enabled `iio-sensor-proxy`, libssc and the native
@@ -29,11 +29,26 @@ inputs are copied to private RAM storage below `/run/uke-ssc`; the original
 calibration partition is never made writable. Do not replace absent inputs
 with files from another device or bypass DNF requirements.
 
+The kernel/DT must expose `/dev/fastrpc-adsp` with the exact Uke root and sensor
+context banks. Native54 (`7.2.9-senemos.1.4054`) retains the OEM FastRPC binding
+and does not expose this device. Installing these packages alone cannot enable
+rotation on that baseline. Preserve its matched boot and module fallback.
+
+Release 2 attaches the explicitly enabled target to the FastRPC device. Udev
+tags that device for systemd. The root listener starts after the device and
+read-only mount; its successful protocol registration sends `READY=1`. The
+sensor listener then registers before SensorProxy starts and acquires its
+D-Bus name. No elapsed-time delay determines this order. Startup timeouts and
+failure backoff only bound failed attempts. ADSP/charger startup remains the
+kernel remoteproc, PDR and PMIC-GLINK dependency path; these units never restart
+the DSP or rebind the battery driver.
+
 ## Install for the evening trial
 
 ```sh
 sudo dnf copr enable mcc45tr/uke-linux-test
-sudo dnf install uke-adaptive-display
+sudo dnf --allow-vendor-change --setopt=installonly_limit=0 --exclude='senemos-uke-linux-kernel*' install uke-adaptive-display
+test -c /dev/fastrpc-adsp
 findmnt --mountpoint /mnt/vendor/persist --output TARGET,OPTIONS
 sudo systemctl enable --now uke-adaptive-display.target
 systemctl --no-pager status uke-ssc-root.service uke-ssc-sensors.service iio-sensor-proxy.service

@@ -33,5 +33,19 @@
     "version": 14,
     "sha256": "1955666f46427f102b2bf19a0018123fbc27cf6951d531a5e623823a0ed1ea35",
     "scope": "Source provenance only; no redistribution permission inferred"
+  },
+  "readiness_candidate": {
+    "date": "2026-10-17",
+    "fileservice": "2026.09.21-4.fc46",
+    "adaptive_display": "0.1.0-2.fc46",
+    "patch": {
+      "path": "patches/hexagonrpc/0006-notify-listener-readiness.patch",
+      "sha256": "99f4b5a49220f2a07766c6748084ed3839577875fc07eb7f3d43df96b422c3ba"
+    },
+    "activation": "explicit-device-dependency",
+    "readiness": "successful-listener-registration",
+    "host_tests_passed": true,
+    "tablet_startup_accepted": false,
+    "copr_build": 11164005
   }
 }

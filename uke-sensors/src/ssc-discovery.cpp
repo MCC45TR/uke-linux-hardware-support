@@ -8,9 +8,11 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
 #include <linux/qrtr.h>
 #include <poll.h>
 #include <span>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -170,12 +172,13 @@ static std::vector<Uid> suids(View event, std::string_view type) {
     require(received, "No matching SUID discovery event");
     return result;
 }
-static std::string attributes(View event, Uid sensor) {
+static std::string attributes(View event, Uid sensor, bool full = false) {
     auto root = fields(event), uid = fields(one(root, 1, 2));
     require(Uid{little(one(uid, 1, 1)), little(one(uid, 2, 1))} == sensor, "Foreign attribute sensor");
     std::array<std::string,4> values{"not returned", "not returned", "not returned", "not returned"};
     std::array<bool,4> seen{};
     bool received = false;
+    std::ostringstream raw;
     for (auto &entry : root) if (entry.number == 2) {
         require(entry.wire == 2, "Invalid attribute event");
         auto e = fields(entry.data); auto id = little(one(e, 1, 5));
@@ -188,6 +191,10 @@ static std::string attributes(View event, Uid sensor) {
             require(attr.wire == 2, "Invalid sensor attribute");
             auto a = fields(attr.data); auto raw_id = one(a, 1, 0);
             std::size_t p = 0; auto which = varint(raw_id, p);
+            if (full) {
+                raw << "\nattribute_id=" << std::dec << which << " protobuf_hex=";
+                for (auto byte : one(a, 2, 2)) raw << std::hex << std::setw(2) << std::setfill('0') << unsigned(byte);
+            }
             if (which != 0 && which != 2 && which != 3 && which != 21) continue;
             unsigned slot = which == 0 ? 0 : which == 2 ? 1 : which == 3 ? 2 : 3;
             require(!seen[slot], "Duplicate metadata attribute"); seen[slot] = true;
@@ -204,7 +211,7 @@ static std::string attributes(View event, Uid sensor) {
         }
     }
     require(received, "No matching attribute event");
-    return "name=" + values[0] + "; type=" + values[1] + "; available=" + values[2] + "; physical=" + values[3];
+    return "name=" + values[0] + "; type=" + values[1] + "; available=" + values[2] + "; physical=" + values[3] + raw.str();
 }
 static Bytes receive(int fd, sockaddr_qrtr &peer, std::chrono::steady_clock::time_point deadline) {
     for (;;) {
@@ -293,17 +300,18 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
 int main(int argc, char **argv) {
     int fd = -1;
     try {
-        require(argc == 2, "Usage: uke-sensor-discovery all|accel|gyro|mag|ambient_light|proximity|sar|hall|sensor_temperature");
+        require(argc == 2 || (argc == 3 && std::string_view(argv[2]) == "--attributes"), "Usage: uke-sensor-discovery all|DATATYPE [--attributes]");
+        const bool full = argc == 3;
         std::string_view type = std::string_view(argv[1]) == "all" ? "" : argv[1];
         require(datatype(type), "Unsupported discovery data type");
         fd = socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
         require(fd >= 0, "QRTR socket unavailable");
         auto found = suids(rpc(fd, request(type)), type); close(fd); fd = -1;
         std::cout << argv[1] << ": " << found.size() << " SUID(s) in first discovery event; no samples requested\n";
-        if (type.empty()) for (auto sensor : found) {
+        if (type.empty() || full) for (auto sensor : found) {
             fd = socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
             require(fd >= 0, "QRTR metadata socket unavailable");
-            std::cout << attributes(rpc(fd, request("", sensor, 1)), sensor) << '\n';
+            std::cout << attributes(rpc(fd, request("", sensor, 1)), sensor, full) << '\n';
             close(fd); fd = -1;
         }
         return 0;

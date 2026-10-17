@@ -1,0 +1,36 @@
+--- a/meson.build
++++ b/meson.build
+@@ -1,4 +1,4 @@
+-project('power-profiles-daemon', [ 'c' ],
++project('power-profiles-daemon', [ 'c', 'cpp' ],
+         version: '0.30',
+         license: 'GPLv3+',
+         default_options: [
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -93,6 +93,7 @@
+   'ppd-action-amdgpu-dpm.c',
+   'ppd-driver-intel-pstate.c',
+   'ppd-driver-amd-pstate.c',
++  'ppd-driver-uke-cpufreq.cpp',
+   'ppd-driver-platform-profile.c',
+   'ppd-driver-placeholder.c',
+   'ppd-driver-fake.c',
+--- a/src/power-profiles-daemon.c
++++ b/src/power-profiles-daemon.c
+@@ -143,6 +143,7 @@
+ #include "ppd-driver-platform-profile.h"
+ #include "ppd-driver-intel-pstate.h"
+ #include "ppd-driver-amd-pstate.h"
++#include "ppd-driver-uke-cpufreq.h"
+ #include "ppd-driver-fake.h"
+ 
+ typedef GType (*GTypeGetFunc) (void);
+@@ -153,6 +154,7 @@
+   ppd_driver_platform_profile_get_type,
+   ppd_driver_intel_pstate_get_type,
+   ppd_driver_amd_pstate_get_type,
++  ppd_driver_uke_cpufreq_get_type,
+ 
+   /* Generic profile driver */
+   ppd_driver_placeholder_get_type,

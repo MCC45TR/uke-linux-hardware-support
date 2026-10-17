@@ -16,6 +16,11 @@ int main() {
     assert(values.size() == 1 && values[0].timestamp == 7 && values[0].status == 3);
     assert((values[0].values == std::vector<float>{1,-2,0}));
     assert(samples(event, {1,2}, 0)[0].values == values[0].values);
+    // Front ALS may include lux and raw channels; preserve the complete vector.
+    const Bytes light{0x0a,18,9,1,0,0,0,0,0,0,0,0x11,2,0,0,0,0,0,0,0,
+        0x12,28,0x0d,1,4,0,0,0x11,7,0,0,0,0,0,0,0,0x1a,12,
+        0x0a,8,0,0,0,0x42,0,0,0x80,0x43,0x10,3};
+    assert((samples(light, {1,2}, 0)[0].values == std::vector<float>{32,256}));
     rejects([&]{ samples(event, {2,1}, 3); });
     rejects([&]{ samples(event, {1,2}, 1); });
     for (std::size_t n=0; n < event.size(); ++n) rejects([&]{ samples(View(event).first(n), {1,2}, 3); });
