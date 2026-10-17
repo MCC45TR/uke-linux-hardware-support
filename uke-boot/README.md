@@ -176,3 +176,13 @@ original inspection command remains available for manual diagnostics. Host
 native fixtures and the installed unit verifier pass. One USB-connected normal
 boot reaches userspace in 4.7 seconds; an unplugged cold-boot console test remains
 separate evidence.
+
+## Clock startup — 18 October 2026
+
+The tested Uke RTC initially reports an old date. Original Fedora chronyd's
+`-s` option restores the later drift-file timestamp before notify readiness,
+then normal NTP synchronization proceeds. A physical reboot confirms this
+behavior. Release 16 packages the same option as a native chronyd drop-in,
+preserving the original environment options and service sandbox. It does not
+write the RTC or add another clock daemon. Original chronyd remains the single
+enabled time authority on the tested installation.

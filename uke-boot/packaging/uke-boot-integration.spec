@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 15%{?dist}
+Release: 16%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -11,7 +11,7 @@ BuildRequires: gcc-c++ make systemd-rpm-macros
 BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
 BuildRequires: openssl-devel
 Requires: senemos-native-runtime(libstdc++)
-Requires: kmod bash systemd NetworkManager openssh-server
+Requires: kmod bash systemd NetworkManager openssh-server chrony
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -87,6 +87,7 @@ bash tests/startup-native.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs openssl libsystemd)
 ./kernel-update-contract
 %install
+install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-wifi-factory %{buildroot}%{_libexecdir}/senemos-uke/uke-wifi-factory
 install -Dm644 src/units/uke-wifi-factory.service %{buildroot}%{_unitdir}/uke-wifi-factory.service
@@ -115,6 +116,7 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %license LICENSE
 %doc README.md
 %{_bindir}/uke-boot-status
+%{_unitdir}/chronyd.service.d/70-uke-clock.conf
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
 %{_libexecdir}/senemos-uke/uke-usb-network
@@ -154,6 +156,9 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-16
+- Restore saved drift-file time before chronyd readiness on Uke.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-13
 - Report detected GPU and display capabilities through the original fastfetch modules.
 
