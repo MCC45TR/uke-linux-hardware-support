@@ -43,3 +43,11 @@ bluetooth-srpm:
 	 docs/BLUETOOTH.md | gzip -n > "$$top/SOURCES/uke-bluetooth-0.1.0.tar.gz"
 	cp packaging/uke-bluetooth.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-bluetooth.spec"
+
+# Host-only OEM data conversion; this executable is not a tablet startup task.
+.PHONY: test-oem-brightness
+test-oem-brightness:
+	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/oem-brightness-curve.cpp -o build/oem-brightness-test
+	./build/oem-brightness-test
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/oem-brightness-curve.cpp -o build/uke-oem-brightness-curve
