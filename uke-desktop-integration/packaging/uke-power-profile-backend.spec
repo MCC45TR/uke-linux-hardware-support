@@ -1,7 +1,7 @@
 Name: uke-power-profile-backend
 Version: 0.1.0
-Release: 2%{?dist}
-Summary: Native Uke CPU governor backend for Power Profiles daemon
+Release: 3%{?dist}
+Summary: Native Uke CPU and GPU backend for Power Profiles daemon
 License: GPL-3.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
 Source0: power-profiles-daemon-0.30.tar.gz
@@ -16,9 +16,10 @@ Requires: policycoreutils selinux-policy-targeted
 %{?systemd_requires}
 
 %description
-The standard PPD D-Bus service with an exact Uke CPU governor driver. Original
-KDE remains unchanged. This candidate controls CPU governors only and includes
-no Python CLI, firmware, calibration, voltage table or GPU policy.
+The standard PPD D-Bus service with an exact Uke CPU and GPU driver. Original
+KDE remains unchanged. CPU governors and GPU maximum-frequency preferences use
+existing kernel interfaces; thermal QoS remains authoritative. No Python CLI,
+firmware, calibration or voltage table is included.
 
 %prep
 echo '90f2c95024861d9f4062abedd514084939224e7a49edd468f001af7260ec8e6c  %{SOURCE0}' | sha256sum -c -
@@ -63,6 +64,10 @@ if [ "$1" -eq 0 ]; then semodule -r uke-power-profile; fi
 %{_datadir}/selinux/packages/uke-power-profile.cil
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-3
+- Add a GPU devfreq preference and preserve tighter thermal constraints.
+- Defer discovery until the native GPU emits its device event.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
 - Retain the original PPD SELinux domain and standard modules-load startup.
 

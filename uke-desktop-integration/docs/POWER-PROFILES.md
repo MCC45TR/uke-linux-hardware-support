@@ -1,28 +1,49 @@
-# Uke CPU power profiles
+# Uke CPU and GPU power profiles
 
-17 October 2026. Target: Fedora Rawhide AArch64, original KDE, Uke with
-`qcom-cpufreq-hw` policies 0, 3 and 7. The installed PPD 0.30 currently reports
-the placeholder platform driver. CPU frequency policies already exist.
+18 October 2026. Tested on POCO Pad X1, Fedora Rawhide AArch64, original KDE,
+Linux `7.2.10-senemos.1.4056` and COPR `uke-power-profile-backend-0.1.0-3`.
+All three profiles appeared through the standard Power Profiles daemon D-Bus
+interface. Each profile changed CPU governors and the GPU preference; the
+original power-saver selection was restored after testing.
 
-The candidate adds a C++ CPU driver to upstream Power Profiles daemon 0.30.
-It requires the exact Uke identity and all three kernel governors. Power saver
-selects `powersave`, balanced selects `schedutil`, and performance selects
-`performance`. Each policy is read back; a failed change restores previous
-governors and returns an error. Firmware OPPs, frequency limits, boost and
-thermal protection are retained. GPU profiles are not implemented.
+| Profile | Three CPU policies | GPU maximum preference |
+|---|---|---|
+| Power saver | `powersave` | 500 MHz |
+| Balanced | `schedutil` | 950 MHz |
+| Performance | `performance` | 950 MHz |
 
-Power saver holds CPU requests at the lowest allowed frequencies and can reduce
-responsiveness. These governor choices need measured device acceptance; they
-do not establish battery-life or thermal results. No invented platform-profile
-sysfs interface or fake PPD driver is used.
+The three `qcom-cpufreq-hw` policies retain their complete firmware frequency
+tables. Performance requested their respective maxima of 1900.8, 2611.2 and
+2803.2 MHz. The native Adreno `0x43030b00` device retains nine frequency states
+from 255 to 950 MHz and its `simple_ondemand` governor. Both 255 and 633 MHz
+were observed during the bounded profile test. These are kernel reports;
+sustained performance and energy consumption have not been qualified.
 
-The original Fedora PPD package supplies its D-Bus and Polkit policy. A separate
-native-only package supplies the daemon candidate and service override. Removing
-the package and restarting `power-profiles-daemon` restores the original daemon.
-No KDE application is rebuilt. No Python code or runtime is in this package.
+The 500 MHz power-saver preference is project policy requiring energy and
+responsiveness validation. It is not an OEM thermal threshold. No minimum,
+OPP voltage, cooling state or firmware maximum is raised. Kernel devfreq QoS
+combines this preference with thermal requests; a tighter readback is accepted.
+Partial failures restore previous CPU/GPU preferences and return an error.
+Missing GPU discovery defers probing and retries on native devfreq/DRM events.
 
-Source: upstream `power-profiles-daemon` 0.30, archive SHA-256
+The native backend extends upstream Power Profiles daemon 0.30. Original
+Fedora packages provide the D-Bus and Polkit policy. Removing the backend
+package and restarting `power-profiles-daemon` restores the distribution daemon.
+KDE applications are unchanged. No project Python code or runtime is shipped.
+Host fixtures cover late GPU discovery, thermal clamps, invalid limits,
+readback failure and rollback; COPR build 11164907 passed these checks.
+
+The supplied thermal handoff was compared with stock-derived Uke
+`thermalbreakboostconfig.xml` at vendor commit
+`51ecce187b180e1df9230ff50b604af535b8e116`. Its virtual-skin triggers are not CPU
+junction temperatures. Its GPU targets are vendor cooling indices, not MHz.
+They are not copied into this preference backend. Four GPUSS zones bind to the
+GPU cooling device. Full OEM skin/BCL policy and CPU emergency cooling mapping
+remain separate kernel work. The profile test reached about 40 degrees Celsius
+at the reported CPU sensor; protective throttling was not deliberately triggered.
+
+Upstream 0.30 archive SHA-256:
 `90f2c95024861d9f4062abedd514084939224e7a49edd468f001af7260ec8e6c`.
-Meson and its Python interpreter run only in the host build SDK; Meson is the
-upstream build system and has no practical replacement here. Upstream CLI,
-Python tests and completion generators are excluded from the candidate payload.
+Meson and Python run only on the build host because Meson is the upstream build
+system. Upstream Python CLI, tests and completion generators are excluded from
+the target payload.
