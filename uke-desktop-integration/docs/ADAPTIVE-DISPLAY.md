@@ -50,7 +50,10 @@ that relation at shutdown, so user services finish before SDDM releases the
 session. The dependency does not pull in a display manager or alter timeouts.
 On the first .4056 lifecycle trial, the shutdown journal reaches its end in
 approximately 2.1 seconds instead of the preceding 42-second plasmashell timeout.
-Repeated clean-session and power-off tests remain separate acceptance gates.
+The second trial from a fresh session still waits 40 seconds for plasmashell,
+even with SDDM ordered after user shutdown. The first trial had a restarted shell;
+the ordering alone is therefore not a fix for the Plasma shutdown regression.
+Root-cause, repeated clean-session and power-off tests remain open.
 
 ## Install for a controlled trial
 
@@ -146,3 +149,12 @@ integration package does not delete device-local firmware or factory calibration
 
 Upstream sources were inspected through their public source APIs. Host and
 package results do not establish physical sensor, display or calibration support.
+
+An uninstrumented full-shutdown core on the preserved fallback places the main
+thread in `WaylandClipboard::~WaylandClipboard()` waiting for `QThread::wait()`.
+The clipboard worker waits for a recursive mutex inside `ClipboardThread::run()`.
+This matches [KDE bug 524538](https://bugs.kde.org/show_bug.cgi?id=524538), marked
+as a duplicate of bug 518902. The installed original Fedora KGuiAddons 6.31.0
+has no newer candidate in the checked repositories. No KDE binary is rebuilt,
+clipboard feature disabled, or stop deadline shortened. The desktop shutdown
+regression remains open.
