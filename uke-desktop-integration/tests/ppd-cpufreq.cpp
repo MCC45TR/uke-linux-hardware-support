@@ -9,6 +9,7 @@ static unsigned fail_policy = 99;
 static bool bad_readback;
 static bool fail_gpu;
 static bool thermal_clamp;
+static std::string gpu_request;
 extern "C" char *ppd_utils_get_sysfs_path(const char *path) { return g_strdup((root + path).c_str()); }
 extern "C" gboolean ppd_utils_write(const char *path, const char *value, GError **error) {
     if (strstr(path, "/devfreq/") && fail_gpu) {
@@ -22,6 +23,7 @@ extern "C" gboolean ppd_utils_write(const char *path, const char *value, GError 
         return FALSE;
     }
     std::ofstream file(path);
+    if (strstr(path, "/devfreq/")) gpu_request = value;
     file << (bad_readback ? "wrong" : thermal_clamp && strstr(path, "/devfreq/") ? "353000000" : value);
     bad_readback = false;
     return bool(file);
@@ -60,7 +62,7 @@ int main(int argc, char **argv) {
     assert(reprobes == 1);
     for (auto profile : {PPD_PROFILE_POWER_SAVER, PPD_PROFILE_PERFORMANCE, PPD_PROFILE_BALANCED}) {
         g_autoptr(GError) error = nullptr;
-        assert(activate(nullptr, profile, PPD_PROFILE_ACTIVATION_REASON_USER, &error));
+        assert(activate(PPD_DRIVER(driver), profile, PPD_PROFILE_ACTIVATION_REASON_USER, &error));
         const char *expected = profile == PPD_PROFILE_POWER_SAVER ? "powersave" : profile == PPD_PROFILE_PERFORMANCE ? "performance" : "schedutil";
         for (unsigned policy : policies) assert(read_is(policy, "scaling_governor", expected));
         assert(gpu_read_is("max_freq", profile == PPD_PROFILE_POWER_SAVER ? "500000000" : "950000000"));
@@ -68,26 +70,32 @@ int main(int argc, char **argv) {
     for (bool readback : {false, true}) {
         g_autoptr(GError) error = nullptr;
         fail_policy = readback ? 99 : 3; bad_readback = readback;
-        assert(!activate(nullptr, PPD_PROFILE_PERFORMANCE, PPD_PROFILE_ACTIVATION_REASON_USER, &error));
+        assert(!activate(PPD_DRIVER(driver), PPD_PROFILE_PERFORMANCE, PPD_PROFILE_ACTIVATION_REASON_USER, &error));
         assert(error);
         for (unsigned policy : policies) assert(read_is(policy, "scaling_governor", "schedutil"));
         assert(gpu_read_is("max_freq", "950000000"));
     }
     fail_gpu = true;
     g_autoptr(GError) gpu_error = nullptr;
-    assert(!activate(nullptr, PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
+    assert(!activate(PPD_DRIVER(driver), PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
     for (unsigned policy : policies) assert(read_is(policy, "scaling_governor", "schedutil"));
     assert(gpu_read_is("max_freq", "950000000"));
     thermal_clamp = true;
-    assert(activate(nullptr, PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, nullptr));
+    assert(activate(PPD_DRIVER(driver), PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, nullptr));
     assert(gpu_read_is("max_freq", "353000000"));
+    fail_policy = 3;
+    g_clear_error(&gpu_error);
+    assert(!activate(PPD_DRIVER(driver), PPD_PROFILE_PERFORMANCE, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
+    assert(gpu_request == "500000000");
     thermal_clamp = false;
+    write(std::string(gpu) + "max_freq", gpu_request);
+    assert(gpu_read_is("max_freq", "500000000"));
     write(std::string(gpu) + "min_freq", "633000000\n");
     g_clear_error(&gpu_error);
-    assert(!activate(nullptr, PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
+    assert(!activate(PPD_DRIVER(driver), PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
     write(std::string(gpu) + "min_freq", "255000000\n");
     g_autoptr(GError) error = nullptr;
-    assert(!activate(nullptr, static_cast<PpdProfile>(0), PPD_PROFILE_ACTIVATION_REASON_USER, &error));
+    assert(!activate(PPD_DRIVER(driver), static_cast<PpdProfile>(0), PPD_PROFILE_ACTIVATION_REASON_USER, &error));
     write(base + "3/scaling_available_governors", "powersave schedutil performance-extra\n");
     assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_FAIL);
     write(base + "3/scaling_available_governors", "powersave schedutil performance\n");

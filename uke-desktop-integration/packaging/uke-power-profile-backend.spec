@@ -1,6 +1,6 @@
 Name: uke-power-profile-backend
 Version: 0.1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Native Uke CPU and GPU backend for Power Profiles daemon
 License: GPL-3.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -64,6 +64,9 @@ if [ "$1" -eq 0 ]; then semodule -r uke-power-profile; fi
 %{_datadir}/selinux/packages/uke-power-profile.cil
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
+- Restore the last requested GPU preference after failures under a thermal clamp.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-3
 - Add a GPU devfreq preference and preserve tighter thermal constraints.
 - Defer discovery until the native GPU emits its device event.

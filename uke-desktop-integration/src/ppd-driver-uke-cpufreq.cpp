@@ -8,7 +8,12 @@ extern "C" {
 #include <cstring>
 #include <initializer_list>
 
-struct _PpdDriverUkeCpufreq { PpdDriverCpu parent_instance; GUdevClient *client; bool awaiting_gpu; };
+struct _PpdDriverUkeCpufreq {
+    PpdDriverCpu parent_instance;
+    GUdevClient *client;
+    bool awaiting_gpu;
+    const char *gpu_preference;
+};
 G_DEFINE_TYPE(PpdDriverUkeCpufreq, ppd_driver_uke_cpufreq, PPD_TYPE_DRIVER_CPU)
 static constexpr unsigned policies[] = {0, 3, 7};
 static constexpr const char *gpu = "/sys/class/devfreq/3d00000.qcom,kgsl-3d0/";
@@ -75,7 +80,8 @@ static PpdProbeResult probe(PpdDriver *driver) {
     return PPD_PROBE_RESULT_SUCCESS;
 }
 
-static gboolean activate(PpdDriver *, PpdProfile profile, PpdProfileActivationReason, GError **error) {
+static gboolean activate(PpdDriver *driver, PpdProfile profile, PpdProfileActivationReason, GError **error) {
+    auto self = PPD_DRIVER_UKE_CPUFREQ(driver);
     const char *governor;
     switch (profile) {
     case PPD_PROFILE_POWER_SAVER: governor = "powersave"; break;
@@ -95,6 +101,11 @@ static gboolean activate(PpdDriver *, PpdProfile profile, PpdProfileActivationRe
     if (!g_file_get_contents(gpu_max_path, &previous_gpu, nullptr, error) ||
         !g_file_get_contents(gpu_min_path, &gpu_min, nullptr, error)) return FALSE;
     g_strchomp(previous_gpu);
+    // Sysfs reports the thermal-clamped limit, not our previous QoS preference.
+    if (self->gpu_preference) {
+        g_free(previous_gpu);
+        previous_gpu = g_strdup(self->gpu_preference);
+    }
     g_strchomp(gpu_min);
     guint64 minimum = 0;
     if (!g_ascii_string_to_unsigned(gpu_min, 10, 0, 950000000, &minimum, error)) return FALSE;
@@ -142,6 +153,7 @@ static gboolean activate(PpdDriver *, PpdProfile profile, PpdProfileActivationRe
             g_prefix_error(error, "GPU preference rollback failed; ");
     }
     for (auto value : previous) g_free(value);
+    if (success) self->gpu_preference = gpu_max;
     return success;
 }
 

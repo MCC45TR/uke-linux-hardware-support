@@ -47,3 +47,11 @@ Upstream 0.30 archive SHA-256:
 Meson and Python run only on the build host because Meson is the upstream build
 system. Upstream Python CLI, tests and completion generators are excluded from
 the target payload.
+
+Release 4 retains the last successfully applied GPU preference for rollback.
+The max_freq sysfs readback includes thermal clamps, so restoring that readback
+could otherwise leave a temporary thermal cap as a persistent user preference.
+The added failure fixture keeps a clamp active during a partial CPU transition,
+checks the restored request, then removes the clamp and checks the original
+profile cap. Initial activation still captures the current effective limit
+conservatively until the backend has its own successful preference.
