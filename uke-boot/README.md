@@ -158,8 +158,11 @@ contains no passwords, authorized keys or private host keys.
 
 The `machine-info` and `fastfetch.jsonc` profiles provide the configured
 Xiaomi Pad 7 presentation. Revision 1.1 is configured presentation metadata,
-not a measured board-revision result. The Adreno 732 hardware label explicitly
-retains the missing DRM qualification. Disk size always comes from the mounted
+not a measured board-revision result. Display and GPU information comes from
+the original fastfetch detectors. On 17 October 2026, the native 7.2.9 display
+candidate reported DSI-1 at 3200×2136/120 Hz through libdrm and Adreno 732 through
+Mesa Vulkan. A detected mode does not qualify all display transitions or rates.
+Disk size always comes from the mounted
 filesystem; grow an existing EXT4 root only after verifying its physical
 `linux` partition. The systemd `reboot bootloader` command already accepts the
 argument, but a matching kernel reboot-reason backend and physical fastboot

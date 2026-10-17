@@ -12,7 +12,7 @@ validate:
 	bash -n src/audit-kernel-inputs.sh
 	sh -n src/uke-usb-network.sh
 	bash -n tests/startup-native.sh src/dracut/93uke-boot-guard/module-setup.sh
-	jq -e . src/profiles/fastfetch.jsonc >/dev/null
+	jq -e '.modules | index("display") != null and index("gpu") != null and all(.[]; type != "object" or .type != "custom")' src/profiles/fastfetch.jsonc >/dev/null
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh

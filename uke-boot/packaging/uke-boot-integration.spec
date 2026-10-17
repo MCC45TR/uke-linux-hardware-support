@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -154,6 +154,9 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-13
+- Report detected GPU and display capabilities through the original fastfetch modules.
+
 * Thu Oct 15 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
 - Add a native matched-boot updater with module, root, partition, power and durable backup checks.
 - Require explicit local enablement for matching boot-bundle transaction hooks.

@@ -5,7 +5,7 @@
     { "type": "host", "format": "Xiaomi Pad 7 (1.1) [uke]" },
     "kernel", "uptime", "packages", "shell", "display", "terminal",
     { "type": "cpu", "format": "Qualcomm Snapdragon 7+ Gen 3 (SM7675) ({cores-online} cores) @ {freq-max}" },
-    { "type": "custom", "key": "GPU (hardware)", "format": "Qualcomm Adreno 732 (DRM unavailable)" },
+    "gpu",
     "memory", "swap", { "type": "disk", "folders": "/" },
     "break", "colors"
   ]
