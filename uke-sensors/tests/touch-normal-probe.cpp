@@ -14,6 +14,7 @@ bool bad_metadata;
 bool coordinate_enabled,bad_mode;
 bool foreign_chip,single_chip;
 unsigned custom_writes,custom_reads,custom_busy_reads,scan_pending_reads;
+unsigned fast_bank_reads,fast_bank_writes;
 bool scan_never_ready;
 std::array<std::uint8_t,0x120000> ram{};
 std::vector<std::pair<unsigned,Bytes>> writes;
@@ -23,10 +24,15 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
     va_list args; va_start(args,request); auto *m=va_arg(args,spi_ioc_transfer *); va_end(args);
     auto *tx=reinterpret_cast<const std::uint8_t *>(m->tx_buf);
     auto *rx=reinterpret_cast<std::uint8_t *>(m->rx_buf);
-    if((m->speed_hz!=1000000 && !(m->len==5434 && m->speed_hz==19200000)) || m->bits_per_word!=8) return -1;
+    if((m->speed_hz!=1000000 && !(m->speed_hz==19200000 &&
+        (m->len==5434 || (m->len>=2 && m->len<=1026)))) || m->bits_per_word!=8) return -1;
     if(!rx && m->len==3 && tx[0]==0xff) selected=(unsigned(tx[1])<<15)|(unsigned(tx[2])<<7);
     else if(!rx) {
         auto address=selected+(tx[0]&0x7f);
+        if(address<0x1142a0) {
+            if(m->speed_hz!=19200000) return -1;
+            fast_bank_writes++;
+        }
         writes.emplace_back(address,Bytes(tx+1,tx+m->len));
         if(address==0x11c450 && m->len==4 && tx[1]==0xbf && tx[3]==1) custom_writes++;
         if(address==0x11c450 && m->len==6 && tx[1]==0xbf && tx[2]==0x15 && tx[3]==0)
@@ -38,6 +44,8 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
         std::fill(rx,rx+m->len,0);
         const auto address=selected+(tx[0]&0x7f);
         if(address<0x1142a0 && address!=0x11c478 && m->len-2<=ram.size()-address) {
+            if(m->speed_hz==19200000) fast_bank_reads++;
+            else if(m->len!=41) return -1;
             std::copy(ram.begin()+address,ram.begin()+address+m->len-2,rx+2); if(bad_bank) rx[2]^=1;
         }
         else if(address==0x1fb104 && m->len==8) {
@@ -75,6 +83,7 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
 }
 void reset() {
     operations=status_reads=selected=custom_writes=custom_reads=custom_busy_reads=scan_pending_reads=0;
+    fast_bank_reads=fast_bank_writes=0;
     fail_at=~0U;
     never_copy=never_reset=bad_crc=bad_bank=bad_metadata=coordinate_enabled=bad_mode=scan_never_ready=false;
     foreign_chip=single_chip=false;
@@ -110,6 +119,9 @@ int main(int argc,char **argv) {
     bad=data; bad[8]^=1; reject([&]{normal_image(bad);});
     bad.resize(100); reject([&]{normal_image(bad);});
     reset(); load_normal(0,data); const unsigned complete=operations;
+    unsigned bank_transfers=0;
+    for(const auto &b:banks)bank_transfers+=(b.size+1023)/1024;
+    assert(fast_bank_reads==bank_transfers && fast_bank_writes==bank_transfers);
     assert(writes.front()==std::make_pair(0x1fb43eU,Bytes{0x69}));
     assert(writes.back()==std::make_pair(0x1fb50dU,Bytes{1}) && status_reads==2);
     std::size_t bank=0,offset=0;

@@ -7,7 +7,8 @@
   previously checked startup-order correction. A narrow SELinux module permits
   its own QRTR sockets.
 - `uke-ssc-fileservice`: native FastRPC file transport with private RAM registry
-  storage. Symlink escapes and incomplete shell inputs are rejected.
+  storage. A native helper publishes the complete factory-derived registry
+  atomically. Symlink escapes and incomplete shell inputs are rejected.
 
 `make srpm PACKAGE=NAME` downloads the exact upstream archive below
 `referances/`, verifies SHA-256 and packages the attributed patches. COPR binary
@@ -26,10 +27,13 @@ inputs. No unit is independently enabled by an install preset.
 
 The optional `uke-adaptive-display` integration target supplies an explicit
 activation path. See its [device trial guide](../../uke-desktop-integration/docs/ADAPTIVE-DISPLAY.md).
-Physical orientation, front-light discovery, lux response, cold boot and
-suspend/resume remain unqualified by package builds.
+On 17 October, the separate 7.2.10-senemos.1.4055 RAM trial exposes the original
+KDE rotation interface. A Uke-specific standard udev mount matrix aligns the
+OEM portrait sensor coordinates with the landscape panel; four physical poses
+and touch alignment are confirmed. Front-light/compass discovery, validated lux,
+cold boot and suspend/resume remain separate device gates.
 
 `make test-native` runs the unprivileged protocol/source fixtures. The separate
-`make test-cache` needs root inside a disposable user namespace or container to
-check root-owned tmpfiles semantics; it never mounts or accesses a real persist
-partition. An ordinary user cannot perform those ownership operations.
+`make test-cache` checks atomic cache publication, exact copying, private modes
+and refusal of unsupported inputs in an isolated fixture. It never mounts or
+accesses a real persist partition. Factory data stays out of source packages.

@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Sensor integration for automatic display rotation and brightness
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -8,7 +8,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRequires: systemd-rpm-macros
 Requires: iio-sensor-proxy(ssc) >= 1
-Requires: uke-ssc-fileservice >= 2026.09.21-4
+Requires: uke-ssc-fileservice >= 2026.09.21-5
 %{?systemd_requires}
 
 %description

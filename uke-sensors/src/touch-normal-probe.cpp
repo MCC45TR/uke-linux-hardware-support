@@ -45,6 +45,7 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
     bool allowed = false;
     for(const auto &b : banks)
         allowed |= address>=b.address && address-b.address<=b.size && data.size()<=b.size-(address-b.address);
+    const bool ram_bank = allowed;
     for(const auto &[reg,size] : std::array<std::pair<unsigned,unsigned>,9>{{
         {0x1fb528,3},{0x1fb518,3},{0x1fb500,4},{0x1fb52c,3},
         {0x1fb530,3},{0x1fb504,4},{0x1fc925,1},{0x11c460,6},{0x11c450,2}}})
@@ -62,7 +63,8 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
     require(allowed && !data.empty() && data.size()<=1024, "Write outside normal RAM-download scope");
     auto select=select_page(address); transfer(fd,select.data(),nullptr,select.size());
     Bytes tx(data.size()+1); tx[0]=(address&0x7f)|0x80;
-    std::copy(data.begin(),data.end(),tx.begin()+1); transfer(fd,tx.data(),nullptr,tx.size());
+    std::copy(data.begin(),data.end(),tx.begin()+1);
+    transfer(fd,tx.data(),nullptr,tx.size(),ram_bank ? 19200000 : 1000000);
 }
 template<std::size_t N> static std::array<std::uint8_t,N> normal_read(int fd,unsigned address) {
     require((N==1 && (address==0x1fc925 || address==0x11c460 || address==0x11c450)) ||
@@ -94,7 +96,7 @@ static void verify_bank(int fd,unsigned address,std::span<const std::uint8_t> ex
     require(allowed && !expected.empty() && expected.size()<=1024,"Readback outside normal bank scope");
     auto select=select_page(address); transfer(fd,select.data(),nullptr,select.size());
     Bytes tx(expected.size()+2),rx(tx.size()); tx[0]=address&0x7f;
-    transfer(fd,tx.data(),rx.data(),tx.size());
+    transfer(fd,tx.data(),rx.data(),tx.size(),19200000);
     require(std::equal(expected.begin(),expected.end(),rx.begin()+2),"Normal firmware bank readback mismatch");
 }
 static unsigned custom_read(int fd,unsigned subcommand);

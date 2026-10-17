@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
         // 1 Hz request; the DSP may round to the sensor's supported minimum rate.
         const Bytes rate{0x0d, 0, 0, 0x80, 0x3f};
         const bool streaming = xyz || type == "ambient_light_back_strm";
-        auto event = rpc(fd, client_request(found[0], streaming ? 513 : 514, streaming ? View(rate) : View{}, xyz), 1025, xyz);
+        auto event = rpc(fd, client_request(found[0], streaming ? 513 : 514, streaming ? View(rate) : View{}, xyz), 1025, streaming);
         close(fd); fd = -1; // QRTR disconnect removes this client's sensor requests.
         // shortcut: OEM rear-light channels remain raw until vendor channel units are verified.
         std::cout << std::setprecision(std::numeric_limits<float>::max_digits10);

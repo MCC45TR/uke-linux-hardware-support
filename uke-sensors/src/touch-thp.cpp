@@ -235,7 +235,7 @@ static void input_report(int fd,const std::vector<nvt::Slot> &slots,std::array<i
             "Touch event publication failed");
 }
 int main(int argc,char **argv) {
-    int spi=-1,input=-1,irq=-1;
+    int spi=-1,input=-1,irq=-1,panel_event=-1;
     const auto started=std::chrono::steady_clock::now();
     std::array<int,nvt::kFingerSlots> ids; ids.fill(-1);
     nvt::Geometry geometry;
@@ -308,6 +308,8 @@ int main(int argc,char **argv) {
                 pause_ms(100);
             }
             require(!panel_provider.empty() && admitted_panel.ready,"O82 kernel panel-reset provider is not ready");
+            panel_event=open(panel_provider.c_str(),O_RDONLY|O_CLOEXEC);
+            require(panel_event>=0,"O82 panel event provider unavailable");
         }
         if(daemon) {
             TouchPanelGuard guard(panel_provider,admitted_panel);
@@ -341,22 +343,33 @@ int main(int argc,char **argv) {
         TouchRecovery recovery{admitted_panel.generation,0,{}};
         while(running && (daemon || std::chrono::steady_clock::now()<deadline)) {
             if(!panel_provider.empty()) {
+                char acknowledged[64];
+                require(pread(panel_event,acknowledged,sizeof(acknowledged),0)>0,"O82 panel event read failed");
                 if(!recover_touch_panel(panel_provider,admitted_panel,recovery,
                     [&]{input_report(input,{},ids,geometry);previous_contacts=0;},
                     [&]{core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);},
                     [&]{discard_touch_irqs(irq);},[&]{touch_start_normal(spi,image);},
                     std::chrono::steady_clock::now())) {
-                    pause_ms(100);continue;
+                    // Retry backoff only bounds failed downloads; panel readiness wakes us immediately.
+                    pollfd changed{panel_event,POLLPRI|POLLERR,0};
+                    const int timeout=recovery.failures && recovery.failures<3 ? 1000 : -1;
+                    const int status=poll(&changed,1,timeout);
+                    if(status<0 && !running)break;
+                    require(status>=0 && !(changed.revents&POLLNVAL),"O82 panel event wait failed");
+                    continue;
                 }
             }
-            pollfd ready{irq,POLLIN,0};
-            const int status=poll(&ready,1,100);
+            pollfd ready[]{{irq,POLLIN,0},{panel_event,POLLPRI|POLLERR,0}};
+            const int status=poll(ready,2,100);
             if(status<0 && !running) break;
             require(status>=0,"Touch IRQ wait failed");
             if(!status) {
                 input_report(input,{},ids,geometry); previous_contacts=0;
                 continue;
             }
+            require(!(ready[0].revents&(POLLERR|POLLHUP|POLLNVAL)) &&
+                    !(ready[1].revents&POLLNVAL),"Touch event provider failed");
+            if(ready[1].revents || !(ready[0].revents&POLLIN))continue;
             coalesced_edges+=consume_touch_irq(irq)-1;
             std::array<std::uint8_t,5434> tx{},rx{};
             try {
@@ -394,6 +407,7 @@ int main(int argc,char **argv) {
         input_report(input,{},ids,geometry);
         require(ioctl(input,UI_DEV_DESTROY)==0,"Touch input cleanup failed");
         close(input); input=-1; close(spi); spi=-1; close(irq); irq=-1;
+        if(panel_event>=0)close(panel_event);
         std::cout<<"valid="<<frames<<" rejected="<<rejected<<" contact_frames="<<contacts<<" coalesced_edges="<<coalesced_edges<<'\n';
         (void)&load_normal; (void)&normal_image; (void)&inspect_normal; (void)&probe_coordinates;
         return 0;
@@ -401,6 +415,7 @@ int main(int argc,char **argv) {
         if(input>=0) { try{input_report(input,{},ids,geometry);}catch(...){} ioctl(input,UI_DEV_DESTROY); close(input); }
         if(spi>=0) close(spi);
         if(irq>=0) close(irq);
+        if(panel_event>=0)close(panel_event);
         std::cerr<<e.what()<<'\n';
         return 1;
     }

@@ -26,19 +26,22 @@ srpm: validate
 	case '$(PACKAGE)' in
 	libssc) cp patches/libssc/*.patch "$$top/SOURCES/";;
 	iio-sensor-proxy) cp patches/iio-sensor-proxy/*.patch packaging/selinux/uke-ssc.cil "$$top/SOURCES/";;
-	uke-ssc-fileservice) cp patches/hexagonrpc/*.patch packaging/systemd/*.service packaging/systemd/iio-ssc-order.conf packaging/systemd/70-uke-ssc.rules packaging/uke-ssc.conf tests/hexagon-registry.cpp tests/hexagon-shell.c tests/hexagon-readiness.c "$$top/SOURCES/";;
+	uke-ssc-fileservice) cp patches/hexagonrpc/*.patch packaging/systemd/*.service packaging/systemd/iio-ssc-order.conf packaging/systemd/70-uke-ssc.rules src/ssc-cache.cpp tests/hexagon-registry.cpp tests/hexagon-shell.c tests/hexagon-readiness.c "$$top/SOURCES/"; cp tests/ssc-cache.cpp "$$top/SOURCES/ssc-cache-test.cpp";;
 	esac
 	cp packaging/$(PACKAGE)/$(PACKAGE).spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/$(PACKAGE).spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
-touchscreen-rpm:
-	test "$$(uname -m)" = aarch64
+.PHONY: touchscreen-srpm
+touchscreen-srpm:
 	test -s src/upstream/nt36532-thp/nvt_touch_core.cpp
 	top="$$(realpath -m build/rpmbuild)"; mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
 	tar --sort=name --mtime=@1791024250 --owner=0 --group=0 --numeric-owner \
 	 --transform='s#^#uke-touchscreen-0.1.0/#' -cJf "$$top/SOURCES/uke-touchscreen-0.1.0.tar.xz" \
 	 src/touch-* src/upstream/nt36532-thp src/units src/modules-load.d src/modprobe.d src/udev tests/touch-input.cpp tests/touch-normal-probe.cpp LICENSE.GPL-3.0
 	cp packaging/uke-touchscreen.spec "$$top/SPECS/"
+	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-touchscreen.spec"
+touchscreen-rpm: touchscreen-srpm
+	test "$$(uname -m)" = aarch64
 	rpmbuild -ba --define "_topdir $$(realpath -m build/rpmbuild)" "$$(realpath -m build/rpmbuild)/SPECS/uke-touchscreen.spec"
 test-native:
 	bash tests/source-contract.sh
@@ -53,8 +56,10 @@ test-native:
 	./build/touch-contract
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-readonly.cpp -o build/uke-touch-readonly
 test-cache:
-	test "$$(id -u)" = 0
-	bash tests/ssc-cache.sh
+	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/ssc-cache.cpp -o build/ssc-cache-contract
+	fixture=$$(mktemp -d); trap 'rm -r -- "$$fixture"' EXIT
+	./build/ssc-cache-contract "$$fixture"
 
 # Host qualification only; this target neither installs nor starts a tablet daemon.
 test-hexagonrpc:

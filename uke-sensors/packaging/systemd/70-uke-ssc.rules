@@ -1,1 +1,3 @@
-SUBSYSTEM=="misc", KERNEL=="fastrpc-adsp", TAG+="systemd"
+SUBSYSTEM=="misc", KERNEL=="fastrpc-adsp", TAG+="systemd", ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-accel"
+# OEM sensor axes use portrait coordinates; the native O82 panel is landscape.
+SUBSYSTEM=="misc", KERNEL=="fastrpc-adsp", PROGRAM=="/usr/bin/grep -Fzqx xiaomi,uke /sys/firmware/devicetree/base/compatible", ENV{ACCEL_MOUNT_MATRIX}="0, 1, 0; -1, 0, 0; 0, 0, 1"

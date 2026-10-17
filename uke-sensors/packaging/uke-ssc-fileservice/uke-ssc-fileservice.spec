@@ -1,18 +1,20 @@
 Name: uke-ssc-fileservice
 Version: 2026.09.21
-Release: 4%{?dist}
+Release: 6%{?dist}
 Summary: Native Uke SSC file service with a disposable registry
 License: GPL-3.0-or-later
 URL: https://github.com/linux-msm/hexagonrpc
 Source0: hexagonrpc-510c87e5.tar.gz
 Source1: uke-ssc-root.service
 Source2: uke-ssc-sensors.service
-Source3: uke-ssc.conf
+Source3: ssc-cache.cpp
 Source4: iio-ssc-order.conf
 Source5: hexagon-registry.cpp
 Source6: hexagon-shell.c
 Source7: 70-uke-ssc.rules
 Source8: hexagon-readiness.c
+Source9: uke-ssc-cache.service
+Source10: ssc-cache-test.cpp
 Patch0: 0001-select-sequence-type.patch
 Patch1: 0002-verbose-native-u64.patch
 Patch2: 0003-map-oem-odm-sensor-config.patch
@@ -27,6 +29,7 @@ Requires: /usr/share/uke-sensors/odm/json.lst
 Requires: /usr/share/uke-sensors/sns_reg.conf
 Requires: /usr/lib/firmware/qcom/uke/sensors/sns_tppe.so
 Requires: /usr/bin/findmnt
+Requires: /usr/bin/grep
 %{?systemd_requires}
 
 %description
@@ -46,6 +49,7 @@ tar -xf %{SOURCE0} --strip-components=1
 gcc $CFLAGS $LDFLAGS -std=gnu11 -Wall -Wextra -Werror -Wno-unused-parameter \
     -I include libhexagonrpc/*.c libhexagonrpc/interface/*.c hexagonrpcd/*.c \
     hexagonrpcd/interface/*.c -lsystemd -o uke-hexagonrpcd
+g++ $CXXFLAGS $LDFLAGS -std=c++20 -Wall -Wextra -Werror %{SOURCE3} -o uke-ssc-cache
 
 %check
 mkdir contract
@@ -61,34 +65,50 @@ gcc -std=gnu11 -O2 -Wall -Wextra -Werror -I contract %{SOURCE6} -o contract/shel
 sed -n '/^static void \*start_reverse_tunnel(/,/^}/p' hexagonrpcd/rpcd.c > contract/listener-function.h
 gcc -std=gnu11 -O2 -Wall -Wextra -Werror -I contract %{SOURCE8} -o contract/readiness
 ./contract/readiness
+mkdir -p src tests
+cp %{SOURCE3} src/ssc-cache.cpp
+cp %{SOURCE10} tests/ssc-cache.cpp
+g++ -std=c++20 -O2 -Wall -Wextra -Werror tests/ssc-cache.cpp -o contract/cache
+mkdir contract/cache-fixture
+./contract/cache "$PWD/contract/cache-fixture"
 
 %install
 install -Dm755 uke-hexagonrpcd %{buildroot}/usr/libexec/uke-hexagonrpcd
+install -Dm755 uke-ssc-cache %{buildroot}/usr/libexec/uke-ssc-cache
 install -Dm644 %{SOURCE1} %{buildroot}%{_unitdir}/uke-ssc-root.service
 install -Dm644 %{SOURCE2} %{buildroot}%{_unitdir}/uke-ssc-sensors.service
-install -Dm644 %{SOURCE3} %{buildroot}%{_tmpfilesdir}/uke-ssc.conf
+install -Dm644 %{SOURCE9} %{buildroot}%{_unitdir}/uke-ssc-cache.service
 install -Dm644 %{SOURCE4} %{buildroot}%{_unitdir}/iio-sensor-proxy.service.d/uke-ssc.conf
 install -Dm644 %{SOURCE7} %{buildroot}%{_udevrulesdir}/70-uke-ssc.rules
 
 %post
-%systemd_post uke-ssc-root.service uke-ssc-sensors.service
+%systemd_post uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service
 
 %preun
-%systemd_preun uke-ssc-root.service uke-ssc-sensors.service
+%systemd_preun uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service
 
 %postun
-%systemd_postun_with_restart uke-ssc-root.service uke-ssc-sensors.service
+%systemd_postun uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service
 
 %files
 %license COPYING
 /usr/libexec/uke-hexagonrpcd
+/usr/libexec/uke-ssc-cache
+%{_unitdir}/uke-ssc-cache.service
 %{_unitdir}/uke-ssc-root.service
 %{_unitdir}/uke-ssc-sensors.service
 %{_unitdir}/iio-sensor-proxy.service.d/uke-ssc.conf
-%{_tmpfilesdir}/uke-ssc.conf
 %{_udevrulesdir}/70-uke-ssc.rules
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-6
+- Discover the upstream SSC accelerometer backend through udev.
+- Map OEM portrait coordinates to the native landscape panel without changing calibration.
+
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-5
+- Publish a complete private registry atomically before listener registration.
+- Scope factory-file read permission to the native cache preparation service.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-4
 - Order sensor startup by the FastRPC device and registered listeners.
 

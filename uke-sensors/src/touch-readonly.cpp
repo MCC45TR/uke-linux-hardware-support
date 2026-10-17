@@ -63,7 +63,8 @@ static void firmware(const std::array<std::uint8_t,16> &info) {
 }
 static void transfer(int fd, const void *tx, void *rx, unsigned size,unsigned speed=1000000) {
     if(touch_transfer_guard) touch_transfer_guard();
-    require(speed==1000000 || (size==5434 && speed==19200000),"Unreviewed SPI transfer speed");
+    require(speed==1000000 || (speed==19200000 && (size==5434 || (size>=2 && size<=1026))),
+            "Unreviewed SPI transfer speed");
     spi_ioc_transfer message{};
     message.tx_buf = reinterpret_cast<std::uintptr_t>(tx);
     message.rx_buf = reinterpret_cast<std::uintptr_t>(rx);

@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-touchscreen
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Native Novatek NT36532 touchscreen input for Xiaomi Uke
 License: GPL-3.0-or-later AND Apache-2.0
 ExclusiveArch: aarch64
@@ -62,6 +62,10 @@ install -Dm644 LICENSE.GPL-3.0 %{buildroot}/usr/share/licenses/%{name}/GPL-3.0
 %license /usr/share/licenses/%{name}/GPL-3.0
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Wake touch recovery from the panel's kernel notification.
+- Transfer and verify normal RAM banks at the exact OEM SPI speed.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Coordinate touch firmware recovery with the native panel reset generation.
 - Retain the input device across resets and bound failed recovery attempts.
