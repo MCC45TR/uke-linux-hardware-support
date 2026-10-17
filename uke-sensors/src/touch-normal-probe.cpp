@@ -83,7 +83,7 @@ template<std::size_t N> static std::array<std::uint8_t,N> normal_read(int fd,uns
 static void pause_ms(unsigned milliseconds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
-static void bootstrap_touch_chip(int fd) {
+[[maybe_unused]] static void bootstrap_touch_chip(int fd) {
     // Uke OEM nt36532_touch.ko performs this sequence before reading chip trim.
     normal_write(fd,0x1fb43e,Bytes{0x69}); pause_ms(5);
     normal_write(fd,0x1fb104,Bytes(6,0));
@@ -155,7 +155,7 @@ static void touch_game_mode(int fd,unsigned value) {
     }
     throw std::runtime_error("Touch game-mode acknowledgement timed out");
 }
-static void touch_probe_game_rates(int fd) {
+[[maybe_unused]] static void touch_probe_game_rates(int fd) {
     const auto previous=custom_read(fd,0x0f);
     require(previous<=1,"Unqualified resident touch game mode");
     try {

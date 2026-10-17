@@ -198,3 +198,40 @@ Device identity reads are bounded to 4 KiB and validate the complete string
 list, including its final terminator. Host fixtures cover lock contention,
 reacquisition, malformed identity and partial/empty IRQ reads. Tablet acceptance
 of the revised transport remains pending.
+
+## Persistent sensor and touch results — 18 October 2026
+
+On POCO Pad X1 with Fedora Rawhide and persistent Linux
+`7.2.10-senemos.1.4056`, normal boot restores four-pose automatic rotation and
+dual front/rear automatic brightness in original KDE. The user confirms both
+functions. Factory registry/calibration stays on read-only persist; the native
+file service prepares a private RAM copy before DSP clients become ready.
+Compass and proximity interfaces are exposed, but heading accuracy and physical
+near/far acceptance remain open. Hall-to-Linux mapping remains incomplete.
+This supersedes the earlier stationary-only and RAM-only status above.
+
+COPR touchscreen 0.1.0-7 uses systemd notify readiness after input publication.
+The physical restart reaches active state about 0.87 seconds after process
+start. Panel reset/ready notifications still control screen-off/on recovery.
+Three bounded DPMS cycles previously reduced readiness to 0.65–0.71 seconds;
+the user reports normal use. Actual system suspend remains unqualified.
+
+The diagnostic `--probe-game-rates` uses the exact stock command protocol,
+validates the existing private inputs, and restores game mode on completion or
+failure. It requires exclusive access with the normal service stopped. It is
+not part of normal startup. Tests cover bounded retries, invalid values,
+readback refusal and restoration. After notify readiness, bounded physical
+queries report the following controller values:
+
+| Display mode | Hand scan | Pen scan | Effect of game mode 0/1 |
+|---|---|---|---|
+| 60 Hz | 120 Hz | 240 Hz | No change |
+| 120 Hz | 120 Hz | 240 Hz | No change |
+| 144 Hz | 180 Hz | 240 Hz | No change |
+
+These are controller reports after the existing OEM panel timing sequence,
+not an independent measurement or a qualified power-profile rate setter.
+An earlier rapid restart races firmware initialization and times out; notify
+readiness removes that race in the repeated sequence. The original 90 Hz mode
+and normal input service are restored. Power-profile-controlled scanning needs
+a verified controller command; frequency hopping is not used as a substitute.
