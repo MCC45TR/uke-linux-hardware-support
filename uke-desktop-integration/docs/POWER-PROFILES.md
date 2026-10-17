@@ -55,3 +55,8 @@ The added failure fixture keeps a clamp active during a partial CPU transition,
 checks the restored request, then removes the clamp and checks the original
 profile cap. Initial activation still captures the current effective limit
 conservatively until the backend has its own successful preference.
+
+COPR 11164959 passes the release-4 fixture. DNF installs the signed RPM on the
+same .4056 tablet; all three CPU/GPU profile choices pass the repeated bounded
+test and power saver is restored. This adds rollback coverage without changing
+the frequency/thermal qualification limits above.
