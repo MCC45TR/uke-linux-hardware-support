@@ -5,6 +5,8 @@ sensors="$project/../uke-sensors"
 grep -qx 'ConditionFirmware=device-tree-compatible(xiaomi,uke)' "$project/packaging/uke-adaptive-display.target"
 grep -qx 'Requires=uke-ssc-sensors.service iio-sensor-proxy.service' "$project/packaging/uke-adaptive-display.target"
 grep -qx 'disable uke-adaptive-display.target' "$project/packaging/80-uke-adaptive-display.preset"
+grep -qx 'After=sddm.service' "$project/packaging/50-uke-sddm-order.conf"
+if grep -E '^(Requires|Wants|ExecStop|TimeoutStopSec)=' "$project/packaging/50-uke-sddm-order.conf"; then exit 1; fi
 grep -Fqx 'WantedBy=dev-fastrpc\x2dadsp.device' "$project/packaging/uke-adaptive-display.target"
 grep -Fqx 'BindsTo=dev-fastrpc\x2dadsp.device' "$sensors/packaging/systemd/uke-ssc-root.service"
 grep -Fqx 'After=dev-fastrpc\x2dadsp.device' "$sensors/packaging/systemd/uke-ssc-root.service"

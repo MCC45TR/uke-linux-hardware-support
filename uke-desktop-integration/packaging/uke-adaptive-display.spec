@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Sensor integration for automatic display rotation and brightness
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -8,7 +8,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildArch: noarch
 BuildRequires: systemd-rpm-macros
 Requires: iio-sensor-proxy(ssc) >= 1
-Requires: uke-ssc-fileservice >= 2026.09.21-5
+Requires: uke-ssc-fileservice >= 2026.09.21-8
 %{?systemd_requires}
 
 %description
@@ -25,6 +25,7 @@ It includes no firmware, calibration, desktop replacement or brightness daemon.
 %install
 install -Dm644 packaging/uke-adaptive-display.target %{buildroot}%{_unitdir}/uke-adaptive-display.target
 install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir}/80-uke-adaptive-display.preset
+install -Dm644 packaging/50-uke-sddm-order.conf %{buildroot}%{_unitdir}/user@.service.d/50-uke-sddm-order.conf
 
 %post
 %systemd_post uke-adaptive-display.target
@@ -40,8 +41,12 @@ install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir
 %doc docs/ADAPTIVE-DISPLAY.md
 %{_unitdir}/uke-adaptive-display.target
 %{_presetdir}/80-uke-adaptive-display.preset
+%{_unitdir}/user@.service.d/50-uke-sddm-order.conf
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
+- Require the dual-light backend and stop user managers before SDDM.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
 - Start an explicitly enabled target when its FastRPC device appears.
 

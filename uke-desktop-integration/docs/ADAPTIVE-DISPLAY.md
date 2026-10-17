@@ -45,6 +45,13 @@ failure backoff only bound failed attempts. ADSP/charger startup remains the
 kernel remoteproc, PDR and PMIC-GLINK dependency path; these units never restart
 the DSP or rebind the battery driver.
 
+Release 4 orders user managers after an existing SDDM service. Systemd reverses
+that relation at shutdown, so user services finish before SDDM releases the
+session. The dependency does not pull in a display manager or alter timeouts.
+On the first .4056 lifecycle trial, the shutdown journal reaches its end in
+approximately 2.1 seconds instead of the preceding 42-second plasmashell timeout.
+Repeated clean-session and power-off tests remain separate acceptance gates.
+
 ## Install for a controlled trial
 
 ```sh
