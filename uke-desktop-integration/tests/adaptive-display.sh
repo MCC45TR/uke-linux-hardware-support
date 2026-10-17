@@ -9,7 +9,7 @@ grep -Fqx 'WantedBy=dev-fastrpc\x2dadsp.device' "$project/packaging/uke-adaptive
 grep -Fqx 'BindsTo=dev-fastrpc\x2dadsp.device' "$sensors/packaging/systemd/uke-ssc-root.service"
 grep -Fqx 'After=dev-fastrpc\x2dadsp.device' "$sensors/packaging/systemd/uke-ssc-root.service"
 grep -qx 'Requires=uke-ssc-sensors.service' "$sensors/packaging/systemd/iio-ssc-order.conf"
-grep -Fq 'ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-accel"' "$sensors/packaging/systemd/70-uke-ssc.rules"
+grep -Fq 'ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-accel ssc-proximity"' "$sensors/packaging/systemd/70-uke-ssc.rules"
 for service in uke-ssc-root uke-ssc-sensors; do
     if grep -q '^WantedBy=' "$sensors/packaging/systemd/$service.service"; then exit 1; fi
     grep -qx 'Type=notify' "$sensors/packaging/systemd/$service.service"

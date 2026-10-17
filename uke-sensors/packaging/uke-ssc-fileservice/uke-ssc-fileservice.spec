@@ -1,6 +1,6 @@
 Name: uke-ssc-fileservice
 Version: 2026.09.21
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Native Uke SSC file service with a disposable registry
 License: GPL-3.0-or-later
 URL: https://github.com/linux-msm/hexagonrpc
@@ -101,6 +101,9 @@ install -Dm644 %{SOURCE7} %{buildroot}%{_udevrulesdir}/70-uke-ssc.rules
 %{_udevrulesdir}/70-uke-ssc.rules
 
 %changelog
+* Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-7
+- Expose the existing upstream SSC proximity backend through udev.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-6
 - Discover the upstream SSC accelerometer backend through udev.
 - Map OEM portrait coordinates to the native landscape panel without changing calibration.

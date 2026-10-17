@@ -22,6 +22,7 @@ int main() {
     auto all = request("");
     assert(all.size() == accel.size()-5 && all[5] == 0x2e && all[8] == 0x2b && all[10] == 0x29);
     rejects([]{ request("factory_test"); });
+    assert(datatype("rotv") && datatype("geomag_rv") && datatype("gravity"));
     rejects([]{ fields(Bytes{0x0a, 5, 1}); });
     rejects([]{ fields(Bytes{0}); });
     rejects([]{ fields(Bytes{0x0b}); });
