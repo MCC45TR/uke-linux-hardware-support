@@ -1,18 +1,20 @@
 Name: libssc
 Version: 0.4.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Native Qualcomm Sensor Core client library
 License: GPL-3.0-or-later
 URL: https://codeberg.org/DylanVanAssche/libssc
 Source0: libssc-v%{version}.tar.gz
 Source1: libssc-light-constructor.cpp
 Source2: libssc-proximity-context.cpp
+Source3: libssc-mount-matrix.sh
 Patch0: 0001-optional-python-mocks.patch
 Patch1: 0002-report-qrtr-error.patch
 Patch2: 0003-gyroscope-cli-units.patch
 Patch3: 0004-light-data-type-and-validity.patch
-Patch4: 0005-bounded-proximity-unpack-context.patch
-BuildRequires: gcc gcc-c++ meson ninja-build pkgconf-pkg-config
+Patch4: 0005-preserve-nonzero-mount-matrix.patch
+Patch5: 0006-bounded-proximity-unpack-context.patch
+BuildRequires: bash gcc gcc-c++ meson ninja-build pkgconf-pkg-config
 BuildRequires: python3 = 3.15.0-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
 BuildRequires: pkgconfig(glib-2.0) pkgconfig(gio-2.0) pkgconfig(qmi-glib)
@@ -43,6 +45,7 @@ meson compile -C build
 DESTDIR=%{buildroot} meson install -C build --no-rebuild
 
 %check
+bash %{SOURCE3} src/libssc-sensor.c
 test -s build/src/libssc.so.2
 g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -I src %{SOURCE1} \
     $(pkg-config --cflags --libs gio-2.0) -L build/src -lssc -o light-constructor-test
@@ -63,8 +66,13 @@ if find %{buildroot} -type f \( -name '*.py' -o -iname '*python*' \) | grep -q .
 %{_libdir}/pkgconfig/libssc.pc
 
 %changelog
-* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-4
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-5
 - Add bounded value-free context to existing proximity unpack warnings.
+- Retain the installed release-4 nonzero mount-matrix correction.
+
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-4
+- Preserve nonzero mount matrices whose values sum to zero.
+- Retain the warning and identity fallback for actual all-zero matrices.
 
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-3
 - Add explicit front/rear light construction and reject invalid lux reports.

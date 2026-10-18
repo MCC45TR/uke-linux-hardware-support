@@ -24,7 +24,7 @@ srpm: validate
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
 	cp "$$archive" "$$top/SOURCES/$$name"
 	case '$(PACKAGE)' in
-	libssc) cp patches/libssc/*.patch tests/libssc-light-constructor.cpp tests/libssc-proximity-context.cpp "$$top/SOURCES/";;
+	libssc) cp patches/libssc/*.patch tests/libssc-light-constructor.cpp tests/libssc-proximity-context.cpp tests/libssc-mount-matrix.sh "$$top/SOURCES/";;
 	iio-sensor-proxy) cp patches/iio-sensor-proxy/*.patch packaging/selinux/uke-ssc.cil src/dual-light.h tests/dual-light.cpp "$$top/SOURCES/";;
 	uke-ssc-fileservice) cp patches/hexagonrpc/*.patch packaging/systemd/*.service packaging/systemd/iio-ssc-order.conf packaging/systemd/70-uke-ssc.rules src/ssc-cache.cpp tests/hexagon-registry.cpp tests/hexagon-shell.c tests/hexagon-readiness.c "$$top/SOURCES/"; cp tests/ssc-cache.cpp "$$top/SOURCES/ssc-cache-test.cpp";;
 	esac
