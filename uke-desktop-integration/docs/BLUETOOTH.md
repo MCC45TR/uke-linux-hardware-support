@@ -33,3 +33,10 @@ retains `PrivateDevices=yes` and binds only the partition node read-only for
 the identity `stat`; it does not read the block device. Source fixtures cover
 these refusals. Compilation, fixture execution, service-namespace admission
 and physical controller startup have not been run for release 6.
+
+18 October 2026, 11:24 UTC: a coordinated tablet smoke test with the same
+namespace and capability restrictions exposed the persist block node to
+`stat` while preserving `ro,nodev,nosuid,noexec`. The real helper and HCI
+commands were not run and no address changed. This supersedes only the
+namespace-smoke gap above; SDK fixtures, package checks, full helper startup
+and physical factory-address equality remain separate.
