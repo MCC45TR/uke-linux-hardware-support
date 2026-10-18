@@ -32,6 +32,23 @@ srpm: validate
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/$(PACKAGE).spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
 .PHONY: touchscreen-srpm
+.PHONY: front-color-srpm test-front-color
+build/uke-front-color: src/front-color.cpp src/front-color-state.hpp src/front-color-file.hpp src/ssc-discovery.cpp src/ssc-sample.cpp
+	mkdir -p build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -O2 -Wall -Wextra -Werror $(LDFLAGS) src/front-color.cpp -o $@
+test-front-color: build/uke-front-color
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(LDFLAGS) tests/front-color.cpp -o build/front-color-test
+	./build/front-color-test
+front-color-srpm:
+	top="$$(realpath -m build/front-color-rpmbuild)"
+	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner \
+	 --transform='s#^#uke-front-color-0.1.0/#' -czf "$$top/SOURCES/uke-front-color-0.1.0.tar.gz" \
+	 src/front-color.cpp src/front-color-state.hpp src/front-color-file.hpp src/ssc-discovery.cpp src/ssc-sample.cpp \
+	 tests/front-color.cpp packaging/uke-front-color/uke-front-color.spec packaging/systemd/uke-front-color.service \
+	 packaging/systemd/90-uke-front-color.preset docs/FRONT-COLOR.md Makefile LICENSE
+	cp packaging/uke-front-color/uke-front-color.spec "$$top/SPECS/"
+	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-front-color.spec"
 touchscreen-srpm:
 	test -s src/upstream/nt36532-thp/nvt_touch_core.cpp
 	top="$$(realpath -m build/rpmbuild)"; mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}

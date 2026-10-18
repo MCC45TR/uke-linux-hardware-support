@@ -1,5 +1,11 @@
 # Uke sensors
 
+18 October 2026: a separate, disabled-by-default native front-color publisher
+candidate exposes raw CCT vectors with explicit freshness, wire status and
+unverified units/calibration. It preserves the original SensorProxy ALS API.
+The [endpoint and activation contract](docs/FRONT-COLOR.md) describes its bounded
+JSON snapshot and separate package, SELinux and tablet acceptance gates.
+
 18 October 2026: the metadata diagnostic also admits the OEM SSC data types
 `rgb`, `cct_front` and `cct_front_strm`. These are sensor lookup names, not
 LED controls or sample requests. Android's `xiaomi.sensor.front_cct` name is a
