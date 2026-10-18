@@ -36,6 +36,7 @@ struct Settings {
 };
 Settings parse_settings(const std::string &text);
 bool settings_match_context(const Settings &settings, const Context &before, const Context &after);
+bool preconfigured_cap_context_matches(const Context &before, const Context &after);
 struct Band {
     int32_t minimum_deciC = 0, maximum_deciC = 0;
     uint32_t maximum_ua = 0, maximum_uv = 0;

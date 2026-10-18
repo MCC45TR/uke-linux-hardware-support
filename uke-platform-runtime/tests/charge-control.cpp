@@ -98,6 +98,34 @@ int main() {
         after.boottime_ns=settings.received_ns+5*second;
         assert(settings_match_context(settings,before,after));
     }
+    {
+        Context before;before.provider_verified=true;before.state=sample();before.boottime_ns=second;
+        before.state.live=before.state.verified=before.state.current_verified=false;
+        before.boot_id="synthetic-boot";before.kernel_release="synthetic-kernel";
+        auto after=before;after.boottime_ns=2*second;
+        after.state.enabled=true;after.state.start=70;after.state.end=80;
+        assert(preconfigured_cap_context_matches(before,after));
+        for(unsigned fault=0;fault<16;fault++) {
+            auto changed=after;
+            if(fault==0)changed.state.enabled=false;
+            if(fault==1)changed.state.start=75;
+            if(fault==2)changed.state.end=100;
+            if(fault==3)changed.state.live=true;
+            if(fault==4)changed.state.verified=true;
+            if(fault==5)changed.state.current_verified=true;
+            if(fault==6)++changed.state.instance;
+            if(fault==7)++changed.state.generation;
+            if(fault==8)++changed.state.firmware;
+            if(fault==9)++changed.state.source;
+            if(fault==10)changed.boot_id="changed";
+            if(fault==11)changed.kernel_release="changed";
+            if(fault==12)changed.provider_verified=false;
+            if(fault==13)changed.state.compiled=false;
+            if(fault==14)changed.boottime_ns=before.boottime_ns-1;
+            if(fault==15)changed.boottime_ns=before.boottime_ns+10*second+1;
+            assert(!preconfigured_cap_context_matches(before,changed));
+        }
+    }
     // Strict metadata shape; unsigned overflow/sign and extra tokens rejected.
     const std::string text = "1 1 1 7 2 3 42 32000000000 1 70 80 1 2000000000 0 1 " + sha +
         " 1 1 1000000 1 2000000000 250 4000000 500000 2000000000 1 500000000\n";

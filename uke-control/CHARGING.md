@@ -115,3 +115,11 @@ returns exact reported values and never grants control permission. The helper
 rejects missing kernel support, recent/active control snapshots, changed epochs,
 malformed/partial or stale data. Existing status/admission remain metadata-only.
 No raw-property selector, setter, polling service or automatic fallback is added.
+
+`sudo uke-control charge enable-cap80` explicitly requests the matched native
+helper/kernel's restricted existing 70/80-cap enable. USB input must be off.
+Different configured thresholds, active control, stale lifecycle or failed
+readback are refused; no general profile, numerical pack limit or service is
+created. There is no fallback from this action to a generic/raw writer. Its
+success describes configuration; physical charge-stop and reboot persistence
+must be tested separately. Failed writes may be ambiguous and are not retried.

@@ -265,3 +265,20 @@ The coordinator will test this query first with PD power disconnected. Unknown
 or timed-out firmware responses retain the transport's existing refusal/quarantine
 rules. There is no automatic replay, firmware reset or control-profile promotion.
 Protection and actual charge stop remain separate qualification stages.
+
+## Restricted existing-cap enable — release 5 candidate
+
+Kernel 29's explicit read on POCO Pad X1 / Fedora Rawhide AArch64 reports the
+firmware's existing restart 70/stop 80 configuration with its feature disabled.
+`sudo uke-charge-control enable-cap80` uses the matched restricted kernel node
+to enable only that existing band with input disconnected. It takes the owner
+lock, validates lifecycle/boot/kernel before/after and checks the returned raw
+configuration. It cannot set a target, disable a cap, change FCC/voltage, suspend
+input or access an XM/PD selector. General profile/current admission is unchanged.
+
+The kernel performs fresh fixed preflight GETs and mandatory enabled 70/80
+readback. Failure may leave configuration unknown; the client never replays or
+undoes it. An uncertain attempted writer is quarantined for that driver instance.
+Success means configuration readback only, not electrical charge stop, battery
+bypass or all autonomous protections. This command does not save intent, start
+a service or promise reboot persistence. Physical effect remains a separate test.

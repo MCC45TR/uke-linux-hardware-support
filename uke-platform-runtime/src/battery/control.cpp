@@ -103,6 +103,19 @@ bool settings_match_context(const Settings &s, const Context &before, const Cont
         before.boottime_ns <= s.received_ns && s.received_ns <= after.boottime_ns &&
         after.boottime_ns - s.received_ns <= 5ULL * 1000000000ULL;
 }
+bool preconfigured_cap_context_matches(const Context &before, const Context &after) {
+    const auto quiescent = [](const Context &c) {
+        return c.provider_verified && c.state.compiled && !c.state.live &&
+            !c.state.verified && !c.state.current_verified && c.state.instance;
+    };
+    return quiescent(before) && quiescent(after) && !before.boot_id.empty() && before.boot_id == after.boot_id &&
+        !before.kernel_release.empty() && before.kernel_release == after.kernel_release &&
+        before.state.instance == after.state.instance && before.state.generation == after.state.generation &&
+        before.state.firmware == after.state.firmware && before.state.source == after.state.source &&
+        before.boottime_ns && before.boottime_ns <= after.boottime_ns &&
+        after.boottime_ns - before.boottime_ns <= 10ULL * 1000000000ULL &&
+        after.state.enabled && after.state.start == 70 && after.state.end == 80;
+}
 Session::Session(Io &io, Profile profile, State binding)
     : io_(io), profile_(std::move(profile)), binding_(std::move(binding)) {}
 Session::~Session() { try { revoke(); } catch (...) {} }

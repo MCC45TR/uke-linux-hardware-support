@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -19,7 +19,7 @@ C++ standard power-supply collector and read-only D-Bus diagnostics. Firmware
 controls charging. No raw-property writes, PD negotiation, thresholds, factory
 access or calibration changes are supplied. Health and estimation algorithms
 remain disabled until pack/firmware evidence is qualified. This source
-candidate has not been built, tested or physically accepted.
+component reports software tests and physical qualification separately.
 
 %package -n uke-charge-control
 Summary: Evidence-gated native Uke charge-control backend
@@ -27,11 +27,13 @@ Requires: senemos-native-runtime(libstdc++) systemd-libs
 Requires(pre): systemd
 
 %description -n uke-charge-control
-Separate privileged threshold/current helper and disabled admission services. Controls
+Separate privileged threshold/current helper and disabled admission services. General controls
 require the reviewed kernel option, exact per-boot evidence, numerical guards
 and matching firmware setting readback. Positive FCC writes use the separately
 admitted OEM property. Voltage and PD remain firmware-owned; no voltage writer.
 The shipped profile is unqualified. No physical acceptance is implied.
+An explicit matched-kernel operation can enable only the existing 70/80 cap
+with external input off, preserving thresholds and electrical settings.
 
 %prep
 %setup -q
@@ -90,6 +92,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Add a restricted explicit enable for the existing offline70/80 firmware cap.
+- Preserve general control admission and distinguish configuration from physical charge stop.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Add an explicit matched-kernel query for firmware-reported charge thresholds.
 - Preserve read-only status and control qualification; reject stale or mixed-epoch readback.

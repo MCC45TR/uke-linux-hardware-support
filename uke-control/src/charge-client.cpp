@@ -55,4 +55,7 @@ Result control_mode(const std::string& mode) {
     // A running worker is not evidence that it has applied a current setting.
     return {0, "{\"kind\":\"uke_charge_control_request\",\"requested\":\"automatic\",\"service_active\":true,\"applied\":null,\"effective\":null,\"physical_charge_stopped\":null}\n"};
 }
+Result enable_preconfigured_cap() {
+    return execute({helper, "enable-cap80"}, 12, 65536);
+}
 }

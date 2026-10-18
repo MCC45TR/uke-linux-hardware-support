@@ -16,6 +16,7 @@ void boot();
 std::string charge_status();
 void charge_set(unsigned percent);
 Result charge_control_query(const std::string& operation);
+Result charge_enable_preconfigured_cap();
 Result charge_control_mode(const std::string& mode);
 std::string usb_status();
 void usb_watch(unsigned seconds);

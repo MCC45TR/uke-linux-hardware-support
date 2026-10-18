@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -73,6 +73,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
+- Add the explicit preconfigured-cap command without a metadata-query fallback.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
 - Add an explicit native read-only firmware threshold query.
 - Keep diagnostic GETs separate from metadata status and qualified control requests.

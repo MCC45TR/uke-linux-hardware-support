@@ -43,6 +43,7 @@ static void charge_helper() {
          "Install the reviewed uke-charge-control backend");
 }
 Result charge_control_query(const std::string& operation) {charge_helper();return charge::control_query(operation);}
+Result charge_enable_preconfigured_cap() {charge_helper();return charge::enable_preconfigured_cap();}
 static void directory(const fs::path& path) {
     fs::create_directories(path);
     struct stat st{};need(lstat(path.c_str(),&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted state directory: "+path.string());

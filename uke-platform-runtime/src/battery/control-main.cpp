@@ -77,6 +77,7 @@ public:
     State state() override { return parse_state(read_attribute("uke_charge_state")); }
     void write(const std::string &name, const std::string &value) override {
         if (name != "uke_charge_lease" && name != "uke_charge_thresholds" && name != "uke_charge_refresh" &&
+            name != "uke_charge_enable_existing_cap" &&
             name != "uke_charge_current_profile" && name != "uke_charge_current_ua")
             fail("control_attribute_forbidden");
         const int fd = openat(directory_, name.c_str(), O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
@@ -205,24 +206,27 @@ int main(int argc, char **argv) {
     const bool admission_query = argc == 2 && std::strcmp(argv[1], "admission") == 0;
     const bool protocol_query = argc == 2 && std::strcmp(argv[1], "protocols") == 0;
     const bool settings_query = argc == 2 && std::strcmp(argv[1], "settings") == 0;
+    const bool preconfigured_cap = argc == 2 && std::strcmp(argv[1], "enable-cap80") == 0;
     try {
         if (argc == 2 && std::string(argv[1]) == "capabilities") {
-            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"settings_query_implemented\":true,\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"settings_query_implemented\":true,\"preconfigured_cap_enable_implemented\":true,\"preconfigured_cap_scope\":\"offline_existing_70_80_only\",\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
             return 0;
         }
         if (argc == 2 && std::string(argv[1]) == "--help") {
             std::cout << "uke-charge-control capabilities | status | admission | protocols | settings\n"
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
+                << "uke-charge-control enable-cap80\n"
                 << "settings requires root and performs three diagnostic GETs without control permission.\n"
-                << "Actions require root, a reviewed control profile and matching per-boot evidence.\n"
+                << "enable-cap80 requires root and the matched offline-only existing70/80-cap interface.\n"
+                << "General threshold/current actions require root, a reviewed control profile and matching per-boot evidence.\n"
                 << "Positive FCC only; CV remains firmware-owned. No PD negotiation or electrical cutoff.\n";
             return 0;
         }
         if (argc < 2) fail("control_command_required");
         const std::string command(argv[1]);
         if ((command == "pair" && argc != 4) || (command != "pair" && argc != 2)) fail("control_arguments_invalid");
-        if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "verify" && command != "cap80" && command != "band80-90" &&
+        if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "enable-cap80" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
@@ -232,6 +236,21 @@ int main(int argc, char **argv) {
             return 0;
         }
         if (geteuid() != 0) fail("control_root_required");
+        if (preconfigured_cap) {
+            Lock owner;
+            const auto before = context(*io);
+            if (before.state.live || before.state.verified || before.state.current_verified)
+                fail("preconfigured_cap_control_busy");
+            io->write("uke_charge_enable_existing_cap", "1\n");
+            const auto after = context(*io);
+            if (!preconfigured_cap_context_matches(before, after)) fail("preconfigured_cap_context_changed");
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_preconfigured_charge_cap\",\"operation\":\"enable_existing_70_80\""
+                << ",\"configuration_applied\":true,\"configuration_readback_verified\":true"
+                << ",\"reported_enabled\":true,\"reported_start_percent\":70,\"reported_end_percent\":80"
+                << ",\"general_control_admitted\":false,\"input_was_offline\":true,\"persistent_policy\":false"
+                << ",\"physical_charge_stopped\":null,\"battery_bypass_qualified\":false}\n";
+            return 0;
+        }
         if (settings_query) {
             Lock owner;
             const auto before = context(*io);
@@ -307,6 +326,12 @@ int main(int argc, char **argv) {
         }
         session->revoke(); session.reset(); return 0;
     } catch (const std::exception &e) {
+        if (preconfigured_cap) {
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_preconfigured_charge_cap\",\"reason\":\""
+                << identifier(e.what()) << "\",\"configuration_applied\":null,\"general_control_admitted\":false"
+                << ",\"physical_charge_stopped\":null,\"battery_bypass_qualified\":false}\n";
+            return 69;
+        }
         if (settings_query) {
             std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_settings\",\"firmware_get_complete\":false,\"reason\":\""
                 << identifier(e.what()) << "\",\"firmware_set_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
