@@ -23,6 +23,17 @@ int main() {
     assert(all.size() == accel.size()-5 && all[5] == 0x2e && all[8] == 0x2b && all[10] == 0x29);
     rejects([]{ request("factory_test"); });
     assert(datatype("rotv") && datatype("geomag_rv") && datatype("gravity"));
+    for (auto type : {"rgb", "cct_front", "cct_front_strm"}) {
+        const auto packet = request(type);
+        auto client = fields(tlv(tlvs(packet), 1).subspan(2));
+        assert(little(one(client, 2, 5)) == 512);
+        const auto lookup = fields(one(fields(one(client, 4, 2)), 2, 2));
+        const auto name = one(lookup, 1, 2);
+        assert(std::string_view(reinterpret_cast<const char *>(name.data()), name.size()) == type);
+        assert(little(one(lookup, 2, 0)) == 0 && little(one(lookup, 3, 0)) == 0);
+        rejects([&]{ request(type, lookup_uid, 513); });
+    }
+    rejects([]{ request("front_cct"); });
     rejects([]{ fields(Bytes{0x0a, 5, 1}); });
     rejects([]{ fields(Bytes{0}); });
     rejects([]{ fields(Bytes{0x0b}); });

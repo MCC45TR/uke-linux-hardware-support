@@ -85,7 +85,7 @@ static View one(const std::vector<Field> &items, unsigned number, unsigned wire)
     return result;
 }
 static bool datatype(std::string_view type) {
-    static constexpr std::array allowed{"", "accel", "gyro", "mag", "ambient_light", "ambient_light_back", "ambient_light_back_strm", "proximity", "sar", "hall", "oem_hall", "flicker", "sensor_temperature", "rotv", "geomag_rv", "game_rv", "gravity", "linear_accel", "tilt", "motion_detect", "pedometer"};
+    static constexpr std::array allowed{"", "accel", "gyro", "mag", "ambient_light", "ambient_light_back", "ambient_light_back_strm", "rgb", "cct_front", "cct_front_strm", "proximity", "sar", "hall", "oem_hall", "flicker", "sensor_temperature", "rotv", "geomag_rv", "game_rv", "gravity", "linear_accel", "tilt", "motion_detect", "pedometer"};
     return std::find(allowed.begin(), allowed.end(), type) != allowed.end();
 }
 struct Uid {
