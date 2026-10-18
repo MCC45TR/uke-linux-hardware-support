@@ -1,8 +1,9 @@
 # Fedora UPower overlay — 18 October 2026
 
-This is a source-only candidate for the `upower-1.91.5-1.fc46.aarch64` version
-reported by the concurrent VRR validation session. No RPM was built, installed
-or activated by the charging task. The new release is `1.91.5-2.uke1`.
+This candidate targets the original `upower-1.91.5-1.fc46.aarch64` version
+observed on Uke. The follow-up release is `1.91.5-2.uke4`; earlier source-only
+notes are superseded by the host results below. Tablet installation and
+activation remain pending.
 
 The spec derives from Fedora dist-git
 [`f47a2ad5d41e310ae0fb6e23ddcce78ae4ae9c87`](https://src.fedoraproject.org/rpms/upower/tree/f47a2ad5d41e310ae0fb6e23ddcce78ae4ae9c87)
@@ -28,9 +29,12 @@ bash packaging/upower/prepare-srpm.sh /private/source/upower-v1.91.5.tar.bz2 /pr
 
 It requires the pinned original archive and a new output directory. It performs
 no download, package installation or daemon activation. The spec applies both
-patches; `%check` runs native helpers and the actual daemon on a private bus under
-umockdev. Those commands have not been run. Archive acquisition is source
-evidence, not patch application, package closure or installed behavior evidence.
+patches. On 18 October 2026, a Fedora Rawhide AArch64 SDK builds the actual
+daemon; GCC and Clang helper contracts pass. The private-bus umockdev test
+observes AC online, a discharging display battery, OnBattery=false and a
+critical low-battery warning. The original external-power policy is preserved.
+Full RPM and transitive dependency admission remain separate; these host
+results do not qualify physical charging or desktop power actions.
 
 Keep the accepted original `upower` and matching `upower-libs` RPMs for rollback.
 Install/update and restoration can activate/restart UPower and restore its policy;

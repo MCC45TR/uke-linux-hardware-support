@@ -1,9 +1,11 @@
 # uke-platform-runtime
 
-Source status, **18 October 2026**: native read-only battery observation and
-model/packaging candidates are prepared for Xiaomi Pad 7 / POCO Pad X1 (`uke`,
-SM7675). Compilation, host tests, RPM/service checks and tablet tests were
-explicitly deferred. This is not physical charging acceptance.
+Status, **18 October 2026**: the native read-only battery observer for Xiaomi
+Pad 7 / POCO Pad X1 (`uke`, SM7675) compiles in a Fedora Rawhide AArch64 SDK.
+Model, session, profile, synthetic collector and private-bus API tests pass.
+RPM/dependency admission and tablet service tests remain pending. This is not
+physical charging acceptance. The optional original UPower overlay has
+separate [host results and installation limits](packaging/upower/README.md).
 
 The C++ observer reads an audited standard power-supply allowlist and offers
 read-only JSON and D-Bus snapshots. Missing/stale data stay unavailable. Health,
@@ -22,7 +24,7 @@ Qualcomm remoteproc, QRTR, FastRPC and SSC integration remains a separate scope.
 This component does not start another remote processor or claim completed
 hexagonrpc/libssc payloads. Use the original Fedora KDE applications.
 
-Future host entry points are `make all`, `make test-native` and `make srpm`.
+Host entry points are `make all`, `make test-native` and `make srpm`.
 The first RPM candidate is `uke-battery-observer` for Fedora AArch64. Other
 runtime package names and distribution targets are not implemented by this
 recipe. Python does not enter its target payload. Archives stay in

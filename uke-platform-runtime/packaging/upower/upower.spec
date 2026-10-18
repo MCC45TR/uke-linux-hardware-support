@@ -1,7 +1,7 @@
 Summary:        Power Management Service
 Name:           upower
 Version:        1.91.5
-Release:        2.uke1%{?dist}
+Release:        2.uke4%{?dist}
 License:        GPL-2.0-or-later
 URL:            https://upower.freedesktop.org/
 Source0:        https://gitlab.freedesktop.org/upower/%{name}/-/archive/v%{version}/%{name}-v%{version}.tar.bz2
@@ -150,6 +150,17 @@ if find %{buildroot} -type f \( -name '*.py' -o -name '*.pyc' -o -name 'python*'
 %{_datadir}/gtk-doc/html/UPower/*
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.91.5-2.uke4
+- Exercise the original daemon's AC and discharging policy on a private bus.
+- Correct the fixture's shell quoting and retain diagnostics on failure.
+
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.91.5-2.uke3
+- Bound unsigned thresholds without a redundant comparison below zero.
+
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.91.5-2.uke2
+- Include the standard math declarations used by the capacity validation patch.
+- Compile the helper fixture with the source file's actual standard headers.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.91.5-2.uke1
 - Propagate required threshold errors and preserve the measured health source.
 - Exclude installed Python tests; retain original desktop clients and APIs.

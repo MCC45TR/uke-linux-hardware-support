@@ -13,12 +13,12 @@
     "src/up-device-battery.c": "c9efe37e688721f985d768f6655b3ab0b48edc8f689407e2c33ef7d82b7801aa",
     "src/linux/up-device-supply-battery.c": "fbea1de289b8262fda8dd95320e36230561677351f35b6e380d32a792a14ee2f"
   },
-  "candidate_nevra": "upower-1.91.5-2.uke1.fc46.aarch64",
+  "candidate_nevra": "upower-1.91.5-2.uke4.fc46.aarch64",
   "reported_installed_nevra": "upower-1.91.5-1.fc46.aarch64",
   "reported_by": "concurrent VRR validation session, 18 October 2026",
   "package_built": false,
   "package_installed": false,
-  "tests_executed": false,
+  "tests_executed": true,
   "python_host_only": "Upstream Meson >= 0.60.0 and the unchanged upstream 1.91.5 unittest discovery helper; no practical non-Python upstream build route. No project Python code or installed Python tests.",
   "original_kde_unchanged": true,
   "battery_setters_enabled_by_this_overlay": false

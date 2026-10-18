@@ -5,7 +5,8 @@ source=${1:?Pass patched src/up-device-battery.c}
 work=$(mktemp -d)
 trap 'rm -r -- "$work"' EXIT
 {
-printf '%s\n' '#include <glib.h>' '#include <math.h>' '#include <assert.h>'
+printf '%s\n' '#include <glib.h>' '#include <assert.h>'
+awk '/^#include </ {print}' "$source"
 awk '/^static gdouble$/ {hold=$0;next}
  /^up_device_battery_calc_capacity / {emit=1;print hold}
  emit {print} emit && /^}/ {exit}' "$source"

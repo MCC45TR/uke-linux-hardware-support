@@ -1,10 +1,10 @@
 From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
 Subject: [PATCH] Propagate every required battery threshold and charge_types failure
 
-Base: UPower ecfd2e166b6213bbdaa4e7c952ebb9a6c1405337
+Base: UPower v1.91.5, 233615a1505166ef4a28c959836fe8c7781f5697
 Source license: GPL-2.0-or-later; original upstream attribution is retained.
-Source candidate only. No patch application, build, host test or installed
-daemon validation was executed. Uke battery controls remain disabled.
+Host results and physical limits are recorded in packaging/upower/README.md.
+Uke battery controls remain disabled.
 
 --- a/src/linux/up-device-supply-battery.c
 +++ b/src/linux/up-device-supply-battery.c
@@ -55,7 +55,8 @@ daemon validation was executed. Uke battery controls remain disabled.
  	}
  
  	if (start != G_MAXUINT) {
- 		g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
+-		g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
++		g_string_printf (start_str, "%u", MIN (start, 100u));
  		if (!g_file_set_contents_full (start_filename, start_str->str, start_str->len,
 -					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, NULL))
 -			err_count++;
@@ -66,7 +67,8 @@ daemon validation was executed. Uke battery controls remain disabled.
  	}
 @@ -737,31 +725,17 @@
  	if (end != G_MAXUINT) {
- 		g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
+-		g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
++		g_string_printf (end_str, "%u", MIN (end, 100u));
  		if (!g_file_set_contents_full (end_filename, end_str->str, end_str->len,
 -					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, NULL))
 -			err_count++;

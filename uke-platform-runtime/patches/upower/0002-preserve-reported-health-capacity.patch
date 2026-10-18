@@ -1,13 +1,21 @@
 From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
 Subject: [PATCH] Keep reported battery health separate from inferred energy capacity
 
-Base: UPower ecfd2e166b6213bbdaa4e7c952ebb9a6c1405337
+Base: UPower v1.91.5, 233615a1505166ef4a28c959836fe8c7781f5697
 Source license: GPL-2.0-or-later; original upstream attribution is retained.
-Source candidate only. No patch application, build, host test or installed
-daemon validation was executed. Uke battery controls remain disabled.
+Host results and physical limits are recorded in packaging/upower/README.md.
+Uke battery controls remain disabled.
 
 --- a/src/up-device-battery.c
 +++ b/src/up-device-battery.c
+@@ -20,6 +20,7 @@
+ 
++#include <math.h>
+ #include <string.h>
+ 
+ #include "up-constants.h"
+ #include "up-config.h"
+ #include "up-device-battery.h"
 @@ -231,7 +231,8 @@
  static gdouble
  up_device_battery_calc_capacity (gdouble energy_full, gdouble energy_design)
