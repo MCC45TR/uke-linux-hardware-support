@@ -57,6 +57,16 @@ rebuilt as Uke applications. Unmodified original Fedora desktop packages may ret
 Python dependencies under the documented exception. Project tools, recovery
 and initramfs do not ship project Python or a Python runtime.
 
+On 18 October, signed COPR `uke-control 0.1.0-3` and its separate development
+test package were installed on POCO Pad X1 with Fedora Rawhide AArch64 and Linux
+`7.2.10-23`. Half-RAM swap (3690 MiB) and the initial partition inventory survive
+a normal reboot. Custom, full-RAM and half-RAM size changes pass. The C++ backend
+and CLI support future independent frontends; no GUI is included. Development
+tests are selected explicitly and are absent from release image package lists.
+Charge-policy previews report unavailable actuators; charge-limit and USB-role
+control remain unqualified. Physical uninterrupted-touch and panel VRR acceptance
+remain separate from these application results.
+
 ## Checks and builds
 
 ```sh
