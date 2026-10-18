@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: MIT
+#include "backend.hpp"
+#include <charconv>
+#include <iostream>
+#include <stdexcept>
+#include <string_view>
+#include <unistd.h>
+static void help() {
+    std::cout << "uke-control 0.1.0 — native device management and development diagnostics\n"
+      "  status                      Swap, qualified charge controls and USB state\n"
+      "  inventory [--refresh]       Partition/filesystem inventory; refresh requires root\n"
+      "  swap status                 Active swaps and saved policy\n"
+      "  swap set half|full|MiB      Save policy and apply (root); prefer linux_swap\n"
+      "  swap apply                  Apply saved policy (root)\n"
+      "  charge status               Standard charge-limit capability\n"
+      "  charge limit PERCENT        Write a supported standard threshold (root)\n"
+      "  usb status                  Cached UDC and role state\n"
+      "  test [--help]               Hz, Wayland cadence, touch and sensor diagnostics\n"
+      "  report                      Save comprehensive private logs locally (root)\n"
+      "  report github DIR OWNER/REPO Submit only the generated anonymous summary via gh\n"
+      "  --self-test                 Host refusal and arithmetic checks\n"
+      "Settings require root, e.g. sudo uke-control swap set half. No setuid binary.\n";
+}
+int main(int argc,char** argv) {
+    try {
+        if(argc<2||std::string_view(argv[1])=="--help"){help();return 0;}
+        std::string command=argv[1];
+        if(command=="test"){execv("/usr/libexec/uke-control/tests",argv+1);throw std::runtime_error("Install uke-control-tests from the development repository");}
+        if(command=="--self-test"&&argc==2){uke::self_test();return 0;}
+        if(command=="status"&&argc==2){std::cout<<uke::status();return 0;}
+        if(command=="boot"&&argc==2){uke::boot();return 0;}
+        if(command=="inventory"&&(argc==2||(argc==3&&std::string_view(argv[2])=="--refresh"))){std::cout<<uke::inventory(argc==3);return 0;}
+        if(command=="swap") {
+            if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::status();return 0;}
+            if(argc==3&&std::string_view(argv[2])=="apply"){uke::swap_apply();return 0;}
+            if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);return 0;}
+        }
+        if(command=="charge") {
+            if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::charge_status();return 0;}
+            if(argc==4&&std::string_view(argv[2])=="limit") {
+                unsigned value{};std::string_view arg=argv[3];auto p=std::from_chars(arg.data(),arg.data()+arg.size(),value);
+                if(p.ec!=std::errc{}||p.ptr!=arg.data()+arg.size()||value<1||value>100)throw std::runtime_error("Charge limit must be 1..100 percent");
+                uke::charge_set(value);return 0;
+            }
+        }
+        if(command=="usb") {
+            if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::usb_status();return 0;}
+        }
+        if(command=="report") {
+            if(argc==2){std::cout<<uke::report()<<'\n';return 0;}
+            if(argc==5&&std::string_view(argv[2])=="github"){uke::report_github(argv[3],argv[4]);return 0;}
+        }
+        help();return 64;
+    } catch(const std::exception& e){std::cerr<<"uke-control: "<<e.what()<<'\n';return 1;}
+}

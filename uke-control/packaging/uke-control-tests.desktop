@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Uke Display Hz Monitor
+Comment=Temporary DPU vblank and VRR diagnostics
+Exec=uke-control test display 3600
+Icon=utilities-system-monitor
+Terminal=true
+Categories=System;Monitor;

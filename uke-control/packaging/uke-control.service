@@ -1,0 +1,17 @@
+[Unit]
+Description=Uke device settings and swap preparation
+After=local-fs.target systemd-udev-trigger.service
+RequiresMountsFor=/var/lib/uke-control
+ConditionPathExists=/sys/firmware/devicetree/base/compatible
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/uke-control boot
+RemainAfterExit=yes
+UMask=0077
+TimeoutStartSec=180
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

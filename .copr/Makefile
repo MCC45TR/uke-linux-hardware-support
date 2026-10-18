@@ -9,7 +9,7 @@ srpm:
 	root="$(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)"
 	subdir="$$(realpath --relative-to="$$root" .)"
 	case "$$subdir" in
-		uke-core-meta|uke-desktop-metas|uke-orangefox-packaging|uke-boot|uke-desktop-integration) component="$$subdir"; package=;;
+		uke-core-meta|uke-desktop-metas|uke-orangefox-packaging|uke-boot|uke-desktop-integration|uke-control) component="$$subdir"; package=;;
 		uke-sensors/packaging/libssc|uke-sensors/packaging/iio-sensor-proxy|uke-sensors/packaging/uke-ssc-fileservice)
 			component=uke-sensors; package="$${subdir##*/}";;
 		uke-desktop-packaging/packaging/*)

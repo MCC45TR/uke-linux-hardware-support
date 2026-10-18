@@ -1,8 +1,9 @@
 # Uke Linux hardware support
 
 Platform packages and device integration for Xiaomi Pad 7 and POCO Pad X1
-(`uke`, SM7675). All twelve components live in this repository as ordinary
-folders, with their own sources and packaging rules.
+(`uke`, SM7675). The imported components live in this repository as ordinary
+folders, with their own sources and packaging rules. New native utilities are
+maintained alongside these imported components.
 
 ## Status — 18 October 2026
 
@@ -44,6 +45,7 @@ light control is fabricated without hardware.
 | [uke-boot](uke-boot) | Boot and USB debug integration |
 | [uke-platform-runtime](uke-platform-runtime) | Native platform runtime |
 | [uke-sensors](uke-sensors) | Sensor discovery and native tools |
+| [uke-control](uke-control) | Native device settings, swap and development diagnostics |
 | [uke-camera](uke-camera) | Camera integration work |
 | [xiaomi-uke-firmware](xiaomi-uke-firmware) | Firmware sources, licenses and file identities |
 | [uke-desktop-integration](uke-desktop-integration) | Desktop integration |
