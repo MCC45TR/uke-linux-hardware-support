@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Destructive only inside a fresh temporary host fixture. Never connects to a tablet.
+set -Eeuo pipefail
+test "$(id -u)" = 0
+for cmd in rpmbuild rpmsign rpmkeys createrepo_c gpg; do command -v "$cmd" >/dev/null; done
+fixture=$(mktemp -d /tmp/uke-channel-repos.XXXXXX)
+trap 'rm -rf -- "$fixture"' EXIT
+mkdir -p "$fixture"/{stable,test,unsigned,shared,home,top/{SOURCES,SPECS,BUILD,RPMS,SRPMS}}
+chmod 700 "$fixture/home"
+export GNUPGHOME="$fixture/home"
+gpg --batch --passphrase '' --quick-generate-key 'Uke fixture <fixture@example.invalid>' rsa2048 sign 1d >/dev/null 2>&1
+fingerprint=$(gpg --batch --with-colons --list-keys | awk -F: '$1=="fpr" {print $10; exit}')
+gpg --batch --armor --export "$fingerprint" >"$fixture/key.asc"
+build() {
+    local name=$1 version=$2 destination=$3 provides=${4-} requires=${5-} text=${6-fixture}
+    cat >"$fixture/top/SPECS/fixture.spec" <<EOF
+Name: $name
+Version: $version
+Release: 1
+Summary: Host-only Uke channel fixture
+License: MIT
+Vendor: Fixture-$destination
+BuildArch: noarch
+AutoReqProv: no
+$provides
+$requires
+%description
+Disposable solver fixture; no device code or scriptlets.
+%install
+mkdir -p %{buildroot}/usr/share/uke-channel-fixtures/$name/$version
+echo '$text' > %{buildroot}/usr/share/uke-channel-fixtures/$name/$version/value
+%files
+/usr/share/uke-channel-fixtures/$name/$version/value
+EOF
+    rpmbuild -bb --define "_topdir $fixture/top" "$fixture/top/SPECS/fixture.spec" >"$fixture/build.log" 2>&1 || { cat "$fixture/build.log"; return 1; }
+    local rpm="$fixture/top/RPMS/noarch/$name-$version-1.noarch.rpm"
+    if [[ $destination != unsigned ]]; then
+        rpmsign --define "_openpgp_sign_id $fingerprint" --define '_openpgp_sign gpg' --addsign "$rpm" >"$fixture/sign.log" 2>&1
+    fi
+    cp "$rpm" "$fixture/$destination/"
+}
+kernel() {
+    local version=$1 repo=$2 uname=$3 suffix extra
+    for suffix in '' -core -modules -dtbs -boot; do
+        extra='Provides: installonlypkg(kernel)'
+        if [[ $suffix == -core ]]; then extra+=$'\n'"Provides: kernel-uname-r($uname)"; fi
+        build "senemos-uke-linux-kernel-mainline$suffix" "$version" "$repo" "$extra"
+    done
+}
+build uke-fixture 1 stable '' '' stable
+build uke-same 1 stable '' '' stable
+build uke-fixture 2 test '' '' test
+build uke-same 1 test '' '' test
+build uke-missing 1 test
+build uke-fixture 3 unsigned
+kernel 7.2.10 stable 7.2.10-fixture
+kernel 7.2.11 test 7.2.11-fixture
+kernel 7.2.12 shared 7.2.11-fixture
+for repo in stable test unsigned shared; do createrepo_c --quiet "$fixture/$repo"; done
+cp "$fixture/stable/uke-"*.rpm "$fixture/shared/"
+createrepo_c --quiet --update "$fixture/shared"
+root() {
+    local target="$fixture/$1"
+    mkdir -p "$target"
+    rpm --root "$target" --initdb
+    rpmkeys --root "$target" --import "$fixture/key.asc"
+    rpm --root "$target" -i "$fixture/test/uke-fixture-2-1.noarch.rpm" "$fixture/test/uke-same-1-1.noarch.rpm" "$fixture/test/senemos-uke-linux-kernel-"*.rpm
+}
+root normal
+build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" downgrade
+rpm --root "$fixture/normal" -q uke-fixture | grep -Fx uke-fixture-1-1.noarch
+test "$(cat "$fixture/normal/usr/share/uke-channel-fixtures/uke-same/1/value")" = stable
+test "$(rpm --root "$fixture/normal" -q senemos-uke-linux-kernel-mainline-core | wc -l)" = 2
+build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" fallback
+build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" upgrade
+root updatecase
+build/test-package-repos "$fixture/updatecase" "$fixture/stable" "$fixture/test" downgrade-update
+root absent
+rpm --root "$fixture/absent" -i "$fixture/test/uke-missing-1-1.noarch.rpm"
+build/test-package-repos "$fixture/absent" "$fixture/stable" "$fixture/test" missing
+root collision
+build/test-package-repos "$fixture/collision" "$fixture/shared" "$fixture/test" shared-uname
+# An isolated unsigned candidate is rejected before running a transaction.
+root signature
+cp "$fixture/stable/uke-same-1-1.noarch.rpm" "$fixture/unsigned/"
+cp "$fixture/stable/senemos-uke-linux-kernel-"*.rpm "$fixture/unsigned/"
+createrepo_c --quiet --update "$fixture/unsigned"
+build/test-package-repos "$fixture/signature" "$fixture/unsigned" "$fixture/test" unsigned
+kernel '7.4~rc7' test 7.4-rc7-fixture
+createrepo_c --quiet --update "$fixture/test"
+build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" rc
+build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" test-preference
+printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, RC fallback/selection, update, missing-package refusal, shared-module refusal and unsigned rejection'
