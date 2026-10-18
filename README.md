@@ -11,7 +11,12 @@ On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64. The full Type-C kernels
 24 and 25 boot and reach SSH, but fail internal display and touchscreen startup.
 Kernel 25 fixes the missing L3B supplier, exposing a DP connector-state Oops.
 Kernel 26 initializes that state and changes panel backlight ordering to address
-the reported white flash; its host checks pass and its COPR build is running.
+the reported white flash. Its signed COPR build succeeds and installs through
+DNF. After a forced restart, release 26 reaches original KDE with visible DSI
+output, the touchscreen input and the saved VRR policy. The previous DP-state
+Oops is absent. White-flash removal and normal-restart acceptance remain open;
+UCSI initialization still times out and optional front-color startup has no
+sample. This does not qualify docked USB or external display operation.
 The accepted kernel 23 bundle remains available. VRR and touch behavior on the
 retained development profile was accepted during tablet use; that acceptance
 applies to the tested profile. Earlier Linux `7.2.10-8` tests restore the original
@@ -64,31 +69,42 @@ rebuilt as Uke applications. Unmodified original Fedora desktop packages may ret
 Python dependencies under the documented exception. Project tools, recovery
 and initramfs do not ship project Python or a Python runtime.
 
-Signed COPR application 7, battery runtime 3, Bluetooth integration 6 and boot
+Signed COPR application 8, battery runtime 3, Bluetooth integration 6 and boot
 integration 20 are installed through DNF. Application self-checks and the
-one-shot manual CDC-off command pass; the new-boot CDC state remains pending.
+one-shot manual CDC-off command pass. On the release-26 boot, the saved policy
+is disabled, g_serial is absent and the legacy shell service remains masked.
 Half-RAM swap (3690 MiB) and the first
 partition inventory survive a normal reboot; custom, full-RAM and half-RAM file
 sizes pass. Existing swap-partition preference remains untested. The native C++
 backend supports future independent frontends. Development diagnostics are
 selected explicitly and excluded from release image package lists.
 
-The opt-in `uke-front-color 0.1.0-1` package publishes raw CCT sensor snapshots
+The opt-in `uke-front-color 0.1.0-2` package publishes raw CCT sensor snapshots
 at `/run/uke-sensors/front-color.json`. On kernel 23 with enforcing SELinux,
 unprivileged reads, stale-sample reporting, stop/restart and crash cleanup pass.
 Units, calibration and DSP clock mapping remain unverified. The installed
 Bluetooth helper verifies the configured controller address against the
-protected read-only factory record; its next-boot path remains a separate test.
+protected read-only factory record. Both factory-address startup services exit
+successfully on release 26; persist remains read-only.
 LDAC playback with Soundcore Space Q45 was reported working; no codec trace is
 recorded here.
 
-Application 6 and boot integration 20 are source candidates for a read-only
+Application 8 and boot integration 20 are installed packages for a read-only
 front-color command, hardened factory WLAN reads and explicit one-shot CDC.
 CDC defaults to off; the new manual API saves no startup policy and requires no
 watcher service. A matched full Type-C kernel/root pair is required. Docked
 host, PD, SuperSpeed, external display and charging-control acceptance remain
 open. Battery admission recognizes the driver and refuses unqualified control;
 an active service or metadata response does not establish an applied charge cap.
+
+Application 8 selects the actual internal DSI connector and active CRTC when
+DP resources are also present. Its signed COPR 11167901 build, native checks,
+DNF installation and ordinary-user vblank observation pass on kernel 26. This
+is DPU timing evidence, not optical panel precision or cadence measurement.
+In the first powered-dock trial, the battery reports charging without a UPower
+warning, but Type-C partner and USB dongle enumeration remain absent. Adding
+HDMI produces no detected sink and the monitor shows no tablet image. USB host
+and external display operation are not accepted by these results.
 
 ## Checks and builds
 
