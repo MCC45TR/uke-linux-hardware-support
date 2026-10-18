@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <array>
+#include <cerrno>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -52,25 +53,58 @@ std::string factory_mac(std::string_view text) {
     return address.data();
 }
 
+std::string factory_record(int root, dev_t expected_device) {
+    int directory = -1, input = -1;
+    try {
+        directory = openat(root, "wlan", O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+        require(directory >= 0, "Factory WLAN directory is unavailable");
+        input = openat(directory, "wlan_mac.bin", O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
+        require(input >= 0, "Factory WLAN record is unavailable");
+        struct stat parent{}, record{};
+        require(fstat(directory, &parent) == 0 && fstat(input, &record) == 0 &&
+                parent.st_dev == expected_device && record.st_dev == expected_device &&
+                S_ISREG(record.st_mode), "Factory WLAN record is not a regular file on persist");
+        require(record.st_size > 0 && record.st_size <= 1024, "Invalid factory WLAN record size");
+        std::array<char, 1025> data{};
+        size_t size = 0;
+        while (size < data.size()) {
+            const auto count = read(input, data.data() + size, data.size() - size);
+            if (count < 0 && errno == EINTR) continue;
+            require(count >= 0, "Factory WLAN record read failed");
+            if (!count) break;
+            size += static_cast<size_t>(count);
+        }
+        require(size == static_cast<size_t>(record.st_size), "Factory WLAN record size changed");
+        close(input); input = -1;
+        close(directory); directory = -1;
+        return std::string(data.data(), size);
+    } catch (...) {
+        if (input >= 0) close(input);
+        if (directory >= 0) close(directory);
+        throw;
+    }
+}
+
 void provision() {
     constexpr auto persist = "/mnt/vendor/persist";
     struct stat mount{}, partition{};
     struct statvfs flags{};
-    require(stat(persist, &mount) == 0 &&
-            stat("/dev/disk/by-partlabel/persist", &partition) == 0 &&
-            S_ISBLK(partition.st_mode) && mount.st_dev == partition.st_rdev,
-            "Factory persist is not the physical persist partition");
-    require(statvfs(persist, &flags) == 0 &&
-            (flags.f_flag & (ST_RDONLY | ST_NODEV | ST_NOSUID | ST_NOEXEC)) ==
-            (ST_RDONLY | ST_NODEV | ST_NOSUID | ST_NOEXEC),
-            "Factory persist must be mounted read-only, nodev, nosuid and noexec");
-    const int input = open("/mnt/vendor/persist/wlan/wlan_mac.bin", O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-    require(input >= 0, "Factory WLAN record is unavailable");
-    std::array<char, 1025> data{};
-    const auto count = read(input, data.data(), data.size());
-    close(input);
-    require(count > 0 && count < static_cast<ssize_t>(data.size()), "Invalid factory WLAN record size");
-    const auto mac = factory_mac(std::string_view(data.data(), static_cast<size_t>(count)));
+    const int root = open(persist, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+    require(root >= 0, "Factory persist directory is unavailable");
+    std::string record;
+    try {
+        require(fstat(root, &mount) == 0 &&
+                stat("/dev/disk/by-partlabel/persist", &partition) == 0 &&
+                S_ISBLK(partition.st_mode) && mount.st_dev == partition.st_rdev,
+                "Factory persist is not the physical persist partition");
+        require(fstatvfs(root, &flags) == 0 &&
+                (flags.f_flag & (ST_RDONLY | ST_NODEV | ST_NOSUID | ST_NOEXEC)) ==
+                (ST_RDONLY | ST_NODEV | ST_NOSUID | ST_NOEXEC),
+                "Factory persist must be mounted read-only, nodev, nosuid and noexec");
+        record = factory_record(root, partition.st_rdev);
+    } catch (...) { close(root); throw; }
+    close(root);
+    const auto mac = factory_mac(record);
     const auto config = "[connection-uke-factory-wifi]\nmatch-device=driver:ath11k\n"
                         "wifi.cloned-mac-address=" + mac + "\n";
     constexpr auto directory = "/run/NetworkManager/conf.d";
