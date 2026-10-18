@@ -7,11 +7,12 @@ maintained alongside these imported components.
 
 ## Status — 18 October 2026
 
-On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64 and Linux `7.2.10-23`.
-The full Type-C kernel 24 candidate boots and reaches SSH, but fails internal
-display and touchscreen startup. The verified kernel 23 bundle was restored.
-Kernel 25 adds the exact missing L3B supplier admission and remains a build
-candidate until a separate tablet test passes. VRR and touch behavior on the
+On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64. The full Type-C kernels
+24 and 25 boot and reach SSH, but fail internal display and touchscreen startup.
+Kernel 25 fixes the missing L3B supplier, exposing a DP connector-state Oops.
+Kernel 26 initializes that state and changes panel backlight ordering to address
+the reported white flash; its host checks pass and its COPR build is running.
+The accepted kernel 23 bundle remains available. VRR and touch behavior on the
 retained development profile was accepted during tablet use; that acceptance
 applies to the tested profile. Earlier Linux `7.2.10-8` tests restore the original
 KDE sensor interfaces. Previous
@@ -63,8 +64,10 @@ rebuilt as Uke applications. Unmodified original Fedora desktop packages may ret
 Python dependencies under the documented exception. Project tools, recovery
 and initramfs do not ship project Python or a Python runtime.
 
-Signed COPR application 5, battery runtime 3, Bluetooth integration 6 and boot
-integration 19 are installed through DNF. Half-RAM swap (3690 MiB) and the first
+Signed COPR application 7, battery runtime 3, Bluetooth integration 6 and boot
+integration 20 are installed through DNF. Application self-checks and the
+one-shot manual CDC-off command pass; the new-boot CDC state remains pending.
+Half-RAM swap (3690 MiB) and the first
 partition inventory survive a normal reboot; custom, full-RAM and half-RAM file
 sizes pass. Existing swap-partition preference remains untested. The native C++
 backend supports future independent frontends. Development diagnostics are

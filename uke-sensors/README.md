@@ -1,17 +1,24 @@
 # Uke sensors
 
-18 October 2026: a separate, disabled-by-default native front-color publisher
-candidate exposes raw CCT vectors with explicit freshness, wire status and
+18 October 2026: the separate, disabled-by-default native front-color publisher
+exposes raw CCT vectors with explicit freshness, wire status and
 unverified units/calibration. It preserves the original SensorProxy ALS API.
 The [endpoint and activation contract](docs/FRONT-COLOR.md) describes its bounded
 JSON snapshot and separate package, SELinux and tablet acceptance gates.
+Release 2 is installed on kernel 25 and produces a fresh raw sample through
+the active-HAL path after explicit restart. Automatic boot readiness remains
+pending the kernel-26 test. Libssc release 5 also installs successfully, retains
+the previously installed mounting-matrix fix and adds bounded proximity warning
+context. The original SensorProxy restarts and advertises light and motion
+interfaces; this is separate from a new physical proximity or rotation test.
 
 18 October 2026: the metadata diagnostic also admits the OEM SSC data types
 `rgb`, `cct_front` and `cct_front_strm`. These are sensor lookup names, not
 LED controls or sample requests. Android's `xiaomi.sensor.front_cct` name is a
 different interface. Endpoint availability, RGB channel meaning and color
 temperature calibration require separate tablet measurements. This source
-extension has not been built or tested.
+extension is present in the packaged native diagnostics; lookup success remains
+endpoint-specific.
 
 The `uke-sensor-sample cct_front` source candidate follows the exact Uke HAL's
 active standard-event 1025 handler after one empty on-change request 514. It

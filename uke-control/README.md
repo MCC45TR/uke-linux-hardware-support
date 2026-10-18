@@ -14,11 +14,13 @@ SELinux swap label. Changes to
 DRM sampling and bounded proximity discovery ran on the tablet. Normal reboot
 restored the half-RAM swap and preserved the first inventory. Preference for an
 existing swap partition remains untested. These observations do not establish
-physical VRR or sensor acceptance. Application 6 is a source candidate for the
-read-only front-color command and one-shot manual CDC API2. Release 7 corrects
+physical VRR or sensor acceptance. The read-only front-color command and
+one-shot manual CDC API2 are installed in release 7 from COPR 11167810 on
+kernel 25. Release 7 corrects
 the RPM capability query: it looks up the capability name and checks the
-provided version explicitly. Its host checks pass; target command acceptance
-requires installing the new package.
+provided version explicitly. Host and native package checks pass. On the tablet,
+the application self-check and scoped manual CDC-off command pass. New-boot
+default-off and physical PC enumeration remain separate checks.
 Charge control uses a qualified native helper or an available standard writable
 `charge_control_end_threshold`. The installed helper recognizes the provider
 but refuses unqualified control. No 80% cutoff is claimed. The USB source adds
