@@ -167,7 +167,16 @@ contains no passwords, authorized keys or private host keys.
 The `machine-info` and `fastfetch.jsonc` profiles provide the configured
 Xiaomi Pad 7 presentation. Revision 1.1 is configured presentation metadata,
 not a measured board-revision result. Display and GPU information comes from
-the original fastfetch detectors. On 17 October 2026, the native 7.2.9 display
+the original fastfetch detectors. The 18 October source profile uses the native
+Display module's format to keep detected resolution, refresh, type and available
+bit depth, without its integer-rounded diagonal. A separate, explicitly labelled
+Panel specification row shows the advertised 11.2-inch size. It does not assign
+that size to an external monitor or claim a measured bit depth, HDR or gamut.
+The original upstream Display module rounds both its default diagonal and its
+`{inch}` format argument to a whole inch; changing the OEM 237x158 mm geometry
+would not correct that presentation. No Fastfetch or KDE application is forked.
+This source profile is prepared for coordinator packaging; no test or tablet
+installation was performed by the source task. On 17 October 2026, the native 7.2.9 display
 candidate reported DSI-1 at 3200×2136/120 Hz through libdrm and Adreno 732 through
 Mesa Vulkan. A detected mode does not qualify all display transitions or rates.
 Disk size always comes from the mounted
