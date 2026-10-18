@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -39,6 +39,7 @@ install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
 install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.so.0
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
 install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
+install -Dm644 src/front-color.hpp %{buildroot}%{_includedir}/uke-control/front-color.hpp
 install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/tests
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
@@ -59,7 +60,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md
+%doc README.md CHARGING.md DISPLAY.md
 %{_bindir}/uke-control
 %{_libdir}/libuke-control.so.0
 %{_includedir}/uke-control/*.hpp
@@ -72,6 +73,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
+- Read the optional native front-color snapshot with independent freshness checks.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
 - Connect qualified charge requests and metadata to the native backend
 - Add descriptor-bound front color-sensor diagnostics to development tests

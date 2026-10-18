@@ -76,6 +76,13 @@ profiles without applying them. Explicit requests use the separately installed
 profile is unqualified. An active automatic worker is reported separately from
 an applied current setting. See [charging policy limits](CHARGING.md).
 
+The source command `uke-control display sensor` reads the optional native
+front-color snapshot without starting collection. It exposes raw values with
+unverified units and independently checks publisher/sample recency. See
+[the display and front-color interface](DISPLAY.md) for the exact contract and
+remaining coordinator/package/device validation. This is not calibrated Kelvin
+or an automatic white-point setting.
+
 ## USB and CDC
 
 `usb status` returns bounded JSON containing cached Type-C and controller roles,

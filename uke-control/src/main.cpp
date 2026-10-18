@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "charge-policy.hpp"
+#include "front-color.hpp"
 #include <charconv>
 #include <iostream>
 #include <stdexcept>
@@ -9,6 +10,7 @@
 static void help() {
     std::cout << "uke-control 0.1.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
+      "  display sensor              Read the existing front-color node; never starts collection\n"
       "  inventory [--refresh]       Partition/filesystem inventory; refresh requires root\n"
       "  swap status                 Active swaps and saved policy\n"
       "  swap set half|full|MiB      Save policy and apply (root); prefer linux_swap\n"
@@ -37,6 +39,9 @@ int main(int argc,char** argv) {
         }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="display"&&argc==3&&std::string_view(argv[2])=="sensor") {
+            std::cout<<uke::display::front_color_status();return 0;
+        }
         if(command=="set"&&argc==4&&std::string_view(argv[2])=="cdc") {
             const std::string_view setting=argv[3];
             if(setting!="on"&&setting!="off")throw std::runtime_error("CDC setting must be on or off");
