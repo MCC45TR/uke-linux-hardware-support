@@ -6,20 +6,24 @@ The original distribution desktop remains unchanged.
 
 ## Status — 18 October 2026
 
-Signed COPR build 11167212 installed core and development packages through DNF
-on POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.10-23. The systemd service
-created a 3690 MiB swap file with the standard SELinux swap label. Changes to
+Signed COPR build 11167510 installed application 5 and its development package
+through DNF on POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.10-23. During earlier
+tests, the native startup service created a 3690 MiB swap file with the standard
+SELinux swap label. Changes to
 512 MiB, full RAM and half RAM passed. SensorProxy, processed sensor inputs,
 DRM sampling and bounded proximity discovery ran on the tablet. Normal reboot
 restored the half-RAM swap and preserved the first inventory. Preference for an
 existing swap partition remains untested. These observations do not establish
-physical VRR or sensor acceptance.
-The charge-limit control is available only when the driver exports a writable
-`charge_control_end_threshold`. Current Uke firmware controls are not invented
-or accessed through raw battery property requests. The USB source candidate adds
+physical VRR or sensor acceptance. Application 6 is a source candidate for the
+read-only front-color command and one-shot manual CDC API2.
+Charge control uses a qualified native helper or an available standard writable
+`charge_control_end_threshold`. The installed helper recognizes the provider
+but refuses unqualified control. No 80% cutoff is claimed. The USB source adds
 cached topology and guarded standard data-role requests. It requires a matched
 full Type-C kernel/root tuple. The installed kernel 7.2.10-23 remains fixed
-peripheral; host, PD, DisplayPort and manual CDC physical acceptance remain open.
+peripheral; the full Type-C kernel 24 candidate failed display/touch startup and
+was replaced with the retained kernel 23 bundle. Host, PD and DisplayPort
+physical acceptance remain open for the corrected candidate.
 
 ## Commands
 

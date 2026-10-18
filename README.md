@@ -7,8 +7,14 @@ maintained alongside these imported components.
 
 ## Status — 18 October 2026
 
-On POCO Pad X1 with Fedora Rawhide AArch64, signed COPR Linux `7.2.10-8`
-boots persistently and restores the original KDE sensor interfaces. Previous
+On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64 and Linux `7.2.10-23`.
+The full Type-C kernel 24 candidate boots and reaches SSH, but fails internal
+display and touchscreen startup. The verified kernel 23 bundle was restored.
+Kernel 25 adds the exact missing L3B supplier admission and remains a build
+candidate until a separate tablet test passes. VRR and touch behavior on the
+retained development profile was accepted during tablet use; that acceptance
+applies to the tested profile. Earlier Linux `7.2.10-8` tests restore the original
+KDE sensor interfaces. Previous
 .4056 normal-boot user tests confirm four-pose rotation and dual-light
 automatic brightness. Bluetooth 5.2 mouse movement, clicks and
 wheel input pass physical tests. Native CPU/GPU profiles operate through PPD;
@@ -57,28 +63,29 @@ rebuilt as Uke applications. Unmodified original Fedora desktop packages may ret
 Python dependencies under the documented exception. Project tools, recovery
 and initramfs do not ship project Python or a Python runtime.
 
-On 18 October, signed COPR `uke-control 0.1.0-3` and its separate development
-test package were installed on POCO Pad X1 with Fedora Rawhide AArch64 and Linux
-`7.2.10-23`. Half-RAM swap (3690 MiB) and the initial partition inventory survive
-a normal reboot. Custom, full-RAM and half-RAM size changes pass. The C++ backend
-and CLI support future independent frontends; no GUI is included. Development
-tests are selected explicitly and are absent from release image package lists.
-Charge-policy previews report unavailable actuators; charge-limit and USB-role
-control remain unqualified. Physical uninterrupted-touch and panel VRR acceptance
-remain separate from these application results.
+Signed COPR application 5, battery runtime 3, Bluetooth integration 6 and boot
+integration 19 are installed through DNF. Half-RAM swap (3690 MiB) and the first
+partition inventory survive a normal reboot; custom, full-RAM and half-RAM file
+sizes pass. Existing swap-partition preference remains untested. The native C++
+backend supports future independent frontends. Development diagnostics are
+selected explicitly and excluded from release image package lists.
 
-The next USB source candidate defaults CDC to off and adds explicit
-`uke-control set cdc on|off`, USB topology observation and guarded Type-C
-data-role requests. ACM opt-in does not enable a root shell or network sharing.
-It requires a matched full Type-C kernel/root pair; the installed kernel 23
-remains fixed peripheral. Docked host, PD, SuperSpeed and external-display
-acceptance remain pending.
+The opt-in `uke-front-color 0.1.0-1` package publishes raw CCT sensor snapshots
+at `/run/uke-sensors/front-color.json`. On kernel 23 with enforcing SELinux,
+unprivileged reads, stale-sample reporting, stop/restart and crash cleanup pass.
+Units, calibration and DSP clock mapping remain unverified. The installed
+Bluetooth helper verifies the configured controller address against the
+protected read-only factory record; its next-boot path remains a separate test.
+LDAC playback with Soundcore Space Q45 was reported working; no codec trace is
+recorded here.
 
-Signed COPR build 11167396 later installed `uke-control 0.1.0-4` and its test
-subpackage through DNF. Package integrity and root/unprivileged USB inventory
-pass on kernel 23. Manual CDC and role requests reject the missing full-profile
-admission without changing the legacy gadget or saving a policy. The default-off
-root support set from build 11167392 is staged for the matched kernel update.
+Application 6 and boot integration 20 are source candidates for a read-only
+front-color command, hardened factory WLAN reads and explicit one-shot CDC.
+CDC defaults to off; the new manual API saves no startup policy and requires no
+watcher service. A matched full Type-C kernel/root pair is required. Docked
+host, PD, SuperSpeed, external display and charging-control acceptance remain
+open. Battery admission recognizes the driver and refuses unqualified control;
+an active service or metadata response does not establish an applied charge cap.
 
 ## Checks and builds
 
