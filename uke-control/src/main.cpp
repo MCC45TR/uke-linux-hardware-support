@@ -16,7 +16,9 @@ static void help() {
       "  charge modes                Show requested policies and unavailable controls\n"
       "  charge plan MODE            Preview metadata; performs no hardware write\n"
       "  charge status               Standard charge-limit capability\n"
-      "  charge limit PERCENT        Write a supported standard threshold (root)\n"
+      "  charge capabilities|admission|protocols  Native backend metadata\n"
+      "  charge mode MODE            Request qualified charge80, hold80-90, slow or automatic\n"
+      "  charge limit PERCENT        Request the qualified 80% cap or a supported standard threshold\n"
       "  usb status                  Cached Type-C, USB topology, NIC and display JSON\n"
       "  usb watch [SECONDS]         Observe changes at 1 Hz for 1..300 seconds\n"
       "  usb request data host|device Request a Type-C data-role swap (root)\n"
@@ -30,6 +32,9 @@ static void help() {
 int main(int argc,char** argv) {
     try {
         if(argc<2||std::string_view(argv[1])=="--help"){help();return 0;}
+        if(argc==4&&std::string_view(argv[1])=="charge"&&std::string_view(argv[2])=="mode") {
+            auto result=uke::charge_control_mode(argv[3]);std::cout<<result.output;return result.status;
+        }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
         if(command=="set"&&argc==4&&std::string_view(argv[2])=="cdc") {
@@ -48,10 +53,14 @@ int main(int argc,char** argv) {
             if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);return 0;}
         }
         if(command=="charge") {
+            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols")) {
+                auto result=uke::charge_control_query(argv[2]);std::cout<<result.output;return result.status;
+            }
             if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::charge_status();return 0;}
             if(argc==4&&std::string_view(argv[2])=="limit") {
                 unsigned value{};std::string_view arg=argv[3];auto p=std::from_chars(arg.data(),arg.data()+arg.size(),value);
                 if(p.ec!=std::errc{}||p.ptr!=arg.data()+arg.size()||value<1||value>100)throw std::runtime_error("Charge limit must be 1..100 percent");
+                if(value==80){auto result=uke::charge_control_mode("charge80");std::cout<<result.output;return result.status;}
                 uke::charge_set(value);return 0;
             }
         }

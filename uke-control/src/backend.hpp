@@ -15,6 +15,8 @@ void swap_apply();
 void boot();
 std::string charge_status();
 void charge_set(unsigned percent);
+Result charge_control_query(const std::string& operation);
+Result charge_control_mode(const std::string& mode);
 std::string usb_status();
 void usb_watch(unsigned seconds);
 Result usb_request_data(const std::string& role);

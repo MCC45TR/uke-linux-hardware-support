@@ -12,8 +12,8 @@ protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 all: build/uke-control build/uke-control-tests build/ssc-discovery build/ssc-sample
 build:
 	mkdir -p build
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/usb.cpp src/usb.hpp src/usb-request.cpp src/usb-request.hpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/usb.cpp src/usb-request.cpp $(shell pkg-config --libs libselinux)
+build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/usb-request.cpp src/usb-request.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/usb-request.cpp $(shell pkg-config --libs libselinux libsystemd)
 build/uke-control: src/main.cpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp -Lbuild -l:libuke-control.so.0
 build/xdg-shell-client.h: | build
@@ -35,6 +35,8 @@ check: all
 	LD_LIBRARY_PATH=build build/uke-control --self-test
 	build/uke-control-tests --self-test
 	bash tests/charge-policy.sh
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-client.cpp src/charge-client.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-client
+	build/test-charge-client
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/usb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-usb
 	LD_LIBRARY_PATH=build build/test-usb
 	for name in discovery sample; do $(CXX) $(CXXFLAGS) $(LDFLAGS) tests/ssc-$$name.cpp -o build/test-ssc-$$name; build/test-ssc-$$name; done

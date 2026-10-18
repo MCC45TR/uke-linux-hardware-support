@@ -33,7 +33,12 @@ sudo uke-control swap set 4096   # MiB
 uke-control charge status
 uke-control charge modes
 uke-control charge plan charge80 # metadata only; no actuator
-sudo uke-control charge limit 80 # requires a standard supported threshold
+uke-control charge capabilities
+uke-control charge protocols     # cached observations; exact protocol may remain unknown
+sudo uke-control charge admission # metadata only; no firmware request
+sudo uke-control charge mode charge80 # requires qualified autonomous thresholds
+sudo uke-control charge mode automatic # requires qualified per-boot admission
+sudo uke-control charge limit 80 # same qualified native 80% request
 uke-control usb status
 uke-control usb watch 60
 sudo uke-control usb request data host
@@ -46,6 +51,7 @@ uke-control test touch /dev/input/event5 60
 uke-control test sensors 30
 uke-control test discover all
 uke-control test sample accel
+uke-control test sample cct_front # raw descriptor-bound fields; units unverified
 sudo uke-control report
 ```
 
@@ -64,10 +70,11 @@ lists must exclude it. The core client and shared library have no Wayland or
 KDE dependency. The test package adds a temporary terminal Hz-monitor launcher.
 Its window can be placed above other windows using the original KDE controls.
 
-Charging policy previews describe 80% cap, 80-90% autonomous hold, slow and
-automatic profiles. They explicitly report the missing actuator and never apply
-a preview. See [charging policy limits](CHARGING.md). No qualified charge-control
-backend is supplied.
+Charging previews describe 80% cap, 80-90% autonomous hold, slow and automatic
+profiles without applying them. Explicit requests use the separately installed
+`uke-charge-control` helper and its per-boot qualification. The shipped backend
+profile is unqualified. An active automatic worker is reported separately from
+an applied current setting. See [charging policy limits](CHARGING.md).
 
 ## USB and CDC
 

@@ -57,13 +57,13 @@ int main() {
     assert(!planner.evaluate({}, {}, {}, {}).eligible);
     assert(planner.evaluate({}, {}, {}, {}).state == "firmware_managed");
     assert(!preset("80; reboot") && preset("hold80-90"));
-    // The CLI contract is metadata-only. An apply cannot turn a proposal into success.
+    // A preview cannot turn a proposal into applied state.
     std::ostringstream output; auto* original = std::cout.rdbuf(output.rdbuf());
-    char exe[] = "uke-control", charge[] = "charge", mode[] = "mode", name[] = "charge80";
+    char exe[] = "uke-control", charge[] = "charge", mode[] = "plan", name[] = "charge80";
     char* argv[] = {exe, charge, mode, name};
-    assert(policy_command(4, argv) == 69);
+    assert(policy_command(4, argv) == 0);
     std::cout.rdbuf(original);
     assert(output.str().find("\"applied\":false") != std::string::npos);
     assert(output.str().find("\"effective\":null") != std::string::npos);
-    assert(policy_modes_json().find("\"actuator_implemented\":false") != std::string::npos);
+    assert(policy_modes_json().find("\"qualification_checked\":false") != std::string::npos);
 }

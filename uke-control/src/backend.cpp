@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "charge-client.hpp"
 #include "usb-request.hpp"
 #include <algorithm>
 #include <array>
@@ -35,6 +36,12 @@ static void need(bool value,const std::string& message){if(!value)throw std::run
 struct Fd { int n=-1; ~Fd(){if(n>=0)close(n);} };
 static void root(){need(geteuid()==0,"This setting requires root; use sudo uke-control");}
 static void board(){auto dt=read("/sys/firmware/devicetree/base/compatible",4096);need(dt.find(std::string("xiaomi,uke\0",11))!=std::string::npos&&dt.find(std::string("qcom,sm7675\0",12))!=std::string::npos,"This operation requires the Uke / SM7675 device tree");}
+static void charge_helper() {
+    struct stat st{};
+    need(lstat("/usr/libexec/uke-charge-control",&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),
+         "Install the reviewed uke-charge-control backend");
+}
+Result charge_control_query(const std::string& operation) {charge_helper();return charge::control_query(operation);}
 static void directory(const fs::path& path) {
     fs::create_directories(path);
     struct stat st{};need(lstat(path.c_str(),&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted state directory: "+path.string());
@@ -44,6 +51,7 @@ struct Lock {
     Fd fd;
     Lock(){root();directory(state);fd.n=open((state/"lock").c_str(),O_CREAT|O_RDWR|O_CLOEXEC|O_NOFOLLOW,0600);need(fd.n>=0,"Cannot open manager lock");need(flock(fd.n,LOCK_EX|LOCK_NB)==0,"Another uke-control operation is running");}
 };
+Result charge_control_mode(const std::string& mode) {root();board();Lock lock;charge_helper();return charge::control_mode(mode);}
 std::string read(const std::string& path,size_t limit) {
     std::ifstream file(path);if(!file)return "unavailable\n";
     std::string value;std::array<char,4096> buffer{};
