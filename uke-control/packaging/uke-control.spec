@@ -75,6 +75,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %changelog
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
 - Read the optional native front-color snapshot with independent freshness checks.
+- Invoke the one-shot manual CDC API without a persistent service or saved opt-in.
 
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
 - Connect qualified charge requests and metadata to the native backend

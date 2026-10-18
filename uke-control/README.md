@@ -104,14 +104,18 @@ request. A successful sysfs write and a matching Type-C/controller readback are
 reported separately; neither establishes physical acceptance. There is no
 automatic retry or saved role override, and no power-source or lane-force control.
 
-CDC defaults to off. `set cdc on` saves explicit permission for ACM and starts
-the matched attachment watcher. A computer must attach in device data role before
-export; waiting for attachment is distinct from export and enumeration. `set cdc
-off` disables the watcher and removes only its recorded gadget. It refuses to
-claim completion if a foreign gadget remains bound. Neither operation enables
-a root shell, Ethernet gadget, hotspot or other network sharing. The manual CDC
-support capability is required; old support packages cannot silently substitute
-their previous debug behavior. The selected on/off policy persists across boots.
+CDC defaults to off. With manual CDC API2, `set cdc on` invokes the existing
+root helper once; a computer must already attach in device data role. A missing
+or ambiguous attachment is refused without a background watcher or retry.
+`set cdc off` removes only the recorded manual ACM gadget and refuses an old
+automatic or foreign project gadget profile before disconnecting it. Neither
+command starts/enables a service, saves a startup opt-in, unloads an inherited
+serial owner or enables a root console, Ethernet gadget, hotspot or network
+sharing. Binding is reported separately from physical PC enumeration. The
+matched root20 capability is required; old support cannot silently substitute
+its service-based behavior. Before upgrade, the coordinator must explicitly
+stop/disable the old watcher and retain the disabled policy using the reviewed
+root migration contract. No automatic migration is performed by this app.
 
 ## Swap and first boot
 

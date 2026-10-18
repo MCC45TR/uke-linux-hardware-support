@@ -226,31 +226,21 @@ Result cdc_set(bool enabled) {
     auto marker=read("/sys/firmware/devicetree/base/chosen/senemos,usb-profile",64);
     while(!marker.empty()&&(marker.back()=='\n'||marker.back()=='\0'))marker.pop_back();
     need(marker=="typec-v1","Manual CDC requires the matched full Type-C boot/root profile");
-    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","uke-usb-manual-cdc-api = 1"},5,4096);
-    need(api.status==0,"Install the matched manual CDC support package before changing policy");
-    const fs::path config="/etc/senemos";
-    fs::create_directories(config);
+    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","uke-usb-manual-cdc-api = 2"},5,4096);
+    need(api.status==0,"Install the matched one-shot manual CDC support package");
+    const char *helper="/usr/libexec/senemos-uke/uke-usb-network";
     struct stat st{};
-    need(lstat(config.c_str(),&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted USB configuration directory");
-    atomic_file(config/"usb-sharing",enabled?"auto-debug\n":"disabled\n");
-    need(chmod((config/"usb-sharing").c_str(),0644)==0,"Cannot publish the non-secret USB policy");
-    // This unit exports only ACM after a real device-role attachment; no shell or ECM.
-    const auto change=execute({"/usr/bin/systemctl",enabled?"enable":"disable","--now","uke-usb-auto.service"},20,4096);
-    const auto active=execute({"/usr/bin/systemctl","is-active","--quiet","uke-usb-auto.service"},5,4096);
-    const bool running=active.status==0;
-    const bool manager_ok=change.status==0&&running==enabled;
-    bool bound=false;
-    if(fs::exists("/sys/class/udc"))for(const auto& udc:fs::directory_iterator("/sys/class/udc")) {
-        auto function=read((udc.path()/"function").string(),256);
-        if(!function.empty()&&function!="\n"&&function!="unavailable\n")bound=true;
-    }
-    const bool owned=read("/run/senemos-uke/usb-gadget-profile",64)=="auto-acm\n";
-    const bool converged=manager_ok&&(enabled?(!bound||owned):!bound);
-    const char* effective=!converged?"error":!enabled?"disabled":bound?"exported_not_host_verified":"awaiting_attachment";
+    need(lstat(helper,&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted manual CDC helper");
+    const auto change=execute({helper,enabled?"manual-on":"manual-off"},20,4096);
+    if(change.status!=0)return {change.status,"Manual CDC request refused or failed:\n"+change.output};
+    const bool owned=read("/run/senemos-uke/usb-gadget-profile",64)=="manual-acm\n";
+    const auto controller=read("/sys/kernel/config/usb_gadget/uke_debug/UDC",256);
+    const bool bound=owned&&!controller.empty()&&controller!="\n"&&controller!="unavailable\n";
+    const bool converged=enabled?owned&&bound:!owned&&!bound;
+    const char* effective=!converged?"unconfirmed":!enabled?"disabled":"exported_not_host_verified";
     return {converged?0:74,std::string("{\"requested_cdc\":\"")+(enabled?"on":"off")+
-        "\",\"policy_saved\":true,\"manager_active\":"+(running?"true":"false")+
-        ",\"manager_matches_request\":"+(manager_ok?"true":"false")+
-        ",\"gadget_bound\":"+(bound?"true":"false")+
+        "\",\"scope\":\"project_manual_acm\",\"execution\":\"one_shot\",\"policy_saved\":false,\"service_required\":false"+
+        ",\"automatic_startup_requested\":false,\"gadget_bound_observed\":"+(bound?"true":"false")+
         ",\"request_converged\":"+(converged?"true":"false")+
         ",\"effective_state\":\""+effective+'"'+
         ",\"enumeration\":\"inspect_usb_status\",\"root_shell\":false,\"network_export\":false}\n"};
