@@ -81,7 +81,7 @@ int main() {
     const auto now=std::chrono::steady_clock::now();
     const auto recover=[&](auto time) {
         return recover_touch_panel(state_fd,admitted,recovery,[&]{release_count++;},[&]{reset_count++;},
-            [&]{drained++;},[&]{
+            [&]{drained++;},[&](bool){
                 reloaded++;
                 if(reset_during_load)write_file(state,std::string("9 0\n"));
                 if(load_failure)throw std::runtime_error("injected loader failure");
@@ -107,6 +107,42 @@ int main() {
     assert(recover(now+std::chrono::seconds(11)) && reloaded==5 && recovery.failures==0);
     assert((admitted==TouchPanelState{10,true}) && !touch_transfer_guard);
     assert(recover(now+std::chrono::seconds(12)) && reloaded==5); // No healthy reload loop.
+    // The captured firmware watchdog does not change the panel generation.
+    bool idle_reset=false;
+    recovery.firmware_reset=true;recovery.watchdog_byte=0xfe;
+    const auto firmware_recover=[&](auto time) {
+        return recover_touch_panel(state_fd,admitted,recovery,[&]{release_count++;},[&]{reset_count++;},
+            [&]{drained++;},[&](bool idle){idle_reset=idle;reloaded++;if(load_failure)throw std::runtime_error("watchdog loader failure");},time);
+    };
+    write_file(state,std::string("10 0\n"));
+    assert(!firmware_recover(now) && reloaded==5 && recovery.failures==0); // No SPI while DPMS is off.
+    write_file(state,std::string("10 1\n"));
+    assert(firmware_recover(now) && reloaded==6 && idle_reset && !recovery.firmware_reset);
+    assert((admitted==TouchPanelState{10,true}));
+    recovery.firmware_reset=true;recovery.watchdog_byte=0xfd;
+    assert(firmware_recover(now) && reloaded==7 && !idle_reset);
+    recovery.firmware_reset=true;recovery.watchdog_byte=0xfe;load_failure=true;
+    assert(!firmware_recover(now) && reloaded==8 && recovery.failures==1);
+    assert(!firmware_recover(now) && reloaded==8); // Failed recovery is rate limited.
+    assert(!firmware_recover(now+std::chrono::seconds(1)) && reloaded==9);
+    bool exhausted=false;
+    try{firmware_recover(now+std::chrono::seconds(2));}catch(const std::exception&){exhausted=true;}
+    assert(exhausted && reloaded==10 && recovery.failures==3); // Never silently active forever.
+    std::array<std::uint8_t,uke_touch::frame_size> watchdog_packet{};
+    uke_touch::Watchdog detector;
+    watchdog_packet.fill(0xfe);
+    for(unsigned i=0;i<10;i++)assert(!detector.observe(watchdog_packet));
+    assert(detector.observe(watchdog_packet)==0xfe);
+    watchdog_packet.fill(0xfd);
+    for(unsigned i=0;i<10;i++)assert(!detector.observe(watchdog_packet));
+    watchdog_packet[5]=0;
+    assert(!detector.observe(watchdog_packet) && detector.consecutive==0);
+    watchdog_packet[5]=0xfe;
+    for(unsigned i=0;i<10;i++)assert(!detector.observe(watchdog_packet));
+    assert(detector.observe(watchdog_packet)==0xfd); // OEM also permits a mixed six-byte signature.
+    exhausted=false;
+    try{detector.observe(std::span(watchdog_packet).first(5));}catch(const std::exception&){exhausted=true;}
+    assert(exhausted);
     close(state_fd);
     bool closed=false;try{touch_panel_state(state_fd);}catch(const std::exception&){closed=true;}
     assert(closed);

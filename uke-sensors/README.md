@@ -278,3 +278,16 @@ complete the first command after a RAM reload under wide AVR, exceeding the
 previous query window. Command payloads and generation guards are retained.
 Actual-function fixtures cover delayed completion, one write, bounded failure
 and a reset during polling. Repeated tablet recovery remains a separate gate.
+
+Release 10 handles the Uke OEM firmware-watchdog signature before THP checksum
+admission. On 18 October 2026, a POCO Pad X1 running kernel 7.2.10-20 loses
+contacts while GPIO interrupts continue and all 256 captured packets contain
+FE reset data. Release 9 discards these packets indefinitely. The new path
+requires eleven consecutive six-byte FD/FE signatures, releases contacts and
+reloads the verified normal firmware while retaining the input device. FE uses
+the stock idle-reset step first. Panel readiness/generation guards and bounded
+retries remain; exhausted recovery returns an explicit service failure.
+Exact OEM attribution is recorded in manifests/touch-normal-probe-source.json.
+Host checks cover signature interruptions, FE/FD paths, DPMS-off refusal and
+failed reloads. The original firmware reset trigger and physical continuity
+under VRR require separate tablet validation.

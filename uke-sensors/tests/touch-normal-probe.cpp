@@ -114,6 +114,9 @@ int main(int argc,char **argv) {
         assert(writes.size()<=2); // Neither a foreign ID nor a transfer fault can download RAM.
     }
     reset();reject([&]{normal_write(0,0x1fb43e,Bytes{0x68});});
+    normal_write(0,0x1fb43e,Bytes{0xaa});
+    assert(writes.size()==1 && writes[0]==std::make_pair(0x1fb43eU,Bytes{0xaa}));
+    reset();
     reject([&]{normal_write(0,0x1fb104,Bytes(6,1));});
     reject([&]{normal_write(0,0x1fb104,Bytes(5,0));});assert(operations==0);
     reset(); normal_scan_ready(0); assert(status_reads==1);

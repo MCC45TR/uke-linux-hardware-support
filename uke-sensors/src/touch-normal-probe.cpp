@@ -51,7 +51,7 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
         {0x1fb530,3},{0x1fb504,4},{0x1fc925,1},{0x11c460,6},{0x11c450,2}}})
         allowed |= address==reg && data.size()==size;
     allowed |= address==0x1fb50d && data.size()==1;
-    allowed |= address==0x1fb43e && data.size()==1 && data[0]==0x69;
+    allowed |= address==0x1fb43e && data.size()==1 && (data[0]==0x69 || data[0]==0xaa);
     // The stock Uke probe clears the trim latch after its bootstrap reset.
     allowed |= address==0x1fb104 && data.size()==6 &&
                std::all_of(data.begin(),data.end(),[](auto byte){return byte==0;});

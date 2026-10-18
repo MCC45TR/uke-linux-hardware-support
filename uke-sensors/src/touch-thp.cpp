@@ -56,7 +56,11 @@ struct TouchPanelGuard {
     }
     ~TouchPanelGuard() { touch_transfer_guard={}; }
 };
-static void touch_start_normal(int fd,const Bytes &image) {
+static void touch_start_normal(int fd,const Bytes &image,bool watchdog_idle=false) {
+    if(watchdog_idle) {
+        // Exact Uke OEM watchdog path: leave the FE reset loop before reloading.
+        normal_write(fd,0x1fb43e,Bytes{0xaa});pause_ms(15);
+    }
     bootstrap_touch_chip(fd);
     load_normal(fd,image); normal_scan_ready(fd);
     const auto info=read<16>(fd,firmware_address(0));
@@ -142,28 +146,32 @@ struct TouchRecovery {
     std::uint64_t generation{};
     unsigned failures{};
     std::chrono::steady_clock::time_point next{};
+    bool firmware_reset{};
+    std::uint8_t watchdog_byte{};
 };
 template<class Release,class Reset,class Drain,class Reload>
 static bool recover_touch_panel(int descriptor,TouchPanelState &admitted,
                                 TouchRecovery &recovery,Release release,Reset reset,Drain drain,
                                 Reload reload,std::chrono::steady_clock::time_point now) {
     const auto observed=touch_panel_state(descriptor);
-    if(observed.ready && observed==admitted) return true;
+    if(observed.ready && observed==admitted && !recovery.firmware_reset) return true;
     release();
     if(observed.generation!=recovery.generation) {
         recovery={observed.generation,0,{}};
         reset();
     }
     drain();
-    if(!touch_reload_required(admitted,observed) || recovery.failures>=3 || now<recovery.next) return false;
+    if(!observed.ready || (!touch_reload_required(admitted,observed) && !recovery.firmware_reset) ||
+       recovery.failures>=3 || now<recovery.next) return false;
     try {
         TouchPanelGuard guard(descriptor,observed);
-        reload();
+        reload(recovery.firmware_reset && recovery.watchdog_byte==0xfe);
         touch_transfer_guard();
         drain();
         admitted=observed;recovery.failures=0;
-        std::cout<<"Touch recovered after panel reset generation "<<observed.generation
+        std::cout<<"Touch recovered after "<<(recovery.firmware_reset ? "firmware watchdog; panel generation " : "panel reset generation ")<<observed.generation
                  <<"; input device retained"<<std::endl;
+        recovery.firmware_reset=false;
         return true;
     } catch(const TouchPanelTransition &) {
         return false;
@@ -171,6 +179,8 @@ static bool recover_touch_panel(int descriptor,TouchPanelState &admitted,
         std::cerr<<"Touch generation "<<observed.generation<<" recovery failed: "<<error.what()<<std::endl;
         recovery.failures++;
         recovery.next=now+std::chrono::seconds(1);
+        require(!recovery.firmware_reset || recovery.failures<3,
+                "Touch firmware watchdog recovery exhausted; restarting service");
         return false;
     }
 }
@@ -357,12 +367,13 @@ int main(int argc,char **argv) {
         unsigned frames=0,rejected=0,contacts=0,coalesced_edges=0;
         std::size_t previous_contacts=0;
         TouchRecovery recovery{admitted_panel.generation,0,{}};
+        uke_touch::Watchdog watchdog;
         while(running && (daemon || std::chrono::steady_clock::now()<deadline)) {
             if(!panel_provider.empty()) {
                 if(!recover_touch_panel(panel_event,admitted_panel,recovery,
                     [&]{input_report(input,{},ids,geometry);previous_contacts=0;},
-                    [&]{core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);},
-                    [&]{discard_touch_irqs(irq);},[&]{touch_start_normal(spi,image);},
+                    [&]{core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);watchdog={};},
+                    [&]{discard_touch_irqs(irq);},[&](bool idle){touch_start_normal(spi,image,idle);},
                     std::chrono::steady_clock::now())) {
                     // Retry backoff only bounds failed downloads; panel readiness wakes us immediately.
                     pollfd changed{panel_event,POLLPRI|POLLERR,0};
@@ -397,7 +408,17 @@ int main(int argc,char **argv) {
                 input_report(input,{},ids,geometry);previous_contacts=0;
                 discard_touch_irqs(irq);continue;
             }
-            const auto frame=uke_touch::decode(std::span(rx).subspan(2));
+            const auto packet=std::span(rx).subspan(2);
+            if(const auto fault=watchdog.observe(packet)) {
+                input_report(input,{},ids,geometry);previous_contacts=0;
+                core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);
+                recovery.firmware_reset=true;recovery.watchdog_byte=*fault;
+                recovery.failures=0;recovery.next={};
+                std::cerr<<"Touch firmware watchdog 0x"<<std::hex<<unsigned(*fault)<<std::dec
+                         <<" after 11 packets; recovering without replacing input device"<<std::endl;
+                continue;
+            }
+            const auto frame=uke_touch::decode(packet);
             const auto now=std::chrono::steady_clock::now();
             if(frame) {
                 last_valid=now; frames++;
