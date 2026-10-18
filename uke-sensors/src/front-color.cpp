@@ -26,12 +26,13 @@ struct Fd {
 };
 static int state_directory() {
     require(geteuid() == 0, "Front-color service requires its root-owned runtime directory");
-    for (const auto *path : {"/run/senemos-uke", "/run/senemos-uke/sensors"}) {
-        struct stat st{};
-        require(lstat(path, &st) == 0 && S_ISDIR(st.st_mode) && st.st_uid == 0 && !(st.st_mode & 0022), "Untrusted front-color runtime directory");
-    }
-    int fd = open("/run/senemos-uke/sensors", O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+    int fd = open("/run/uke-sensors", O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
     require(fd >= 0, "Front-color runtime directory unavailable");
+    struct stat st{};
+    if (fstat(fd, &st) != 0 || !uke::color::public_directory(st)) {
+        close(fd);
+        throw std::runtime_error("Front-color runtime directory must be root-owned and mode 0755");
+    }
     return fd;
 }
 static void check_board() {

@@ -39,6 +39,16 @@ static std::string contents(const std::filesystem::path &path) {
 int main() {
     using uke::color::State;
     using uke::color::Error;
+    struct stat public_dir{}; public_dir.st_mode = S_IFDIR | 0755; public_dir.st_uid = 0;
+    assert(uke::color::public_directory(public_dir));
+    for (auto mode : {0700,0750,0775,0777,01755}) {
+        public_dir.st_mode = S_IFDIR | mode;
+        assert(!uke::color::public_directory(public_dir));
+    }
+    public_dir.st_mode = S_IFDIR | 0755; public_dir.st_uid = 1000;
+    assert(!uke::color::public_directory(public_dir));
+    public_dir.st_uid = 0; public_dir.st_mode = S_IFREG | 0755;
+    assert(!uke::color::public_directory(public_dir));
     State state;
     assert(state.json(1).find("\"available\":false") != std::string::npos);
     assert(state.json(1).find("\"status\":null") != std::string::npos);

@@ -11,6 +11,9 @@
 
 namespace uke::color {
 inline void file_need(bool ok) { if (!ok) throw std::runtime_error("Front-color snapshot publication failed"); }
+inline bool public_directory(const struct stat &st) {
+    return S_ISDIR(st.st_mode) && st.st_uid == 0 && (st.st_mode & 07777) == 0755;
+}
 inline void check_target(int directory) {
     struct stat st{};
     if (fstatat(directory, "front-color.json", &st, AT_SYMLINK_NOFOLLOW) == 0)

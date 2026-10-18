@@ -10,7 +10,7 @@ persistent operation.
 The optional `uke-front-color` package publishes one local, read-only snapshot:
 
 ```text
-/run/senemos-uke/sensors/front-color.json
+/run/uke-sensors/front-color.json
 ```
 
 It does not replace original SensorProxy, which remains the ALS/rotation
@@ -55,8 +55,11 @@ sudo systemctl disable --now uke-front-color.service
 
 The schema string is `org.uke.sensors.front-color.v1`. The snapshot is bounded to
 4096 bytes and replaced atomically no more than once per second. The runtime
-directory is owned by root and is not writable by other users; the regular
-snapshot is mode 0644. Readers can inspect raw color values without privileges.
+directory is owned by root and is mode 0755; the regular snapshot is mode 0644.
+The publisher checks directory traversal permissions as well as ownership.
+Readers can inspect raw color values without privileges. This public directory
+is independent of the private mode-0700 `/run/senemos-uke` USB gadget state;
+enabling CDC must not make the sensor endpoint inaccessible.
 
 | Field | Type and meaning |
 |---|---|
