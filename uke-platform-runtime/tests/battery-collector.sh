@@ -4,11 +4,13 @@ set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d)
 trap 'rm -r -- "$work"' EXIT
+"${CXX:-c++}" -std=c++17 -O2 -Wall -Wextra -Werror "$root/tests/provider-identity.cpp" -o "$work/provider-identity"
+"$work/provider-identity" "$work/provider-fixture"
 make -C "$root" outdir="$work/build" all
 sys=$work/sys
-mkdir -p "$sys/firmware/devicetree/base" "$sys/class/power_supply" "$sys/devices/charger" "$sys/bus/auxiliary/drivers/pmic_glink_power_supply"
+mkdir -p "$sys/firmware/devicetree/base" "$sys/class/power_supply" "$sys/devices/charger" "$sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply"
 printf 'xiaomi,uke\0qcom,sm7675\0' > "$sys/firmware/devicetree/base/compatible"
-ln -s "$sys/bus/auxiliary/drivers/pmic_glink_power_supply" "$sys/devices/charger/driver"
+ln -s "$sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply" "$sys/devices/charger/driver"
 for name in bat usb; do
     supply=$sys/class/power_supply/qcom-battmgr-$name
     mkdir "$supply"
@@ -54,6 +56,25 @@ printf '1 2 1 2 1 1 0 0 -110 0 100 99\n' > "$sys/devices/charger/uke_battmgr_sta
 "$work/build/uke-battery" --sysfs-root "$sys" > "$work/stale.json"
 jq -e '(.snapshot_coherent | not) and .status == "transport_quiesced" and .recovery == "cold_boot_required" and .fields == {}
     and .physical_charge_stopped == null and .health_provenance == null' "$work/stale.json" >/dev/null
+for driver in pmic_glink_power_supply other.pmic_glink_power_supply qcom_battmgr.pmic_glink_power_supply_extra; do
+    mkdir -p "$sys/bus/auxiliary/drivers/$driver"
+    rm "$sys/devices/charger/driver"
+    ln -s "$sys/bus/auxiliary/drivers/$driver" "$sys/devices/charger/driver"
+    "$work/build/uke-battery" --sysfs-root "$sys" --inventory > "$work/wrong-driver.json"
+    jq -e '(.provider_verified | not) and .status == "provider_unverified" and .fields == null' "$work/wrong-driver.json" >/dev/null
+done
+rm "$sys/devices/charger/driver"
+ln -s "$sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply" "$sys/devices/charger/driver"
+"$work/build/uke-battery" --sysfs-root "$sys" --inventory > "$work/qualified-provider.json"
+jq -e '.provider_verified and .status == "inventory_only" and .fields == null' "$work/qualified-provider.json" >/dev/null
+mkdir -p "$sys/devices/other-charger"
+ln -s "$sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply" "$sys/devices/other-charger/driver"
+rm "$sys/class/power_supply/qcom-battmgr-usb/device"
+ln -s "$sys/devices/other-charger" "$sys/class/power_supply/qcom-battmgr-usb/device"
+"$work/build/uke-battery" --sysfs-root "$sys" --inventory > "$work/mismatched-providers.json"
+jq -e '(.provider_verified | not) and .status == "provider_unverified" and .fields == null' "$work/mismatched-providers.json" >/dev/null
+rm "$sys/class/power_supply/qcom-battmgr-usb/device"
+ln -s "$sys/devices/charger" "$sys/class/power_supply/qcom-battmgr-usb/device"
 printf 'xiaomi,other\0' > "$sys/firmware/devicetree/base/compatible"
 "$work/build/uke-battery" --sysfs-root "$sys" --inventory > "$work/other.json"
 jq -e '(.provider_verified | not) and .status == "provider_unverified" and (.fields == null)' "$work/other.json" >/dev/null

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "control.hpp"
+#include "provider.hpp"
 #include <algorithm>
 #include <cerrno>
 #include <charconv>
@@ -46,22 +47,13 @@ std::string read_file(const fs::path &path) {
     try { auto data = read_fd(fd); close(fd); return data; }
     catch (...) { close(fd); throw; }
 }
-fs::path provider(const fs::path &supply) {
-    std::error_code error;
-    auto node = fs::canonical(supply / "device", error);
-    for (int i = 0; !error && i != 5 && node != node.root_path(); ++i) {
-        auto driver = fs::canonical(node / "driver", error);
-        if (!error && driver.filename() == "pmic_glink_power_supply") return node;
-        error.clear(); node = node.parent_path();
-    }
-    return {};
-}
 class Sysfs final : public Io {
     int directory_ = -1;
 public:
     Sysfs() {
         const fs::path root("/sys/class/power_supply");
-        const auto bat = provider(root / "qcom-battmgr-bat"), usb = provider(root / "qcom-battmgr-usb");
+        const auto bat = uke::battery::provider::find(root / "qcom-battmgr-bat");
+        const auto usb = uke::battery::provider::find(root / "qcom-battmgr-usb");
         if (bat.empty() || usb != bat || bat.string().rfind("/sys/devices/", 0) != 0) fail("control_provider_unverified");
         const auto compatible = read_file("/sys/firmware/devicetree/base/compatible");
         bool uke = false;

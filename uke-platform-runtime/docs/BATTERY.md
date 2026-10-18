@@ -20,10 +20,21 @@ and services remain disabled/unqualified; this observation API gains no writer.
 ## Observation contract
 
 The collector admits only the exact `xiaomi,uke` DT compatible and the expected
-`pmic_glink_power_supply` provider shared by `qcom-battmgr-bat` and
+`qcom_battmgr.pmic_glink_power_supply` bound auxiliary driver shared by `qcom-battmgr-bat` and
 `qcom-battmgr-usb`. This is a provider-name/topology check, not verification of
 installed module bytes, firmware identity or physical semantics. The first
 inventory must establish those separate identities.
+
+The driver symlink must resolve to the exact driver under
+`/sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply`. Linux prefixes
+the auxiliary driver's source name with KBUILD_MODNAME. The previous unprefixed
+comparison and synthetic symlink fixture were incorrect; release2 failed the
+coordinator's actual installed-provider check despite passing host/package
+checks. Release3 uses one shared exact resolver for observer/control, with
+qualified positive and wrong-module/suffix/bus/topology fixtures prepared.
+The model/attestation semantic provider id remains `pmic_glink_power_supply`;
+it is not the basename of the bound driver. Recognizing a provider neither
+qualifies firmware nor permits a GET/SET or automatic service activation.
 
 Only the explicit attribute list in `collector.cpp` is read. Model/serial,
 private OEM nodes, charger partitions, authentication, persist, generic thermal
