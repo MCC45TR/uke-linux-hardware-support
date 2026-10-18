@@ -22,7 +22,7 @@ flock -w 5 -x 9
 debug_authorized() {
     [ ! -e "$state/usb-gadget-inhibit" ] || return 1
     case " $(cat /proc/cmdline) " in *' senemos.debug=cdc-acm '*) ;; *) return 1;; esac
-    uke-boot-status --cdc --wait 15
+    uke-boot-status --cdc --wait 15 >/dev/null
 }
 resolve_udc() {
     set -- /sys/class/udc/*
