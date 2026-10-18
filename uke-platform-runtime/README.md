@@ -41,6 +41,13 @@ protocol-ABI, source-contract and cable-contract proof hashes.
 [qualification record](manifests/battery-profile.json),
 [readiness](manifests/battery-readiness.json).
 
+The qualification record now lists separate unresolved charge-pump, fuel-gauge
+and pack-protection identities. Its source-only `charger_pd` attribution does
+not identify fitted parts or establish their protections. This evidence record
+is not parsed by either the model or control resolver and enables no driver or
+control. The central research record is
+`uke-linux-docs/docs/research/UKE-CHARGING-COMPONENTS-2026-10-18.md`.
+
 Qualcomm remoteproc, QRTR, FastRPC and SSC integration remains a separate scope.
 This component does not start another remote processor or claim completed
 hexagonrpc/libssc payloads. Use the original Fedora KDE applications.

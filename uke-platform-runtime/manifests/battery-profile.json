@@ -22,6 +22,47 @@
   "learned_full_capacity_qualified": false,
   "hardware_cycles_qualified": false,
   "autonomous_protection_evidence": [],
+  "component_identity_evidence": [
+    {
+      "role": "charge_pump",
+      "presence": "unconfirmed",
+      "part_number": null,
+      "revision": null,
+      "control_owner": null,
+      "qualification": "unqualified",
+      "missing_evidence": ["selected_part_and_topology", "firmware_owner_and_bound_interface", "measurement_units", "protection_and_fallback_contract"]
+    },
+    {
+      "role": "fuel_gauge",
+      "presence": "unconfirmed",
+      "part_number": null,
+      "revision": null,
+      "control_owner": null,
+      "qualification": "unqualified",
+      "missing_evidence": ["selected_part_and_pack_configuration", "gauge_owner_and_bound_interface", "capacity_current_temperature_and_counter_basis"]
+    },
+    {
+      "role": "pack_protection",
+      "presence": "unconfirmed",
+      "part_number": null,
+      "revision": null,
+      "control_owner": null,
+      "qualification": "unqualified",
+      "missing_evidence": ["selected_controller_and_fet_topology", "host_interface_or_autonomous_only_design", "fault_thresholds_and_recovery_contract"]
+    }
+  ],
+  "component_source_evidence": {
+    "evidence_class": "source_only",
+    "oem_kernel_commit": "5712080a4b0c0b1a879e6d145c601c649ddaddfd",
+    "oem_dt_commit": "94c84aeb9e517dbde546fc732033c184094c8e57",
+    "oem_dt_file": "qcom/cliffs.dtsi",
+    "aggregate_firmware_channel": "PMIC_RTR_ADSP_APPS",
+    "aggregate_firmware_domain": "msm/adsp/charger_pd",
+    "per_component_ownership_established": false,
+    "fitted_part_identity_established": false,
+    "active_firmware_identity_established": false,
+    "autonomous_protection_established": false
+  },
   "validated_adapter_cases": [],
   "note": "Evidence record only. The observer does not parse this file into hardware controls or enable qualification flags.",
   "sensors": [

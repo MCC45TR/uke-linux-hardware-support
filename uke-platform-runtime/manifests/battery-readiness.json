@@ -23,6 +23,9 @@
     {"id":"tte_with_reserve","source":"collector_session_connected_inputs_unqualified","qualified":false},
     {"id":"time_to_target_curve","source":"collector_session_connected_inputs_unqualified","qualified":false},
     {"id":"fixed_pdo_admission","source":"pure_arithmetic_no_port_control","qualified":false},
+    {"id":"charge_pump_identity","source":"unconfirmed_selected_part_and_firmware_ownership_required","qualified":false},
+    {"id":"fuel_gauge_identity","source":"unconfirmed_selected_part_and_measurement_basis_required","qualified":false},
+    {"id":"pack_protection","source":"unconfirmed_controller_interface_and_fault_contract_required","qualified":false},
     {"id":"threshold_hold_high_power","source":"disabled_pending_firmware_profile","qualified":false}
   ],
   "gates":{"G0":"PARTIAL","G1":"NOT_RUN","G2":"NOT_RUN","G3":"BLOCKED","G4":"NOT_RUN","G5":"NOT_RUN","G6":"NOT_RUN","G7":"NOT_RUN","G8":"NOT_READY"}
