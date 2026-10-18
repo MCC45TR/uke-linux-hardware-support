@@ -282,3 +282,27 @@ undoes it. An uncertain attempted writer is quarantined for that driver instance
 Success means configuration readback only, not electrical charge stop, battery
 bypass or all autonomous protections. This command does not save intent, start
 a service or promise reboot persistence. Physical effect remains a separate test.
+
+## Existing-target application — release 7 candidate
+
+The exact OEM Uke source `5712080a4b0c0b1a879e6d145c601c649ddaddfd`,
+`qti_battery_charger.c::battery_psy_set_charge_threshold`, separates feature
+permission from opcode0x48 target application. Enabling the flag and observing
+70/80 configuration alone cannot establish the second operation or its effect.
+
+`sudo uke-charge-control apply-cap80` requires the matching kernel interface,
+root privilege, owner serialization and quiescent same-boot/lifecycle metadata.
+It submits one literal request to `uke_charge_apply_existing_cap`. The kernel
+requires fresh enabled70/80 settings, present/Good battery and disconnected
+external input, then sends only `{enable=1,target=80,delta=10}`. There is no
+arbitrary target, disable, FCC, CV, input-suspend, XM or PD path in this operation.
+
+A successful command reports `request_sent=true`, `firmware_reply_received=true`
+and mandatory same-epoch configuration readback. The firmware reply is bounded
+and correlated but opaque: `applied=null`, `control_outcome_unknown=true`,
+`physical_charge_stopped=null` and `battery_bypass_qualified=false` remain
+explicit. No generic ACK envelope or actuator qualification is created.
+The kernel keeps both restricted writers quarantined after an attempt for that
+driver instance. Ambiguous delivery, timeouts and lifecycle failures never cause
+replay, undo, a service or persisted intent. A reboot is not permission to retry
+an unresolved physical outcome. General control admission remains independent.

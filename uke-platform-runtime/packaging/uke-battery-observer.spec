@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -35,6 +35,8 @@ admitted OEM property. Voltage and PD remain firmware-owned; no voltage writer.
 The shipped profile is unqualified. No physical acceptance is implied.
 An explicit matched-kernel operation can enable only the existing 70/80 cap
 with external input off, preserving thresholds and electrical settings.
+Another explicit operation requests that already enabled target once. An opaque
+firmware reply is reported as receipt only, with physical effect unknown.
 
 %package -n uke-offline-charge
 Summary: Minimal native charger-boot interface for Uke
@@ -110,6 +112,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
+- Add a one-shot request for the already enabled offline 70/80 target.
+- Preserve uncertain outcomes without retries, leases or bypass claims.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
 - Add a separate native offline-charging interface and explicit boot-signal checks.
 - Keep firmware charging ownership and normal desktop startup separate.

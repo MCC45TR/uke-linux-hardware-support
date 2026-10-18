@@ -116,6 +116,10 @@ bool preconfigured_cap_context_matches(const Context &before, const Context &aft
         after.boottime_ns - before.boottime_ns <= 10ULL * 1000000000ULL &&
         after.state.enabled && after.state.start == 70 && after.state.end == 80;
 }
+void request_preconfigured_cap_application(Io &io, const Context &before) {
+    if (!preconfigured_cap_context_matches(before, before)) fail("preconfigured_cap_context_not_ready");
+    io.write("uke_charge_apply_existing_cap", "1\n");
+}
 Session::Session(Io &io, Profile profile, State binding)
     : io_(io), profile_(std::move(profile)), binding_(std::move(binding)) {}
 Session::~Session() { try { revoke(); } catch (...) {} }

@@ -1,18 +1,23 @@
 # uke-platform-runtime
 
 Status, **18 October 2026**: signed COPR 11168630 installs observer/helper 6 and
-the separate offline-charging interface on POCO Pad X1, Fedora Rawhide AArch64 /
-Linux 7.2.10-29. Exact source/signature/native payload checks and RPM verification
-pass. The deliberate offline query reads disabled 70/80 firmware thresholds.
-Metadata status remains unqualified and charge workers remain inactive. The
-restricted cap-enable operation refuses the absent kernel-29 write interface.
-No charging SET, physical cutoff, bypass or full protection is qualified.
+the separate offline-charging interface on POCO Pad X1, Fedora Rawhide AArch64.
+The tablet now runs Linux 7.2.11-2 with normal display and touch. Explicit
+feature activation and readback of the existing 70/80 band survive normal
+reboots. A later powered observation reaches reported 80% with positive battery
+current; physical charge stop and bypass remain unqualified. General control
+admission stays closed and charge workers remain inactive.
+
+Helper 7 adds an explicit one-shot application request for that already enabled
+band. This source candidate distinguishes an opaque firmware receipt and setting
+readback from unknown actuator effect. It never retries, enables a service,
+changes a target/current/voltage or promotes the general control profile.
 
 The native [offline interface](docs/OFFLINE-CHARGING.md) reports a large battery,
 percentage, firmware time-to-full, signed battery-side watts and temperature.
 Unavailable time stays unknown. Its normal-boot guard passes on the tablet
 without opening DRM or interrupting KDE/touch. The matched 7.2.11 initramfs is
-building; physical charger boot, power-key reboot and unplug/power use remain
+installed; physical charger boot, power-key reboot and unplug/power use remain
 untested. The firmware retains all charging ownership. See the
 [observation contract](docs/BATTERY.md) and [control contract](docs/CHARGE-CONTROL.md).
 

@@ -53,6 +53,7 @@ public:
         if (name == "uke_charge_current_profile") { value.current_admitted = true; return; }
         if (name == "uke_charge_refresh") return;
         if (delivery_error) throw std::runtime_error("synthetic_delivery_ambiguous");
+        if (name == "uke_charge_apply_existing_cap") { assert(record == "1\n"); return; }
         if (name == "uke_charge_current_ua") {
             if (!mismatch) value.current_ua = uint32_t(std::stoul(record));
         } else if (name == "uke_charge_thresholds") {
@@ -105,6 +106,13 @@ int main() {
         auto after=before;after.boottime_ns=2*second;
         after.state.enabled=true;after.state.start=70;after.state.end=80;
         assert(preconfigured_cap_context_matches(before,after));
+        Fake io;
+        request_preconfigured_cap_application(io, before);
+        assert(io.writes == std::vector<std::string>{"uke_charge_apply_existing_cap"});
+        io.writes.clear(); io.delivery_error = true;
+        rejects([&] { request_preconfigured_cap_application(io, before); });
+        // Ambiguous delivery produces exactly one write, with no retry/undo/lease.
+        assert(io.writes == std::vector<std::string>{"uke_charge_apply_existing_cap"});
         for(unsigned fault=0;fault<16;fault++) {
             auto changed=after;
             if(fault==0)changed.state.enabled=false;
@@ -124,6 +132,23 @@ int main() {
             if(fault==14)changed.boottime_ns=before.boottime_ns-1;
             if(fault==15)changed.boottime_ns=before.boottime_ns+10*second+1;
             assert(!preconfigured_cap_context_matches(before,changed));
+        }
+        for (unsigned fault=0;fault<11;fault++) {
+            auto invalid=before;
+            if(fault==0)invalid.state.enabled=false;
+            if(fault==1)invalid.state.start=75;
+            if(fault==2)invalid.state.end=100;
+            if(fault==3)invalid.state.live=true;
+            if(fault==4)invalid.state.verified=true;
+            if(fault==5)invalid.state.current_verified=true;
+            if(fault==6)invalid.provider_verified=false;
+            if(fault==7)invalid.state.compiled=false;
+            if(fault==8)invalid.state.instance=0;
+            if(fault==9)invalid.boot_id.clear();
+            if(fault==10)invalid.kernel_release.clear();
+            io.writes.clear();
+            rejects([&] { request_preconfigured_cap_application(io, invalid); });
+            assert(io.writes.empty());
         }
     }
     // Strict metadata shape; unsigned overflow/sign and extra tokens rejected.
