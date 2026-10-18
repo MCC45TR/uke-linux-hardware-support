@@ -27,7 +27,10 @@ int main() {
     if(geteuid()==0) {
         char dir[]="/tmp/uke-channel-state-XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
         auto rejected=[](auto&& fn){bool caught=false;try{fn();}catch(const std::exception&){caught=true;}assert(caught);};
+        const auto previous_mask=umask(0077);
         atomic_write(root/"channel","test\n");assert(saved(root/"channel")=="test");
+        struct stat mode{};assert(stat((root/"channel").c_str(),&mode)==0&&(mode.st_mode&0777)==0644);
+        umask(previous_mask);
         atomic_write(root/"channel","stable\n");assert(saved(root/"channel")=="stable");
         fs::create_symlink(root/"channel",root/"symlink");rejected([&]{atomic_write(root/"symlink","bad");});
         fs::create_hard_link(root/"channel",root/"hardlink");rejected([&]{atomic_write(root/"channel","bad");});fs::remove(root/"hardlink");
