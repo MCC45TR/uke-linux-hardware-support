@@ -1,0 +1,7 @@
+[Unit]
+Description=Uke offline charging screen
+DefaultDependencies=no
+Requires=sysinit.target uke-offline-charge.service
+After=sysinit.target uke-offline-charge.service
+Conflicts=multi-user.target graphical.target
+AllowIsolate=yes

@@ -8,7 +8,10 @@ outdir ?= $(CURDIR)/build
 battery_sources := src/battery/main.cpp src/battery/collector.cpp src/battery/service.cpp src/battery/session.cpp src/battery/checkpoint.cpp src/battery/profile.cpp src/battery/record.cpp
 control_sources := src/battery/control-main.cpp src/battery/control.cpp src/battery/control-profile.cpp src/battery/record.cpp
 .PHONY: all validate test-native install srpm
-all: $(outdir)/uke-battery $(outdir)/uke-charge-control
+all: $(outdir)/uke-battery $(outdir)/uke-charge-control $(outdir)/uke-offline-charge
+$(outdir)/uke-offline-charge: src/offline/main.cpp src/offline/boot-mode.hpp src/offline/io.hpp src/offline/screen.hpp
+	mkdir -p "$(outdir)"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$(CURDIR)=. src/offline/main.cpp $$(pkg-config --cflags --libs libdrm) $(LDFLAGS) -o "$@"
 $(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp src/battery/record.hpp src/battery/provider.hpp
 	mkdir -p "$(outdir)"
 	pkg-config --atleast-version=257 libsystemd
@@ -30,9 +33,14 @@ test-native:
 	bash tests/battery-collector.sh
 	bash tests/battery-api.sh
 	bash tests/charge-control.sh
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/offline-charge.cpp -o "$(outdir)/test-offline-charge"
+	"$(outdir)/test-offline-charge"
 install: all
 	install -Dm755 "$(outdir)/uke-battery" "$(DESTDIR)$(prefix)/bin/uke-battery"
 	install -Dm755 "$(outdir)/uke-charge-control" "$(DESTDIR)$(prefix)/libexec/uke-charge-control"
+	install -Dm755 "$(outdir)/uke-offline-charge" "$(DESTDIR)$(prefix)/libexec/uke-offline-charge"
+	install -Dm644 packaging/systemd/uke-offline-charge.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-offline-charge.service"
+	install -Dm644 packaging/systemd/uke-offline-charge.target "$(DESTDIR)$(prefix)/lib/systemd/system/uke-offline-charge.target"
 	install -Dm644 manifests/control-profile.json "$(DESTDIR)/etc/uke-battery/control-profile.json"
 	install -Dm644 packaging/systemd/uke-charge-control.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-control.service"
 	install -Dm644 packaging/systemd/uke-charge-automatic.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-automatic.service"

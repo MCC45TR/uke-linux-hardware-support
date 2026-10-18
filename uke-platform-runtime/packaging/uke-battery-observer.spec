@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -11,6 +11,7 @@ ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros jq dbus-daemon systemd
 BuildRequires: pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(libcrypto)
+BuildRequires: pkgconfig(libdrm)
 Requires: senemos-native-runtime(libstdc++) systemd-libs
 Requires(pre): systemd
 
@@ -34,6 +35,16 @@ admitted OEM property. Voltage and PD remain firmware-owned; no voltage writer.
 The shipped profile is unqualified. No physical acceptance is implied.
 An explicit matched-kernel operation can enable only the existing 70/80 cap
 with external input off, preserving thresholds and electrical settings.
+
+%package -n uke-offline-charge
+Summary: Minimal native charger-boot interface for Uke
+Requires: systemd senemos-native-runtime(libstdc++)
+
+%description -n uke-offline-charge
+Native DRM battery screen for an explicitly detected charger boot. The matched
+initramfs selects its isolated systemd target before desktop startup. Normal
+boots are unchanged. No firmware writer, PD control or charging algorithm is
+included. Physical charger-boot, power-key and unplug behavior require testing.
 
 %prep
 %setup -q
@@ -79,6 +90,13 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_presetdir}/91-uke-charge-control.preset
 %config(noreplace) %{_sysconfdir}/uke-battery/control-profile.json
 
+%files -n uke-offline-charge
+%license LICENSE
+%doc docs/OFFLINE-CHARGING.md
+%{_libexecdir}/uke-offline-charge
+%{_unitdir}/uke-offline-charge.service
+%{_unitdir}/uke-offline-charge.target
+
 %files
 %license LICENSE
 %doc README.md docs/BATTERY.md docs/RUNTIME-PROFILE.md SOURCE-SHA256SUMS
@@ -92,6 +110,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
+- Add a separate native offline-charging interface and explicit boot-signal checks.
+- Keep firmware charging ownership and normal desktop startup separate.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
 - Add a restricted explicit enable for the existing offline70/80 firmware cap.
 - Preserve general control admission and distinguish configuration from physical charge stop.
