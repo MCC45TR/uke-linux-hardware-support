@@ -51,10 +51,15 @@ int main() {
     write_file(panel/"of_node/compatible",panel_name);
     write_file(state,std::string("7 1\n"));
     assert(touch_panel_provider(panels)==state);
-    assert((touch_panel_state(state)==TouchPanelState{7,true}));
-    for(const auto *invalid:{"-1 1", "1 2", "1 1 trailing", "18446744073709551615 1", "1", "x 1"}) {
+    const int state_fd=open(state.c_str(),O_RDONLY|O_CLOEXEC);assert(state_fd>=0);
+    assert(lseek(state_fd,1,SEEK_SET)==1);
+    assert((touch_panel_state(state_fd)==TouchPanelState{7,true}));
+    assert(lseek(state_fd,0,SEEK_CUR)==1); // Positional reads do not consume the provider.
+    for(const auto &invalid:{std::string("-1 1\n"),std::string("1 2\n"),std::string("1 1 trailing\n"),
+            std::string("18446744073709551615 1\n"),std::string("1"),std::string("x 1\n"),
+            std::string(),std::string(64,'1'),std::string("1 1\nextra")}) {
         write_file(state,std::string(invalid));
-        bool rejected=false;try{touch_panel_state(state);}catch(const std::exception&){rejected=true;}
+        bool rejected=false;try{touch_panel_state(state_fd);}catch(const std::exception&){rejected=true;}
         assert(rejected);
     }
     write_file(state,std::string("7 1\n"));
@@ -62,7 +67,7 @@ int main() {
     refused=false;try{touch_panel_provider(panels);}catch(const std::exception&){refused=true;}
     assert(refused);std::filesystem::remove_all(panels/"dsi-other");
     {
-        TouchPanelGuard guard(state,{7,true});
+        TouchPanelGuard guard(state_fd,{7,true});
         touch_transfer_guard();
         write_file(state,std::string("8 0\n"));
         bool blocked=false;
@@ -75,7 +80,7 @@ int main() {
     bool load_failure=false,reset_during_load=false;
     const auto now=std::chrono::steady_clock::now();
     const auto recover=[&](auto time) {
-        return recover_touch_panel(state,admitted,recovery,[&]{release_count++;},[&]{reset_count++;},
+        return recover_touch_panel(state_fd,admitted,recovery,[&]{release_count++;},[&]{reset_count++;},
             [&]{drained++;},[&]{
                 reloaded++;
                 if(reset_during_load)write_file(state,std::string("9 0\n"));
@@ -102,6 +107,9 @@ int main() {
     assert(recover(now+std::chrono::seconds(11)) && reloaded==5 && recovery.failures==0);
     assert((admitted==TouchPanelState{10,true}) && !touch_transfer_guard);
     assert(recover(now+std::chrono::seconds(12)) && reloaded==5); // No healthy reload loop.
+    close(state_fd);
+    bool closed=false;try{touch_panel_state(state_fd);}catch(const std::exception&){closed=true;}
+    assert(closed);
     std::filesystem::remove_all(root);
     int pipefd[2]; assert(pipe2(pipefd,O_NONBLOCK|O_CLOEXEC)==0);
     std::array<gpio_v2_line_event,16> edges{};

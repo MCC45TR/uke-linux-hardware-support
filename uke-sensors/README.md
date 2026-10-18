@@ -264,3 +264,10 @@ An earlier rapid restart races firmware initialization and times out; notify
 readiness removes that race in the repeated sequence. The original 90 Hz mode
 and normal input service are restored. Power-profile-controlled scanning needs
 a verified controller command; frequency hopping is not used as a substitute.
+
+18 October 2026: release-8 source reuses the open read-only panel-state
+provider for positional reads. Every pre-transfer and post-frame generation
+check remains. Kernel sysfs supplies the exact `generation ready\n` format;
+malformed, oversized, truncated and failed reads refuse SPI. Host fixtures
+also check repeated reads, reset races and recovery backoff. Packaged build,
+CPU measurements and physical input acceptance are separate test stages.

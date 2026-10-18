@@ -33,24 +33,25 @@ static std::filesystem::path touch_panel_provider(const std::filesystem::path &r
     }
     return selected;
 }
-static TouchPanelState touch_panel_state(const std::filesystem::path &path) {
-    std::ifstream file(path);
-    std::string generation,ready,extra;
-    require(bool(file>>generation>>ready) && !(file>>extra) && generation.size()<=20 &&
-            (ready=="0" || ready=="1"),"Invalid O82 panel reset state");
+static TouchPanelState touch_panel_state(int descriptor) {
+    char bytes[64];ssize_t size;
+    do {size=pread(descriptor,bytes,sizeof(bytes),0);}while(size<0 && errno==EINTR);
+    require(size>0 && size<ssize_t(sizeof(bytes)),"O82 panel event read failed");
     std::uint64_t value=0;
-    const auto parsed=std::from_chars(generation.data(),generation.data()+generation.size(),value);
-    require(parsed.ec==std::errc{} && parsed.ptr==generation.data()+generation.size() &&
-            value<=UINT64_MAX/2,"Invalid O82 panel generation");
-    return {value,ready=="1"};
+    const auto parsed=std::from_chars(bytes,bytes+size,value);
+    require(parsed.ec==std::errc{} && parsed.ptr>bytes && parsed.ptr-bytes<=20 &&
+            bytes+size-parsed.ptr==3 && parsed.ptr[0]==' ' &&
+            (parsed.ptr[1]=='0' || parsed.ptr[1]=='1') && parsed.ptr[2]=='\n' &&
+            value<=UINT64_MAX/2,"Invalid O82 panel reset state");
+    return {value,parsed.ptr[1]=='1'};
 }
 struct TouchPanelGuard {
-    TouchPanelGuard(const std::filesystem::path &path,TouchPanelState expected) {
-        if(path.empty()) return;
+    TouchPanelGuard(int descriptor,TouchPanelState expected) {
+        if(descriptor<0) return;
         require(expected.ready && !touch_transfer_guard,"Panel is not ready for touch initialization");
-        if(touch_panel_state(path)!=expected) throw TouchPanelTransition();
-        touch_transfer_guard=[path,expected] {
-            if(touch_panel_state(path)!=expected) throw TouchPanelTransition();
+        if(touch_panel_state(descriptor)!=expected) throw TouchPanelTransition();
+        touch_transfer_guard=[descriptor,expected] {
+            if(touch_panel_state(descriptor)!=expected) throw TouchPanelTransition();
         };
     }
     ~TouchPanelGuard() { touch_transfer_guard={}; }
@@ -143,10 +144,10 @@ struct TouchRecovery {
     std::chrono::steady_clock::time_point next{};
 };
 template<class Release,class Reset,class Drain,class Reload>
-static bool recover_touch_panel(const std::filesystem::path &path,TouchPanelState &admitted,
+static bool recover_touch_panel(int descriptor,TouchPanelState &admitted,
                                 TouchRecovery &recovery,Release release,Reset reset,Drain drain,
                                 Reload reload,std::chrono::steady_clock::time_point now) {
-    const auto observed=touch_panel_state(path);
+    const auto observed=touch_panel_state(descriptor);
     if(observed.ready && observed==admitted) return true;
     release();
     if(observed.generation!=recovery.generation) {
@@ -156,7 +157,7 @@ static bool recover_touch_panel(const std::filesystem::path &path,TouchPanelStat
     drain();
     if(!touch_reload_required(admitted,observed) || recovery.failures>=3 || now<recovery.next) return false;
     try {
-        TouchPanelGuard guard(path,observed);
+        TouchPanelGuard guard(descriptor,observed);
         reload();
         touch_transfer_guard();
         drain();
@@ -305,7 +306,11 @@ int main(int argc,char **argv) {
             for(unsigned attempt=0;attempt<100;attempt++) {
                 panel_provider=touch_panel_provider();
                 if(!panel_provider.empty()) {
-                    admitted_panel=touch_panel_state(panel_provider);
+                    const int initial=open(panel_provider.c_str(),O_RDONLY|O_CLOEXEC);
+                    require(initial>=0,"O82 panel event open failed");
+                    try {admitted_panel=touch_panel_state(initial);}
+                    catch(...) {close(initial);throw;}
+                    close(initial);
                     if(admitted_panel.ready) break;
                 }
                 pause_ms(100);
@@ -315,14 +320,14 @@ int main(int argc,char **argv) {
             require(panel_event>=0,"O82 panel event provider unavailable");
         }
         if(probe_rates) {
-            TouchPanelGuard guard(panel_provider,admitted_panel);
+            TouchPanelGuard guard(panel_event,admitted_panel);
             require(nt36532(read<6>(spi,0x1fb104)) && !(read<1>(spi,0x1fb12c)[0]&1),"Foreign chip/topology");
             touch_probe_game_rates(spi);
             close(panel_event); close(spi);
             return 0;
         }
         if(daemon) {
-            TouchPanelGuard guard(panel_provider,admitted_panel);
+            TouchPanelGuard guard(panel_event,admitted_panel);
             touch_start_normal(spi,image);
             if(touch_transfer_guard)touch_transfer_guard();
         } else {
@@ -354,9 +359,7 @@ int main(int argc,char **argv) {
         TouchRecovery recovery{admitted_panel.generation,0,{}};
         while(running && (daemon || std::chrono::steady_clock::now()<deadline)) {
             if(!panel_provider.empty()) {
-                char acknowledged[64];
-                require(pread(panel_event,acknowledged,sizeof(acknowledged),0)>0,"O82 panel event read failed");
-                if(!recover_touch_panel(panel_provider,admitted_panel,recovery,
+                if(!recover_touch_panel(panel_event,admitted_panel,recovery,
                     [&]{input_report(input,{},ids,geometry);previous_contacts=0;},
                     [&]{core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);},
                     [&]{discard_touch_irqs(irq);},[&]{touch_start_normal(spi,image);},
@@ -386,7 +389,7 @@ int main(int argc,char **argv) {
             try {
                 // Recheck after the IRQ wait and before each SPI transfer. A panel reset
                 // invalidates the whole matrix; the next iteration releases its contacts.
-                TouchPanelGuard guard(panel_provider,admitted_panel);
+                TouchPanelGuard guard(panel_event,admitted_panel);
                 auto page_select=select_page(0x11c400); transfer(spi,page_select.data(),nullptr,page_select.size());
                 transfer(spi,tx.data(),rx.data(),rx.size(),19200000);
                 if(touch_transfer_guard)touch_transfer_guard();

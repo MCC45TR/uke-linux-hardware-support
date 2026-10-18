@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-touchscreen
 Version: 0.1.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: Native Novatek NT36532 touchscreen input for Xiaomi Uke
 License: GPL-3.0-or-later AND Apache-2.0
 ExclusiveArch: aarch64
@@ -62,6 +62,9 @@ install -Dm644 LICENSE.GPL-3.0 %{buildroot}/usr/share/licenses/%{name}/GPL-3.0
 %license /usr/share/licenses/%{name}/GPL-3.0
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
+- Reuse the open panel state descriptor while retaining every transfer guard.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
 - Add a bounded OEM game-mode and scan-rate diagnostic with verified restoration.
 
