@@ -234,7 +234,13 @@ static Bytes receive(int fd, sockaddr_qrtr &peer, std::chrono::steady_clock::tim
 static void send(int fd, const sockaddr_qrtr &peer, View bytes) {
     require(sendto(fd, bytes.data(), bytes.size(), 0, reinterpret_cast<const sockaddr *>(&peer), sizeof(peer)) == ssize_t(bytes.size()), "QRTR send failed");
 }
-static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool settle_motion = false) {
+static void trace_rpc_event(std::ostream *trace, unsigned &count, unsigned id) {
+    if (trace && count < 8) {
+        *trace << "SSC received event_id=" << id << '\n';
+        ++count;
+    }
+}
+static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool settle_motion = false, std::ostream *trace = nullptr) {
     require(!settle_motion || wanted_event == 1025, "Settling is restricted to sensor data");
     sockaddr_qrtr local{};
     socklen_t size = sizeof(local);
@@ -259,9 +265,12 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
         found = true; break;
     }
     require(found, "SSC service lookup exceeded packet limit");
+    if (trace) *trace << "SSC service lookup complete\n";
     send(fd, server, packet);
+    if (trace) *trace << "SSC request sent\n";
     const auto settled = std::chrono::steady_clock::now() + std::chrono::seconds(3);
     bool accepted = false; std::uint64_t client = 0;
+    unsigned traced = 0;
     for (unsigned i = 0; i < 64; ++i) {
         auto data = receive(fd, peer, deadline);
         if (peer.sq_node != server.sq_node || peer.sq_port != server.sq_port) continue;
@@ -274,6 +283,7 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
             client = little(id);
             for (auto &t : items) if (t.type == 0x11) require(t.data.size() == 4 && little(t.data) == 0, "SSC protobuf request rejected");
             accepted = true;
+            if (trace) *trace << "SSC request acknowledged\n";
         } else if (data[0] == 4 && message == 0x21) {
             require(accepted, "SSC event precedes acknowledged request");
             auto id = tlv(items, 1); require(id.size() == 8 && little(id) == client, "Foreign SSC client event");
@@ -285,6 +295,7 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
                 for (auto &entry : fields(event)) if (entry.number == 2) {
                     require(entry.wire == 2, "Invalid client event");
                     auto id = little(one(fields(entry.data), 1, 5));
+                    trace_rpc_event(trace, traced, id);
                     require(id != 130, "SSC returned a sensor error event");
                     matching |= id == wanted_event;
                 }
