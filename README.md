@@ -6,21 +6,31 @@ folders, with their own sources and packaging rules.
 
 ## Status — 18 October 2026
 
-On POCO Pad X1, Fedora Rawhide AArch64 and persistent Linux
-`7.2.10-senemos.1.4056`, normal boot restores four-pose rotation and dual-light
-automatic brightness in original KDE. Bluetooth 5.2 mouse movement, clicks and
+On POCO Pad X1 with Fedora Rawhide AArch64, signed COPR Linux `7.2.10-8`
+boots persistently and restores the original KDE sensor interfaces. Previous
+.4056 normal-boot user tests confirm four-pose rotation and dual-light
+automatic brightness. Bluetooth 5.2 mouse movement, clicks and
 wheel input pass physical tests. Native CPU/GPU profiles operate through PPD;
 touchscreen readiness follows actual input publication. Signed COPR packages
 are installed through DNF. Factory firmware and calibration remain separate,
 device-local inputs. The downloadable Alpha 1 image is not accepted by these
 results.
 
-Compass accuracy, proximity transitions, hall mapping, remaining PMIC scalers,
-full thermal policy and lifecycle endurance remain incomplete. Full shutdown
+Physical proximity far/near/far and Hall lid/fold transitions pass. The original
+KDE sensor backend reads all 27 configured PMIC channels with standard units.
+The OEM charger-temperature conversion returns 0 °C in this trial; its physical
+accuracy is unqualified. The compass returns changing headings; absolute
+heading accuracy, full thermal policy and lifecycle endurance remain incomplete. Full shutdown
 can hang in the original KDE clipboard worker. See the
 [hardware table](https://github.com/MCC45TR/uke-linux#hardware-support) for the
 exact tested functions and limits. Package success alone does not establish
 hardware support.
+
+Original Fedora Plasma Login Manager starts the session. Declarative udev
+policy keeps rear-cover state and ordinary mice from overriding KWin's tablet
+attachment heuristic. No pogo keyboard is available; native pogo input,
+authentication and illumination remain unimplemented and untested. No keyboard
+light control is fabricated without hardware.
 
 ## Components
 

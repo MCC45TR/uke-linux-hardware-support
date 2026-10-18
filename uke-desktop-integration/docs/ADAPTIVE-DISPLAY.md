@@ -154,7 +154,8 @@ as a duplicate of bug 518902. The installed original Fedora KGuiAddons 6.31.0
 has no newer candidate in the checked repositories. No KDE binary is rebuilt,
 clipboard feature disabled, or stop deadline shortened. The desktop shutdown
 regression remains open.
-# Tablet and keyboard presence
+
+## Tablet and keyboard presence
 
 18 October 2026. Original KWin detects a touchscreen without a pointing device
 as tablet mode. Uke's udev policy excludes ordinary mice from that decision and
@@ -171,4 +172,3 @@ authentication, hotplug UI and illumination remain untested: no pogo keyboard
 is available. The Android-only
 [Xiaomi keyboard fix](https://github.com/JohnnyFFM/xiaomi-keyboard-fix/tree/f838a54bd70f84087cd35b54d5d62c7bba489d15)
 is protocol research, not a Fedora driver or an installed startup script.
-
