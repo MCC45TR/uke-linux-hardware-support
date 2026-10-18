@@ -9,11 +9,11 @@ battery_sources := src/battery/main.cpp src/battery/collector.cpp src/battery/se
 control_sources := src/battery/control-main.cpp src/battery/control.cpp src/battery/control-profile.cpp src/battery/record.cpp
 .PHONY: all validate test-native install srpm
 all: $(outdir)/uke-battery $(outdir)/uke-charge-control
-$(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp src/battery/record.hpp
+$(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp src/battery/record.hpp src/battery/provider.hpp
 	mkdir -p "$(outdir)"
 	pkg-config --atleast-version=257 libsystemd
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -pthread -ffile-prefix-map=$(CURDIR)=. $(battery_sources) $$(pkg-config --cflags --libs libsystemd) $(LDFLAGS) -o "$@"
-$(outdir)/uke-charge-control: $(control_sources) src/battery/control.hpp src/battery/record.hpp
+$(outdir)/uke-charge-control: $(control_sources) src/battery/control.hpp src/battery/record.hpp src/battery/provider.hpp
 	mkdir -p "$(outdir)"
 	pkg-config --atleast-version=257 libsystemd
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -pthread -ffile-prefix-map=$(CURDIR)=. $(control_sources) $$(pkg-config --cflags --libs libsystemd libcrypto) $(LDFLAGS) -o "$@"

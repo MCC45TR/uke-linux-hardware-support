@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime

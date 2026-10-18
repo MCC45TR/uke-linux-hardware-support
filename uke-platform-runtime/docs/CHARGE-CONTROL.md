@@ -56,6 +56,18 @@ operations and current-policy writers. The kernel also serializes all requests
 and binds admission to a referenced TGID, driver instance, firmware/source
 epochs, reviewed profile digest and short CLOCK_BOOTTIME lease.
 
+The exact bound driver is
+`/sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply`: the auxiliary
+bus prefixes the source driver name with KBUILD_MODNAME. Release3 shares this
+exact canonical-path resolver with the collector, rejecting unprefixed names,
+other modules, suffix lookalikes, wrong buses and different battery/USB provider
+nodes. The coordinator's installed release2 failed at this discovery step; its
+signed/package/host successes were not behavioral acceptance. New source and
+fixtures are prepared here, with no tests or tablet access in this task. The
+semantic profile provider id `pmic_glink_power_supply` remains unchanged. On an
+older kernel, successful discovery may next report the guarded metadata ABI
+unavailable; never infer qualification or activate an observer to bypass that.
+
 The package installs an **unqualified** `/etc/uke-battery/control-profile.json`.
 No hardware limit, pack identity, firmware identity, calibration or attestation
 is shipped. The separately reviewed root-owned

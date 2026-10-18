@@ -1,5 +1,13 @@
 # uke-platform-runtime
 
+Provider correction, **18 October 2026**: installed release2 failed discovery
+because the auxiliary bus uses the qualified driver name
+`qcom_battmgr.pmic_glink_power_supply`. Release3 source shares an exact canonical
+auxiliary-driver resolver and corrected positive/negative fixtures; these changes
+have not been built/tested here. Earlier host/package passes do not establish
+installed provider or charging acceptance. See the
+[observation contract](docs/BATTERY.md) and [control contract](docs/CHARGE-CONTROL.md).
+
 Status, **18 October 2026**: the earlier native read-only battery observer for Xiaomi
 Pad 7 / POCO Pad X1 (`uke`, SM7675) compiles in a Fedora Rawhide AArch64 SDK.
 Model, session, profile, synthetic collector and private-bus API tests pass.

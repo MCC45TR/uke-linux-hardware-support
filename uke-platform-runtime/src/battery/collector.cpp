@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "collector.hpp"
 #include "profile.hpp"
+#include "provider.hpp"
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -110,16 +111,6 @@ Reading read_field(const fs::path &path, uint64_t deadline) {
     r.validity = "unqualified";
     return r;
 }
-fs::path provider(const fs::path &supply) {
-    std::error_code error;
-    fs::path parent = fs::canonical(supply / "device", error);
-    for (int i = 0; !error && i != 5 && parent != parent.root_path(); ++i) {
-        const auto driver = fs::canonical(parent / "driver", error);
-        if (!error && driver.filename() == "pmic_glink_power_supply") return parent;
-        error.clear(); parent = parent.parent_path();
-    }
-    return {};
-}
 bool within(const fs::path &path, const fs::path &root) {
     const auto a = path.lexically_normal(), b = root.lexically_normal();
     auto i = a.begin();
@@ -202,7 +193,7 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
     const fs::path root = fs::canonical(sysfs_root);
     const fs::path bat = root / "class/power_supply/qcom-battmgr-bat";
     const fs::path usb = root / "class/power_supply/qcom-battmgr-usb";
-    const auto bat_provider = provider(bat), usb_provider = provider(usb);
+    const auto bat_provider = provider::find(bat, root), usb_provider = provider::find(usb, root);
     const Reading compatible = read_field(root / "firmware/devicetree/base/compatible", deadline);
     bool uke = false;
     size_t offset = 0;
@@ -246,7 +237,7 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
     const bool coherent = first.valid && last.valid && first.generation == last.generation &&
         first.firmware == last.firmware && first.source == last.source && first.instance == last.instance && first.instance && first.up && last.up &&
         !first.desynced && !last.desynced && !first.suspended && !last.suspended && !last.removing &&
-        provider(bat) == bat_provider && provider(usb) == usb_provider && end >= start && end - start <= 5000000000ULL;
+        provider::find(bat, root) == bat_provider && provider::find(usb, root) == usb_provider && end >= start && end - start <= 5000000000ULL;
     out << ",\"status\":" << quote(coherent ? "source_unqualified" : "snapshot_invalid")
         << ",\"snapshot_coherent\":" << (coherent ? "true" : "false")
         << ",\"generation\":" << (last.valid ? std::to_string(last.generation) : "null")
