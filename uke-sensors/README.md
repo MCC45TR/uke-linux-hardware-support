@@ -1,5 +1,12 @@
 # Uke sensors
 
+18 October 2026: the metadata diagnostic also admits the OEM SSC data types
+`rgb`, `cct_front` and `cct_front_strm`. These are sensor lookup names, not
+LED controls or sample requests. Android's `xiaomi.sensor.front_cct` name is a
+different interface. Endpoint availability, RGB channel meaning and color
+temperature calibration require separate tablet measurements. This source
+extension has not been built or tested.
+
 14 October 2026. Preview RPMs provide libssc, SSC-enabled SensorProxy and a
 native FastRPC file service for Fedora Rawhide AArch64. The standard desktop
 interface supplies orientation and ambient-light data when the device firmware
