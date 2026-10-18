@@ -1,7 +1,46 @@
 SHELL := /bin/bash
-.PHONY: validate srpm
+.SHELLFLAGS := -Eeuo pipefail -c
+.ONESHELL:
+CXX ?= c++
+CXXFLAGS ?= -O2 -g
+prefix ?= /usr
+outdir ?= $(CURDIR)/build
+battery_sources := src/battery/main.cpp src/battery/collector.cpp src/battery/service.cpp src/battery/session.cpp src/battery/checkpoint.cpp src/battery/profile.cpp
+.PHONY: all validate test-native install srpm
+all: $(outdir)/uke-battery
+$(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp
+	mkdir -p "$(outdir)"
+	pkg-config --atleast-version=257 libsystemd
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -pthread -ffile-prefix-map=$(CURDIR)=. $(battery_sources) $$(pkg-config --cflags --libs libsystemd) $(LDFLAGS) -o "$@"
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | length > 0)' manifests/component.json >/dev/null
+	jq -e '.kind == "qualification_record" and .enable_control == false and .battery_pack_id == null and .allowed_vbus_uv == [] and .jeita_bands == [] and .qualification == "unqualified"' manifests/battery-profile.json >/dev/null
+	jq -e '.kind == "model_qualification" and .qualification == "unqualified" and .enable_control == false and .identities == null and .evidence_id == null' manifests/model-profile.json >/dev/null
+	jq -e 'all(.features[]; .qualified == false) and .tests_executed == false' manifests/battery-readiness.json >/dev/null
+test-native:
+	bash tests/battery-model.sh
+	bash tests/battery-session.sh
+	bash tests/battery-profile.sh
+	bash tests/battery-collector.sh
+	bash tests/battery-api.sh
+install: all
+	install -Dm755 "$(outdir)/uke-battery" "$(DESTDIR)$(prefix)/bin/uke-battery"
+	install -Dm644 packaging/systemd/uke-battery.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-battery.service"
+	install -Dm644 packaging/systemd/90-uke-battery.preset "$(DESTDIR)$(prefix)/lib/systemd/system-preset/90-uke-battery.preset"
+	install -Dm644 packaging/dbus/org.senemos.Uke.Battery1.conf "$(DESTDIR)$(prefix)/share/dbus-1/system.d/org.senemos.Uke.Battery1.conf"
+	install -Dm644 packaging/dbus/org.senemos.Uke.Battery1.service "$(DESTDIR)$(prefix)/share/dbus-1/system-services/org.senemos.Uke.Battery1.service"
+	install -Dm644 packaging/sysusers/uke-battery.conf "$(DESTDIR)$(prefix)/lib/sysusers.d/uke-battery.conf"
+	install -Dm644 manifests/battery-profile.json "$(DESTDIR)$(prefix)/share/uke-battery/battery-profile.json"
+	install -Dm644 manifests/model-profile.json "$(DESTDIR)$(prefix)/share/uke-battery/model-profile.json"
 srpm:
-	@echo 'No validated Uke package payload yet; complete the manifest acceptance gates.' >&2
-	@exit 1
+	mkdir -p "$(outdir)/rpmbuild"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
+	# Package exactly the reviewed worktree, with a per-file byte inventory.
+	stage=$$(mktemp -d)
+	trap 'rm -r -- "$$stage"' EXIT
+	mkdir "$$stage/uke-battery-observer-0.1.0"
+	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-0.1.0/"
+	(cd "$$stage/uke-battery-observer-0.1.0"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
+	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-0.1.0.tar.xz" -C "$$stage" uke-battery-observer-0.1.0
+	cp packaging/uke-battery-observer.spec "$(outdir)/rpmbuild/SPECS/"
+	cp packaging/sysusers/uke-battery.conf "$(outdir)/rpmbuild/SOURCES/"
+	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $(outdir)/rpmbuild" "$(outdir)/rpmbuild/SPECS/uke-battery-observer.spec"
