@@ -103,7 +103,7 @@ public:
         if (!c.qualified || !c.autonomous_protection || c.epoch.empty() || c.epoch != s.epoch)
             return blocked("control_backend_unqualified");
         if (!s.coherent || !s.measurements_qualified || s.suspended || s.fault || !s.sink ||
-            !s.receipt_ns || s.boottime_ns < s.receipt_ns || !e.max_age_ns ||
+            !s.receipt_ns || s.boottime_ns < s.receipt_ns || !e.max_age_ns || !e.max_gap_ns ||
             s.boottime_ns - s.receipt_ns > e.max_age_ns)
             return blocked("telemetry_unqualified_or_unavailable");
         if (request.target != Target::full) {
@@ -142,7 +142,7 @@ public:
                 stable_since_ns_ = s.boottime_ns; candidate_ua_ = current; candidate_uv_ = voltage;
             }
             if (previous_ua_ && previous_uv_ && (current > *previous_ua_ || voltage > *previous_uv_)) {
-                if (s.net_discharging || s.boottime_ns - stable_since_ns_ < e.increase_dwell_ns) {
+                if (s.net_discharging || *s.battery_ua < 0 || s.boottime_ns - stable_since_ns_ < e.increase_dwell_ns) {
                     current = std::min(current, *previous_ua_); voltage = std::min(voltage, *previous_uv_);
                 } else {
                     current = static_cast<uint32_t>(std::min<uint64_t>(current, uint64_t(*previous_ua_) + e.increase_step_ua));

@@ -37,6 +37,9 @@ int main() {
     assert(p.battery_current_ua == 500000 && p.battery_voltage_uv == 4100000);
     s.temperature_deci_c = 200; p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 500000 && p.battery_voltage_uv == 4100000);
     s.boottime_ns += 20; p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 600000);
+    s.battery_ua = -100000; s.boottime_ns += 20;
+    p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 600000);
+    s.battery_ua = 200000;
     s.temperature_deci_c = 400; p = step({Target::full, Rate::automatic});
     assert(!p.eligible && p.reason == "firmware_thermal_inhibit_required" && !p.battery_current_ua);
     s.temperature_deci_c = std::numeric_limits<double>::quiet_NaN(); assert(!step({Target::full, Rate::automatic}).eligible);
@@ -46,6 +49,7 @@ int main() {
     e.qualified = true; e.bands.push_back({250, 350, 1000000, 4100000}); assert(!step({Target::full, Rate::automatic}).eligible); e.bands.pop_back();
     c.qualified = false; assert(!step(cap).eligible); c.qualified = true;
     c.epoch = "old"; assert(!step(cap).eligible); c.epoch = "fixture";
+    e.max_gap_ns = 0; assert(!step(cap).eligible); e.max_gap_ns = 100;
     ++s.boottime_ns; s.receipt_ns = s.boottime_ns - 51;
     p = planner.evaluate(cap, s, e, c); assert(!p.eligible && p.reason == "telemetry_unqualified_or_unavailable");
     assert(planner.evaluate(cap, s, e, c).reason == "sample_time_not_increasing");
