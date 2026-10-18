@@ -23,4 +23,10 @@ cd71d38. Upstream MIT licensing and installed license files are retained.
 Upstream CMake can build without Python: its original unminified help and basic
 man-page fallbacks are used, and optional embedded PCI/AMD databases stay off.
 Python discovery is explicitly disabled and no Python target payload is allowed.
-Build with `make srpm` in this directory; package and device results are pending.
+Build with `make srpm` in this directory. COPR11169224 passes the actual fallback
+fixture and all six upstream tests. Four RPM signatures, exact source inputs,
+native AArch64 hardening and absence of Python payload/dependencies pass audit.
+DNF upgrades only Fastfetch to2.68.1-2 on Linux7.2.11-2; RPM verification passes.
+The ordinary root all-module invocation completes at exit0 without the transient
+`/dev/mem` restriction. Missing cache geometry and unavailable hardware remain
+explicit errors; the correction does not manufacture those capabilities.
