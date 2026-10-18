@@ -19,8 +19,10 @@ no Ethernet cable or traffic result is claimed.
 
 Kernel 28 from signed COPR 11168191 also installs through DNF and returns to SSH
 and the original KDE session after a normal reboot. The touch service is active
-with zero restarts; the user confirms physical display and touch operation. Application 9
-provides metadata-only charge status; adaptive-display 9 retains successful
+with zero restarts; the user confirms physical display and touch operation. Application 10
+and charging helper 4 are installed from signed COPR packages. Metadata-only
+charge status and explicit diagnostic refusals pass on kernel 28; the matched
+kernel-29 firmware query remains pending. Adaptive-display 9 retains successful
 original libddcutil initialization after reboot while excluding internal GENI
 buses. External DDC/CI brightness remains untested. The half-RAM swap, balanced
 profile and CDC disabled state persist. No KDE application is forked or rebuilt.

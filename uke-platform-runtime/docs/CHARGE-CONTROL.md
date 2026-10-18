@@ -1,9 +1,9 @@
 # Uke charging control source candidate — 18 October 2026
 
-Environment: source editing on the development host. No build, test, package
-installation, service activation or tablet operation was performed for this
-candidate. Earlier observer/UPower host receipts apply to their recorded pins,
-not this new backend. Physical charging acceptance remains open.
+Initial environment: source editing on the development host. The original
+source review did not perform build, test, installation or tablet operations.
+Subsequent host and installed results are recorded below and in the component
+README; physical charging acceptance remains open.
 
 ## Standard Linux and original KDE
 

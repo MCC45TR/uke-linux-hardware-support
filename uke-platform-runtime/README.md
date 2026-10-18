@@ -1,19 +1,20 @@
 # uke-platform-runtime
 
-Provider correction, **18 October 2026**: installed release2 failed discovery
-because the auxiliary bus uses the qualified driver name
-`qcom_battmgr.pmic_glink_power_supply`. Release3 source shares an exact canonical
-auxiliary-driver resolver and corrected positive/negative fixtures; these changes
-have not been built/tested here. Earlier host/package passes do not establish
-installed provider or charging acceptance. See the
+Status, **18 October 2026**: observer and helper release4 from signed COPR11168495
+are installed through DNF on POCO Pad X1, Fedora Rawhide AArch64 / Linux7.2.10-28.
+The complete native host suite, exact source/payload audit and tablet RPM
+verification pass. The canonical auxiliary-provider resolver recognizes the
+installed driver. Metadata status reports the unqualified profile and inactive
+charge workers. The explicit settings query refuses missing kernel support;
+matched kernel29 firmware readback remains pending. No charging SET, cutoff,
+bypass or protection qualification follows from these results. See the
 [observation contract](docs/BATTERY.md) and [control contract](docs/CHARGE-CONTROL.md).
 
-Status, **18 October 2026**: the earlier native read-only battery observer for Xiaomi
+Earlier host results: the native read-only battery observer for Xiaomi
 Pad 7 / POCO Pad X1 (`uke`, SM7675) compiles in a Fedora Rawhide AArch64 SDK.
 Model, session, profile, synthetic collector and private-bus API tests pass.
 COPR builds 11166039 (UPower) and 11166040 (observer) and direct payload audits
-pass at their recorded pins. The new charge-control source below has not been
-built or tested. Target dependency admission and tablet service tests remain pending. This is not
+pass at their recorded pins. Target service and physical control acceptance remain separate. This is not
 physical charging acceptance. The optional original UPower overlay has
 separate [host results and installation limits](packaging/upower/README.md).
 

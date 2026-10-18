@@ -6,8 +6,8 @@ The original distribution desktop remains unchanged.
 
 ## Status — 18 October 2026
 
-Application 9 and its separate development package are installed from signed
-COPR 11168298 on POCO Pad X1, Fedora Rawhide AArch64. Its refresh observer selects
+Application 10 and its separate development package are installed from signed
+COPR 11168494 on POCO Pad X1, Fedora Rawhide AArch64. Its refresh observer selects
 the active internal DSI CRTC when an external connector also exists. Ordinary-user
 observation and the application self-check pass. The current kernel is 7.2.10-28;
 a normal reboot retains the 3690 MiB half-RAM swap and CDC disabled. Earlier
@@ -21,13 +21,18 @@ SensorProxy, processed readings and bounded SSC discovery are separate from
 physical sensor qualification. The optional front-color endpoint currently has
 no valid startup sample.
 
-DNF upgrades only the core and development packages. RPM verification and
-native self-checks pass. Root and the ordinary desktop user receive the existing
+DNF upgrades the core/development packages and native charging helper 4 from
+COPR 11168495. All nine source/binary RPM signatures and exact source inputs
+pass. RPM verification and native self-checks pass. Root and the ordinary desktop user receive the existing
 helper's metadata-only charging status; aggregate status uses the same path.
 Charging controls remain unavailable with the installed unqualified profile.
 No 80% cutoff, battery bypass or autonomous termination is claimed. Kernel 28
 subsequently completes a normal reboot, retaining the installed application,
-half-RAM swap and CDC disabled state. See [charging boundaries](CHARGING.md).
+half-RAM swap and CDC disabled state. On kernel 28 the new deliberate
+`sudo uke-control charge settings` query reports missing backend support without
+fallback; ordinary users are denied. Its matched-kernel firmware read remains
+pending. Neither installed package enables a charge worker or qualifies a cutoff.
+See [charging boundaries](CHARGING.md).
 
 ## Commands
 
