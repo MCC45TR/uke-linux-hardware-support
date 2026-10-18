@@ -25,7 +25,7 @@ build/%-protocol.c: | build
 	wayland-scanner private-code "$$xml" $@
 build/%-protocol.o: build/%-protocol.c
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@ $(shell pkg-config --cflags wayland-client)
-build/uke-control-tests: src/diagnostics.cpp src/cadence.cpp src/contact.cpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
+build/uke-control-tests: src/diagnostics.cpp src/display-device.hpp src/cadence.cpp src/contact.cpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/diagnostics.cpp src/cadence.cpp src/contact.cpp build/*-protocol.o $(LDLIBS)
 build/ssc-discovery: shared/ssc-discovery.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
@@ -34,6 +34,8 @@ build/ssc-sample: shared/ssc-sample.cpp shared/ssc-discovery.cpp | build
 build/test-front-color: tests/front-color.cpp src/front-color.cpp src/front-color.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
 check: all build/test-front-color
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/display-device.cpp -o build/test-display-device
+	build/test-display-device
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/rpm-api.cpp -o build/test-rpm-api
 	build/test-rpm-api
 	build/test-front-color

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include <xf86drm.h>
 #include <xf86drmMode.h>
+#include "display-device.hpp"
 #include <systemd/sd-bus.h>
 #include <algorithm>
 #include <array>
@@ -39,22 +40,17 @@ static std::string text(const fs::path &path) {
     return value;
 }
 struct Fd {int value=-1;~Fd(){if(value>=0)close(value);}};
-struct State {int fd=-1;uint32_t crtc{};};
+struct State {int fd=-1;uint32_t crtc{},index{};};
 static State display_device() {
     if(!fs::exists("/dev/dri"))throw std::runtime_error("No DRM devices");
     for(const auto &entry:fs::directory_iterator("/dev/dri")) {
         if(!entry.path().filename().string().starts_with("card"))continue;
-        const int fd=open(entry.path().c_str(),O_RDONLY|O_CLOEXEC);
-        if(fd<0)continue;
-        auto *resources=drmModeGetResources(fd);uint32_t selected=0;
-        if(resources&&resources->count_crtcs==1) {
-            auto *crtc=drmModeGetCrtc(fd,resources->crtcs[0]);
-            if(crtc&&crtc->mode_valid&&crtc->mode.hdisplay==3200&&crtc->mode.vdisplay==2136)selected=crtc->crtc_id;
-            drmModeFreeCrtc(crtc);
-        }
-        drmModeFreeResources(resources);
-        if(selected)return {fd,selected};
-        close(fd);
+        Fd fd{open(entry.path().c_str(),O_RDONLY|O_CLOEXEC)};
+        if(fd.value<0)continue;
+        std::unique_ptr<drmModeRes,decltype(&drmModeFreeResources)> resources(
+            drmModeGetResources(fd.value),drmModeFreeResources);
+        const auto selected=resources?uke::test::internal_crtc(fd.value,*resources):std::nullopt;
+        if(selected) { const int owned=fd.value;fd.value=-1;return {owned,selected->id,selected->index}; }
     }
     throw std::runtime_error("No accessible active Uke 3200x2136 CRTC; wake the screen and check the active-seat DRM permissions");
 }
@@ -80,7 +76,7 @@ static int display(unsigned seconds,bool csv) {
     if(csv)std::puts("sequence,drm_timestamp_ns,return_monotonic_ns,period_ns");
     else std::puts("DPU vblank measurement; selected mode and observed scanout rate are separate. This keeps vblank IRQs referenced; it is not optical panel metrology.");
     while(!stopped&&now()<end) {
-        drmVBlank blank{};blank.request.type=DRM_VBLANK_RELATIVE;blank.request.sequence=1;
+        drmVBlank blank{};blank.request.type=uke::test::vblank_type(selected.index);blank.request.sequence=1;
         if(drmWaitVBlank(fd.value,&blank)){if(stopped)break;throw std::runtime_error("DRM wait-vblank failed");}
         const uint64_t stamp=uint64_t(blank.reply.tval_sec)*1000000000+blank.reply.tval_usec*1000;
         const double sample=previous?period(sequence,previous,blank.reply.sequence,stamp):0;
