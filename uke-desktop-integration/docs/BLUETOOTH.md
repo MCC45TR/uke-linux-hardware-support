@@ -24,3 +24,12 @@ the normal kernel UHID module. No manual module load or service restart is used.
 Release 5 handles Linux's zero-length management send result during HCI setup
 by consuming the queued status and waiting for the controller's index event.
 Repeated cold power cycles and full system suspend remain unqualified.
+
+18 October 2026: release 6 source requires the mounted device to match the
+physical `persist` partition and retain `ro,nodev,nosuid,noexec`. Directory and
+file descriptors reject symlinks, a different filesystem and non-regular or
+non-six-byte records before any Bluetooth management command. The service
+retains `PrivateDevices=yes` and binds only the partition node read-only for
+the identity `stat`; it does not read the block device. Source fixtures cover
+these refusals. Compilation, fixture execution, service-namespace admission
+and physical controller startup have not been run for release 6.

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -13,6 +14,7 @@
 #include <stdexcept>
 #include <string>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <vector>
@@ -43,6 +45,38 @@ static bool compatible(const Bytes &bytes,const std::string &expected) {
         offset=std::distance(bytes.begin(),end)+1;
     }
     return match;
+}
+static bool factory_mount(const struct stat &mount,const struct stat &partition,unsigned long flags) {
+    constexpr auto required=ST_RDONLY|ST_NODEV|ST_NOSUID|ST_NOEXEC;
+    return S_ISBLK(partition.st_mode) && mount.st_dev==partition.st_rdev &&
+           (flags&required)==required;
+}
+static Bytes factory_record(const std::filesystem::path &persist,dev_t expected_device) {
+    int root=-1,directory=-1,input=-1;
+    try {
+        root=open(persist.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW);
+        check(root>=0,"Factory persist directory unavailable");
+        directory=openat(root,"bluetooth",O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW);
+        check(directory>=0,"Factory Bluetooth directory unavailable");
+        input=openat(directory,".bt_nv.bin",O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK);
+        check(input>=0,"Factory Bluetooth record unavailable");
+        struct stat mount{},parent{},record{};
+        check(fstat(root,&mount)==0 && fstat(directory,&parent)==0 && fstat(input,&record)==0 &&
+              mount.st_dev==expected_device && S_ISREG(record.st_mode) && record.st_size==6 &&
+              parent.st_dev==mount.st_dev && record.st_dev==mount.st_dev,
+              "Factory Bluetooth record must remain on persist");
+        std::array<std::uint8_t,7> buffer{};
+        const auto size=read(input,buffer.data(),buffer.size());
+        check(size==6,"Uke Bluetooth factory address must contain six bytes");
+        Bytes bytes(buffer.begin(),buffer.begin()+6);
+        close(input);close(directory);close(root);
+        return bytes;
+    } catch(...) {
+        if(input>=0)close(input);
+        if(directory>=0)close(directory);
+        if(root>=0)close(root);
+        throw;
+    }
 }
 static Bytes factory_address(const Bytes &input) {
     check(input.size()==6,"Uke Bluetooth factory address must contain six bytes");
@@ -118,9 +152,13 @@ int main() {
         check(compatible(file_bytes("/sys/firmware/devicetree/base/compatible",4096),"xiaomi,uke") &&
               compatible(file_bytes("/sys/class/bluetooth/hci0/device/of_node/compatible",4096),"xiaomi,uke-wcn6750-bt"),
               "Factory Bluetooth setup is restricted to the exact Uke controller");
-        struct statvfs mount{};
-        check(statvfs("/mnt/vendor/persist",&mount)==0 && (mount.f_flag&ST_RDONLY),"Factory persist must be read-only");
-        auto address=factory_address(file_bytes("/mnt/vendor/persist/bluetooth/.bt_nv.bin",6));
+        struct stat mount{},partition{};
+        struct statvfs flags{};
+        check(stat("/mnt/vendor/persist",&mount)==0 &&
+              stat("/dev/disk/by-partlabel/persist",&partition)==0 &&
+              statvfs("/mnt/vendor/persist",&flags)==0 && factory_mount(mount,partition,flags.f_flag),
+              "Factory persist must be the physical partition mounted read-only, nodev, nosuid and noexec");
+        auto address=factory_address(factory_record("/mnt/vendor/persist",partition.st_rdev));
         fd=socket(AF_BLUETOOTH,SOCK_RAW|SOCK_CLOEXEC,BTPROTO_HCI);
         check(fd>=0,"Bluetooth management socket unavailable");
         sockaddr_hci control{};control.hci_family=AF_BLUETOOTH;control.hci_dev=HCI_DEV_NONE;control.hci_channel=HCI_CHANNEL_CONTROL;
