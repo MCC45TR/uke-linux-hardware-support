@@ -40,3 +40,9 @@ namespace and capability restrictions exposed the persist block node to
 commands were not run and no address changed. This supersedes only the
 namespace-smoke gap above; SDK fixtures, package checks, full helper startup
 and physical factory-address equality remain separate.
+
+18 October 2026: the coordinator subsequently built release 6's C++20 source
+fixtures in an original Fedora AMD64 SDK with BlueZ development headers. Factory
+input, event readiness, management bytes, idempotence and refusal fixtures
+passed. This closes the host-source fixture gap only. The real helper/HCI path,
+AArch64 package checks and physical factory-address equality remain untested.
