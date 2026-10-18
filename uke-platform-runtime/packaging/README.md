@@ -1,13 +1,18 @@
 # Battery packaging candidate
 
-The Fedora AArch64 `uke-battery-observer.spec` packages the original C++ observer
-and read-only service. It does not package a second charger or any firmware,
-UPower source, tests, Python payload or factory data. Its service preset is
-disabled. D-Bus may activate the unprivileged read-only observer when requested.
+The Fedora AArch64 `uke-battery-observer.spec` produces the original read-only
+observer package and a separate root `uke-charge-control` subpackage. It contains
+no firmware, UPower source, installed tests, Python payload or factory data.
+All service presets are disabled. D-Bus may activate only the unprivileged
+read-only observer; it cannot activate the control helper. The control package
+requires reviewed kernel/profile admission and is unqualified by default.
 
 The recipe, native dependency closure, sysusers/preset behavior and upgrade/
-removal paths have not been built or tested. Other intended runtime packages
-remain unavailable. Review `docs/BATTERY.md` before joint validation.
+removal paths for this candidate have not been built or tested. Other intended
+runtime packages remain unavailable. Review `docs/BATTERY.md` and
+`docs/CHARGE-CONTROL.md` before joint validation. The control/profile digest uses
+the distribution's OpenSSL libcrypto; `openssl-devel` is a host build dependency,
+and generated ELF dependencies must retain the target libcrypto requirement.
 
 `upower/` contains a separate optional source RPM recipe for the reported Fedora
 1.91.5 daemon. It retains the upstream ABI/original clients and excludes installed

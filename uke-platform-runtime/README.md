@@ -1,10 +1,11 @@
 # uke-platform-runtime
 
-Status, **18 October 2026**: the native read-only battery observer for Xiaomi
+Status, **18 October 2026**: the earlier native read-only battery observer for Xiaomi
 Pad 7 / POCO Pad X1 (`uke`, SM7675) compiles in a Fedora Rawhide AArch64 SDK.
 Model, session, profile, synthetic collector and private-bus API tests pass.
 COPR builds 11166039 (UPower) and 11166040 (observer) and direct payload audits
-pass. Target dependency admission and tablet service tests remain pending. This is not
+pass at their recorded pins. The new charge-control source below has not been
+built or tested. Target dependency admission and tablet service tests remain pending. This is not
 physical charging acceptance. The optional original UPower overlay has
 separate [host results and installation limits](packaging/upower/README.md).
 
@@ -13,9 +14,16 @@ read-only JSON and D-Bus snapshots. Missing/stale data stay unavailable. Health,
 EFC and duration models share one session across CLI/daemon observations; unqualified
 firmware/pack data do not produce precise health or time claims. New charging
 controls, thresholds, high power, PPS and EPR remain disabled.
-The identity resolver requires privileged, matching per-boot evidence with an
-expiry. The installed profile is unqualified; no evidence record enables a
-charging actuator. See [runtime identity and recovery](docs/RUNTIME-PROFILE.md).
+The model identity resolver requires privileged, matching per-boot evidence with
+an expiry and never enables an actuator. See
+[runtime identity and recovery](docs/RUNTIME-PROFILE.md).
+
+A separate [charge-control source candidate](docs/CHARGE-CONTROL.md) implements
+guarded standard Linux thresholds for original KDE, positive OEM FCC writes,
+slow mode and automatic FCC adaptation with firmware-owned CV. Its kernel
+options, services and shipped profile remain off/unqualified. Exact firmware,
+pack, source, protections, measurements and readback admission are required;
+no physical control or hardware safety is qualified by these source changes.
 
 [Battery contract and limitations](docs/BATTERY.md),
 [qualification record](manifests/battery-profile.json),
@@ -26,7 +34,8 @@ This component does not start another remote processor or claim completed
 hexagonrpc/libssc payloads. Use the original Fedora KDE applications.
 
 Host entry points are `make all`, `make test-native` and `make srpm`.
-The first RPM candidate is `uke-battery-observer` for Fedora AArch64. Other
+The RPM source produces separate `uke-battery-observer` and `uke-charge-control`
+packages for Fedora AArch64. The observer remains read-only. Other
 runtime package names and distribution targets are not implemented by this
 recipe. Python does not enter its target payload. Archives stay in
 `referances/`; original implementation lives in `src/`.
