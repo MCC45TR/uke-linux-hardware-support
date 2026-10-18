@@ -53,9 +53,10 @@ Profile resolve(const Context &c, const std::string &path, const std::string &id
         result.current_control = boolean(field(p.get(), "current_control"));
         auto *proof = field(p.get(), "proofs");
         keys(proof, {"firmware_abi", "ack_envelope", "threshold_readback", "enable_feature",
-            "autonomous_protection", "measurements", "source_lifecycle", "current_abi", "current_readback", "firmware_cv", "current_restore"});
+            "autonomous_protection", "measurements", "source_lifecycle", "protocol_property_abi", "source_contract", "cable_contract",
+            "current_abi", "current_readback", "firmware_cv", "current_restore"});
         for (const char *key : {"firmware_abi", "ack_envelope", "threshold_readback", "autonomous_protection",
-            "measurements", "source_lifecycle"}) (void)digest(field(proof, key));
+            "measurements", "source_lifecycle", "protocol_property_abi", "source_contract", "cable_contract"}) (void)digest(field(proof, key));
         auto *enable = field(proof, "enable_feature");
         if (result.may_enable || !sd_json_variant_is_null(enable)) (void)digest(enable);
         for (const char *key : {"current_abi", "current_readback", "firmware_cv", "current_restore"}) {

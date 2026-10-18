@@ -58,6 +58,25 @@ State parse_state(const std::string &text) {
         (mv && !s.measurement_ns)) fail("control_current_state_invalid");
     return s;
 }
+ProtocolState parse_protocol_state(const std::string &text) {
+    if (text.size() > 4096) fail("protocol_state_size_invalid");
+    std::array<std::string, 12> t;
+    std::istringstream in(text);
+    for (auto &value : t) if (!(in >> value)) fail("protocol_state_fields_missing");
+    ProtocolState s;
+    const auto version = decimal<unsigned>(t[0]), valid = decimal<unsigned>(t[5]);
+    s.instance = decimal<uint64_t>(t[1]); s.generation = decimal<uint32_t>(t[2]);
+    s.firmware = decimal<uint32_t>(t[3]); s.source = decimal<uint32_t>(t[4]);
+    s.raw = decimal<uint32_t>(t[6]); s.standard_type = decimal<uint32_t>(t[7]);
+    s.received_ns = decimal<uint64_t>(t[8]); s.sample_generation = decimal<uint32_t>(t[9]);
+    s.sample_firmware = decimal<uint32_t>(t[10]); s.sample_source = decimal<uint32_t>(t[11]);
+    if (version != 1 || valid > 1 || !(in >> std::ws).eof() ||
+        s.standard_type != (s.raw <= 8 ? s.raw : 0)) fail("protocol_state_invalid");
+    s.cache_matches_epochs = valid;
+    if (valid && (!s.instance || !s.received_ns || s.sample_generation != s.generation ||
+        s.sample_firmware != s.firmware || s.sample_source != s.source)) fail("protocol_state_epoch_invalid");
+    return s;
+}
 Session::Session(Io &io, Profile profile, State binding)
     : io_(io), profile_(std::move(profile)), binding_(std::move(binding)) {}
 Session::~Session() { try { revoke(); } catch (...) {} }

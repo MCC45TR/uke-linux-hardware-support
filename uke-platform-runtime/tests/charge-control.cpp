@@ -69,6 +69,14 @@ int main() {
     rejects([&] { parse_state(text + " extra"); });
     auto negative = text; negative.replace(0, 1, "-1"); rejects([&] { parse_state(negative); });
     auto overflow = text; overflow.replace(6, 1, "4294967296"); rejects([&] { parse_state(overflow); });
+    assert(parse_protocol_state("1 42 7 2 3 1 1 1 2000000000 7 2 3").raw == 1);
+    assert(parse_protocol_state("1 42 7 2 3 1 130 0 2000000000 7 2 3").standard_type == 0);
+    assert(!parse_protocol_state("1 42 8 2 4 0 130 0 2000000000 7 2 3").cache_matches_epochs);
+    rejects([&] { parse_protocol_state("1 42 7 2 3 1 130 2 2000000000 7 2 3"); });
+    rejects([&] { parse_protocol_state("1 42 8 2 3 1 1 1 2000000000 7 2 3"); });
+    rejects([&] { parse_protocol_state("1 42 7 2 3 1 -1 0 2000000000 7 2 3"); });
+    rejects([&] { parse_protocol_state("1 42 7 2 3 1 4294967296 0 2000000000 7 2 3"); });
+    rejects([&] { parse_protocol_state("1 42 7 2 3 1 1 1 2000000000 7 2 3 extra"); });
     {
         Context c; c.provider_verified = true; c.boottime_ns = 2 * second; c.state = sample();
         auto p = profile();

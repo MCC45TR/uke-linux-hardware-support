@@ -16,6 +16,13 @@ struct State {
     std::string evidence;
 };
 State parse_state(const std::string &text);
+struct ProtocolState {
+    uint64_t instance = 0, received_ns = 0;
+    uint32_t generation = 0, firmware = 0, source = 0, raw = 0, standard_type = 0;
+    uint32_t sample_generation = 0, sample_firmware = 0, sample_source = 0;
+    bool cache_matches_epochs = false;
+};
+ProtocolState parse_protocol_state(const std::string &text);
 struct Context {
     bool provider_verified = false;
     std::string kernel_release, boot_id;

@@ -148,6 +148,34 @@ void emit_admission(const Admission &a) {
         << "\",\"lease_acquisition_verified\":false,\"policy_lock_checked\":false,\"runtime_measurements_checked\":false"
         << ",\"firmware_rpc_performed\":false,\"service_activation_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
 }
+void emit_protocols(const ProtocolState &s, bool available, const std::string &reason) {
+    const auto time = now();
+    const bool fresh = available && s.cache_matches_epochs && s.received_ns && s.received_ns <= time &&
+        time - s.received_ns <= 5000000000ULL;
+    std::cout << "{\"schema_version\":1,\"kind\":\"uke_charging_protocol_report\",\"metadata_available\":"
+        << (available ? "true" : "false") << ",\"reason\":\"" << identifier(reason)
+        << "\",\"firmware_rpc_performed\":false,\"service_activation_performed\":false,\"helper_protocol_request_api\":false"
+        << ",\"protocol_qualification_checked\":false,\"negotiated_protocol\":null,\"negotiated_pd_revision\":null"
+        << ",\"accepted_pdo\":null,\"accepted_rdo\":null,\"measured_input_power_w\":null"
+        << ",\"cached_observation\":{\"property_family\":\"USB\",\"wire_id\":6,\"adapter_wire7_read\":false,\"xm_real_type_read\":false"
+        << ",\"driver_instance_boottime_ns\":" << (available ? std::to_string(s.instance) : "null")
+        << ",\"cache_matches_epochs\":" << (s.cache_matches_epochs ? "true" : "false")
+        << ",\"fresh\":" << (fresh ? "true" : "false")
+        << ",\"raw_value\":" << (available && s.received_ns ? std::to_string(s.raw) : "null")
+        << ",\"normalized_standard_type\":" << (fresh ? std::to_string(s.standard_type) : "null")
+        << ",\"received_boottime_ns\":" << (available && s.received_ns ? std::to_string(s.received_ns) : "null")
+        << ",\"age_ns\":" << (available && s.received_ns && s.received_ns <= time ? std::to_string(time - s.received_ns) : "null")
+        << ",\"source_event_generation\":" << (available ? std::to_string(s.source) : "null") << '}';
+    std::cout << ",\"manufacturer_tablet_protocols\":[";
+    bool first = true;
+    for (const char *name : {"QC2.0", "QC3.0", "QC3+", "PD2.0", "PD3.0", "MI_FC2.0"}) {
+        if (!first) std::cout << ',';
+        first = false;
+        std::cout << "{\"protocol\":\"" << name << "\",\"manufacturer_declared\":true,\"runtime_qualified\":null}";
+    }
+    std::cout << "],\"manufacturer_source\":\"https://www.mi.com/ph/support/faq/details/KA-628084/\""
+        << ",\"manufacturer_list_is_negotiation_evidence\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
+}
 void emit(const State &s, const Profile &p, const char *operation, bool applied, bool qualification_checked = true) {
     std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control\",\"operation\":\"" << operation
         << "\",\"backend_compiled\":" << (s.compiled ? "true" : "false")
@@ -183,13 +211,14 @@ int main(int argc, char **argv) {
     std::unique_ptr<Sysfs> io;
     std::unique_ptr<Session> session;
     const bool admission_query = argc == 2 && std::strcmp(argv[1], "admission") == 0;
+    const bool protocol_query = argc == 2 && std::strcmp(argv[1], "protocols") == 0;
     try {
         if (argc == 2 && std::string(argv[1]) == "capabilities") {
             std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
             return 0;
         }
         if (argc == 2 && std::string(argv[1]) == "--help") {
-            std::cout << "uke-charge-control capabilities | status | admission\n"
+            std::cout << "uke-charge-control capabilities | status | admission | protocols\n"
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
                 << "Actions require root, a reviewed control profile and matching per-boot evidence.\n"
@@ -199,11 +228,15 @@ int main(int argc, char **argv) {
         if (argc < 2) fail("control_command_required");
         const std::string command(argv[1]);
         if ((command == "pair" && argc != 4) || (command != "pair" && argc != 2)) fail("control_arguments_invalid");
-        if (command != "status" && command != "admission" && command != "verify" && command != "cap80" && command != "band80-90" &&
+        if (command != "status" && command != "admission" && command != "protocols" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
         if (command == "status") { emit(io->state(), {}, "metadata_only", false, false); return 0; }
+        if (protocol_query) {
+            emit_protocols(parse_protocol_state(io->read_attribute("uke_usb_source_state")), true, "cached_legacy_wire6_not_protocol_qualification");
+            return 0;
+        }
         if (geteuid() != 0) fail("control_root_required");
         const auto initial = context(*io);
         const auto profile = resolve(initial);
@@ -264,6 +297,7 @@ int main(int argc, char **argv) {
         }
         session->revoke(); session.reset(); return 0;
     } catch (const std::exception &e) {
+        if (protocol_query) { emit_protocols({}, false, e.what()); return 69; }
         if (admission_query) {
             Admission a; a.reason = e.what(); emit_admission(a); return 69;
         }

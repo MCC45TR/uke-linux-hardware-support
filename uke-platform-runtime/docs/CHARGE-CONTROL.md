@@ -119,6 +119,7 @@ Commands (perform no device action merely by documenting them):
 | `capabilities` | Static implemented source interfaces; no provider/firmware I/O. |
 | `status` | Cached metadata; no firmware GET/SET or profile resolution. `profile_qualification_checked=false`; its legacy qualification=false is not a profile verdict. |
 | `admission` | Root metadata/profile preflight; no firmware RPC, lease write, lock-directory creation or service activation. Returns separate threshold/automatic/standard-client readiness and reason. |
+| `protocols` | Cached USB wire6 provenance and manufacturer receiver declarations, no GET/SET or service activation. Exact negotiated protocol/revision/PDO/RDO/power remain null. |
 | `verify` | Guarded measurement, threshold and admitted FCC GET/readback. |
 | `cap80` | Profile resume →80 threshold pair, verified. |
 | `band80-90` |80→90 threshold pair, verified. |
@@ -156,6 +157,26 @@ leaves `lease_acquisition_verified`, `policy_lock_checked` and
 checks, acquire their locks/lease and obtain the separately permitted firmware
 measurements. Preflight never creates those conditions or guarantees startup,
 current effectiveness or hardware safety.
+
+The protocol audit requires three additional proof SHA256 fields:
+`protocol_property_abi`, `source_contract` and `cable_contract`. They are mandatory
+for control qualification and bound by the exact profile-byte digest/per-boot
+attestation. Original USB type6, OEM adapter7 and XM REAL_TYPE are separate ABI
+spaces. A standard PD/DCP string or a label on an adapter does not establish an
+exact contract or protocol. No user preference creates these proof records.
+
+`protocols` uses only the new read-only kernel `uke_usb_source_state` cache;
+missing provider/node returns69 with metadata unavailable. It never attempts a
+refresh or activates an observer/UPower. Cache epoch validity and <=5-second age
+are reported separately from protocol qualification. It preserves raw family
+USB/wire6 and normalized legacy class, without treating raw9+/vendor codes as
+modern AVS, BrickID, QC or MI versions. Manufacturer receiver declarations for
+QC2/QC3/QC3+, PD2/PD3 and MI FC2.0 are explicitly separate and never become active
+support claims. No new voltage/current negotiation command is added. See the
+kernel owner's `docs/CHARGING-PROTOCOLS-20261018.md` for exact source comparisons,
+UCSI capability-versus-session limits, regional FAQ conflict and staged adapter
+requirements. Firmware owns negotiation; full protocol/physical acceptance is
+still required.
 
 `uke-charge-control.service` and `uke-charge-automatic.service` are disabled by
 preset, have no automatic restart, and require the per-boot record. The automatic

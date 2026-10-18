@@ -24,6 +24,10 @@ slow mode and automatic FCC adaptation with firmware-owned CV. Its kernel
 options, services and shipped profile remain off/unqualified. Exact firmware,
 pack, source, protections, measurements and readback admission are required;
 no physical control or hardware safety is qualified by these source changes.
+The cache-only `protocols` report separates manufacturer receiver declarations
+from unknown negotiated sessions; original USB wire6, OEM adapter7 and vendor XM
+spaces are not interchangeable. Control qualification also requires reviewed
+protocol-ABI, source-contract and cable-contract proof hashes.
 
 [Battery contract and limitations](docs/BATTERY.md),
 [qualification record](manifests/battery-profile.json),
