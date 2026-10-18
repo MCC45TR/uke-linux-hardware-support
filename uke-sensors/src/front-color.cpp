@@ -80,6 +80,7 @@ static Uid discover_color() {
     require(lookup.value >= 0, "QRTR lookup socket unavailable");
     auto found = suids(rpc(lookup.value, request("cct_front")), "cct_front");
     require(found.size() == 1, "Exactly one front-color endpoint required");
+    require(!stopped, "Front-color discovery interrupted");
     Fd metadata(socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
     require(metadata.value >= 0, "QRTR metadata socket unavailable");
     gate_metadata(rpc(metadata.value, request("", found[0], 1)), found[0]);
