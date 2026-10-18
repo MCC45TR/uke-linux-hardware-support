@@ -67,6 +67,19 @@ Charge-policy previews report unavailable actuators; charge-limit and USB-role
 control remain unqualified. Physical uninterrupted-touch and panel VRR acceptance
 remain separate from these application results.
 
+The next USB source candidate defaults CDC to off and adds explicit
+`uke-control set cdc on|off`, USB topology observation and guarded Type-C
+data-role requests. ACM opt-in does not enable a root shell or network sharing.
+It requires a matched full Type-C kernel/root pair; the installed kernel 23
+remains fixed peripheral. Docked host, PD, SuperSpeed and external-display
+acceptance remain pending.
+
+Signed COPR build 11167396 later installed `uke-control 0.1.0-4` and its test
+subpackage through DNF. Package integrity and root/unprivileged USB inventory
+pass on kernel 23. Manual CDC and role requests reject the missing full-profile
+admission without changing the legacy gadget or saving a policy. The default-off
+root support set from build 11167392 is staged for the matched kernel update.
+
 ## Checks and builds
 
 ```sh
