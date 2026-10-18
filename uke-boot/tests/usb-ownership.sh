@@ -29,6 +29,10 @@ rm "$g/configs/c.1/acm.gs0"
 ln -s "$g/functions/acm.gs0" "$g/configs/c.1/foreign.0"
 refused_without_unbind
 rm "$g/configs/c.1/foreign.0"
+printf 'manual-acm\n' > "$state/usb-gadget-profile"
+mkdir "$g/functions/ecm.usb0"
+refused_without_unbind
+rmdir "$g/functions/ecm.usb0"
 printf 'wrong-inode\n' > "$state/usb-gadget-owner"
 refused_without_unbind
 printf 'USB foreign ownership/layout refused before unbind; offline only\n'

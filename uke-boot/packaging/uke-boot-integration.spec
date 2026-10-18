@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 19%{?dist}
+Release: 20%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -16,7 +16,7 @@ Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Provides: uke-usb-gadget-ownership-api = 2
-Provides: uke-usb-manual-cdc-api = 1
+Provides: uke-usb-manual-cdc-api = 2
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -110,7 +110,6 @@ install -m644 src/profiles/* %{buildroot}%{_datadir}/senemos/boot/uke/
 install -Dm644 src/units/uke-cdc-acm.service %{buildroot}%{_unitdir}/uke-cdc-acm.service
 install -Dm644 src/units/uke-cdc-shell.service %{buildroot}%{_unitdir}/uke-cdc-shell.service
 install -Dm755 src/uke-usb-network.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-usb-network
-install -Dm644 src/units/uke-usb-auto.service %{buildroot}%{_unitdir}/uke-usb-auto.service
 install -Dm644 src/profiles/usb-sharing %{buildroot}%{_sysconfdir}/senemos/usb-sharing
 install -Dm644 src/profiles/80-uke-usb.preset %{buildroot}%{_presetdir}/80-uke-usb.preset
 install -Dm644 src/units/uke-usb-network.service %{buildroot}%{_unitdir}/uke-usb-network.service
@@ -141,7 +140,6 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
 %{_libexecdir}/senemos-uke/uke-usb-network
-%{_unitdir}/uke-usb-auto.service
 %config(noreplace) %{_sysconfdir}/senemos/usb-sharing
 %{_presetdir}/80-uke-usb.preset
 %{_unitdir}/uke-usb-network.service
@@ -180,6 +178,10 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-20
+- Replace the CDC watcher with explicit one-shot manual API2 commands.
+- Preserve device-role, attachment, inhibitor and gadget ownership guards.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-19
 - Default CDC to disabled and admit explicit manual opt-in on the full Type-C profile.
 

@@ -1,30 +1,47 @@
 # USB-C source candidate
 
-## Manual CDC update — 18 October 2026
+## One-shot manual CDC update — 18 October 2026
 
-The current source candidate adds `uke-usb-manual-cdc-api = 1` alongside ownership
-API2. `/etc/senemos/usb-sharing` defaults to `disabled`, and the distribution
-preset disables CDC, its watcher and the old network/shell units. Missing policy
-also denies automatic export. The original KDE desktop is unchanged.
+The current root20 source candidate provides `uke-usb-manual-cdc-api = 2`
+alongside ownership API2. `/etc/senemos/usb-sharing` defaults to `disabled`.
+The continuous watcher and its systemd unit are removed. Manual commands do not
+save an automatic opt-in or enable/start any service. The original KDE desktop
+and independent read-only USB observer remain unchanged.
 
 On the matched full kernel profile, `chosen/senemos,usb-profile = "typec-v1"` and
 the `qcom,sm7675-dwc3-typec` controller permit explicit root opt-in without the
-early debug argument. `uke-control set cdc on` selects `auto-debug` and enables
-the attachment watcher; `off` selects `disabled` and stops it. The watcher still
-requires a corresponding Type-C partner, device data role and one associated
-USB-role provider. It exports ACM only, without a shell or Ethernet gadget.
+early debug argument. The paired app6 source calls the existing root helper
+directly: `manual-on` or `manual-off`. On requires a corresponding Type-C
+partner, device data role and one associated USB-role provider at that time;
+an absent/ambiguous attachment is refused once, without a retry loop. It exports
+ACM only, without a shell or Ethernet gadget. Configfs is mounted directly when
+needed; an unrelated existing mount or gadget owner is refused. Off removes
+only the inode-owned `manual-acm` profile, after validating the full layout.
+An inherited `g_serial` owner is not unloaded by the manual path. Every operation
+uses the existing shared five-second lock and inhibitor/identity checks.
 Explicit legacy rescue behavior remains separately gated. The profile marker
 identifies source wiring; it is not physical qualification.
 
 Default-off before switch-root belongs to the matched kernel/initramfs producer.
 Updating root packages alone does not remove an inherited early `g_serial`
 binding. Do not combine this candidate with an older default-CDC boot image and
-claim the requested policy is effective. The unchanged updater and recovery
-sources are retained. Host fixtures cover default-off/manual opt-in and provider
-mismatch; native package, matched boot and physical enumeration remain separate
-validation gates.
+claim the requested policy is effective. This source does not alter the updater
+or recovery route. Before deploying root20, the coordinator must explicitly
+stop/disable the old watcher using its existing owned cleanup, verify that no
+legacy shell/network unit is active, and retain the disabled policy. Package
+installation performs no automatic migration or gadget teardown. The retained
+`stop-auto` helper command exists only for that bounded old-profile cleanup.
+An old `auto-acm` profile is not silently adopted as a new manual profile.
 
-The sections below describe the earlier API2 source history and its limits.
+Prepared host fixtures cover actual readiness and foreign ownership refusal,
+including the explicit one-shot path with disabled/missing automatic policy.
+No tests/compiler/package build or device action ran in this source task.
+The coordinator must verify matching root20/app6 APIs, no automatic unit in the
+payload, default-off after boot, manual on/off, rejection in host/unattached
+state and real PC enumeration separately. Binding alone is not enumeration.
+
+The sections below retain the earlier ownership-API2/manual-API1 source history.
+Their watcher activation instructions are superseded by the one-shot API above.
 
 Date: **18 October 2026**. Target: Xiaomi Pad 7 / POCO Pad X1, SM7675.
 Environment: source editing on Fedora. No test, compilation, package build,

@@ -1,5 +1,12 @@
 # Uke boot integration
 
+18 October 2026 source update: manual CDC API2 uses the existing root helper
+once per explicit on/off command. The continuous CDC watcher unit is removed;
+commands enable no service, root console or network gadget and save no startup
+opt-in. Read [the current manual API and migration contract](docs/USB-TYPEC.md)
+before coordinator packaging/deployment. Source preparation is not a device
+enumeration result.
+
 Image input templates and a native read-only boot prerequisite inspector for
 Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 

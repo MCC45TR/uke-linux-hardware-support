@@ -1,17 +1,12 @@
 #!/bin/sh
 # Explicit development profiles only; never changes Type-C or power roles.
 set -eu
+PATH=/usr/sbin:/usr/bin
+export PATH
 umask 077
 state=/run/senemos-uke
 g=/sys/kernel/config/usb_gadget/uke_debug
-# The watcher never holds the configfs lock while sleeping or running another instance.
-if [ "${1-}" = watch-auto ]; then
-    trap 'exit 0' INT TERM
-    while :; do
-        "$0" reconcile-auto || exit "$?"
-        sleep 2 & wait "$!" || :
-    done
-fi
+manual_request=no
 [ "$(id -u)" = 0 ] || { echo 'USB gadget management requires root' >&2; exit 1; }
 mkdir -p "$state"
 [ ! -L "$state" ] && [ "$(stat -c %u "$state")" = 0 ] || exit 1
@@ -26,8 +21,10 @@ full_typec_profile() {
 debug_authorized() {
     [ ! -e "$state/usb-gadget-inhibit" ] || return 1
     if full_typec_profile; then
-        [ -r /etc/senemos/usb-sharing ] &&
-            [ "$(cat /etc/senemos/usb-sharing)" = auto-debug ] || return 1
+        if [ "${manual_request:-no}" != yes ]; then
+            [ -r /etc/senemos/usb-sharing ] &&
+                [ "$(cat /etc/senemos/usb-sharing)" = auto-debug ] || return 1
+        fi
         uke-boot-status --identity >/dev/null
         return
     fi
@@ -53,8 +50,10 @@ resolve_udc() {
 }
 auto_ready() {
     auto_reason=POLICY_DISABLED
-    [ -f /etc/senemos/usb-sharing ] &&
-        [ "$(cat /etc/senemos/usb-sharing)" = auto-debug ] || return 1
+    if [ "${manual_request:-no}" != yes ]; then
+        [ -f /etc/senemos/usb-sharing ] &&
+            [ "$(cat /etc/senemos/usb-sharing)" = auto-debug ] || return 1
+    fi
     auto_reason=DEBUG_NOT_AUTHORIZED
     debug_authorized || return 1
     auto_reason=UDC_UNAVAILABLE
@@ -104,7 +103,7 @@ auto_ready() {
 auto_status() {
     previous=
     [ ! -r "$state/usb-auto-state" ] || previous=$(cat "$state/usb-auto-state")
-    [ "$previous" = "$1" ] || printf 'Uke USB auto: %s\n' "$1"
+    [ "$previous" = "$1" ] || printf 'Uke USB gadget: %s\n' "$1"
     printf '%s\n' "$1" > "$state/usb-auto-state"
 }
 
@@ -121,11 +120,11 @@ owned() {
     [ -f "$state/usb-gadget-owner" ] && [ ! -L "$state/usb-gadget-owner" ] &&
     [ "$(cat "$state/usb-gadget-owner")" = "$(stat -c '%d:%i' "$g")" ]
 }
-cleanup() {
+validate_owned() {
     owned || { echo 'Refusing an unowned configfs gadget' >&2; return 1; }
     # Validate before unbinding: a foreign function must not be disconnected first.
     saved_profile=$(cat "$state/usb-gadget-profile")
-    case $saved_profile in auto-acm|network) ;; *) return 1;; esac
+    case $saved_profile in auto-acm|manual-acm|network) ;; *) return 1;; esac
     for function in "$g"/functions/*; do
         [ -e "$function" ] || continue
         case ${function##*/}:$saved_profile in acm.gs0:*|ecm.usb0:network) ;; *) return 1;; esac
@@ -139,21 +138,24 @@ cleanup() {
         case ${link##*/}:$saved_profile in acm.gs0:*|ecm.usb0:network) ;; *) return 1;; esac
         [ "$(readlink -f "$link")" = "$g/functions/${link##*/}" ] || return 1
     done
-    [ ! -e "$g/UDC" ] || printf '\n' > "$g/UDC"
+}
+cleanup() {
+    validate_owned || return 1
+    [ ! -e "$g/UDC" ] || printf '\n' > "$g/UDC" || return 1
     for function in acm.gs0 ecm.usb0; do
         link=$g/configs/c.1/$function
         if [ -L "$link" ]; then
             [ "$(readlink -f "$link")" = "$g/functions/$function" ] || return 1
-            rm -- "$link"
+            rm -- "$link" || return 1
         fi
     done
     # No recursive deletion: unexpected functions/configurations remain an ownership error.
     for dir in configs/c.1/strings/0x409 configs/c.1 functions/acm.gs0 functions/ecm.usb0 strings/0x409; do
-        [ ! -d "$g/$dir" ] || rmdir "$g/$dir"
+        [ ! -d "$g/$dir" ] || rmdir "$g/$dir" || return 1
     done
-    rmdir "$g"
-    rm -- "$state/usb-gadget-owner"
-    rm -f -- "$state/usb-gadget-profile"
+    rmdir "$g" || return 1
+    rm -- "$state/usb-gadget-owner" || return 1
+    rm -f -- "$state/usb-gadget-profile" || return 1
 }
 profile=network
 case ${1-} in
@@ -171,40 +173,59 @@ case ${1-} in
         if [ -d "$g" ] && [ -r "$state/usb-gadget-profile" ] &&
             [ "$(cat "$state/usb-gadget-profile")" = auto-acm ]; then cleanup; fi
         exit;;
-    reconcile-auto)
-        if ! auto_ready; then
-            auto_status "$auto_reason"
-            if [ -d "$g" ] && [ -r "$state/usb-gadget-profile" ] &&
-                [ "$(cat "$state/usb-gadget-profile")" = auto-acm ]; then cleanup; fi
-            exit 0
+    manual-off)
+        if [ -d "$g" ]; then
+            [ -r "$state/usb-gadget-profile" ] &&
+                [ "$(cat "$state/usb-gadget-profile")" = manual-acm ] || exit 1
+            cleanup
+        elif [ -e "$state/usb-gadget-owner" ] || [ -e "$state/usb-gadget-profile" ]; then
+            echo 'Orphaned gadget ownership requires review' >&2; exit 69
         fi
-        if [ -d /sys/module/g_serial ]; then
-            auto_status LEGACY_G_SERIAL_OWNS_PORT
-            exit 0
+        auto_status MANUAL_ACM_DISABLED
+        exit;;
+    manual-on)
+        manual_request=yes
+        full_typec_profile || { echo 'Manual CDC requires the full Type-C profile' >&2; exit 69; }
+        if ! auto_ready; then auto_status "$auto_reason"; exit 69; fi
+        [ ! -d /sys/module/g_serial ] || { echo 'Legacy serial owns the port' >&2; exit 69; }
+        if [ ! -d "$g" ] && [ -r "/sys/class/udc/$udc/function" ] &&
+            [ -n "$(cat "/sys/class/udc/$udc/function")" ]; then
+            echo 'Another gadget owns the controller' >&2; exit 69
         fi
-        profile=auto-acm;;
+        profile=manual-acm;;
     start) allow_legacy;;
-    *) echo 'Usage: uke-usb-network start|stop|start-acm|stop-acm|allow-legacy|watch-auto|reconcile-auto|stop-auto' >&2; exit 2;;
+    *) echo 'Usage: uke-usb-network manual-on|manual-off|start|stop|start-acm|stop-acm|allow-legacy|stop-auto' >&2; exit 2;;
 esac
+if [ "$profile" = manual-acm ]; then
+    if mountpoint -q /sys/kernel/config; then
+        [ "$(stat -f -c %T /sys/kernel/config)" = configfs ] || exit 1
+    else
+        mount -t configfs configfs /sys/kernel/config
+    fi
+fi
 # Resolve exactly one UDC admitted by the device identity prerequisite, not a fixed name.
 set -- /sys/class/udc/*
 [ "$#" = 1 ] && [ -e "$1" ] || exit 1
 udc=${1##*/}
 if [ -d "$g" ]; then
-    owned
+    validate_owned
     [ -r "$state/usb-gadget-profile" ] && [ "$(cat "$state/usb-gadget-profile")" = "$profile" ]
     [ "$(cat "$g/UDC")" = "$udc" ]
     [ "$(readlink -f "$g/configs/c.1/acm.gs0")" = "$g/functions/acm.gs0" ]
     if [ "$profile" = network ]; then
         [ "$(readlink -f "$g/configs/c.1/ecm.usb0")" = "$g/functions/ecm.usb0" ]
     else
-        auto_status AUTO_ACM_PREPARED_NOT_HOST_VERIFIED
+        auto_status MANUAL_ACM_BOUND_NOT_HOST_VERIFIED
     fi
     [ "$(cat "$g/configs/c.1/MaxPower")" = 500 ]
     exit 0
 fi
 # The debug profile explicitly authorizes replacing its inherited initramfs ACM transport.
-[ ! -d /sys/module/g_serial ] || modprobe -r g_serial
+if [ "$profile" = manual-acm ]; then
+    [ ! -d /sys/module/g_serial ] || exit 69
+else
+    [ ! -d /sys/module/g_serial ] || modprobe -r g_serial
+fi
 modprobe libcomposite
 [ "$profile" != network ] || modprobe usb_f_ecm
 modprobe usb_f_acm
@@ -237,4 +258,4 @@ fi
 if [ "$profile" = network ]; then allow_legacy; else auto_ready; fi
 printf '%s\n' "$udc" > UDC
 trap - EXIT
-[ "$profile" != auto-acm ] || auto_status AUTO_ACM_PREPARED_NOT_HOST_VERIFIED
+[ "$profile" != manual-acm ] || auto_status MANUAL_ACM_BOUND_NOT_HOST_VERIFIED

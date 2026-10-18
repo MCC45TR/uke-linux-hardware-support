@@ -81,8 +81,25 @@ rm "$root/etc/senemos/usb-sharing"
 refused POLICY_DISABLED
 printf 'auto-debug\n' > "$root/etc/senemos/usb-sharing"
 ready
+# Explicit API2 calls do not save an automatic startup opt-in.
+manual_request=yes
+printf 'disabled\n' > "$root/etc/senemos/usb-sharing"
+ready
+rm "$root/etc/senemos/usb-sharing"
+ready
+printf '1\n' > "$state/usb-gadget-inhibit"
+refused DEBUG_NOT_AUTHORIZED
+rm "$state/usb-gadget-inhibit"
+identity_valid=no
+refused DEBUG_NOT_AUTHORIZED
+identity_valid=yes
+printf 'host\n' > "$provider/role/usb-role-switch/role"
+refused DATA_ROLE_UNVERIFIED
+printf 'device\n' > "$provider/role/usb-role-switch/role"
+ready
 [[ $(cat "$here/src/profiles/usb-sharing") == disabled ]]
 grep -Fxq 'disable uke-usb-auto.service' "$here/src/profiles/80-uke-usb.preset"
-! grep -q '^ConditionKernelCommandLine=' "$here/src/units/uke-usb-auto.service"
+[[ ! -e $here/src/units/uke-usb-auto.service ]]
+! grep -Eq 'watch-auto\)|reconcile-auto\)|sleep 2' "$here/src/uke-usb-network.sh"
 [[ ! -e $work/power-get-attempted ]]
-printf 'USB auto attachment fixtures passed; no hardware operations\n'
+printf 'USB attachment/manual one-shot admission fixtures passed; no hardware operations\n'
