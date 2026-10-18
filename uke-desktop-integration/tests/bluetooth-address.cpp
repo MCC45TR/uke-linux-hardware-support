@@ -30,6 +30,15 @@ int main() {
     assert(compatible(Bytes{'x',0,'u','k','e',0},"uke"));
     assert(!compatible(Bytes{'x',0},"uke"));
     refuses([]{compatible(Bytes{'u','k','e'},"uke");});
+    struct stat mount{},partition{};
+    mount.st_dev=42;partition.st_rdev=42;partition.st_mode=S_IFBLK;
+    constexpr auto protected_mount=ST_RDONLY|ST_NODEV|ST_NOSUID|ST_NOEXEC;
+    assert(factory_mount(mount,partition,protected_mount));
+    for(auto flag:{ST_RDONLY,ST_NODEV,ST_NOSUID,ST_NOEXEC})
+        assert(!factory_mount(mount,partition,protected_mount&~flag));
+    partition.st_rdev=43;assert(!factory_mount(mount,partition,protected_mount));
+    partition.st_rdev=42;partition.st_mode=S_IFREG;
+    assert(!factory_mount(mount,partition,protected_mount));
     auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(3);
     int fd[2];assert(socketpair(AF_UNIX,SOCK_SEQPACKET|SOCK_CLOEXEC,0,fd)==0);
     response(fd[1],0x37,0x11);packet(fd[1],0x1d,1,{});packet(fd[1],0x1d,0,{});
@@ -59,6 +68,29 @@ int main() {
     auto file=std::filesystem::path(directory)/"factory";
     {std::ofstream output(file,std::ios::binary);output.write(reinterpret_cast<const char *>(input.data()),input.size());}
     assert(file_bytes(file,6)==input);refuses([&]{file_bytes(file,5);});
+    auto factory=std::filesystem::path(directory)/"bluetooth";
+    struct stat fixture_mount{};assert(stat(directory,&fixture_mount)==0);
+    auto read_factory=[&]{return factory_record(directory,fixture_mount.st_dev);};
+    std::filesystem::create_directory(factory);
+    std::filesystem::copy_file(file,factory/".bt_nv.bin");
+    assert(read_factory()==input);
+    refuses([&]{factory_record(directory,fixture_mount.st_dev+1);});
+    std::filesystem::remove(factory/".bt_nv.bin");
+    std::filesystem::create_symlink(file,factory/".bt_nv.bin");
+    refuses(read_factory);
+    std::filesystem::remove(factory/".bt_nv.bin");
+    assert(mkfifo((factory/".bt_nv.bin").c_str(),0600)==0);
+    refuses(read_factory);
+    std::filesystem::remove(factory/".bt_nv.bin");
+    for(auto count:{5,7}) {
+        {std::ofstream output(factory/".bt_nv.bin",std::ios::binary);output<<std::string(count,'x');}
+        refuses(read_factory);
+        std::filesystem::remove(factory/".bt_nv.bin");
+    }
+    std::filesystem::remove(factory);
+    std::filesystem::create_directory(std::filesystem::path(directory)/"redirected");
+    std::filesystem::create_directory_symlink(std::filesystem::path(directory)/"redirected",factory);
+    refuses(read_factory);
     std::filesystem::remove_all(directory);
     std::cout<<"Bluetooth factory input, event readiness, management bytes, idempotence and refusal fixtures passed\n";
 }
