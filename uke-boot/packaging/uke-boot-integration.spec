@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 18%{?dist}
+Release: 19%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -16,6 +16,7 @@ Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Provides: uke-usb-gadget-ownership-api = 2
+Provides: uke-usb-manual-cdc-api = 1
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -89,6 +90,7 @@ RPMs. Installation alone does not activate partition writes or reboot.
 ./usb-port-contract
 bash tests/usb-inventory.sh
 bash tests/usb-auto.sh
+bash tests/usb-ownership.sh
 %{__cxx} -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o wifi-factory-contract
 ./wifi-factory-contract
 bash tests/startup-contract.sh
@@ -109,6 +111,8 @@ install -Dm644 src/units/uke-cdc-acm.service %{buildroot}%{_unitdir}/uke-cdc-acm
 install -Dm644 src/units/uke-cdc-shell.service %{buildroot}%{_unitdir}/uke-cdc-shell.service
 install -Dm755 src/uke-usb-network.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-usb-network
 install -Dm644 src/units/uke-usb-auto.service %{buildroot}%{_unitdir}/uke-usb-auto.service
+install -Dm644 src/profiles/usb-sharing %{buildroot}%{_sysconfdir}/senemos/usb-sharing
+install -Dm644 src/profiles/80-uke-usb.preset %{buildroot}%{_presetdir}/80-uke-usb.preset
 install -Dm644 src/units/uke-usb-network.service %{buildroot}%{_unitdir}/uke-usb-network.service
 install -Dm644 src/units/uke-usb-network-shell.service %{buildroot}%{_unitdir}/uke-usb-network-shell.service
 install -Dm644 src/profiles/uke-coresight-bringup.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
@@ -138,6 +142,8 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_unitdir}/uke-cdc-acm.service
 %{_libexecdir}/senemos-uke/uke-usb-network
 %{_unitdir}/uke-usb-auto.service
+%config(noreplace) %{_sysconfdir}/senemos/usb-sharing
+%{_presetdir}/80-uke-usb.preset
 %{_unitdir}/uke-usb-network.service
 %{_unitdir}/uke-usb-network-shell.service
 %{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
@@ -174,6 +180,9 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-19
+- Default CDC to disabled and admit explicit manual opt-in on the full Type-C profile.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-17
 - Add a read-only USB-C class observer and independent role/power planning code.
 - Serialize explicit debug gadget ownership and inhibit stale legacy fallback.

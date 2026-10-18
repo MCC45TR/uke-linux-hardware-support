@@ -1,9 +1,8 @@
 [Unit]
-Description=Uke automatic CDC gadget for an attached USB computer
+Description=Uke manually enabled CDC gadget for an attached USB computer
 Requires=sys-kernel-config.mount
 After=sys-kernel-config.mount systemd-udev-trigger.service
 Conflicts=uke-cdc-acm.service uke-cdc-shell.service uke-usb-network.service uke-usb-network-shell.service
-ConditionKernelCommandLine=senemos.debug=cdc-acm
 ConditionPathExists=/etc/senemos/usb-sharing
 
 [Service]

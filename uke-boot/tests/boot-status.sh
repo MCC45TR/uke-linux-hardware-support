@@ -57,6 +57,12 @@ if build/tests/uke-boot-status --cdc --root "$fixture" > build/tests/cdc-missing
 mkdir -p "$fixture/sys/class/udc/fixture-controller"
 build/tests/uke-boot-status --cdc --root "$fixture" > build/tests/cdc-controller.json
 jq -e '.single_udc_present and .usb_enumeration_tested==false and .hardware_acceptance_granted==false' build/tests/cdc-controller.json >/dev/null
+mkdir -p "$fixture/sys/firmware/devicetree/base/chosen" "$fixture/etc/senemos"
+printf 'typec-v1\0' > "$fixture/sys/firmware/devicetree/base/chosen/senemos,usb-profile"
+printf 'disabled\n' > "$fixture/etc/senemos/usb-sharing"
+build/tests/uke-boot-status --cdc --root "$fixture" | jq -e '.full_typec_profile and (.manual_cdc_opt_in|not)' >/dev/null
+printf 'auto-debug\n' > "$fixture/etc/senemos/usb-sharing"
+build/tests/uke-boot-status --cdc --root "$fixture" | jq -e '.full_typec_profile and .manual_cdc_opt_in and (.usb_enumeration_tested|not)' >/dev/null
 if build/tests/uke-boot-status --cdc --require-tty --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi
 mkdir "$fixture/sys/class/udc/second-controller"
 if build/tests/uke-boot-status --cdc --root "$fixture" >/dev/null; then exit 1; else test "$?" -eq 2; fi

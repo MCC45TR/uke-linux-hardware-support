@@ -1,5 +1,31 @@
 # USB-C source candidate
 
+## Manual CDC update — 18 October 2026
+
+The current source candidate adds `uke-usb-manual-cdc-api = 1` alongside ownership
+API2. `/etc/senemos/usb-sharing` defaults to `disabled`, and the distribution
+preset disables CDC, its watcher and the old network/shell units. Missing policy
+also denies automatic export. The original KDE desktop is unchanged.
+
+On the matched full kernel profile, `chosen/senemos,usb-profile = "typec-v1"` and
+the `qcom,sm7675-dwc3-typec` controller permit explicit root opt-in without the
+early debug argument. `uke-control set cdc on` selects `auto-debug` and enables
+the attachment watcher; `off` selects `disabled` and stops it. The watcher still
+requires a corresponding Type-C partner, device data role and one associated
+USB-role provider. It exports ACM only, without a shell or Ethernet gadget.
+Explicit legacy rescue behavior remains separately gated. The profile marker
+identifies source wiring; it is not physical qualification.
+
+Default-off before switch-root belongs to the matched kernel/initramfs producer.
+Updating root packages alone does not remove an inherited early `g_serial`
+binding. Do not combine this candidate with an older default-CDC boot image and
+claim the requested policy is effective. The unchanged updater and recovery
+sources are retained. Host fixtures cover default-off/manual opt-in and provider
+mismatch; native package, matched boot and physical enumeration remain separate
+validation gates.
+
+The sections below describe the earlier API2 source history and its limits.
+
 Date: **18 October 2026**. Target: Xiaomi Pad 7 / POCO Pad X1, SM7675.
 Environment: source editing on Fedora. No test, compilation, package build,
 device operation or publication has been performed in this USB conversation.

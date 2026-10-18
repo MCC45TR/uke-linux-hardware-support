@@ -34,6 +34,7 @@ test-usb:
 	build/tests/usb-port-contract
 	bash tests/usb-inventory.sh
 	bash tests/usb-auto.sh
+	bash tests/usb-ownership.sh
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}

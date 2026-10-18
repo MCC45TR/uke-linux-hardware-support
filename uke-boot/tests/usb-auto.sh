@@ -17,12 +17,13 @@ mkdir -p "$root/sys/class/power_supply/qcom-battmgr-usb"
 psy=$root/sys/class/power_supply/qcom-battmgr-usb
 printf '1\n' > "$psy/online"
 printf 'Unknown [SDP] DCP CDP PD\n' > "$psy/usb_type"
-sed -n '/^debug_authorized() {/,/^allow_legacy() {/p' "$here/src/uke-usb-network.sh" |
+sed -n '/^full_typec_profile() {/,/^allow_legacy() {/p' "$here/src/uke-usb-network.sh" |
     sed '$d' | sed "s@/sys/@$root/sys/@g; s@/etc/@$root/etc/@g; s@/proc/@$root/proc/@g" > "$work/functions.sh"
 # These are project functions copied from the helper, with only filesystem roots redirected.
 source "$work/functions.sh"
 state=$root/run/senemos-uke
-uke-boot-status() { return 0; }
+identity_valid=yes
+uke-boot-status() { [[ $identity_valid == yes ]]; }
 mkdir -p "$provider/role/usb-role-switch"
 printf 'device\n' > "$provider/role/usb-role-switch/role"
 ln -s "$provider/role/usb-role-switch" "$root/sys/class/usb_role/renamed-role"
@@ -63,5 +64,25 @@ refused NO_PC_PARTNER
 printf 'host [device]\n' > "$root/sys/class/typec/port7/data_role"
 mkdir "$root/sys/class/typec/port8"
 refused PORT_ASSOCIATION_AMBIGUOUS
+rmdir "$root/sys/class/typec/port8"
+# Full Type-C CDC requires the saved opt-in, never the old early-debug argument.
+mkdir -p "$root/sys/firmware/devicetree/base/chosen"
+printf 'typec-v1\0' > "$root/sys/firmware/devicetree/base/chosen/senemos,usb-profile"
+printf 'root=PARTLABEL=linux\n' > "$root/proc/cmdline"
+refused PROFILE_PROVIDER_MISMATCH
+printf 'qcom,sm7675-dwc3-typec\0' > "$provider/of_node/compatible"
+ready
+identity_valid=no
+refused DEBUG_NOT_AUTHORIZED
+identity_valid=yes
+printf 'disabled\n' > "$root/etc/senemos/usb-sharing"
+refused POLICY_DISABLED
+rm "$root/etc/senemos/usb-sharing"
+refused POLICY_DISABLED
+printf 'auto-debug\n' > "$root/etc/senemos/usb-sharing"
+ready
+[[ $(cat "$here/src/profiles/usb-sharing") == disabled ]]
+grep -Fxq 'disable uke-usb-auto.service' "$here/src/profiles/80-uke-usb.preset"
+! grep -q '^ConditionKernelCommandLine=' "$here/src/units/uke-usb-auto.service"
 [[ ! -e $work/power-get-attempted ]]
 printf 'USB auto attachment fixtures passed; no hardware operations\n'

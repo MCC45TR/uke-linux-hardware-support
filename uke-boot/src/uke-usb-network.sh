@@ -19,8 +19,18 @@ chmod 700 "$state"
 exec 9>"$state/usb-gadget.lock"
 flock -w 5 -x 9
 
+full_typec_profile() {
+    [ -r /sys/firmware/devicetree/base/chosen/senemos,usb-profile ] &&
+        [ "$(tr -d '\000' < /sys/firmware/devicetree/base/chosen/senemos,usb-profile)" = typec-v1 ]
+}
 debug_authorized() {
     [ ! -e "$state/usb-gadget-inhibit" ] || return 1
+    if full_typec_profile; then
+        [ -r /etc/senemos/usb-sharing ] &&
+            [ "$(cat /etc/senemos/usb-sharing)" = auto-debug ] || return 1
+        uke-boot-status --identity >/dev/null
+        return
+    fi
     case " $(cat /proc/cmdline) " in *' senemos.debug=cdc-acm '*) ;; *) return 1;; esac
     uke-boot-status --cdc --wait 15 >/dev/null
 }
@@ -31,8 +41,10 @@ resolve_udc() {
     provider=$(readlink -f "$1")
     while [ "$provider" != /sys/devices ] && [ "$provider" != / ]; do
         if [ -r "$provider/of_node/compatible" ] &&
-            tr '\000' '\n' < "$provider/of_node/compatible" | grep -Fxq qcom,sm7675-dwc3; then
+            tr '\000' '\n' < "$provider/of_node/compatible" | grep -Eq '^qcom,sm7675-dwc3(-typec)?$'; then
             dr_mode=$(tr -d '\000' < "$provider/of_node/dr_mode")
+            full_provider=no
+            if tr '\000' '\n' < "$provider/of_node/compatible" | grep -Fxq qcom,sm7675-dwc3-typec; then full_provider=yes; fi
             return 0
         fi
         provider=${provider%/*}
@@ -47,6 +59,10 @@ auto_ready() {
     debug_authorized || return 1
     auto_reason=UDC_UNAVAILABLE
     resolve_udc || return 1
+    if full_typec_profile; then
+        auto_reason=PROFILE_PROVIDER_MISMATCH
+        [ "$full_provider" = yes ] && [ "$dr_mode" = otg ] || return 1
+    fi
     auto_reason=DATA_ROLE_UNVERIFIED
     case $dr_mode in
         peripheral|otg) ;;
@@ -107,6 +123,22 @@ owned() {
 }
 cleanup() {
     owned || { echo 'Refusing an unowned configfs gadget' >&2; return 1; }
+    # Validate before unbinding: a foreign function must not be disconnected first.
+    saved_profile=$(cat "$state/usb-gadget-profile")
+    case $saved_profile in auto-acm|network) ;; *) return 1;; esac
+    for function in "$g"/functions/*; do
+        [ -e "$function" ] || continue
+        case ${function##*/}:$saved_profile in acm.gs0:*|ecm.usb0:network) ;; *) return 1;; esac
+    done
+    for config in "$g"/configs/*; do
+        [ -e "$config" ] || continue
+        [ "${config##*/}" = c.1 ] || return 1
+    done
+    for link in "$g"/configs/c.1/*; do
+        [ -L "$link" ] || continue
+        case ${link##*/}:$saved_profile in acm.gs0:*|ecm.usb0:network) ;; *) return 1;; esac
+        [ "$(readlink -f "$link")" = "$g/functions/${link##*/}" ] || return 1
+    done
     [ ! -e "$g/UDC" ] || printf '\n' > "$g/UDC"
     for function in acm.gs0 ecm.usb0; do
         link=$g/configs/c.1/$function

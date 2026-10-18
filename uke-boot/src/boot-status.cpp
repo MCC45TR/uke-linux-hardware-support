@@ -95,6 +95,8 @@ int main(int argc, char** argv) {
             return uke && kernel ? 0 : 2;
         }
         if (cdc) {
+            const bool full_typec = compatible(read(root / "sys/firmware/devicetree/base/chosen/senemos,usb-profile"), "typec-v1");
+            const bool manual_opt_in = read(root / "etc/senemos/usb-sharing") == "auto-debug\n";
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(wait_seconds);
             unsigned controllers = 0;
             bool tty = false;
@@ -117,6 +119,8 @@ int main(int argc, char** argv) {
                       << ",\"selected_kernel_release\":" << boolean(kernel)
                       << ",\"single_udc_present\":" << boolean(controllers == 1)
                       << ",\"tty_gs0_present\":" << boolean(tty)
+                      << ",\"full_typec_profile\":" << boolean(full_typec)
+                      << ",\"manual_cdc_opt_in\":" << boolean(manual_opt_in)
                       << ",\"usb_enumeration_tested\":false,\"hardware_acceptance_granted\":false}\n";
             return uke && kernel && controllers == 1 && (!require_tty || tty) ? 0 : 2;
         }

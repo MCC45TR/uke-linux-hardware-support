@@ -11,5 +11,6 @@ test-native:
 	$(MAKE) -C uke-sensors test-native
 	$(MAKE) -C uke-desktop-packaging test-native
 	$(MAKE) -C uke-boot test-native
+	$(MAKE) -C uke-boot test-usb
 	$(MAKE) -C uke-control check
 	$(MAKE) -C xiaomi-uke-firmware test-admission
