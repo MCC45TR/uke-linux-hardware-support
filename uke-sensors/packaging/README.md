@@ -1,5 +1,14 @@
 # SSC sensor packages
 
+18 October 2026: libssc 0.4.4 release 4 is a source candidate that adds context
+only after an existing proximity unpack warning. At most eight extra messages
+per process report the event ID, payload length and first protobuf field/wire
+tag. They contain no sensor identifier, payload byte or measurement value.
+The original warnings and decoder behavior are preserved; malformed-tag,
+privacy and concurrent-cap fixtures are part of the RPM checks. Compilation,
+packaging and a reproduced tablet failure remain coordinator checks. This
+diagnostic does not establish a decoder fix or a CCT/proximity interaction.
+
 14 October 2026. Fedora Rawhide AArch64 preview sources:
 
 - `libssc`: native SSC client library; Python mock servers are excluded.

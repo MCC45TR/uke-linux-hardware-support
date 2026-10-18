@@ -1,15 +1,17 @@
 Name: libssc
 Version: 0.4.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Native Qualcomm Sensor Core client library
 License: GPL-3.0-or-later
 URL: https://codeberg.org/DylanVanAssche/libssc
 Source0: libssc-v%{version}.tar.gz
 Source1: libssc-light-constructor.cpp
+Source2: libssc-proximity-context.cpp
 Patch0: 0001-optional-python-mocks.patch
 Patch1: 0002-report-qrtr-error.patch
 Patch2: 0003-gyroscope-cli-units.patch
 Patch3: 0004-light-data-type-and-validity.patch
+Patch4: 0005-bounded-proximity-unpack-context.patch
 BuildRequires: gcc gcc-c++ meson ninja-build pkgconf-pkg-config
 BuildRequires: python3 = 3.15.0-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
@@ -45,6 +47,9 @@ test -s build/src/libssc.so.2
 g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -I src %{SOURCE1} \
     $(pkg-config --cflags --libs gio-2.0) -L build/src -lssc -o light-constructor-test
 LD_LIBRARY_PATH="$PWD/build/src" ./light-constructor-test
+g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -pthread -I src %{SOURCE2} \
+    $(pkg-config --cflags --libs glib-2.0) -o proximity-context-test
+./proximity-context-test
 if find %{buildroot} -type f \( -name '*.py' -o -iname '*python*' \) | grep -q .; then exit 1; fi
 
 %files
@@ -58,6 +63,9 @@ if find %{buildroot} -type f \( -name '*.py' -o -iname '*python*' \) | grep -q .
 %{_libdir}/pkgconfig/libssc.pc
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-4
+- Add bounded value-free context to existing proximity unpack warnings.
+
 * Sat Oct 17 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-3
 - Add explicit front/rear light construction and reject invalid lux reports.
 
