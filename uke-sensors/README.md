@@ -242,3 +242,10 @@ check remains. Kernel sysfs supplies the exact `generation ready\n` format;
 malformed, oversized, truncated and failed reads refuse SPI. Host fixtures
 also check repeated reads, reset races and recovery backoff. Packaged build,
 CPU measurements and physical input acceptance are separate test stages.
+
+Release 9 polls a pending command once per 20 ms within the existing 500 ms
+readiness budget. A guarded release-10 kernel trial measured about 345 ms to
+complete the first command after a RAM reload under wide AVR, exceeding the
+previous query window. Command payloads and generation guards are retained.
+Actual-function fixtures cover delayed completion, one write, bounded failure
+and a reset during polling. Repeated tablet recovery remains a separate gate.
