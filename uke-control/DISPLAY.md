@@ -41,3 +41,9 @@ clock/unit rules. It has not run in this source workstream. The coordinator
 must run host/native checks and separately qualify package/SELinux, explicit
 publisher activation, ordinary-user reading, stop/crash invalidation and physical
 color response. A source or fixture result does not establish those device gates.
+
+The development display observer labels the configured mode as `VRR upper limit`
+while VRR is enabled and shows `Measured DPU` separately. For example, a 144 Hz
+configured mode can coexist with a 30 Hz measured vblank cadence. VRR changes frame
+timing inside that mode; the selected-mode label need not follow each interval.
+This measurement keeps interrupts referenced and is not optical panel metrology.

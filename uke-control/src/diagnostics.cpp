@@ -74,7 +74,7 @@ static int display(unsigned seconds,bool csv) {
     std::deque<double> intervals;uint64_t previous=0,report=now(),end=now()+uint64_t(seconds)*1000000000;
     uint32_t sequence=0;
     if(csv)std::puts("sequence,drm_timestamp_ns,return_monotonic_ns,period_ns");
-    else std::puts("DPU vblank measurement; selected mode and observed scanout rate are separate. This keeps vblank IRQs referenced; it is not optical panel metrology.");
+    else std::puts("With VRR enabled, the configured mode is the upper limit; DPU is the measured vblank rate. This keeps vblank IRQs referenced; it is not optical panel metrology.");
     while(!stopped&&now()<end) {
         drmVBlank blank{};blank.request.type=uke::test::vblank_type(selected.index);blank.request.sequence=1;
         if(drmWaitVBlank(fd.value,&blank)){if(stopped)break;throw std::runtime_error("DRM wait-vblank failed");}
@@ -89,8 +89,10 @@ static int display(unsigned seconds,bool csv) {
             auto *crtc=drmModeGetCrtc(fd.value,selected.crtc);double base=0;
             if(crtc&&crtc->mode_valid)base=crtc->mode.clock*1000.0/(double(crtc->mode.htotal)*crtc->mode.vtotal);
             drmModeFreeCrtc(crtc);
-            std::printf("\rMode %6.2f Hz | DPU %6.2f Hz | interval %.2f..%.2f ms | VRR %s       ",base,
-                1e9/(sum/intervals.size()),*limits.first/1e6,*limits.second/1e6,vrr(fd.value,selected.crtc)==1?"enabled":"disabled/unknown");
+            const auto vrr_state=vrr(fd.value,selected.crtc);
+            std::printf("\r%s %6.2f Hz | Measured DPU %6.2f Hz | interval %.2f..%.2f ms | VRR %s       ",
+                vrr_state==1?"VRR upper limit":"Configured mode",base,
+                1e9/(sum/intervals.size()),*limits.first/1e6,*limits.second/1e6,vrr_state==1?"enabled":"disabled/unknown");
             std::fflush(stdout);report=now();
         }
     }

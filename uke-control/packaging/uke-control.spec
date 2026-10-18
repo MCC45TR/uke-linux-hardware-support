@@ -75,6 +75,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %changelog
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
 - Add the explicit preconfigured-cap command without a metadata-query fallback.
+- Label the configured VRR mode as an upper limit beside measured DPU cadence.
 
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
 - Add an explicit native read-only firmware threshold query.
