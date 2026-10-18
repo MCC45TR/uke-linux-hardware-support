@@ -13,6 +13,10 @@ reboot. The powered Juo dock enumerates USB hubs, its HID receiver and RTL8153
 Ethernet function. Evdev records mouse motion and the user confirms operation.
 Ethernet networking and HDMI output remain unqualified.
 
+After the kernel-28 compressed firmware-loader change, the RTL8153 driver
+reports firmware `rtl8153b-2 v2 04/27/23` through ethtool. Carrier is zero;
+no Ethernet cable or traffic result is claimed.
+
 Kernel 28 from signed COPR 11168191 also installs through DNF and returns to SSH
 and the original KDE session after a normal reboot. The touch service is active
 with zero restarts; physical display/touch confirmation is pending. Application 9
