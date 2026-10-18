@@ -16,6 +16,24 @@ installations also mask `uke-userdata-update.service` and
 `uke-userdata-accept.service`. Those planned services are not provided yet.
 `status` reads the stored profile without probing the root partition again.
 
+The system-wide record is `/var/lib/senemos/installation/profile`, owned by
+root with mode `0600`, inside a `0700` directory. For example:
+
+```ini
+format=1
+root=userdata
+```
+
+After the atomic, synchronized write, the classifier creates
+`/etc/systemd/system/uke-install-profile.service -> /dev/null`. This persistent
+systemd mask prevents subsequent starts across boots and package upgrades.
+The unit's missing-profile condition also prevents repeated classification
+if power fails between the profile write and masking. Neither mechanism uses
+a home directory, login account or per-user service. A Linux profile also
+masks the two planned userdata units. No periodic task or resident classifier
+is installed. The package remains inactive until an image explicitly enables
+the first-boot unit.
+
 Profile writes use descriptor-relative protected paths, atomic replacement,
 file and directory fsync, and a process-wide file lock. Unknown roots produce
 a disabled diagnostic profile; they never activate an updater. Administrative
@@ -35,10 +53,20 @@ Run `make test-installation` for regular-file and policy tests. Set
 `SANITIZE=1` when the host compiler has matching ASan/UBSan runtimes. These
 checks do not open tablet block devices or establish physical boot success.
 
+The revised package plan uses one `senemos-uke-linux-kernel-mainline` family,
+one Image and matching modules. A kernel candidate admits only the boot-header
+selector `senemos.root=linux|userdata`, while preserving the forced command
+line for every other option. The transaction helper will select the boot
+profile from installation state and revalidate the mounted physical root
+before writing. DNF does not need to modify GPT entries or filesystem labels.
+No `-up` package is needed if the Uke bootloader handoff is qualified. The
+current updater still refuses userdata; no new writer is activated here.
+
 Remaining work is the qualified Qualcomm slot backend, durable update
-transactions, mutually exclusive standard/`-up` kernel selections from one
-source build, inactive-slot boot writes, bounded success confirmation, recovery
-installer and checksummed userdata test image. Bootloader retry and watchdog
+transactions, common-kernel/bootloader qualification, transaction dispatch,
+inactive-slot boot writes, userdata-aware startup readiness, bounded success
+confirmation and a recovery installer. ZIP and test-image creation are deferred
+until the requested source revisions are complete. Bootloader retry and watchdog
 behavior need separate Uke evidence. Kernel/boot A/B with a shared filesystem
 does not roll back general DNF packages or user data.
 
