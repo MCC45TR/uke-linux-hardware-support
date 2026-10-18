@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -71,5 +71,8 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR.noreply.github.com> - 0.1.0-2
+- Preserve distribution linker hardening and include the actual UTC report timestamp.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1
 - Add a shared C++ backend, persistent swap policy and separate development diagnostics.

@@ -14,6 +14,7 @@
 #include <thread>
 #include <cerrno>
 #include <csignal>
+#include <ctime>
 #include <fcntl.h>
 #include <linux/magic.h>
 #include <poll.h>
@@ -246,7 +247,8 @@ std::string report() {
     auto kernel=execute({"/usr/bin/uname","-r"},5);
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
-    atomic_file(path/"github-summary.md","Date: see issue timestamp; local bundle directory records UTC epoch seconds\nDevice family: Uke / SM7675\nApplication: uke-control 0.1.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 0.1.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {
@@ -255,7 +257,8 @@ void report_github(const std::string& dir,const std::string& repository) {
     auto summary=path/"github-summary.md";struct stat st{};
     need(lstat(summary.c_str(),&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022)&&st.st_size<4096,"Untrusted report summary");
     need(fs::exists("/usr/bin/gh"),"Install the original gh package and authenticate for issue submission; private raw logs remain local");
-    checked({"/usr/bin/gh","issue","create","--repo",repository,"--title","Uke device diagnostic report","--body-file",summary.string()},45);
+    auto result=execute({"/usr/bin/gh","issue","create","--repo",repository,"--title","Uke device diagnostic report","--body-file",summary.string()},45);
+    need(result.status==0,"GitHub submission failed: "+result.output);std::cout<<result.output;
 }
 void self_test() {
     need(swap_mib("half",8*GiB)==4096&&swap_mib("full",8*GiB)==8192&&swap_mib("512",8*GiB)==512,"Swap sizing regression");

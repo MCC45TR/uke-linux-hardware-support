@@ -6,8 +6,14 @@ The original distribution desktop remains unchanged.
 
 ## Status — 18 October 2026
 
-The first package is in development. Source and host checks do not establish
-successful installation, boot persistence, physical VRR or sensor acceptance.
+Signed COPR build 11166924 installed core and development packages through DNF
+on POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.10-23. The systemd service
+created a 3690 MiB swap file with the standard SELinux swap label. Changes to
+512 MiB, full RAM and half RAM passed. SensorProxy, processed sensor inputs,
+DRM sampling and bounded proximity discovery ran on the tablet. Reboot
+persistence and preference for an existing swap partition remain untested at
+this checkpoint. These observations do not establish physical VRR or sensor
+acceptance.
 The charge-limit control is available only when the driver exports a writable
 `charge_control_end_threshold`. Current Uke firmware controls are not invented
 or accessed through raw battery property requests. USB status reads cached
