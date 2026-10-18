@@ -21,11 +21,13 @@ SensorProxy, processed readings and bounded SSC discovery are separate from
 physical sensor qualification. The optional front-color endpoint currently has
 no valid startup sample.
 
+Signed COPR 11168298 installs application 9 through DNF. RPM verification and
+native self-checks pass. Root and the ordinary desktop user receive the existing
+helper's metadata-only charging status; aggregate status uses the same path.
 Charging controls remain unavailable with the installed unqualified profile.
-No 80% cutoff, battery bypass or autonomous termination is claimed. Release-9
-source routes status through the existing helper's metadata-only operation and
-reports unavailable generic reads explicitly; build and tablet validation are
-pending. See [charging boundaries](CHARGING.md).
+No 80% cutoff, battery bypass or autonomous termination is claimed. Kernel 28
+subsequently completes a normal reboot, retaining the installed application,
+half-RAM swap and CDC disabled state. See [charging boundaries](CHARGING.md).
 
 ## Commands
 

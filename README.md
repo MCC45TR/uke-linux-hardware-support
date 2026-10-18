@@ -7,19 +7,30 @@ maintained alongside these imported components.
 
 ## Status — 18 October 2026
 
-On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64. The full Type-C kernels
-24 and 25 boot and reach SSH, but fail internal display and touchscreen startup.
-Kernel 25 fixes the missing L3B supplier, exposing a DP connector-state Oops.
-Kernel 26 initializes that state and changes panel backlight ordering to address
-the reported white flash. Its signed COPR build succeeds and installs through
-DNF. After a forced restart, release 26 reaches original KDE with visible DSI
-output, the touchscreen input and the saved VRR policy. The previous DP-state
-Oops is absent. White-flash removal and normal-restart acceptance remain open;
-UCSI initialization still times out and optional front-color startup has no
-sample. This does not qualify docked USB or external display operation.
-The accepted kernel 23 bundle remains available. VRR and touch behavior on the
-retained development profile was accepted during tablet use; that acceptance
-applies to the tested profile. Earlier Linux `7.2.10-8` tests restore the original
+On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64 and original KDE.
+Signed COPR kernel 7.2.10-27 installs through DNF and reaches KDE after a normal
+reboot. The powered Juo dock enumerates USB hubs, its HID receiver and RTL8153
+Ethernet function. Evdev records mouse motion and the user confirms operation.
+Ethernet networking and HDMI output remain unqualified.
+
+Kernel 28 from signed COPR 11168191 also installs through DNF and returns to SSH
+and the original KDE session after a normal reboot. The touch service is active
+with zero restarts; physical display/touch confirmation is pending. Application 9
+provides metadata-only charge status; adaptive-display 9 retains successful
+original libddcutil initialization after reboot while excluding internal GENI
+buses. External DDC/CI brightness remains untested. The half-RAM swap, balanced
+profile and CDC disabled state persist. No KDE application is forked or rebuilt.
+
+The battery's 100% display and Charging state do not establish termination or an
+electrical fault. Manual PD disconnection is verified as Discharging at 28 degrees
+Celsius. The installed profile refuses charge-control requests; battery bypass
+and autonomous protection are not qualified. The new host boundary fixtures
+validate software refusal, not physical charge cutoff. HDMI testing remains
+behind the unresolved battery power-path gate. PMIC warnings, optional front-
+color startup, white-flash behavior and complete stability remain open.
+
+The user accepted VRR and touch on the retained development profile; that
+acceptance applies to the tested profile. Earlier Linux `7.2.10-8` tests restore the original
 KDE sensor interfaces. Previous
 .4056 normal-boot user tests confirm four-pose rotation and dual-light
 automatic brightness. Bluetooth 5.2 mouse movement, clicks and
