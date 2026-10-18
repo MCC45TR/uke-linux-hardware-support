@@ -2,6 +2,7 @@
 #include "backend.hpp"
 #include "charge-policy.hpp"
 #include "front-color.hpp"
+#include "sensors.hpp"
 #include <charconv>
 #include <iostream>
 #include <stdexcept>
@@ -10,6 +11,13 @@
 static void help() {
     std::cout << "uke-control 0.1.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
+      "  brunch stable|test|unstable  Switch Uke COPR and synchronize its packages (root)\n"
+      "  brunch sync|status          Repair selected channel, or show selection\n"
+      "  branch ...                  Alias for brunch; --dry-run and --yes supported\n"
+      "  update [--check] [--yes]     Sync channel and upgrade distribution packages\n"
+      "  sensors [-n5] [--json]      Sensor snapshot; -n repeats every N seconds\n"
+      "  sensors list                List exported channels and SensorProxy capabilities\n"
+      "  sensors -n5 --count=3       Three snapshots, five seconds apart; Ctrl-C stops\n"
       "  display sensor              Read the existing front-color node; never starts collection\n"
       "  inventory [--refresh]       Partition/filesystem inventory; refresh requires root\n"
       "  swap status                 Active swaps and saved policy\n"
@@ -42,6 +50,11 @@ int main(int argc,char** argv) {
         }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="brunch"||command=="branch"||command=="update") {
+            execv("/usr/libexec/uke-control/packages",argv+1);
+            throw std::runtime_error("The native package manager helper is missing");
+        }
+        if(command=="sensors")return uke::sensors::command(argc-2,argv+2);
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="sensor") {
             std::cout<<uke::display::front_color_status();return 0;
         }
