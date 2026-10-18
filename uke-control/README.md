@@ -1,5 +1,13 @@
 # Uke Control
 
+18 October 2026 source follow-up: `sudo uke-control charge apply-cap80` is a
+separate one-shot development request for the firmware's already enabled 70/80
+band. It requires the matched helper and kernel interface, disconnected input
+and fresh device checks. It does not acquire a general control lease, set current
+or voltage, retry a request or qualify bypass. An opaque firmware reply and
+unchanged settings leave the physical effect unknown. This client source alone
+does not implement the helper, install the feature or establish a tablet result.
+
 Native C++ settings backend and terminal client for Uke (SM7675). GTK4 and
 Qt/Breeze clients can use the same backend in future; neither GUI is included.
 The original distribution desktop remains unchanged.

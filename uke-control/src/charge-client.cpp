@@ -58,4 +58,8 @@ Result control_mode(const std::string& mode) {
 Result enable_preconfigured_cap() {
     return execute({helper, "enable-cap80"}, 12, 65536);
 }
+Result apply_preconfigured_cap() {
+    // One bounded request; preserve unknown outcomes and never replay it.
+    return execute({helper, "apply-cap80"}, 12, 65536);
+}
 }
