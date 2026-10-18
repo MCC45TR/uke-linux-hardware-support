@@ -25,11 +25,35 @@ mkdir -p "$sys/class/thermal/thermal_zone0"
 printf 'pmic_bcl_current\n' > "$sys/class/thermal/thermal_zone0/type"
 printf '125000\n' > "$sys/class/thermal/thermal_zone0/temp"
 "$work/build/uke-battery" --sysfs-root "$sys" > "$work/snapshot.json"
-jq -e '.origin == "fixture" and .provider_verified and .snapshot_coherent and .external_power_with_negative_battery_current and .fields["battery.power_now"].value == -2000000 and .fields["battery.cycle_count"].value == null and .health.capacity_retention_percent == null and .forecast.time_to_full_seconds == null and .forecast.reason == "profile_unqualified" and .efc_coverage.checkpoint == "disabled_unqualified" and .capabilities.read_only and (.capabilities.charge_threshold | not)' "$work/snapshot.json" >/dev/null
+jq -e '.schema_version == 1 and .origin == "fixture" and .provider_verified and .snapshot_coherent
+    and .external_power_with_negative_battery_current and .fields["battery.power_now"].value == -2000000
+    and .fields["battery.cycle_count"].value == 0 and .fields["battery.cycle_count"].validity == "unqualified"
+    and .health.capacity_retention_percent == null and (.health.learned_capacity_qualified | not)
+    and .health_provenance.reported_cycles.reported == 0 and .health_provenance.reported_cycles.effective_cycles == null
+    and (.health_provenance.reported_cycles.semantics_qualified | not)
+    and .health_provenance.reported_health.reported == "Good" and (.health_provenance.reported_health.physical_safety_qualified | not)
+    and .health_provenance.vendor_soh_percent.reported == null and (.health_provenance.observed_efc_is_lifetime_cycles | not)
+    and .observed_efc == null and .forecast.time_to_full_seconds == null and .forecast.reason == "profile_unqualified"
+    and .efc_coverage.checkpoint == "disabled_unqualified" and .capabilities.read_only and (.capabilities.charge_threshold | not)' "$work/snapshot.json" >/dev/null
 jq -e '.fields["battery.temp"].value == null and .safety == "unknown_safety_state"' "$work/snapshot.json" >/dev/null
+for value in -1 2147483648 missing; do
+    if [[ $value == missing ]]; then rm "$sys/class/power_supply/qcom-battmgr-bat/cycle_count";
+    else printf '%s\n' "$value" > "$sys/class/power_supply/qcom-battmgr-bat/cycle_count"; fi
+    "$work/build/uke-battery" --sysfs-root "$sys" > "$work/cycles-$value.json"
+    jq -e '.fields["battery.cycle_count"].value == null and .health_provenance.reported_cycles.reported == null
+        and .health_provenance.reported_cycles.effective_cycles == null and .observed_efc == null
+        and .health.capacity_retention_percent == null' "$work/cycles-$value.json" >/dev/null
+done
+printf '12\n' > "$sys/class/power_supply/qcom-battmgr-bat/cycle_count"
+printf '95\n' > "$sys/class/power_supply/qcom-battmgr-bat/state_of_health"
+"$work/build/uke-battery" --sysfs-root "$sys" > "$work/reported-health.json"
+jq -e '.health_provenance.reported_cycles.reported == 12 and .health_provenance.reported_cycles.effective_cycles == null
+    and .health_provenance.vendor_soh_percent.reported == 95 and (.health_provenance.vendor_soh_percent.semantics_qualified | not)
+    and .health.capacity_retention_percent == null and .observed_efc == null' "$work/reported-health.json" >/dev/null
 printf '1 2 1 2 1 1 0 0 -110 0 100 99\n' > "$sys/devices/charger/uke_battmgr_state"
 "$work/build/uke-battery" --sysfs-root "$sys" > "$work/stale.json"
-jq -e '(.snapshot_coherent | not) and .status == "transport_quiesced" and .recovery == "cold_boot_required" and .fields == {} and .physical_charge_stopped == null' "$work/stale.json" >/dev/null
+jq -e '(.snapshot_coherent | not) and .status == "transport_quiesced" and .recovery == "cold_boot_required" and .fields == {}
+    and .physical_charge_stopped == null and .health_provenance == null' "$work/stale.json" >/dev/null
 printf 'xiaomi,other\0' > "$sys/firmware/devicetree/base/compatible"
 "$work/build/uke-battery" --sysfs-root "$sys" --inventory > "$work/other.json"
 jq -e '(.provider_verified | not) and .status == "provider_unverified" and (.fields == null)' "$work/other.json" >/dev/null

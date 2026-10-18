@@ -170,6 +170,7 @@ bool range(const Field &f, const Reading &r) {
     if (name == "present" || name == "online") return v == 0 || v == 1;
     if (name == "current_now" || name == "charge_counter" || name == "power_now") return v >= INT32_MIN && v <= INT32_MAX;
     if (name == "input_current_limit") return v >= 0 && v <= INT32_MAX;
+    if (name == "cycle_count") return v >= 0 && v <= INT32_MAX;
     if (name == "temp") return v > INT32_MIN && v < INT32_MAX;
     return v > 0 && v <= INT32_MAX;
 }
@@ -254,6 +255,7 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
         << ",\"driver_instance_boottime_ns\":" << (last.valid ? std::to_string(last.instance) : "null")
         << ",\"attach_generation\":null,\"protocol\":null,\"contract\":null,\"cable_identity\":null,\"fields\":{";
     std::optional<int64_t> online, current;
+    std::string health_label;
     Observation sample; sample.fault = true;
     sample.valid = coherent; sample.boottime_ns = end; sample.monotonic_ns = now(CLOCK_MONOTONIC);
     if (last.valid) sample.epoch = std::to_string(last.instance) + ":" + std::to_string(last.firmware) + ":" + std::to_string(last.generation);
@@ -286,7 +288,7 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
             else if (name == "charge_full_design") sample.design_full_uah = n;
             else if (name == "state_of_health") sample.vendor_soh = n;
             else if (name == "cycle_count") sample.hardware_cycles = n;
-            else if (name == "health") sample.fault = r.text != "Good";
+            else if (name == "health") { health_label = r.text; sample.fault = r.text != "Good"; }
         }
     }
     const char *direction = !current ? "unknown" : *current > 0 ? "charging_current_observed" :
@@ -317,7 +319,16 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
         << ",\"capacity_basis\":" << (qualification.capacity_basis ? "true" : "false")
         << ",\"controls_enabled\":false},\"health\":{\"capacity_retention_percent\":";
     number(out, derived.capacity_retention_percent);
-    out << ",\"learned_capacity_qualified\":" << (qualification.learned_capacity ? "true" : "false") << "},\"observed_efc\":";
+    out << ",\"learned_capacity_qualified\":" << (qualification.learned_capacity ? "true" : "false")
+        << "},\"health_provenance\":{\"reported_health\":{\"reported\":" << (health_label.empty() ? "null" : quote(health_label))
+        << ",\"source\":\"linux_power_supply\",\"field\":\"battery.health\",\"physical_safety_qualified\":false}"
+        << ",\"vendor_soh_percent\":{\"reported\":";
+    number(out, sample.vendor_soh);
+    out << ",\"source\":\"linux_power_supply\",\"field\":\"battery.state_of_health\",\"semantics_qualified\":false}"
+        << ",\"reported_cycles\":{\"reported\":";
+    number(out, sample.hardware_cycles);
+    out << ",\"source\":\"linux_power_supply\",\"field\":\"battery.cycle_count\",\"semantics_qualified\":false,\"effective_cycles\":null}"
+        << ",\"capacity_retention_method\":\"qualified_learned_full_over_design\",\"observed_efc_is_lifetime_cycles\":false},\"observed_efc\":";
     number(out, derived.observed_efc);
     out << ",\"efc_coverage\":{\"covered_seconds\":" << derived.covered_seconds
         << ",\"uncovered_seconds\":" << derived.uncovered_seconds
