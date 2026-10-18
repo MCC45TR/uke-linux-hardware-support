@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 16%{?dist}
+Release: 17%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -70,6 +70,16 @@ and a synced backup, then verifies the complete partition after writing.
 Automatic updates require explicit local enablement and compatible boot-bundle
 RPMs. Installation alone does not activate partition writes or reboot.
 
+%package -n uke-installation-profile
+Summary: One-time native classification of the Uke Linux root partition
+Requires: senemos-native-runtime(libstdc++) systemd
+%description -n uke-installation-profile
+Optional first-boot classifier with system-wide durable state. Verifies the
+mounted physical EXT4 root and matching boot selector, then masks itself.
+The linux profile also masks the planned userdata-specific services. Neither
+installation nor classification writes a block device or changes boot slots.
+The service remains inactive until explicitly enabled by the image composer.
+
 %prep
 %setup -q
 %build
@@ -79,7 +89,9 @@ RPMs. Installation alone does not activate partition writes or reboot.
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/boot-guard.cpp -o uke-boot-guard $(pkg-config --cflags --libs libsystemd wayland-client) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs openssl libsystemd) %{build_ldflags}
+%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/install-profile.cpp -o uke-install-profile %{build_ldflags}
 %check
+bash tests/installation-policy.sh
 %{__cxx} -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o wifi-factory-contract
 ./wifi-factory-contract
 bash tests/startup-contract.sh
@@ -103,6 +115,8 @@ install -Dm755 uke-esp32-cdc %{buildroot}%{_libexecdir}/senemos-uke/uke-esp32-cd
 install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-esp32-cdc-log.service
 install -Dm755 uke-reboot %{buildroot}%{_bindir}/uke-reboot
 install -Dm755 uke-kernel-update %{buildroot}%{_bindir}/uke-kernel-update
+install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
+install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm644 src/profiles/kernel-update.conf %{buildroot}%{_sysconfdir}/senemos/kernel-update.conf
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
 install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
@@ -144,6 +158,12 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %dir %{_sysconfdir}/senemos
 %config(noreplace) %{_sysconfdir}/senemos/kernel-update.conf
 
+%files -n uke-installation-profile
+%license LICENSE
+%doc docs/USERDATA-AB.md
+%{_libexecdir}/senemos-uke/uke-install-profile
+%{_unitdir}/uke-install-profile.service
+
 %files -n uke-boot-recovery
 %license LICENSE
 %{_bindir}/uke-reboot
@@ -156,6 +176,10 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-17
+- Add an opt-in native installation classifier and file-based A/B policy tests.
+- Keep userdata slot writes and installer activation unavailable pending review.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-16
 - Restore saved drift-file time before chronyd readiness on Uke.
 
