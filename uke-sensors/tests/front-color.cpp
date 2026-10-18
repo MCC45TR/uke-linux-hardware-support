@@ -37,6 +37,21 @@ static std::string contents(const std::filesystem::path &path) {
     std::ifstream in(path); return std::string(std::istreambuf_iterator<char>(in), {});
 }
 int main() {
+    auto lookup_payload = color_lookup_payload();
+    auto lookup_fields = fields(lookup_payload);
+    std::size_t offset = 0;
+    assert(varint(one(lookup_fields,2,0),offset) == 1);
+    offset = 0; assert(varint(one(lookup_fields,3,0),offset) == 0);
+    Bytes lookup_result;
+    const std::string_view type = "cct_front";
+    length_field(lookup_result,1,View(reinterpret_cast<const std::uint8_t *>(type.data()),type.size()));
+    assert(!color_endpoint(event(lookup_uid,768,lookup_result)));
+    Bytes uid{9}; put(uid,1,8); uid.push_back(0x11); put(uid,2,8);
+    length_field(lookup_result,2,uid);
+    assert((color_endpoint(event(lookup_uid,768,lookup_result)) == Uid{1,2}));
+    rejects([&] { color_endpoint(event({1,2},768,lookup_result)); });
+    length_field(lookup_result,2,uid);
+    rejects([&] { color_endpoint(event(lookup_uid,768,lookup_result)); });
     using uke::color::State;
     using uke::color::Error;
     struct stat public_dir{}; public_dir.st_mode = S_IFDIR | 0755; public_dir.st_uid = 0;

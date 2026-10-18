@@ -1,11 +1,20 @@
 # Raw front-color endpoint
 
-18 October 2026. This is an isolated native C++ source/package candidate for
-Fedora AArch64 on Uke / SM7675. It has not been built, installed or tested in this
-workstream. A separate bounded tablet trial received one raw `cct_front` value
-through the exact Uke HAL's standard event 1025 after an empty on-change request
-514. That observation does not establish units, spectral calibration or
-persistent operation.
+18 October 2026. Release 1 is installed on Fedora Rawhide AArch64 / Uke and
+publishes raw `cct_front` samples through event 1025 after on-change request 514.
+The kernel-25 boot instead reports metadata unavailable; an explicit later
+restart receives a sample. This does not establish automatic data readiness,
+units, spectral calibration or persistent operation.
+
+Release 2 waits for SUID readiness updates before admitting metadata and
+collection. It uses the pinned Qualcomm sensinghub
+`329551963bcc063f6a89f6cbca259c5b5c9c4e0b` `sns_suid.proto` subscription,
+retains all matching endpoints and refuses ambiguity. Discovery ends after
+30 seconds or 64 events; it does not resend requests or restart a failed DSP.
+The metadata reply must contain event 128 and the existing type, physical,
+availability and on-change checks still apply. A failure logs one reason
+without raw identifiers. Host framing/state/file and empty-to-ready endpoint
+fixtures pass; native packaging and a normal tablet boot remain separate gates.
 
 The optional `uke-front-color` package publishes one local, read-only snapshot:
 

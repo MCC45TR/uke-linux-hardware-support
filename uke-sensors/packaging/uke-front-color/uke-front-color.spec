@@ -1,6 +1,6 @@
 Name: uke-front-color
 Version: 0.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native raw front-color snapshot publisher for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -46,5 +46,9 @@ install -Dm644 packaging/systemd/90-uke-front-color.preset %{buildroot}%{_preset
 %{_presetdir}/90-uke-front-color.preset
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
+- Wait for bounded SUID readiness events before metadata and sample admission.
+- Log one reason on startup failure without retrying a failed sensor.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1
 - Add an opt-in raw front-color endpoint with explicit freshness and invalidation.

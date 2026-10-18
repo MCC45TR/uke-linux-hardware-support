@@ -76,17 +76,6 @@ static void gate_metadata(View event, Uid selected) {
     }
     require(type_ok && available && physical && on_change, "Front-color endpoint metadata unavailable");
 }
-static Uid discover_color() {
-    Fd lookup(socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
-    require(lookup.value >= 0, "QRTR lookup socket unavailable");
-    auto found = suids(rpc(lookup.value, request("cct_front")), "cct_front");
-    require(found.size() == 1, "Exactly one front-color endpoint required");
-    require(!stopped, "Front-color discovery interrupted");
-    Fd metadata(socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
-    require(metadata.value >= 0, "QRTR metadata socket unavailable");
-    gate_metadata(rpc(metadata.value, request("", found[0], 1)), found[0]);
-    return found[0];
-}
 struct Connection {
     Fd fd{socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)};
     sockaddr_qrtr server{};
@@ -94,7 +83,7 @@ struct Connection {
     std::uint64_t rate_start_ns = boottime_ns();
     std::uint32_t local_node = 0;
     unsigned packet_count = 0;
-    explicit Connection(Uid selected) {
+    explicit Connection(Uid selected, unsigned message_id = 514, View payload = {}) {
         require(fd.value >= 0, "QRTR front-color socket unavailable");
         sockaddr_qrtr local{}, peer{}; socklen_t size = sizeof(local);
         require(getsockname(fd.value, reinterpret_cast<sockaddr *>(&local), &size) == 0 && size == sizeof(local), "QRTR local address unavailable");
@@ -121,7 +110,7 @@ struct Connection {
             found = true; break;
         }
         require(found && !stopped, "SSC service lookup unavailable");
-        send(fd.value, server, client_request(selected, 514, {}));
+        send(fd.value, server, client_request(selected, message_id, payload));
         while (!stopped && packets++ < 64) {
             auto data = receive(fd.value, peer, deadline);
             if (peer.sq_node != server.sq_node || peer.sq_port != server.sq_port) continue;
@@ -172,6 +161,40 @@ struct Connection {
         return Bytes(payload.begin() + 2, payload.end());
     }
 };
+static Bytes color_lookup_payload() {
+    constexpr std::string_view type = "cct_front";
+    Bytes payload;
+    length_field(payload, 1, View(reinterpret_cast<const std::uint8_t *>(type.data()), type.size()));
+    // sns_suid.proto: register_updates=true, default_only=false.
+    payload.insert(payload.end(), {0x10, 1, 0x18, 0});
+    return payload;
+}
+static std::optional<Uid> color_endpoint(View event) {
+    auto found = suids(event, "cct_front");
+    require(found.size() <= 1, "Ambiguous front-color endpoint");
+    return found.empty() ? std::nullopt : std::optional<Uid>(found[0]);
+}
+static Uid discover_color() {
+    std::optional<Uid> selected;
+    {
+        const auto payload = color_lookup_payload();
+        Connection lookup(lookup_uid, 512, payload);
+        const auto deadline = boottime_ns() + 30'000'000'000ULL;
+        unsigned events = 0;
+        while (!stopped && !selected && boottime_ns() < deadline && events < 64) {
+            auto event = lookup.next();
+            if (!event) continue;
+            ++events;
+            selected = color_endpoint(*event);
+        }
+    }
+    require(!stopped, "Front-color discovery interrupted");
+    require(selected.has_value(), "Front-color endpoint not ready within bounded discovery");
+    Fd metadata(socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
+    require(metadata.value >= 0, "QRTR metadata socket unavailable");
+    gate_metadata(rpc(metadata.value, request("", *selected, 1), 128), *selected);
+    return *selected;
+}
 static void update(uke::color::State &state, View event, Uid selected, std::uint64_t now_ns) {
     auto root = fields(event), uid = fields(one(root, 1, 2));
     require(Uid{little(one(uid, 1, 1)), little(one(uid, 2, 1))} == selected, "Foreign front-color sample");
@@ -227,7 +250,8 @@ int main(int argc, char **) {
                     uke::color::write_snapshot(directory.value, state.json(now)); published = now;
                 }
             }
-        } catch (const std::exception &) {
+        } catch (const std::exception &error) {
+            std::cerr << "Front-color unavailable: " << error.what() << '\n';
             // Disconnect invalidates immediately; error publication still obeys 1 Hz.
             state.clear(stage); uke::color::remove_snapshot(directory.value);
             while (!stopped) {
