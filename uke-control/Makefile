@@ -8,7 +8,7 @@ CPPFLAGS += -Isrc -Ibuild $(shell pkg-config --cflags libdrm libsystemd wayland-
 LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
-.PHONY: all check check-repositories clean srpm validate
+.PHONY: all check check-repositories check-sensor-proxy clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample
 build:
 	mkdir -p build
@@ -58,6 +58,10 @@ check-repositories: build/test-package-repos
 	bash tests/package-repos.sh
 build/test-package-repos: tests/package-repos.cpp src/packages.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(shell pkg-config --cflags --libs libdnf5 rpm) -o $@
+check-sensor-proxy: build/test-sensor-proxy
+	bash tests/sensor-proxy.sh
+build/test-sensor-proxy: tests/sensor-proxy.cpp src/sensors.cpp src/front-color.cpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $< src/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
 validate:
 	test -s src/backend.cpp -a -s src/diagnostics.cpp -a -s packaging/uke-control.spec
 	cmp shared/ssc-discovery.cpp ../uke-sensors/src/ssc-discovery.cpp
