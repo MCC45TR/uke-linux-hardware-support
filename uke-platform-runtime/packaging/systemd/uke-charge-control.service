@@ -1,0 +1,31 @@
+[Unit]
+Description=Reviewed Uke charge-threshold admission for standard power clients
+After=local-fs.target
+ConditionPathExists=/run/uke-battery/control-identity.json
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/uke-charge-control serve
+User=root
+Restart=no
+TimeoutStopSec=35
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_SYS_ADMIN
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+UMask=0077
+RuntimeDirectory=uke-charge-control
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+ReadWritePaths=/run/uke-charge-control
+
+[Install]
+WantedBy=multi-user.target

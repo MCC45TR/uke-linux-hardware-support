@@ -1,0 +1,2 @@
+disable uke-charge-control.service
+disable uke-charge-automatic.service

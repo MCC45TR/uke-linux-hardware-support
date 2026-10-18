@@ -4,22 +4,26 @@
   "soc": "SM7675",
   "repository": "https://github.com/MCC45TR/uke-linux-hardware-support",
   "version": "0.1.0",
-  "status": "initial-source-and-packaging-scaffold",
+  "status": "battery-observer-and-charge-control-source-candidate",
   "package_build_ready": false,
   "expected_packages": [
     "uke-platform-runtime",
     "hexagonrpc-uke",
-    "libssc-uke"
+    "libssc-uke",
+    "uke-battery-observer",
+    "uke-charge-control"
   ],
   "nabu_reference_packages": [
     "nabu-platform-runtime"
   ],
   "reference_project": "mcc45tr/nabu-linux",
-  "scope": "Qualcomm remoteproc, QRTR, FastRPC and SSC native runtime integration",
+  "scope": "Qualcomm remoteproc, QRTR, FastRPC and SSC native runtime integration; read-only battery observation, evidence-gated models and separately admitted native standard charging control",
   "acceptance_gates": [
     "Pin upstream C/C++ sources and their licenses",
     "Prove Uke firmware/service topology and kernel interfaces",
-    "Do not carry Nabu service arguments or firmware names"
+    "Do not carry Nabu service arguments or firmware names",
+    "Run deferred battery source, model, collector and D-Bus checks",
+    "Qualify pack/firmware/profile and adapter cases before enabling estimates or controls"
   ],
   "targets": {
     "first": "fedora-rawhide-aarch64",

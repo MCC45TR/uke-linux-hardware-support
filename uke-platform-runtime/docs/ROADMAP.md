@@ -1,17 +1,14 @@
-# Initial Uke roadmap
+# Source and acceptance roadmap — 18 October 2026
 
-1. Inventory the named Nabu reference families and pin relevant upstream sources.
-2. Establish Uke-specific interfaces, licenses and firmware profile boundaries.
-3. Implement the intended packages and complete these gates:
+1. Complete the deferred source application, native compilation, host fixtures,
+   sanitizer/concurrency review, D-Bus and RPM lifecycle/closure work.
+2. Identify actual pack, firmware ABI, measurement basis and protection owners.
+3. Qualify existing bounded SDP charging before any new writable policy.
+4. Record tablet OEM, F5 OEM and Ricomm C1/C2/shared-port evidence independently.
+5. Admit health/EFC/time models only with qualified inputs and independent traces.
+6. Add a firmware policy interface only when its field-specific contract,
+   autonomous protections, effective readback and rollback are known.
 
-- Pin upstream C/C++ sources and their licenses.
-- Prove Uke firmware/service topology and kernel interfaces.
-- Do not carry Nabu service arguments or firmware names.
-
-4. Build and audit AArch64 RPM/SRPM payloads and their complete dependency closure.
-5. Test installation, upgrade and removal in an isolated target environment.
-6. Publish accepted development candidates to COPR, then collect distinct physical
-   results using a preserved stock/recovery route.
-
-The initial repository validates structure and intent only. It claims no build,
-boot, peripheral or physical acceptance.
+The observer and model libraries are source candidates. Remoteproc/QRTR/FastRPC/
+SSC packages retain their own source and hardware gates. Neither the observer
+nor its build can close a physical charging or protection requirement.
