@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "usb-request.hpp"
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -208,13 +209,43 @@ void charge_set(unsigned percent) {
     Fd fd{open(paths[0].c_str(),O_WRONLY|O_CLOEXEC)};need(fd.n>=0,"Charge threshold is not writable");write_all(fd.n,std::to_string(percent));
     auto value=read(paths[0].string(),64);need(value==std::to_string(percent)+"\n","Driver did not confirm the requested threshold");atomic_file(state/"charge-limit",std::to_string(percent)+"\n");
 }
-std::string usb_status() {
-    std::string result;
-    for(const char* root:{"/sys/class/udc","/sys/class/usb_role","/sys/class/typec"})if(fs::exists(root))for(const auto& item:fs::directory_iterator(root)) {
-        for(const char* attr:{"state","current_speed","maximum_speed","role","data_role","power_role"})if(fs::exists(item.path()/attr))result+=item.path().filename().string()+"/"+attr+"="+read((item.path()/attr).string(),256);
+Result usb_request_data(const std::string& role) {
+    Lock lock;
+    return usb::request_data(role);
+}
+Result cdc_set(bool enabled) {
+    Lock lock;board();
+    auto marker=read("/sys/firmware/devicetree/base/chosen/senemos,usb-profile",64);
+    while(!marker.empty()&&(marker.back()=='\n'||marker.back()=='\0'))marker.pop_back();
+    need(marker=="typec-v1","Manual CDC requires the matched full Type-C boot/root profile");
+    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","uke-usb-manual-cdc-api = 1"},5,4096);
+    need(api.status==0,"Install the matched manual CDC support package before changing policy");
+    const fs::path config="/etc/senemos";
+    fs::create_directories(config);
+    struct stat st{};
+    need(lstat(config.c_str(),&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted USB configuration directory");
+    atomic_file(config/"usb-sharing",enabled?"auto-debug\n":"disabled\n");
+    need(chmod((config/"usb-sharing").c_str(),0644)==0,"Cannot publish the non-secret USB policy");
+    // This unit exports only ACM after a real device-role attachment; no shell or ECM.
+    const auto change=execute({"/usr/bin/systemctl",enabled?"enable":"disable","--now","uke-usb-auto.service"},20,4096);
+    const auto active=execute({"/usr/bin/systemctl","is-active","--quiet","uke-usb-auto.service"},5,4096);
+    const bool running=active.status==0;
+    const bool manager_ok=change.status==0&&running==enabled;
+    bool bound=false;
+    if(fs::exists("/sys/class/udc"))for(const auto& udc:fs::directory_iterator("/sys/class/udc")) {
+        auto function=read((udc.path()/"function").string(),256);
+        if(!function.empty()&&function!="\n"&&function!="unavailable\n")bound=true;
     }
-    auto service=execute({"/usr/bin/systemctl","show","uke-cdc-acm.service","--property=ActiveState,UnitFileState","--no-pager"},5);
-    result+=service.output;result+="USB role/PD/DisplayPort controls require a qualified kernel and ownership API; direct rebind is unavailable.\n";return result;
+    const bool owned=read("/run/senemos-uke/usb-gadget-profile",64)=="auto-acm\n";
+    const bool converged=manager_ok&&(enabled?(!bound||owned):!bound);
+    const char* effective=!converged?"error":!enabled?"disabled":bound?"exported_not_host_verified":"awaiting_attachment";
+    return {converged?0:74,std::string("{\"requested_cdc\":\"")+(enabled?"on":"off")+
+        "\",\"policy_saved\":true,\"manager_active\":"+(running?"true":"false")+
+        ",\"manager_matches_request\":"+(manager_ok?"true":"false")+
+        ",\"gadget_bound\":"+(bound?"true":"false")+
+        ",\"request_converged\":"+(converged?"true":"false")+
+        ",\"effective_state\":\""+effective+'"'+
+        ",\"enumeration\":\"inspect_usb_status\",\"root_shell\":false,\"network_export\":false}\n"};
 }
 std::string status() {
     std::string selected=geteuid()==0?policy():"root-private (sudo to inspect)";

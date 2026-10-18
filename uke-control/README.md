@@ -6,18 +6,20 @@ The original distribution desktop remains unchanged.
 
 ## Status — 18 October 2026
 
-Signed COPR build 11166924 installed core and development packages through DNF
+Signed COPR build 11167212 installed core and development packages through DNF
 on POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.10-23. The systemd service
 created a 3690 MiB swap file with the standard SELinux swap label. Changes to
 512 MiB, full RAM and half RAM passed. SensorProxy, processed sensor inputs,
-DRM sampling and bounded proximity discovery ran on the tablet. Reboot
-persistence and preference for an existing swap partition remain untested at
-this checkpoint. These observations do not establish physical VRR or sensor
-acceptance.
+DRM sampling and bounded proximity discovery ran on the tablet. Normal reboot
+restored the half-RAM swap and preserved the first inventory. Preference for an
+existing swap partition remains untested. These observations do not establish
+physical VRR or sensor acceptance.
 The charge-limit control is available only when the driver exports a writable
 `charge_control_end_threshold`. Current Uke firmware controls are not invented
-or accessed through raw battery property requests. USB status reads cached
-sysfs state; role switching, PD and DisplayPort management remain unqualified.
+or accessed through raw battery property requests. The USB source candidate adds
+cached topology and guarded standard data-role requests. It requires a matched
+full Type-C kernel/root tuple. The installed kernel 7.2.10-23 remains fixed
+peripheral; host, PD, DisplayPort and manual CDC physical acceptance remain open.
 
 ## Commands
 
@@ -33,6 +35,10 @@ uke-control charge modes
 uke-control charge plan charge80 # metadata only; no actuator
 sudo uke-control charge limit 80 # requires a standard supported threshold
 uke-control usb status
+uke-control usb watch 60
+sudo uke-control usb request data host
+sudo uke-control set cdc on
+sudo uke-control set cdc off
 uke-control test display 60
 uke-control test display 30 --csv
 uke-control test cadence 144
@@ -62,6 +68,36 @@ Charging policy previews describe 80% cap, 80-90% autonomous hold, slow and
 automatic profiles. They explicitly report the missing actuator and never apply
 a preview. See [charging policy limits](CHARGING.md). No qualified charge-control
 backend is supplied.
+
+## USB and CDC
+
+`usb status` returns bounded JSON containing cached Type-C and controller roles,
+UDC state, USB device/interface IDs and speeds, bound drivers, USB NIC counters
+and external display modes. Missing values remain null. `usb watch` records one
+snapshot per second for a bounded interval. Neither command reads power-supply
+attributes, activates D-Bus services or collects serial strings, MAC address
+attributes or EDID bytes. Interface names may still encode device identifiers;
+snapshots belong in private reports. These observations do not prove PD contracts, coherent
+attachment epochs, display depth or physical functionality.
+
+`usb request data host|device` requires root, the matched `typec-v1` Uke profile
+and the shared gadget ownership API. It requests the standard Type-C `data_role`
+through the kernel's UCSI provider; it never writes `usb_role`, PHY registers or
+charger properties. Attached USB storage, an active USB NIC or enabled external
+display blocks a change. Only the recorded automatic ACM gadget may be torn down.
+Other gadgets and legacy `g_serial` are refused. A changed partner aborts the
+request. A successful sysfs write and a matching Type-C/controller readback are
+reported separately; neither establishes physical acceptance. There is no
+automatic retry or saved role override, and no power-source or lane-force control.
+
+CDC defaults to off. `set cdc on` saves explicit permission for ACM and starts
+the matched attachment watcher. A computer must attach in device data role before
+export; waiting for attachment is distinct from export and enumeration. `set cdc
+off` disables the watcher and removes only its recorded gadget. It refuses to
+claim completion if a foreign gadget remains bound. Neither operation enables
+a root shell, Ethernet gadget, hotspot or other network sharing. The manual CDC
+support capability is required; old support packages cannot silently substitute
+their previous debug behavior. The selected on/off policy persists across boots.
 
 ## Swap and first boot
 
