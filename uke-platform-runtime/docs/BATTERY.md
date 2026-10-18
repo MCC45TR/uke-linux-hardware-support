@@ -13,6 +13,10 @@ The system service uses an unprivileged account and is disabled by its preset.
 A request to its own D-Bus name may activate this read-only observer. It never
 connects to or activates UPower. Installation and activation remain untested.
 
+The separate [charge-control source](CHARGE-CONTROL.md) supplies guarded standard
+threshold/FCC operations outside this observer. Its own kernel options, profile
+and services remain disabled/unqualified; this observation API gains no writer.
+
 ## Observation contract
 
 The collector admits only the exact `xiaomi,uke` DT compatible and the expected
@@ -68,7 +72,7 @@ An invalid snapshot/provider or lost qualification breaks continuity. The defaul
 profile is `uke-unqualified`. The implemented runtime resolver requires matching,
 privileged per-boot evidence with expiry; [its contract](RUNTIME-PROFILE.md)
 separates operator attestation from hardware authentication. A profile edit alone
-does not enable calculations, and no profile enables hardware control. Default
+does not enable calculations, and no model profile enables hardware control. Default
 production health ratios, EFC and ETA remain null. Firmware
 SOH, cycles and ETA are exposed only as separate unqualified reported fields.
 
@@ -135,8 +139,9 @@ A fixture warning level is not proof of a desktop power-off action.
 ## Build and rollback boundary
 
 `make all`, `make test-native` and `make srpm` are future host operations, not
-results of this session. The RPM recipe contains the C++ observer, units and an
-unqualified evidence record. It excludes upstream UPower sources, tests,
+results of this session. The RPM recipe separates the read-only observer from
+the privileged charge-control subpackage, with disabled services and unqualified
+records. It excludes upstream UPower sources, installed tests,
 firmware, calibration and Python from the installed payload. Transitive RPM
 closure and package/service lifecycle have not been checked.
 
