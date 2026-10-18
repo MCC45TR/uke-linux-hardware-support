@@ -108,3 +108,10 @@ fixtures cover these refusals and do not establish an electrical cutoff when
 the process exits or a lease expires. Firmware retains CV, termination and
 autonomous thermal/fault protection ownership. A displayed 100% and Charging
 alone establish neither a fault nor successful termination.
+
+`sudo uke-control charge settings` is an explicit firmware read through the
+matched native helper/kernel. It reads only the three standard threshold fields,
+returns exact reported values and never grants control permission. The helper
+rejects missing kernel support, recent/active control snapshots, changed epochs,
+malformed/partial or stale data. Existing status/admission remain metadata-only.
+No raw-property selector, setter, polling service or automatic fallback is added.

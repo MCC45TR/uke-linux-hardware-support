@@ -244,3 +244,24 @@ are not interchangeable with battery isolation and external system supply.
 No guessed vendor command, bus access or protection threshold is introduced.
 Selected firmware/pack, autonomous protection and physical current-response
 evidence remain required before enabling power-path controls.
+
+## Deliberate firmware settings query — release 4 candidate
+
+`sudo uke-charge-control settings` requires the matched kernel's root-only
+`uke_charge_settings` node. It performs three fixed standard threshold GETs,
+with no profile admission, SET, current/voltage/XM/PD request or service activation.
+`status`, `admission`, `protocols` and `capabilities` retain their metadata-only
+semantics. Missing old-kernel support is an explicit failure, without fallback.
+
+The helper holds its existing owner lock and requires quiescent control/readback
+metadata before querying. It compares provider, boot, kernel and lifecycle epochs
+before/after, strictly parses all nine fields and rejects partial, stale, future,
+invalid or changed-source responses. Fields are sequential remote reads, not an
+atomic configuration transaction. Disabled0/0 is preserved rather than invented
+0/100. Successful JSON reports firmware values, applied=false and no granted
+control authorization; no threshold effect or battery bypass is established.
+
+The coordinator will test this query first with PD power disconnected. Unknown
+or timed-out firmware responses retain the transport's existing refusal/quarantine
+rules. There is no automatic replay, firmware reset or control-profile promotion.
+Protection and actual charge stop remain separate qualification stages.

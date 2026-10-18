@@ -19,6 +19,7 @@ static void help() {
       "  charge plan MODE            Preview metadata; performs no hardware write\n"
       "  charge status               Native control metadata, or standard capability\n"
       "  charge capabilities|admission|protocols  Native backend metadata\n"
+      "  charge settings             Read three firmware threshold fields (root; no SET)\n"
       "  charge mode MODE            Request qualified charge80, hold80-90, slow or automatic\n"
       "  charge limit PERCENT        Request the qualified 80% cap or a supported standard threshold\n"
       "  usb status                  Cached Type-C, USB topology, NIC and display JSON\n"
@@ -58,7 +59,7 @@ int main(int argc,char** argv) {
             if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);return 0;}
         }
         if(command=="charge") {
-            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols")) {
+            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="settings")) {
                 auto result=uke::charge_control_query(argv[2]);std::cout<<result.output;return result.status;
             }
             if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::charge_status();return 0;}

@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -88,3 +88,8 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_sysusersdir}/uke-battery.conf
 %{_datadir}/uke-battery/battery-profile.json
 %{_datadir}/uke-battery/model-profile.json
+
+%changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
+- Add an explicit matched-kernel query for firmware-reported charge thresholds.
+- Preserve read-only status and control qualification; reject stale or mixed-epoch readback.

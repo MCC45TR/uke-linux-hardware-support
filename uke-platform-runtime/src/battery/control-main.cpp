@@ -204,15 +204,17 @@ int main(int argc, char **argv) {
     std::unique_ptr<Session> session;
     const bool admission_query = argc == 2 && std::strcmp(argv[1], "admission") == 0;
     const bool protocol_query = argc == 2 && std::strcmp(argv[1], "protocols") == 0;
+    const bool settings_query = argc == 2 && std::strcmp(argv[1], "settings") == 0;
     try {
         if (argc == 2 && std::string(argv[1]) == "capabilities") {
-            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"settings_query_implemented\":true,\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
             return 0;
         }
         if (argc == 2 && std::string(argv[1]) == "--help") {
-            std::cout << "uke-charge-control capabilities | status | admission | protocols\n"
+            std::cout << "uke-charge-control capabilities | status | admission | protocols | settings\n"
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
+                << "settings requires root and performs three diagnostic GETs without control permission.\n"
                 << "Actions require root, a reviewed control profile and matching per-boot evidence.\n"
                 << "Positive FCC only; CV remains firmware-owned. No PD negotiation or electrical cutoff.\n";
             return 0;
@@ -220,7 +222,7 @@ int main(int argc, char **argv) {
         if (argc < 2) fail("control_command_required");
         const std::string command(argv[1]);
         if ((command == "pair" && argc != 4) || (command != "pair" && argc != 2)) fail("control_arguments_invalid");
-        if (command != "status" && command != "admission" && command != "protocols" && command != "verify" && command != "cap80" && command != "band80-90" &&
+        if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
@@ -230,6 +232,22 @@ int main(int argc, char **argv) {
             return 0;
         }
         if (geteuid() != 0) fail("control_root_required");
+        if (settings_query) {
+            Lock owner;
+            const auto before = context(*io);
+            if (before.state.live || before.state.verified || before.state.current_verified)
+                fail("settings_recent_control_readback");
+            const auto settings = parse_settings(io->read_attribute("uke_charge_settings"));
+            const auto after = context(*io);
+            if (!settings_match_context(settings, before, after)) fail("settings_epoch_or_time_changed");
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_settings\",\"operation\":\"firmware_read_only\",\"firmware_get_complete\":true"
+                << ",\"reported_enabled\":" << (settings.enabled ? "true" : "false")
+                << ",\"reported_start_percent\":" << settings.start << ",\"reported_end_percent\":" << settings.end
+                << ",\"received_boottime_ns\":" << settings.received_ns
+                << ",\"atomic_remote_snapshot\":false,\"profile_qualification_checked\":false,\"control_authorization_granted\":false"
+                << ",\"firmware_set_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
+            return 0;
+        }
         const auto initial = context(*io);
         const auto profile = resolve(initial);
         if (admission_query) {
@@ -289,6 +307,11 @@ int main(int argc, char **argv) {
         }
         session->revoke(); session.reset(); return 0;
     } catch (const std::exception &e) {
+        if (settings_query) {
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_settings\",\"firmware_get_complete\":false,\"reason\":\""
+                << identifier(e.what()) << "\",\"firmware_set_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
+            return 69;
+        }
         if (protocol_query) { emit_protocols({}, false, e.what()); return 69; }
         if (admission_query) {
             Admission a; a.reason = e.what(); emit_admission(a); return 69;

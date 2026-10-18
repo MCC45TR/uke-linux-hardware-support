@@ -29,6 +29,13 @@ struct Context {
     State state;
     uint64_t boottime_ns = 0;
 };
+struct Settings {
+    uint64_t instance = 0, received_ns = 0;
+    uint32_t generation = 0, firmware = 0, source = 0, start = 0, end = 0;
+    bool enabled = false;
+};
+Settings parse_settings(const std::string &text);
+bool settings_match_context(const Settings &settings, const Context &before, const Context &after);
 struct Band {
     int32_t minimum_deciC = 0, maximum_deciC = 0;
     uint32_t maximum_ua = 0, maximum_uv = 0;

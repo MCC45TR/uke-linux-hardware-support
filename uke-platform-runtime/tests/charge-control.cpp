@@ -64,6 +64,40 @@ public:
 };
 }
 int main() {
+    {
+        const std::string text="1 42 7 2 3 2000000000 0 0 0";
+        const auto settings=parse_settings(text);
+        assert(!settings.enabled && !settings.start && !settings.end);
+        for(const auto &invalid:{text+" extra",std::string("2 42 7 2 3 2000000000 0 0 0"),
+            std::string("1 -1 7 2 3 2000000000 0 0 0"),std::string("1 0 7 2 3 2000000000 0 0 0"),
+            std::string("1 18446744073709551616 7 2 3 2000000000 0 0 0"),
+            std::string("1 42 7 2 3 0 0 0 0"),std::string("1 42 7 2 3 2000000000 2 0 0"),
+            std::string("1 42 7 2 3 2000000000 1 90 80"),std::string("1 42 7 2 3 2000000000 1 0 101")})
+            rejects([&]{parse_settings(invalid);});
+        Context before;before.provider_verified=true;before.state=sample();before.boottime_ns=2*second-1;
+        before.state.live=before.state.verified=before.state.current_verified=false;
+        before.boot_id="synthetic-boot";before.kernel_release="synthetic-kernel";
+        auto after=before;after.boottime_ns=2*second+1;
+        assert(settings_match_context(settings,before,after));
+        for(unsigned fault=0;fault<12;fault++) {
+            auto changed=after;
+            if(fault==0)++changed.state.generation;
+            if(fault==1)++changed.state.firmware;
+            if(fault==2)++changed.state.source;
+            if(fault==3)++changed.state.instance;
+            if(fault==4)changed.boot_id="other-boot";
+            if(fault==5)changed.kernel_release="other-kernel";
+            if(fault==6)changed.provider_verified=false;
+            if(fault==7)changed.boottime_ns=settings.received_ns-1;
+            if(fault==8)changed.boottime_ns=settings.received_ns+5*second+1;
+            if(fault==9)changed.state.live=true;
+            if(fault==10)changed.state.verified=true;
+            if(fault==11)changed.state.current_verified=true;
+            assert(!settings_match_context(settings,before,changed));
+        }
+        after.boottime_ns=settings.received_ns+5*second;
+        assert(settings_match_context(settings,before,after));
+    }
     // Strict metadata shape; unsigned overflow/sign and extra tokens rejected.
     const std::string text = "1 1 1 7 2 3 42 32000000000 1 70 80 1 2000000000 0 1 " + sha +
         " 1 1 1000000 1 2000000000 250 4000000 500000 2000000000 1 500000000\n";

@@ -25,6 +25,9 @@ int main() {
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","status"}}));
     reset({{69,"metadata unavailable"}});
     assert(uke::charge::control_query("status").status==69&&calls.size()==1);
+    reset({{0,"{\"kind\":\"uke_charge_settings\",\"applied\":false}\n"}});
+    assert(uke::charge::control_query("settings").status==0);
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","settings"}}));
     reset({});
     bool query_rejected=false;
     try{uke::charge::control_query("verify");}catch(const std::exception&){query_rejected=true;}
