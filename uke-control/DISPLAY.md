@@ -28,8 +28,8 @@ no request to refresh it. A missing/untrusted/malformed snapshot returns an
 unavailable status with a fixed reason and no values.
 
 DSP tick frequency, clock mapping, units and calibration remain unverified.
-In particular, the prior raw value 4749/status 3 is not relabelled Kelvin and
-status 3 is not a calibration certificate. This interface does not set the
+Raw numeric values are not relabelled Kelvin, and wire status 3 is not a
+calibration certificate. This interface does not set the
 desktop white point, replace SensorProxy's ALS/rotation interface or invent
 an IIO/sysfs device.
 

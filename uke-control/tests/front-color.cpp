@@ -51,7 +51,7 @@ int main() {
         assert(fifo.value>=0&&!trusted(fifo.value,false));
     }
     std::filesystem::remove_all(fixture);
-    const std::string sample=R"({"schema":"org.uke.sensors.front-color.v1","version":1,"data_type":"cct_front","connected":true,"has_sample":true,"fresh":true,"available":true,"error":"","values":[4749],"status":3,"timestamp_ticks":123,"dsp_clock_hz":null,"dsp_clock_mapping":"unverified","received_boottime_ns":10000000000,"published_boottime_ns":11000000000,"freshness_window_ns":30000000000,"units":"unverified","calibration":"unverified"})";
+    const std::string sample=R"({"schema":"org.uke.sensors.front-color.v1","version":1,"data_type":"cct_front","connected":true,"has_sample":true,"fresh":true,"available":true,"error":"","values":[4500],"status":3,"timestamp_ticks":123,"dsp_clock_hz":null,"dsp_clock_mapping":"unverified","received_boottime_ns":10000000000,"published_boottime_ns":11000000000,"freshness_window_ns":30000000000,"units":"unverified","calibration":"unverified"})";
     auto inspected=front_color_snapshot(sample,12'000'000'000);
     assert(available(inspected) && inspected.find("org.uke.control.front-color.v1")!=std::string::npos);
     assert(available(front_color_snapshot(sample,16'000'000'000)));
@@ -69,8 +69,8 @@ int main() {
         replace(sample,"\"version\":1","\"version\":1,\"version\":1"),
         replace(sample,"\"units\":\"unverified\"","\"units\":\"kelvin\""),
         replace(sample,"\"dsp_clock_hz\":null","\"dsp_clock_hz\":19200000"),
-        replace(sample,"[4749]","[\"4749\"]"), replace(sample,"[4749]","[1e999]"),
-        replace(sample,"[4749]","[]"), replace(sample,"\"status\":3","\"status\":4"),
+        replace(sample,"[4500]","[\"4500\"]"), replace(sample,"[4500]","[1e999]"),
+        replace(sample,"[4500]","[]"), replace(sample,"\"status\":3","\"status\":4"),
         replace(sample,"\"connected\":true","\"connected\":false"),
         replace(sample,"\"fresh\":true","\"fresh\":false"),
         replace(sample,"\"timestamp_ticks\":123","\"timestamp_ticks\":0"),
@@ -84,7 +84,7 @@ int main() {
     waiting=replace(waiting,"\"fresh\":true","\"fresh\":false");
     waiting=replace(waiting,"\"available\":true","\"available\":false");
     waiting=replace(waiting,"\"error\":\"\"","\"error\":\"awaiting_sample\"");
-    waiting=replace(waiting,"[4749]","[]");
+    waiting=replace(waiting,"[4500]","[]");
     waiting=replace(waiting,"\"status\":3","\"status\":null");
     waiting=replace(waiting,"\"timestamp_ticks\":123","\"timestamp_ticks\":null");
     waiting=replace(waiting,"\"received_boottime_ns\":10000000000","\"received_boottime_ns\":null");
