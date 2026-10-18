@@ -12,6 +12,10 @@
 using namespace uke::battery;
 int main(int argc, char **argv) {
     assert(argc == 2);
+    const double duration_limit = static_cast<double>(std::numeric_limits<int64_t>::max());
+    assert(!duration(duration_limit, "fixture").seconds);
+    assert(duration(std::nextafter(duration_limit, 0.0), "fixture").seconds);
+    assert(!duration(-1, "fixture").seconds && !duration(INFINITY, "fixture").seconds);
     Qualification q;
     Observation s; s.valid = true; s.battery_id = "a1"; s.boot_id = "b1"; s.epoch = "1";
     s.current_ua = -1000000; s.voltage_uv = 4000000; s.energy_uwh = 19000000;

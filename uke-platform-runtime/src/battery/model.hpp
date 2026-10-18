@@ -40,7 +40,8 @@ inline Number retention(const Observation &s, const Qualification &q) {
     return std::isfinite(result) ? Number(result) : Number{};
 }
 inline Estimate duration(double seconds, const char *method) {
-    if (!std::isfinite(seconds) || seconds < 0 || seconds > std::numeric_limits<int64_t>::max())
+    if (!std::isfinite(seconds) || seconds < 0 ||
+        seconds >= static_cast<double>(std::numeric_limits<int64_t>::max()))
         return {{}, "estimate_out_of_range", "unknown"};
     return {seconds, method, "low"};
 }
