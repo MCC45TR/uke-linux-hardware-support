@@ -6,6 +6,7 @@ After=uke-cdc-acm.service
 ConditionKernelCommandLine=senemos.debug=cdc-acm
 
 [Service]
+ExecCondition=/usr/libexec/senemos-uke/uke-usb-network allow-legacy
 # Opening the gadget TTY can wait for USB carrier; do not hold up boot.
 Type=simple
 ExecStart=-/usr/bin/bash --noediting --noprofile --norc -i

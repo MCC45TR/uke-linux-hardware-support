@@ -1,0 +1,19 @@
+[Unit]
+Description=Uke automatic CDC gadget for an attached USB computer
+Requires=sys-kernel-config.mount
+After=sys-kernel-config.mount systemd-udev-trigger.service
+Conflicts=uke-cdc-acm.service uke-cdc-shell.service uke-usb-network.service uke-usb-network-shell.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+ConditionPathExists=/etc/senemos/usb-sharing
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/senemos-uke/uke-usb-network watch-auto
+ExecStopPost=/usr/libexec/senemos-uke/uke-usb-network stop-auto
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

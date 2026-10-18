@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 16%{?dist}
+Release: 18%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -10,8 +10,11 @@ ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
 BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
 BuildRequires: openssl-devel
+BuildRequires: pkgconfig(libdrm)
 Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
+Requires: util-linux-core coreutils grep
+Provides: uke-usb-gadget-ownership-api = 2
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -74,12 +77,17 @@ RPMs. Installation alone does not activate partition writes or reboot.
 %setup -q
 %build
 %{__cxx} %{optflags} -std=c++17 -ffile-prefix-map=$PWD=. src/boot-status.cpp -o uke-boot-status %{build_ldflags}
+%{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/usb-port.cpp -o uke-usb-port $(pkg-config --cflags --libs libsystemd libdrm) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -ffile-prefix-map=$PWD=. src/esp32-cdc.cpp -o uke-esp32-cdc %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/wifi-factory.cpp -o uke-wifi-factory %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/boot-guard.cpp -o uke-boot-guard $(pkg-config --cflags --libs libsystemd wayland-client) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs openssl libsystemd) %{build_ldflags}
 %check
+%{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o usb-port-contract
+./usb-port-contract
+bash tests/usb-inventory.sh
+bash tests/usb-auto.sh
 %{__cxx} -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o wifi-factory-contract
 ./wifi-factory-contract
 bash tests/startup-contract.sh
@@ -89,6 +97,9 @@ bash tests/startup-native.sh
 %install
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
+install -Dm755 uke-usb-port %{buildroot}%{_bindir}/uke-usb-port
+install -Dm644 src/units/uke-usb-observer.service %{buildroot}%{_unitdir}/uke-usb-observer.service
+install -Dm644 src/profiles/org.senemos.Uke.USB1.conf %{buildroot}%{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
 install -Dm755 uke-wifi-factory %{buildroot}%{_libexecdir}/senemos-uke/uke-wifi-factory
 install -Dm644 src/units/uke-wifi-factory.service %{buildroot}%{_unitdir}/uke-wifi-factory.service
 install -d %{buildroot}%{_datadir}/senemos/boot/uke
@@ -96,6 +107,7 @@ install -m644 src/profiles/* %{buildroot}%{_datadir}/senemos/boot/uke/
 install -Dm644 src/units/uke-cdc-acm.service %{buildroot}%{_unitdir}/uke-cdc-acm.service
 install -Dm644 src/units/uke-cdc-shell.service %{buildroot}%{_unitdir}/uke-cdc-shell.service
 install -Dm755 src/uke-usb-network.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-usb-network
+install -Dm644 src/units/uke-usb-auto.service %{buildroot}%{_unitdir}/uke-usb-auto.service
 install -Dm644 src/units/uke-usb-network.service %{buildroot}%{_unitdir}/uke-usb-network.service
 install -Dm644 src/units/uke-usb-network-shell.service %{buildroot}%{_unitdir}/uke-usb-network-shell.service
 install -Dm644 src/profiles/uke-coresight-bringup.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
@@ -115,11 +127,16 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %files
 %license LICENSE
 %doc README.md
+%doc docs/USB-TYPEC.md
 %{_bindir}/uke-boot-status
+%{_bindir}/uke-usb-port
+%{_unitdir}/uke-usb-observer.service
+%{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
 %{_unitdir}/chronyd.service.d/70-uke-clock.conf
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
 %{_libexecdir}/senemos-uke/uke-usb-network
+%{_unitdir}/uke-usb-auto.service
 %{_unitdir}/uke-usb-network.service
 %{_unitdir}/uke-usb-network-shell.service
 %{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
@@ -156,6 +173,12 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-17
+- Add a read-only USB-C class observer and independent role/power planning code.
+- Serialize explicit debug gadget ownership and inhibit stale legacy fallback.
+- Match configfs's mA descriptor with the configured 500 mA USB2 budget.
+- Keep new protocol and hardware validation pending; installation activates no USB service.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-16
 - Restore saved drift-file time before chronyd readiness on Uke.
 

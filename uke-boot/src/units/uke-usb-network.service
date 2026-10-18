@@ -1,5 +1,5 @@
 [Unit]
-Description=Uke owner-enabled USB ACM and Ethernet debug transport
+Description=Uke explicit USB ACM and Ethernet debug transport
 Requires=sys-kernel-config.mount
 Wants=NetworkManager.service sshd.socket
 After=sys-kernel-config.mount NetworkManager.service
@@ -11,6 +11,7 @@ ConditionPathExists=/etc/NetworkManager/system-connections/uke-usb-debug.nmconne
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+ExecCondition=/usr/libexec/senemos-uke/uke-usb-network allow-legacy
 ExecStart=/usr/libexec/senemos-uke/uke-usb-network start
 ExecStop=/usr/libexec/senemos-uke/uke-usb-network stop
 TimeoutStartSec=30

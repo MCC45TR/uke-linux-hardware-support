@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate test-native test-startup test-kernel-update srpm
+.PHONY: validate test-native test-startup test-kernel-update test-usb srpm
 version := 0.1.0
 outdir ?= $(CURDIR)/build/srpm
 validate:
@@ -28,10 +28,16 @@ test-kernel-update:
 	mkdir -p build/tests
 	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o build/tests/kernel-update-contract $$(pkg-config --cflags --libs openssl libsystemd)
 	build/tests/kernel-update-contract
+test-usb:
+	mkdir -p build/tests
+	c++ -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o build/tests/usb-port-contract
+	build/tests/usb-port-contract
+	bash tests/usb-inventory.sh
+	bash tests/usb-auto.sh
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
-	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md packaging/uke-boot-integration.spec
+	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USB-TYPEC.md packaging/uke-boot-integration.spec
 	cp packaging/uke-boot-integration.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-boot-integration.spec"
 	mkdir -p "$(outdir)"
