@@ -9,7 +9,9 @@
     "patches": [
       "0001-optional-python-mocks.patch",
       "0002-report-qrtr-error.patch",
-      "0003-gyroscope-cli-units.patch"
+      "0003-gyroscope-cli-units.patch",
+      "0004-light-data-type-and-validity.patch",
+      "0005-preserve-nonzero-mount-matrix.patch"
     ],
     "python_runtime": false,
     "cli_sha256": "905007dd7d2642428d3a297019807e2b5bc4f53f4dfffe1f1b8a265c745323f2"

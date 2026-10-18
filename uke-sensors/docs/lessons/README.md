@@ -3,6 +3,9 @@
 | ID | Date | Finding | Validation |
 |---|---|---|---|
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
+| UKE-TOUCH-PERF001 | 2026-10-18 | Reuse positional panel-state reads | Controlled tablet CPU and syscall comparison |
+| UKE-TOUCH-CMD001 | 2026-10-18 | Poll pending commands through wide-VFP startup | Signed RPM and two seven-mode reset sequences |
+| UKE-SSC-MAT001 | 2026-10-18 | Preserve nonzero matrices whose entries sum to zero | Actual-source host regression fixture; tablet comparison pending |
 
 ## UKE-INITIAL-001
 
@@ -52,3 +55,26 @@
   the delay. Package and repeated cold-AVR recovery acceptance remain pending.
 - Next validation: install the signed RPM and repeat fixed and wide AVR lifecycle
   tests across every admitted base mode, then check idle CPU and logs.
+
+## UKE-SSC-MAT001
+
+- Date: 2026-10-18.
+- Environment: libssc 0.4.4 source pin, release-3 Uke runtime; current upstream
+  main `4e4c6c8cc702a754bd700506c01961aaf971a23b` retains the same predicate.
+- Evidence: `src/libssc-sensor.c` adds float entries into an integer and treats
+  a zero sum as an all-zero matrix. No OEM device matrix is transferred.
+- Finding: a valid nonzero rotation can sum to zero and be replaced incorrectly.
+  Integer truncation also loses fractional components during the check.
+- Consequence: release-4 source tests each entry for zero and preserves every
+  nonzero supplied matrix. The existing all-zero warning and identity fallback
+  remain; warnings now identify the sensor data type.
+- Validation: the actual upstream fallback block fails the 120-degree X-rotation
+  fixture; the patched block preserves it, fractional rotations and each nonzero
+  element while retaining all-zero fallback. All five source patches apply
+  without fuzz. Source-factory negative controls pass.
+- Uncertainty: the Uke boot emits two old generic warnings; their sensor types
+  and matrix values are not yet correlated. This host regression does not prove
+  that either observed warning is a false positive or validate physical axes.
+- Next validation: signed package/payload audit, stationary runtime comparison
+  and identification of the remaining firmware metadata warnings. Physical
+  rotation and calibration remain separate acceptance work.
