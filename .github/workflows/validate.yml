@@ -3,6 +3,11 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      before:
+        description: Previous commit for a reviewed failed build-request retry
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -22,9 +27,11 @@ jobs:
       - name: Exercise signed repositories and the private sensor bus
         run: dnf5 -y install dbus-daemon && make -C uke-control check-repositories check-sensor-proxy check-copr-trigger
       - name: Request a changed Uke Control release after validation
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         env:
-          UKE_CONTROL_BEFORE: ${{ github.event.before }}
+          UKE_CONTROL_BEFORE: ${{ github.event.before || inputs.before }}
           UKE_CONTROL_COMMIT: ${{ github.sha }}
           COPR_SUPPORT_BUILD_HOOK_BASE: ${{ secrets.COPR_SUPPORT_BUILD_HOOK_BASE }}
-        run: bash uke-control/host/request-copr.sh
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          bash uke-control/host/request-copr.sh
