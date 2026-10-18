@@ -98,6 +98,7 @@ void atomic_write(const fs::path& path,const std::string& value,mode_t mode=0644
     const auto tmp=path.string()+".new";
     Fd out(open(tmp.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,mode));
     need(out.n>=0,"Interrupted or concurrent write at "+tmp+"; inspect before retrying");
+    need(fchmod(out.n,mode)==0,"Cannot set configuration permissions");
     size_t offset=0;
     while(offset<value.size()){auto n=write(out.n,value.data()+offset,value.size()-offset);if(n<0&&errno==EINTR)continue;need(n>0,"Configuration write failed");offset+=size_t(n);}
     need(fsync(out.n)==0&&rename(tmp.c_str(),path.c_str())==0,"Cannot commit configuration");

@@ -38,7 +38,7 @@ remain pending. See [charging boundaries](CHARGING.md) and the
 
 ## Commands
 
-Source release 13 adds [channel synchronization and updates](CHANNELS.md) and
+Source release 14 adds [channel synchronization and updates](CHANNELS.md) and
 the [live sensor view](SENSORS.md). These changes are prepared and tested on the
 host; the installed application-11 observations above remain separate.
 
