@@ -33,8 +33,12 @@ patches. On 18 October 2026, a Fedora Rawhide AArch64 SDK builds the actual
 daemon; GCC and Clang helper contracts pass. The private-bus umockdev test
 observes AC online, a discharging display battery, OnBattery=false and a
 critical low-battery warning. The original external-power policy is preserved.
-Full RPM and transitive dependency admission remain separate; these host
-results do not qualify physical charging or desktop power actions.
+COPR 11166039 passes the full RPM build and these checks. All seven binary
+RPM signatures and Python file inventories pass; the runtime pair's ELF
+dependencies and service restart scripts are recorded. The signed original
+Fedora 1.91.5-1 runtime pair is retained for rollback. Target dependency
+admission remains open. These host results do not qualify physical charging
+or desktop power actions.
 
 Keep the accepted original `upower` and matching `upower-libs` RPMs for rollback.
 Install/update and restoration can activate/restart UPower and restore its policy;

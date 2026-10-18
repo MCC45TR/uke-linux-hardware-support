@@ -16,7 +16,7 @@
   "candidate_nevra": "upower-1.91.5-2.uke4.fc46.aarch64",
   "reported_installed_nevra": "upower-1.91.5-1.fc46.aarch64",
   "reported_by": "concurrent VRR validation session, 18 October 2026",
-  "package_built": false,
+  "package_built": true,
   "package_installed": false,
   "tests_executed": true,
   "python_host_only": "Upstream Meson >= 0.60.0 and the unchanged upstream 1.91.5 unittest discovery helper; no practical non-Python upstream build route. No project Python code or installed Python tests.",

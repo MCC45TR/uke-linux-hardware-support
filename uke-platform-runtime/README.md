@@ -3,7 +3,8 @@
 Status, **18 October 2026**: the native read-only battery observer for Xiaomi
 Pad 7 / POCO Pad X1 (`uke`, SM7675) compiles in a Fedora Rawhide AArch64 SDK.
 Model, session, profile, synthetic collector and private-bus API tests pass.
-RPM/dependency admission and tablet service tests remain pending. This is not
+COPR builds 11166039 (UPower) and 11166040 (observer) and direct payload audits
+pass. Target dependency admission and tablet service tests remain pending. This is not
 physical charging acceptance. The optional original UPower overlay has
 separate [host results and installation limits](packaging/upower/README.md).
 
