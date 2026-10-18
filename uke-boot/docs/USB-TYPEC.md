@@ -2,25 +2,27 @@
 
 Date: **18 October 2026**. Target: Xiaomi Pad 7 / POCO Pad X1, SM7675.
 Environment: source editing on Fedora. No test, compilation, package build,
-device operation or publication has been performed for this candidate.
+device operation or publication has been performed in this USB conversation.
+Coordinator-reported host results apply only to their exact recorded revision.
 
-`uke-usb-port` reads standard Type-C, USB-role, UDC, external DP connector and
-selected power-supply attributes. Missing information is `null`. It neither
+`uke-usb-port` reads cached Type-C, USB-role, UDC and external DP state.
+It delegates power-supply collection to the charging provider: even a read-only
+power-supply getter can issue firmware GETs. Missing information is `null`. It neither
 loads a driver nor activates UPower, NetworkManager or another D-Bus service.
 `--root EXTRACTED_ROOT` reads an offline fixture. The optional
 `uke-usb-observer.service` exposes `GetState()` on `org.senemos.Uke.USB1` at
 `/org/senemos/Uke/USB1`. Installing the package does not start it. There are no
 raw hardware write methods and no KDE application is replaced. The paired
-development-image composer explicitly enables the observer. Installing the
+development-image composer explicitly enables the cached-state observer. Installing the
 package alone still starts no service.
 
 Class attributes are sequential observations, not a coherent hardware snapshot.
 They do not establish a physical connector-to-controller association, current
 attach generation, applied role, DP training, effective charger control or an
-electrical shutdown. UCSI current/voltage fields are labelled as contract-derived;
-the battery driver's values retain their own provenance. Neither is certified as
-a calibrated measurement by this observer. USB serial strings and EDID payloads
-are excluded.
+electrical shutdown. It reports `DELEGATED_TO_CHARGING_PROVIDER` instead of
+opening power-supply attributes. The charging provider's eventual contract and
+measurement provenance must remain explicit. USB serial strings and EDID
+payloads are excluded.
 
 The shared C++ policy source keeps data role, power role, orientation and lane
 allocation separate. It rejects stale observations and voluntary disruptions of
@@ -83,9 +85,10 @@ handoff and does not flash a boot partition.
 `uke-usb-gadget-ownership-api = 2` adds `uke-usb-auto.service` and the explicit
 saved policy `auto-debug`. With `senemos.debug=cdc-acm`, it reconciles every two
 seconds and offers ACM only after observing a PC/device-role attachment. An
-OTG graph requires exactly one matching USB-role provider reporting `device`.
-The fixed peripheral graph can use the battery driver's online SDP/CDP report
-when no Type-C class exists. A dedicated charger, host role, unknown attachment,
+admitted graph requires exactly one matching USB-role provider reporting
+`device` and a corresponding Type-C partner with device data role. The former
+SDP/CDP power-supply fallback is removed: the charging source owner confirms
+that no qualified cached attachment API exists. A host/none role, unknown attachment,
 inhibit file or ambiguous provider does not admit export. Type-C/data/power roles
 are never written by this helper. The reason is recorded privately under `/run`
 and exposed by the observer.
@@ -99,9 +102,14 @@ fixed-profile rescue console is retained: automatic PC detection before remote
 firmware is available is not established by this real-root candidate. CDC log
 forwarding to an ESP32 is a separate service and is unchanged here.
 
+The fixed peripheral producer therefore retains guarded legacy ACM instead of
+enabling a watcher that cannot establish PC attachment. Select `auto-debug` and
+enable the watcher only in a matched image with the actual Type-C/role graph.
+Transport diagnostics or a model-attestation file do not grant that admission.
+
 The source fixtures cover actual attachment-decision functions, disabled and
-ambiguous states, host rejection, dedicated-charger refusal and the QHD/depth
-budget. They are written but have not been run in this thread. Service lifecycle,
+ambiguous states, host/none rejection, absence of power-supply reads and the
+QHD/depth budget. They are written but have not been run in this thread. Service lifecycle,
 SELinux permissions, real configfs cleanup and physical CDC remain untested.
 
 ## Remaining source and acceptance work

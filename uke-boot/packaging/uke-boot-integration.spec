@@ -11,6 +11,7 @@ BuildRequires: gcc-c++ make systemd-rpm-macros
 BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
 BuildRequires: openssl-devel
 BuildRequires: pkgconfig(libdrm)
+BuildRequires: jq
 Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep

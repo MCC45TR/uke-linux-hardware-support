@@ -106,19 +106,8 @@ std::string inventory(const fs::path& root) {
         }
         result += ']';
     }
+    // power_supply getters can transact with firmware; the charging owner collects these.
     result += ",\"power_supply\":[";
-    bool first = true;
-    for (const auto& object : entries(root / "sys/class/power_supply")) {
-        const auto name = object.filename().string();
-        const bool ucsi = name.rfind("ucsi-source-psy-", 0) == 0;
-        if (!ucsi && name != "qcom-battmgr-bat" && name != "qcom-battmgr-usb") continue;
-        if (!first) result += ',';
-        first = false;
-        result += "{\"class_name\":" + quoted(name) + ",\"origin\":";
-        result += quoted(ucsi ? "ucsi_contract_derived_not_adc" : "battery_driver_reported_not_calibrated_here");
-        result += ",\"attributes\":" + attributes(object,
-            {"type", "present", "online", "status", "usb_type", "voltage_now", "current_now", "input_current_limit", "capacity", "temp"}) + '}';
-    }
     std::string wcd = "[";
     for (const auto& object : entries(root / "sys/bus/i2c/devices")) {
         std::error_code error;
@@ -131,7 +120,8 @@ std::string inventory(const fs::path& root) {
     const auto kms = root == fs::path("/") && uke ? uke::usb::kms_observation() : "null";
     if (clock_gettime(CLOCK_BOOTTIME, &finish)) throw std::runtime_error("Cannot read boottime");
     const auto ms = [](const timespec& time) { return std::int64_t(time.tv_sec) * 1000 + time.tv_nsec / 1000000; };
-    result += "]},\"wcd\":" + wcd + "],\"kms\":" + kms;
+    result += "]},\"power_supply_observation\":\"DELEGATED_TO_CHARGING_PROVIDER\"";
+    result += ",\"wcd\":" + wcd + "],\"kms\":" + kms;
     result += ",\"boottime_start_ms\":" + std::to_string(ms(start));
     result += ",\"boottime_end_ms\":" + std::to_string(ms(finish));
     result += ",\"dp_link_training\":null,\"allocated_dp_lanes\":null,\"trained_dp_lanes\":null,";

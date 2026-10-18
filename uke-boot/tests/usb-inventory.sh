@@ -13,11 +13,16 @@ printf '7.2.10-7\n' > "$work/root/proc/sys/kernel/osrelease"
 printf 'host\n' > "$work/root/sys/class/typec/port7/data_role"
 printf 'sink\n' > "$work/root/sys/class/typec/port7/power_role"
 printf 'unknown\n' > "$work/root/sys/class/udc/controller-renamed/state"
-"$work/observer" --root "$work/root" > "$work/result.json"
+mkdir -p "$work/root/sys/class/power_supply/qcom-battmgr-usb"
+# Reading this firmware-like getter would block; a cached inventory must never open it.
+mkfifo "$work/root/sys/class/power_supply/qcom-battmgr-usb/online"
+timeout 5 "$work/observer" --root "$work/root" > "$work/result.json"
 jq -e '.target_identity_matches and .control_authorized == false and
  .coherence == "unproven_sequential_reads" and .attach_generation == null and
  .classes.typec[0].attributes.data_role == "host" and
  .classes.typec[0].attributes.power_role == "sink" and
  .classes.typec[0].attributes.orientation == null and
  .classes.udc[0].class_name == "controller-renamed" and
- .trained_dp_lanes == null and .physical_acceptance == "NOT_RUN"' "$work/result.json"
+ .trained_dp_lanes == null and .physical_acceptance == "NOT_RUN" and
+ .classes.power_supply == [] and
+ .power_supply_observation == "DELEGATED_TO_CHARGING_PROVIDER"' "$work/result.json"

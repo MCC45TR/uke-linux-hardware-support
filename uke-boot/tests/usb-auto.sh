@@ -23,11 +23,24 @@ sed -n '/^debug_authorized() {/,/^allow_legacy() {/p' "$here/src/uke-usb-network
 source "$work/functions.sh"
 state=$root/run/senemos-uke
 uke-boot-status() { return 0; }
+mkdir -p "$provider/role/usb-role-switch"
+printf 'device\n' > "$provider/role/usb-role-switch/role"
+ln -s "$provider/role/usb-role-switch" "$root/sys/class/usb_role/renamed-role"
+cat() {
+    case $1 in "$root"/sys/class/power_supply/*)
+        : > "$work/power-get-attempted"
+        return 1;;
+    esac
+    command cat "$@"
+}
 ready() { auto_ready || { echo "Unexpected refusal: $auto_reason" >&2; exit 1; }; }
 refused() {
     if auto_ready; then echo "Unexpected admission: $1" >&2; exit 1; fi
     [[ $auto_reason == "$1" ]]
 }
+refused PC_ATTACHMENT_UNVERIFIED
+mkdir -p "$root/sys/class/typec/port7" "$root/sys/class/typec/port7-partner"
+printf 'host [device]\n' > "$root/sys/class/typec/port7/data_role"
 ready
 printf '1\n' > "$state/usb-gadget-inhibit"
 refused DEBUG_NOT_AUTHORIZED
@@ -35,19 +48,13 @@ rm "$state/usb-gadget-inhibit"
 printf 'disabled\n' > "$root/etc/senemos/usb-sharing"
 refused POLICY_DISABLED
 printf 'auto-debug\n' > "$root/etc/senemos/usb-sharing"
-printf '0\n' > "$psy/online"
-refused PC_ATTACHMENT_UNVERIFIED
-printf '1\n' > "$psy/online"
-printf 'SDP DCP CDP [PD]\n' > "$psy/usb_type"
-refused PC_ATTACHMENT_UNVERIFIED
 printf 'otg\0' > "$provider/of_node/dr_mode"
+rm "$root/sys/class/usb_role/renamed-role"
 refused DATA_ROLE_UNVERIFIED
-mkdir -p "$provider/role/usb-role-switch"
-printf 'device\n' > "$provider/role/usb-role-switch/role"
 ln -s "$provider/role/usb-role-switch" "$root/sys/class/usb_role/renamed-role"
-mkdir -p "$root/sys/class/typec/port7" "$root/sys/class/typec/port7-partner"
-printf 'host [device]\n' > "$root/sys/class/typec/port7/data_role"
 ready
+printf 'none\n' > "$provider/role/usb-role-switch/role"
+refused DATA_ROLE_UNVERIFIED
 printf 'host\n' > "$provider/role/usb-role-switch/role"
 refused DATA_ROLE_UNVERIFIED
 printf 'device\n' > "$provider/role/usb-role-switch/role"
@@ -56,4 +63,5 @@ refused NO_PC_PARTNER
 printf 'host [device]\n' > "$root/sys/class/typec/port7/data_role"
 mkdir "$root/sys/class/typec/port8"
 refused PORT_ASSOCIATION_AMBIGUOUS
+[[ ! -e $work/power-get-attempted ]]
 printf 'USB auto attachment fixtures passed; no hardware operations\n'

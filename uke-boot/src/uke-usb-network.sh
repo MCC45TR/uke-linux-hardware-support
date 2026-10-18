@@ -49,19 +49,18 @@ auto_ready() {
     resolve_udc || return 1
     auto_reason=DATA_ROLE_UNVERIFIED
     case $dr_mode in
-        peripheral) ;; # Admitted fixed-role rescue graph; it cannot become host.
-        otg)
-            matches=0
-            for role in /sys/class/usb_role/*; do
-                [ -e "$role" ] || continue
-                role_path=$(readlink -f "$role")
-                case $role_path in "$provider"/*|"$provider":*) ;; *) continue;; esac
-                [ "$(cat "$role/role")" = device ] || return 1
-                matches=$((matches + 1))
-            done
-            [ "$matches" = 1 ] || return 1;;
+        peripheral|otg) ;;
         *) return 1;;
     esac
+    matches=0
+    for role in /sys/class/usb_role/*; do
+        [ -e "$role" ] || continue
+        role_path=$(readlink -f "$role")
+        case $role_path in "$provider"/*|"$provider":*) ;; *) continue;; esac
+        [ "$(cat "$role/role")" = device ] || return 1
+        matches=$((matches + 1))
+    done
+    [ "$matches" = 1 ] || return 1
     # A Type-C partner's UFP role is attachment evidence; an unattached UDC is not.
     ports=0
     pc_attached=no
@@ -76,13 +75,10 @@ auto_ready() {
     if [ "$ports" = 1 ]; then
         auto_reason=NO_PC_PARTNER
         [ "$pc_attached" = yes ] || return 1
-    elif [ "$ports" = 0 ] && [ "$dr_mode" = peripheral ]; then
-        # Older rescue DT has no Type-C class. Only its USB-data charger types qualify.
+    elif [ "$ports" = 0 ]; then
+        # Battery getters issue firmware GETs; no qualified cached attachment API exists yet.
         auto_reason=PC_ATTACHMENT_UNVERIFIED
-        psy=/sys/class/power_supply/qcom-battmgr-usb
-        [ -r "$psy/online" ] && [ "$(cat "$psy/online")" = 1 ] || return 1
-        [ -r "$psy/usb_type" ] || return 1
-        case $(cat "$psy/usb_type") in SDP|CDP|*'[SDP]'*|*'[CDP]'*) ;; *) return 1;; esac
+        return 1
     else
         auto_reason=PORT_ASSOCIATION_AMBIGUOUS
         return 1
