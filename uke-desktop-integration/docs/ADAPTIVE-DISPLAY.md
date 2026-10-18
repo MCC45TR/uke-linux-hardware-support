@@ -65,6 +65,8 @@ systemctl --no-pager status uke-ssc-root.service uke-ssc-sensors.service iio-sen
 Installation leaves the integration target disabled. Enable it only after the
 local-input and read-only-mount checks pass. It affects sensors only; it does
 not flash boot partitions, change display modes or replace display settings.
+Release 7 additionally provides original PowerDevil display-toggle defaults
+and selects the standard DDC tools; see [display controls](DISPLAY-CONTROLS.md).
 
 Inspect the standard interface before changing the desktop:
 

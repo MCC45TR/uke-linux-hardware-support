@@ -15,5 +15,14 @@ sudo dnf install uke-adaptive-display
 ```
 
 Source and host checks are separate from tablet acceptance. The package does
-not flash partitions, change refresh rates or claim support for other desktop
-policies. RPM Version/Release fields use numeric versions and release counters.
+not flash partitions or change refresh rates. RPM Version/Release fields use
+numeric versions and release counters.
+
+18 October 2026. Release 7 also requires the original Fedora ddcutil/libddcutil
+packages and supplies PowerDevil defaults for display-only short power-button
+presses. Existing per-user choices take precedence. Its additional udev rule
+grants active-seat access only to I2C adapters below the upstream MSM DisplayPort
+driver. Sensor/touch buses retain their existing permissions. External display
+and DDC brightness acceptance still require a compatible connected monitor.
+The package neither unmasks system sleep nor replaces KDE applications.
+See [display controls](docs/DISPLAY-CONTROLS.md).
