@@ -17,7 +17,10 @@ static void help() {
       "  charge plan MODE            Preview metadata; performs no hardware write\n"
       "  charge status               Standard charge-limit capability\n"
       "  charge limit PERCENT        Write a supported standard threshold (root)\n"
-      "  usb status                  Cached UDC and role state\n"
+      "  usb status                  Cached Type-C, USB topology, NIC and display JSON\n"
+      "  usb watch [SECONDS]         Observe changes at 1 Hz for 1..300 seconds\n"
+      "  usb request data host|device Request a Type-C data-role swap (root)\n"
+      "  set cdc on|off              Explicit CDC ACM opt-in; default off (root)\n"
       "  test [--help]               Hz, Wayland cadence, touch and sensor diagnostics\n"
       "  report                      Save comprehensive private logs locally (root)\n"
       "  report github DIR OWNER/REPO Submit only the generated anonymous summary via gh\n"
@@ -29,6 +32,11 @@ int main(int argc,char** argv) {
         if(argc<2||std::string_view(argv[1])=="--help"){help();return 0;}
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="set"&&argc==4&&std::string_view(argv[2])=="cdc") {
+            const std::string_view setting=argv[3];
+            if(setting!="on"&&setting!="off")throw std::runtime_error("CDC setting must be on or off");
+            auto result=uke::cdc_set(setting=="on");std::cout<<result.output;return result.status;
+        }
         if(command=="test"){execv("/usr/libexec/uke-control/tests",argv+1);throw std::runtime_error("Install uke-control-tests from the development repository");}
         if(command=="--self-test"&&argc==2){uke::self_test();return 0;}
         if(command=="status"&&argc==2){std::cout<<uke::status();return 0;}
@@ -49,6 +57,14 @@ int main(int argc,char** argv) {
         }
         if(command=="usb") {
             if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::usb_status();return 0;}
+            if(argc==5&&std::string_view(argv[2])=="request"&&std::string_view(argv[3])=="data") {
+                auto result=uke::usb_request_data(argv[4]);std::cout<<result.output;return result.status;
+            }
+            if((argc==3||argc==4)&&std::string_view(argv[2])=="watch") {
+                unsigned seconds=30;
+                if(argc==4){std::string_view arg=argv[3];auto p=std::from_chars(arg.data(),arg.data()+arg.size(),seconds);if(p.ec!=std::errc{}||p.ptr!=arg.data()+arg.size())throw std::runtime_error("Invalid USB watch duration");}
+                uke::usb_watch(seconds);return 0;
+            }
         }
         if(command=="report") {
             if(argc==2){std::cout<<uke::report()<<'\n';return 0;}
