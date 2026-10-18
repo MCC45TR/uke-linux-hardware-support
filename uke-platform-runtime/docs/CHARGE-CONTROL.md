@@ -217,3 +217,30 @@ software results. Follow the central staged VRR/charging plan: metadata/source
 and PC USB first, independent infrastructure WiFi, admitted low-power measurements,
 threshold/current evidence, then separately qualified adapters. POCO F5 high-power
 tests remain blocked until their electrical/protection gates are satisfied.
+
+## Coordinator verification — 18 October 2026
+
+The complete battery runtime host suite passes in the Fedora SDK: model,
+session, profile, collector, private-bus API and control fixtures. Additional
+control cases verify the exact observation-age boundary, future observation
+and readback timestamps, expiry, invalid telemetry, transport error, minimum
+signed current, insufficient source budget and temperature below the admitted
+band. Invalid current/threshold targets cause no admission or control write.
+All electrical values are synthetic. This extends software regression coverage;
+it supplies no production pack limits or physical cutoff evidence.
+
+On POCO Pad X1, Fedora Rawhide AArch64 / Linux 7.2.10-27, the existing native
+metadata status and admission commands work. The shipped profile reports
+unqualified and the charge workers remain inactive. During a powered-dock test,
+100% SOC still accompanies Charging and positive battery current. Manual PD
+disconnection changes the provider to Discharging at 28 degrees Celsius. No
+autonomous termination, 80% threshold effect or electrical fault is inferred.
+
+The reviewed Uke OEM AP file exposes input suspension and charge thresholds,
+but no independently identified battery-bypass command. Current upstream and
+shared-protocol comparisons do not supply a Uke power-path contract. Input
+suspension, zero FCC, charge type Bypass and a successfully reported threshold
+are not interchangeable with battery isolation and external system supply.
+No guessed vendor command, bus access or protection threshold is introduced.
+Selected firmware/pack, autonomous protection and physical current-response
+evidence remain required before enabling power-path controls.

@@ -3,8 +3,10 @@
 #include "../src/battery/control.hpp"
 #include <cassert>
 #include <functional>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 using namespace uke::battery::control;
 namespace {
@@ -148,4 +150,34 @@ int main() {
     rejects([&] { current_ceiling(p, s, 2 * second); });
     p.bands[0].maximum_ua = 0; s = sample();
     rejects([&] { current_ceiling(p, s, 2 * second); });
+    p = profile(); s = sample();
+    assert(current_ceiling(p, s, 7 * second) == 1500000); // Exact age limit.
+    rejects([&] { current_ceiling(p, s, 7 * second + 1); });
+    for (int fault = 0; fault != 9; ++fault) {
+        p = profile(); s = sample();
+        switch (fault) {
+        case 0: s.measurement_ns = 2 * second + 1; break;
+        case 1: s.current_verified_ns = 2 * second + 1; break;
+        case 2: s.expires_ns = 2 * second; break;
+        case 3: p.expires_ns = 2 * second; break;
+        case 4: s.measurement_valid = false; break;
+        case 5: s.error = -5; break;
+        case 6: s.measured_current_ua = std::numeric_limits<int32_t>::min(); break;
+        case 7: p.source_budget_ua = p.minimum_ua - 1; break;
+        case 8: s.temperature_deciC = p.temperature_min - 1; break;
+        }
+        rejects([&] { current_ceiling(p, s, 2 * second); });
+    }
+    // Invalid targets must not acquire permission or issue a control write.
+    for (const auto value : {uint32_t(0), uint32_t(99), uint32_t(2000001),
+                            std::numeric_limits<uint32_t>::max()}) {
+        Fake io; Session session(io, profile(), io.value);
+        rejects([&] { session.current(value, 2 * second); });
+        assert(io.writes.empty() && !session.write_attempted());
+    }
+    for (const auto pair : {std::pair<uint32_t,uint32_t>{80,80}, {90,80}, {80,101}}) {
+        Fake io; Session session(io, profile(), io.value);
+        rejects([&] { session.thresholds(pair.first,pair.second,2 * second); });
+        assert(io.writes.empty() && !session.write_attempted());
+    }
 }
