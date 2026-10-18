@@ -1,8 +1,8 @@
 # Charging policy source — 18 October 2026
 
-Environment: source preparation for Uke Control. No build, host test, tablet
-command, charging write or physical acceptance was performed by this task.
-The module is not connected to the executable until the integration below.
+Environment: Uke Control source, 18 October 2026. The shared backend and CLI
+include metadata-only policy previews. Synthetic host fixtures pass; no charging
+write or physical policy acceptance has been established.
 
 The requested presets are `charge80` (autonomous end threshold 80%), `hold80-90`
 (autonomous start 80%, end 90%), `slow` (a qualified pack-specific current), and
@@ -35,16 +35,8 @@ ran, maintain a physical cutoff or substitute for autonomous protections.
 
 ## CLI integration
 
-The integration owner adds `src/charge-policy.cpp` to the core shared-library
-sources and `src/charge-policy.hpp` to its dependencies. In `main.cpp`, before
-the existing command dispatch, include the header and call:
-
-```cpp
-if (const int result = uke::charge::policy_command(argc, argv); result >= 0)
-    return result;
-```
-
-Add these commands to help and run `bash tests/charge-policy.sh` in `make check`:
+The shared C++ backend exports the policy planner. The CLI exposes these
+metadata-only commands; `make check` runs the synthetic policy fixture:
 
 ```sh
 uke-control charge modes
@@ -64,8 +56,7 @@ through the proposal planner or infer control qualification from sysfs names.
 The synthetic host fixture checks SOC boundaries/hysteresis, source-power and
 thermal ceilings, slow/automatic composition, invalid/stale inputs, identity
 changes and unsupported apply. Its electrical numbers are test data, never a
-production Uke profile. The integration coordinator runs those checks and
-records host/package results separately from tablet results.
+production Uke profile. Host and package checks remain separate from tablet results.
 
 The current kernel exposes no standard charge threshold. The exact Uke OEM
 threshold opcode has no-send success and ACK/effect ambiguities, and its thermal

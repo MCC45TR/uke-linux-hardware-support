@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -38,6 +38,7 @@ package selections. Numeric readings alone do not establish physical acceptance.
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
 install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.so.0
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
+install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
 install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/tests
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
@@ -58,10 +59,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %files
 %license LICENSE
-%doc README.md
+%doc README.md CHARGING.md
 %{_bindir}/uke-control
 %{_libdir}/libuke-control.so.0
-%{_includedir}/uke-control/backend.hpp
+%{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
 %{_presetdir}/80-uke-control.preset
 %dir %attr(0700,root,root) %{_localstatedir}/lib/uke-control
@@ -71,7 +72,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
-* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR.noreply.github.com> - 0.1.0-2
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-3
+- Integrate read-only charging policy previews with explicit unavailable actuator state.
+
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
 - Preserve distribution linker hardening and include the actual UTC report timestamp.
 
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1

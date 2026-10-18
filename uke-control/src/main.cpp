@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "charge-policy.hpp"
 #include <charconv>
 #include <iostream>
 #include <stdexcept>
@@ -12,6 +13,8 @@ static void help() {
       "  swap status                 Active swaps and saved policy\n"
       "  swap set half|full|MiB      Save policy and apply (root); prefer linux_swap\n"
       "  swap apply                  Apply saved policy (root)\n"
+      "  charge modes                Show requested policies and unavailable controls\n"
+      "  charge plan MODE            Preview metadata; performs no hardware write\n"
       "  charge status               Standard charge-limit capability\n"
       "  charge limit PERCENT        Write a supported standard threshold (root)\n"
       "  usb status                  Cached UDC and role state\n"
@@ -24,6 +27,7 @@ static void help() {
 int main(int argc,char** argv) {
     try {
         if(argc<2||std::string_view(argv[1])=="--help"){help();return 0;}
+        if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
         if(command=="test"){execv("/usr/libexec/uke-control/tests",argv+1);throw std::runtime_error("Install uke-control-tests from the development repository");}
         if(command=="--self-test"&&argc==2){uke::self_test();return 0;}

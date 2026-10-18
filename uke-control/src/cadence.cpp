@@ -49,7 +49,7 @@ struct App {
     xdg_wm_base *shell{}; wp_presentation *presentation{}; wl_surface *surface{};
     xdg_surface *xdg{}; xdg_toplevel *toplevel{};
     std::array<Buffer,3> buffers{}; std::unordered_set<Feedback*> pending;
-    int width=1208,height=807; bool configured{},failed{}; uint32_t clock{};
+    int width=1208,height=807; bool configured{},failed{}; uint32_t clock{},presented{},discarded{};
     ~App() {
         for (auto *f:pending) { wp_presentation_feedback_destroy(f->object); delete f; }
         for (auto &b:buffers) { if(b.object)wl_buffer_destroy(b.object); if(b.pixels)munmap(b.pixels,b.bytes); }
@@ -102,6 +102,7 @@ static void sync_output(void*,struct wp_presentation_feedback*,wl_output*){}
 static void forget(Feedback *f){f->app->pending.erase(f);wp_presentation_feedback_destroy(f->object);delete f;}
 static void presented(void *data,struct wp_presentation_feedback*,uint32_t hi,uint32_t lo,uint32_t ns,uint32_t refresh,uint32_t seq_hi,uint32_t seq_lo,uint32_t flags) {
     auto *f=static_cast<Feedback*>(data);
+    ++f->app->presented;
     const uint64_t stamp=((uint64_t(hi)<<32)|lo)*1000000000ULL+ns;
     const uint64_t sequence=(uint64_t(seq_hi)<<32)|seq_lo;
     std::printf("present,%u,%u,%llu,%llu,%llu,%llu,%u,%u\n",f->frame,f->stage,
@@ -109,7 +110,11 @@ static void presented(void *data,struct wp_presentation_feedback*,uint32_t hi,ui
         (unsigned long long)stamp,(unsigned long long)sequence,refresh,flags);forget(f);
 }
 static void discarded(void *data,struct wp_presentation_feedback*) {
-    auto *f=static_cast<Feedback*>(data);std::printf("discard,%u,%u\n",f->frame,f->stage);forget(f);
+    auto *f=static_cast<Feedback*>(data);++f->app->discarded;
+    std::printf("discard,%u,%u\n",f->frame,f->stage);forget(f);
+}
+static void require_presentation(unsigned count) {
+    if(!count)throw std::runtime_error("No frame was presented; unlock the session and expose the test window");
 }
 static const wp_presentation_feedback_listener feedback_listener{sync_output,presented,discarded};
 static void allocate(App &a) {
@@ -134,6 +139,8 @@ int run(int argc,char **argv) {
             if(!s.idle)assert(s.interval>=1000000000ULL/max&&s.interval<=1000000000ULL/30);
         }
         assert(schedule(33000000000ULL,0,144).idle);assert(schedule(43000000000ULL,0,144).done);
+        bool refused=false;try{require_presentation(0);}catch(const std::exception&){refused=true;}
+        assert(refused);require_presentation(1);
         std::puts("Bounded rates, irregular intervals, eight-second idle and termination passed");return 0;
     }
     if(argc==2) {char *end{};auto value=strtoul(argv[1],&end,10);if(*end||value<30||value>144)return 64;maximum=value;}
@@ -159,6 +166,7 @@ int run(int argc,char **argv) {
         std::puts("# present,frame,stage,requested_interval_ns,submit_monotonic_ns,presentation_ns,sequence,refresh_ns,flags");
         while(!stopped&&!a.failed) {
             if(wl_display_dispatch_pending(a.display)<0)throw std::runtime_error("Pending dispatch");
+            if(now()-start>5000000000ULL)require_presentation(a.presented);
             auto s=schedule(now()-start,frame,maximum);if(s.done)break;
             if(s.stage!=last_stage){std::printf("stage,%u,%llu\n",s.stage,(unsigned long long)now());last_stage=s.stage;}
             if(now()>=deadline) {
@@ -187,7 +195,8 @@ int run(int argc,char **argv) {
             if((ready<0&&errno!=EINTR)||(fd.revents&(POLLERR|POLLHUP|POLLNVAL)))throw std::runtime_error("Display poll");
         }
         if(a.failed)throw std::runtime_error("Output size changed");
-        std::printf("done,%u,%llu\n",frame,(unsigned long long)now());
+        require_presentation(a.presented);
+        std::printf("done,%u,%llu,presented=%u,discarded=%u\n",frame,(unsigned long long)now(),a.presented,a.discarded);
     }catch(const std::exception &error){std::fprintf(stderr,"%s\n",error.what());return 1;}
     return 0;
 }

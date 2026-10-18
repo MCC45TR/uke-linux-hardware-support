@@ -29,6 +29,8 @@ sudo uke-control swap set half
 sudo uke-control swap set full
 sudo uke-control swap set 4096   # MiB
 uke-control charge status
+uke-control charge modes
+uke-control charge plan charge80 # metadata only; no actuator
 sudo uke-control charge limit 80 # requires a standard supported threshold
 uke-control usb status
 uke-control test display 60
@@ -55,6 +57,11 @@ Install `uke-control-tests` explicitly for development. Release image package
 lists must exclude it. The core client and shared library have no Wayland or
 KDE dependency. The test package adds a temporary terminal Hz-monitor launcher.
 Its window can be placed above other windows using the original KDE controls.
+
+Charging policy previews describe 80% cap, 80-90% autonomous hold, slow and
+automatic profiles. They explicitly report the missing actuator and never apply
+a preview. See [charging policy limits](CHARGING.md). No qualified charge-control
+backend is supplied.
 
 ## Swap and first boot
 

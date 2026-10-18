@@ -12,8 +12,8 @@ protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 all: build/uke-control build/uke-control-tests build/ssc-discovery build/ssc-sample
 build:
 	mkdir -p build
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp $(shell pkg-config --libs libselinux)
+build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp $(shell pkg-config --libs libselinux)
 build/uke-control: src/main.cpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp -Lbuild -l:libuke-control.so.0
 build/xdg-shell-client.h: | build
@@ -34,6 +34,7 @@ build/ssc-sample: shared/ssc-sample.cpp shared/ssc-discovery.cpp | build
 check: all
 	LD_LIBRARY_PATH=build build/uke-control --self-test
 	build/uke-control-tests --self-test
+	bash tests/charge-policy.sh
 	for name in discovery sample; do $(CXX) $(CXXFLAGS) $(LDFLAGS) tests/ssc-$$name.cpp -o build/test-ssc-$$name; build/test-ssc-$$name; done
 	LD_LIBRARY_PATH=build build/uke-control --help
 validate:
@@ -43,7 +44,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-0.1.0/#' -czf "$$top/SOURCES/uke-control-0.1.0.tar.gz" src shared tests packaging Makefile LICENSE README.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-0.1.0/#' -czf "$$top/SOURCES/uke-control-0.1.0.tar.gz" src shared tests packaging Makefile LICENSE README.md CHARGING.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
