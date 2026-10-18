@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -14,6 +14,7 @@ Requires: powerdevil >= 6.8.0
 Requires: kscreen >= 6.8.0
 Requires: ddcutil >= 3.0.2
 Requires: libddcutil >= 3.0.2
+Requires: systemd >= 256
 %{?systemd_requires}
 
 %description
@@ -24,6 +25,8 @@ It includes no firmware, calibration, desktop replacement or brightness daemon.
 Original PowerDevil defaults make short power-button presses toggle only the
 display. Original DDC tools and restricted platform DisplayPort seat access
 prepare external monitor brightness; physical adapter/monitor tests are separate.
+Standard systemd policy enables suspend using s2idle. Physical wake, resume and
+power use remain separate device acceptance gates. Administrator masks are preserved.
 
 %prep
 %setup -q
@@ -38,15 +41,19 @@ install -Dm644 packaging/61-uke-display-ddc.rules %{buildroot}%{_udevrulesdir}/6
 install -Dm644 packaging/powerdevilrc %{buildroot}%{_sysconfdir}/xdg/powerdevilrc
 install -Dm755 src/uke-ddc-config %{buildroot}%{_libexecdir}/senemos-uke/uke-ddc-config
 install -Dm644 packaging/60-uke-display-ddc.conf %{buildroot}%{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
+install -Dm644 packaging/30-uke-s2idle.conf %{buildroot}%{_prefix}/lib/systemd/sleep.conf.d/30-uke-s2idle.conf
+install -Dm644 packaging/uke-suspend.conf %{buildroot}%{_tmpfilesdir}/uke-suspend.conf
 
 %check
 udevadm verify packaging/71-uke-tablet-mode.rules
 udevadm verify packaging/61-uke-display-ddc.rules
 sh tests/ddc-config.sh
+systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 
 %post
 %systemd_post uke-adaptive-display.target
 %udev_rules_update
+%tmpfiles_create %{_tmpfilesdir}/uke-suspend.conf
 
 %preun
 %systemd_preun uke-adaptive-display.target
@@ -57,7 +64,7 @@ sh tests/ddc-config.sh
 
 %files
 %license LICENSE
-%doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md
+%doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md docs/SUSPEND.md
 %config(noreplace) %{_sysconfdir}/xdg/powerdevilrc
 %{_unitdir}/uke-adaptive-display.target
 %{_presetdir}/80-uke-adaptive-display.preset
@@ -65,8 +72,14 @@ sh tests/ddc-config.sh
 %{_udevrulesdir}/61-uke-display-ddc.rules
 %{_libexecdir}/senemos-uke/uke-ddc-config
 %{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
+%{_prefix}/lib/systemd/sleep.conf.d/30-uke-s2idle.conf
+%{_tmpfilesdir}/uke-suspend.conf
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
+- Enable standard systemd suspend with persistent s2idle selection.
+- Preserve administrator masks and separate physical resume qualification.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
 - Keep ignored internal adapters out of the original library's all-bus preflight.
 - Retain normal permissions, DP discovery and per-device DDC error handling.
