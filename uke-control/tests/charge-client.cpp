@@ -19,6 +19,16 @@ Result execute(const std::vector<std::string>& arguments, unsigned seconds, size
 }
 int main() {
     using uke::charge::control_mode;
+    reset({{0,"{\"operation\":\"metadata_only\",\"physical_charge_stopped\":null}\n"}});
+    const auto status=uke::charge::control_query("status");
+    assert(status.status==0&&status.output.find("metadata_only")!=std::string::npos);
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","status"}}));
+    reset({{69,"metadata unavailable"}});
+    assert(uke::charge::control_query("status").status==69&&calls.size()==1);
+    reset({});
+    bool query_rejected=false;
+    try{uke::charge::control_query("verify");}catch(const std::exception&){query_rejected=true;}
+    assert(query_rejected&&calls.empty());
     reset({{0,"{\"applied\":true}\n"}});
     assert(control_mode("charge80").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","cap80"}}));

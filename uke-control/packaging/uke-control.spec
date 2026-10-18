@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -73,6 +73,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
+- Report native charging metadata without probing guarded threshold attributes.
+- Preserve helper failures and mark unavailable generic threshold reads explicitly.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
 - Select the active internal DSI CRTC when external display resources also exist.
 - Use its resource index for vblank measurements and reject ambiguous selection.

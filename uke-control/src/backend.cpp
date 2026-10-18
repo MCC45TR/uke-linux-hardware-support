@@ -209,8 +209,14 @@ static std::vector<fs::path> thresholds() {
     return paths;
 }
 std::string charge_status() {
+    struct stat helper{};
+    if(lstat("/usr/libexec/uke-charge-control",&helper)==0||errno!=ENOENT) {
+        const auto result=charge_control_query("status");
+        need(result.status==0,"Charge-control status unavailable:\n"+result.output);
+        return result.output;
+    }
     auto paths=thresholds();if(paths.empty())return "charge_limit=unsupported (no standard charge_control_end_threshold)\n";
-    std::string out;for(const auto& path:paths)out+=path.string()+"="+read(path.string(),64);return out;
+    std::string out;for(const auto& path:paths){auto value=read(path.string(),64);out+=path.string()+"="+(value.empty()?"unavailable\n":value);}return out;
 }
 void charge_set(unsigned percent) {
     Lock lock;auto paths=thresholds();need(paths.size()==1,"A unique standard charge threshold is required; no raw firmware writes are supported");

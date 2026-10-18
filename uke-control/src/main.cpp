@@ -17,7 +17,7 @@ static void help() {
       "  swap apply                  Apply saved policy (root)\n"
       "  charge modes                Show requested policies and unavailable controls\n"
       "  charge plan MODE            Preview metadata; performs no hardware write\n"
-      "  charge status               Standard charge-limit capability\n"
+      "  charge status               Native control metadata, or standard capability\n"
       "  charge capabilities|admission|protocols  Native backend metadata\n"
       "  charge mode MODE            Request qualified charge80, hold80-90, slow or automatic\n"
       "  charge limit PERCENT        Request the qualified 80% cap or a supported standard threshold\n"

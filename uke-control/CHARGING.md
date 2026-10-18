@@ -35,6 +35,14 @@ ran, maintain a physical cutoff or substitute for autonomous protections.
 
 ## CLI integration
 
+`charge status` and the aggregate `status` command prefer the trusted installed
+native helper's metadata-only status. They do not probe its guarded standard
+threshold files or activate a charging service. A helper failure is reported;
+it does not trigger a fallback firmware query. Without that helper, generic
+standard threshold discovery remains available and empty reads are marked
+unavailable. A returned percentage setting or status is not proof of physical
+charge termination.
+
 The shared C++ backend exports the policy planner. The CLI exposes these
 metadata-only commands; `make check` runs the synthetic policy fixture:
 
@@ -82,3 +90,21 @@ used. Battery health labels, reported SOH, reported
 cycles, qualified capacity retention and observed discharge EFC remain separate.
 See the central `UKE-CHARGING-CONTROL-ABI-2026-10-18.md` research record for exact
 OEM/donor pins and the outstanding backend evidence.
+
+## System power while charging is inhibited
+
+The reviewed Uke OEM AP driver exposes charge thresholds and input suspension,
+but no independently identified battery-bypass command. Input suspension is
+not a qualified way to preserve powered dock operation. An 80% threshold also
+does not prove that the battery is electrically isolated or that all system
+power comes from USB. No bypass, zero-current stop or guessed vendor command
+is provided. The selected firmware/pack power-path and protection contracts,
+setting readback and physical current response remain required before enabling
+such a control.
+
+Existing admission rejects missing/stale measurements, mismatched source or
+firmware epochs, unqualified profiles and ambiguous transport state. Synthetic
+fixtures cover these refusals and do not establish an electrical cutoff when
+the process exits or a lease expires. Firmware retains CV, termination and
+autonomous thermal/fault protection ownership. A displayed 100% and Charging
+alone establish neither a fault nor successful termination.

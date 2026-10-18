@@ -6,29 +6,26 @@ The original distribution desktop remains unchanged.
 
 ## Status — 18 October 2026
 
-Signed COPR build 11167510 installed application 5 and its development package
-through DNF on POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.10-23. During earlier
-tests, the native startup service created a 3690 MiB swap file with the standard
-SELinux swap label. Changes to
-512 MiB, full RAM and half RAM passed. SensorProxy, processed sensor inputs,
-DRM sampling and bounded proximity discovery ran on the tablet. Normal reboot
-restored the half-RAM swap and preserved the first inventory. Preference for an
-existing swap partition remains untested. These observations do not establish
-physical VRR or sensor acceptance. The read-only front-color command and
-one-shot manual CDC API2 are installed in release 7 from COPR 11167810 on
-kernel 25. Release 7 corrects
-the RPM capability query: it looks up the capability name and checks the
-provided version explicitly. Host and native package checks pass. On the tablet,
-the application self-check and scoped manual CDC-off command pass. New-boot
-default-off and physical PC enumeration remain separate checks.
-Charge control uses a qualified native helper or an available standard writable
-`charge_control_end_threshold`. The installed helper recognizes the provider
-but refuses unqualified control. No 80% cutoff is claimed. The USB source adds
-cached topology and guarded standard data-role requests. It requires a matched
-full Type-C kernel/root tuple. The installed kernel 7.2.10-23 remains fixed
-peripheral; the full Type-C kernel 24 candidate failed display/touch startup and
-was replaced with the retained kernel 23 bundle. Host, PD and DisplayPort
-physical acceptance remain open for the corrected candidate.
+Application 8 and its separate development package are installed from signed
+COPR 11167901 on POCO Pad X1, Fedora Rawhide AArch64. Its refresh observer selects
+the active internal DSI CRTC when an external connector also exists. Ordinary-user
+observation and the application self-check pass. The current kernel is 7.2.10-27;
+a normal reboot retains the 3690 MiB half-RAM swap and CDC disabled. Earlier
+512 MiB/full-RAM/half-RAM transitions passed with the standard SELinux swap label.
+Preference for an existing swap partition remains untested.
+
+Kernel 27 enumerates the powered Juo dock, receiver and Ethernet function. Evdev
+records mouse movement and the user confirms pointer operation. This does not
+establish Ethernet networking or HDMI output; DisplayPort remains disconnected.
+SensorProxy, processed readings and bounded SSC discovery are separate from
+physical sensor qualification. The optional front-color endpoint currently has
+no valid startup sample.
+
+Charging controls remain unavailable with the installed unqualified profile.
+No 80% cutoff, battery bypass or autonomous termination is claimed. Release-9
+source routes status through the existing helper's metadata-only operation and
+reports unavailable generic reads explicitly; build and tablet validation are
+pending. See [charging boundaries](CHARGING.md).
 
 ## Commands
 
