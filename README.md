@@ -18,7 +18,8 @@ results.
 
 Physical proximity far/near/far and Hall lid/fold transitions pass. The original
 KDE sensor backend reads all 27 configured PMIC channels with standard units.
-The OEM charger-temperature conversion returns 0 °C in this trial; its physical
+The internal charger-temperature channel reads 31.29–31.41 °C with USB power;
+without USB power its near-zero input produces the OEM-clamped 0 °C. Its absolute
 accuracy is unqualified. The compass returns changing headings; absolute
 heading accuracy, full thermal policy and lifecycle endurance remain incomplete. Full shutdown
 can hang in the original KDE clipboard worker. See the
