@@ -48,6 +48,14 @@ Mount-only SELinux contexts preserve the original Android file labels. Do not
 mount security, boot or encrypted data partitions as ordinary data directories.
 Repeated normal-boot address checks remain a separate physical acceptance gate.
 
+The 18 October source candidate anchors factory WLAN reads to the verified
+persist directory descriptor. Intermediate/final symlinks, nonregular files,
+foreign filesystems and empty/oversized records are rejected; interrupted reads
+are retried and a complete size-matched record is required. Existing physical
+partition and protected-mount checks, parser semantics and NetworkManager
+configuration remain. New filesystem fixtures are prepared; this source review
+ran no tests, builds or tablet operations. No Bluetooth or P2P behavior changes.
+
 On 2026-10-14, native AArch64 fixtures passed for the optional
 `uke-boot-recovery` development package. Its C++ observer measures 180 seconds
 from kernel startup, including initramfs time. It accepts the physical EXT4
