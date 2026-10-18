@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate test-native test-startup test-kernel-update srpm
+.PHONY: validate test-native test-startup test-kernel-update test-installation srpm
 version := 0.1.0
 outdir ?= $(CURDIR)/build/srpm
 validate:
@@ -12,6 +12,7 @@ validate:
 	bash -n src/audit-kernel-inputs.sh
 	sh -n src/uke-usb-network.sh
 	bash -n tests/startup-native.sh src/dracut/93uke-boot-guard/module-setup.sh
+	bash -n tests/installation-policy.sh
 	jq -e '.modules | index("display") != null and index("gpu") != null and all(.[]; type != "object" or .type != "custom")' src/profiles/fastfetch.jsonc >/dev/null
 test-native: validate
 	bash tests/boot-status.sh
@@ -28,10 +29,12 @@ test-kernel-update:
 	mkdir -p build/tests
 	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o build/tests/kernel-update-contract $$(pkg-config --cflags --libs openssl libsystemd)
 	build/tests/kernel-update-contract
+test-installation:
+	bash tests/installation-policy.sh
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
-	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md packaging/uke-boot-integration.spec
+	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USERDATA-AB.md packaging/uke-boot-integration.spec
 	cp packaging/uke-boot-integration.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-boot-integration.spec"
 	mkdir -p "$(outdir)"

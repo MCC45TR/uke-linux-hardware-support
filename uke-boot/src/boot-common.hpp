@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-static std::string read_text(const std::filesystem::path &path) {
+[[maybe_unused]] static std::string read_text(const std::filesystem::path &path) {
     std::ifstream input(path,std::ios::binary);
     std::string value(4096,'\0');
     input.read(value.data(),value.size());
