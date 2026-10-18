@@ -38,8 +38,21 @@ remain pending. See [charging boundaries](CHARGING.md) and the
 
 ## Commands
 
+Source release 12 adds [channel synchronization and updates](CHANNELS.md) and
+the [live sensor view](SENSORS.md). These changes are prepared and tested on the
+host; the installed application-11 observations above remain separate.
+
 ```sh
 uke-control status
+uke-control brunch status
+sudo uke-control brunch stable --dry-run
+sudo uke-control brunch test
+sudo uke-control brunch unstable
+sudo uke-control brunch sync
+sudo uke-control update --check
+sudo uke-control update
+uke-control sensors -n5
+uke-control sensors -n5 --count=3 --json
 uke-control inventory
 sudo uke-control inventory --refresh
 sudo uke-control swap set half

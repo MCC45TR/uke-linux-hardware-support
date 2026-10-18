@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -9,6 +9,7 @@ ExclusiveArch: aarch64 x86_64
 BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd)
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
+BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 Requires: util-linux-core util-linux systemd
 %{?systemd_requires}
 
@@ -36,6 +37,7 @@ package selections. Numeric readings alone do not establish physical acceptance.
 
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
+install -Dm755 build/uke-control-packages %{buildroot}%{_libexecdir}/uke-control/packages
 install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.so.0
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
 install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
@@ -60,8 +62,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md
 %{_bindir}/uke-control
+%dir %{_libexecdir}/uke-control
+%{_libexecdir}/uke-control/packages
 %{_libdir}/libuke-control.so.0
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
@@ -69,10 +73,16 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %dir %attr(0700,root,root) %{_localstatedir}/lib/uke-control
 
 %files tests
-%{_libexecdir}/uke-control/
+%{_libexecdir}/uke-control/tests
+%{_libexecdir}/uke-control/ssc-discovery
+%{_libexecdir}/uke-control/ssc-sample
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
+- Add native channel synchronization, distribution updates and live sensor views.
+- Preserve installed kernel tuples and journal interrupted package changes.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
 - Add the explicit preconfigured-cap command without a metadata-query fallback.
 - Label the configured VRR mode as an upper limit beside measured DPU cadence.
