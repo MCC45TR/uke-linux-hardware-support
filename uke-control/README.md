@@ -46,6 +46,7 @@ uke-control test touch /dev/input/event5 60
 uke-control test sensors 30
 uke-control test discover all
 uke-control test sample accel
+uke-control test audio-inventory
 sudo uke-control report
 ```
 
@@ -63,6 +64,14 @@ Install `uke-control-tests` explicitly for development. Release image package
 lists must exclude it. The core client and shared library have no Wayland or
 KDE dependency. The test package adds a temporary terminal Hz-monitor launcher.
 Its window can be placed above other windows using the original KDE controls.
+
+`audio-inventory` runs as the desktop user and creates a private directory in the
+current working directory. It records standard ALSA, remoteproc and bus metadata,
+including `aprbus` GPR bindings, installed Fedora audio packages and existing
+kernel logs. Each probe retains its exit status; missing packages or denied logs
+remain explicit. It opens no PCM, reads no vendor calibration/register attribute
+and changes no mixer or service state. Raw output can contain private identifiers
+and must stay private. Completion does not establish audio functionality.
 
 Charging policy previews describe 80% cap, 80-90% autonomous hold, slow and
 automatic profiles. They explicitly report the missing actuator and never apply

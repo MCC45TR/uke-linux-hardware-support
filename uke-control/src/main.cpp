@@ -21,7 +21,7 @@ static void help() {
       "  usb watch [SECONDS]         Observe changes at 1 Hz for 1..300 seconds\n"
       "  usb request data host|device Request a Type-C data-role swap (root)\n"
       "  set cdc on|off              Explicit CDC ACM opt-in; default off (root)\n"
-      "  test [--help]               Hz, Wayland cadence, touch and sensor diagnostics\n"
+      "  test [--help]               Display, touch, sensor and audio metadata diagnostics\n"
       "  report                      Save comprehensive private logs locally (root)\n"
       "  report github DIR OWNER/REPO Submit only the generated anonymous summary via gh\n"
       "  --self-test                 Host refusal and arithmetic checks\n"
@@ -37,7 +37,13 @@ int main(int argc,char** argv) {
             if(setting!="on"&&setting!="off")throw std::runtime_error("CDC setting must be on or off");
             auto result=uke::cdc_set(setting=="on");std::cout<<result.output;return result.status;
         }
-        if(command=="test"){execv("/usr/libexec/uke-control/tests",argv+1);throw std::runtime_error("Install uke-control-tests from the development repository");}
+        if(command=="test"){
+            if(argc==3&&std::string_view(argv[2])=="audio-inventory") {
+                char path[]="/usr/libexec/uke-control/audio-inventory";
+                char *args[]={path,nullptr};execv(path,args);
+            } else execv("/usr/libexec/uke-control/tests",argv+1);
+            throw std::runtime_error("Install uke-control-tests from the development repository");
+        }
         if(command=="--self-test"&&argc==2){uke::self_test();return 0;}
         if(command=="status"&&argc==2){std::cout<<uke::status();return 0;}
         if(command=="boot"&&argc==2){uke::boot();return 0;}

@@ -167,6 +167,7 @@ static void help() {
         "  sensors [seconds]          SensorProxy and processed IIO/hwmon readings\n"
         "  discover [all|datatype]    Bounded existing SSC metadata helper\n"
         "  sample datatype           Bounded existing SSC sample helper\n"
+        "  audio-inventory           Private metadata/log collector; no PCM access\n"
         "  --self-test               Host checks; no device or bus access\n"
         "Default observation: 30 seconds; Ctrl-C exits. Numeric data alone is not a physical sensor acceptance result.");
 }

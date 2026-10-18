@@ -9,7 +9,10 @@ LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check clean srpm validate
+.PHONY: test-audio-inventory
 all: build/uke-control build/uke-control-tests build/ssc-discovery build/ssc-sample
+test-audio-inventory:
+	bash tests/audio-inventory.sh
 build:
 	mkdir -p build
 build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/usb.cpp src/usb.hpp src/usb-request.cpp src/usb-request.hpp | build
@@ -32,6 +35,7 @@ build/ssc-discovery: shared/ssc-discovery.cpp | build
 build/ssc-sample: shared/ssc-sample.cpp shared/ssc-discovery.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
 check: all
+	bash tests/audio-inventory.sh
 	LD_LIBRARY_PATH=build build/uke-control --self-test
 	build/uke-control-tests --self-test
 	bash tests/charge-policy.sh
@@ -40,6 +44,7 @@ check: all
 	for name in discovery sample; do $(CXX) $(CXXFLAGS) $(LDFLAGS) tests/ssc-$$name.cpp -o build/test-ssc-$$name; build/test-ssc-$$name; done
 	LD_LIBRARY_PATH=build build/uke-control --help
 validate:
+	sh -n src/audio-inventory.sh
 	test -s src/backend.cpp -a -s src/diagnostics.cpp -a -s packaging/uke-control.spec
 	cmp shared/ssc-discovery.cpp ../uke-sensors/src/ssc-discovery.cpp
 	cmp shared/ssc-sample.cpp ../uke-sensors/src/ssc-sample.cpp

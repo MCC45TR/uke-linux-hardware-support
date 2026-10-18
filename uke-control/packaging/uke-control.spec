@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 4.audio2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -21,10 +21,11 @@ are never formatted. Charge and USB controls follow real driver capabilities.
 %package tests
 Summary: Development-only Uke display, touch and sensor diagnostics
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: coreutils findutils rpm
 
 %description tests
 Development diagnostics for DPU refresh measurement, Wayland presentation,
-continuous touch, SensorProxy and SSC sensors. Excluded from release image
+continuous touch, SensorProxy, SSC sensors and private audio metadata collection. Excluded from release image
 package selections. Numeric readings alone do not establish physical acceptance.
 
 %prep
@@ -42,6 +43,7 @@ install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/char
 install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/tests
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
+install -Dm755 src/audio-inventory.sh %{buildroot}%{_libexecdir}/uke-control/audio-inventory
 install -Dm644 packaging/uke-control.service %{buildroot}%{_unitdir}/uke-control.service
 install -Dm644 packaging/80-uke-control.preset %{buildroot}%{_presetdir}/80-uke-control.preset
 install -Dm644 packaging/uke-control-tests.desktop %{buildroot}%{_datadir}/applications/uke-control-tests.desktop
@@ -72,6 +74,12 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4.audio2
+- Make optional-command fixtures independent of installed host tools.
+
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4.audio1
+- Add a development-only audio metadata collector with private output and no PCM access.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Add cached USB topology, bounded observation, guarded Type-C requests and explicit CDC opt-in.
 
