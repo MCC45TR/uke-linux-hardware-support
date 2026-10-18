@@ -7,6 +7,13 @@ different interface. Endpoint availability, RGB channel meaning and color
 temperature calibration require separate tablet measurements. This source
 extension has not been built or tested.
 
+The separate `uke-sensor-sample cct_front` source candidate decodes only the
+exact Uke `sns_cct_event` descriptor, event 882, after one on-change request.
+It reports original field names with units unverified and no invented accuracy
+status. Kelvin, spectral calibration and desktop white-point integration remain
+unqualified. The different `cct_front_strm` API and multi-channel event 883 remain
+unsupported. This sampler extension also awaits coordinator build and tests.
+
 14 October 2026. Preview RPMs provide libssc, SSC-enabled SensorProxy and a
 native FastRPC file service for Fedora Rawhide AArch64. The standard desktop
 interface supplies orientation and ambient-light data when the device firmware
