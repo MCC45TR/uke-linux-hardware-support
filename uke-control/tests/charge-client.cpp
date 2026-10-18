@@ -32,6 +32,15 @@ int main() {
     bool query_rejected=false;
     try{uke::charge::control_query("verify");}catch(const std::exception&){query_rejected=true;}
     assert(query_rejected&&calls.empty());
+    reset({{0,"{\"request_sent\":true,\"applied\":null}\n"}});
+    const auto applied=uke::charge::apply_preconfigured_cap();
+    assert(applied.status==0&&applied.output.find("\"applied\":null")!=std::string::npos);
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","apply-cap80"}}));
+    reset({{69,"uncertain"}});
+    assert(uke::charge::apply_preconfigured_cap().status==69&&calls.size()==1);
+    reset({});query_rejected=false;
+    try{uke::charge::control_query("apply-cap80");}catch(const std::exception&){query_rejected=true;}
+    assert(query_rejected&&calls.empty());
     reset({{69,"restricted cap unavailable"}});
     assert(uke::charge::enable_preconfigured_cap().status==69);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","enable-cap80"}}));
