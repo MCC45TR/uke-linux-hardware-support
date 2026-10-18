@@ -133,10 +133,26 @@ Context context(Sysfs &io) {
     while (!c.boot_id.empty() && (c.boot_id.back() == '\n' || c.boot_id.back() == '\r')) c.boot_id.pop_back();
     return c;
 }
-void emit(const State &s, const Profile &p, const char *operation, bool applied) {
+std::string identifier(std::string reason) {
+    for (auto &ch : reason) if (!(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z') &&
+        !(ch >= '0' && ch <= '9') && ch != '_' && ch != '-') ch = '_';
+    return reason;
+}
+void emit_admission(const Admission &a) {
+    std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_admission\",\"operation\":\"metadata_profile_preflight\""
+        << ",\"profile_qualified\":" << (a.profile_qualified ? "true" : "false")
+        << ",\"threshold_admission_ready\":" << (a.threshold_ready ? "true" : "false")
+        << ",\"automatic_admission_ready\":" << (a.automatic_ready ? "true" : "false")
+        << ",\"standard_client_admission_ready\":" << (a.standard_client_ready ? "true" : "false")
+        << ",\"reason\":\"" << identifier(a.reason)
+        << "\",\"lease_acquisition_verified\":false,\"policy_lock_checked\":false,\"runtime_measurements_checked\":false"
+        << ",\"firmware_rpc_performed\":false,\"service_activation_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
+}
+void emit(const State &s, const Profile &p, const char *operation, bool applied, bool qualification_checked = true) {
     std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control\",\"operation\":\"" << operation
         << "\",\"backend_compiled\":" << (s.compiled ? "true" : "false")
         << ",\"control_profile_qualified\":" << (p.qualified ? "true" : "false")
+        << ",\"profile_qualification_checked\":" << (qualification_checked ? "true" : "false")
         << ",\"configuration_readback_verified\":" << (s.verified ? "true" : "false")
         << ",\"reported_feature_enabled\":" << (s.enabled ? "true" : "false")
         << ",\"reported_start_percent\":" << (s.verified ? std::to_string(s.start) : "null")
@@ -166,13 +182,14 @@ uint32_t percent(const char *value) {
 int main(int argc, char **argv) {
     std::unique_ptr<Sysfs> io;
     std::unique_ptr<Session> session;
+    const bool admission_query = argc == 2 && std::strcmp(argv[1], "admission") == 0;
     try {
         if (argc == 2 && std::string(argv[1]) == "capabilities") {
-            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
             return 0;
         }
         if (argc == 2 && std::string(argv[1]) == "--help") {
-            std::cout << "uke-charge-control capabilities | status\n"
+            std::cout << "uke-charge-control capabilities | status | admission\n"
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
                 << "Actions require root, a reviewed control profile and matching per-boot evidence.\n"
@@ -182,14 +199,17 @@ int main(int argc, char **argv) {
         if (argc < 2) fail("control_command_required");
         const std::string command(argv[1]);
         if ((command == "pair" && argc != 4) || (command != "pair" && argc != 2)) fail("control_arguments_invalid");
-        if (command != "status" && command != "verify" && command != "cap80" && command != "band80-90" &&
+        if (command != "status" && command != "admission" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
-        if (command == "status") { emit(io->state(), {}, "metadata_only", false); return 0; }
+        if (command == "status") { emit(io->state(), {}, "metadata_only", false, false); return 0; }
         if (geteuid() != 0) fail("control_root_required");
         const auto initial = context(*io);
         const auto profile = resolve(initial);
+        if (admission_query) {
+            emit_admission(inspect_admission(initial, profile)); return 0;
+        }
         if (!profile.qualified) throw std::runtime_error(profile.reason);
         if (command == "serve" && !profile.standard_clients) fail("control_standard_clients_not_admitted");
         const bool current_action = command == "slow" || command == "automatic" || command == "profile-restore";
@@ -244,10 +264,11 @@ int main(int argc, char **argv) {
         }
         session->revoke(); session.reset(); return 0;
     } catch (const std::exception &e) {
+        if (admission_query) {
+            Admission a; a.reason = e.what(); emit_admission(a); return 69;
+        }
         const bool uncertain = session && session->write_attempted();
-        std::string reason(e.what());
-        for (auto &ch : reason) if (!(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z') &&
-            !(ch >= '0' && ch <= '9') && ch != '_' && ch != '-') ch = '_';
+        const auto reason = identifier(e.what());
         session.reset();
         std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control\",\"status\":\"failed\",\"reason\":\""
             << reason << "\",\"applied\":" << (uncertain ? "null" : "false")

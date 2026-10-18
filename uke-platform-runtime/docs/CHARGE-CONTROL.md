@@ -117,7 +117,8 @@ Commands (perform no device action merely by documenting them):
 | Command | Behavior after admission |
 |---|---|
 | `capabilities` | Static implemented source interfaces; no provider/firmware I/O. |
-| `status` | Cached metadata; no firmware GET or SET. |
+| `status` | Cached metadata; no firmware GET/SET or profile resolution. `profile_qualification_checked=false`; its legacy qualification=false is not a profile verdict. |
+| `admission` | Root metadata/profile preflight; no firmware RPC, lease write, lock-directory creation or service activation. Returns separate threshold/automatic/standard-client readiness and reason. |
 | `verify` | Guarded measurement, threshold and admitted FCC GET/readback. |
 | `cap80` | Profile resume →80 threshold pair, verified. |
 | `band80-90` |80→90 threshold pair, verified. |
@@ -132,6 +133,29 @@ Commands (perform no device action merely by documenting them):
 FCC. Success reports verified **configuration**; physical charge stop remains
 null. A failure after an attempted firmware operation reports applied=null and
 possible delivery uncertainty. No command silently persists a desired mode.
+
+Use `admission`, never `verify`, to preflight service/client availability. It
+reads only the existing driver diagnostic caches, Uke/provider/boot metadata and
+strict root-owned profile/attestation files. The JSON kind is
+`uke_charge_control_admission`, with `profile_qualified`,
+`threshold_admission_ready`, `automatic_admission_ready`,
+`standard_client_admission_ready` and a stable reason. Inspection returns 0 even
+when qualification/readiness is false; unavailable/untrusted metadata or missing
+root privileges return 69 with the same false readiness shape and reason. The
+automatic client must require an exit-0 response and explicit true
+`automatic_admission_ready`, then start the supplied automatic service through
+its existing authorized root path. No observation/model D-Bus activation is
+needed. The shipped unqualified profile never becomes ready.
+
+Readiness is permission to **attempt admission**, not a reservation or live
+measurement/readback result. Profile/lease/source/locks can change immediately.
+A matching live lease is borrowable only for admitted standard clients; inactive
+but unexpired foreign admission is conservatively blocked. JSON explicitly
+leaves `lease_acquisition_verified`, `policy_lock_checked` and
+`runtime_measurements_checked` false. Actual actions/service startup repeat all
+checks, acquire their locks/lease and obtain the separately permitted firmware
+measurements. Preflight never creates those conditions or guarantees startup,
+current effectiveness or hardware safety.
 
 `uke-charge-control.service` and `uke-charge-automatic.service` are disabled by
 preset, have no automatic restart, and require the per-boot record. The automatic

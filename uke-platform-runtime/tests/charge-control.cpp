@@ -70,6 +70,33 @@ int main() {
     auto negative = text; negative.replace(0, 1, "-1"); rejects([&] { parse_state(negative); });
     auto overflow = text; overflow.replace(6, 1, "4294967296"); rejects([&] { parse_state(overflow); });
     {
+        Context c; c.provider_verified = true; c.boottime_ns = 2 * second; c.state = sample();
+        auto p = profile();
+        auto a = inspect_admission(c, p);
+        assert(a.profile_qualified && a.threshold_ready && a.automatic_ready && a.standard_client_ready);
+        p.current_control = false;
+        a = inspect_admission(c, p); assert(a.threshold_ready && !a.automatic_ready);
+        p = profile(); p.qualified = false; p.reason = "synthetic_unqualified";
+        a = inspect_admission(c, p); assert(!a.profile_qualified && !a.threshold_ready && a.reason == p.reason);
+        p = profile(); c.state.evidence = std::string(64, 'b');
+        a = inspect_admission(c, p); assert(a.profile_qualified && !a.threshold_ready);
+        c.state = sample(); c.state.standard_clients = false;
+        assert(!inspect_admission(c, p).threshold_ready);
+        c.state = sample(); c.state.current_admitted = false;
+        assert(!inspect_admission(c, p).automatic_ready);
+        c.state = sample(); c.state.live = false;
+        assert(!inspect_admission(c, p).threshold_ready); // Unexpired foreign lease.
+        c.state.expires_ns = 0;
+        a = inspect_admission(c, p); assert(a.threshold_ready && a.automatic_ready);
+        c.state.invalidation_ns = p.reviewed_ns;
+        assert(!inspect_admission(c, p).threshold_ready);
+        c.state = sample(); c.boottime_ns = p.expires_ns;
+        assert(!inspect_admission(c, p).profile_qualified);
+        c.boottime_ns = 2 * second; c.provider_verified = false;
+        assert(!inspect_admission(c, p).threshold_ready);
+        // These pure decisions take no Io/Session and cannot renew/read/write.
+    }
+    {
         Fake io; auto p = profile(); p.qualified = false; Session s(io, p, io.value);
         rejects([&] { s.thresholds(70, 80, 2 * second); }); assert(io.writes.empty());
     }

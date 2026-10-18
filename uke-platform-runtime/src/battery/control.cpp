@@ -61,6 +61,39 @@ State parse_state(const std::string &text) {
 Session::Session(Io &io, Profile profile, State binding)
     : io_(io), profile_(std::move(profile)), binding_(std::move(binding)) {}
 Session::~Session() { try { revoke(); } catch (...) {} }
+Admission inspect_admission(const Context &c, const Profile &p) {
+    Admission a;
+    const auto &s = c.state;
+    if (!c.provider_verified || !s.compiled || !s.instance || !c.boottime_ns) {
+        a.reason = "control_provider_unqualified"; return a;
+    }
+    if (!p.qualified || !digest(p.evidence)) { a.reason = p.reason; return a; }
+    if (p.expires_ns <= c.boottime_ns || !p.reviewed_ns || p.reviewed_ns > c.boottime_ns ||
+        p.reviewed_ns <= s.invalidation_ns || p.lease_ns < 15000000000ULL || p.lease_ns > 30000000000ULL) {
+        a.reason = "control_profile_expired_or_invalidated"; return a;
+    }
+    a.profile_qualified = true;
+    if (s.live) {
+        if (s.evidence != p.evidence || !s.standard_clients) {
+            a.reason = "control_live_lease_not_borrowable"; return a;
+        }
+        if (p.current_control && (!s.current_compiled || !s.current_admitted)) {
+            a.reason = "control_current_not_admitted"; return a;
+        }
+    } else if (s.expires_ns > c.boottime_ns) {
+        // A stale foreign TGID may still own the unexpired lease. This query
+        // cannot prove ownership or try a takeover without writing admission.
+        a.reason = "control_unexpired_inactive_lease"; return a;
+    }
+    if (p.current_control && !s.current_compiled) {
+        a.reason = "control_current_not_compiled"; return a;
+    }
+    a.threshold_ready = true;
+    a.automatic_ready = p.current_control;
+    a.standard_client_ready = p.standard_clients;
+    a.reason = "control_admission_preflight_passed";
+    return a;
+}
 void Session::admit(uint64_t now) {
     if (!profile_.qualified || !digest(profile_.evidence) || !now ||
         profile_.expires_ns <= now || profile_.lease_ns < 15000000000ULL ||

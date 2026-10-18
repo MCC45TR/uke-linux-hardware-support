@@ -40,6 +40,13 @@ struct Profile {
 Profile resolve(const Context &context,
     const std::string &profile = "/etc/uke-battery/control-profile.json",
     const std::string &identity = "/run/uke-battery/control-identity.json", uid_t trusted_uid = 0);
+struct Admission {
+    bool profile_qualified = false, threshold_ready = false, automatic_ready = false, standard_client_ready = false;
+    std::string reason = "control_admission_not_checked";
+};
+// Metadata/profile preflight only. Does not acquire a lease, take policy locks,
+// inspect live measurements, activate a service or issue a firmware request.
+Admission inspect_admission(const Context &context, const Profile &profile);
 uint32_t current_ceiling(const Profile &profile, const State &state, uint64_t now);
 class Automatic {
     uint64_t previous_ns_ = 0, stable_since_ = 0;
