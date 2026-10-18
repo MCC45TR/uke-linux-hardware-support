@@ -63,6 +63,10 @@ std::string kernel_release(const Package& pkg) {
     return result;
 }
 std::string key(const Package& p){return p.get_name()+"."+p.get_arch();}
+bool channel_api(const Package& pkg) {
+    for(const auto& dep:pkg.get_provides())if(std::string_view(dep.get_name())=="uke-control(channel-api)"&&std::string_view(dep.get_version())=="1")return true;
+    return false;
+}
 bool prerelease(const Package& p) {
     const auto v=p.get_version()+"-"+p.get_release();
     return v.find("rc")!=std::string::npos||v.find("alpha")!=std::string::npos||v.find("beta")!=std::string::npos;
@@ -222,11 +226,17 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         need(candidates.contains(k),"Target channel has no replacement for "+k+"; nothing was removed");
         const auto& list=candidates.at(k);
         p.targets.insert_or_assign(k,*std::max_element(list.begin(),list.end(),older));
+        if(pkg.get_name()=="uke-control")need(channel_api(p.targets.at(k)),"Target uke-control lacks channel API 1; promote a compatible manager first so the return path remains available");
     }
     if(has_kernel) {
         std::vector<Package> stable,rc;
         for(const auto& pkg:available)if(kernel_arches.contains(pkg.get_arch())&&pkg.get_name()==kernel)
             (prerelease(pkg)?rc:stable).push_back(pkg);
+        // COPR retains old builds: a superseded RC is not the current unstable kernel.
+        if(!stable.empty()) {
+            const auto latest=*std::max_element(stable.begin(),stable.end(),older);
+            std::erase_if(rc,[&](const Package& candidate){return !older(latest,candidate);});
+        }
         p.fallback=selected=="unstable"&&rc.empty();
         const auto& choices=selected=="unstable"&&!rc.empty()?rc:stable;
         need(!choices.empty(),"Target channel has no eligible kernel");

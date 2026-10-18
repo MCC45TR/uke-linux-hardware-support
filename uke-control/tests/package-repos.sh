@@ -6,7 +6,7 @@ test "$(id -u)" = 0
 for cmd in rpmbuild rpmsign rpmkeys createrepo_c gpg; do command -v "$cmd" >/dev/null; done
 fixture=$(mktemp -d /tmp/uke-channel-repos.XXXXXX)
 trap 'rm -rf -- "$fixture"' EXIT
-mkdir -p "$fixture"/{stable,test,unsigned,shared,home,top/{SOURCES,SPECS,BUILD,RPMS,SRPMS}}
+mkdir -p "$fixture"/{stable,test,unsigned,shared,legacy,home,top/{SOURCES,SPECS,BUILD,RPMS,SRPMS}}
 chmod 700 "$fixture/home"
 export GNUPGHOME="$fixture/home"
 gpg --batch --passphrase '' --quick-generate-key 'Uke fixture <fixture@example.invalid>' rsa2048 sign 1d >/dev/null 2>&1
@@ -53,6 +53,9 @@ build uke-same 1 stable '' '' stable
 build uke-fixture 2 test '' '' test
 build uke-same 1 test '' '' test
 build uke-missing 1 test
+build uke-control 1 stable 'Provides: uke-control(channel-api) = 1'
+build uke-control 2 test 'Provides: uke-control(channel-api) = 1'
+build uke-control 0 legacy
 build uke-fixture 3 unsigned
 kernel 7.2.10 stable 7.2.10-fixture
 kernel 7.2.11 test 7.2.11-fixture
@@ -60,12 +63,14 @@ kernel 7.2.12 shared 7.2.11-fixture
 for repo in stable test unsigned shared; do createrepo_c --quiet "$fixture/$repo"; done
 cp "$fixture/stable/uke-"*.rpm "$fixture/shared/"
 createrepo_c --quiet --update "$fixture/shared"
+cp "$fixture/stable/uke-fixture-"*.rpm "$fixture/stable/uke-same-"*.rpm "$fixture/stable/senemos-"*.rpm "$fixture/legacy/"
+createrepo_c --quiet "$fixture/legacy"
 root() {
     local target="$fixture/$1"
     mkdir -p "$target"
     rpm --root "$target" --initdb
     rpmkeys --root "$target" --import "$fixture/key.asc"
-    rpm --root "$target" -i "$fixture/test/uke-fixture-2-1.noarch.rpm" "$fixture/test/uke-same-1-1.noarch.rpm" "$fixture/test/senemos-uke-linux-kernel-"*.rpm
+    rpm --root "$target" -i "$fixture/test/uke-fixture-2-1.noarch.rpm" "$fixture/test/uke-same-1-1.noarch.rpm" "$fixture/test/uke-control-2-1.noarch.rpm" "$fixture/test/senemos-uke-linux-kernel-"*.rpm
 }
 root normal
 build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" downgrade
@@ -81,9 +86,12 @@ rpm --root "$fixture/absent" -i "$fixture/test/uke-missing-1-1.noarch.rpm"
 build/test-package-repos "$fixture/absent" "$fixture/stable" "$fixture/test" missing
 root collision
 build/test-package-repos "$fixture/collision" "$fixture/shared" "$fixture/test" shared-uname
+root manager
+build/test-package-repos "$fixture/manager" "$fixture/legacy" "$fixture/test" old-manager
 # An isolated unsigned candidate is rejected before running a transaction.
 root signature
 cp "$fixture/stable/uke-same-1-1.noarch.rpm" "$fixture/unsigned/"
+cp "$fixture/stable/uke-control-1-1.noarch.rpm" "$fixture/unsigned/"
 cp "$fixture/stable/senemos-uke-linux-kernel-"*.rpm "$fixture/unsigned/"
 createrepo_c --quiet --update "$fixture/unsigned"
 build/test-package-repos "$fixture/signature" "$fixture/unsigned" "$fixture/test" unsigned
@@ -91,4 +99,7 @@ kernel '7.4~rc7' test 7.4-rc7-fixture
 createrepo_c --quiet --update "$fixture/test"
 build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" rc
 build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" test-preference
+kernel 7.4 test 7.4-fixture
+createrepo_c --quiet --update "$fixture/test"
+build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" fallback
 printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, RC fallback/selection, update, missing-package refusal, shared-module refusal and unsigned rejection'

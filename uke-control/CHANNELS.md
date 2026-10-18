@@ -30,7 +30,8 @@ containing updates; it is not DNF's check-upgrade exit-code interface.
 | unstable | mcc45tr/uke-linux-test | Latest available Uke RC; otherwise the test kernel |
 
 The requested unstable selection is retained when no RC exists. A later sync
-or update checks again. RC versions must be valid RPM versions, for example
+or update checks again. An RC older than or equal to the newest final package
+is superseded and does not prevent that fallback. RC versions must be valid RPM versions, for example
 `7.4~rc7` in the `senemos-uke-linux-kernel-mainline` family, with matching
 core/modules/DTB/boot packages. A new package-family name requires a reviewed
 updater/selector extension. This command does not
@@ -48,6 +49,10 @@ from the selected repository, so matching version labels cannot hide a different
 payload. An installed project package missing from the target blocks the whole
 transition. Promote its matching package or resolve the obsolete component
 explicitly; the tool does not silently delete it or its dependants.
+The target `uke-control` must provide `uke-control(channel-api) = 1`; otherwise
+the transition is refused before changes. Promote a compatible manager into
+the destination first. Downgrading to a manager without these commands would
+remove the return path even if the RPM transaction itself succeeded.
 
 `sync` repairs the saved selection; without a saved selection the default is
 stable. `update` performs the same synchronization and upgrades the other

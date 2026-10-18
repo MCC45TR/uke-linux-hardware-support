@@ -22,7 +22,7 @@ int main(int argc,char** argv) {
     const fs::path repo=std::string(selected)=="stable"?stable:test;
     session(root,repo,selected,[&](libdnf5::Base& base) {
         const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test"};
-        if(phase=="missing"||phase=="shared-uname") {
+        if(phase=="missing"||phase=="shared-uname"||phase=="old-manager") {
             bool refused=false;try{plan(base,selected,ids);}catch(const std::exception& e){std::cout<<e.what()<<'\n';refused=true;}assert(refused);return;
         }
         auto p=plan(base,selected,ids);
