@@ -89,8 +89,11 @@ int main() {
     }
     rejects([&]{ cct_samples(many, {1,2}); });
     const Bytes cct_request{0,1,0,0x20,0,40,0,1,37,0,35,0,
-        0x0a,18,9,1,0,0,0,0,0,0,0x11,2,0,0,0,0,0,0,0,
+        0x0a,18,
+        0x09,1,0,0,0,0,0,0,0,
+        0x11,2,0,0,0,0,0,0,0,
         0x15,2,2,0,0,0x1a,4,8,1,0x10,1,0x22,2,0x12,0};
+    assert(cct_request.size() == 47);
     assert(client_request({1,2}, 514, {}) == cct_request);
     (void)&rpc; (void)&request; (void)&suids; (void)&attributes;
     std::cout << "SSC sample framing, finite floats, dimensions, status and foreign-source checks passed\n";
