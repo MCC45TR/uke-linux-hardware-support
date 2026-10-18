@@ -17,15 +17,23 @@ After the kernel-28 compressed firmware-loader change, the RTL8153 driver
 reports firmware `rtl8153b-2 v2 04/27/23` through ethtool. Carrier is zero;
 no Ethernet cable or traffic result is claimed.
 
-Kernel 28 from signed COPR 11168191 also installs through DNF and returns to SSH
-and the original KDE session after a normal reboot. The touch service is active
-with zero restarts; the user confirms physical display and touch operation. Application 10
-and charging helper 4 are installed from signed COPR packages. Metadata-only
-charge status and explicit diagnostic refusals pass on kernel 28; the matched
-kernel-29 firmware query remains pending. Adaptive-display 9 retains successful
-original libddcutil initialization after reboot while excluding internal GENI
-buses. External DDC/CI brightness remains untested. The half-RAM swap, balanced
-profile and CDC disabled state persist. No KDE application is forked or rebuilt.
+Kernel 29 from signed COPR 11168479 installs through DNF and returns to SSH and
+original KDE after a normal reboot. The user confirms display/touch; VRR Always
+persists without restoration, with about 30 Hz measured idle DPU at the 144 Hz
+upper mode. Application 11 and runtime/helper 6 are installed from signed COPR
+11168593/11168630. Explicit threshold GETs report disabled 70/80. The restricted
+enable operation refuses the old-kernel write interface without fallback.
+Charge workers remain inactive. Adaptive-display 9 retains original libddcutil
+initialization, excluding internal GENI buses. External DDC brightness is untested.
+Half-RAM swap, balanced profile and CDC disabled state persist.
+
+The separate minimal native offline UI is installed. It draws a large battery,
+percentage, firmware time-to-full, signed battery power and temperature; missing
+time remains unavailable. Normal-boot refusal passes without interrupting KDE
+or touch. Its matched initramfs targets Linux 7.2.11, currently in full COPR.
+Physical charger boot, key/unplug behavior and efficiency remain untested. See
+[the interface contract](uke-platform-runtime/docs/OFFLINE-CHARGING.md).
+No KDE application is forked or rebuilt.
 
 The battery's 100% display and Charging state do not establish termination or an
 electrical fault. Manual PD disconnection is verified as Discharging at 28 degrees
