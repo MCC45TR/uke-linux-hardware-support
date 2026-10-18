@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -12,8 +12,8 @@ Requires: uke-ssc-fileservice >= 2026.09.21-8
 Requires: coreutils grep sed systemd-udev
 Requires: powerdevil >= 6.8.0
 Requires: kscreen >= 6.8.0
-Requires: ddcutil >= 2.2.4
-Requires: libddcutil >= 2.2.4
+Requires: ddcutil >= 3.0.2
+Requires: libddcutil >= 3.0.2
 %{?systemd_requires}
 
 %description
@@ -67,6 +67,10 @@ sh tests/ddc-config.sh
 %{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
+- Keep ignored internal adapters out of the original library's all-bus preflight.
+- Retain normal permissions, DP discovery and per-device DDC error handling.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
 - Exclude internal GENI adapters from original PowerDevil DDC discovery.
 - Resolve current bus numbers from sysfs and retain original XDG search paths.

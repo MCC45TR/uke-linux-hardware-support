@@ -20,7 +20,7 @@ export XDG_CONFIG_DIRS=$work/etc:$work/vendor
 run_helper() { sh "$project/src/uke-ddc-config" "$sysfs"; }
 run_helper
 config=$work/run/uke-display-ddc/ddcutil/ddcutilrc
-grep -Fxq 'options = --ignore-bus 2 --ignore-bus 5' "$config"
+grep -Fxq 'options = --disable-early-permission-checks --ignore-bus 2 --ignore-bus 5' "$config"
 if grep -Fq -- '--ignore-bus 300' "$config"; then exit 1; fi
 test "$(stat -c %a "$config")" = 600
 test "$(stat -c %a "$work/run/uke-display-ddc.env")" = 600

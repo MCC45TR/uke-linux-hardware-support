@@ -34,6 +34,18 @@ pre-start step. No KDE application or library is rebuilt. The offline fixture
 checks GENI/DP ancestry, private file modes, repeated startup and configuration
 precedence; physical external brightness still needs a working display path.
 
+On Linux 7.2.10-27, original libddcutil 3.0.2 loads release 8's exclusions but
+its early all-bus permission preflight still opens the excluded GENI adapters
+and aborts initialization. Release 9 adds the original library's
+`--disable-early-permission-checks` option and requires version 3.0.2 or later.
+Only this incompatible preflight is skipped; monitor discovery still applies
+the explicit GENI exclusions, normal device permissions remain enforced and
+DDC transactions retain their ordinary error checks. No internal I2C access is
+granted and no DDC/CI check or display control is disabled. The source comparison
+uses upstream ddcutil `5085ae9bb1a8e5bd8db717d80dd80a279a0f05fb`,
+`src/i2c/i2c_bus_collections.c` and `src/ddc/ddc_common_init.c`.
+Package and tablet acceptance remain separate from these source findings.
+
 ## Color resolution and RGB range
 
 [Xiaomi's FAQ](https://www.mi.com/my/support/faq/details/KA-537666/) advertises

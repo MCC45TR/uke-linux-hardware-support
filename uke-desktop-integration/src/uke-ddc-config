@@ -29,7 +29,9 @@ set +f
 IFS=$ddc_saved_ifs
 umask 077
 mkdir -p "$output/ddcutil"
-options=
+# libddcutil 3.0.2's all-bus preflight ignores --ignore-bus. Discovery itself
+# honors exclusions and still uses normal per-device access/error handling.
+options=' --disable-early-permission-checks'
 for entry in "$sysfs"/class/i2c-dev/i2c-[0-9]*; do
     test -e "$entry" || continue
     number=${entry##*/i2c-}
