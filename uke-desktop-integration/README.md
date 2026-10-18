@@ -26,3 +26,9 @@ driver. Sensor/touch buses retain their existing permissions. External display
 and DDC brightness acceptance still require a compatible connected monitor.
 The package neither unmasks system sleep nor replaces KDE applications.
 See [display controls](docs/DISPLAY-CONTROLS.md).
+
+Release8 also prepares a PowerDevil-only libddcutil search path that excludes
+actual internal GENI adapters while retaining DP AUX. The helper only reads
+sysfs topology and writes private runtime configuration; existing user/admin
+ddcutil files retain precedence. Offline topology and configuration tests pass;
+package and tablet startup checks remain separate gates.

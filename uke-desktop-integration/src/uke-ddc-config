@@ -1,0 +1,53 @@
+#!/bin/sh
+# Original PowerDevil must not probe the tablet's internal GENI I2C adapters.
+set -eu
+sysfs=${1:-/sys}
+test -r "$sysfs/firmware/devicetree/base/compatible" || exit 0
+if ! tr '\000' '\n' < "$sysfs/firmware/devicetree/base/compatible" | grep -Fqx xiaomi,uke; then
+    exit 0
+fi
+output=${XDG_RUNTIME_DIR:?}/uke-display-ddc
+directories=${XDG_CONFIG_DIRS:-/etc/xdg}
+case $directories in "$output":*) directories=${directories#"$output":};; esac
+# Administrator and user configuration takes precedence over board defaults.
+if test -f "${XDG_CONFIG_HOME:-${HOME:?}/.config}/ddcutil/ddcutilrc"; then
+    rm -f "$XDG_RUNTIME_DIR/uke-display-ddc.env"
+    exit 0
+fi
+ddc_saved_ifs=$IFS
+IFS=:
+set -f
+for directory in $directories; do
+    case $directory in
+        /*) if test -f "$directory/ddcutil/ddcutilrc"; then
+                rm -f "$XDG_RUNTIME_DIR/uke-display-ddc.env"
+                exit 0
+            fi;;
+    esac
+done
+set +f
+IFS=$ddc_saved_ifs
+umask 077
+mkdir -p "$output/ddcutil"
+options=
+for entry in "$sysfs"/class/i2c-dev/i2c-[0-9]*; do
+    test -e "$entry" || continue
+    number=${entry##*/i2c-}
+    case $number in ''|*[!0-9]*) continue;; esac
+    test "$number" -le 255 || continue
+    parent=$(readlink -f "$entry/device") || continue
+    while test "$parent" != / && test -n "$parent"; do
+        driver=$(readlink -f "$parent/driver" 2>/dev/null || :)
+        if test "${driver##*/}" = geni_i2c; then
+            options="$options --ignore-bus $number"
+            break
+        fi
+        parent=${parent%/*}
+    done
+done
+config=$output/ddcutil/ddcutilrc
+printf '[libddcutil]\noptions =%s\n' "$options" > "$config.new"
+mv -f "$config.new" "$config"
+escaped=$(printf '%s' "$output:$directories" | sed 's/\\/\\\\/g; s/"/\\"/g')
+printf 'XDG_CONFIG_DIRS="%s"\n' "$escaped" > "$XDG_RUNTIME_DIR/uke-display-ddc.env.new"
+mv -f "$XDG_RUNTIME_DIR/uke-display-ddc.env.new" "$XDG_RUNTIME_DIR/uke-display-ddc.env"

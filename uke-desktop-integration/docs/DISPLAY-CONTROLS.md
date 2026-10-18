@@ -21,6 +21,19 @@ uaccess policy without granting sensor/touch buses access. Existing Fedora
 DDC tools remain responsible for monitor discovery and brightness control.
 No OEM pin, power setting or foreign board value is transferred.
 
+Release8 generates a private libddcutil configuration before original
+PowerDevil starts. It derives internal GENI adapter numbers from their actual
+sysfs driver ancestry and excludes them from monitor discovery. DP AUX remains
+eligible; no I2C device is opened by the helper. The user-service drop-in loads
+the resulting XDG path only for PowerDevil. Existing user or administrator
+ddcutil configuration takes precedence and is not modified. Configured custom
+files must provide their own internal-bus exclusion when appropriate.
+
+The standard EnvironmentFile mechanism reads the generated values after the
+pre-start step. No KDE application or library is rebuilt. The offline fixture
+checks GENI/DP ancestry, private file modes, repeated startup and configuration
+precedence; physical external brightness still needs a working display path.
+
 ## Color resolution and RGB range
 
 [Xiaomi's FAQ](https://www.mi.com/my/support/faq/details/KA-537666/) advertises

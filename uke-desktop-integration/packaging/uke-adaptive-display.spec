@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -9,10 +9,11 @@ BuildArch: noarch
 BuildRequires: systemd-rpm-macros systemd-udev
 Requires: iio-sensor-proxy(ssc) >= 1
 Requires: uke-ssc-fileservice >= 2026.09.21-8
-Requires: grep systemd-udev
+Requires: coreutils grep sed systemd-udev
 Requires: powerdevil >= 6.8.0
 Requires: kscreen >= 6.8.0
-Requires: ddcutil libddcutil
+Requires: ddcutil >= 2.2.4
+Requires: libddcutil >= 2.2.4
 %{?systemd_requires}
 
 %description
@@ -35,10 +36,13 @@ install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir
 install -Dm644 packaging/71-uke-tablet-mode.rules %{buildroot}%{_udevrulesdir}/71-uke-tablet-mode.rules
 install -Dm644 packaging/61-uke-display-ddc.rules %{buildroot}%{_udevrulesdir}/61-uke-display-ddc.rules
 install -Dm644 packaging/powerdevilrc %{buildroot}%{_sysconfdir}/xdg/powerdevilrc
+install -Dm755 src/uke-ddc-config %{buildroot}%{_libexecdir}/senemos-uke/uke-ddc-config
+install -Dm644 packaging/60-uke-display-ddc.conf %{buildroot}%{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
 
 %check
 udevadm verify packaging/71-uke-tablet-mode.rules
 udevadm verify packaging/61-uke-display-ddc.rules
+sh tests/ddc-config.sh
 
 %post
 %systemd_post uke-adaptive-display.target
@@ -59,8 +63,14 @@ udevadm verify packaging/61-uke-display-ddc.rules
 %{_presetdir}/80-uke-adaptive-display.preset
 %{_udevrulesdir}/71-uke-tablet-mode.rules
 %{_udevrulesdir}/61-uke-display-ddc.rules
+%{_libexecdir}/senemos-uke/uke-ddc-config
+%{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
+- Exclude internal GENI adapters from original PowerDevil DDC discovery.
+- Resolve current bus numbers from sysfs and retain original XDG search paths.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
 - Require original Fedora DDC tools and provide display-only power-key defaults.
 - Restrict additional platform DDC access to upstream MSM DisplayPort adapters.

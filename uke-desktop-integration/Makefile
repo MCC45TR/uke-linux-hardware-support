@@ -9,7 +9,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792281600 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-adaptive-display-0.1.0/,' -cf - LICENSE docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md packaging/uke-adaptive-display.target packaging/80-uke-adaptive-display.preset packaging/71-uke-tablet-mode.rules packaging/61-uke-display-ddc.rules packaging/powerdevilrc | gzip -n > "$$top/SOURCES/uke-adaptive-display-0.1.0.tar.gz"
+	tar --sort=name --mtime=@1792281600 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-adaptive-display-0.1.0/,' -cf - LICENSE docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md packaging/uke-adaptive-display.target packaging/80-uke-adaptive-display.preset packaging/71-uke-tablet-mode.rules packaging/61-uke-display-ddc.rules packaging/powerdevilrc packaging/60-uke-display-ddc.conf src/uke-ddc-config tests/ddc-config.sh | gzip -n > "$$top/SOURCES/uke-adaptive-display-0.1.0.tar.gz"
 	cp packaging/uke-adaptive-display.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --define "_topdir $$top" "$$top/SPECS/uke-adaptive-display.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
