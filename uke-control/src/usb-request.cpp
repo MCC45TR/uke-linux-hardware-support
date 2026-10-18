@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "usb-request.hpp"
+#include "rpm-api.hpp"
 #include <algorithm>
 #include <cerrno>
 #include <charconv>
@@ -166,8 +167,8 @@ Result request_data(const std::string& desired) {
         noop=first.state.typec_role==desired&&first.state.controller_role==desired;
         if(noop) {observed=true;status=0;after_typec=before_typec;after_controller=before_controller;}
         else {
-            const auto api=execute({"/usr/bin/rpm","-q","--whatprovides","uke-usb-gadget-ownership-api = 2"},5,4096);
-            need(api.status==0,"GADGET_OWNERSHIP_API2_REQUIRED");
+            const auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-gadget-ownership-api"},5,4096);
+            need(api.status==0&&rpm_api_matches(api.output,"uke-usb-gadget-ownership-api","2"),"GADGET_OWNERSHIP_API2_REQUIRED");
             GadgetLock lock;Inhibit inhibit;
             auto current=graph();need(same_partner(first,current),"ATTACHMENT_CHANGED");
             if(current.state.gadget) {

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "rpm-api.hpp"
 #include "charge-client.hpp"
 #include "usb-request.hpp"
 #include <algorithm>
@@ -226,8 +227,8 @@ Result cdc_set(bool enabled) {
     auto marker=read("/sys/firmware/devicetree/base/chosen/senemos,usb-profile",64);
     while(!marker.empty()&&(marker.back()=='\n'||marker.back()=='\0'))marker.pop_back();
     need(marker=="typec-v1","Manual CDC requires the matched full Type-C boot/root profile");
-    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","uke-usb-manual-cdc-api = 2"},5,4096);
-    need(api.status==0,"Install the matched one-shot manual CDC support package");
+    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-manual-cdc-api"},5,4096);
+    need(api.status==0&&rpm_api_matches(api.output,"uke-usb-manual-cdc-api","2"),"Install the matched one-shot manual CDC support package");
     const char *helper="/usr/libexec/senemos-uke/uke-usb-network";
     struct stat st{};
     need(lstat(helper,&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted manual CDC helper");

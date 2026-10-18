@@ -15,7 +15,10 @@ DRM sampling and bounded proximity discovery ran on the tablet. Normal reboot
 restored the half-RAM swap and preserved the first inventory. Preference for an
 existing swap partition remains untested. These observations do not establish
 physical VRR or sensor acceptance. Application 6 is a source candidate for the
-read-only front-color command and one-shot manual CDC API2.
+read-only front-color command and one-shot manual CDC API2. Release 7 corrects
+the RPM capability query: it looks up the capability name and checks the
+provided version explicitly. Its host checks pass; target command acceptance
+requires installing the new package.
 Charge control uses a qualified native helper or an available standard writable
 `charge_control_end_threshold`. The installed helper recognizes the provider
 but refuses unqualified control. No 80% cutoff is claimed. The USB source adds

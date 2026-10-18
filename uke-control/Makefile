@@ -12,7 +12,7 @@ protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 all: build/uke-control build/uke-control-tests build/ssc-discovery build/ssc-sample
 build:
 	mkdir -p build
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp | build
+build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/usb-request.cpp src/front-color.cpp $(shell pkg-config --libs libselinux libsystemd)
 build/uke-control: src/main.cpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp -Lbuild -l:libuke-control.so.0
@@ -34,6 +34,8 @@ build/ssc-sample: shared/ssc-sample.cpp shared/ssc-discovery.cpp | build
 build/test-front-color: tests/front-color.cpp src/front-color.cpp src/front-color.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
 check: all build/test-front-color
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/rpm-api.cpp -o build/test-rpm-api
+	build/test-rpm-api
 	build/test-front-color
 	LD_LIBRARY_PATH=build build/uke-control --self-test
 	build/uke-control-tests --self-test
