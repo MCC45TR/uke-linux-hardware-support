@@ -127,11 +127,11 @@ static void inspect_normal(int fd) {
         std::cout<<name<<'='<<custom_read(fd,subcommand)<<'\n';
 }
 static unsigned custom_read(int fd,unsigned subcommand) {
-    // The Uke OEM command path waits 35 ms, then resends up to five times at 20 ms.
+    // Wide-VFP startup can need 345 ms; poll the pending command within the 500 ms readiness budget.
     pause_ms(35);
+    normal_write(fd,0x11c450,Bytes{0xbf,std::uint8_t(subcommand),1});
     unsigned last_status=0xff;
-    for(unsigned attempt=0;attempt<5;attempt++) {
-        normal_write(fd,0x11c450,Bytes{0xbf,std::uint8_t(subcommand),1});
+    for(unsigned attempt=0;attempt<25;attempt++) {
         pause_ms(20);
         const auto status=normal_read<5>(fd,0x11c450);
         if(status[0]==0) {

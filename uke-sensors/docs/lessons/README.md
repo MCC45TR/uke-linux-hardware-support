@@ -29,3 +29,26 @@
   races and recovery-backoff fixtures; signed package and tablet checks follow.
 - Uncertainty: syscall reduction is not a measured power or physical touch result.
 - Next validation: compare target CPU/syscalls, panel-reset recovery and input.
+
+## UKE-TOUCH-CMD001
+
+- Date: 2026-10-18.
+- Environment: Uke release-10 kernel, O82 144 Hz base with opt-in 30 Hz AVR floor;
+  release-8 native touch service and a guarded native SPI latency helper.
+- Donor evidence: the existing Uke OEM BF read path waits 35 ms and performs
+  five write/wait/read attempts at 20 ms. The normal reset-ready poll separately
+  permits 500 ms. No command payload, scan mode, firmware or calibration changes.
+- Observed result: cold wide-AVR activation repeatedly times out on read command
+  1. After the same pinned RAM image is reloaded under held wide AVR, a single
+  query remains pending for about 345 ms and then returns operating mode 1.
+  A later query completes in 10.7 ms; the narrow 120 Hz floor control takes 5.4 ms.
+- Consequence: the old 135 ms query window can end before firmware command
+  readiness. Release 9 sends once and polls at 20 ms within the existing 500 ms
+  readiness budget. Every SPI transfer retains the panel-generation guard.
+- Validation: actual command fixtures cover delayed ACK, one write, bounded
+  failure, transfer failure and a panel reset while the command is pending.
+- Uncertainty: the latency observation does not qualify panel scan cadence or
+  physical finger input. It does not establish that retransmission alone caused
+  the delay. Package and repeated cold-AVR recovery acceptance remain pending.
+- Next validation: install the signed RPM and repeat fixed and wide AVR lifecycle
+  tests across every admitted base mode, then check idle CPU and logs.
