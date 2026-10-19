@@ -3,6 +3,7 @@
 | ID | Date | Finding | Validation |
 |---|---|---|---|
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
+| UKE-INP-ASSIGN001 | 2026-10-19 | Excess candidates made recursive touch assignment consume system memory | Partial tablet core, bounded host regression; corrected package validation pending |
 
 ## UKE-INITIAL-001
 
@@ -14,6 +15,36 @@
 - Consequence: package admission requires Uke sources and isolated payload tests.
 - Uncertainty: no functional package exists at this initial scaffold stage.
 - Next validation: complete the manifest's component-specific gates.
+
+## UKE-INP-ASSIGN001
+
+- Date: 2026-10-19.
+- Environment: POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.11-6,
+  uke-touchscreen 0.1.0-10; no kernel or display policy change during capture.
+- Evidence: the live process is runnable with 82.6% RSS; systemd records a
+  6 GiB memory peak and 1.1 GiB swap peak. A requested service restart times
+  out. Its resulting ABRT core resolves the PC to the recursive assignment
+  lambda using the exact installed RPM executable. The core is truncated;
+  the full stack and original matrix cannot be recovered from it.
+- Source: Apache-2.0 ianchb/xiaomi-sheng-thp commit
+  34046210932d654a4c0df0121ecc31c008f8148c uses masks over the larger
+  candidate set when that set exceeds twelve. Uke normal firmware and private
+  runtime geometry remain unchanged. The pinned OnePlus Pad 2 coordinate driver
+  uses kernel slots rather than this host algorithm. Upstream input-mt.c uses
+  bounded slot resources and a different matching algorithm; no code is copied.
+- Finding: a 12-by-32 test reproduces allocation failure with a 256 MiB
+  address-space limit. A row-mask implementation limits workspace to 4096
+  states and preserves exact costs and lexicographic ties. Exhaustive small
+  cases, transpose, overload and invalid-size refusal cover the actual function.
+- Consequence: release 11 replaces the exponential fallback and adds
+  MemoryMax=128M/MemorySwapMax=0 containment. Preparation hashes, source patch,
+  source RPM and RPM checks include the correction.
+- Observed recovery: restarting release 10 restores real touch, confirmed by
+  the operator. This is recovery evidence, not corrected-package acceptance.
+- Uncertainty: the exact matrix that triggered the large search is unavailable.
+  Separate FD firmware watchdogs recover in about half a second and remain open.
+- Next validation: install the signed release 11, verify input and bounded
+  memory across active use and display lifecycle, then isolate FD triggers.
 
 ## UKE-TOUCH-PERF001
 

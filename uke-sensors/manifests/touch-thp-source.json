@@ -8,7 +8,9 @@
     "class": "adjacent-device host-touch algorithm; Uke calibration loaded separately",
     "files": ["src/nvt_touch_core.cpp", "src/nvt_touch_core.hpp"],
     "patch": "patches/nt36532-thp-runtime-geometry.patch",
-    "patch_sha256": "9f2a0b03e9ca59df095a36e3c314d16e67273735328348f1213848b7988f40c7"
+    "patch_sha256": "9f2a0b03e9ca59df095a36e3c314d16e67273735328348f1213848b7988f40c7",
+    "bounded_assignment_patch": "patches/nt36532-thp-bounded-assignment.patch",
+    "bounded_assignment_patch_sha256": "8073e96d009d74a8b9586586479f8092ac8ac1321d7ef5e1acdc845d091030b2"
   },
   "input": {
     "name": "Novatek NT36532 Uke Touchscreen",

@@ -288,6 +288,16 @@ reloads the verified normal firmware while retaining the input device. FE uses
 the stock idle-reset step first. Panel readiness/generation guards and bounded
 retries remain; exhausted recovery returns an explicit service failure.
 Exact OEM attribution is recorded in manifests/touch-normal-probe-source.json.
+
+19 October 2026: release 10 stalled inside its recursive contact assignment on
+POCO Pad X1 with Linux 7.2.11-6. The process reached a 6 GiB service memory peak;
+the retained partial core identifies the assignment function. Release 11 bounds
+the exact assignment to at most 4096 tracked-row states, including excess raw
+contact candidates, and retains deterministic minimum-cost matching. An
+exhaustive small-case comparison and a 12-by-32 overload regression run during
+RPM checks. The service also caps memory at 128 MiB and disables service swap.
+This corrects the unbounded host algorithm; separate firmware FD watchdogs and
+long-duration physical input continuity still require validation.
 Host checks cover signature interruptions, FE/FD paths, DPMS-off refusal and
 failed reloads. The original firmware reset trigger and physical continuity
 under VRR require separate tablet validation.

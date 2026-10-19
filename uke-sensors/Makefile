@@ -54,7 +54,7 @@ touchscreen-srpm:
 	top="$$(realpath -m build/rpmbuild)"; mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
 	tar --sort=name --mtime=@1791024250 --owner=0 --group=0 --numeric-owner \
 	 --transform='s#^#uke-touchscreen-0.1.0/#' -cJf "$$top/SOURCES/uke-touchscreen-0.1.0.tar.xz" \
-	 src/touch-* src/upstream/nt36532-thp src/units src/modules-load.d src/modprobe.d src/udev tests/touch-input.cpp tests/touch-normal-probe.cpp LICENSE.GPL-3.0
+ src/touch-* src/upstream/nt36532-thp src/units src/modules-load.d src/modprobe.d src/udev tests/touch-input.cpp tests/touch-normal-probe.cpp tests/touch-assignment.cpp LICENSE.GPL-3.0
 	cp packaging/uke-touchscreen.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-touchscreen.spec"
 touchscreen-rpm: touchscreen-srpm
@@ -113,6 +113,8 @@ test-touch-thp:
 	test -n "$(TOUCH_CORE_REFERENCE)" -a -n "$(TOUCH_FRAME_REFERENCE)" -a -n "$(TOUCH_CONFIG)"
 	bash src/prepare-touch-core.sh "$(TOUCH_CORE_REFERENCE)"
 	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-assignment.cpp -o build/touch-assignment-contract
+	timeout 15 bash -c 'ulimit -v 262144; exec ./build/touch-assignment-contract'
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-thp.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -o build/touch-thp-contract
 	./build/touch-thp-contract "$(TOUCH_FRAME_REFERENCE)" "$(TOUCH_CONFIG)"
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-input.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o build/touch-input-contract
