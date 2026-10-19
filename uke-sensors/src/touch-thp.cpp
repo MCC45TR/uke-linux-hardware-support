@@ -8,11 +8,59 @@
 #include <filesystem>
 #include <linux/gpio.h>
 #include <linux/uinput.h>
+#include <memory>
 #include <poll.h>
+#include <string_view>
 #include <systemd/sd-daemon.h>
+#include <systemd/sd-device.h>
+#include <systemd/sd-event.h>
 
 static volatile std::sig_atomic_t running=1;
 static void stop_touch(int) { running=0; }
+static std::optional<bool> touch_usb_online(const std::filesystem::path &path=
+        "/sys/class/power_supply/qcom-battmgr-usb/online") {
+    std::ifstream file(path,std::ios::binary);
+    char bytes[3]{};file.read(bytes,sizeof(bytes));
+    if(file.bad() || file.gcount()!=2 || bytes[1]!='\n' || (bytes[0]!='0' && bytes[0]!='1'))
+        return std::nullopt;
+    return bytes[0]=='1';
+}
+struct TouchPowerState {
+    std::optional<bool> attempted;
+    template<class Apply> void update(std::optional<bool> supplied,Apply apply) {
+        if(!supplied || supplied==attempted)return;
+        attempted=supplied; // Retry only after a source change or firmware reload.
+        apply(*supplied);
+    }
+};
+struct TouchPowerMonitor {
+    std::unique_ptr<sd_device_monitor,decltype(&sd_device_monitor_unref)> monitor{nullptr,sd_device_monitor_unref};
+    std::unique_ptr<sd_event,decltype(&sd_event_unref)> event{nullptr,sd_event_unref};
+    bool dirty=true;
+    TouchPowerState state;
+    TouchPowerMonitor() {
+        sd_device_monitor *m=nullptr;
+        require(sd_device_monitor_new(&m)>=0,"Touch power monitor unavailable");monitor.reset(m);
+        sd_event *e=nullptr;
+        require(sd_event_new(&e)>=0,"Touch power event loop unavailable");event.reset(e);
+        require(sd_device_monitor_filter_add_match_subsystem_devtype(m,"power_supply",nullptr)>=0 &&
+                sd_device_monitor_attach_event(m,e)>=0 &&
+                sd_device_monitor_start(m,[](sd_device_monitor *,sd_device *device,void *user) {
+                    const char *name=nullptr;
+                    if(sd_device_get_sysname(device,&name)>=0 && std::string_view(name)=="qcom-battmgr-usb")
+                        static_cast<TouchPowerMonitor *>(user)->dirty=true;
+                    return 0;
+                },this)>=0,"Touch power notification setup failed");
+    }
+    int fd() const {return sd_event_get_fd(event.get());}
+    void dispatch() {
+        for(unsigned count=0;count<16;count++) {
+            const int result=sd_event_run(event.get(),0);
+            require(result>=0,"Touch power notification dispatch failed");
+            if(!result)break;
+        }
+    }
+};
 struct TouchPanelState {
     std::uint64_t generation{};
     bool ready{};
@@ -212,6 +260,7 @@ static void input_setup(int fd,const nvt::Geometry &geometry) {
             ioctl(fd,UI_DEV_CREATE)==0,"Touch input registration failed");
 }
 static void input_report(int fd,const std::vector<nvt::Slot> &slots,std::array<int,nvt::kFingerSlots> &ids,const nvt::Geometry &geometry) {
+    if(slots.empty() && std::all_of(ids.begin(),ids.end(),[](int id){return id<0;}))return;
     std::array<bool,nvt::kFingerSlots> seen{};
     for(const auto &slot:slots) {
         require(slot.number>=0 && slot.number<int(ids.size()) && !seen[slot.number],"Invalid or duplicate touch slot");
@@ -353,6 +402,8 @@ int main(int argc,char **argv) {
             require(operating_mode==1 && stylus_only==0 && single_step==0,
                 "Touch operating mode unavailable");
         }
+        std::optional<TouchPowerMonitor> power;
+        if(daemon)power.emplace();
         irq=touch_irq(controller);
         input=open("/dev/uinput",O_WRONLY|O_CLOEXEC); require(input>=0,"Kernel uinput is unavailable");
         input_setup(input,geometry);
@@ -369,11 +420,15 @@ int main(int argc,char **argv) {
         TouchRecovery recovery{admitted_panel.generation,0,{}};
         uke_touch::Watchdog watchdog;
         while(running && (daemon || std::chrono::steady_clock::now()<deadline)) {
+            if(power)power->dispatch();
             if(!panel_provider.empty()) {
                 if(!recover_touch_panel(panel_event,admitted_panel,recovery,
                     [&]{input_report(input,{},ids,geometry);previous_contacts=0;},
                     [&]{core.reset();core.process(reference_frame->matrix,reference_frame->counter,reference_frame->scan_mode);watchdog={};},
-                    [&]{discard_touch_irqs(irq);},[&](bool idle){touch_start_normal(spi,image,idle);},
+                    [&]{discard_touch_irqs(irq);},[&](bool idle){
+                        touch_start_normal(spi,image,idle);
+                        if(power){power->state.attempted.reset();power->dirty=true;}
+                    },
                     std::chrono::steady_clock::now())) {
                     // Retry backoff only bounds failed downloads; panel readiness wakes us immediately.
                     pollfd changed{panel_event,POLLPRI|POLLERR,0};
@@ -384,8 +439,23 @@ int main(int argc,char **argv) {
                     continue;
                 }
             }
-            pollfd ready[]{{irq,POLLIN,0},{panel_event,POLLPRI|POLLERR,0}};
-            const int status=poll(ready,2,100);
+            if(power && power->dirty && !previous_contacts) {
+                power->dirty=false;
+                try {
+                    TouchPanelGuard guard(panel_event,admitted_panel);
+                    power->state.update(touch_usb_online(),[&](bool supplied) {
+                        touch_charger_mode(spi,supplied);
+                        std::cout<<"Touch charger-noise filter: external-power="<<supplied<<std::endl;
+                    });
+                } catch(const TouchPanelTransition &) {
+                    power->state.attempted.reset();power->dirty=true;continue;
+                } catch(const std::exception &error) {
+                    std::cerr<<"Touch charger-noise filter not applied: "<<error.what()<<std::endl;
+                }
+            }
+            pollfd ready[]{{irq,POLLIN,0},{panel_event,POLLPRI|POLLERR,0},
+                {power?power->fd():-1,POLLIN,0}};
+            const int status=poll(ready,3,100);
             if(status<0 && !running) break;
             require(status>=0,"Touch IRQ wait failed");
             if(!status) {
@@ -393,7 +463,8 @@ int main(int argc,char **argv) {
                 continue;
             }
             require(!(ready[0].revents&(POLLERR|POLLHUP|POLLNVAL)) &&
-                    !(ready[1].revents&POLLNVAL),"Touch event provider failed");
+                    !(ready[1].revents&POLLNVAL) &&
+                    !(ready[2].revents&(POLLERR|POLLHUP|POLLNVAL)),"Touch event provider failed");
             if(ready[1].revents || !(ready[0].revents&POLLIN))continue;
             coalesced_edges+=consume_touch_irq(irq)-1;
             std::array<std::uint8_t,5434> tx{},rx{};

@@ -17,6 +17,8 @@ unsigned custom_writes,custom_reads,custom_busy_reads,scan_pending_reads;
 unsigned custom_command,game_mode,game_writes,game_busy_reads;
 bool bad_game_readback;
 unsigned fast_bank_reads,fast_bank_writes;
+bool charger_mode,bad_charger_readback;
+unsigned charger_writes;
 bool scan_never_ready;
 std::array<std::uint8_t,0x120000> ram{};
 std::vector<std::pair<unsigned,Bytes>> writes;
@@ -45,6 +47,9 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
         }
         if(address==0x11c450 && m->len==6 && tx[1]==0xbf && tx[2]==0x15 && tx[3]==0)
             coordinate_enabled=tx[4];
+        if(address==0x11c450 && m->len==6 && tx[1]==0xbf && tx[2]==0x10 && tx[3]==0) {
+            charger_mode=tx[4];charger_writes++;
+        }
         if(address<ram.size() && m->len-1<=ram.size()-address)
             std::copy(tx+1,tx+m->len,ram.begin()+address);
     }
@@ -77,6 +82,7 @@ int mock_ioctl(int,unsigned long request,...) noexcept {
                 if(custom_command==0x0f) rx[5]=bad_game_readback ? 2 : game_mode;
                 if(custom_command==0x0a) rx[5]=game_mode ? 240 : 120;
                 if(custom_command==0x0b) rx[5]=240;
+                if(custom_command==0x10) rx[5]=bad_charger_readback?2:charger_mode;
             }
         }
         else if(address==0x1093d8 && m->len==41) { rx[4]=0x38; rx[5]=0x14; }
@@ -97,6 +103,7 @@ void reset() {
     fast_bank_reads=fast_bank_writes=0;
     custom_command=game_mode=game_writes=game_busy_reads=0;
     bad_game_readback=false;
+    charger_mode=bad_charger_readback=false;charger_writes=0;
     fail_at=~0U;
     never_copy=never_reset=bad_crc=bad_bank=bad_metadata=coordinate_enabled=bad_mode=scan_never_ready=false;
     foreign_chip=single_chip=false;
@@ -137,11 +144,19 @@ int main(int argc,char **argv) {
     touch_game_mode(0,0); assert(game_mode==0 && custom_read(0,0x0a)==120);
     reset(); reject([&]{touch_game_mode(0,2);}); assert(operations==0);
     reject([&]{normal_write(0,0x11c450,Bytes{0xbf,0x0f,0,2,0});}); assert(operations==0);
-    reset(); game_busy_reads=5; reject([&]{touch_game_mode(0,1);}); assert(game_writes==5);
+    reset(); game_busy_reads=17; touch_game_mode(0,1); assert(game_writes==1);
+    reset(); game_busy_reads=25; reject([&]{touch_game_mode(0,1);}); assert(game_writes==1);
     reset(); bad_game_readback=true; reject([&]{touch_game_mode(0,1);});
     reset(); game_mode=1; touch_probe_game_rates(0); assert(game_mode==1 && game_writes==3);
-    reset(); game_busy_reads=5; reject([&]{touch_probe_game_rates(0);});
-    assert(game_mode==0 && game_writes==6);
+    reset(); game_busy_reads=25; reject([&]{touch_probe_game_rates(0);});
+    assert(game_mode==0 && game_writes==2);
+    reset();touch_charger_mode(0,true);assert(charger_mode && charger_writes==1);
+    touch_charger_mode(0,false);assert(!charger_mode && charger_writes==2);
+    reset();bad_charger_readback=true;reject([&]{touch_charger_mode(0,true);});assert(charger_writes==1);
+    reset();game_busy_reads=25;reject([&]{touch_charger_mode(0,true);});assert(charger_writes==1);
+    reset();fail_at=0;reject([&]{touch_charger_mode(0,true);});assert(charger_writes==0);
+    reset();reject([&]{normal_write(0,0x11c450,Bytes{0xbf,0x10,0,2,0});});assert(operations==0);
+    reject([&]{touch_boolean_mode(0,0x19,1);});assert(operations==0);
     std::cout<<"Pending commands use one write and bounded ACK polling; reset, transport and baseline readiness guards passed\n";
     if(argc==1) return 0;
     assert(argc==2);

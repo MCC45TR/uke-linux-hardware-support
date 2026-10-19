@@ -55,12 +55,12 @@ static void normal_write(int fd, unsigned address, std::span<const std::uint8_t>
     // The stock Uke probe clears the trim latch after its bootstrap reset.
     allowed |= address==0x1fb104 && data.size()==6 &&
                std::all_of(data.begin(),data.end(),[](auto byte){return byte==0;});
-    allowed |= address==0x11c450 && data.size()==5 && data[0]==0xbf && (data[1]==0x15 || data[1]==0x0f) &&
+    allowed |= address==0x11c450 && data.size()==5 && data[0]==0xbf && (data[1]==0x15 || data[1]==0x0f || data[1]==0x10) &&
                data[2]==0 && data[3]<=1 && data[4]==0;
     allowed |= address==0x11c450 && data.size()==3 && data[0]==0xbf && data[2]==1 &&
                (data[1]==1 || data[1]==4 || data[1]==5 || data[1]==6 ||
                 data[1]==0x0a || data[1]==0x0b || data[1]==0x0d || data[1]==0x0e ||
-                data[1]==0x0f || data[1]==0x15);
+                data[1]==0x0f || data[1]==0x10 || data[1]==0x15);
     require(allowed && !data.empty() && data.size()<=1024, "Write outside normal RAM-download scope");
     auto select=select_page(address); transfer(fd,select.data(),nullptr,select.size());
     Bytes tx(data.size()+1); tx[0]=(address&0x7f)|0x80;
@@ -142,18 +142,24 @@ static unsigned custom_read(int fd,unsigned subcommand) {
     throw std::runtime_error("Touch command "+std::to_string(subcommand)+
         " timed out; status="+std::to_string(last_status));
 }
-static void touch_game_mode(int fd,unsigned value) {
-    require(value<=1,"Invalid touch game mode");
+static void touch_boolean_mode(int fd,unsigned subcommand,unsigned value) {
+    require((subcommand==0x0f || subcommand==0x10) && value<=1,"Invalid touch boolean mode");
     pause_ms(35);
-    for(unsigned attempt=0;attempt<5;attempt++) {
-        normal_write(fd,0x11c450,Bytes{0xbf,0x0f,0,std::uint8_t(value),0});
+    normal_write(fd,0x11c450,Bytes{0xbf,std::uint8_t(subcommand),0,std::uint8_t(value),0});
+    for(unsigned attempt=0;attempt<25;attempt++) {
         pause_ms(20);
         if(normal_read<1>(fd,0x11c450)[0]==0) {
-            require(custom_read(fd,0x0f)==value,"Touch game-mode readback failed");
+            require(custom_read(fd,subcommand)==value,"Touch boolean-mode readback failed");
             return;
         }
     }
-    throw std::runtime_error("Touch game-mode acknowledgement timed out");
+    throw std::runtime_error("Touch boolean-mode "+std::to_string(subcommand)+" acknowledgement timed out");
+}
+static void touch_game_mode(int fd,unsigned value) {
+    touch_boolean_mode(fd,0x0f,value);
+}
+[[maybe_unused]] static void touch_charger_mode(int fd,bool connected) {
+    touch_boolean_mode(fd,0x10,connected);
 }
 [[maybe_unused]] static void touch_probe_game_rates(int fd) {
     const auto previous=custom_read(fd,0x0f);

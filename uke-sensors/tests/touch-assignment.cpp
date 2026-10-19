@@ -33,6 +33,15 @@ static auto exhaustive(const Points &predictions,const Points &contacts) {
     return result;
 }
 int main() {
+    std::array<nvt::TouchCore::TrackerSlot,nvt::kFingerSlots> old{},next{};
+    uint16_t cursor=65535;
+    old[0].active=true;old[0].tracking_id=65535;
+    old[1].active=true;old[1].tracking_id=0;
+    next[0].active=true;next[0].tracking_id=1;
+    assert(nvt::takeTrackingId(cursor,old,next)==2 && cursor==3);
+    old={};next={};cursor=65535;
+    assert(nvt::takeTrackingId(cursor,old,next)==65535 && cursor==0);
+    assert(nvt::takeTrackingId(cursor,old,next)==0 && cursor==1);
     std::mt19937 random(36532);
     for(unsigned trial=0;trial<160;trial++) {
         Points predictions(1+trial%4),contacts(1+(trial/4)%7);

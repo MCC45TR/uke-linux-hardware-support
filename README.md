@@ -5,7 +5,7 @@ Platform packages and device integration for Xiaomi Pad 7 and POCO Pad X1
 folders, with their own sources and packaging rules. New native utilities are
 maintained alongside these imported components.
 
-## Status — 18 October 2026
+## Status — 19 October 2026
 
 On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64 and original KDE.
 Signed COPR kernel 7.2.10-27 installs through DNF and reaches KDE after a normal
@@ -43,8 +43,21 @@ validate software refusal, not physical charge cutoff. HDMI testing remains
 behind the unresolved battery power-path gate. PMIC warnings, optional front-
 color startup, white-flash behavior and complete stability remain open.
 
-The user accepted VRR and touch on the retained development profile; that
-acceptance applies to the tested profile. Earlier Linux `7.2.10-8` tests restore the original
+19 October 2026, Linux 7.2.11-6: touchscreen release 10 stalls in contact
+assignment and reaches a 6 GiB memory peak. Signed COPR release 11 is installed
+through DNF; a 30-second physical scrolling trial reports uninterrupted input
+with about 9 MiB RSS. Separate short firmware watchdog recoveries remain open.
+Ten-finger input later causes transient display/touch corruption with Always
+VRR. Changing only VRR to Never at the same 60 Hz base removes the reported
+symptom; VRR remains disabled for this control. Release 12 adds OEM charger-noise
+policy restoration, bounded configuration input and tracking-ID wrap. Host
+ASan/LSan checks, 18800 private-packet replay operations and 100 power-monitor
+lifetimes report no memory/descriptor failure; these are host results. Signed
+device delivery and full lifecycle qualification are recorded in
+[the firmware audit](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/testing/UKE-TOUCH-FIRMWARE-AUDIT-2026-10-19.md).
+[The diagnosis and limits](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/lessons/2026-10-19-UKE-TOUCH-ASSIGNMENT.md)
+supersede unrestricted long-duration touch acceptance. The ten-contact fault
+reopens earlier VRR acceptance. Earlier Linux `7.2.10-8` tests restore the original
 KDE sensor interfaces. Previous
 .4056 normal-boot user tests confirm four-pose rotation and dual-light
 automatic brightness. Bluetooth 5.2 mouse movement, clicks and

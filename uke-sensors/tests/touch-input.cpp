@@ -15,6 +15,30 @@ int main() {
         std::ofstream file(path,std::ios::binary);
         file.write(reinterpret_cast<const char *>(data.data()),data.size()); assert(file);
     };
+    assert(!touch_usb_online(root/"missing"));
+    for(const auto *invalid:{"", "2\n", "1", "0\nextra", "bad"}) {
+        write_file(root/"online",std::string(invalid));assert(!touch_usb_online(root/"online"));
+    }
+    for(bool online:{false,true}) {
+        write_file(root/"online",std::string(online?"1\n":"0\n"));
+        assert(touch_usb_online(root/"online")==online);
+    }
+    write_file(root/"config.ini",std::string(36229,'x'));
+    bool oversized_config=false;
+    try {touch_geometry((root/"config.ini").c_str());}
+    catch(const std::exception &error) {oversized_config=std::string(error.what())=="Unqualified O82 configuration size";}
+    assert(oversized_config);
+    TouchPowerState power;unsigned applied=0;
+    const auto apply=[&](bool){applied++;};
+    power.update(std::nullopt,apply);assert(!applied);
+    power.update(true,apply);power.update(true,apply);assert(applied==1);
+    power.update(false,apply);assert(applied==2);
+    power.attempted.reset();power.update(false,apply);assert(applied==3);
+    bool failed=false;
+    try {power.update(true,[&](bool){throw std::runtime_error("injected charger-noise failure");});}
+    catch(const std::exception &) {failed=true;}
+    assert(failed);power.update(true,apply);assert(applied==3);
+    power.attempted.reset();power.update(true,apply);assert(applied==4);
     for(const auto *size:{"4096", "5433", "bad", ""}) {
         write_file(root/"bufsiz",std::string(size));
         bool rejected=false;
@@ -194,6 +218,8 @@ int main() {
     const auto released=publish({});
     assert(std::count_if(released.begin(),released.end(),[](auto e){return e.type==EV_ABS && e.code==ABS_MT_TRACKING_ID && e.value==-1;})==9);
     assert(std::all_of(ids.begin(),ids.end(),[](int id){return id==-1;}));
+    input_report(pipefd[1],{},ids,geometry);
+    input_event idle{};assert(::read(pipefd[0],&idle,sizeof(idle))==-1 && errno==EAGAIN);
     for(unsigned trial=0;trial<4;trial++) {
         auto invalid=slots;
         if(trial==0) invalid[1].number=invalid[0].number;

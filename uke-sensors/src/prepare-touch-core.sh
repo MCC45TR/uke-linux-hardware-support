@@ -16,9 +16,10 @@ awk '/constexpr int kShortAxisMaximum/{skip=1} skip && /^struct Profile/{skip=0}
  src/nvt_touch_core.cpp > "$stage/nvt_touch_core.cpp"
 patch --batch --fuzz=0 -d "$stage" -p1 < "$root/patches/nt36532-thp-runtime-geometry.patch"
 patch --batch --fuzz=0 -d "$stage" -p1 < "$root/patches/nt36532-thp-bounded-assignment.patch"
+patch --batch --fuzz=0 -d "$stage" -p1 < "$root/patches/nt36532-thp-tracking-id-wrap.patch"
 cd "$stage"
 printf '%s\n' \
- 'bd61ca3441b26769b89a8341834219f721ba4dfe27e976433380b7142cad293b  nvt_touch_core.cpp' \
- '6a0312308c22c4562205317078f01684153ca9a1f7a425f26ea96e003d59a1c8  nvt_touch_core.hpp' | sha256sum -c -
+ '6f6b07e15e5a815c9fd652c30a597bf1e1888ac16e885cb974886a3fbdc96f6c  nvt_touch_core.cpp' \
+ '473a2b7b71cea8f7143706ac563c6c9b81be1b31e51d841dec37a404c2c1ee94  nvt_touch_core.hpp' | sha256sum -c -
 mkdir -p "$root/src/upstream/nt36532-thp"
 cp nvt_touch_core.cpp nvt_touch_core.hpp LICENSE "$root/src/upstream/nt36532-thp/"
