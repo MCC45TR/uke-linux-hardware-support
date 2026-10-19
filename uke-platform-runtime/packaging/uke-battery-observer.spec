@@ -119,6 +119,9 @@ sha256sum -c SOURCE-SHA256SUMS
 - Add fixed firmware moisture observation and qualified owned-input protection.
 - Require version-2 thermal leases and periodic-effect evidence; remain unqualified.
 
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
+- Hide charger-screen time-to-full without valid positive battery power.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
 - Weight battery power by elapsed time in the qualified runtime estimate.
 

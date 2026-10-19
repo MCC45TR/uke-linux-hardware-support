@@ -18,7 +18,9 @@ actual cutoff, bypass, temperature qualification and power use remain separate.
 Battery power is the standard signed battery-side `power_now` in microwatts,
 not adapter input or negotiated maximum power. Temperature uses the standard
 deci-Celsius value. Time to full uses the firmware's positive `time_to_full_avg`
-only while actually Charging with input present. It is not a qualified prediction
+only with valid healthy data, known input present, Charging status and positive
+net battery power. Zero, negative or unavailable power keeps time unavailable,
+even if firmware still reports Charging. It is not a qualified prediction
 to an 80% target. Unavailable inputs show dashes; no percentage-only time or
 adapter-wattage estimate is invented.
 
