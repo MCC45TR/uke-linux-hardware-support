@@ -232,3 +232,23 @@ Wayland protocol glue remains upstream C. No project Python payload or runtime
 is used. Native self-tests cover sizing, refusal, ownership, command argument
 isolation, bounded collection, cadence scheduling and the inherited SSC parsers.
 Tablet installation, reboot and physical tests are recorded separately.
+
+## Cached firmware status
+
+`uke-control firmware status` returns a bounded JSON snapshot of SCMI base
+identity, agent-visible protocol discovery, Linux protocol consumers and
+remote-processor state. It reads cached kernel interfaces only, without vendor
+RPCs, firmware loading, background polling, resets or policy changes. It shares
+the existing contained sysfs reader with USB diagnostics.
+
+`implemented_protocols` requires kernel 7.2.11-7. A null field means unavailable,
+including older kernels or failed discovery; an empty string is a successfully
+discovered empty list. A protocol ID does not establish support for its vendor
+algorithms. A running DSP does not establish an audio, camera or compute path.
+Collection start/end times describe sequential reads, not firmware freshness or
+an atomic cross-device snapshot. Missing interfaces remain unknown.
+
+`report` also saves firmware.json privately and records collection failures
+without discarding other logs. This content is excluded from the anonymous
+GitHub summary. Serial numbers, network addresses, firmware blobs, calibration,
+crash dumps and power-supply attributes are not read by this command.

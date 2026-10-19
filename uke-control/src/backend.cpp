@@ -315,6 +315,7 @@ std::string report() {
     };
     capture("partitions.json",[]{return inventory(false);});
     capture("device-status.log",[]{return status();});
+    capture("firmware.json",[]{return firmware_status();});
     atomic_file(path/"collection.log",receipt.str());
     auto kernel=execute({"/usr/bin/uname","-r"},5);
     std::string release=kernel.status==0?kernel.output:"unavailable\n";

@@ -12,8 +12,8 @@ protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample
 build:
 	mkdir -p build
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/usb-request.cpp src/front-color.cpp $(shell pkg-config --libs libselinux libsystemd)
+build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/front-color.cpp $(shell pkg-config --libs libselinux libsystemd)
 build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
 build/uke-control-packages: src/packages.cpp | build
@@ -50,6 +50,8 @@ check: all build/test-front-color
 	build/test-charge-client
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/usb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-usb
 	LD_LIBRARY_PATH=build build/test-usb
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/firmware.cpp -Lbuild -l:libuke-control.so.0 -o build/test-firmware
+	LD_LIBRARY_PATH=build build/test-firmware
 	for name in discovery sample; do $(CXX) $(CXXFLAGS) $(LDFLAGS) tests/ssc-$$name.cpp -o build/test-ssc-$$name; build/test-ssc-$$name; done
 	LD_LIBRARY_PATH=build build/uke-control --help
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/sensors.cpp src/sensors.cpp src/front-color.cpp $(shell pkg-config --libs libsystemd) -o build/test-sensors

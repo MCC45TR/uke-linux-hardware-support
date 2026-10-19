@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "usb.hpp"
+#include "sysfs.hpp"
 #include <algorithm>
 #include <chrono>
 #include <fstream>
@@ -12,63 +13,7 @@
 
 namespace fs = std::filesystem;
 namespace uke::usb {
-namespace {
-std::string quote(const std::string& value) {
-    constexpr char hex[]="0123456789abcdef";
-    std::string out="\"";
-    for(unsigned char c:value) {
-        if(c=='"'||c=='\\'){out+='\\';out+=char(c);}
-        else if(c<32||c>=127){out+="\\u00";out+=hex[c>>4];out+=hex[c&15];}
-        else out+=char(c);
-    }
-    return out+'"';
-}
-bool beneath(const fs::path& root,const fs::path& path) {
-    auto r=root.begin(),p=path.begin();
-    for(;r!=root.end();++r,++p)if(p==path.end()||*r!=*p)return false;
-    return true;
-}
-std::optional<fs::path> resolved(const fs::path& root,const fs::path& path) {
-    std::error_code error;
-    auto target=fs::canonical(path,error);
-    if(error||!beneath(root,target))return std::nullopt;
-    return target;
-}
-std::string attribute(const fs::path& root,const fs::path& path) {
-    const auto target=resolved(root,path);
-    if(!target)return "null";
-    std::ifstream in(*target,std::ios::binary);
-    if(!in)return "null";
-    std::string result;char c;
-    while(result.size()<4096&&in.get(c))result+=c;
-    if(in.get(c))throw std::runtime_error("USB class attribute exceeds 4096 bytes");
-    while(!result.empty()&&(result.back()=='\n'||result.back()=='\0'))result.pop_back();
-    return quote(result);
-}
-std::vector<fs::path> entries(const fs::path& root,const fs::path& directory) {
-    std::vector<fs::path> result;
-    const auto target=resolved(root,directory);
-    if(!target)return result;
-    std::error_code error;
-    for(fs::directory_iterator i(*target,error),end;!error&&i!=end;i.increment(error)) {
-        if(result.size()>=256)throw std::runtime_error("USB inventory exceeds 256 class objects");
-        result.push_back(i->path());
-    }
-    if(error)throw std::runtime_error("USB inventory directory could not be read");
-    std::sort(result.begin(),result.end());return result;
-}
-bool exists(const fs::path& root,const fs::path& path){return bool(resolved(root,path));}
-std::string driver(const fs::path& root,const fs::path& object) {
-    auto target=resolved(root,object/"driver");
-    if(!target)target=resolved(root,object/"device/driver");
-    return target?quote(target->filename().string()):"null";
-}
-std::string object(const fs::path& root,const fs::path& path,const std::vector<std::string>& fields) {
-    std::string result="{\"name\":"+quote(path.filename().string())+",\"driver\":"+driver(root,path);
-    for(const auto& field:fields)result+=','+quote(field)+':'+attribute(root,path/field);
-    return result+'}';
-}
-}
+using namespace uke::sysfs;
 std::string snapshot(const fs::path& requested_root) {
     const auto root=fs::canonical(requested_root);
     const auto now=[] {return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();};

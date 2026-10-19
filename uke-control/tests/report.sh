@@ -22,7 +22,7 @@ cat > "$work/test.cpp" <<'CPP'
 #include <vector>
 namespace fs=std::filesystem;
 static fs::path state;
-static bool bad_inventory=false,bad_status=false;
+static bool bad_inventory=false,bad_status=false,bad_firmware=false;
 struct Lock {};
 struct Result {int status;std::string output;};
 static void need(bool ok,const std::string& error){if(!ok)throw std::runtime_error(error);}
@@ -35,16 +35,17 @@ static Result execute(const std::vector<std::string>& args,unsigned) {
 static std::string read(const std::string& path){std::ifstream f(path);std::ostringstream out;out<<f.rdbuf();return out.str();}
 static std::string inventory(bool){if(bad_inventory)throw std::runtime_error("inventory unavailable");return "{}\n";}
 static std::string status(){if(bad_status)throw std::runtime_error("charge helper unavailable");return "fixture status\n";}
+static std::string firmware_status(){if(bad_firmware)throw std::runtime_error("firmware cache unavailable");return "{\"fixture\":true}\n";}
 #include "report.inc"
 int main(int argc,char** argv) {
     assert(argc==2);
-    for(int scenario:{2,1,3,0}) {
+    for(int scenario:{2,1,3,0,4,5,6,7}) {
         state=fs::path(argv[1])/std::to_string(scenario);
-        bad_inventory=scenario&1;bad_status=scenario&2;
+        bad_inventory=scenario&1;bad_status=scenario&2;bad_firmware=scenario&4;
         const fs::path output=report();
         auto receipt=read((output/"collection.log").string());
         assert(receipt.find("dmesg exit=3")!=std::string::npos);
-        for(const auto& [name,bad]:std::vector<std::pair<std::string,bool>>{{"partitions.json",bad_inventory},{"device-status.log",bad_status}}) {
+        for(const auto& [name,bad]:std::vector<std::pair<std::string,bool>>{{"partitions.json",bad_inventory},{"device-status.log",bad_status},{"firmware.json",bad_firmware}}) {
             assert(fs::exists(output/name)==!bad);
             assert(fs::exists(output/(name+".error"))==bad);
             assert(receipt.find(name+" exit="+(bad?"1":"0"))!=std::string::npos);
@@ -53,6 +54,7 @@ int main(int argc,char** argv) {
         assert(summary.find("charge helper unavailable")==std::string::npos);
         assert(summary.find("inventory unavailable")==std::string::npos);
         assert(summary.find("fixture command")==std::string::npos);
+        assert(summary.find("firmware cache unavailable")==std::string::npos);
     }
 }
 CPP

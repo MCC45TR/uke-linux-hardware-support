@@ -33,6 +33,7 @@ static void help() {
       "  charge mode MODE            Request qualified charge80, hold80-90, slow or automatic\n"
       "  charge limit PERCENT        Request the qualified 80% cap or a supported standard threshold\n"
       "  usb status                  Cached Type-C, USB topology, NIC and display JSON\n"
+      "  firmware status             Cached SCMI discovery and remote-processor JSON\n"
       "  usb watch [SECONDS]         Observe changes at 1 Hz for 1..300 seconds\n"
       "  usb request data host|device Request a Type-C data-role swap (root)\n"
       "  set cdc on|off              Explicit CDC ACM opt-in; default off (root)\n"
@@ -66,6 +67,7 @@ int main(int argc,char** argv) {
         if(command=="test"){execv("/usr/libexec/uke-control/tests",argv+1);throw std::runtime_error("Install uke-control-tests from the development repository");}
         if(command=="--self-test"&&argc==2){uke::self_test();return 0;}
         if(command=="status"&&argc==2){std::cout<<uke::status();return 0;}
+        if(command=="firmware"&&argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::firmware_status();return 0;}
         if(command=="boot"&&argc==2){uke::boot();return 0;}
         if(command=="inventory"&&(argc==2||(argc==3&&std::string_view(argv[2])=="--refresh"))){std::cout<<uke::inventory(argc==3);return 0;}
         if(command=="swap") {

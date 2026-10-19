@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 16%{?dist}
+Release: 17%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -81,6 +81,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-17
+- Add cached SCMI and remote-processor status to the CLI and private reports.
+- Keep firmware reads separate from feature qualification and active controls.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-16
 - Preserve diagnostic receipts when inventory or device-status collection fails.
 - Include bounded process, cgroup, boot, filesystem and pressure context.
