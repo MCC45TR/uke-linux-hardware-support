@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
+# Host fixture of the actual collector; no device access or privileged writes.
+set -Eeuo pipefail
+ulimit -c 0
+project=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf -- "$work"' EXIT
+awk '/^std::string report\(\)/{copy=1} /^void report_github/{copy=0} copy' "$project/src/backend.cpp" > "$work/report.inc"
+test -s "$work/report.inc"
+cat > "$work/test.cpp" <<'CPP'
+#include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+namespace fs=std::filesystem;
+static fs::path state;
+static bool bad_inventory=false,bad_status=false;
+struct Lock {};
+struct Result {int status;std::string output;};
+static void need(bool ok,const std::string& error){if(!ok)throw std::runtime_error(error);}
+static void directory(const fs::path& path){fs::create_directories(path);}
+static void atomic_file(const fs::path& path,const std::string& value){std::ofstream(path)<<value;}
+static Result execute(const std::vector<std::string>& args,unsigned) {
+    if(args.size()==2&&args[0]=="/usr/bin/uname"&&args[1]=="-r")return {0,"7.2.11-fixture\n"};
+    return {args[0]=="/usr/bin/dmesg"?3:0,"fixture command\n"};
+}
+static std::string read(const std::string& path){std::ifstream f(path);std::ostringstream out;out<<f.rdbuf();return out.str();}
+static std::string inventory(bool){if(bad_inventory)throw std::runtime_error("inventory unavailable");return "{}\n";}
+static std::string status(){if(bad_status)throw std::runtime_error("charge helper unavailable");return "fixture status\n";}
+#include "report.inc"
+int main(int argc,char** argv) {
+    assert(argc==2);
+    for(int scenario:{2,1,3,0}) {
+        state=fs::path(argv[1])/std::to_string(scenario);
+        bad_inventory=scenario&1;bad_status=scenario&2;
+        const fs::path output=report();
+        auto receipt=read((output/"collection.log").string());
+        assert(receipt.find("dmesg exit=3")!=std::string::npos);
+        for(const auto& [name,bad]:std::vector<std::pair<std::string,bool>>{{"partitions.json",bad_inventory},{"device-status.log",bad_status}}) {
+            assert(fs::exists(output/name)==!bad);
+            assert(fs::exists(output/(name+".error"))==bad);
+            assert(receipt.find(name+" exit="+(bad?"1":"0"))!=std::string::npos);
+        }
+        auto summary=read((output/"github-summary.md").string());
+        assert(summary.find("charge helper unavailable")==std::string::npos);
+        assert(summary.find("inventory unavailable")==std::string::npos);
+        assert(summary.find("fixture command")==std::string::npos);
+    }
+}
+CPP
+${CXX:-c++} -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-variable "$work/test.cpp" -o "$work/test"
+"$work/test" "$work/output"
+printf '%s\n' 'Report partial inventory/status failures preserve logs and private/public separation'

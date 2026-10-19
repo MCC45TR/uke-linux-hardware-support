@@ -282,15 +282,40 @@ std::string report() {
       {"journal-kde",{"/usr/bin/journalctl","-b","_UID=1000","--no-pager","-n","30000"}},
       {"failed-units",{"/usr/bin/systemctl","--failed","--no-pager"}},
       {"services",{"/usr/bin/systemctl","list-units","--all","--no-pager"}},
+      {"processes",{"/usr/bin/ps","-e","-o","pid,ppid,comm,stat,etimes,pcpu,pmem,rss,wchan:32","--sort=-rss"}},
+      {"resource-sample",{"/usr/bin/vmstat","-w","1","5"}},
+      {"cgroup-memory",{"/usr/bin/systemd-cgtop","--batch","--iterations=1","--depth=3","--order=memory"}},
+      {"boot-time",{"/usr/bin/systemd-analyze","time"}},
+      {"boot-critical-chain",{"/usr/bin/systemd-analyze","critical-chain","--no-pager"}},
+      {"boot-history",{"/usr/bin/journalctl","--list-boots","--no-pager"}},
+      {"unit-overrides",{"/usr/bin/systemd-delta","--no-pager"}},
       {"packages",{"/usr/bin/rpm","-qa","--qf","%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n"}},
       {"mounts",{"/usr/bin/findmnt","--json"}},
+      {"fstab-verify",{"/usr/bin/findmnt","--verify","--verbose"}},
       {"display",{"/usr/bin/modetest","-M","msm-kms","-c","-p"}}};
     std::ostringstream receipt;
-    for(const auto& [name,args]:commands){auto result=execute(args,25);atomic_file(path/(name+".log"),result.output);receipt<<name<<" exit="<<result.status<<'\n';}
-    for(const char* file:{"meminfo","swaps","vmstat","interrupts","softirqs","uptime","pressure/cpu","pressure/memory","pressure/io"}) {
+    for(const auto& [name,args]:commands){
+        const auto started=std::chrono::steady_clock::now();auto result=execute(args,25);
+        const auto elapsed=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-started).count();
+        atomic_file(path/(name+".log"),result.output);receipt<<name<<" exit="<<result.status<<" elapsed_ms="<<elapsed<<'\n';
+    }
+    for(const char* file:{"meminfo","swaps","vmstat","interrupts","softirqs","uptime","loadavg","stat","schedstat","diskstats","buddyinfo","pressure/cpu","pressure/memory","pressure/io"}) {
         std::string name=file;std::replace(name.begin(),name.end(),'/','-');atomic_file(path/("proc-"+name+".log"),read(std::string("/proc/")+file));
     }
-    atomic_file(path/"partitions.json",inventory(false));atomic_file(path/"device-status.log",status());atomic_file(path/"collection.log",receipt.str());
+    for(const char* file:{"enabled","defrag","shmem_enabled"})
+        atomic_file(path/(std::string("thp-")+file+".log"),read(std::string("/sys/kernel/mm/transparent_hugepage/")+file));
+    auto capture=[&](const std::string& name,const auto& collect) {
+        std::string value;
+        try {value=collect();}
+        catch(const std::exception& error) {
+            atomic_file(path/(name+".error"),std::string("Collection unavailable: ")+error.what()+'\n');
+            receipt<<name<<" exit=1\n";return;
+        }
+        atomic_file(path/name,value);receipt<<name<<" exit=0\n";
+    };
+    capture("partitions.json",[]{return inventory(false);});
+    capture("device-status.log",[]{return status();});
+    atomic_file(path/"collection.log",receipt.str());
     auto kernel=execute({"/usr/bin/uname","-r"},5);
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");

@@ -14,14 +14,15 @@ The original distribution desktop remains unchanged.
 
 ## Validated baseline — 19 October 2026
 
-Signed COPR11169315 installs application14 and its development diagnostics on
-POCO Pad X1, Fedora Rawhide AArch64. Three bounded sensor snapshots pass while
-retaining cached, unknown-age and unavailable fields. Package-channel changes
-and physical sensor accuracy remain untested. The display observer separates
+Signed COPR11170610 installs application15 and its development diagnostics on
+POCO Pad X1, Fedora Rawhide AArch64. Kernel7.2.11-5 retains the existing swap and
+first-boot inventory. Three sensor snapshots on application14 retain cached,
+unknown-age and unavailable fields. Package-channel changes and physical sensor
+accuracy remain untested. The display observer separates
 the configured144Hz upper mode from measured DPU cadence; neither is optical
 metrology.
 
-The device runs signed Linux7.2.11-4. The3690MiB half-RAM swap persists and is
+The last observed session runs signed Linux7.2.11-5. The3690MiB half-RAM swap persists and is
 unused in the quiet observation. CDC defaults off. Native runtime/helper7 keeps
 automatic charging workers disabled. One existing70/80-band application request
 receives an opaque16-byte firmware reply and unchanged setting readback; actual
@@ -184,7 +185,18 @@ are root-only and serialized. There is no setuid binary or privileged GUI.
 
 `report` collects bounded current/previous journals, KDE user logs, dmesg, failed
 units, package versions, mount/partition state, DRM state, memory/interrupt/pressure
-counters and command exit statuses. A partial collector is recorded explicitly.
+counters and command exit statuses. Release16 adds process/RSS and cgroup-memory
+snapshots, five vmstat samples, boot time/critical chain, unit overrides, fstab
+verification, scheduler/disk counters and THP policy. It records elapsed command
+milliseconds. Inventory or device-status failure now produces a private .error
+file and receipt while retaining the rest of the bundle; disk-write failures
+still fail the command. Collection can be partial; inspect collection.log.
+This source change adds no startup work, sampler or automatic upload.
+
+Process CPU is a lifetime average; vmstat's first sample covers time since boot.
+RSS and hierarchical cgroup memory overlap and must not be summed as independent
+physical usage. These observations do not replace process PSS, active UI frame
+measurements, calibrated energy or bootloader/physical first-frame timing.
 Bundles are root-private under `/var/lib/uke-control/reports`; raw logs may contain
 identifiers and must not be committed or attached to public issues. Calibration,
 credential files, process environments and filesystem contents are not collected.

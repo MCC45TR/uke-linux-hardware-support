@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 15%{?dist}
+Release: 16%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -10,7 +10,7 @@ BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd)
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
-Requires: util-linux-core util-linux systemd
+Requires: util-linux-core util-linux systemd procps-ng
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
 %{?systemd_requires}
@@ -81,6 +81,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-16
+- Preserve diagnostic receipts when inventory or device-status collection fails.
+- Include bounded process, cgroup, boot, filesystem and pressure context.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-15
 - Read GPT swap labels without a second whole-device filesystem scan.
 - Preserve filesystem labels, ambiguity refusal and selected swap validation.
