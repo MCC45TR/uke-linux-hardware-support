@@ -32,6 +32,16 @@ int main(int argc, char **argv) {
     }
     auto empty = forecast.empty(s, q);
     assert(empty.seconds && std::fabs(*empty.seconds - 16200) < 0.01);
+    Forecast irregular;
+    auto unequal = s;
+    for (const auto [seconds, current] : std::array<std::pair<unsigned, int>, 3>{{
+            {1, -1000000}, {2, -1400000}, {32, -1400000}}}) {
+        unequal.boottime_ns = unequal.monotonic_ns = uint64_t(seconds) * 1000000000ULL;
+        unequal.current_ua = current;
+        irregular.observe(unequal, q);
+    }
+    const auto weighted = irregular.empty(unequal, q);
+    assert(weighted.seconds && std::fabs(*weighted.seconds - 11625) < 0.01);
     s.current_ua = 0; forecast.observe(s, q); assert(!forecast.empty(s, q).seconds);
     s.current_ua = 500000; s.soc = 79; s.effective_target = 80; q.target_effective = true;
     s.conditions = "profile-1:contract-1:normal:load-1";

@@ -82,13 +82,18 @@ public:
             !std::isfinite(*q.reserve_uwh) || *q.reserve_uwh < 0 || !positive(s.energy_uwh)) return {};
         if (window_.size() < 3 || window_.back().boottime_ns - window_.front().boottime_ns < 30000000000ULL)
             return {{}, "converging", "unknown"};
-        double power = 0;
+        // Integrate power over time; polling intervals need not be equal.
+        double energy_uws = 0, previous_power = 0;
+        uint64_t previous_time = window_.front().boottime_ns;
         for (const auto &v : window_) {
             if (!positive(v.voltage_uv) || !v.current_ua || *v.current_ua >= 0)
                 return {{}, "not_net_discharging", "unknown"};
-            power += -*v.voltage_uv * *v.current_ua / 1000000.0;
+            const double power = -*v.voltage_uv * *v.current_ua / 1000000.0;
+            energy_uws += (previous_power + power) / 2 * ((v.boottime_ns - previous_time) / 1e9);
+            previous_power = power; previous_time = v.boottime_ns;
         }
-        power /= window_.size();
+        const double elapsed = (window_.back().boottime_ns - window_.front().boottime_ns) / 1e9;
+        const double power = energy_uws / elapsed;
         if (!std::isfinite(power) || power <= 0) return {{}, "rate_unavailable", "unknown"};
         return duration(3600 * std::max(0.0, *s.energy_uwh - *q.reserve_uwh) / power,
                         "net_battery_power_with_reserve");

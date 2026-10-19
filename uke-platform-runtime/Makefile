@@ -27,6 +27,7 @@ validate:
 	jq -e '.kind == "control_qualification" and .qualification == "unqualified" and .enable_control == false and .current_control == false and .current_limits == null and .standard_clients == false' manifests/control-profile.json >/dev/null
 	jq -e 'all(.features[]; .qualified == false) and .tests_executed == false' manifests/battery-readiness.json >/dev/null
 test-native:
+	mkdir -p "$(outdir)"
 	bash tests/battery-model.sh
 	bash tests/battery-session.sh
 	bash tests/battery-profile.sh
