@@ -14,6 +14,16 @@ The original distribution desktop remains unchanged.
 
 ## Validated baseline — 19 October 2026
 
+At 16:14 UTC, signed COPR 11171675 upgrades only `uke-control` and its test
+package from 15 to 16 on POCO Pad X1, Fedora Rawhide AArch64, Linux 7.2.11-5.
+RPM verification and six installed ELF hashes match the audited packages.
+The actual report command succeeds: 39 private files, directory mode 0700,
+file modes 0600 and all 20 collection receipts successful. No upload or kernel
+update occurs. A separate read-only charge-settings query reports the retained
+enabled 70/80 band; physical cutoff and bypass remain unqualified. The user
+reports a forced power-off after the earlier shutdown hung; its cause remains
+open. See the [live firmware record](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/testing/UKE-FIRMWARE-LIVE-RECONCILIATION-2026-10-19.md).
+
 Signed COPR11170610 installs application15 and its development diagnostics on
 POCO Pad X1, Fedora Rawhide AArch64. Kernel7.2.11-5 retains the existing swap and
 first-boot inventory. Three sensor snapshots on application14 retain cached,
