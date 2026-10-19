@@ -1,12 +1,14 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
 Source0: %{name}-%{version}.tar.gz
-BuildArch: noarch
+ExclusiveArch: aarch64
 BuildRequires: systemd-rpm-macros systemd-udev
+BuildRequires: cmake gcc-c++ ninja-build extra-cmake-modules
+BuildRequires: qt6-qtbase-devel kf6-kcoreaddons-devel libksysguard-devel lm_sensors-devel
 Requires: iio-sensor-proxy(ssc) >= 1
 Requires: uke-ssc-fileservice >= 2026.09.21-8
 Requires: coreutils grep sed systemd-udev
@@ -15,6 +17,8 @@ Requires: kscreen >= 6.8.0
 Requires: ddcutil >= 3.0.2
 Requires: libddcutil >= 3.0.2
 Requires: systemd >= 256
+Requires: ksystemstats >= 6.8.0
+Requires: libksysguard >= 6.8.0
 %{?systemd_requires}
 
 %description
@@ -32,8 +36,12 @@ power use remain separate device acceptance gates. Administrator masks are prese
 %setup -q
 
 %build
+%cmake -S src/adreno-stats
+%cmake_build
 
 %install
+%cmake_install
+install -Dm644 packaging/adreno.page %{buildroot}%{_datadir}/plasma-systemmonitor/adreno.page
 install -Dm644 packaging/uke-adaptive-display.target %{buildroot}%{_unitdir}/uke-adaptive-display.target
 install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir}/80-uke-adaptive-display.preset
 install -Dm644 packaging/71-uke-tablet-mode.rules %{buildroot}%{_udevrulesdir}/71-uke-tablet-mode.rules
@@ -46,6 +54,7 @@ install -Dm644 packaging/30-uke-s2idle.conf %{buildroot}%{_prefix}/lib/systemd/s
 install -Dm644 packaging/uke-suspend.conf %{buildroot}%{_tmpfilesdir}/uke-suspend.conf
 
 %check
+%ctest
 udevadm verify packaging/71-uke-tablet-mode.rules
 udevadm verify packaging/61-uke-display-ddc.rules
 udevadm verify packaging/60-block-scheduler.rules
@@ -66,7 +75,9 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 
 %files
 %license LICENSE
-%doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md docs/SUSPEND.md docs/SERVICE-POLICY.md
+%doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md docs/SUSPEND.md docs/SERVICE-POLICY.md docs/GPU-MONITORING.md
+%{_libdir}/qt6/plugins/ksystemstats/libuke_adreno.so
+%{_datadir}/plasma-systemmonitor/adreno.page
 %config(noreplace) %{_sysconfdir}/xdg/powerdevilrc
 %config(noreplace) %{_sysconfdir}/udev/rules.d/60-block-scheduler.rules
 %{_unitdir}/uke-adaptive-display.target
@@ -79,6 +90,10 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %{_tmpfilesdir}/uke-suspend.conf
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-13
+- Add a native read-only Adreno SystemStats extension and monitor page.
+- Keep original KDE applications and use the kernel's cumulative engine counter.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
 - Keep the kernel scheduler for Qualcomm UFS instead of racing BFQ switches.
 - Preserve Fedora disk policy for other devices and administrator overrides.

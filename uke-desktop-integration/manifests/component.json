@@ -15,7 +15,7 @@
     "nabu-desktop-integration"
   ],
   "reference_project": "mcc45tr/nabu-linux",
-  "scope": "Uke rotation, cover, brightness, Bluetooth, power and audio desktop policies",
+  "scope": "Uke rotation, cover, brightness, Bluetooth, power, audio and native GPU monitoring integration",
   "acceptance_gates": [
     "Use measured Uke input and sensor paths",
     "Require physical suspend, charger and routing evidence",
