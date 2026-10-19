@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 13%{?dist}
+Release: 14%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -90,6 +90,10 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %{_tmpfilesdir}/uke-suspend.conf
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-14
+- Read bounded sysfs GPU counters without treating PAGE_SIZE as payload length.
+- Cover real sysfs reads and remove a mismatched plugin metadata identifier.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-13
 - Add a native read-only Adreno SystemStats extension and monitor page.
 - Keep original KDE applications and use the kernel's cumulative engine counter.
