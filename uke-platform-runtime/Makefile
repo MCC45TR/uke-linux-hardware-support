@@ -28,6 +28,7 @@ validate:
 	jq -e 'all(.features[]; .qualified == false) and .tests_executed == false' manifests/battery-readiness.json >/dev/null
 	jq -e '.qualification == "unqualified" and .physical_acceptance == false and .pack_limits == null and all(.features[]; .qualified == false)' manifests/protection-readiness.json >/dev/null
 test-native:
+	mkdir -p "$(outdir)"
 	bash tests/battery-model.sh
 	bash tests/battery-session.sh
 	bash tests/battery-profile.sh
