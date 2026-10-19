@@ -44,6 +44,7 @@ check: all build/test-front-color
 	LD_LIBRARY_PATH=build build/uke-control --self-test
 	build/uke-control-tests --self-test
 	bash tests/charge-policy.sh
+	bash tests/swap-discovery.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-client.cpp src/charge-client.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-client
 	build/test-charge-client
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/usb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-usb

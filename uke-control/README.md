@@ -12,35 +12,40 @@ Native C++ settings backend and terminal client for Uke (SM7675). GTK4 and
 Qt/Breeze clients can use the same backend in future; neither GUI is included.
 The original distribution desktop remains unchanged.
 
-## Status — 18 October 2026
+## Validated baseline — 19 October 2026
 
-Application 11 and its separate development diagnostics are installed from
-signed COPR 11168593 on POCO Pad X1, Fedora Rawhide AArch64. The active internal
-DSI CRTC is selected even with multiple connectors. With VRR enabled, the monitor
-labels the configured 144 Hz mode as the upper limit and reports approximately
-30 Hz measured idle DPU cadence. These are host timings, not optical metrology.
+Signed COPR11169315 installs application14 and its development diagnostics on
+POCO Pad X1, Fedora Rawhide AArch64. Three bounded sensor snapshots pass while
+retaining cached, unknown-age and unavailable fields. Package-channel changes
+and physical sensor accuracy remain untested. The display observer separates
+the configured144Hz upper mode from measured DPU cadence; neither is optical
+metrology.
 
-Kernel 7.2.10-29 completes a normal reboot; the user confirms display and touch.
-KDE VRR Always, the 3690 MiB half-RAM swap, balanced profile and disabled CDC
-persist. Earlier standard swap resizing passes; an existing swap partition
-remains untested. The powered Juo receiver works on kernel 27; actual Ethernet
-traffic, HDMI and monitor brightness are separate unqualified functions.
-
-Signed COPR 11168630 installs runtime/helper 6 and a separate native offline
-charging screen. Exact source/signature/payload checks, native self-checks and
-RPM verification pass. The deliberate kernel-29 query reports disabled 70/80
-thresholds. The restricted enable-cap80 operation refuses the missing old-kernel
-interface; ordinary users are denied. No fallback, SET or charge worker starts.
-Physical cutoff, persistent cap and bypass remain unqualified. The offline UI's
-normal-boot refusal passes; its matched initramfs and physical screen lifecycle
-remain pending. See [charging boundaries](CHARGING.md) and the
+The device runs signed Linux7.2.11-4. The3690MiB half-RAM swap persists and is
+unused in the quiet observation. CDC defaults off. Native runtime/helper7 keeps
+automatic charging workers disabled. One existing70/80-band application request
+receives an opaque16-byte firmware reply and unchanged setting readback; actual
+charge cutoff and bypass remain unqualified. Physical display/touch after the
+latest reboot, powered HDMI, Ethernet traffic and offline charging remain
+separate gates. See [charging boundaries](CHARGING.md) and the
 [offline interface](../uke-platform-runtime/docs/OFFLINE-CHARGING.md).
+
+Release15 changes only swap candidate discovery: GPT partition labels come from
+standard lsblk metadata rather than a second full filesystem scan. Filesystem
+labels, duplicate/ambiguous-candidate refusal and actual selected-partition
+signature validation are retained. A kernel4 observation records1.903s for the
+boot helper and1.231s across its two old label searches. Source fixtures and
+later package/device timing must remain separate; no boot-time reduction is
+claimed from this source change alone.
+Saved inventory refreshes also use the existing manager lock, preserving the
+first-boot snapshot and refusing a concurrent settings writer.
 
 ## Commands
 
-Source release 14 adds [channel synchronization and updates](CHANNELS.md) and
+Source release14 adds [channel synchronization and updates](CHANNELS.md) and
 the [live sensor view](SENSORS.md). These changes are prepared and tested on the
-host; the installed application-11 observations above remain separate.
+host; the bounded installed application14 observations above remain separate
+from an actual channel transition.
 
 ```sh
 uke-control status

@@ -130,12 +130,21 @@ static std::vector<Swap> active() {
 }
 static std::set<std::string> partition_candidates() {
     std::set<std::string> result;
-    for(const char* tag:{"PARTLABEL=linux_swap","LABEL=linux_swap"}) {
-        auto found=execute({"/usr/bin/blkid","-t",tag,"-o","device"});
-        need(found.status==0||found.status==2,"Cannot enumerate linux_swap candidates");
-        std::istringstream stream(found.output);std::string path;
-        while(std::getline(stream,path)){need(path.starts_with("/dev/"),"Unexpected swap candidate");result.insert(fs::canonical(path).string());}
+    auto labels=execute({"/usr/bin/lsblk","--raw","--noheadings","--output","PATH,PARTLABEL"});
+    need(labels.status==0,"Cannot enumerate partition labels");
+    std::istringstream rows(labels.output);std::string line;
+    while(std::getline(rows,line)) {
+        if(line.empty())continue;
+        std::istringstream row(line);std::string path,label,extra;
+        need(bool(row>>path)&&path.starts_with("/dev/"),"Unexpected partition path");
+        row>>label;
+        need(!(row>>extra),"Malformed partition-label metadata");
+        if(label=="linux_swap")result.insert(fs::canonical(path).string());
     }
+    auto found=execute({"/usr/bin/blkid","-t","LABEL=linux_swap","-o","device"});
+    need(found.status==0||found.status==2,"Cannot enumerate linux_swap candidates");
+    std::istringstream stream(found.output);std::string path;
+    while(std::getline(stream,path)){need(path.starts_with("/dev/"),"Unexpected swap candidate");result.insert(fs::canonical(path).string());}
     need(result.size()<=1,"Multiple linux_swap candidates; select a unique partition before applying swap");
     return result;
 }
@@ -202,7 +211,7 @@ std::string inventory(bool save) {
     if(save)root();
     auto result=execute({"/usr/bin/lsblk","--json","--bytes","--output","NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,PARTLABEL,MOUNTPOINTS"});
     need(result.status==0,"Partition inventory failed");
-    if(save){directory(state);if(!fs::exists(state/"partitions-first-boot.json"))atomic_file(state/"partitions-first-boot.json",result.output);atomic_file(state/"partitions-current.json",result.output);}
+    if(save){Lock lock;if(!fs::exists(state/"partitions-first-boot.json"))atomic_file(state/"partitions-first-boot.json",result.output);atomic_file(state/"partitions-current.json",result.output);}
     return result.output;
 }
 static std::vector<fs::path> thresholds() {

@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 14%{?dist}
+Release: 15%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -81,6 +81,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-15
+- Read GPT swap labels without a second whole-device filesystem scan.
+- Preserve filesystem labels, ambiguity refusal and selected swap validation.
+- Serialize saved inventory updates with the existing manager lock.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-14
 - Keep public channel configuration readable when the administrator uses umask 077.
 
