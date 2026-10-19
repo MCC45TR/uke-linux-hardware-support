@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 0.1.0
-Release: 20%{?dist}
+Release: 21%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -178,6 +178,10 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-21
+- Use noatime and remount-ro error handling in the root filesystem template.
+- Preserve normal ext4 journaling and administrator fstab ownership.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-20
 - Replace the CDC watcher with explicit one-shot manual API2 commands.
 - Preserve device-role, attachment, inhibitor and gadget ownership guards.

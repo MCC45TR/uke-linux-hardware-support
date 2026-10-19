@@ -201,6 +201,15 @@ native fixtures and the installed unit verifier pass. One USB-connected normal
 boot reaches userspace in 4.7 seconds; an unplugged cold-boot console test remains
 separate evidence.
 
+## Root mount policy — 19 October 2026
+
+The image fstab template in release 21 adds noatime and errors=remount-ro for
+the ext4 root. On 19 October, the development installation accepts the same
+options through a validated administrator update and live remount. Normal
+journaling, write barriers, commit interval and periodic fstrim remain enabled.
+The package does not edit an existing fstab. Reboot persistence and image
+acceptance remain separate from template/source and live-remount checks.
+
 ## Clock startup — 18 October 2026
 
 The tested Uke RTC initially reports an old date. Original Fedora chronyd's
