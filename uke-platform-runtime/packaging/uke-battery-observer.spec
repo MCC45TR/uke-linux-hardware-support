@@ -115,14 +115,12 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
-<<<<<<< HEAD
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
 - Add fixed firmware moisture observation and qualified owned-input protection.
 - Require version-2 thermal leases and periodic-effect evidence; remain unqualified.
-=======
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
 - Weight battery power by elapsed time in the qualified runtime estimate.
->>>>>>> 7be35d9 (Weight battery runtime estimates by elapsed sample intervals)
 
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
 - Add a one-shot request for the already enabled offline 70/80 target.
