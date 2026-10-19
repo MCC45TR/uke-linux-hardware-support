@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -38,6 +38,7 @@ install -Dm644 packaging/uke-adaptive-display.target %{buildroot}%{_unitdir}/uke
 install -Dm644 packaging/80-uke-adaptive-display.preset %{buildroot}%{_presetdir}/80-uke-adaptive-display.preset
 install -Dm644 packaging/71-uke-tablet-mode.rules %{buildroot}%{_udevrulesdir}/71-uke-tablet-mode.rules
 install -Dm644 packaging/61-uke-display-ddc.rules %{buildroot}%{_udevrulesdir}/61-uke-display-ddc.rules
+install -Dm644 packaging/60-block-scheduler.rules %{buildroot}%{_sysconfdir}/udev/rules.d/60-block-scheduler.rules
 install -Dm644 packaging/powerdevilrc %{buildroot}%{_sysconfdir}/xdg/powerdevilrc
 install -Dm755 src/uke-ddc-config %{buildroot}%{_libexecdir}/senemos-uke/uke-ddc-config
 install -Dm644 packaging/60-uke-display-ddc.conf %{buildroot}%{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
@@ -47,6 +48,7 @@ install -Dm644 packaging/uke-suspend.conf %{buildroot}%{_tmpfilesdir}/uke-suspen
 %check
 udevadm verify packaging/71-uke-tablet-mode.rules
 udevadm verify packaging/61-uke-display-ddc.rules
+udevadm verify packaging/60-block-scheduler.rules
 sh tests/ddc-config.sh
 systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 
@@ -66,6 +68,7 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %license LICENSE
 %doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md docs/SUSPEND.md docs/SERVICE-POLICY.md
 %config(noreplace) %{_sysconfdir}/xdg/powerdevilrc
+%config(noreplace) %{_sysconfdir}/udev/rules.d/60-block-scheduler.rules
 %{_unitdir}/uke-adaptive-display.target
 %{_presetdir}/80-uke-adaptive-display.preset
 %{_udevrulesdir}/71-uke-tablet-mode.rules
@@ -76,6 +79,10 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %{_tmpfilesdir}/uke-suspend.conf
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
+- Keep the kernel scheduler for Qualcomm UFS instead of racing BFQ switches.
+- Preserve Fedora disk policy for other devices and administrator overrides.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
 - Leave software RAID monitoring and its weekly timer disabled by default.
 - Document measured idle-daemon policy while retaining firmware update access.

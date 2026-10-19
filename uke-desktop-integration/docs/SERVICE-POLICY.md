@@ -49,6 +49,20 @@ this is not a measured battery-life improvement.
 
 ## Release limits
 
+Release 12 adds an administrator rule with the original Fedora
+60-block-scheduler.rules filename. It skips the generic BFQ assignment only
+when the block device has a ufshcd-qcom ancestor. Linux 7.2.11 selects
+mq-deadline for the tested single-queue/shared-tag UFS LUNs; simultaneous
+runtime switches can return EBUSY and leave inconsistent LUN schedulers.
+The remaining Fedora disk rule is retained for external storage.
+
+The configuration is installed with noreplace semantics. It does not force a
+live scheduler switch, trigger devices, change queue depths or add a daemon.
+Administrator overrides remain available. Recompare this small override when
+the original distribution rule changes; its current source SHA-256 is
+05cda1baec9b869bbc6371b75462aa5e2cff2165e49778f19955dcb3bf09b54e.
+Rule syntax and package checks are separate from post-reboot UFS acceptance.
+
 Screen-off CPU, active desktop work and package updates require distinct
 measurements. A post-boot Discover update is not an idle benchmark. The system
 manager's startup duration excludes bootloader and physical first-frame time.
