@@ -82,7 +82,9 @@ struct Screen {
             const auto magnitude=tenths<0?-tenths:tenths;
             return std::string(tenths<0?"-":"")+std::to_string(magnitude/10)+"."+std::to_string(magnitude%10);
         };
-        const auto time=s.full_seconds && s.status=="Charging" && s.online ? std::to_string((*s.full_seconds+59)/60)+" MIN" : "-- MIN";
+        const bool net_charging=s.valid && s.health=="Good" && s.input_known && s.online &&
+            s.status=="Charging" && s.power_uw && *s.power_uw>0;
+        const auto time=net_charging && s.full_seconds && *s.full_seconds>0 ? std::to_string((*s.full_seconds+59)/60)+" MIN" : "-- MIN";
         const auto power=s.power_uw ? decimal(*s.power_uw/100000)+"W" : "-- W";
         const auto temp=s.temperature_decic ? decimal(*s.temperature_decic)+"C" : "-- C";
         text(time,390,2,white,120); text(power,390,2,white,360); text(temp,390,2,white,600);

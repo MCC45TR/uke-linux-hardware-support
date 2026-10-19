@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -112,6 +112,9 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
+- Hide charger-screen time-to-full without valid positive battery power.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-8
 - Weight battery power by elapsed time in the qualified runtime estimate.
 
