@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "../src/upstream/nt36532-thp/nvt_touch_core.cpp"
 #include <cassert>
+#include <climits>
 #include <iostream>
 #include <random>
 
@@ -33,6 +34,9 @@ static auto exhaustive(const Points &predictions,const Points &contacts) {
     return result;
 }
 int main() {
+    assert(nvt::incrementLifetimeCounter(0)==1);
+    assert(nvt::incrementLifetimeCounter(INT_MAX-1)==INT_MAX);
+    assert(nvt::incrementLifetimeCounter(INT_MAX)==INT_MAX);
     std::array<nvt::TouchCore::TrackerSlot,nvt::kFingerSlots> old{},next{};
     uint16_t cursor=65535;
     old[0].active=true;old[0].tracking_id=65535;
