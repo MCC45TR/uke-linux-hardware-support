@@ -1,6 +1,6 @@
 Name: uke-adaptive-display
 Version: 0.1.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -64,7 +64,7 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 
 %files
 %license LICENSE
-%doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md docs/SUSPEND.md
+%doc docs/ADAPTIVE-DISPLAY.md docs/DISPLAY-CONTROLS.md docs/SUSPEND.md docs/SERVICE-POLICY.md
 %config(noreplace) %{_sysconfdir}/xdg/powerdevilrc
 %{_unitdir}/uke-adaptive-display.target
 %{_presetdir}/80-uke-adaptive-display.preset
@@ -76,6 +76,10 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %{_tmpfilesdir}/uke-suspend.conf
 
 %changelog
+* Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
+- Leave software RAID monitoring and its weekly timer disabled by default.
+- Document measured idle-daemon policy while retaining firmware update access.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
 - Enable standard systemd suspend with persistent s2idle selection.
 - Preserve administrator masks and separate physical resume qualification.

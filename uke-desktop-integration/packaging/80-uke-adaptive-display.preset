@@ -2,3 +2,6 @@
 disable uke-adaptive-display.target
 disable uke-ssc-root.service
 disable uke-ssc-sensors.service
+# The Uke image uses ordinary UFS partitions; RAID remains an explicit opt-in.
+disable raid-check.timer
+disable mdmonitor.service
