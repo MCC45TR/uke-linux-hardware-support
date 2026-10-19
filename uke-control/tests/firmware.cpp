@@ -38,6 +38,9 @@ int main() {
         assert(data.find("a\\\"b\\\\c")!=std::string::npos);
         assert(data.find("\"driver\":\"scmi-test\"")!=std::string::npos);
         assert(data.find("\"state\":\"running\"")!=std::string::npos);
+        assert(data.find("\"name\":\"remoteproc0\"")!=std::string::npos);
+        assert(data.find("\"device_name\":\"adsp\"")!=std::string::npos);
+        assert(data.find("\"name\":\"adsp\"")==std::string::npos);
         assert(data.find("\"recovery\":null")!=std::string::npos);
         assert(data.find("\"firmware_rpcs_performed\":false")!=std::string::npos);
         assert(data.find("\"feature_support_inferred\":false")!=std::string::npos);

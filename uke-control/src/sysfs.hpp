@@ -64,7 +64,7 @@ inline std::string driver(const fs::path& root,const fs::path& object) {
 }
 inline std::string object(const fs::path& root,const fs::path& path,const std::vector<std::string>& fields) {
     std::string result="{\"name\":"+quote(path.filename().string())+",\"driver\":"+driver(root,path);
-    for(const auto& field:fields)result+=','+quote(field)+':'+attribute(root,path/field);
+    for(const auto& field:fields)result+=','+quote(field=="name"?"device_name":field)+':'+attribute(root,path/field);
     return result+'}';
 }
 }

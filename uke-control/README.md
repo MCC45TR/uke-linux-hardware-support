@@ -235,6 +235,10 @@ Tablet installation, reboot and physical tests are recorded separately.
 
 ## Cached firmware status
 
+Release 18 keeps the class object ID in name and the kernel's descriptive name
+in device_name; release 17 emitted a duplicate name key for remote processors.
+Both identities are now preserved, with a regression for that observed output.
+
 `uke-control firmware status` returns a bounded JSON snapshot of SCMI base
 identity, agent-visible protocol discovery, Linux protocol consumers and
 remote-processor state. It reads cached kernel interfaces only, without vendor
