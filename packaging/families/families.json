@@ -10,6 +10,12 @@
       ],
       "suggests": [
         "uke-control-tests"
+      ],
+      "watch_paths": [
+        "uke-control/src",
+        "uke-control/shared",
+        "uke-control/packaging",
+        "uke-control/Makefile"
       ]
     },
     {
@@ -26,7 +32,13 @@
         "uke-touchscreen",
         "uke-wifi-factory"
       ],
-      "release": 1
+      "release": 1,
+      "watch_paths": [
+        "uke-boot/src",
+        "uke-boot/packaging/uke-installation-profile.spec",
+        "uke-boot/Makefile",
+        "uke-desktop-packaging/src/fastfetch"
+      ]
     },
     {
       "name": "uke-power",
@@ -39,6 +51,14 @@
         "uke-power-profile-backend",
         "uke-battery-observer",
         "uke-charge-control"
+      ],
+      "watch_paths": [
+        "uke-desktop-integration/src",
+        "uke-desktop-integration/packaging",
+        "uke-desktop-integration/Makefile",
+        "uke-platform-runtime/src",
+        "uke-platform-runtime/packaging",
+        "uke-platform-runtime/Makefile"
       ]
     },
     {
@@ -52,7 +72,8 @@
         "uke-ssc-fileservice",
         "uke-front-color"
       ],
-      "release": 2
+      "release": 2,
+      "watch_paths": []
     },
     {
       "name": "uke-extras",
@@ -61,6 +82,10 @@
       "suggests": [
         "uke-plymonth = 1.0.2-1%{?dist}",
         "uke-orangefox-recovery"
+      ],
+      "watch_paths": [
+        "uke-desktop-packaging/packaging/plymouth-uke",
+        "uke-desktop-packaging/Makefile"
       ]
     },
     {
@@ -72,6 +97,9 @@
       "suggests": [
         "uke-mesa-dri-drivers",
         "uke-mesa-vulkan-drivers"
+      ],
+      "watch_paths": [
+        "uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch"
       ]
     },
     {
@@ -83,6 +111,14 @@
       "suggests": [
         "uke-core-meta",
         "uke-kde-plasma-meta"
+      ],
+      "watch_paths": [
+        "uke-core-meta/packaging",
+        "uke-core-meta/src",
+        "uke-core-meta/Makefile",
+        "uke-desktop-metas/packaging",
+        "uke-desktop-metas/src",
+        "uke-desktop-metas/Makefile"
       ]
     },
     {
@@ -92,7 +128,8 @@
       "suggests": [
         "plasma-camera"
       ],
-      "status": "selection-only; internal camera graph not qualified"
+      "status": "selection-only; internal camera graph not qualified",
+      "watch_paths": []
     },
     {
       "name": "uke-sound",
@@ -106,14 +143,15 @@
       "suggests": [
         "plasma-pa"
       ],
-      "status": "original Fedora audio userspace; internal playback/capture not qualified"
+      "status": "original Fedora audio userspace; internal playback/capture not qualified",
+      "watch_paths": []
     }
   ],
   "exceptions": [
-    "material-decoration",
     "senemos-uke-linux-kernel-mainline",
     "senemos-uke-linux-kernel-mainline-singleboot",
-    "senemos-uke-linux-kernel-mainline-kvm"
+    "senemos-uke-linux-kernel-mainline-kvm",
+    "senemos-uke-linux-kernel-mainline-kvm-singleboot"
   ],
   "rename": {
     "libstdc++": "uke-libstdcxx"

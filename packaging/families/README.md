@@ -11,16 +11,18 @@ RPMs. Installing a metadata parent starts no process by itself.
 | uke-hw | retained boot/USB/Wi-Fi integration, separate installation classifier, firmware, Bluetooth factory-address oneshot, touchscreen and original Fastfetch configuration |
 | uke-power | original UPower with reviewed corrections, battery observation/control gates, PPD backend, adaptive display |
 | uke-sensors | SSC library, standard SensorProxy with SSC, bounded file service and opt-in front color |
-| uke-additional | reviewed native runtime libraries and Mesa; original upstream versions retained |
-| uke-extras | optional uke-plymonth theme and recovery images delivered as data |
+| uke-additional | AT-SPI, GStreamer, libaccounts-glib, libwacom, C++ runtime and Mesa; original upstream versions retained |
+| uke-extras | optional uke-plymonth theme, original material-decoration and recovery images delivered as data |
 | uke-metas | separate strict console and original Fedora Plasma selections |
 | uke-camera | optional original Fedora camera application selection; internal camera graph unqualified |
 | uke-sound | original Fedora ALSA/PipeWire/WirePlumber selection; internal playback/capture unqualified |
 
-The three kernel source names remain `senemos-uke-linux-kernel-mainline`,
-`senemos-uke-linux-kernel-mainline-singleboot` and
-`senemos-uke-linux-kernel-mainline-kvm`. `material-decoration` is an explicit
-non-device-specific exception. `uke-hw` also produces `uke-firmware`, an
+The four kernel source names are `senemos-uke-linux-kernel-mainline`,
+`senemos-uke-linux-kernel-mainline-singleboot`,
+`senemos-uke-linux-kernel-mainline-kvm` and
+`senemos-uke-linux-kernel-mainline-kvm-singleboot`. The resulting source list contains
+13 families. The `material-decoration` binary keeps its original identity under
+`uke-extras`; it no longer needs a separate source row. `uke-hw` also produces `uke-firmware`, an
 explicitly requested proprietary data RPM with OEM notices. Its historical
 file-level redistribution review remains incomplete; publication does not
 establish additional grants. Private calibration is excluded.
@@ -117,6 +119,14 @@ scriptlet, source hash, signature and rollback artifact. A COPR package deletion
 also deletes its builds: never use it merely to hide a dashboard row. Preserve
 referenced historical builds and test the new dependency closure before a
 source-definition cutover. Stable promotion remains distinct from test builds.
+
+Source-family automation watches each family's inputs, requires a higher RPM
+revision, runs validation and suppresses duplicate active or published builds.
+The COPR source definitions track the published branch with auto-rebuild enabled.
+The direct GitHub integration accepts tag creation events; validated CI requests
+changed families through the existing custom hook. This avoids two builds for
+one branch push. Frozen third-party source inputs require an explicit hash and
+revision refresh; auto-rebuild does not silently replace upstream sources.
 
 Primary contracts: [RPM spec format](https://rpm.org/docs/6.0.x/manual/spec.html),
 [DNF5 native transaction API](https://dnf5.readthedocs.io/en/latest/tutorial/transaction.html)
