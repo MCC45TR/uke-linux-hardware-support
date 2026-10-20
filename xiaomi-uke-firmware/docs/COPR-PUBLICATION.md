@@ -9,10 +9,16 @@ families and inspected source revisions. Existing local payloads remain intact.
 The [candidate manifest](../manifests/local-firmware-candidates.json) pins 74
 files, their sizes, SHA-256 values, source selectors and installation paths.
 WPSS and ADSP match the pinned official OTA modem extraction. The three GPU
-files match the retained device extraction; their original source container
-still needs independent verification. The connected tablet's board and regdb
+files match the retained device extraction. On 20 October 2026, GMU and SQE
+were also independently matched to the verified OS3.0.304.0 vendor partition;
+the ZAP source container remains unverified. The connected tablet's board and regdb
 hashes match the local OEM O82 Global board and regulatory files. None of these
 identity checks is a redistribution grant.
+
+The [OS3.0.304.0 runtime input profile](OEM-RUNTIME-INPUTS.md) separately
+records 143 SSC, touch and Bluetooth files. It uses the same host staging helper
+with a complete source manifest, an exact known-missing SSC reference set and
+private touch preparation assets. It does not add public firmware admission.
 
 For a local evaluation, first extract the pinned official OTA using the
 host-only tool revision recorded in

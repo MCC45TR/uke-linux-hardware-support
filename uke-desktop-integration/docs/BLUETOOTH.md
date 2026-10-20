@@ -1,5 +1,12 @@
 # Uke Bluetooth integration
 
+20 October 2026: the verified Global OS3.0.304.0 Bluetooth partition supplies
+69 firmware/NVM files identical to the supplied OS3.0.303.0 subset. The
+[local input preparation guide](../../xiaomi-uke-firmware/docs/OEM-RUNTIME-INPUTS.md)
+maps them to the standard `qca/` firmware directory. The kernel retains ROM/board
+selection; staging neither identifies the active variant nor reloads firmware.
+The factory address remains a separate read-only persist input.
+
 17 October 2026. The kernel owns UART, pinctrl, power rails and QCA firmware
 transport. BlueZ owns Bluetooth protocols and HID-over-GATT through kernel UHID.
 Original KDE consumes the distribution BlueZ interface.

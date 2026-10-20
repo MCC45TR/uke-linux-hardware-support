@@ -1,5 +1,12 @@
 # Uke sensors
 
+20 October 2026: host extraction from the verified Global OS3.0.304.0 OTA
+supplies the OEM SSC configuration and updated DSP helper. Normal CSOT touch
+firmware/configuration match the existing pins; TM remains a separate candidate.
+The [local input preparation guide](../xiaomi-uke-firmware/docs/OEM-RUNTIME-INPUTS.md)
+preserves the two unresolved OEM sensor-list entries and excludes private touch
+reference captures. No new tablet operation or physical acceptance is recorded.
+
 18 October 2026: the separate, disabled-by-default native front-color publisher
 exposes raw CCT vectors with explicit freshness, wire status and
 unverified units/calibration. It preserves the original SensorProxy ALS API.

@@ -8,6 +8,16 @@
     "sha256": "a4f949fb89c7eaad9da85a5885cd2dcc1fffbf08bc1e7ffe9f0bb97c1769b310",
     "bytes": 245760,
     "redistribution": "not-admitted",
+    "verified_oem_source": {
+      "date": "2026-10-20",
+      "release": "OS3.0.304.0.WOZMIXM",
+      "archive_sha256": "c56da12747c6c108929aedb09280f0b406bb03b9e959de7234db38ee2fa66d60",
+      "partition": "odm",
+      "partition_sha256": "840f52991580882e1e44144527b6dbd24816a279bf490a7580a85b0e66319dea",
+      "firmware_path": "firmware/novatek_nt36532_o82_fw_csot.bin",
+      "config_path": "firmware/o82_nova_thp_config.ini",
+      "hardware_tested": false
+    },
     "config": {
       "path": "proprietary/odm/firmware/o82_nova_thp_config.ini",
       "sha256": "c02d1956da3714bbd9a19f14ca814731cffd4e2442677a83d5e071ea547a0616",

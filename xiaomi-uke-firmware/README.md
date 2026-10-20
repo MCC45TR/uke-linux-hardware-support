@@ -2,6 +2,11 @@
 
 File-level firmware provenance, acquisition and redistribution policy for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 
+20 October 2026: a verified Global OS3.0.304.0 local input profile now covers
+SSC, normal touch preparation and Bluetooth. See the
+[source and staging guide](docs/OEM-RUNTIME-INPUTS.md). The existing modem/GPU
+staging interface and public admission policy remain separate.
+
 This component owns the file-level admission rules for the shared hardware
 support repository. The current lock admits no firmware bytes, so `make srpm`
 fails explicitly. A metadata-only RPM cannot substitute for device firmware.
