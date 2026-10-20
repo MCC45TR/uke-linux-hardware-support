@@ -25,6 +25,7 @@ component reports software tests and physical qualification separately.
 %package -n uke-charge-control
 Summary: Evidence-gated native Uke charge-control backend
 Requires: senemos-native-runtime(libstdc++) systemd-libs
+Requires: upower >= 1.91.5
 Requires(pre): systemd
 
 %description -n uke-charge-control
@@ -91,6 +92,7 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_unitdir}/uke-charge-automatic.service
 %{_presetdir}/91-uke-charge-control.preset
 %config(noreplace) %{_sysconfdir}/uke-battery/control-profile.json
+%config(noreplace) %{_sysconfdir}/UPower/UPower.conf.d/60-uke-battery-safety.conf
 
 %files -n uke-offline-charge
 %license LICENSE

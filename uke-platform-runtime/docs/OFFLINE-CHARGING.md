@@ -16,7 +16,8 @@ retains charging and autonomous protection ownership. Independent 80% policy,
 actual cutoff, bypass, temperature qualification and power use remain separate.
 
 Battery power is the standard signed battery-side `power_now` in microwatts,
-not adapter input or negotiated maximum power. When unavailable, a coherent
+not adapter input or negotiated maximum power. The matched Uke driver derives
+this value from V/I, so it is labelled as an estimate. When unavailable, a coherent
 voltage/current pair supplies a separately labelled **battery estimate** using
 `V_uV * I_uA / 1000000`. A connected adapter with negative battery power displays
 that the battery is draining. Temperature uses the standard

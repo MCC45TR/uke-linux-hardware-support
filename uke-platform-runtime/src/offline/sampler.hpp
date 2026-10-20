@@ -16,7 +16,8 @@
 
 namespace uke::offline {
 inline std::optional<std::int64_t> number(const std::string &path) {
-    const auto text=trim(read(path,64));
+    const auto raw=read(path,64);
+    const auto text=trim(raw);
     std::int64_t value=0;
     const auto parsed=std::from_chars(text.data(),text.data()+text.size(),value);
     if(text.empty() || parsed.ec!=std::errc{} || parsed.ptr!=text.data()+text.size() || value<INT32_MIN || value>INT32_MAX) return {};
@@ -44,6 +45,7 @@ inline Snapshot sample(const std::string &root="/sys") {
     if(s.valid) s.percent=*percent;
     s.input_known=online && (*online==0 || *online==1); s.online=s.input_known && *online==1;
     s.power_uw=number((bat/"power_now").string());
+    s.power_estimated=bool(s.power_uw); // The matched Uke driver also computes power_now from V*I.
     // Uke has no firmware power_now; label V*I as an estimate, never a raw measurement.
     if(!s.power_uw) {
         const auto voltage=number((bat/"voltage_now").string()),current=number((bat/"current_now").string());

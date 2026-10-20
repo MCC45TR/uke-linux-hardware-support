@@ -45,6 +45,7 @@ install: all
 	install -Dm644 packaging/systemd/uke-offline-charge.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-offline-charge.service"
 	install -Dm644 packaging/systemd/uke-offline-charge.target "$(DESTDIR)$(prefix)/lib/systemd/system/uke-offline-charge.target"
 	install -Dm644 manifests/control-profile.json "$(DESTDIR)/etc/uke-battery/control-profile.json"
+	install -Dm644 packaging/upower/60-uke-battery-safety.conf "$(DESTDIR)/etc/UPower/UPower.conf.d/60-uke-battery-safety.conf"
 	install -Dm644 packaging/systemd/uke-charge-control.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-control.service"
 	install -Dm644 packaging/systemd/uke-charge-automatic.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-automatic.service"
 	install -Dm644 packaging/systemd/91-uke-charge-control.preset "$(DESTDIR)$(prefix)/lib/systemd/system-preset/91-uke-charge-control.preset"

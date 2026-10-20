@@ -43,7 +43,7 @@ int main() {
     put(bat/"voltage_now","3800000");put(bat/"current_now","-250000");put(bat/"temp","210");
     put(supply/"qcom-battmgr-usb/online","1");
     auto s=sample(root.string());assert(s.valid && s.power_uw==-950000 && s.power_estimated && s.online);
-    put(bat/"power_now","123456");s=sample(root.string());assert(s.power_uw==123456 && !s.power_estimated);
+    put(bat/"power_now","123456");s=sample(root.string());assert(s.power_uw==123456 && s.power_estimated);
     fs::remove(bat/"capacity");assert(mkfifo((bat/"capacity").c_str(),0600)==0);
     std::thread changing([&] {
         std::ofstream capacity(bat/"capacity");
