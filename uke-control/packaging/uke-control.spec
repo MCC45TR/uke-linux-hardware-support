@@ -89,6 +89,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-21
+- Preserve presentation-deadline fixes with the moisture notification client.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-20
 - Add cached moisture and charging-fault notifications in the desktop session.
 - Distinguish firmware input-inhibit readback from physical cutoff acceptance.

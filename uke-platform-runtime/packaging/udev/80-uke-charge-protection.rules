@@ -1,2 +1,2 @@
-# Start from the bound provider, not from a fixed boot delay. Cached attribute only.
-ACTION=="bind", SUBSYSTEM=="auxiliary", KERNEL=="pmic_glink.power-supply.*", TEST=="uke_charge_protection_state", TAG+="systemd", ENV{SYSTEMD_WANTS}+="uke-charge-protection.service"
+# Include root coldplug after an initramfs bind; the attribute requires a ready provider.
+ACTION=="add|bind", SUBSYSTEM=="auxiliary", KERNEL=="pmic_glink.power-supply.*", TEST=="uke_charge_protection_state", TAG+="systemd", ENV{SYSTEMD_WANTS}+="uke-charge-protection.service"

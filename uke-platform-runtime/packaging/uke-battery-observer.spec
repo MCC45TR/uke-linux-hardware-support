@@ -115,6 +115,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
+- Preserve elapsed-power and offline net-charge fixes in the protection candidate.
+- Activate protection observation for a ready provider at root coldplug.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
 - Add fixed firmware moisture observation and qualified owned-input protection.
 - Require version-2 thermal leases and periodic-effect evidence; remain unqualified.
