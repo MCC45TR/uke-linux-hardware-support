@@ -92,6 +92,16 @@ suspend/resume and calibrated photometric response remain separate tests.
 
 ## Dual light and the OEM brightness curve
 
+20 October 2026: the package supplies original KWin's system configuration for
+the internal `DSI-1` output. New sessions start with automatic brightness,
+tablet-mode rotation and automatic VRR policy when the driver supports it.
+The monotone seven-point lux/brightness curve is a generic desktop policy,
+not factory calibration or a measured luminance map. KWin retains its existing
+filtering and user learning. Existing per-user configurations take precedence;
+external monitor layout, modes and colour settings are not prescribed.
+The system file is managed as an RPM configuration file without replacing local
+administrator edits. Physical response, orientation and VRR remain device tests.
+
 `libssc` 0.4.4 release 3, SensorProxy 3.9 release 6 and file-service release 8
 acquire `ambient_light` and `ambient_light_back` under an exact Uke udev opt-in.
 Both calibrated, finite, reliable samples are required before the brighter lux
