@@ -19,8 +19,8 @@ RPMs. Installing a metadata parent starts no process by itself.
 
 The four kernel source names are `senemos-uke-linux-kernel-mainline`,
 `senemos-uke-linux-kernel-mainline-singleboot`,
-`senemos-uke-kernel-mainline-kvm` and
-`senemos-uke-kernel-mainline-kvm-singleboot`. The resulting source list contains
+`senemos-uke-linux-kernel-mainline-kvm` and
+`senemos-uke-linux-kernel-mainline-kvm-singleboot`. The resulting source list contains
 13 families. The `material-decoration` binary keeps its original identity under
 `uke-extras`; it no longer needs a separate source row. `uke-hw` also produces `uke-firmware`, an
 explicitly requested proprietary data RPM with OEM notices. Its historical
