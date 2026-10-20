@@ -48,6 +48,7 @@ install -Dm644 packaging/71-uke-tablet-mode.rules %{buildroot}%{_udevrulesdir}/7
 install -Dm644 packaging/61-uke-display-ddc.rules %{buildroot}%{_udevrulesdir}/61-uke-display-ddc.rules
 install -Dm644 packaging/60-block-scheduler.rules %{buildroot}%{_sysconfdir}/udev/rules.d/60-block-scheduler.rules
 install -Dm644 packaging/powerdevilrc %{buildroot}%{_sysconfdir}/xdg/powerdevilrc
+install -Dm644 packaging/kwinoutputconfig.json %{buildroot}%{_sysconfdir}/xdg/kwinoutputconfig.json
 install -Dm755 src/uke-ddc-config %{buildroot}%{_libexecdir}/senemos-uke/uke-ddc-config
 install -Dm644 packaging/60-uke-display-ddc.conf %{buildroot}%{_userunitdir}/plasma-powerdevil.service.d/60-uke-display-ddc.conf
 install -Dm644 packaging/30-uke-s2idle.conf %{buildroot}%{_prefix}/lib/systemd/sleep.conf.d/30-uke-s2idle.conf
@@ -79,6 +80,7 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %{_libdir}/qt6/plugins/ksystemstats/libuke_adreno.so
 %{_datadir}/plasma-systemmonitor/adreno.page
 %config(noreplace) %{_sysconfdir}/xdg/powerdevilrc
+%config(noreplace) %{_sysconfdir}/xdg/kwinoutputconfig.json
 %config(noreplace) %{_sysconfdir}/udev/rules.d/60-block-scheduler.rules
 %{_unitdir}/uke-adaptive-display.target
 %{_presetdir}/80-uke-adaptive-display.preset
