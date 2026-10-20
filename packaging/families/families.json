@@ -154,7 +154,8 @@
     "senemos-uke-linux-kernel-mainline-kvm-singleboot"
   ],
   "rename": {
-    "libstdc++": "uke-libstdcxx"
+    "libstdc++": "uke-libstdcxx",
+    "material-decoration": "material-decoration"
   },
   "native_versions": {
     "uke-control": "1.0.21",
