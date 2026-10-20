@@ -14,7 +14,8 @@ function mapped_dependency(line,  old,head,tail,pattern) {
         head=line; line=""
         while(match(head,/[A-Za-z0-9_+.-]+(\([^)]*\))?/)) {
             line=line substr(head,1,RSTART-1);tail=substr(head,RSTART,RLENGTH)
-            if(tail==old || index(tail,old "(")==1)tail=package_new[old] substr(tail,length(old)+1)
+            # Function-like virtual APIs remain compatible with external consumers.
+            if(tail==old)tail=package_new[old]
             line=line tail;head=substr(head,RSTART+RLENGTH)
         }
         line=line head
