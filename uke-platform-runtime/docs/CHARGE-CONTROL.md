@@ -372,3 +372,9 @@ action threshold, uses percentage policy and disables risky-action overrides.
 It does not supply new numerical thresholds or trigger a power action. Later
 administrator drop-ins remain effective. This desktop policy is separate from
 firmware charging, moisture inhibition and physical battery protection.
+
+The protection observer logs its first state/error and subsequent changes only.
+Moisture, faults, freshness and input-suspend readback remain in the compared
+report; an error-to-healthy transition is logged even when the healthy fields
+match an earlier report. Firmware polling and the two-second guard cadence are
+unchanged. Desktop cached-status queries still return a full report each time.

@@ -152,17 +152,27 @@ void emit_protection(const Protection &p, bool enable_request) {
         << ",\"wet_response_qualified\":false,\"physical_charge_stopped\":null"
         << ",\"jeita_qualified\":false,\"autonomous_ovp_ocp_qualified\":false,\"firmware_watchdog_qualified\":false}\n";
 }
-void emit_protection_cache(ProtectionCache p) {
+std::string protection_cache_report(ProtectionCache p) {
     const auto time = now();
     p.valid = p.valid && p.received_ns && time >= p.received_ns && time - p.received_ns <= 5000000000ULL;
-    std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_protection_cache\",\"metadata_only\":true"
+    std::ostringstream report;
+    report << "{\"schema_version\":1,\"kind\":\"uke_charge_protection_cache\",\"metadata_only\":true"
         << ",\"fresh\":" << (p.valid ? "true" : "false")
         << ",\"reported_moisture_detection_enabled\":" << (p.enabled ? "true" : "false")
         << ",\"reported_moisture\":" << (p.moisture_reported ? "true" : "false")
         << ",\"wet_latched\":" << (p.wet_latched ? "true" : "false")
         << ",\"faults\":" << p.faults
         << ",\"input_suspend_readback\":" << (p.valid && p.input_suspend_readback ? "true" : "false")
-        << ",\"physical_charge_stopped\":null,\"firmware_rpc_performed\":false}\n" << std::flush;
+        << ",\"physical_charge_stopped\":null,\"firmware_rpc_performed\":false}\n";
+    return report.str();
+}
+void emit_protection_cache(ProtectionCache p) {
+    std::cout << protection_cache_report(p) << std::flush;
+}
+void emit_protection_change(std::ostream &output, const std::string &report, std::string &previous) {
+    if (report == previous) return;
+    output << report << std::flush;
+    previous = report;
 }
 void emit_protocols(const ProtocolState &s, bool available, const std::string &reason) {
     const auto time = now();
@@ -271,6 +281,7 @@ int main(int argc, char **argv) {
         if (geteuid() != 0) fail("control_root_required");
         if (command == "protection-serve") {
             signal(SIGTERM, stop); signal(SIGINT, stop);
+            std::string previous_report;
             while (!stopping) {
                 try {
                     Lock owner;
@@ -285,10 +296,11 @@ int main(int argc, char **argv) {
                         if (!p.enabled) guard.enable_moisture(now());
                         guard.revoke();
                     }
-                    emit_protection_cache(parse_protection_cache(io->read_attribute("uke_charge_protection_state")));
+                    emit_protection_change(std::cout,
+                        protection_cache_report(parse_protection_cache(io->read_attribute("uke_charge_protection_state"))), previous_report);
                 } catch (const std::exception &e) {
                     // Transport quarantine and the kernel's uncertain-write latch forbid SET replay.
-                    std::cerr << "protection observation: " << identifier(e.what()) << '\n';
+                    emit_protection_change(std::cerr, "protection observation: " + identifier(e.what()) + '\n', previous_report);
                 }
                 for (unsigned ticks = 0; ticks < 20 && !stopping; ++ticks)
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
