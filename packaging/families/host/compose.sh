@@ -33,7 +33,10 @@ uke-hw)
     make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
     boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]
     printf '%s\t%s\n' uke-boot-integration "${boots[0]}" >"$stage/inputs";;
-uke-core) make -C uke-control srpm outdir="$root/uke-control/build/srpm" >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-core)
+    make -C uke-control srpm outdir="$stage/control" >"$stage/local.log"
+    controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
+    printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"

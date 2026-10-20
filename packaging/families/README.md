@@ -5,6 +5,9 @@ package map. COPR lists source packages in a flat list; it has no nested package
 folders. Each family is one source RPM producing separately installable child
 RPMs. Installing a metadata parent starts no process by itself.
 
+The [runtime responsibility map](RESPONSIBILITIES.md) records which functions
+belong to kernel/DT, original distribution services and bounded Uke helpers.
+
 | Source family | Child responsibilities |
 |---|---|
 | uke-core | uke-control and optional development diagnostics |
@@ -130,6 +133,9 @@ source-definition cutover. Stable promotion remains distinct from test builds.
 
 Source-family automation watches each family's inputs, requires a higher RPM
 revision, runs validation and suppresses duplicate active or published builds.
+Shared composer changes rebuild only families with an explicit revision bump;
+unchanged families retain their published RPMs. Changes to a family's own
+sources, policy or pinned inputs without a revision bump still fail admission.
 The COPR source definitions track the published branch with auto-rebuild enabled.
 The direct GitHub integration accepts tag creation events; validated CI requests
 changed families through the existing custom hook. This avoids two builds for

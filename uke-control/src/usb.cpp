@@ -34,12 +34,18 @@ std::string snapshot(const fs::path& requested_root) {
     };
     const auto all=[](const fs::path&){return true;};
     group("typec","sys/class/typec",{"data_role","power_role","port_type","preferred_role","orientation","power_operation_mode","supports_usb_power_delivery","usb_power_delivery_revision"},all);
+    group("altmodes","sys/bus/typec/devices",{"svid","mode","vdo","active"},[&](const fs::path& p){return exists(root,p/"svid");});
     group("role_switches","sys/class/usb_role",{"role"},all);
+    // Driver-owned caches only; none of these attributes initiates a bus transaction.
+    group("ucsi_transport","sys/bus/auxiliary/drivers/ucsi_glink.pmic_glink_ucsi",{"uke_transport_state"},[&](const fs::path& p){return driver(root,p)==quote("ucsi_glink.pmic_glink_ucsi");});
+    group("phy_routes","sys/bus/platform/drivers/qcom-qmp-combo-phy",{"uke_route_state"},[&](const fs::path& p){return driver(root,p)==quote("qcom-qmp-combo-phy");});
+    group("aux_routes","sys/bus/i2c/drivers/wcd939x-uke-typec",{"route_state"},[&](const fs::path& p){return driver(root,p)==quote("wcd939x-uke-typec");});
     group("gadgets","sys/class/udc",{"state","function","current_speed","maximum_speed"},all);
     group("usb_devices","sys/bus/usb/devices",{"idVendor","idProduct","bcdDevice","bDeviceClass","busnum","devnum","devpath","speed","version","bMaxPower","authorized","configuration"},[&](const fs::path& p){return exists(root,p/"idVendor");});
     group("usb_interfaces","sys/bus/usb/devices",{"bInterfaceClass","bInterfaceSubClass","bInterfaceProtocol"},[&](const fs::path& p){return exists(root,p/"bInterfaceClass");});
     group("usb_network","sys/class/net",{"operstate","carrier","speed","duplex","statistics/rx_bytes","statistics/tx_bytes","statistics/rx_errors","statistics/tx_errors","statistics/rx_dropped","statistics/tx_dropped"},[&](const fs::path& p){return exists(root,p/"device/bInterfaceClass");});
     group("displays","sys/class/drm",{"status","enabled","modes"},[](const fs::path& p){return p.filename().string().find("-DP-")!=std::string::npos||p.filename().string().find("-HDMI-A-")!=std::string::npos;});
+    out+=",\"routing_observation\":\"driver_caches_without_firmware_or_bus_reads\",\"link_training_verified\":null,\"physical_image_verified\":null";
     out+=",\"started_monotonic_ms\":"+std::to_string(start)+",\"finished_monotonic_ms\":"+std::to_string(now())+'}';
     if(out.size()>1024*1024)throw std::runtime_error("USB snapshot exceeds 1 MiB");
     return out+'\n';

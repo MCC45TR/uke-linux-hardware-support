@@ -1,5 +1,16 @@
 # Uke Control
 
+20 October 2026: [hardware path diagnostics](HARDWARE.md) separate configured
+audio/camera nodes, effective parent status, driver bindings and exported
+endpoints. `uke-control hardware status` performs no device open, firmware
+request, stream, probe or calibration. Missing endpoints remain explicit.
+
+20 October 2026: [desktop interface diagnostics](DESKTOP.md) inspect the existing
+UPower, power profiles, SensorProxy, logind and optional KDE consumer contracts.
+`uke-control desktop status` and `uke-control test desktop` perform no activation,
+sensor claim, setting or physical feature test. Private reports include the same
+bounded interface evidence; missing services remain unavailable.
+
 18 October 2026 source follow-up: `sudo uke-control charge apply-cap80` is a
 separate one-shot development request for the firmware's already enabled 70/80
 band. It requires the matched helper and kernel interface, disconnected input

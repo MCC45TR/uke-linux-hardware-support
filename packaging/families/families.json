@@ -4,9 +4,9 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.0.20",
+      "version": "1.0.21",
       "requires": [
-        "uke-control = 1.0.20-1%{?dist}"
+        "uke-control = 1.0.21-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -64,7 +64,7 @@
     },
     {
       "name": "uke-sensors",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "requires": [
         "uke-libssc",
         "uke-iio-sensor-proxy"
@@ -73,7 +73,7 @@
         "uke-ssc-fileservice",
         "uke-front-color"
       ],
-      "release": 3,
+      "release": 1,
       "watch_paths": []
     },
     {
@@ -107,8 +107,10 @@
     },
     {
       "name": "uke-metas",
-      "version": "1.0.0",
-      "requires": [],
+      "version": "1.0.1",
+      "requires": [
+        "uke-core-meta >= 1.0.1"
+      ],
       "suggests": [
         "uke-core-meta",
         "uke-kde-plasma-meta"
@@ -159,7 +161,7 @@
     "material-decoration": "material-decoration"
   },
   "native_versions": {
-    "uke-control": "1.0.20",
+    "uke-control": "1.0.21",
     "uke-adaptive-display": "1.0.15",
     "uke-boot-integration": "1.1.1",
     "uke-bluetooth": "1.0.6",
@@ -170,7 +172,7 @@
     "uke-installation-profile": "1.1.1"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "9.fc46",
+    "iio-sensor-proxy": "10.fc46",
     "uke-boot-integration": "2.fc46",
     "uke-bluetooth": "3.fc46",
     "uke-touchscreen": "3.fc46",
@@ -181,8 +183,8 @@
     "uke-adaptive-display": "2.fc46",
     "uke-firmware": "2.fc46",
     "uke-fastfetch-config": "2.fc46",
-    "libssc": "7.fc46",
-    "uke-ssc-fileservice": "10.fc46",
-    "uke-front-color": "2.fc46"
+    "libssc": "8.fc46",
+    "uke-ssc-fileservice": "11.fc46",
+    "uke-front-color": "3.fc46"
   }
 }

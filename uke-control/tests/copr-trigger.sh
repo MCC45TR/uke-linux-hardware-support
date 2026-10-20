@@ -81,4 +81,21 @@ git add .;git commit -qm backwards
 export UKE_CONTROL_BEFORE=$previous UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
 if bash "$script"; then exit 1; fi
 test "$(wc -l <"$FIXTURE_REQUESTS")" = 2
-printf '%s\n' 'PASS: unchanged source, NVR admission, active/published deduplication, single uncertain POST and source-advance refusal'
+mkdir -p packaging/families
+cat >packaging/families/families.json <<'JSON'
+{"families":[{"name":"uke-core","version":"0.1.0","release":1,"watch_paths":["uke-control/src","uke-control/packaging"]}]}
+JSON
+printf '%s\n' '[]' >packaging/families/source-inputs.json
+git add .; git commit -qm family-base
+export UKE_CONTROL_BEFORE=$(git rev-parse HEAD)
+printf '%s\n' shared-change >>.copr/Makefile
+git add .; git commit -qm shared-only
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+bash "$script"
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 2
+printf '%s\n' own-change >>uke-control/src/value
+git add .; git commit -qm family-unversioned
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+if bash "$script"; then exit 1; fi
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 2
+printf '%s\n' 'PASS: unchanged source, NVR admission, deduplication, uncertain POST, source advance and family-scoped shared tooling'

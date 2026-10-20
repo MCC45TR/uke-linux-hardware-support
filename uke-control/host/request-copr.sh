@@ -18,12 +18,14 @@ trap 'rm -rf -- "$stage"' EXIT
 map=packaging/families/families.json
 pins=packaging/families/source-inputs.json
 paths=(.copr/Makefile packaging/families/host/compose.sh packaging/families/host/split-spec.awk packaging/families/host/service-rename.sh)
+own_paths=()
 if git cat-file -e "$commit:$map" 2>/dev/null; then
     git show "$commit:$map" >"$stage/families.json"
     jq -ce --arg f "$family" '.families[]|select(.name==$f)' "$stage/families.json" >"$stage/new.json"
     version=$(jq -er '.version+"-"+((.release // 1)|tostring)' "$stage/new.json")
     mapfile -t watched < <(jq -er '.watch_paths[]' "$stage/new.json")
     paths+=("${watched[@]}")
+    own_paths=("${watched[@]}")
     jq -Sc 'del(.watch_paths)' "$stage/new.json" >"$stage/new-policy"
     git show "$commit:$pins" | jq -Sc --arg f "$family" '[.[]|select(.family==$f)]' >"$stage/new-pins"
     old=
@@ -53,14 +55,20 @@ else
 fi
 [[ $version =~ ^[a-zA-Z0-9._+~^-]+$ ]]
 changed=false
+own_changed=false
 if ! git diff --quiet "$base" "$commit" -- "${paths[@]}"; then changed=true; fi
+if ((${#own_paths[@]})) && ! git diff --quiet "$base" "$commit" -- "${own_paths[@]}"; then own_changed=true; fi
 if [[ -e $stage/new.json ]]; then
-    if [[ ! -e $stage/old.json ]] || ! cmp -s "$stage/new-policy" "$stage/old-policy" || ! cmp -s "$stage/new-pins" "$stage/old-pins"; then changed=true; fi
+    if [[ ! -e $stage/old.json ]] || ! cmp -s "$stage/new-policy" "$stage/old-policy" || ! cmp -s "$stage/new-pins" "$stage/old-pins"; then changed=true; own_changed=true; fi
 fi
 if [[ $changed == false ]]; then
     printf 'No %s package input change; no build requested.\n' "$family"; exit 0
 fi
 if [[ $version == "$old" ]]; then
+    # Shared generator maintenance selects affected families through revision bumps.
+    if [[ -e $stage/new.json && $own_changed == false ]]; then
+        printf '%s: shared tooling changed without a family revision; no build requested.\n' "$family"; exit 0
+    fi
     printf '%s inputs changed without a version/release bump; refusing a same-NEVRA rebuild.\n' "$family" >&2; exit 1
 fi
 if [[ -n $old ]]; then
