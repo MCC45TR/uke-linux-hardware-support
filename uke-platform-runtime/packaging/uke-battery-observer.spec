@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 7%{?dist}
+Release: 10%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -75,20 +75,23 @@ sha256sum -c SOURCE-SHA256SUMS
 %systemd_postun uke-battery.service
 
 %post -n uke-charge-control
-%systemd_post uke-charge-control.service uke-charge-automatic.service
+%systemd_post uke-charge-control.service uke-charge-automatic.service uke-charge-protection.service
 
 %preun -n uke-charge-control
-%systemd_preun uke-charge-control.service uke-charge-automatic.service
+%systemd_preun uke-charge-control.service uke-charge-automatic.service uke-charge-protection.service
 
 %postun -n uke-charge-control
-%systemd_postun uke-charge-control.service uke-charge-automatic.service
+%systemd_postun uke-charge-control.service uke-charge-automatic.service uke-charge-protection.service
 
 %files -n uke-charge-control
 %license LICENSE
 %doc docs/CHARGE-CONTROL.md
 %{_libexecdir}/uke-charge-control
+%{_datadir}/uke-battery/protection-readiness.json
 %{_unitdir}/uke-charge-control.service
 %{_unitdir}/uke-charge-automatic.service
+%{_unitdir}/uke-charge-protection.service
+%{_udevrulesdir}/80-uke-charge-protection.rules
 %{_presetdir}/91-uke-charge-control.preset
 %config(noreplace) %{_sysconfdir}/uke-battery/control-profile.json
 
@@ -112,6 +115,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
+- Add fixed firmware moisture observation and qualified owned-input protection.
+- Require version-2 thermal leases and periodic-effect evidence; remain unqualified.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
 - Add a one-shot request for the already enabled offline 70/80 target.
 - Preserve uncertain outcomes without retries, leases or bypass claims.

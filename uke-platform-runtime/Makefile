@@ -26,6 +26,7 @@ validate:
 	jq -e '.kind == "model_qualification" and .qualification == "unqualified" and .enable_control == false and .identities == null and .evidence_id == null' manifests/model-profile.json >/dev/null
 	jq -e '.kind == "control_qualification" and .qualification == "unqualified" and .enable_control == false and .current_control == false and .current_limits == null and .standard_clients == false' manifests/control-profile.json >/dev/null
 	jq -e 'all(.features[]; .qualified == false) and .tests_executed == false' manifests/battery-readiness.json >/dev/null
+	jq -e '.qualification == "unqualified" and .physical_acceptance == false and .pack_limits == null and all(.features[]; .qualified == false)' manifests/protection-readiness.json >/dev/null
 test-native:
 	bash tests/battery-model.sh
 	bash tests/battery-session.sh
@@ -42,8 +43,11 @@ install: all
 	install -Dm644 packaging/systemd/uke-offline-charge.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-offline-charge.service"
 	install -Dm644 packaging/systemd/uke-offline-charge.target "$(DESTDIR)$(prefix)/lib/systemd/system/uke-offline-charge.target"
 	install -Dm644 manifests/control-profile.json "$(DESTDIR)/etc/uke-battery/control-profile.json"
+	install -Dm644 manifests/protection-readiness.json "$(DESTDIR)$(prefix)/share/uke-battery/protection-readiness.json"
 	install -Dm644 packaging/systemd/uke-charge-control.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-control.service"
 	install -Dm644 packaging/systemd/uke-charge-automatic.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-automatic.service"
+	install -Dm644 packaging/systemd/uke-charge-protection.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-charge-protection.service"
+	install -Dm644 packaging/udev/80-uke-charge-protection.rules "$(DESTDIR)$(prefix)/lib/udev/rules.d/80-uke-charge-protection.rules"
 	install -Dm644 packaging/systemd/91-uke-charge-control.preset "$(DESTDIR)$(prefix)/lib/systemd/system-preset/91-uke-charge-control.preset"
 	install -Dm644 packaging/systemd/uke-battery.service "$(DESTDIR)$(prefix)/lib/systemd/system/uke-battery.service"
 	install -Dm644 packaging/systemd/90-uke-battery.preset "$(DESTDIR)$(prefix)/lib/systemd/system-preset/90-uke-battery.preset"

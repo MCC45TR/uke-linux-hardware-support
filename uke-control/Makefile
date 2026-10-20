@@ -14,8 +14,8 @@ build:
 	mkdir -p build
 build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/front-color.cpp $(shell pkg-config --libs libselinux libsystemd)
-build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp build/libuke-control.so.0
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
+build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp build/libuke-control.so.0
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
 build/uke-control-packages: src/packages.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(shell pkg-config --cflags --libs libdnf5 rpm)
 build/xdg-shell-client.h: | build
@@ -48,6 +48,10 @@ check: all build/test-front-color
 	bash tests/report.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-client.cpp src/charge-client.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-client
 	build/test-charge-client
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-notify.cpp src/charge-notify.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify
+	build/test-charge-notify
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -pthread tests/charge-notify-bus.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify-bus
+	dbus-run-session -- build/test-charge-notify-bus
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/usb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-usb
 	LD_LIBRARY_PATH=build build/test-usb
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/firmware.cpp -Lbuild -l:libuke-control.so.0 -o build/test-firmware

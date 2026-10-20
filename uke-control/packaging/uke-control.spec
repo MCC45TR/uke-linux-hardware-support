@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 18%{?dist}
+Release: 20%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -10,6 +10,7 @@ BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd)
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
+BuildRequires: dbus-daemon
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
@@ -49,6 +50,8 @@ install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-di
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
 install -Dm644 packaging/uke-control.service %{buildroot}%{_unitdir}/uke-control.service
 install -Dm644 packaging/80-uke-control.preset %{buildroot}%{_presetdir}/80-uke-control.preset
+install -Dm644 packaging/uke-control-moisture-notify.service %{buildroot}%{_userunitdir}/uke-control-moisture-notify.service
+install -Dm644 packaging/80-uke-control-user.preset %{buildroot}%{_userpresetdir}/80-uke-control-user.preset
 install -Dm644 packaging/uke-control-tests.desktop %{buildroot}%{_datadir}/applications/uke-control-tests.desktop
 install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
@@ -57,10 +60,13 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %post
 %systemd_post uke-control.service
+%systemd_user_post uke-control-moisture-notify.service
 %preun
 %systemd_preun uke-control.service
+%systemd_user_preun uke-control-moisture-notify.service
 %postun
 %systemd_postun uke-control.service
+%systemd_user_postun uke-control-moisture-notify.service
 
 %files
 %license LICENSE
@@ -72,6 +78,8 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
 %{_presetdir}/80-uke-control.preset
+%{_userunitdir}/uke-control-moisture-notify.service
+%{_userpresetdir}/80-uke-control-user.preset
 %dir %attr(0700,root,root) %{_localstatedir}/lib/uke-control
 
 %files tests
@@ -81,6 +89,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-20
+- Add cached moisture and charging-fault notifications in the desktop session.
+- Distinguish firmware input-inhibit readback from physical cutoff acceptance.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-18
 - Preserve both class object IDs and device names without duplicate JSON keys.
 

@@ -44,6 +44,7 @@ static void charge_helper() {
 }
 Result charge_control_query(const std::string& operation) {charge_helper();return charge::control_query(operation);}
 Result charge_enable_preconfigured_cap() {charge_helper();return charge::enable_preconfigured_cap();}
+Result charge_enable_moisture() {charge_helper();return charge::enable_moisture();}
 Result charge_apply_preconfigured_cap() {charge_helper();return charge::apply_preconfigured_cap();}
 static void directory(const fs::path& path) {
     fs::create_directories(path);
