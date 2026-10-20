@@ -9,9 +9,11 @@
 #include <string_view>
 #include <unistd.h>
 #include "charge-notify.hpp"
+#include "desktop.hpp"
 static void help() {
     std::cout << "uke-control 0.1.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
+      "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  brunch stable|test|unstable  Switch Uke COPR and synchronize its packages (root)\n"
       "  brunch sync|status          Repair selected channel, or show selection\n"
       "  branch ...                  Alias for brunch; --dry-run and --yes supported\n"
@@ -56,6 +58,7 @@ int main(int argc,char** argv) {
         }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::desktop::status();return 0;}
         if(command=="brunch"||command=="branch"||command=="update") {
             execv("/usr/libexec/uke-control/packages",argv+1);
             throw std::runtime_error("The native package manager helper is missing");

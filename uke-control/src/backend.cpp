@@ -292,6 +292,7 @@ std::string report() {
       {"unit-overrides",{"/usr/bin/systemd-delta","--no-pager"}},
       {"packages",{"/usr/bin/rpm","-qa","--qf","%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n"}},
       {"battery-snapshot",{"/usr/bin/uke-battery"}},
+      {"desktop-interfaces",{"/usr/bin/uke-control","desktop","status"}},
       {"battery-control",{"/usr/libexec/uke-charge-control","status"}},
       {"battery-admission",{"/usr/libexec/uke-charge-control","admission"}},
       {"battery-protocols",{"/usr/libexec/uke-charge-control","protocols"}},

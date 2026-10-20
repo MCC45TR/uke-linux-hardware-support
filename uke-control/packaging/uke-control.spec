@@ -45,6 +45,7 @@ install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.s
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
 install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
 install -Dm644 src/front-color.hpp %{buildroot}%{_includedir}/uke-control/front-color.hpp
+install -Dm644 src/desktop.hpp %{buildroot}%{_includedir}/uke-control/desktop.hpp
 install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/tests
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
@@ -70,7 +71,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md
 %{_bindir}/uke-control
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages

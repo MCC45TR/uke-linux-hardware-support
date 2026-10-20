@@ -31,6 +31,7 @@ static void atomic_file(const fs::path& path,const std::string& value){std::ofst
 static Result execute(const std::vector<std::string>& args,unsigned) {
     if(args.size()==2&&args[0]=="/usr/bin/uname"&&args[1]=="-r")return {0,"7.2.11-fixture\n"};
     if(args[0]=="/usr/bin/uke-battery") {assert(args.size()==1);return {0,"private battery snapshot\n"};}
+    if(args[0]=="/usr/bin/uke-control") {assert((args==std::vector<std::string>{"/usr/bin/uke-control","desktop","status"}));return {0,"private desktop interfaces\n"};}
     if(args[0]=="/usr/libexec/uke-charge-control") {
         assert(args.size()==2 && (args[1]=="status" || args[1]=="admission" || args[1]=="protocols" || args[1]=="protection-status"));
         return {69,"private unavailable battery metadata\n"};
@@ -51,6 +52,7 @@ int main(int argc,char** argv) {
         auto receipt=read((output/"collection.log").string());
         assert(receipt.find("dmesg exit=3")!=std::string::npos);
         assert(read((output/"battery-snapshot.log").string())=="private battery snapshot\n");
+        assert(read((output/"desktop-interfaces.log").string())=="private desktop interfaces\n");
         for(auto name:{"battery-control","battery-admission","battery-protocols","battery-protection"}) {
             assert(read((output/(std::string(name)+".log")).string())=="private unavailable battery metadata\n");
             assert(receipt.find(std::string(name)+" exit=69")!=std::string::npos);
@@ -66,6 +68,7 @@ int main(int argc,char** argv) {
         assert(summary.find("fixture command")==std::string::npos);
         assert(summary.find("firmware cache unavailable")==std::string::npos);
         assert(summary.find("private battery")==std::string::npos);
+        assert(summary.find("private desktop")==std::string::npos);
         assert(summary.find("private unavailable battery")==std::string::npos);
     }
 }
