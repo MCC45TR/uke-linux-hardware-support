@@ -30,15 +30,19 @@ jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
 uke-hw)
-    make -C uke-boot profile-srpm outdir="$stage/profile" >"$stage/local.log"
-    profiles=("$stage/profile/"*.src.rpm); [[ ${#profiles[@]} == 1 ]]
-    printf '%s\t%s\n' uke-installation-profile "${profiles[0]}" >"$stage/inputs";;
-uke-core) make -C uke-control srpm outdir="$root/uke-control/build/srpm" >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+    make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
+    boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 ]]
+    printf '%s\t%s\n' uke-boot-integration "${boots[0]}" >"$stage/inputs";;
+uke-core)
+    make -C uke-control srpm outdir="$stage/control" >"$stage/local.log"
+    controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 ]]
+    printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
     printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.15-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
-    printf '%s\t%s\n' uke-battery-observer "$stage/battery/rpmbuild/SRPMS/uke-battery-observer-0.1.0-9$(rpm --eval '%{?dist}').src.rpm" >>"$stage/inputs";;
+    batteries=("$stage/battery/rpmbuild/SRPMS/"*.src.rpm); [[ ${#batteries[@]} == 1 ]]
+    printf '%s\t%s\n' uke-battery-observer "${batteries[0]}" >>"$stage/inputs";;
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
     printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;

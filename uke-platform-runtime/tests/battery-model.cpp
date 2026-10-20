@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     s.current_ua = -1000000; s.voltage_uv = 4000000; s.energy_uwh = 19000000;
     s.learned_full_uah = 8000000; s.design_full_uah = 8800000; s.soc = 50;
     assert(!retention(s, q));
-    q.current = q.energy = q.learned_capacity = q.capacity_basis = true; q.reserve_uwh = 1000000;
+    q.current = q.voltage = q.energy = q.learned_capacity = q.capacity_basis = true; q.reserve_uwh = 1000000;
     assert(std::fabs(*retention(s, q) - 90.9090909) < 0.001);
     s.design_full_uah = 0; assert(!retention(s, q)); s.design_full_uah = 8800000;
     q.learned_capacity = false; assert(!retention(s, q)); q.learned_capacity = true;

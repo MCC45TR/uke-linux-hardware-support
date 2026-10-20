@@ -4,9 +4,9 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.0.20",
+      "version": "1.0.21",
       "requires": [
-        "uke-control = 1.0.20-1%{?dist}"
+        "uke-control = 1.0.21-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -14,22 +14,23 @@
     },
     {
       "name": "uke-hw",
-      "version": "1.0.0",
+      "version": "1.1.1",
       "requires": [
-        "uke-boot-integration >= 1.0.22",
-        "uke-fastfetch-config",
-        "uke-installation-profile = 1.0.31-1%{?dist}"
+        "uke-boot-integration = 1.1.1-1%{?dist}",
+        "uke-installation-profile = 1.1.1-1%{?dist}",
+        "uke-kernel-update = 1.1.1-1%{?dist}",
+        "uke-fastfetch-config"
       ],
       "suggests": [
         "uke-bluetooth",
         "uke-touchscreen",
         "uke-wifi-factory"
       ],
-      "release": 2
+      "release": 1
     },
     {
       "name": "uke-power",
-      "version": "1.0.15",
+      "version": "1.0.16",
       "requires": [
         "uke-upower"
       ],
@@ -75,8 +76,10 @@
     },
     {
       "name": "uke-metas",
-      "version": "1.0.0",
-      "requires": [],
+      "version": "1.0.1",
+      "requires": [
+        "uke-core-meta >= 1.0.1"
+      ],
       "suggests": [
         "uke-core-meta",
         "uke-kde-plasma-meta"
@@ -116,19 +119,18 @@
     "libstdc++": "uke-libstdcxx"
   },
   "native_versions": {
-    "uke-control": "1.0.20",
+    "uke-control": "1.0.21",
     "uke-adaptive-display": "1.0.15",
-    "uke-boot-integration": "1.0.22",
+    "uke-boot-integration": "1.1.1",
     "uke-bluetooth": "1.0.6",
     "uke-touchscreen": "1.0.13",
     "uke-power-profile-backend": "1.0.4",
-    "uke-battery-observer": "1.0.9",
+    "uke-battery-observer": "1.0.14",
     "uke-front-color": "1.0.2",
-    "uke-installation-profile": "1.0.31"
+    "uke-installation-profile": "1.1.1"
   },
   "release_overrides": {
     "iio-sensor-proxy": "8.fc46",
-    "uke-boot-integration": "2.fc46",
     "uke-bluetooth": "2.fc46",
     "uke-touchscreen": "2.fc46"
   }

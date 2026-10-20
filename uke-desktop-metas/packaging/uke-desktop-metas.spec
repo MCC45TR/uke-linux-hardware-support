@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -14,11 +14,11 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-6
-Obsoletes: kde-plasma-uke-meta < 1.0.0-6
+Provides: kde-plasma-uke-meta = 1.0.0-7
+Obsoletes: kde-plasma-uke-meta < 1.0.0-7
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
-Requires: senemos-uke-linux-kernel-mainline >= 7.2.9-1.35
+Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
 # Keep this optional selection independent of the Python-free console meta.
 # BEGIN ORIGINAL FEDORA PLASMA PACKAGES
 Requires: PackageKit

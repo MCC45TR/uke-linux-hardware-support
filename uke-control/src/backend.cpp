@@ -46,6 +46,7 @@ static void charge_helper() {
 }
 Result charge_control_query(const std::string& operation) {charge_helper();return charge::control_query(operation);}
 Result charge_enable_preconfigured_cap() {charge_helper();return charge::enable_preconfigured_cap();}
+Result charge_enable_moisture() {charge_helper();return charge::enable_moisture();}
 Result charge_apply_preconfigured_cap() {charge_helper();return charge::apply_preconfigured_cap();}
 static void directory(const fs::path& path) {
     fs::create_directories(path);
@@ -300,6 +301,12 @@ std::string report() {
       {"boot-history",{"/usr/bin/journalctl","--list-boots","--no-pager"}},
       {"unit-overrides",{"/usr/bin/systemd-delta","--no-pager"}},
       {"packages",{"/usr/bin/rpm","-qa","--qf","%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n"}},
+      {"battery-snapshot",{"/usr/bin/uke-battery"}},
+      {"desktop-interfaces",{"/usr/bin/uke-control","desktop","status"}},
+      {"battery-control",{"/usr/libexec/uke-charge-control","status"}},
+      {"battery-admission",{"/usr/libexec/uke-charge-control","admission"}},
+      {"battery-protocols",{"/usr/libexec/uke-charge-control","protocols"}},
+      {"battery-protection",{"/usr/libexec/uke-charge-control","protection-status"}},
       {"mounts",{"/usr/bin/findmnt","--json"}},
       {"fstab-verify",{"/usr/bin/findmnt","--verify","--verbose"}},
       {"display",{"/usr/bin/modetest","-M","msm-kms","-c","-p"}}};
@@ -326,6 +333,7 @@ std::string report() {
     capture("partitions.json",[]{return inventory(false);});
     capture("device-status.log",[]{return status();});
     capture("firmware.json",[]{return firmware_status();});
+    capture("hardware.json",[]{return hardware_status();});
     atomic_file(path/"collection.log",receipt.str());
     auto kernel=execute({"/usr/bin/uname","-r"},5);
     std::string release=kernel.status==0?kernel.output:"unavailable\n";

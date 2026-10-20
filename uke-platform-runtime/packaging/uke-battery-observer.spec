@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
 Version: 0.1.0
-Release: 9%{?dist}
+Release: 13%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -25,6 +25,7 @@ component reports software tests and physical qualification separately.
 %package -n uke-charge-control
 Summary: Evidence-gated native Uke charge-control backend
 Requires: senemos-native-runtime(libstdc++) systemd-libs
+Requires: upower >= 1.91.5
 Requires(pre): systemd
 
 %description -n uke-charge-control
@@ -75,22 +76,26 @@ sha256sum -c SOURCE-SHA256SUMS
 %systemd_postun uke-battery.service
 
 %post -n uke-charge-control
-%systemd_post uke-charge-control.service uke-charge-automatic.service
+%systemd_post uke-charge-control.service uke-charge-automatic.service uke-charge-protection.service
 
 %preun -n uke-charge-control
-%systemd_preun uke-charge-control.service uke-charge-automatic.service
+%systemd_preun uke-charge-control.service uke-charge-automatic.service uke-charge-protection.service
 
 %postun -n uke-charge-control
-%systemd_postun uke-charge-control.service uke-charge-automatic.service
+%systemd_postun uke-charge-control.service uke-charge-automatic.service uke-charge-protection.service
 
 %files -n uke-charge-control
 %license LICENSE
 %doc docs/CHARGE-CONTROL.md
 %{_libexecdir}/uke-charge-control
+%{_datadir}/uke-battery/protection-readiness.json
 %{_unitdir}/uke-charge-control.service
 %{_unitdir}/uke-charge-automatic.service
+%{_unitdir}/uke-charge-protection.service
+%{_udevrulesdir}/80-uke-charge-protection.rules
 %{_presetdir}/91-uke-charge-control.preset
 %config(noreplace) %{_sysconfdir}/uke-battery/control-profile.json
+%config(noreplace) %{_sysconfdir}/UPower/UPower.conf.d/60-uke-battery-safety.conf
 
 %files -n uke-offline-charge
 %license LICENSE
@@ -101,7 +106,7 @@ sha256sum -c SOURCE-SHA256SUMS
 
 %files
 %license LICENSE
-%doc README.md docs/BATTERY.md docs/RUNTIME-PROFILE.md SOURCE-SHA256SUMS
+%doc README.md docs/BATTERY.md docs/RUNTIME-PROFILE.md docs/BATTERY-ENGINEERING.md SOURCE-SHA256SUMS
 %{_bindir}/uke-battery
 %{_unitdir}/uke-battery.service
 %{_presetdir}/90-uke-battery.preset
@@ -112,6 +117,24 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-13
+- Weight charge curves by elapsed time and reject discontinuous or stale forecasts.
+- Separate reviewed pack and cell arithmetic from raw reported terminal power.
+- Keep lifetime, topology and charge targets unavailable without qualified evidence.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
+- Log protection state and errors only when they change; preserve every transition.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
+- Preserve elapsed-power and offline net-charge fixes in the protection candidate.
+- Activate protection observation for a ready provider at root coldplug.
+- Keep power-key handling responsive during stalled offline telemetry.
+- Use the original UPower drop-in policy for critical-battery poweroff.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
+- Add fixed firmware moisture observation and qualified owned-input protection.
+- Require version-2 thermal leases and periodic-effect evidence; remain unqualified.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
 - Hide charger-screen time-to-full without valid positive battery power.
 
