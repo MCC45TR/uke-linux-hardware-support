@@ -1,5 +1,10 @@
 # Uke Control
 
+20 October 2026: [hardware path diagnostics](HARDWARE.md) separate configured
+audio/camera nodes, effective parent status, driver bindings and exported
+endpoints. `uke-control hardware status` performs no device open, firmware
+request, stream, probe or calibration. Missing endpoints remain explicit.
+
 20 October 2026: [desktop interface diagnostics](DESKTOP.md) inspect the existing
 UPower, power profiles, SensorProxy, logind and optional KDE consumer contracts.
 `uke-control desktop status` and `uke-control test desktop` perform no activation,

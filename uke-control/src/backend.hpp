@@ -22,6 +22,7 @@ Result charge_apply_preconfigured_cap();
 Result charge_control_mode(const std::string& mode);
 std::string usb_status();
 std::string firmware_status();
+std::string hardware_status();
 void usb_watch(unsigned seconds);
 Result usb_request_data(const std::string& role);
 Result cdc_set(bool enabled);

@@ -3,6 +3,7 @@
 #include <xf86drmMode.h>
 #include "display-device.hpp"
 #include "desktop.hpp"
+#include "hardware.hpp"
 #include <systemd/sd-bus.h>
 #include <algorithm>
 #include <array>
@@ -165,6 +166,7 @@ static void help() {
         "  touch /dev/input/eventN seconds  Require continuous accepted contact (1..300s)\n"
         "  sensors [seconds]          SensorProxy and processed IIO/hwmon readings\n"
         "  desktop                    Existing UPower, profiles, sensors, logind and KDE interfaces\n"
+        "  hardware                   Cached audio/media/input paths; no PCM or camera opens\n"
         "  discover [all|datatype]    Bounded existing SSC metadata helper\n"
         "  sample datatype           Bounded existing SSC sample helper\n"
         "  --self-test               Host checks; no device or bus access\n"
@@ -176,6 +178,7 @@ int main(int argc,char **argv) {
         if(argc==1||std::string_view(argv[1])=="--help"){help();return 0;}
         const std::string_view command=argv[1];
         if(command=="desktop"&&argc==2){std::cout<<uke::desktop::status();return 0;}
+        if(command=="hardware"&&argc==2){std::cout<<uke::hardware::snapshot("/");return 0;}
         if(command=="--self-test") {
             if(period(UINT32_MAX,1000000,0,2000000)!=1000000||period(1,100,1,200)!=0||period(1,200,2,100)!=0)throw std::runtime_error("Vblank delta refusal failed");
             bool refused=false;try{(void)number("-1");}catch(...){refused=true;}if(!refused)throw std::runtime_error("Argument refusal failed");

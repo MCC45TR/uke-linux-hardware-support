@@ -42,6 +42,7 @@ static std::string read(const std::string& path){std::ifstream f(path);std::ostr
 static std::string inventory(bool){if(bad_inventory)throw std::runtime_error("inventory unavailable");return "{}\n";}
 static std::string status(){if(bad_status)throw std::runtime_error("charge helper unavailable");return "fixture status\n";}
 static std::string firmware_status(){if(bad_firmware)throw std::runtime_error("firmware cache unavailable");return "{\"fixture\":true}\n";}
+static std::string hardware_status(){if(bad_firmware)throw std::runtime_error("hardware cache unavailable");return "{\"private_hardware\":true}\n";}
 #include "report.inc"
 int main(int argc,char** argv) {
     assert(argc==2);
@@ -57,7 +58,7 @@ int main(int argc,char** argv) {
             assert(read((output/(std::string(name)+".log")).string())=="private unavailable battery metadata\n");
             assert(receipt.find(std::string(name)+" exit=69")!=std::string::npos);
         }
-        for(const auto& [name,bad]:std::vector<std::pair<std::string,bool>>{{"partitions.json",bad_inventory},{"device-status.log",bad_status},{"firmware.json",bad_firmware}}) {
+        for(const auto& [name,bad]:std::vector<std::pair<std::string,bool>>{{"partitions.json",bad_inventory},{"device-status.log",bad_status},{"firmware.json",bad_firmware},{"hardware.json",bad_firmware}}) {
             assert(fs::exists(output/name)==!bad);
             assert(fs::exists(output/(name+".error"))==bad);
             assert(receipt.find(name+" exit="+(bad?"1":"0"))!=std::string::npos);
@@ -69,6 +70,8 @@ int main(int argc,char** argv) {
         assert(summary.find("firmware cache unavailable")==std::string::npos);
         assert(summary.find("private battery")==std::string::npos);
         assert(summary.find("private desktop")==std::string::npos);
+        assert(summary.find("private_hardware")==std::string::npos);
+        assert(summary.find("hardware cache unavailable")==std::string::npos);
         assert(summary.find("private unavailable battery")==std::string::npos);
     }
 }

@@ -14,6 +14,7 @@ static void help() {
     std::cout << "uke-control 0.1.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
+      "  hardware status             Cached audio/media/input paths; no device access\n"
       "  brunch stable|test|unstable  Switch Uke COPR and synchronize its packages (root)\n"
       "  brunch sync|status          Repair selected channel, or show selection\n"
       "  branch ...                  Alias for brunch; --dry-run and --yes supported\n"
@@ -76,6 +77,7 @@ int main(int argc,char** argv) {
         if(command=="--self-test"&&argc==2){uke::self_test();return 0;}
         if(command=="status"&&argc==2){std::cout<<uke::status();return 0;}
         if(command=="firmware"&&argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::firmware_status();return 0;}
+        if(command=="hardware"&&argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::hardware_status();return 0;}
         if(command=="boot"&&argc==2){uke::boot();return 0;}
         if(command=="inventory"&&(argc==2||(argc==3&&std::string_view(argv[2])=="--refresh"))){std::cout<<uke::inventory(argc==3);return 0;}
         if(command=="swap") {
