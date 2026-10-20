@@ -59,7 +59,8 @@
         "uke-platform-runtime/src",
         "uke-platform-runtime/packaging",
         "uke-platform-runtime/Makefile"
-      ]
+      ],
+      "release": 2
     },
     {
       "name": "uke-sensors",

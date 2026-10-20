@@ -92,6 +92,10 @@ while IFS=$'\t' read -r key input; do
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
+    if grep -En '(^|[[:space:]])%(cmake|cmake_build|cmake_install|meson|meson_build|meson_install)([[:space:]]|$)' "$part/expanded.spec"; then
+        printf 'Install the child recipe build macros before source generation: %s\n' "$key" >&2
+        exit 1
+    fi
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc46$ ]]
