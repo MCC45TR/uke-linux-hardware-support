@@ -20,9 +20,11 @@
 #include <ctime>
 #include <fcntl.h>
 #include <linux/magic.h>
+#include <linux/f2fs.h>
 #include <poll.h>
 #include <selinux/selinux.h>
 #include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
@@ -165,6 +167,16 @@ static bool own_file(const std::string& path) {
 static void trusted_swap(const std::string& path,uint64_t size) {
     struct stat st{};need(lstat(path.c_str(),&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1&&!(st.st_mode&0077)&&uint64_t(st.st_size)==size,"Untrusted or incorrectly sized managed swap file");
 }
+static void allocate_swap(int fd,uint64_t size,bool f2fs) {
+    if(f2fs) {
+        uint32_t pin=1;
+        need(ioctl(fd,F2FS_IOC_SET_PIN_FILE,&pin)>=0,"Cannot pin the new F2FS swap file");
+        need(fallocate(fd,0,0,static_cast<off_t>(size))==0,"Cannot preallocate the pinned F2FS swap file");
+    }
+    std::array<char,1024*1024> zeros{};uint64_t left=size;
+    while(left){size_t amount=std::min<uint64_t>(left,zeros.size());ssize_t n=write(fd,zeros.data(),amount);if(n<0&&errno==EINTR)continue;need(n>0,"Swap allocation failed");left-=uint64_t(n);}
+    need(fsync(fd)==0,"Swap allocation sync failed");
+}
 static void apply_locked(const std::string& selected) {
     board();
     const auto before=active();std::string target=partition();
@@ -172,7 +184,7 @@ static void apply_locked(const std::string& selected) {
     if(target.empty()) {
         directory(swaps);target=(swaps/("swap-"+std::to_string(size/MiB))).string();
         if(!fs::exists(target)) {
-            struct statfs filesystem{};need(statfs(swaps.c_str(),&filesystem)==0&&(filesystem.f_type==EXT4_SUPER_MAGIC||filesystem.f_type==XFS_SUPER_MAGIC),"Automatic swap-file creation currently supports ext4 and XFS only");
+            struct statfs filesystem{};need(statfs(swaps.c_str(),&filesystem)==0&&(filesystem.f_type==EXT4_SUPER_MAGIC||filesystem.f_type==XFS_SUPER_MAGIC||filesystem.f_type==F2FS_SUPER_MAGIC),"Automatic swap-file creation supports ext4, XFS and F2FS only");
             struct statvfs space{};need(statvfs(swaps.c_str(),&space)==0,"Cannot measure free storage");
             const uint64_t free=uint64_t(space.f_bavail)*space.f_frsize;
             need(free>size+std::max<uint64_t>(2*GiB,uint64_t(space.f_blocks)*space.f_frsize/10),"Insufficient free storage after reserve; existing swap remains active");
@@ -180,9 +192,7 @@ static void apply_locked(const std::string& selected) {
             Fd fd{open(temporary.c_str(),O_CREAT|O_EXCL|O_WRONLY|O_CLOEXEC|O_NOFOLLOW,0600)};
             need(fd.n>=0,"Interrupted allocation exists; inspect and remove only its inactive .allocating file");
             try {
-                std::array<char,1024*1024> zeros{};uint64_t left=size;
-                while(left){size_t amount=std::min<uint64_t>(left,zeros.size());ssize_t n=write(fd.n,zeros.data(),amount);if(n<0&&errno==EINTR)continue;need(n>0,"Swap allocation failed");left-=uint64_t(n);}
-                need(fsync(fd.n)==0,"Swap allocation sync failed");
+                allocate_swap(fd.n,size,filesystem.f_type==F2FS_SUPER_MAGIC);
                 checked({"/usr/bin/mkswap","--quiet",temporary});
                 if(is_selinux_enabled()>0)need(fsetfilecon(fd.n,"system_u:object_r:swapfile_t:s0")==0,"Cannot label swap file for SELinux");
                 need(rename(temporary.c_str(),target.c_str())==0,"Cannot commit allocated swap");
