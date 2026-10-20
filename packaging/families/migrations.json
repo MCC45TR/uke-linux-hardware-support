@@ -1,0 +1,4 @@
+[
+ {"family":"uke-sensors","old":"iio-sensor-proxy","new":"uke-iio-sensor-proxy","unit":"iio-sensor-proxy.service"},
+ {"family":"uke-power","old":"upower","new":"uke-upower","unit":"upower.service"}
+]

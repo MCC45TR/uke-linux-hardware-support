@@ -46,6 +46,7 @@ bool managed_repo(const std::string& id) {
 }
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
 bool protected_package(const Package& p) {
+    if(p.get_name().starts_with("uke-senemos-kernel-"))return true;
     if(kernel_package(p.get_name())||p.get_name()=="kernel"||p.get_name().starts_with("kernel-"))return true;
     for(const auto& dep:p.get_provides())if(std::string_view(dep.get_name())=="installonlypkg(kernel)")return true;
     return false;
@@ -208,26 +209,49 @@ void verify_repositories(const std::set<std::string>& ids,const std::string& sel
         if(id==prefix+project(selected))need(c.get_pkg_gpgcheck_option().get_value()&&c.get_sslverify_option().get_value(),"Repository admission policy changed");
     }
 }
-struct Plan {std::map<std::string,Package> targets;std::set<std::string> scope;bool fallback=false;std::string kernel_nevra,krel;};
+struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope;bool fallback=false;std::string kernel_nevra,krel;};
 Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids) {
     Plan p;const auto repo=prefix+project(selected);
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();
     libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(repo);
     std::map<std::string,std::vector<Package>> candidates;
     for(const auto& pkg:available)candidates[key(pkg)].push_back(pkg);
+    std::map<std::string,std::vector<Package>> replacements;
+    for(const auto& pkg:available)if(!protected_package(pkg)) {
+        std::set<std::string> provides;
+        for(const auto& dep:pkg.get_provides())provides.insert(dep.get_name());
+        for(const auto& dep:pkg.get_obsoletes()) {
+            const std::string name=dep.get_name();
+            if(name!=pkg.get_name()&&provides.contains(name))replacements[name].push_back(pkg);
+        }
+    }
     std::map<std::string,unsigned> counts;
     bool has_kernel=false;std::set<std::string> kernel_arches;
-    for(const auto& pkg:installed)if(kernel_package(pkg.get_name())&&pkg.get_name().ends_with("-core"))kernel_arches.insert(pkg.get_arch());
+    for(const auto& pkg:installed)if(pkg.get_name()==kernel+"-core")kernel_arches.insert(pkg.get_arch());
     for(const auto& pkg:installed) {
-        if(kernel_package(pkg.get_name())){has_kernel=true;continue;}
+        if(kernel_package(pkg.get_name())){if(pkg.get_name()==kernel||pkg.get_name()==kernel+"-core")has_kernel=true;continue;}
+        if(protected_package(pkg))continue;
         const auto k=key(pkg);
+        if(pkg.get_name()=="fastfetch") {
+            // The project fork is withdrawn; return only this package to Fedora.
+            libdnf5::rpm::PackageQuery fedora(base);fedora.filter_available();fedora.filter_repo_id("rawhide");fedora.filter_name("fastfetch");fedora.filter_arch(pkg.get_arch());
+            need(!fedora.empty(),"Original Fedora Rawhide Fastfetch is unavailable; keep the installed package until its signed replacement is available");
+            const auto target=*std::max_element(fedora.begin(),fedora.end(),older);
+            p.scope.insert(k);p.targets.insert_or_assign(k,target);continue;
+        }
+        std::vector<Package> renamed;
+        for(const auto& replacement:replacements[pkg.get_name()])
+            if(replacement.get_arch()==pkg.get_arch()||replacement.get_arch()=="noarch")renamed.push_back(replacement);
         const bool ours=ids.contains(pkg.get_from_repo_id())||managed_repo(pkg.get_from_repo_id())||pkg.get_name().starts_with("uke-")||pkg.get_name().starts_with("senemos-uke-");
-        if(!ours&&!candidates.contains(k))continue;
+        if(!ours&&!candidates.contains(k)&&renamed.empty())continue;
         p.scope.insert(k);need(++counts[k]==1,"Duplicate installed package requires repair: "+k);
-        need(candidates.contains(k),"Target channel has no replacement for "+k+"; nothing was removed");
-        const auto& list=candidates.at(k);
-        p.targets.insert_or_assign(k,*std::max_element(list.begin(),list.end(),older));
-        if(pkg.get_name()=="uke-control")need(channel_api(p.targets.at(k)),"Target uke-control lacks channel API 1; promote a compatible manager first so the return path remains available");
+        need(candidates.contains(k)||!renamed.empty(),"Target channel has no replacement for "+k+"; nothing was removed");
+        const auto& list=renamed.empty()?candidates.at(k):renamed;
+        const auto target=*std::max_element(list.begin(),list.end(),older);
+        for(const auto& candidate:renamed)need(candidate.get_name()==target.get_name(),"Ambiguous renamed replacement for "+k);
+        if(!renamed.empty())p.renames.emplace(pkg.get_nevra(),target.get_nevra());
+        p.scope.insert(key(target));p.targets.insert_or_assign(key(target),target);
+        if(pkg.get_name()=="uke-control")need(channel_api(target),"Target uke-control lacks channel API 1; promote a compatible manager first so the return path remains available");
     }
     if(has_kernel) {
         std::vector<Package> stable,rc;
@@ -266,7 +290,7 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     for(const auto& pkg:available) {
         const auto k=key(pkg);auto chosen=p.targets.find(k);
         if((kernel_package(pkg.get_name())&&(chosen==p.targets.end()||chosen->second.get_id()!=pkg.get_id()))||
-           (p.scope.contains(k)&&pkg.get_repo_id()!=prefix+project(selected)))excluded.add(pkg);
+           (p.scope.contains(k)&&pkg.get_repo_id()!=(chosen==p.targets.end()?prefix+project(selected):chosen->second.get_repo_id())))excluded.add(pkg);
     }
     base.get_rpm_package_sack()->add_user_excludes(excluded);
     for(const auto& [k,target]:p.targets) {
@@ -284,15 +308,25 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
         throw std::runtime_error("Channel dependency resolution failed:\n"+errors);
     }
     std::set<std::string> selected_inbound;
+    std::set<std::string> renamed_outbound;
     for(const auto& item:tx.get_transaction_packages()) {
         const auto pkg=item.get_package();const auto action=item.get_action();
         need(action!=Action::REMOVE,"Transaction would remove "+pkg.get_nevra()+"; refusing");
+        if(action==Action::REPLACED&&p.renames.contains(pkg.get_nevra())) {
+            renamed_outbound.insert(pkg.get_nevra());
+        }
         if(protected_package(pkg))need(!libdnf5::transaction::transaction_item_action_is_outbound(action)&&action!=Action::REINSTALL,"Transaction would replace a retained kernel: "+pkg.get_nevra());
         if(libdnf5::transaction::transaction_item_action_is_inbound(action)) {
-            if(p.scope.contains(key(pkg)))need(pkg.get_repo_id()==prefix+project(selected),"Solver selected a package outside the selected COPR: "+pkg.get_nevra());
+            if(p.scope.contains(key(pkg))) {
+                const auto chosen=p.targets.find(key(pkg));
+                const auto expected=chosen==p.targets.end()?prefix+project(selected):chosen->second.get_repo_id();
+                need(pkg.get_repo_id()==expected,"Solver selected a package outside its admitted repository: "+pkg.get_nevra());
+            }
             selected_inbound.insert(pkg.get_nevra());
         }
     }
+    for(const auto& [old,replacement]:p.renames)
+        need(renamed_outbound.contains(old)&&selected_inbound.contains(replacement),"Solver omitted the complete declared rename: "+old);
     for(const auto& [k,target]:p.targets) {
         bool same=false;for(const auto& old:installed)if(key(old)==k&&old.get_nevra()==target.get_nevra()&&(protected_package(old)||old.get_from_repo_id()==target.get_repo_id()))same=true;
         need(same||selected_inbound.contains(target.get_nevra()),"Solver omitted required replacement: "+target.get_nevra());

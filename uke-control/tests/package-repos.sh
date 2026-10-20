@@ -102,4 +102,45 @@ build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" tes
 kernel 7.4 test 7.4-fixture
 createrepo_c --quiet --update "$fixture/test"
 build/test-package-repos "$fixture/normal" "$fixture/stable" "$fixture/test" fallback
+build uke-old 1 test
+build uke-old 3 test
+build uke-renamed 2 stable $'Provides: uke-old = 2-1\nObsoletes: uke-old < 2-1\nConflicts: uke-old'
+createrepo_c --quiet --update "$fixture/stable"
+root renamecase
+rpm --root "$fixture/renamecase" -i "$fixture/test/uke-old-1-1.noarch.rpm"
+build/test-package-repos "$fixture/renamecase" "$fixture/stable" "$fixture/test" rename
+rpm --root "$fixture/renamecase" -q uke-renamed
+! rpm --root "$fixture/renamecase" -q uke-old
+root newerold
+rpm --root "$fixture/newerold" -i "$fixture/test/uke-old-3-1.noarch.rpm"
+build/test-package-repos "$fixture/newerold" "$fixture/stable" "$fixture/test" rename-upper-bound
+mkdir "$fixture/ambiguous" "$fixture/provides-only"
+cp "$fixture/stable/"*.rpm "$fixture/ambiguous/"
+cp "$fixture/stable/"*.rpm "$fixture/provides-only/"
+rm "$fixture/provides-only/uke-renamed-2-1.noarch.rpm"
+build uke-second 2 ambiguous $'Provides: uke-old = 2-1\nObsoletes: uke-old < 2-1'
+build uke-only-provides 2 provides-only 'Provides: uke-old = 2-1'
+for repo in ambiguous provides-only; do createrepo_c --quiet "$fixture/$repo"; done
+root ambiguouscase
+rpm --root "$fixture/ambiguouscase" -i "$fixture/test/uke-old-1-1.noarch.rpm"
+build/test-package-repos "$fixture/ambiguouscase" "$fixture/ambiguous" "$fixture/test" ambiguous-rename
+root providescase
+rpm --root "$fixture/providescase" -i "$fixture/test/uke-old-1-1.noarch.rpm"
+build/test-package-repos "$fixture/providescase" "$fixture/provides-only" "$fixture/test" provides-only
+mkdir "$fixture/fedora"
+build fastfetch 1 fedora
+build fastfetch 2 test
+createrepo_c --quiet "$fixture/fedora"
+root originalfastfetch
+rpm --root "$fixture/originalfastfetch" -i "$fixture/test/fastfetch-2-1.noarch.rpm"
+build/test-package-repos "$fixture/originalfastfetch" "$fixture/stable" "$fixture/test" missing-fedora-fastfetch
+build/test-package-repos "$fixture/originalfastfetch" "$fixture/stable" "$fixture/test" fedora-fastfetch
+rpm --root "$fixture/originalfastfetch" -q fastfetch | grep -Fx fastfetch-1-1.noarch
+build uke-senemos-kernel-mainline-kvm 7.2.9 test
+build senemos-uke-linux-kernel-mainline-kvm-core 7.2.11 test $'Provides: installonlypkg(kernel)\nProvides: kernel-uname-r(7.2.11-kvm-fixture)'
+mkdir "$fixture/kvmonly"
+rpm --root "$fixture/kvmonly" --initdb
+rpmkeys --root "$fixture/kvmonly" --import "$fixture/key.asc"
+rpm --root "$fixture/kvmonly" -i "$fixture/test/uke-senemos-kernel-mainline-kvm-7.2.9-1.noarch.rpm" "$fixture/test/senemos-uke-linux-kernel-mainline-kvm-core-7.2.11-1.noarch.rpm"
+build/test-package-repos "$fixture/kvmonly" "$fixture/stable" "$fixture/test" isolated-kvm
 printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, RC fallback/selection, update, missing-package refusal, shared-module refusal and unsigned rejection'

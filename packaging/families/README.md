@@ -1,0 +1,89 @@
+# COPR source families
+
+20 October 2026. Fedora Rawhide AArch64. This directory owns the Uke source
+package map. COPR lists source packages in a flat list; it has no nested package
+folders. Each family is one source RPM producing separately installable child
+RPMs. Installing a metadata parent starts no process by itself.
+
+| Source family | Child responsibilities |
+|---|---|
+| uke-core | uke-control and optional development diagnostics |
+| uke-hw | boot/USB/Wi-Fi integration, existing Bluetooth factory-address oneshot, native touchscreen |
+| uke-power | original UPower with reviewed corrections, battery observation/control gates, PPD backend, adaptive display |
+| uke-sensors | SSC library, standard SensorProxy with SSC, bounded file service and opt-in front color |
+| uke-additional | reviewed native runtime libraries and Mesa; original upstream versions retained |
+| uke-extras | optional uke-plymonth theme and recovery images delivered as data |
+| uke-metas | separate strict console and original Fedora Plasma selections |
+| uke-camera | optional original Fedora camera application selection; internal camera graph unqualified |
+| uke-sound | original Fedora ALSA/PipeWire/WirePlumber selection; internal playback/capture unqualified |
+
+The three kernel source names remain `senemos-uke-linux-kernel-mainline`,
+`senemos-uke-linux-kernel-mainline-singleboot` and
+`senemos-uke-linux-kernel-mainline-kvm`. `material-decoration` is an explicit
+non-device-specific exception. Private firmware remains a separately admitted
+local data RPM; proprietary bytes are not imported into these public sources.
+
+Project application versions follow `MAJOR.MINOR.PATCH`: increment MAJOR for a
+critical architectural or compatibility change, MINOR for a feature and PATCH
+for a correction. Reset lower fields after a higher-field increment. A
+packaging-only rebuild increments RPM Release. Upstream libraries, kernels and
+third-party applications retain their actual upstream versions. Requested
+application identities are `uke-control 1.0.19-1`,
+`uke-adaptive-display 1.0.14-1` and `uke-plymonth 1.0.2-1`; the latter is the
+requested package spelling, while the original Plymouth theme file paths stay
+compatible. Do not add Epoch to outrank another repository.
+
+The family composer retains complete exact-pinned source RPM inputs, original
+specifications, archives, patches and licensing. It expands the reviewed RPM
+recipes for the native target and combines their build/check phases in isolated
+source directories. Binary RPMs are built from source, never copied from an
+old binary package. Source input hashes and build IDs are in
+`source-inputs.json`; component source changes require an explicit input refresh
+and package revision review. Local Control, adaptive display, battery and meta
+sources come from their current owning component recipes. The existing input
+boot-22 keeps the frozen userdata image ABI intact.
+
+The source family Release defaults to 1; set its `release` field when packaging
+changes require a rebuild. Control's family version and Release must match its
+owning spec; CI refuses a mismatch. Native child recipes keep their Release
+once their source Version matches the declared native Version. Refresh exact
+dependency pins deliberately: the Mesa LLVM build pin is 23.1.3-1.fc46 because
+23.1.2-1.fc46 is absent from Rawhide AArch64. The original recipe is retained.
+
+Renamed child RPMs carry versioned Provides (including ISA where appropriate)
+and bounded Obsoletes for their previous names. New project names begin `uke-`;
+standard executable paths, library SONAMEs, D-Bus names, units and pkg-config
+interfaces remain upstream-compatible. Development packages retain exact
+runtime dependencies. Meta selections do not force optional diagnostics,
+recovery images, physical camera/audio controls or private calibration packages.
+The Plasma selection stays independent of the Python-free console selection.
+
+Service renaming preserves admitted system-unit state through RPM scriptlets;
+a masked or disabled path is not newly enabled. SensorProxy's policy is restored
+after the old package's removal scriptlet. Failed restoration retains its
+private state for inspection. This is packaging logic, not physical lifecycle
+qualification. The Bluetooth helper performs a device-specific factory address
+handoff via the standard management API and exits; removing its package would
+not remove a persistent extra Bluetooth daemon. UART, pinctrl, regulators and
+protocols continue to belong to the kernel/DT and original BlueZ.
+
+The Fastfetch fork is withdrawn. The normal Fedora `fastfetch` dependency is
+retained. Control's signed native solver returns that one package explicitly
+to `rawhide`, including a necessary downgrade; other project packages still
+come from the selected Uke channel. Missing original replacements refuse the
+transaction. Hardware identity fixes belong in the real kernel/DT and existing
+system integration. Do not manufacture SMBIOS data or probe legacy PC memory
+ranges on ARM to satisfy a display field. Full root all-module captures remain
+unqualified until the original distribution program safely handles that case.
+
+Build a source family with `make -C packaging/families srpm FAMILY=uke-core`.
+Run `make -C packaging/families check` and the original component/native solver
+checks. Before changing COPR, validate every generated package name, dependency,
+scriptlet, source hash, signature and rollback artifact. A COPR package deletion
+also deletes its builds: never use it merely to hide a dashboard row. Preserve
+referenced historical builds and test the new dependency closure before a
+source-definition cutover. Stable promotion remains distinct from test builds.
+
+Primary contracts: [RPM spec format](https://rpm.org/docs/6.0.x/manual/spec.html),
+[DNF5 native transaction API](https://dnf5.readthedocs.io/en/latest/tutorial/transaction.html)
+and [COPR source methods](https://docs.copr.fedorainfracloud.org/user_documentation.html#build-source-types).

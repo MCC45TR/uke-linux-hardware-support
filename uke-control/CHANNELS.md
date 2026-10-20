@@ -54,6 +54,20 @@ the transition is refused before changes. Promote a compatible manager into
 the destination first. Downgrading to a manager without these commands would
 remove the return path even if the RPM transaction itself succeeded.
 
+20 October 2026: renamed child packages are accepted only through paired
+Provides/Obsoletes in the selected signed repository. Different replacement
+names are ambiguous and fail. The solver must replace the old package and
+install the declared new package together; a virtual Provide alone is
+insufficient. Kernel packages, including the old KVM namespace, remain retained.
+The normal-kernel selector does not infer a normal kernel from an isolated KVM
+core. Source families and child names are defined in
+[`packaging/families`](../packaging/families/README.md).
+
+The withdrawn Fastfetch fork is a deliberate exception: the exact replacement
+must come from Fedora's `rawhide` repository, including a necessary downgrade.
+No other project package is handed to an arbitrary outside repository. If the
+original replacement is unavailable, the whole transaction is refused.
+
 `sync` repairs the saved selection; without a saved selection the default is
 stable. `update` performs the same synchronization and upgrades the other
 distribution packages in the same dependency transaction. Dependency failures,

@@ -24,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0
       - run: make validate && make test-native
+      - run: make -C packaging/families check
       - name: Exercise signed repositories and the private sensor bus
         run: dnf5 -y install dbus-daemon && make -C uke-control check-repositories check-sensor-proxy check-copr-trigger
       - name: Request a changed Uke Control release after validation

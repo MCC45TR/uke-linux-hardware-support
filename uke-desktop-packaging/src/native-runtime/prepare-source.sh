@@ -40,7 +40,7 @@ if [[ $name == mesa ]]; then
         /^BuildRequires:.*python3-mako/ { print "BuildRequires: python3-mako = 1.4.1-2.fc46"; next }
         /^BuildRequires:.*python3-pycparser/ { print "BuildRequires: python3-pycparser = 3.00-4.fc45"; next }
         /^BuildRequires:.*python3-pyyaml/ { print "BuildRequires: python3-pyyaml = 6.0.3-6.fc45"; next }
-        /^BuildRequires:.*llvm-devel/ { print "BuildRequires: llvm-devel = 23.1.2-1.fc46"; next }
+        /^BuildRequires:.*llvm-devel/ { print "BuildRequires: llvm-devel = 23.1.3-1.fc46"; next }
         /^%files filesystem/ {
             print "# No build tool or Python payload may reach a binary subpackage."
             print "if find %{buildroot} -type f \\( -name \"*.py\" -o -name \"*.pyc\" -o -name \"*.pyo\" -o -name \"python[0-9]*\" \\) -print | grep .; then exit 1; fi"

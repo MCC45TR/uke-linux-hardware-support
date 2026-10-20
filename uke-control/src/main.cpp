@@ -9,7 +9,7 @@
 #include <string_view>
 #include <unistd.h>
 static void help() {
-    std::cout << "uke-control 0.1.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.0.19 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  brunch stable|test|unstable  Switch Uke COPR and synchronize its packages (root)\n"
       "  brunch sync|status          Repair selected channel, or show selection\n"

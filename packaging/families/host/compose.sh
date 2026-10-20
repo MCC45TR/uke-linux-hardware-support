@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# Compose complete source recipes into a source family; no binary repackaging.
+set -Eeuo pipefail
+root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
+cd "$root"
+family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
+[[ $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
+[[ $target == aarch64 || $target == x86_64 ]]
+profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' packaging/families/families.json)
+version=$(jq -er .version <<<"$profile")
+release=$(jq -er '.release // 1' <<<"$profile")
+[[ $release =~ ^[1-9][0-9]*$ ]]
+output=$(realpath -m "${2:-packaging/families/build/$family}")
+stage=$(mktemp -d)
+trap 'rm -rf -- "$stage"' EXIT
+bundle="$stage/$family-$version"
+mkdir -p "$bundle/inputs" "$stage/parts" "$output"/{SOURCES,SPECS,SRPMS}
+printf '%s\n' '20 October 2026. Source-family packaging; device acceptance remains separate.' >"$bundle/README"
+cp packaging/families/{families.json,source-inputs.json} "$bundle/"
+cp LICENSE "$bundle/LICENSE"
+cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
+jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
+# Local native sources are produced by the existing owning-component recipes.
+case $family in
+uke-core) make -C uke-control srpm >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.19-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-power)
+    make -C uke-desktop-integration srpm >"$stage/local.log"
+    make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
+    printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.14-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
+    printf '%s\t%s\n' uke-battery-observer "$stage/battery/rpmbuild/SRPMS/uke-battery-observer-0.1.0-9$(rpm --eval '%{?dist}').src.rpm" >>"$stage/inputs";;
+uke-extras)
+    make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke >"$stage/local.log"
+    printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-metas)
+    for component in uke-core-meta uke-desktop-metas; do
+        make -C "$component" srpm outdir="$stage/$component" >"$stage/local.log"
+        files=("$stage/$component/"*.src.rpm); [[ ${#files[@]} == 1 ]]
+        printf '%s\t%s\n' "$component" "${files[0]}" >>"$stage/inputs"
+    done;;
+esac
+touch "$stage/inputs"
+while IFS=$'\t' read -r key url hash; do
+    input="$root/packaging/families/referances/inputs/$key.src.rpm"
+    mkdir -p "$(dirname "$input")"
+    if [[ ! -s $input ]]; then
+        [[ $url == https://download.copr.fedorainfracloud.org/results/mcc45tr/* ]]
+        curl --fail --silent --show-error --proto '=https' --max-time 240 "$url" -o "$input.part"
+        mv "$input.part" "$input"
+    fi
+    printf '%s  %s\n' "$hash" "$input" | sha256sum -c - >&2
+    printf '%s\t%s\n' "$key" "$input" >>"$stage/inputs"
+done < <(jq -r --arg family "$family" 'map(select(.family==$family))|sort_by(if .name=="libssc" then 0 else 1 end)[]|[.name,.url,.sha256]|@tsv' packaging/families/source-inputs.json)
+while IFS=$'\t' read -r key input; do
+    [[ $key =~ ^[a-zA-Z0-9+_.-]+$ ]]
+    source="$bundle/inputs/$key"; part="$stage/parts/$key"
+    mkdir -p "$source" "$part"
+    rpm2cpio "$input" >"$part/source.cpio"
+    cpio -t --quiet <"$part/source.cpio" >"$part/source-files"
+    awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}' "$part/source-files"
+    (cd "$source"; cpio -idm --quiet --no-absolute-filenames <"$part/source.cpio")
+    specs=("$source/"*.spec); [[ ${#specs[@]} == 1 ]]
+    # The original LLVM pin disappeared from Rawhide; preserve the input spec.
+    if [[ $key == mesa ]]; then
+        cp "${specs[0]}" "$source/mesa.spec.original"
+        sed -i 's/^BuildRequires: llvm-devel = 23\.1\.2-1\.fc46$/BuildRequires: llvm-devel = 23.1.3-1.fc46/' "${specs[0]}"
+        grep -Fx 'BuildRequires: llvm-devel = 23.1.3-1.fc46' "${specs[0]}" >/dev/null
+    fi
+    awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
+    rpmspec --parse --target "$target" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
+    native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
+    awk -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
+done <"$stage/inputs"
+spec="$output/SPECS/$family.spec"
+{
+    printf '%%global debug_package %%{nil}\nName: %s\nVersion: %s\nRelease: %s%%{?dist}\nSummary: Uke %s package selection and source family\nLicense: MIT\nURL: https://github.com/MCC45TR/uke-linux-hardware-support\nSource0: %s-%s.tar.xz\nExclusiveArch: %s\n' "$family" "$version" "$release" "${family#uke-}" "$family" "$version" "$target"
+    printf 'SourceLicense: MIT'
+    for part in "$stage/parts/"*; do [[ ! -f $part/preamble ]] || awk '/^License:/{sub(/^License:[[:space:]]*/, "");print}' "$part/preamble"; done | LC_ALL=C sort -u | while IFS= read -r license; do printf ' AND (%s)' "$license"; done
+    printf '\n'
+    jq -r '.requires[]|"Requires: "+.' <<<"$profile"
+    jq -r '.suggests[]|"Suggests: "+.' <<<"$profile"
+    for part in "$stage/parts/"*; do [[ ! -f $part/buildrequires ]] || cat "$part/buildrequires"; done | LC_ALL=C sort -u | if [[ $family == uke-sensors ]]; then sed '/^BuildRequires: libssc-devel /d;s/pkgconfig(libssc)//g'; else cat; fi
+    printf '\n%%description\nLogical installation selection. Child RPMs remain separately installable.\nThis package adds no process and does not enable hardware or prove support.\n'
+    for part in "$stage/parts/"*; do
+        [[ -f $part/preamble ]] || continue
+        awk '
+          /^%description -n uke-(iio-sensor-proxy|upower)$/ {
+            print "Requires(pre): rpm systemd coreutils sed"
+            print "Requires(posttrans): systemd coreutils sed"
+            if($3=="uke-iio-sensor-proxy")print "Requires(posttrans): /usr/bin/semodule /usr/bin/selinuxenabled"
+          }
+          {print}
+        ' "$part/preamble"
+    done
+    printf '\n%%prep\n%%setup -q\n'
+    for phase in prep generate_buildrequires build install check; do
+        if [[ $phase == generate_buildrequires ]] && ! find "$stage/parts" -name generate_buildrequires -print -quit | grep -q .; then continue; fi
+        [[ $phase == prep ]] || printf '\n%%%s\n' "$phase"
+        if [[ $family == uke-sensors ]]; then
+            printf 'export PKG_CONFIG_PATH="%%{_builddir}/%s-%s/work/libssc/libssc/build/meson-uninstalled${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"\nexport LD_LIBRARY_PATH="%%{_builddir}/%s-%s/work/libssc/libssc/build/src${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n' "$family" "$version" "$family" "$version"
+        fi
+        # Manifest order is build order, including libssc before SensorProxy.
+        while IFS=$'\t' read -r key input; do
+            part="$stage/parts/$key"; [[ -s $part/$phase ]] || continue
+            IFS=$'\t' read -r old oldversion oldrelease cwd builddir buildroot <"$part/identity"
+            base="%{_builddir}/$family-$version"
+            printf '(\n'
+            if [[ $phase == prep ]]; then
+                printf 'mkdir -p "%s/work/%s"\n' "$base" "$key"
+            else
+                printf 'cd "%s/work/%s/%s"\n' "$base" "$key" "$cwd"
+            fi
+            # Fully expanded recipes retain literal percents; only paths are late-bound.
+            awk -v base="$base" -v key="$key" -v source="$bundle/inputs/$key" -v builddir="$builddir" -v buildroot="$buildroot" '
+              function replace(s,old,new, p,r){r="";while((p=index(s,old))){r=r substr(s,1,p-1) new;s=substr(s,p+length(old))}return r s}
+              {gsub(/%/,"%%");s=replace($0,buildroot,"%{buildroot}");s=replace(s,builddir,base "/work/" key);s=replace(s,source,base "/inputs/" key);print s}
+            ' "$part/$phase"
+            printf ')\n'
+        done <"$stage/inputs"
+    done
+    printf '\n%%files\n%%license LICENSE\n%%doc README\n'
+    while IFS=$'\t' read -r key input; do
+        part="$stage/parts/$key"; [[ -f $part/tail ]] || continue
+        IFS=$'\t' read -r old oldversion oldrelease cwd builddir buildroot <"$part/identity"
+        awk -v prefix="work/$key/$cwd/" -v base="%{_builddir}/$family-$version" -v key="$key" -v source="$bundle/inputs/$key" '
+          function replace(s,old,new, p,r){r="";while((p=index(s,old))){r=r substr(s,1,p-1) new;s=substr(s,p+length(old))}return r s}
+          /^%files/ {files=1;for(i=2;i<=NF;i++)if($i=="-f")$(i+1)=prefix $(i+1); print;next}
+          /^%/ && !/^%(license|doc|dir|ghost|config|attr|defattr|exclude|verify|caps)/ {files=0;print;next}
+          files && /^%(license|doc) / {for(i=2;i<=NF;i++)if($i!~/^\//)$i=prefix $i;print;next}
+          files && /^%config / {sub(/^%config /,"%config(noreplace) ");print;next}
+          {if(!files)gsub(/%/,"%%");print replace($0,source,base "/inputs/" key)}
+        ' "$part/tail"
+    done <"$stage/inputs"
+    while IFS=$'\t' read -r old new unit; do
+        printf '\n%%pre -n %s\n' "$new"
+        printf 'old=%s; new=%s; unit=%s; phase=save\n' "$old" "$new" "$unit"
+        sed 's/%/%%/g' packaging/families/host/service-rename.sh
+        printf '\n%%posttrans -n %s\n' "$new"
+        printf 'old=%s; new=%s; unit=%s; phase=restore\n' "$old" "$new" "$unit"
+        sed 's/%/%%/g' packaging/families/host/service-rename.sh
+    done < <(jq -r --arg family "$family" '.[]|select(.family==$family)|[.old,.new,.unit]|@tsv' packaging/families/migrations.json)
+    printf '\n%%changelog\n* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %s-%s\n- Build reviewed child recipes under one source family without binary repackaging.\n' "$version" "$release"
+} >"$spec"
+# The archive contains complete upstream sources, patches, licenses and original specs.
+(cd "$bundle"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum >SOURCE-SHA256SUMS)
+tar --sort=name --mtime='2026-10-20 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$output/SOURCES/$family-$version.tar.xz" -C "$stage" "$family-$version"
+rpmspec --parse --target "$target" "$spec" >"$output/parsed.spec"
+rpmbuild -bs --nodeps --target "$target" --define "_topdir $output" "$spec"
