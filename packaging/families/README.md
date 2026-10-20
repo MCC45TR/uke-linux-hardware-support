@@ -106,7 +106,11 @@ memory module. Platform and advertised panel text are explicitly profile
 metadata. Per-user configuration still overrides the system default. This is a
 small data RPM with no helper or resident process, not a Fastfetch fork.
 
-Build a source family with `make -C packaging/families srpm FAMILY=uke-core`.
+On Rawhide AArch64, build a source family with
+`make -C packaging/families srpm FAMILY=uke-core`. The source-generation host
+must match the target: RPM's `--target` does not retarget every build/host
+triplet in an expanded recipe. The normal COPR source worker is AArch64.
+Use `TARGET_ARCH=x86_64` only for isolated x86_64 host fixtures.
 Run `make -C packaging/families check` and the original component/native solver
 checks. Before changing COPR, validate every generated package name, dependency,
 scriptlet, source hash, signature and rollback artifact. A COPR package deletion
