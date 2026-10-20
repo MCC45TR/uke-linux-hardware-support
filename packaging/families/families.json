@@ -41,12 +41,12 @@
     },
     {
       "name": "uke-power",
-      "version": "1.0.15",
+      "version": "1.1.0",
       "requires": [
         "uke-upower"
       ],
       "suggests": [
-        "uke-adaptive-display = 1.0.15-1%{?dist}",
+        "uke-adaptive-display = 1.0.15-2%{?dist}",
         "uke-power-profile-backend",
         "uke-battery-observer",
         "uke-charge-control"
@@ -58,7 +58,8 @@
         "uke-platform-runtime/src",
         "uke-platform-runtime/packaging",
         "uke-platform-runtime/Makefile"
-      ]
+      ],
+      "release": 1
     },
     {
       "name": "uke-sensors",
@@ -163,7 +164,7 @@
     "uke-bluetooth": "1.0.6",
     "uke-touchscreen": "1.0.13",
     "uke-power-profile-backend": "1.0.4",
-    "uke-battery-observer": "1.0.9",
+    "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
     "uke-installation-profile": "1.0.31"
   },
@@ -173,6 +174,9 @@
     "uke-bluetooth": "2.fc46",
     "uke-touchscreen": "2.fc46",
     "uke-plymonth": "2.fc46",
-    "uke-orangefox-recovery": "3.fc46"
+    "uke-orangefox-recovery": "3.fc46",
+    "upower": "4.fc46",
+    "uke-power-profile-backend": "2.fc46",
+    "uke-adaptive-display": "2.fc46"
   }
 }
