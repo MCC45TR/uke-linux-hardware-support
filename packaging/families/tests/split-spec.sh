@@ -11,6 +11,7 @@ Version: $version
 Release: 2.fc46
 Summary: Fixture
 License: MIT
+Provides: iio-sensor-proxy(ssc) = 1
 %description
 Fixture.
 %build
@@ -23,6 +24,13 @@ SPEC
 done
 grep -Fx 'Release: 2.fc46' "$stage/1.0.19/preamble"
 grep -Fx 'Release: 1.fc46' "$stage/0.1.0/preamble"
+grep -Fx 'Provides: iio-sensor-proxy(ssc) = 1' "$stage/0.1.0/preamble"
+mkdir "$stage/api"
+sed 's/^Name: uke-control$/Name: iio-sensor-proxy/; /Provides: iio-sensor-proxy(ssc)/aRequires: iio-sensor-proxy(ssc) >= 1' "$stage/input" > "$stage/api-input"
+awk -v out="$stage/api" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/api-input"
+grep -Fx '%package -n uke-iio-sensor-proxy' "$stage/api/preamble"
+grep -Fx 'Provides: iio-sensor-proxy(ssc) = 1' "$stage/api/preamble"
+grep -Fx 'Requires: iio-sensor-proxy(ssc) >= 1' "$stage/api/preamble"
 mkdir "$stage/material"
 printf 'material-decoration\tmaterial-decoration\n' >"$stage/rename"
 sed 's/Name: uke-control/Name: material-decoration/' "$stage/input" >"$stage/material-input"

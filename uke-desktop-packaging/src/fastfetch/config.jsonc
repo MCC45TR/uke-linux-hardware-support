@@ -1,14 +1,44 @@
 {
-  "logo": { "type": "builtin", "source": "fedora" },
+  "logo": {
+    "type": "builtin",
+    "source": "fedora"
+  },
   "modules": [
-    "title", "separator", "os",
-    { "type": "custom", "key": "Platform", "format": "Uke (SM7675)" },
-    "kernel", "uptime", "packages", "shell",
-    { "type": "display", "format": "{width}x{height}{?refresh-rate} @ {refresh-rate} Hz{?} [{type}]{?bit-depth}, {bit-depth} bpc{?}{?hdr-enabled}, HDR{?}{?is-primary} *{?}" },
-    { "type": "custom", "key": "Panel (specification)", "format": "11.2-inch (advertised)" },
+    "title",
+    "separator",
+    "os",
+    {
+      "type": "custom",
+      "key": "Platform",
+      "format": "Uke (SM7675)"
+    },
+    "kernel",
+    "uptime",
+    "packages",
+    "shell",
+    {
+      "type": "display",
+      "format": "{width}x{height}{?refresh-rate} @ {refresh-rate} Hz{?} [{type}]{?bit-depth}, {bit-depth} bpc{?}{?hdr-enabled}, HDR{?}{?is-primary} *{?}"
+    },
+    {
+      "type": "custom",
+      "key": "Panel (specification)",
+      "format": "11.2-inch (advertised)"
+    },
     "terminal",
-    { "type": "cpu", "format": "{vendor} {name} ({cores-online} cores) @ {freq-max}" },
-    "gpu", "memory", "swap", { "type": "disk", "folders": "/" },
-    "break", "colors"
+    {
+      "type": "cpu",
+      "format": "{vendor} {name} ({cores-online} cores) @ {freq-max}"
+    },
+    "gpu",
+    "memory",
+    "swap",
+    "physicaldisk",
+    {
+      "type": "disk",
+      "folders": "/"
+    },
+    "break",
+    "colors"
   ]
 }

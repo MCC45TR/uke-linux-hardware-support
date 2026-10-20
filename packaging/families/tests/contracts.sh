@@ -18,7 +18,7 @@ for name in uke-core uke-hw uke-power uke-sensors uke-extras uke-additional uke-
 done
 [[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
 jq -e '(.modules[]|select(type=="object" and .type=="cpu")|.format)=="{vendor} {name} ({cores-online} cores) @ {freq-max}" and all(.modules[]; if type=="string" then (test("^(bios|board|host|physicalmemory|command)$")|not) else (.type|test("^(bios|board|host|physicalmemory|command)$")|not) end)' uke-desktop-packaging/src/fastfetch/config.jsonc >/dev/null
-grep -Fx 'Version: 1.0.20' uke-control/packaging/uke-control.spec
+grep -Fx "Version: $(jq -r '.native_versions["uke-control"]' packaging/families/families.json)" uke-control/packaging/uke-control.spec
 grep -Fx 'Version: 1.0.15' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then

@@ -45,7 +45,7 @@ static void terminate_during_write(int fd,const Bytes &data) {
 int main() {
     char dir[]="/tmp/uke-kernel-update.XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
     assert(root_label("console=tty0 root=PARTLABEL=linux rw")=="linux");
-    reject([]{root_label("root=PARTLABEL=userdata rw");});reject([]{root_label("root=UUID=123");});
+    assert(root_label("root=PARTLABEL=userdata rw")=="userdata");reject([]{root_label("root=UUID=123");});
     reject([]{root_label("root=PARTLABEL=linux root=PARTLABEL=linux");});
     assert(uke_device(std::string("xiaomi,uke\0qcom,sm7675\0",24)));
     reject([]{properties("format=1\nformat=1\n");});reject([]{properties("format=\n");});
@@ -68,6 +68,8 @@ int main() {
     text(root/"virtual/sdc1/partition","1\n");text(root/"virtual/sdc1/uevent","PARTNAME=linux\n");text(root/"virtual/sdc1/dev","8:33\n");
     fs::create_directory_symlink(root/"virtual/sdc1",root/"sys/sdc1");reject([&]{partition("linux",root/"sys");});
     root_mount(makedev(8,1),"1 2 8:1 / / rw - ext4 /dev/sda1 rw\n");
+    root_mount(makedev(8,1),"1 2 8:1 / / rw,noatime - f2fs /dev/sda1 rw\n","userdata");
+    reject([]{root_mount(makedev(8,1),"1 2 8:1 / / ro - f2fs /dev/sda1 ro\n","userdata");});
     reject([]{root_mount(makedev(8,1),"1 2 8:1 /subdir / rw - ext4 /dev/sda1 rw\n");});
     reject([]{root_mount(makedev(8,1),"1 2 8:2 / / rw - ext4 /dev/sda2 rw\n");});
     const auto bundle=root/"bundle",modules=root/"modules";fs::create_directories(bundle);
@@ -76,18 +78,20 @@ int main() {
     const auto module=modules/release/"kernel/test.ko.zst",dtb=modules/release/"dtb/qcom/sm7675-xiaomi-uke.dtb";
     text(module,"synthetic module");text(dtb,"synthetic dtb");
     const auto inventory=digest(file(module))+"  kernel/test.ko.zst\n";text(bundle/"modules.sha256",inventory);
-    const auto lp=synthetic_boot(release,"linux"),up=synthetic_boot(release,"userdata");
+    const auto lp=synthetic_boot(release,"linux");auto up=lp;
+    constexpr char userdata_selector[]="senemos.root=userdata";
+    memcpy(up.data()+44,userdata_selector,sizeof(userdata_selector)-1);
     save_new(bundle/"linux.img",lp);save_new(bundle/"userdata.img",up);save_new(modules/release/"vmlinuz",boot_kernel(lp));
     const auto manifest="format=1\nkernel_release="+release+"\nlinux_image_sha256="+digest(lp)+"\nuserdata_image_sha256="+digest(up)+
         "\nlinux_kernel_sha256="+digest(boot_kernel(lp))+"\nuserdata_kernel_sha256="+digest(boot_kernel(up))+"\nmodules_sha256="+digest(file(bundle/"modules.sha256"))+"\n";
     text(bundle/"manifest",manifest);
-    record_package("-boot",{bundle/"manifest",bundle/"modules.sha256",bundle/"linux.img"});
+    record_package("-boot",{bundle/"manifest",bundle/"modules.sha256",bundle/"linux.img",bundle/"userdata.img"});
     record_package("-core",{modules/release/"vmlinuz"});record_package("-modules",{module});record_package("-dtbs",{dtb});
     const auto core_package=package(owners.at((modules/release/"vmlinuz").string()),"senemos-uke-linux-kernel-mainline-core");
     rollback_modules(core_package,fake_rollback_rpm);attempts=1;reject([&]{rollback_modules(core_package,fake_rollback_rpm);});attempts=0;
     assert(validate_bundle(bundle,modules,"linux",running,fake_rpm)==lp);
     assert(validate_bundle(bundle,modules,"linux",release,fake_rpm)==lp);
-    reject([&]{validate_bundle(bundle,modules,"userdata",running,fake_rpm);});
+    assert(validate_bundle(bundle,modules,"userdata",running,fake_rpm)==up);
     const auto good_owner=owners.at(module.string());owners[module.string()]="other\t0\t7.2.9\t1.40.fc46\taarch64\t8\n";
     reject([&]{validate_bundle(bundle,modules,"linux",running,fake_rpm);});owners[module.string()]=good_owner;
     owners[module.string()]="senemos-uke-linux-kernel-mainline-modules\t0\t7.2.9\t1.41.fc46\taarch64\t8\n";

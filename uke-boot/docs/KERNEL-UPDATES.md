@@ -1,5 +1,10 @@
 # Stock-ABL kernel updates
 
+20 October 2026 source update: version 1.1.0 adds a separate guarded
+[userdata boot A/B path](USERDATA-AB.md). The Linux-root writer and its explicit
+enablement policy remain. The 15 October device results below describe that
+earlier Linux-root path; they do not qualify the new userdata implementation.
+
 15 October 2026. Fedora Rawhide AArch64 stock-ABL update implementation.
 On Uke, COPR kernel 7.2.9-1.40 and updater 0.1.0-12 passed DNF installation,
 complete boot B write/readback and an ordinary reboot to Fedora/KDE. The new
@@ -23,9 +28,9 @@ SHA-256 rows relative to `/usr/lib/modules/KERNEL_RELEASE`, limited to the exact
 both userdata manifest values must be `unsupported` for this supported layout.
 Payloads must be root-owned and not group/world-writable.
 
-The first update path supports the physical `linux` root. A `userdata` boot
-variant is not admitted by this writer; publishing a separate preview image
-does not qualify in-system updates for that layout.
+The original update path supports the physical `linux` root. Userdata was not
+admitted by that implementation; its new policy and validation gates are
+documented separately above.
 
 The new kernel must have a **different kernel release**, and running-kernel
 modules must remain installed. A package revision that replaces the same module

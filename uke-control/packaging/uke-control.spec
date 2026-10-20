@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.0.20
+Version: 1.0.21
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -10,6 +10,7 @@ BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd)
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
+BuildRequires: dbus-daemon
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
@@ -44,11 +45,14 @@ install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.s
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
 install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
 install -Dm644 src/front-color.hpp %{buildroot}%{_includedir}/uke-control/front-color.hpp
+install -Dm644 src/desktop.hpp %{buildroot}%{_includedir}/uke-control/desktop.hpp
 install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/tests
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
 install -Dm644 packaging/uke-control.service %{buildroot}%{_unitdir}/uke-control.service
 install -Dm644 packaging/80-uke-control.preset %{buildroot}%{_presetdir}/80-uke-control.preset
+install -Dm644 packaging/uke-control-moisture-notify.service %{buildroot}%{_userunitdir}/uke-control-moisture-notify.service
+install -Dm644 packaging/80-uke-control-user.preset %{buildroot}%{_userpresetdir}/80-uke-control-user.preset
 install -Dm644 packaging/uke-control-tests.desktop %{buildroot}%{_datadir}/applications/uke-control-tests.desktop
 install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
@@ -57,14 +61,17 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %post
 %systemd_post uke-control.service
+%systemd_user_post uke-control-moisture-notify.service
 %preun
 %systemd_preun uke-control.service
+%systemd_user_preun uke-control-moisture-notify.service
 %postun
 %systemd_postun uke-control.service
+%systemd_user_postun uke-control-moisture-notify.service
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md
 %{_bindir}/uke-control
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
@@ -72,6 +79,8 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
 %{_presetdir}/80-uke-control.preset
+%{_userunitdir}/uke-control-moisture-notify.service
+%{_userpresetdir}/80-uke-control-user.preset
 %dir %attr(0700,root,root) %{_localstatedir}/lib/uke-control
 
 %files tests
@@ -81,11 +90,36 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
-* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.20-1
-- Pin and preallocate new F2FS swap files before writing through the guarded settings backend.
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.21-1
+- Restore moisture notifications, desktop and hardware inspection, and USB routing reports.
+- Preserve the F2FS swap allocator and signed DNF channel management.
 
-* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.19-1
-- Adopt the project semantic version and preserve the native channel API.
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-26
+- Match the exact Uke USB-switch compatible separately from the audio codec.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-25
+- Record cached audio, media, input and configured hardware paths without opening devices.
+- Preserve ancestor status, missing endpoints and private report failure receipts.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-24
+- Read existing standard desktop interfaces without activation or controls.
+- Preserve units, unknown values and desktop evidence in private reports.
+- Retain the cached UCSI and DisplayPort routing diagnostics from release23.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-23
+- Include cached UCSI transport, PHY/AUX routing and Type-C alternate-mode evidence.
+- Keep driver completion separate from link training and physical display acceptance.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-22
+- Preserve read-only battery and protection evidence in private device reports.
+- Retain unavailable-command receipts without exposing private report data.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-21
+- Preserve presentation-deadline fixes with the moisture notification client.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-20
+- Add cached moisture and charging-fault notifications in the desktop session.
+- Distinguish firmware input-inhibit readback from physical cutoff acceptance.
 
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-19
 - Preserve absolute presentation deadlines without accumulating rendering cost.

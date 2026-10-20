@@ -1,0 +1,6 @@
+# Standard first-install policy; explicit administrator masks are preserved.
+disable sshd.service
+disable sshd.socket
+enable uke-wifi-factory.service
+enable uke-install-profile.service
+enable uke-userdata-accept.service

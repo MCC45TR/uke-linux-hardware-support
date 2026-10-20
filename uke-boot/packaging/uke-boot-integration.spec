@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 0.1.0
-Release: 21%{?dist}
+Version: 1.1.1
+Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -10,6 +10,7 @@ ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
 BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
 BuildRequires: openssl-devel
+BuildRequires: pkgconfig(fdisk) pkgconfig(zlib) util-linux
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: jq
 Requires: senemos-native-runtime(libstdc++)
@@ -68,12 +69,23 @@ The image must provide the protected persist mount and enable the service.
 %package -n uke-kernel-update
 Summary: Native checked installation of matched Uke stock-ABL kernel bundles
 Requires: senemos-native-runtime(libstdc++) openssl-libs systemd rpm
+Requires: uke-installation-profile = %{version}-%{release}
+Provides: uke-kernel-update(userdata-ab) = 1
 %description -n uke-kernel-update
-Validates an installed matched boot-v4 payload and module inventory before
-updating only the physical boot_b partition. Retains the running kernel modules
-and a synced backup, then verifies the complete partition after writing.
-Automatic updates require explicit local enablement and compatible boot-bundle
-RPMs. Installation alone does not activate partition writes or reboot.
+Validates matched installed boot-v4 payloads and module inventories. The Linux
+root profile retains its opt-in boot_b writer. The userdata profile writes an
+inactive boot slot and selects the QTI slot only after full readback, coherent
+GPT/boot-LUN checks and durable backups. Boot health accepts a matching trial.
+The packaged userdata policy enables automatic staging after transactions;
+reboot remains manual. Physical power-loss recovery requires device validation.
+
+%package -n uke-installation-profile
+Summary: Native classification of the Uke Linux root partition
+Requires: senemos-native-runtime(libstdc++) systemd
+%description -n uke-installation-profile
+Verifies the physical UFS root and exact Linux or userdata selector. Repairs
+only the legacy unknown record after fresh inspection. State is private and
+durable; classification does not write block devices or select a boot slot.
 
 %prep
 %setup -q
@@ -84,8 +96,12 @@ RPMs. Installation alone does not activate partition writes or reboot.
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/wifi-factory.cpp -o uke-wifi-factory %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/boot-guard.cpp -o uke-boot-guard $(pkg-config --cflags --libs libsystemd wayland-client) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
-%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs openssl libsystemd) %{build_ldflags}
+%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs fdisk zlib openssl libsystemd) %{build_ldflags}
+%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/install-profile.cpp -o uke-install-profile %{build_ldflags}
 %check
+bash tests/installation-policy.sh
+bash tests/slot-control.sh
+bash tests/userdata-update.sh
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o usb-port-contract
 ./usb-port-contract
 bash tests/usb-inventory.sh
@@ -95,7 +111,7 @@ bash tests/usb-ownership.sh
 ./wifi-factory-contract
 bash tests/startup-contract.sh
 bash tests/startup-native.sh
-%{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs openssl libsystemd)
+%{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
 ./kernel-update-contract
 %install
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
@@ -120,6 +136,11 @@ install -Dm644 src/units/uke-esp32-cdc-log.service %{buildroot}%{_unitdir}/uke-e
 install -Dm755 uke-reboot %{buildroot}%{_bindir}/uke-reboot
 install -Dm755 uke-kernel-update %{buildroot}%{_bindir}/uke-kernel-update
 install -Dm644 src/profiles/kernel-update.conf %{buildroot}%{_sysconfdir}/senemos/kernel-update.conf
+install -Dm644 src/profiles/userdata-update.conf %{buildroot}%{_sysconfdir}/senemos/userdata-update.conf
+install -Dm644 src/profiles/80-uke-boot.preset %{buildroot}%{_presetdir}/80-uke-boot.preset
+install -Dm644 src/units/uke-userdata-accept.service %{buildroot}%{_unitdir}/uke-userdata-accept.service
+install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
+install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
 install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
 install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-reboot.conf
@@ -128,6 +149,27 @@ install -d %{buildroot}%{_unitdir}/sysinit.target.wants %{buildroot}/usr/local/{
 ln -s ../uke-boot-guard.service %{buildroot}%{_unitdir}/sysinit.target.wants/uke-boot-guard.service
 ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/bin/reboot
 ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
+
+%post -n uke-kernel-update
+%systemd_post uke-userdata-accept.service
+
+%preun -n uke-kernel-update
+%systemd_preun uke-userdata-accept.service
+
+%postun -n uke-kernel-update
+%systemd_postun uke-userdata-accept.service
+
+%posttrans -n uke-installation-profile
+if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
+    %{_libexecdir}/senemos-uke/uke-install-profile reconcile || :
+fi
+
+%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates
+if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
+    if ! %{_bindir}/uke-kernel-update auto; then
+        echo 'Uke automatic boot update refused; inspect the reported cause before rebooting.' >&2
+    fi
+fi
 %files
 %license LICENSE
 %doc README.md
@@ -137,6 +179,7 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_unitdir}/uke-usb-observer.service
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
 %{_unitdir}/chronyd.service.d/70-uke-clock.conf
+%{_presetdir}/80-uke-boot.preset
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
 %{_libexecdir}/senemos-uke/uke-usb-network
@@ -162,9 +205,18 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %files -n uke-kernel-update
 %license LICENSE
 %doc docs/KERNEL-UPDATES.md
+%doc docs/USERDATA-AB.md
 %{_bindir}/uke-kernel-update
 %dir %{_sysconfdir}/senemos
 %config(noreplace) %{_sysconfdir}/senemos/kernel-update.conf
+%config(noreplace) %{_sysconfdir}/senemos/userdata-update.conf
+%{_unitdir}/uke-userdata-accept.service
+
+%files -n uke-installation-profile
+%license LICENSE
+%doc docs/USERDATA-AB.md
+%{_libexecdir}/senemos-uke/uke-install-profile
+%{_unitdir}/uke-install-profile.service
 
 %files -n uke-boot-recovery
 %license LICENSE
@@ -178,6 +230,14 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.1-1
+- Add explicit checked boot-B updates for userdata without changing firmware slots.
+- Retain the automatic A/B refusal for unmatched early firmware cohorts.
+
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
+- Add guarded userdata boot A/B staging and boot-health acceptance.
+- Preserve Linux-root behavior and repair legacy installation classification.
+
 * Mon Oct 19 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-21
 - Use noatime and remount-ro error handling in the root filesystem template.
 - Preserve normal ext4 journaling and administrator fstab ownership.

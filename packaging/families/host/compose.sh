@@ -30,15 +30,19 @@ jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
 uke-hw)
-    make -C uke-boot profile-srpm outdir="$stage/profile" >"$stage/local.log"
-    profiles=("$stage/profile/"*.src.rpm); [[ ${#profiles[@]} == 1 ]]
-    printf '%s\t%s\n' uke-installation-profile "${profiles[0]}" >"$stage/inputs";;
-uke-core) make -C uke-control srpm outdir="$root/uke-control/build/srpm" >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+    make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
+    boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 ]]
+    printf '%s\t%s\n' uke-boot-integration "${boots[0]}" >"$stage/inputs";;
+uke-core)
+    make -C uke-control srpm outdir="$stage/control" >"$stage/local.log"
+    controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 ]]
+    printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
     printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.15-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
-    printf '%s\t%s\n' uke-battery-observer "$stage/battery/rpmbuild/SRPMS/uke-battery-observer-0.1.0-9$(rpm --eval '%{?dist}').src.rpm" >>"$stage/inputs";;
+    batteries=("$stage/battery/rpmbuild/SRPMS/"*.src.rpm); [[ ${#batteries[@]} == 1 ]]
+    printf '%s\t%s\n' uke-battery-observer "${batteries[0]}" >>"$stage/inputs";;
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
     printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
@@ -78,6 +82,8 @@ while IFS=$'\t' read -r key input; do
     fi
     if [[ $key == uke-firmware ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
+        # These owned data paths must resolve from primary metadata without optional filelists.
+        sed -i '/^AutoReqProv: no/aProvides: /usr/lib/firmware/qcom/uke/sensors/sns_tppe.so\nProvides: /usr/share/uke-sensors/odm/json.lst\nProvides: /usr/share/uke-sensors/sns_reg.conf' "${specs[0]}"
         # Compare only this child's files in the shared buildroot.
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi
@@ -88,6 +94,10 @@ while IFS=$'\t' read -r key input; do
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
+    if grep -En '(^|[[:space:]])%(cmake|cmake_build|cmake_install|meson|meson_build|meson_install)([[:space:]]|$)' "$part/expanded.spec"; then
+        printf 'Install the child recipe build macros before source generation: %s\n' "$key" >&2
+        exit 1
+    fi
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc46$ ]]
@@ -120,7 +130,7 @@ spec="$output/SPECS/$family.spec"
         ' "$part/preamble"
     done
     if [[ $family == uke-hw ]]; then
-        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.0\nRelease: 1%%{?dist}\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n'
+        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.1\nRelease: 1%%{?dist}\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n'
     fi
     printf '\n%%prep\n%%setup -q\n'
     for phase in prep generate_buildrequires build install check; do

@@ -45,6 +45,12 @@ int main(int argc,char **argv) {
         invalid.full_seconds.reset();screen.render(invalid);assert(screen.pixels==with_time);
     }
     s.status="Not charging";s.power_uw=8250000;screen.render(s);
+    s.power_estimated=false;screen.render(s);const auto measured=screen.pixels;
+    s.power_estimated=true;screen.render(s);assert(screen.pixels!=measured);
+    s.valid=false;screen.render(s);const auto invalid=screen.pixels;
+    s.power_uw.reset();s.temperature_decic.reset();screen.render(s);assert(screen.pixels==invalid);
+    s.valid=true;s.status="Charging";s.power_uw=-950000;screen.render(s);const auto draining=screen.pixels;
+    s.power_uw=950000;screen.render(s);assert(screen.pixels!=draining);
     if(argc==2) {
         std::ofstream image(argv[1],std::ios::binary);
         image<<"P6\n720 480\n255\n";
