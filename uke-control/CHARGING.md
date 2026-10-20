@@ -138,3 +138,9 @@ offline after qualification; no disable or force-resume command is exposed.
 The shipped profile is unqualified. These source paths require the matching
 version-2 kernel and reviewed firmware, sensor and electrical-effect evidence.
 They are not active protection on the previously observed kernel 7.2.11-6.
+
+Private device reports capture the battery snapshot and fixed control,
+admission, protocol and cached-protection metadata. Missing or refused data
+retains its command receipt; it does not become success. These private logs do
+not enter the generated anonymous GitHub summary. Collection does not issue
+firmware settings GET/SET requests or start charging services.
