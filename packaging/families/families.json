@@ -16,13 +16,15 @@
       "name": "uke-hw",
       "version": "1.0.0",
       "requires": [
-        "uke-boot-integration >= 1.0.22"
+        "uke-boot-integration >= 1.0.22",
+        "uke-fastfetch-config"
       ],
       "suggests": [
         "uke-bluetooth",
         "uke-touchscreen",
         "uke-wifi-factory"
-      ]
+      ],
+      "release": 2
     },
     {
       "name": "uke-power",
@@ -123,6 +125,9 @@
     "uke-front-color": "1.0.2"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "8.fc46"
+    "iio-sensor-proxy": "8.fc46",
+    "uke-boot-integration": "2.fc46",
+    "uke-bluetooth": "2.fc46",
+    "uke-touchscreen": "2.fc46"
   }
 }
