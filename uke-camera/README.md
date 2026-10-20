@@ -2,6 +2,18 @@
 
 Uke camera source, media graph and userspace pipeline bring-up for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 
+20 October 2026: an [inactive OV13B10 kernel prerequisite](https://github.com/MCC45TR/senemos-uke-kernel-mainline/commit/5c64172)
+adds generic Device Tree matching and a strict binding. The complete driver
+object compiles for AArch64; real schema tests accept two/four lanes and reject
+eight invalid cases. No board sensor node, CAMSS platform, firmware startup or
+physical capture is enabled. The fitted rear module and front sensor identity,
+native provider/CSI graph and calibration remain unresolved.
+
+`uke-control hardware status` reads existing media endpoints and configured
+camera/audio nodes without opening a camera or triggering a probe. The
+[path review](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/testing/UKE-NATIVE-HARDWARE-PATHS-2026-10-20.md)
+records the source pins and remaining work; documentation access is required.
+
 Status, 13 October 2026: this component contains package definitions and source
 plans. It provides no working device feature. The manifest lists the proposed
 packages and the checks required before release.
