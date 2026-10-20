@@ -120,6 +120,8 @@ sha256sum -c SOURCE-SHA256SUMS
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
 - Preserve elapsed-power and offline net-charge fixes in the protection candidate.
 - Activate protection observation for a ready provider at root coldplug.
+- Keep power-key handling responsive during stalled offline telemetry.
+- Use the original UPower drop-in policy for critical-battery poweroff.
 
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
 - Add fixed firmware moisture observation and qualified owned-input protection.

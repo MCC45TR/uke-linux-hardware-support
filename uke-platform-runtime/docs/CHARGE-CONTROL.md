@@ -363,3 +363,12 @@ The kernel keeps both restricted writers quarantined after an attempt for that
 driver instance. Ambiguous delivery, timeouts and lifecycle failures never cause
 replay, undo, a service or persisted intent. A reboot is not permission to retry
 an unresolved physical outcome. General control admission remains independent.
+
+## Critical-battery action — 20 October 2026
+
+The package supplies `/etc/UPower/UPower.conf.d/60-uke-battery-safety.conf` for
+original UPower 1.91.5 or newer. It requests `PowerOff` at the existing critical
+action threshold, uses percentage policy and disables risky-action overrides.
+It does not supply new numerical thresholds or trigger a power action. Later
+administrator drop-ins remain effective. This desktop policy is separate from
+firmware charging, moisture inhibition and physical battery protection.
