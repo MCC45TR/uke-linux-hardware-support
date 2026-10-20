@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.1.0
+Version: 1.1.1
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -230,6 +230,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.1-1
+- Add explicit checked boot-B updates for userdata without changing firmware slots.
+- Retain the automatic A/B refusal for unmatched early firmware cohorts.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
 - Add guarded userdata boot A/B staging and boot-health acceptance.
 - Preserve Linux-root behavior and repair legacy installation classification.

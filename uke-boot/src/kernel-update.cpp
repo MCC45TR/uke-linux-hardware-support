@@ -381,17 +381,20 @@ static Fd inhibit_shutdown() {
 #include "userdata-update.hpp"
 int main(int argc,char **argv) {
     try {
-        need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply")) ||
+        need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
+                         std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current")) ||
              (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="auto")),
-             "Usage: uke-kernel-update check|apply BUNDLE | accept | auto");
+             "Usage: uke-kernel-update check|apply|check-current|apply-current BUNDLE | accept | auto");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto";
-        const bool apply=action=="apply";
+        const bool current_only=action=="check-current"||action=="apply-current";
+        const bool apply=action=="apply"||action=="apply-current";
         if(automatic && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
         const auto label=root_label(read_text("/proc/cmdline"));
         if(automatic && label!="userdata")return 0;
+        need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
         need(label=="userdata"||action!="accept","Boot acceptance is specific to userdata A/B installations");
         const auto root=partition(label);root_mount(root.second,read_text("/proc/self/mountinfo"),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
@@ -412,8 +415,8 @@ int main(int argc,char **argv) {
         Fd state_dir=directory(state,true);need(!fchmod(state_dir.value,0700),"Cannot protect update state");
         Fd lock(openat(state_dir.value,"lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));trusted_fd(lock.value);
         need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update is active");
-        const auto bytes=validate_bundle(bundle,"/usr/lib/modules",label,current.release);
-        if(label=="userdata") {
+        auto bytes=validate_bundle(bundle,"/usr/lib/modules",label,current.release);
+        if(label=="userdata" && !current_only) {
             if(automatic) {
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
@@ -429,6 +432,12 @@ int main(int argc,char **argv) {
         struct stat st{};uint64_t size=0;
         need(!fstat(boot.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==target.second && !ioctl(boot.value,BLKGETSIZE64,&size) && size==capacity,"boot_b identity/capacity changed");
         const auto previous=read_fd(boot.value,capacity);
+        if(current_only) {
+            auto other=physical_boot(partition("boot_a"));
+            const std::array<Bytes,2> images{read_fd(other.value,capacity),previous};
+            require_current_b(read_text("/proc/cmdline"),images,file(fs::path("/usr/lib/modules")/current.release/"vmlinuz"));
+            bytes=userdata_vrr(std::move(bytes),vrr_policy());
+        }
         if(previous==bytes){std::cout<<"boot_b already matches the verified installed bundle; no partition write\n";return 0;}
         const auto raw=file(bundle/"manifest");const auto release=properties(std::string(raw.begin(),raw.end())).at("kernel_release");
         need(release!=current.release,"A distinct kernel release is required to preserve running and rollback modules");

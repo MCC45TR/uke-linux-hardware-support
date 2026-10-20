@@ -56,6 +56,25 @@ the failed candidate and refuses an automatic retry of the same release.
 
 ## Validation and limits
 
+On 20 October, read-only tablet comparison found different early firmware in
+the two slots, including XBL and ABL. Automatic A/B is therefore refused on that
+installation. Firmware is not copied to make the guard pass.
+
+Version 1.1.1 adds an explicit maintenance path:
+
+```
+sudo uke-kernel-update check-current /usr/lib/senemos/kernel-updates/RELEASE
+sudo uke-kernel-update apply-current /usr/lib/senemos/kernel-updates/RELEASE
+```
+
+Both commands require the userdata profile and a proven running boot B. The
+first checks without writing. The second reuses the existing full backup,
+power, distinct-release, module preservation and complete write/readback checks
+to update only boot B. It does not change GPT, boot-LUN attributes, firmware or
+boot A. This is an explicitly requested single-slot update, not seamless A/B;
+it is not power-loss atomic. The automatic path never silently selects it.
+Keep the backup and a working external fastboot recovery route before reboot.
+
 Native fixtures cover 512/4096-byte GPT sectors, both selection directions,
 unchanged geometry and unrelated flags, CRC damage, concurrent changes, torn
 writes and metadata restoration. Mocked UFS ioctls cover read/write/readback,

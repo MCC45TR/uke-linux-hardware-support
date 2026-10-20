@@ -92,6 +92,9 @@ static Bytes userdata_vrr(Bytes bytes,bool enabled) {
     }
     need(boot_kernel(bytes)==kernel,"Derived wrapper changed the signed package Image");return bytes;
 }
+static void require_current_b(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
+    need(identify_slot(cmdline,images,running)==1,"Explicit current-slot update requires a proven running boot_b");
+}
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
     Fd fd(open(("/dev/"+part.first).c_str(),(write?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));

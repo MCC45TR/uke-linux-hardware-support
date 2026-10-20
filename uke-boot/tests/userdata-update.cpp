@@ -37,9 +37,12 @@ int main() {
     fs::create_hard_link(root/"state",root/"unsafe");reject([&]{save_update(root/"unsafe",saved);});fs::remove(root/"unsafe");
     std::array<Bytes,2> boots{image("7.2.11-14"),image("7.2.11-16")};
     const auto running=boot_kernel(boots[1]);assert(identify_slot("root=PARTLABEL=userdata",boots,running)==1);
+    require_current_b("root=PARTLABEL=userdata",boots,running);
+    reject([&]{require_current_b("root=PARTLABEL=userdata",boots,boot_kernel(boots[0]));});
     assert(identify_slot("androidboot.slot_suffix=_b",boots,running)==1);
     reject([&]{identify_slot("androidboot.slot_suffix=_a",boots,running);});
     boots[0]=boots[1];reject([&]{identify_slot("",boots,running);});assert(identify_slot("androidboot.slot_suffix=_b",boots,running)==1);
+    reject([&]{require_current_b("",boots,running);});
     assert(userdata_vrr(boots[1],false)==boots[1]);const auto vrr=userdata_vrr(boots[1],true);
     assert(boot_kernel(vrr)==running && std::string(reinterpret_cast<const char*>(vrr.data()+44))=="senemos.root=userdata msm.o82_vrr_test_min_hz=30");
     reject([&]{userdata_vrr(vrr,true);});
