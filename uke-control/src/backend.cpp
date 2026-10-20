@@ -291,6 +291,11 @@ std::string report() {
       {"boot-history",{"/usr/bin/journalctl","--list-boots","--no-pager"}},
       {"unit-overrides",{"/usr/bin/systemd-delta","--no-pager"}},
       {"packages",{"/usr/bin/rpm","-qa","--qf","%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n"}},
+      {"battery-snapshot",{"/usr/bin/uke-battery"}},
+      {"battery-control",{"/usr/libexec/uke-charge-control","status"}},
+      {"battery-admission",{"/usr/libexec/uke-charge-control","admission"}},
+      {"battery-protocols",{"/usr/libexec/uke-charge-control","protocols"}},
+      {"battery-protection",{"/usr/libexec/uke-charge-control","protection-status"}},
       {"mounts",{"/usr/bin/findmnt","--json"}},
       {"fstab-verify",{"/usr/bin/findmnt","--verify","--verbose"}},
       {"display",{"/usr/bin/modetest","-M","msm-kms","-c","-p"}}};
