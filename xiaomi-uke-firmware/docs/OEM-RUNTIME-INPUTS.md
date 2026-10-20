@@ -100,3 +100,43 @@ These checks neither execute the DSP helper nor stimulate touch hardware.
 The public admission lock remains empty. No OEM bytes, private reference,
 calibration, persist, MP firmware, early firmware or security payload is admitted
 for COPR/GitHub publication by this work. No Python file/runtime is added.
+
+## Local RPM and Linux root integration
+
+The local packaging target builds one `xiaomi-uke-firmware`
+3.0.304.0-1.local data RPM from both verified staging profiles:
+
+```bash
+make local-rpms OEM_FILES=referances/oem-304/oem-blobs \
+  MODEM_FILES=referances/oem-304/files GPU_FILES=referances/qualified-gpu
+```
+
+The noarch RPM contains 217 payload files and no scriptlets, applications,
+services or Python dependencies. It consolidates the six legacy sensor, GPU,
+ADSP, WPSS, WLAN board and regulatory RPMs; bounded Obsoletes and exact legacy
+virtual versions preserve dependent packages. The transient split Bluetooth
+data package is also replaced. `uke-local-touch-data` remains installed because
+it owns the qualified private reference. Four OEM touch assets are installed
+under `qcom/uke/touch/{csot,tm}` without changing the active CSOT paths.
+Host ELF post-processing is disabled to preserve the foreign DSP firmware exactly.
+The public `srpm` target remains closed. Its archive hash must be reviewed
+and pinned in the private image profile; a changed build requires fresh pins.
+
+The active Uke WCN6750 consumer requests the `msbtfw12`/`msnv12` family.
+Those files are present alongside HMT candidates in this subset; their hashes
+match the retained 17 October installation record. No filename alias or radio
+type substitution is required. The stored base DTB alone does not represent
+the live stock-ABL fixups; inspect the selected producer and module together.
+
+The Fedora builder's private profile now requires the exact source manifests
+and one local RPM archive hash. Its offline transaction merges the generic data
+packages, adds Bluetooth firmware, retains the existing CSOT data/reference and
+enables the existing resource-dependent sensor target and Bluetooth address helper.
+`audit-oem-runtime.sh` verifies 215 active inputs plus all four packaged touch
+assets: 219 file paths in total. The two TM assets remain unselected. New package
+bytes are verified from their own extraction before accepting embedded OEM namespaces;
+they are not described as a newly measured device match.
+
+This integration applies to a separate offline Linux root. Package dependency,
+file identity, startup-link and rollback checks remain distinct from physical
+SSC, touch, Bluetooth pairing, cold boot and suspend/resume acceptance.

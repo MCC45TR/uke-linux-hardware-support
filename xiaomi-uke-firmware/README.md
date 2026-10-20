@@ -7,6 +7,14 @@ SSC, normal touch preparation and Bluetooth. See the
 [source and staging guide](docs/OEM-RUNTIME-INPUTS.md). The existing modem/GPU
 staging interface and public admission policy remain separate.
 
+`make local-rpms OEM_FILES=... MODEM_FILES=... GPU_FILES=...` builds one private
+`xiaomi-uke-firmware` data RPM for SSC, Bluetooth, ADSP, WPSS, WLAN, GPU and OEM
+touch assets. It replaces the legacy generic firmware packages without adding
+applications or services. Existing qualified CSOT runtime data/reference stay
+intact; the matching WCN6750 MS-family files require no alias.
+Offline root identity, dependencies and rollback have separate checks from
+physical operation. This local RPM is not a COPR input.
+
 This component owns the file-level admission rules for the shared hardware
 support repository. The current lock admits no firmware bytes, so `make srpm`
 fails explicitly. A metadata-only RPM cannot substitute for device firmware.

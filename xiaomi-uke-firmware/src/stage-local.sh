@@ -50,6 +50,7 @@ if $oem; then
 fi
 install -Dm644 -- "$lock" "$stage/local-firmware-candidates.json"
 printf '%s\n' 'Local evaluation payload. Redistribution is unreviewed. Do not upload this directory or an archive containing it to COPR or a public release.' > "$stage/LOCAL-ONLY.txt"
+# shellcheck disable=SC2094
 (cd "$stage" && find . -type f ! -name MANIFEST.sha256 -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > MANIFEST.sha256)
 mv -T -- "$stage" "$output"
 trap - EXIT
