@@ -16,6 +16,12 @@ for name in uke-core uke-hw uke-power uke-sensors uke-extras uke-additional uke-
     ! grep -q '/__UKE_' "$spec"
     ! grep -qE '^(Requires|Recommends):.*(python|pypy)' "$spec"
 done
+hw_spec=packaging/families/build/uke-hw/SPECS/uke-hw.spec
+if [[ -f $hw_spec ]]; then
+    for name in adsp-firmware wpss-firmware wlan-board wlan-regdb; do
+        grep -Fxq "Obsoletes: uke-owner-$name <= 3.0.304.0-1.owner.fc46" "$hw_spec"
+    done
+fi
 [[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
 jq -e '(.modules[]|select(type=="object" and .type=="cpu")|.format)=="{vendor} {name} ({cores-online} cores) @ {freq-max}" and all(.modules[]; if type=="string" then (test("^(bios|board|host|physicalmemory|command)$")|not) else (.type|test("^(bios|board|host|physicalmemory|command)$")|not) end)' uke-desktop-packaging/src/fastfetch/config.jsonc >/dev/null
 grep -Fx 'Version: 1.0.20' uke-control/packaging/uke-control.spec

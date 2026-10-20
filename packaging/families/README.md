@@ -55,12 +55,20 @@ and package revision review. Local Control, adaptive display, battery and meta
 sources come from their current owning component recipes. The existing input
 boot-22 keeps the frozen userdata image ABI intact.
 
-Hardware source Release 2 retains boot22 and separately builds the corrected
+Hardware source 1.0.0-2 retains boot22 and separately builds the corrected
 `uke-installation-profile 1.0.31` from the coordinator's canonical C++ source.
 The original classifier30 service unit is retained. Reconciliation runs only on
 a real Uke outside a container/chroot, may repair only the exact legacy unknown
 record, and preserves masks. It performs no block writes or slot changes. The
 new A/B backend remains a separate future source freeze.
+
+Hardware source 1.1.1-2 retains the subsequently packaged 1.1.1 boot/update
+implementation and corrects the canonical firmware replacement bounds for
+installed `.owner.fc46` packages. Unsuffixed compatibility Provides remain
+available. Firmware Release 2 contains the same 217 generic files; private touch
+data remain separate. Every rebuilt child has a new packaging revision.
+The updater's existing `automatic=0` setting and administrator masks remain
+authoritative; package installation does not qualify a boot transition.
 
 Firmware source inputs retain their exact upstream Version and Release.
 Foreign DSP ELF data is held outside the buildroot while RPM runs native

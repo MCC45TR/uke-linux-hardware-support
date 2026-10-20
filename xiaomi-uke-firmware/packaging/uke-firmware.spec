@@ -1,6 +1,6 @@
 Name: uke-firmware
 Version: 3.0.304.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Consolidated Xiaomi Pad 7 and POCO Pad X1 firmware
 License: LicenseRef-Proprietary
 BuildArch: noarch
@@ -13,17 +13,21 @@ Provides: uke-local-gpu-firmware = 3.0.304.0-1.local%{?dist}
 Provides: uke-local-sensor-data = 3.0.304.0-2.local%{?dist}
 Provides: uke-local-bluetooth-firmware = 3.0.304.0-2.local%{?dist}
 Provides: uke-owner-adsp-firmware = 3.0.304.0-1.owner
+Provides: uke-owner-adsp-firmware = 3.0.304.0-1.owner%{?dist}
 Provides: uke-owner-wpss-firmware = 3.0.304.0-1.owner
+Provides: uke-owner-wpss-firmware = 3.0.304.0-1.owner%{?dist}
 Provides: uke-owner-wlan-board = 3.0.304.0-1.owner
+Provides: uke-owner-wlan-board = 3.0.304.0-1.owner%{?dist}
 Provides: uke-owner-wlan-regdb = 3.0.304.0-1.owner
+Provides: uke-owner-wlan-regdb = 3.0.304.0-1.owner%{?dist}
 Obsoletes: xiaomi-uke-firmware <= 3.0.304.0-1.local%{?dist}
 Obsoletes: uke-local-gpu-firmware <= 3.0.304.0-1.local%{?dist}
 Obsoletes: uke-local-sensor-data <= 3.0.304.0-2.local%{?dist}
 Obsoletes: uke-local-bluetooth-firmware <= 3.0.304.0-2.local%{?dist}
-Obsoletes: uke-owner-adsp-firmware <= 3.0.304.0-1.owner
-Obsoletes: uke-owner-wpss-firmware <= 3.0.304.0-1.owner
-Obsoletes: uke-owner-wlan-board <= 3.0.304.0-1.owner
-Obsoletes: uke-owner-wlan-regdb <= 3.0.304.0-1.owner
+Obsoletes: uke-owner-adsp-firmware <= 3.0.304.0-1.owner%{?dist}
+Obsoletes: uke-owner-wpss-firmware <= 3.0.304.0-1.owner%{?dist}
+Obsoletes: uke-owner-wlan-board <= 3.0.304.0-1.owner%{?dist}
+Obsoletes: uke-owner-wlan-regdb <= 3.0.304.0-1.owner%{?dist}
 
 # Preserve foreign DSP firmware bytes; host ELF post-processing is inappropriate.
 %global __os_install_post %{nil}

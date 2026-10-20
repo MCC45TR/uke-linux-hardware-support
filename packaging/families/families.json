@@ -20,11 +20,12 @@
     },
     {
       "name": "uke-hw",
-      "version": "1.0.0",
+      "version": "1.1.1",
       "requires": [
-        "uke-boot-integration >= 1.0.22",
-        "uke-fastfetch-config",
-        "uke-installation-profile = 1.0.31-1%{?dist}"
+        "uke-boot-integration = 1.1.1-2%{?dist}",
+        "uke-installation-profile = 1.1.1-2%{?dist}",
+        "uke-kernel-update = 1.1.1-2%{?dist}",
+        "uke-fastfetch-config"
       ],
       "suggests": [
         "uke-bluetooth",
@@ -160,23 +161,25 @@
   "native_versions": {
     "uke-control": "1.0.20",
     "uke-adaptive-display": "1.0.15",
-    "uke-boot-integration": "1.0.22",
+    "uke-boot-integration": "1.1.1",
     "uke-bluetooth": "1.0.6",
     "uke-touchscreen": "1.0.13",
     "uke-power-profile-backend": "1.0.4",
     "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
-    "uke-installation-profile": "1.0.31"
+    "uke-installation-profile": "1.1.1"
   },
   "release_overrides": {
     "iio-sensor-proxy": "8.fc46",
     "uke-boot-integration": "2.fc46",
-    "uke-bluetooth": "2.fc46",
-    "uke-touchscreen": "2.fc46",
+    "uke-bluetooth": "3.fc46",
+    "uke-touchscreen": "3.fc46",
     "uke-plymonth": "2.fc46",
     "uke-orangefox-recovery": "3.fc46",
     "upower": "4.fc46",
     "uke-power-profile-backend": "2.fc46",
-    "uke-adaptive-display": "2.fc46"
+    "uke-adaptive-display": "2.fc46",
+    "uke-firmware": "2.fc46",
+    "uke-fastfetch-config": "2.fc46"
   }
 }

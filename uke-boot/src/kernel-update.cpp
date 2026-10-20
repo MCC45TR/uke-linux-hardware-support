@@ -138,7 +138,12 @@ static Bytes boot_kernel(const Bytes &b) {
     need(b.size()==capacity && !memcmp(b.data(),"ANDROID!",8),"Expected complete 96 MiB Android boot image");
     need(le32(b,40)==4 && le32(b,20)==1584 && !le32(b,12) && !le32(b,1580),"Only kernel-only boot v4 is supported");
     for(size_t i=24;i<40;++i) need(!b[i],"Reserved boot fields changed");
-    for(size_t i=44;i<page;++i) need(!b[i],"Unexpected boot command line or header data");
+    const auto terminator=std::find(b.begin()+44,b.begin()+1580,0);
+    need(terminator!=b.begin()+1580,"Unterminated boot command line");
+    const std::string command(b.begin()+44,terminator);
+    need(command.empty() || command=="senemos.root=userdata" ||
+         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30","Unexpected boot command line");
+    for(auto it=terminator;it!=b.begin()+page;++it)need(!*it,"Unexpected boot header data");
     const size_t size=le32(b,8);
     need(size>=64 && size<=b.size()-page,"Invalid kernel length");
     Bytes kernel(b.begin()+page,b.begin()+page+size);
@@ -167,6 +172,7 @@ static std::string root_label(const std::string &cmdline) {
     while(input>>word) if(word.rfind("root=",0)==0) {
         need(result.empty(),"Multiple root selectors");
         if(word=="root=PARTLABEL=linux") result="linux";
+        else if(word=="root=PARTLABEL=userdata") result="userdata";
         else throw std::runtime_error("Unsupported root selector");
     }
     need(!result.empty(),"Exact PARTLABEL root selector required"); return result;
@@ -206,14 +212,17 @@ static std::pair<std::string,dev_t> partition(const std::string &label,const fs:
     }
     need(!result.first.empty(),"Physical "+label+" partition unavailable"); return result;
 }
-[[maybe_unused]] static void root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo")) {
+[[maybe_unused]] static void root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo"),const std::string &label="linux") {
     std::istringstream input(mounts);std::string row;
     bool found=false;
     while(std::getline(input,row)) {
-        std::istringstream line(row);std::string id,parent,device,root,mount;
-        if(!(line>>id>>parent>>device>>root>>mount)||mount!="/") continue;
+        std::istringstream line(row);std::string id,parent,device,root,mount,options;
+        if(!(line>>id>>parent>>device>>root>>mount>>options)||mount!="/") continue;
         unsigned a=0,b=0; char tail=0;
-        need(!found && root=="/" && sscanf(device.c_str(),"%u:%u%c",&a,&b,&tail)==2 && makedev(a,b)==expected && row.find(" - ext4 ")!=std::string::npos,"Root must be the selected physical EXT4 partition");found=true;
+        need(label=="linux"||label=="userdata","Unsupported root profile");
+        const auto filesystem=label=="userdata"?" - f2fs ":" - ext4 ";
+        need(!found && root=="/" && sscanf(device.c_str(),"%u:%u%c",&a,&b,&tail)==2 && makedev(a,b)==expected &&
+             row.find(filesystem)!=std::string::npos && (","+options+",").find(",rw,")!=std::string::npos,"Root must be the selected writable physical filesystem");found=true;
     }
     need(found,"Root mount identity unavailable");
 }
@@ -296,7 +305,7 @@ static void rollback_modules(const Package &core,Query query=rpm) {
     need(query({"-V","--noscripts","--nomtime","--nomode","--nouser","--nogroup","--",nevra}).empty(),"Rollback modules RPM verification failed");
 }
 static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,const std::string &label,const std::string &running,Query query=rpm) {
-    need(label=="linux","The userdata root layout is not qualified for in-system boot updates");
+    need(label=="linux"||label=="userdata","Unsupported boot bundle root profile");
     trusted(bundle,true);trusted(bundle/"manifest");trusted(bundle/"modules.sha256");
     const auto raw_manifest=file(bundle/"manifest");
     const auto manifest=properties(std::string(raw_manifest.begin(),raw_manifest.end()));
@@ -319,13 +328,17 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     for(const auto &[path,hash]:expected) {trusted(modules/release/path);need(actual.contains(path) && digest(file(modules/release/path))==hash,"Module bytes differ: "+path);module_files.emplace(modules/release/path,hash);}
     const auto image=bundle/(label+".img");trusted(image);
     const auto bytes=file(image),kernel=boot_kernel(bytes);
+    const std::string selector(reinterpret_cast<const char*>(bytes.data()+44));
+    need(selector==(label=="userdata"?"senemos.root=userdata":""),"Package wrapper does not match its root profile");
     need(hex(manifest.at(label+"_image_sha256")) && digest(bytes)==manifest.at(label+"_image_sha256") && digest(kernel)==manifest.at(label+"_kernel_sha256"),"Boot or embedded Image digest mismatch");
     const auto banner="Linux version "+release+" ";
     need(std::search(kernel.begin(),kernel.end(),banner.begin(),banner.end())!=kernel.end(),"Embedded Image release differs");
-    const auto cmd="root=PARTLABEL="+label+" ";
+    // Common Images keep the forced Linux default; userdata is selected by its checked v4 wrapper.
+    const auto cmd=std::string("root=PARTLABEL=linux ");
     need(std::search(kernel.begin(),kernel.end(),cmd.begin(),cmd.end())!=kernel.end(),"Embedded root selector differs");
     const auto core=file(modules/release/"vmlinuz");
     need(digest(core)==manifest.at("linux_kernel_sha256"),"Installed core Image does not match the boot/module bundle");
+    if(label=="userdata")need(kernel==core && manifest.at("userdata_kernel_sha256")==manifest.at("linux_kernel_sha256"),"A shared root-selecting Image is required");
     const auto dtb=modules/release/"dtb/qcom/sm7675-xiaomi-uke.dtb";
     installed_files({{"-boot",{{bundle/"manifest",digest(raw_manifest)},{bundle/"modules.sha256",digest(inventory)},{image,digest(bytes)}}},
                      {"-core",{{modules/release/"vmlinuz",digest(core)}}},{"-dtbs",{{dtb,digest(file(dtb))}}},{"-modules",module_files}},query);
@@ -365,27 +378,66 @@ static Fd inhibit_shutdown() {
     }
     return retained;
 }
+#include "userdata-update.hpp"
 int main(int argc,char **argv) {
     try {
-        need(argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply"),"Usage: uke-kernel-update check|apply /usr/lib/senemos/kernel-updates/BUNDLE");
+        need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
+                         std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current")) ||
+             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="auto")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current BUNDLE | accept | auto");
         need(geteuid()==0,"Root privileges are required");
-        const bool apply=std::string(argv[1])=="apply";
+        const std::string action=argv[1];const bool automatic=action=="auto";
+        const bool current_only=action=="check-current"||action=="apply-current";
+        const bool apply=action=="apply"||action=="apply-current";
+        if(automatic && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
+                         !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
-        const auto label=root_label(read_text("/proc/cmdline"));const auto root=partition(label);root_mount(root.second);
+        const auto label=root_label(read_text("/proc/cmdline"));
+        if(automatic && label!="userdata")return 0;
+        need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
+        need(label=="userdata"||action!="accept","Boot acceptance is specific to userdata A/B installations");
+        const auto root=partition(label);root_mount(root.second,read_text("/proc/self/mountinfo"),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
-        const fs::path bundle=argv[2];
+        fs::path bundle=action=="accept"?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
+        if(automatic) {
+            const auto raw=file("/etc/senemos/userdata-update.conf");
+            const auto config=properties(std::string(raw.begin(),raw.end()));
+            (void)vrr_policy();if(config.at("automatic")=="0")return 0;
+            auto parent=directory("/usr/lib/senemos");struct stat link{};
+            need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
+            const auto target=fs::read_symlink("/usr/lib/senemos/default-boot.img");
+            need(target.is_relative() && target.lexically_normal()==target && target.parent_path().parent_path()=="kernel-updates" &&
+                 target.filename()=="userdata.img" && token(target.parent_path().filename()),"Exact userdata profile link required");
+            bundle=fs::path("/usr/lib/senemos")/target.parent_path();
+        }
         need(bundle.is_absolute() && bundle.parent_path()=="/usr/lib/senemos/kernel-updates" && token(bundle.filename()),"Only installed package bundle directories are accepted");
         const fs::path state="/var/lib/senemos/kernel-update";
         Fd state_dir=directory(state,true);need(!fchmod(state_dir.value,0700),"Cannot protect update state");
         Fd lock(openat(state_dir.value,"lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));trusted_fd(lock.value);
         need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update is active");
-        const auto bytes=validate_bundle(bundle,"/usr/lib/modules",label,current.release);
+        auto bytes=validate_bundle(bundle,"/usr/lib/modules",label,current.release);
+        if(label=="userdata" && !current_only) {
+            if(automatic) {
+                const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
+                const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
+                userdata_update("accept",running_bundle,baseline,state,current.release);
+                if(decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::trial)return 0;
+                if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
+            }
+            userdata_update(automatic?"apply":action,bundle,bytes,state,current.release);return 0;
+        }
         const auto target=partition("boot_b");
         need(ufs_controller(fs::path("/sys/class/block")/target.first)==ufs_controller(fs::path("/sys/class/block")/root.first),"Root and boot_b must share the measured UFS controller");
         Fd boot(open(("/dev/"+target.first).c_str(),(apply?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));
         struct stat st{};uint64_t size=0;
         need(!fstat(boot.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==target.second && !ioctl(boot.value,BLKGETSIZE64,&size) && size==capacity,"boot_b identity/capacity changed");
         const auto previous=read_fd(boot.value,capacity);
+        if(current_only) {
+            auto other=physical_boot(partition("boot_a"));
+            const std::array<Bytes,2> images{read_fd(other.value,capacity),previous};
+            require_current_b(read_text("/proc/cmdline"),images,file(fs::path("/usr/lib/modules")/current.release/"vmlinuz"));
+            bytes=userdata_vrr(std::move(bytes),vrr_policy());
+        }
         if(previous==bytes){std::cout<<"boot_b already matches the verified installed bundle; no partition write\n";return 0;}
         const auto raw=file(bundle/"manifest");const auto release=properties(std::string(raw.begin(),raw.end())).at("kernel_release");
         need(release!=current.release,"A distinct kernel release is required to preserve running and rollback modules");

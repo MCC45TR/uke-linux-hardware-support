@@ -30,9 +30,9 @@ jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
 uke-hw)
-    make -C uke-boot profile-srpm outdir="$stage/profile" >"$stage/local.log"
-    profiles=("$stage/profile/"*.src.rpm); [[ ${#profiles[@]} == 1 ]]
-    printf '%s\t%s\n' uke-installation-profile "${profiles[0]}" >"$stage/inputs";;
+    make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
+    boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]
+    printf '%s\t%s\n' uke-boot-integration "${boots[0]}" >"$stage/inputs";;
 uke-core) make -C uke-control srpm outdir="$root/uke-control/build/srpm" >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
@@ -80,6 +80,8 @@ while IFS=$'\t' read -r key input; do
     fi
     if [[ $key == uke-firmware ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
+        # Retain unsuffixed virtual versions and cover the installed Fedora builds.
+        sed -i '/^Provides: uke-owner-.*1\.owner$/ {p;s/1\.owner$/1.owner%{?dist}/;}; /^Obsoletes: uke-owner-/s/1\.owner$/1.owner%{?dist}/' "${specs[0]}"
         # Compare only this child's files in the shared buildroot.
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi
@@ -122,7 +124,9 @@ spec="$output/SPECS/$family.spec"
         ' "$part/preamble"
     done
     if [[ $family == uke-hw ]]; then
-        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.0\nRelease: 1%%{?dist}\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n'
+        fastfetch_release=$(jq -er '.release_overrides["uke-fastfetch-config"] // "1.fc46"' packaging/families/families.json)
+        [[ $fastfetch_release =~ ^[1-9][0-9]*[.]fc46$ ]]
+        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.0\nRelease: %s\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n' "$fastfetch_release"
     fi
     printf '\n%%prep\n%%setup -q\n'
     for phase in prep generate_buildrequires build install check; do

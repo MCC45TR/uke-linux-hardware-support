@@ -16,4 +16,11 @@ reject no
 printf 'Synthetic notice corruption\n' > "$work/notices/vendor-NOTICE.xml.gz"
 reject yes
 [[ $(rpmspec -q --qf '%{NAME}' packaging/uke-firmware.spec) == uke-firmware ]]
+provides=$(rpmspec --define 'dist .fc46' -q --provides packaging/uke-firmware.spec)
+obsoletes=$(rpmspec --define 'dist .fc46' -q --obsoletes packaging/uke-firmware.spec)
+for name in adsp-firmware wpss-firmware wlan-board wlan-regdb; do
+    grep -Fxq "uke-owner-$name = 3.0.304.0-1.owner" <<< "$provides"
+    grep -Fxq "uke-owner-$name = 3.0.304.0-1.owner.fc46" <<< "$provides"
+    grep -Fxq "uke-owner-$name <= 3.0.304.0-1.owner.fc46" <<< "$obsoletes"
+done
 echo 'Firmware source contract: one canonical binary; absent publisher request and changed notices reject.'
