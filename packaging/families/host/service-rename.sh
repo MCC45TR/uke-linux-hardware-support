@@ -14,8 +14,12 @@ save)
     (umask 077; printf '%s\n%s\n' "$enabled" "$active" >"$state/$new")
     ;;
 restore)
-    if [ "$new" = uke-iio-sensor-proxy ] && /usr/bin/selinuxenabled; then
-        /usr/bin/semodule -i /usr/share/selinux/packages/uke-ssc.cil || exit 1
+    if [ "$new" = uke-iio-sensor-proxy ]; then
+        if /usr/bin/selinuxenabled; then
+            /usr/bin/semodule -i /usr/share/selinux/packages/uke-ssc.cil || exit 1
+        else
+            /usr/bin/semodule -n -s targeted -i /usr/share/selinux/packages/uke-ssc.cil || exit 1
+        fi
     fi
     state=/run/uke-rpm-migration
     [ -f "$state/$new" ] && [ ! -L "$state" ] && [ ! -L "$state/$new" ] || exit 0

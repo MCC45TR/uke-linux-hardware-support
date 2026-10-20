@@ -94,6 +94,9 @@ CLEAN
     *) exit 2;;
 esac
 # Section-aware edits preserve upstream source, native flags and file lists.
+if [[ $name == libaccounts-glib ]]; then
+    cp "$project/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch" "$top/SOURCES/"
+fi
 awk -v name="$name" -v release="$native_release" -v cleanup="$cleanup" '
     BEGIN { print "%global debug_package %{nil}" }
     function finish_install() {
@@ -103,6 +106,7 @@ awk -v name="$name" -v release="$native_release" -v cleanup="$cleanup" '
         print "while IFS= read -r -d \"\" file; do if head -c 256 \"$file\" | LC_ALL=C grep -aE \"^#!.*(python|pypy)\"; then exit 1; fi; done < <(find %{buildroot} -type f -print0)"
     }
     /^Release:/ { print "Release: " release "%{?dist}"; next }
+    /^Source0:/ && name=="libaccounts-glib" { print; print "Patch9999: 0001-fix-uncommitted-changes-cleanup.patch"; next }
     /^BuildRequires:.*%\{majmin_ver_kf6\}/ && name=="plasma-workspace" { sub(/%\{majmin_ver_kf6\}/,"6.7.91"); print; next }
     /^%install([[:space:]]|$)/ {
         if (name=="plasma-workspace") print "%{__cxx} -std=c++20 %{build_cxxflags} %{build_ldflags} $(pkg-config --cflags Qt6Core) %{SOURCE9999} -o senemos-calendar-migration $(pkg-config --libs Qt6Core)"

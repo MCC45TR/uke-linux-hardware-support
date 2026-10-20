@@ -2,17 +2,127 @@
   "schema": 1,
   "version_policy": "MAJOR critical changes; MINOR features; PATCH fixes; RPM Release for packaging-only rebuilds",
   "families": [
-    {"name":"uke-core","version":"1.0.19","requires":["uke-control = 1.0.19-1%{?dist}"],"suggests":["uke-control-tests"]},
-    {"name":"uke-hw","version":"1.0.0","requires":["uke-boot-integration >= 1.0.22"],"suggests":["uke-bluetooth","uke-touchscreen","uke-wifi-factory"]},
-    {"name":"uke-power","version":"1.0.14","requires":["uke-upower"],"suggests":["uke-adaptive-display = 1.0.14-1%{?dist}","uke-power-profile-backend","uke-battery-observer","uke-charge-control"]},
-    {"name":"uke-sensors","version":"1.0.0","requires":["uke-libssc","uke-iio-sensor-proxy"],"suggests":["uke-ssc-fileservice","uke-front-color"]},
-    {"name":"uke-extras","version":"1.0.2","requires":[],"suggests":["uke-plymonth = 1.0.2-1%{?dist}","uke-orangefox-recovery"]},
-    {"name":"uke-additional","version":"1.0.0","requires":["uke-libstdcxx"],"suggests":["uke-mesa-dri-drivers","uke-mesa-vulkan-drivers"]},
-    {"name":"uke-metas","version":"1.0.0","requires":[],"suggests":["uke-core-meta","uke-kde-plasma-meta"]},
-    {"name":"uke-camera","version":"1.0.0","requires":[],"suggests":["plasma-camera"],"status":"selection-only; internal camera graph not qualified"},
-    {"name":"uke-sound","version":"1.0.0","requires":["pipewire","pipewire-alsa","wireplumber","alsa-utils"],"suggests":["plasma-pa"],"status":"original Fedora audio userspace; internal playback/capture not qualified"}
+    {
+      "name": "uke-core",
+      "version": "1.0.19",
+      "requires": [
+        "uke-control = 1.0.19-1%{?dist}"
+      ],
+      "suggests": [
+        "uke-control-tests"
+      ]
+    },
+    {
+      "name": "uke-hw",
+      "version": "1.0.0",
+      "requires": [
+        "uke-boot-integration >= 1.0.22"
+      ],
+      "suggests": [
+        "uke-bluetooth",
+        "uke-touchscreen",
+        "uke-wifi-factory"
+      ]
+    },
+    {
+      "name": "uke-power",
+      "version": "1.0.14",
+      "requires": [
+        "uke-upower"
+      ],
+      "suggests": [
+        "uke-adaptive-display = 1.0.14-1%{?dist}",
+        "uke-power-profile-backend",
+        "uke-battery-observer",
+        "uke-charge-control"
+      ]
+    },
+    {
+      "name": "uke-sensors",
+      "version": "1.0.0",
+      "requires": [
+        "uke-libssc",
+        "uke-iio-sensor-proxy"
+      ],
+      "suggests": [
+        "uke-ssc-fileservice",
+        "uke-front-color"
+      ],
+      "release": 2
+    },
+    {
+      "name": "uke-extras",
+      "version": "1.0.2",
+      "requires": [],
+      "suggests": [
+        "uke-plymonth = 1.0.2-1%{?dist}",
+        "uke-orangefox-recovery"
+      ]
+    },
+    {
+      "name": "uke-additional",
+      "version": "1.0.0",
+      "requires": [
+        "uke-libstdcxx"
+      ],
+      "suggests": [
+        "uke-mesa-dri-drivers",
+        "uke-mesa-vulkan-drivers"
+      ]
+    },
+    {
+      "name": "uke-metas",
+      "version": "1.0.0",
+      "requires": [],
+      "suggests": [
+        "uke-core-meta",
+        "uke-kde-plasma-meta"
+      ]
+    },
+    {
+      "name": "uke-camera",
+      "version": "1.0.0",
+      "requires": [],
+      "suggests": [
+        "plasma-camera"
+      ],
+      "status": "selection-only; internal camera graph not qualified"
+    },
+    {
+      "name": "uke-sound",
+      "version": "1.0.0",
+      "requires": [
+        "pipewire",
+        "pipewire-alsa",
+        "wireplumber",
+        "alsa-utils"
+      ],
+      "suggests": [
+        "plasma-pa"
+      ],
+      "status": "original Fedora audio userspace; internal playback/capture not qualified"
+    }
   ],
-  "exceptions":["material-decoration","senemos-uke-linux-kernel-mainline","senemos-uke-linux-kernel-mainline-singleboot","senemos-uke-linux-kernel-mainline-kvm"],
-  "rename":{"libstdc++":"uke-libstdcxx"},
-  "native_versions":{"uke-control":"1.0.19","uke-adaptive-display":"1.0.14","uke-boot-integration":"1.0.22","uke-bluetooth":"1.0.6","uke-touchscreen":"1.0.13","uke-power-profile-backend":"1.0.4","uke-battery-observer":"1.0.9","uke-front-color":"1.0.2"}
+  "exceptions": [
+    "material-decoration",
+    "senemos-uke-linux-kernel-mainline",
+    "senemos-uke-linux-kernel-mainline-singleboot",
+    "senemos-uke-linux-kernel-mainline-kvm"
+  ],
+  "rename": {
+    "libstdc++": "uke-libstdcxx"
+  },
+  "native_versions": {
+    "uke-control": "1.0.19",
+    "uke-adaptive-display": "1.0.14",
+    "uke-boot-integration": "1.0.22",
+    "uke-bluetooth": "1.0.6",
+    "uke-touchscreen": "1.0.13",
+    "uke-power-profile-backend": "1.0.4",
+    "uke-battery-observer": "1.0.9",
+    "uke-front-color": "1.0.2"
+  },
+  "release_overrides": {
+    "iio-sensor-proxy": "8.fc46"
+  }
 }

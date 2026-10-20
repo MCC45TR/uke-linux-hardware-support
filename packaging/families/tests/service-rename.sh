@@ -53,4 +53,8 @@ ln -s "$stage/calls" "$stage/state/$new"
 export new=uke-iio-sensor-proxy FIXTURE_SELINUX=0
 phase=restore sh "$stage/fragment"
 grep -Fx 'policy:-i /usr/share/selinux/packages/uke-ssc.cil' "$stage/calls"
+export FIXTURE_SELINUX=1
+: >"$stage/calls"
+phase=restore sh "$stage/fragment"
+grep -Fx 'policy:-n -s targeted -i /usr/share/selinux/packages/uke-ssc.cil' "$stage/calls"
 printf '%s\n' 'PASS: admitted active/enabled state, disabled/masked refusal, retained failed restoration and symlink rejection; host stubs only.'

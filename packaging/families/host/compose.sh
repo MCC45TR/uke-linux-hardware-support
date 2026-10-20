@@ -65,10 +65,22 @@ while IFS=$'\t' read -r key input; do
         sed -i 's/^BuildRequires: llvm-devel = 23\.1\.2-1\.fc46$/BuildRequires: llvm-devel = 23.1.3-1.fc46/' "${specs[0]}"
         grep -Fx 'BuildRequires: llvm-devel = 23.1.3-1.fc46' "${specs[0]}" >/dev/null
     fi
+    if [[ $key == uke-firmware ]]; then
+        cp "${specs[0]}" "$source/uke-firmware.spec.original"
+        # Compare only this child's files in the shared buildroot.
+        sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
+    fi
+    if [[ $key == libaccounts-glib ]]; then
+        cp "${specs[0]}" "$source/libaccounts-glib.spec.original"
+        cp uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch "$source/"
+        sed -i '/^Source0:/aPatch9999: 0001-fix-uncommitted-changes-cleanup.patch' "${specs[0]}"
+    fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
-    awk -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
+    [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc46$ ]]
+    awk -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
 spec="$output/SPECS/$family.spec"
@@ -77,6 +89,10 @@ spec="$output/SPECS/$family.spec"
     printf 'SourceLicense: MIT'
     for part in "$stage/parts/"*; do [[ ! -f $part/preamble ]] || awk '/^License:/{sub(/^License:[[:space:]]*/, "");print}' "$part/preamble"; done | LC_ALL=C sort -u | while IFS= read -r license; do printf ' AND (%s)' "$license"; done
     printf '\n'
+    if [[ $family == uke-hw ]]; then
+        # DSP firmware ELF data is not a host executable and has no build-id link.
+        printf '%%global _build_id_links none\n%%global _binaries_in_noarch_packages_terminate_build 0\n'
+    fi
     jq -r '.requires[]|"Requires: "+.' <<<"$profile"
     jq -r '.suggests[]|"Suggests: "+.' <<<"$profile"
     for part in "$stage/parts/"*; do [[ ! -f $part/buildrequires ]] || cat "$part/buildrequires"; done | LC_ALL=C sort -u | if [[ $family == uke-sensors ]]; then sed '/^BuildRequires: libssc-devel /d;s/pkgconfig(libssc)//g'; else cat; fi
@@ -87,7 +103,7 @@ spec="$output/SPECS/$family.spec"
           /^%description -n uke-(iio-sensor-proxy|upower)$/ {
             print "Requires(pre): rpm systemd coreutils sed"
             print "Requires(posttrans): systemd coreutils sed"
-            if($3=="uke-iio-sensor-proxy")print "Requires(posttrans): /usr/bin/semodule /usr/bin/selinuxenabled"
+            if($3=="uke-iio-sensor-proxy")print "Requires(posttrans): /usr/bin/semodule /usr/bin/selinuxenabled selinux-policy-targeted"
           }
           {print}
         ' "$part/preamble"
@@ -96,6 +112,9 @@ spec="$output/SPECS/$family.spec"
     for phase in prep generate_buildrequires build install check; do
         if [[ $phase == generate_buildrequires ]] && ! find "$stage/parts" -name generate_buildrequires -print -quit | grep -q .; then continue; fi
         [[ $phase == prep ]] || printf '\n%%%s\n' "$phase"
+        if [[ $family == uke-hw && $phase == check ]]; then
+            printf 'mv "%%{_builddir}/%s-%s/firmware-unprocessed" "%%{buildroot}/usr/lib/firmware"\n' "$family" "$version"
+        fi
         if [[ $family == uke-sensors ]]; then
             printf 'export PKG_CONFIG_PATH="%%{_builddir}/%s-%s/work/libssc/libssc/build/meson-uninstalled${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"\nexport LD_LIBRARY_PATH="%%{_builddir}/%s-%s/work/libssc/libssc/build/src${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\n' "$family" "$version" "$family" "$version"
         fi
@@ -117,6 +136,10 @@ spec="$output/SPECS/$family.spec"
             ' "$part/$phase"
             printf ')\n'
         done <"$stage/inputs"
+        if [[ $family == uke-hw && $phase == install ]]; then
+            # RPM's native post-install processing runs before %check.
+            printf 'mv "%%{buildroot}/usr/lib/firmware" "%%{_builddir}/%s-%s/firmware-unprocessed"\n' "$family" "$version"
+        fi
     done
     printf '\n%%files\n%%license LICENSE\n%%doc README\n'
     while IFS=$'\t' read -r key input; do

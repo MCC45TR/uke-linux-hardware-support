@@ -206,5 +206,12 @@
     "archive_method": "project-fork",
     "original_sha256": "c5a6de13e8bffe93567fdfc59e3ed96068f7b748de9a08a1031a0f980d9761ef",
     "original_payload_sha256": "27e7df57d40068a1c9bd1ab4d631eed1f64592d0fc53af863eb9fc0c2daed986"
+  },
+  {
+    "family": "uke-hw",
+    "name": "uke-firmware",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179541/uke-firmware-3.0.304.0-1.fc46.src.rpm",
+    "sha256": "375f1f7a0d2e73668820752e48504978b31916a115061604d97d81a291ad8b4c",
+    "build": 11179541
   }
 ]

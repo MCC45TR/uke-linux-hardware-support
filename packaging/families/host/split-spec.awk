@@ -69,9 +69,10 @@ END {
     print original "\t" version "\t" release "\t" cwd "\t" builddir "\t" buildroot >out "/identity"
     newversion=native_version!=""?native_version:version
     newrelease=native_version!="" && native_version!=version?"1.fc46":release
-    if(native_version=="" && original!="uke-plymonth" && original!="uke-desktop-metas") {
+    if(native_version=="" && original!="uke-plymonth" && original!="uke-desktop-metas" && original!="uke-firmware") {
         split(release,r,".");newrelease=(r[1]+1) ".fc46"
     }
+    if(release_override!="")newrelease=release_override
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0) {

@@ -20,8 +20,10 @@ RPMs. Installing a metadata parent starts no process by itself.
 The three kernel source names remain `senemos-uke-linux-kernel-mainline`,
 `senemos-uke-linux-kernel-mainline-singleboot` and
 `senemos-uke-linux-kernel-mainline-kvm`. `material-decoration` is an explicit
-non-device-specific exception. Private firmware remains a separately admitted
-local data RPM; proprietary bytes are not imported into these public sources.
+non-device-specific exception. `uke-hw` also produces `uke-firmware`, an
+explicitly requested proprietary data RPM with OEM notices. Its historical
+file-level redistribution review remains incomplete; publication does not
+establish additional grants. Private calibration is excluded.
 
 Project application versions follow `MAJOR.MINOR.PATCH`: increment MAJOR for a
 critical architectural or compatibility change, MINOR for a feature and PATCH
@@ -42,6 +44,12 @@ old binary package. Source input hashes and build IDs are in
 and package revision review. Local Control, adaptive display, battery and meta
 sources come from their current owning component recipes. The existing input
 boot-22 keeps the frozen userdata image ABI intact.
+
+Firmware source inputs retain their exact upstream Version and Release.
+Foreign DSP ELF data is held outside the buildroot while RPM runs native
+post-install processing, then restored before the firmware hash checks. Native
+programs retain normal post-processing. The final firmware RPM must match all
+217 source file hashes and modes; a source check alone is insufficient.
 
 The source family Release defaults to 1; set its `release` field when packaging
 changes require a rebuild. Control's family version and Release must match its
