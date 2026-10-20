@@ -35,6 +35,14 @@ application identities are `uke-control 1.0.19-1`,
 requested package spelling, while the original Plymouth theme file paths stay
 compatible. Do not add Epoch to outrank another repository.
 
+The subsequent coordinated corrections use `uke-control 1.0.20-1` for F2FS
+swap allocation and `uke-adaptive-display 1.0.15-1` for original KWin defaults.
+The latter ships a generic monotone brightness curve, tablet-mode rotation and
+automatic VRR policy only for DSI-1, without forced layout/resolution or factory
+calibration. The configuration is installed with noreplace semantics; existing
+user settings remain authoritative. These changes require their own native
+build and device checks rather than replacing the earlier package identities.
+
 The family composer retains complete exact-pinned source RPM inputs, original
 specifications, archives, patches and licensing. It expands the reviewed RPM
 recipes for the native target and combines their build/check phases in isolated

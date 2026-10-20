@@ -15,8 +15,8 @@ for name in uke-core uke-hw uke-power uke-sensors uke-extras uke-additional uke-
     ! grep -qE '^(Requires|Recommends):.*(python|pypy)' "$spec"
 done
 [[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
-grep -Fx 'Version: 1.0.19' uke-control/packaging/uke-control.spec
-grep -Fx 'Version: 1.0.14' uke-desktop-integration/packaging/uke-adaptive-display.spec
+grep -Fx 'Version: 1.0.20' uke-control/packaging/uke-control.spec
+grep -Fx 'Version: 1.0.15' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then
     grep -Fx 'BuildRequires: llvm-devel = 23.1.3-1.fc46' packaging/families/build/uke-additional/SPECS/uke-additional.spec

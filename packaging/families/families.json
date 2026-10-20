@@ -4,9 +4,9 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "requires": [
-        "uke-control = 1.0.19-1%{?dist}"
+        "uke-control = 1.0.20-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -26,12 +26,12 @@
     },
     {
       "name": "uke-power",
-      "version": "1.0.14",
+      "version": "1.0.15",
       "requires": [
         "uke-upower"
       ],
       "suggests": [
-        "uke-adaptive-display = 1.0.14-1%{?dist}",
+        "uke-adaptive-display = 1.0.15-1%{?dist}",
         "uke-power-profile-backend",
         "uke-battery-observer",
         "uke-charge-control"
@@ -113,8 +113,8 @@
     "libstdc++": "uke-libstdcxx"
   },
   "native_versions": {
-    "uke-control": "1.0.19",
-    "uke-adaptive-display": "1.0.14",
+    "uke-control": "1.0.20",
+    "uke-adaptive-display": "1.0.15",
     "uke-boot-integration": "1.0.22",
     "uke-bluetooth": "1.0.6",
     "uke-touchscreen": "1.0.13",

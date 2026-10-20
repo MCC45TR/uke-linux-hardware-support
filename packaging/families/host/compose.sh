@@ -22,11 +22,11 @@ cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
-uke-core) make -C uke-control srpm >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.19-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-core) make -C uke-control srpm >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
-    printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.14-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
+    printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.15-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
     printf '%s\t%s\n' uke-battery-observer "$stage/battery/rpmbuild/SRPMS/uke-battery-observer-0.1.0-9$(rpm --eval '%{?dist}').src.rpm" >>"$stage/inputs";;
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke >"$stage/local.log"

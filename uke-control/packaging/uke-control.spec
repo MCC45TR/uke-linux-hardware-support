@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.0.19
+Version: 1.0.20
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -81,6 +81,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.20-1
+- Pin and preallocate new F2FS swap files before writing through the guarded settings backend.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.19-1
 - Adopt the project semantic version and preserve the native channel API.
 

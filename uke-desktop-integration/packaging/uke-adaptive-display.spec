@@ -1,5 +1,5 @@
 Name: uke-adaptive-display
-Version: 1.0.14
+Version: 1.0.15
 Release: 1%{?dist}
 Summary: Standard desktop sensor and display policy for Uke
 License: MIT
@@ -92,6 +92,9 @@ systemd-tmpfiles --dry-run --create packaging/uke-suspend.conf
 %{_tmpfilesdir}/uke-suspend.conf
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.15-1
+- Supply original KWin defaults using a generic brightness curve and preserve local configuration.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.14-1
 - Adopt the project semantic version without enabling additional services.
 
