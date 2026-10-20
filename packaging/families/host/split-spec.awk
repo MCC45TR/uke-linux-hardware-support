@@ -91,6 +91,15 @@ END {
         h=mapped_dependency(header[i]);oldevr=version "-" release;newevr=newversion "-" newrelease
         if(oldevr!=newevr)while((pos=index(h,oldevr)))h=substr(h,1,pos-1) newevr substr(h,pos+length(oldevr))
         output("preamble",h)
+        # External consumers retain the original feature-capability names.
+        count=split(header[i],original_lines,"\n")
+        for(k=1;k<=count;k++) {
+            alias=original_lines[k]
+            if(alias ~ /^Provides:/ && mapped_dependency(alias)!=alias) {
+                if(oldevr!=newevr)while((pos=index(alias,oldevr)))alias=substr(alias,1,pos-1) newevr substr(alias,pos+length(oldevr))
+                output("preamble",alias)
+            }
+        }
         if(renamed(pkg)!=pkg) {
             evr=(epoch!=""?epoch ":":"") newevr
             output("preamble","Provides: " pkg " = " evr)

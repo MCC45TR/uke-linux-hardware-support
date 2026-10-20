@@ -29,4 +29,11 @@ sed 's/Name: uke-control/Name: material-decoration/' "$stage/input" >"$stage/mat
 awk -v out="$stage/material" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/material-input"
 grep -Fx '%package -n material-decoration' "$stage/material/preamble"
 ! grep -q '^Conflicts: material-decoration' "$stage/material/preamble"
+mkdir "$stage/sensor"
+sed 's/Name: uke-control/Name: iio-sensor-proxy/; /Summary: Fixture/aProvides: iio-sensor-proxy(ssc) = 1\nProvides: iio-sensor-proxy(uke-dual-light) = 1' "$stage/input" >"$stage/sensor-input"
+awk -v out="$stage/sensor" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/sensor-input"
+for capability in ssc uke-dual-light; do
+    grep -Fxq "Provides: iio-sensor-proxy($capability) = 1" "$stage/sensor/preamble"
+    grep -Fxq "Provides: uke-iio-sensor-proxy($capability) = 1" "$stage/sensor/preamble"
+done
 printf '%s\n' 'PASS: native version conversion resets Release once; later packaging revisions are retained.'

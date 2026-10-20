@@ -73,7 +73,7 @@
         "uke-ssc-fileservice",
         "uke-front-color"
       ],
-      "release": 2,
+      "release": 3,
       "watch_paths": []
     },
     {
@@ -170,7 +170,7 @@
     "uke-installation-profile": "1.1.1"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "8.fc46",
+    "iio-sensor-proxy": "9.fc46",
     "uke-boot-integration": "2.fc46",
     "uke-bluetooth": "3.fc46",
     "uke-touchscreen": "3.fc46",
@@ -180,6 +180,9 @@
     "uke-power-profile-backend": "2.fc46",
     "uke-adaptive-display": "2.fc46",
     "uke-firmware": "2.fc46",
-    "uke-fastfetch-config": "2.fc46"
+    "uke-fastfetch-config": "2.fc46",
+    "libssc": "7.fc46",
+    "uke-ssc-fileservice": "10.fc46",
+    "uke-front-color": "2.fc46"
   }
 }
