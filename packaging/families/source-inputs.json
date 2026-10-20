@@ -213,5 +213,14 @@
     "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179541/uke-firmware-3.0.304.0-1.fc46.src.rpm",
     "sha256": "375f1f7a0d2e73668820752e48504978b31916a115061604d97d81a291ad8b4c",
     "build": 11179541
+  },
+  {
+    "family": "uke-extras",
+    "name": "material-decoration",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-archive-20261020/srpm-builds/11179253/material-decoration-20261006.094154-3.src.rpm",
+    "sha256": "3eded3d4256923b6acb1949666b696adf77b9357cc0090e3007ab3c7b2010c55",
+    "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/srpm-builds/11122182/material-decoration-20261006.094154-3.src.rpm",
+    "archive_build": 11179253,
+    "archive_method": "project-fork"
   }
 ]
