@@ -22,14 +22,14 @@ cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
-uke-core) make -C uke-control srpm >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-core) make -C uke-control srpm outdir="$root/uke-control/build/srpm" >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-power)
-    make -C uke-desktop-integration srpm >"$stage/local.log"
+    make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
     printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.15-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
     printf '%s\t%s\n' uke-battery-observer "$stage/battery/rpmbuild/SRPMS/uke-battery-observer-0.1.0-9$(rpm --eval '%{?dist}').src.rpm" >>"$stage/inputs";;
 uke-extras)
-    make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke >"$stage/local.log"
+    make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
     printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-metas)
     for component in uke-core-meta uke-desktop-metas; do
@@ -76,7 +76,7 @@ while IFS=$'\t' read -r key input; do
         sed -i '/^Source0:/aPatch9999: 0001-fix-uncommitted-changes-cleanup.patch' "${specs[0]}"
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
-    rpmspec --parse --target "$target" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
+    rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc46$ ]]
@@ -167,5 +167,5 @@ spec="$output/SPECS/$family.spec"
 # The archive contains complete upstream sources, patches, licenses and original specs.
 (cd "$bundle"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum >SOURCE-SHA256SUMS)
 tar --sort=name --mtime='2026-10-20 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$output/SOURCES/$family-$version.tar.xz" -C "$stage" "$family-$version"
-rpmspec --parse --target "$target" "$spec" >"$output/parsed.spec"
-rpmbuild -bs --nodeps --target "$target" --define "_topdir $output" "$spec"
+rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' "$spec" >"$output/parsed.spec"
+rpmbuild -bs --nodeps --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_topdir $output" "$spec"
