@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 0.1.0
-Release: 23%{?dist}
+Release: 24%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -90,6 +90,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-24
+- Read existing standard desktop interfaces without activation or controls.
+- Preserve units, unknown values and desktop evidence in private reports.
+- Retain the cached UCSI and DisplayPort routing diagnostics from release23.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-23
 - Include cached UCSI transport, PHY/AUX routing and Type-C alternate-mode evidence.
 - Keep driver completion separate from link training and physical display acceptance.
