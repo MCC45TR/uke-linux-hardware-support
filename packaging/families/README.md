@@ -66,10 +66,13 @@ record, and preserves masks. It performs no block writes or slot changes. The
 new A/B backend remains a separate future source freeze.
 
 Hardware source 1.1.1-2 retains the subsequently packaged 1.1.1 boot/update
-implementation and corrects the canonical firmware replacement bounds for
-installed `.owner.fc46` packages. Unsuffixed compatibility Provides remain
+implementation and extends the canonical firmware replacement bounds to
+`.owner.fc46` package variants. Unsuffixed compatibility Provides remain
 available. Firmware Release 2 contains the same 217 generic files; private touch
 data remain separate. Every rebuilt child has a new packaging revision.
+Re-querying the captured tablet RPM database confirmed that its four owner
+packages actually use unsuffixed `1.owner` releases. The suffix extension is a
+compatibility correction, not an observed migration failure on this tablet.
 The updater's existing `automatic=0` setting and administrator masks remain
 authoritative; package installation does not qualify a boot transition.
 
