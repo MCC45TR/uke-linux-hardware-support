@@ -32,7 +32,7 @@
         "uke-touchscreen",
         "uke-wifi-factory"
       ],
-      "release": 2,
+      "release": 3,
       "watch_paths": [
         "uke-boot/src",
         "uke-boot/packaging/uke-installation-profile.spec",

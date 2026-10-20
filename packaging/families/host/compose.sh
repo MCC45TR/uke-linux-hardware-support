@@ -130,7 +130,7 @@ spec="$output/SPECS/$family.spec"
         ' "$part/preamble"
     done
     if [[ $family == uke-hw ]]; then
-        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.0\nRelease: 1%%{?dist}\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n'
+        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.1\nRelease: 1%%{?dist}\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n'
     fi
     printf '\n%%prep\n%%setup -q\n'
     for phase in prep generate_buildrequires build install check; do
