@@ -111,7 +111,7 @@ std::string snapshot(const fs::path& requested_root) {
             {"qcom,audio_prm","audio_oem_service"},{"qcom,spf-core-platform","audio_oem_machine"},
             {"qcom,pineapple-asoc-snd","audio_oem_machine"},{"foursemi,fs16xx","speaker_amplifier"},
             {"qcom,wcd9390-codec","audio_codec"},{"qcom,wcd9395-codec","audio_codec"},
-            {"qcom,wcd939x-codec","audio_oem_codec"},{"qcom,wcd939x-uke-typec","usb_switch"}};
+            {"qcom,wcd939x-codec","audio_oem_codec"},{"xiaomi,uke-wcd939x-typec","usb_switch"}};
         std::error_code error;std::size_t count=0;
         for(fs::recursive_directory_iterator it(*target,error),end;!error&&it!=end;it.increment(error)) {
             check();if(++count>32768)throw std::runtime_error("Device tree metadata exceeds node budget");

@@ -28,6 +28,7 @@ int main() {
         put(camera.parent_path()/"status",std::string("okay\0",5));
         put(camera/"serial","DO_NOT_COLLECT_SERIAL");
         put(dt/"soc/fake/compatible",std::string("xqcom,cam-sensor")+'\0');
+        put(dt/"soc/usb-switch/compatible",std::string("xiaomi,uke-wcd939x-typec")+'\0');
         const auto card=root/"sys/class/sound/card0";
         put(card/"id","test\"card\n");put(card/"dev","116:0\n");
         fs::create_directories(root/"sys/bus/platform/drivers/test-audio");
@@ -44,6 +45,7 @@ int main() {
         assert(data.find("\"effective_available\":false")!=std::string::npos);
         assert(data.find("\"effective_available\":true")!=std::string::npos);
         assert(data.find("\"stage\":\"camera_sensor\"")!=std::string::npos);
+        assert(data.find("\"stage\":\"usb_switch\"")!=std::string::npos);
         assert(data.find("\"capabilities/key\":null")!=std::string::npos);
         assert(data.find("\"pen_advertised\":null")!=std::string::npos);
         assert(data.find("\"speaker_stimulus_admitted\":false")!=std::string::npos);
