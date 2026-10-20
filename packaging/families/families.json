@@ -17,7 +17,8 @@
       "version": "1.0.0",
       "requires": [
         "uke-boot-integration >= 1.0.22",
-        "uke-fastfetch-config"
+        "uke-fastfetch-config",
+        "uke-installation-profile = 1.0.31-1%{?dist}"
       ],
       "suggests": [
         "uke-bluetooth",
@@ -122,7 +123,8 @@
     "uke-touchscreen": "1.0.13",
     "uke-power-profile-backend": "1.0.4",
     "uke-battery-observer": "1.0.9",
-    "uke-front-color": "1.0.2"
+    "uke-front-color": "1.0.2",
+    "uke-installation-profile": "1.0.31"
   },
   "release_overrides": {
     "iio-sensor-proxy": "8.fc46",

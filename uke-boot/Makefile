@@ -2,7 +2,16 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
+.DEFAULT_GOAL := validate
 version := 0.1.0
+.PHONY: profile-srpm
+profile-srpm:
+	top="$$(realpath -m '$(outdir)/profile-rpmbuild')"
+	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
+	tar --sort=name --mtime=@1792454400 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-installation-profile-1.0.31/,' -cJf "$$top/SOURCES/uke-installation-profile-1.0.31.tar.xz" LICENSE src/install-profile.cpp src/installation-policy.hpp src/boot-common.hpp src/units/uke-install-profile.service tests/installation-policy.cpp tests/install-profile.cpp tests/installation-policy.sh docs/INSTALLATION-PROFILE.md
+	cp packaging/uke-installation-profile.spec "$$top/SPECS/"
+	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-installation-profile.spec"
+	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null

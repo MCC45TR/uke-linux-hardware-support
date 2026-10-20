@@ -8,7 +8,7 @@ RPMs. Installing a metadata parent starts no process by itself.
 | Source family | Child responsibilities |
 |---|---|
 | uke-core | uke-control and optional development diagnostics |
-| uke-hw | boot/USB/Wi-Fi integration, existing Bluetooth factory-address oneshot, native touchscreen |
+| uke-hw | retained boot/USB/Wi-Fi integration, separate installation classifier, firmware, Bluetooth factory-address oneshot, touchscreen and original Fastfetch configuration |
 | uke-power | original UPower with reviewed corrections, battery observation/control gates, PPD backend, adaptive display |
 | uke-sensors | SSC library, standard SensorProxy with SSC, bounded file service and opt-in front color |
 | uke-additional | reviewed native runtime libraries and Mesa; original upstream versions retained |
@@ -53,6 +53,13 @@ and package revision review. Local Control, adaptive display, battery and meta
 sources come from their current owning component recipes. The existing input
 boot-22 keeps the frozen userdata image ABI intact.
 
+Hardware source Release 2 retains boot22 and separately builds the corrected
+`uke-installation-profile 1.0.31` from the coordinator's canonical C++ source.
+The original classifier30 service unit is retained. Reconciliation runs only on
+a real Uke outside a container/chroot, may repair only the exact legacy unknown
+record, and preserves masks. It performs no block writes or slot changes. The
+new A/B backend remains a separate future source freeze.
+
 Firmware source inputs retain their exact upstream Version and Release.
 Foreign DSP ELF data is held outside the buildroot while RPM runs native
 post-install processing, then restored before the firmware hash checks. Native
@@ -91,6 +98,13 @@ transaction. Hardware identity fixes belong in the real kernel/DT and existing
 system integration. Do not manufacture SMBIOS data or probe legacy PC memory
 ranges on ARM to satisfy a display field. Full root all-module captures remain
 unqualified until the original distribution program safely handles that case.
+
+`uke-fastfetch-config` installs a noreplace system profile for original Fedora
+Fastfetch, with dynamic CPU vendor/name, online cores and maximum-frequency
+fields. It uses no command callbacks, BIOS/board/host detection or physical
+memory module. Platform and advertised panel text are explicitly profile
+metadata. Per-user configuration still overrides the system default. This is a
+small data RPM with no helper or resident process, not a Fastfetch fork.
 
 Build a source family with `make -C packaging/families srpm FAMILY=uke-core`.
 Run `make -C packaging/families check` and the original component/native solver

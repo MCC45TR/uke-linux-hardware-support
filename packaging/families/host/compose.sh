@@ -25,6 +25,10 @@ fi
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
+uke-hw)
+    make -C uke-boot profile-srpm outdir="$stage/profile" >"$stage/local.log"
+    profiles=("$stage/profile/"*.src.rpm); [[ ${#profiles[@]} == 1 ]]
+    printf '%s\t%s\n' uke-installation-profile "${profiles[0]}" >"$stage/inputs";;
 uke-core) make -C uke-control srpm outdir="$root/uke-control/build/srpm" >"$stage/local.log"; printf '%s\t%s\n' uke-control "$root/uke-control/build/srpm/uke-control-1.0.20-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
