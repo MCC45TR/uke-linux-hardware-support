@@ -82,6 +82,8 @@ while IFS=$'\t' read -r key input; do
     fi
     if [[ $key == uke-firmware ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
+        # These owned data paths must resolve from primary metadata without optional filelists.
+        sed -i '/^AutoReqProv: no/aProvides: /usr/lib/firmware/qcom/uke/sensors/sns_tppe.so\nProvides: /usr/share/uke-sensors/odm/json.lst\nProvides: /usr/share/uke-sensors/sns_reg.conf' "${specs[0]}"
         # Compare only this child's files in the shared buildroot.
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi

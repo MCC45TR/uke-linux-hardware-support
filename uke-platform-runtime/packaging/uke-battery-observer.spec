@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
-Version: 0.1.0
-Release: 13%{?dist}
+Version: 1.1.0
+Release: 1%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
@@ -117,6 +117,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
+- Collect diagnostic snapshots on demand and exit after idle client sessions.
+- Retain the reviewed charging protection, observation and offline UI behavior.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-13
 - Weight charge curves by elapsed time and reject discontinuous or stale forecasts.
 - Separate reviewed pack and cell arithmetic from raw reported terminal power.
