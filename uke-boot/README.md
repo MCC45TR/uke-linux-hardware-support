@@ -219,3 +219,9 @@ behavior. Release 16 packages the same option as a native chronyd drop-in,
 preserving the original environment options and service sandbox. It does not
 write the RTC or add another clock daemon. Original chronyd remains the single
 enabled time authority on the tested installation.
+
+20 October 2026: boot prerequisite reporting recognizes the explicit userdata
+root selector alongside the existing Linux selectors. This is read-only status;
+physical storage checks and userdata kernel activation remain separate. The
+current updater still refuses userdata writes. Boot inspection fixtures cover
+the added selector without promoting hardware acceptance.
