@@ -30,6 +30,8 @@ validate:
 test-native:
 	mkdir -p "$(outdir)"
 	bash tests/battery-model.sh
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/battery-engineering.cpp -o "$(outdir)/test-battery-engineering"
+	"$(outdir)/test-battery-engineering"
 	bash tests/battery-session.sh
 	bash tests/battery-profile.sh
 	bash tests/battery-collector.sh
