@@ -9,7 +9,7 @@ battery_sources := src/battery/main.cpp src/battery/collector.cpp src/battery/se
 control_sources := src/battery/control-main.cpp src/battery/control.cpp src/battery/control-profile.cpp src/battery/record.cpp
 .PHONY: all validate test-native install srpm
 all: $(outdir)/uke-battery $(outdir)/uke-charge-control $(outdir)/uke-offline-charge
-$(outdir)/uke-offline-charge: src/offline/main.cpp src/offline/boot-mode.hpp src/offline/io.hpp src/offline/screen.hpp
+$(outdir)/uke-offline-charge: src/offline/main.cpp src/offline/boot-mode.hpp src/offline/io.hpp src/offline/screen.hpp src/offline/sampler.hpp src/battery/provider.hpp
 	mkdir -p "$(outdir)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$(CURDIR)=. src/offline/main.cpp $$(pkg-config --cflags --libs libdrm) $(LDFLAGS) -o "$@"
 $(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp src/battery/record.hpp src/battery/provider.hpp
@@ -37,6 +37,8 @@ test-native:
 	bash tests/charge-control.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/offline-charge.cpp -o "$(outdir)/test-offline-charge"
 	"$(outdir)/test-offline-charge"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/offline-sampler.cpp -o "$(outdir)/test-offline-sampler"
+	"$(outdir)/test-offline-sampler"
 install: all
 	install -Dm755 "$(outdir)/uke-battery" "$(DESTDIR)$(prefix)/bin/uke-battery"
 	install -Dm755 "$(outdir)/uke-charge-control" "$(DESTDIR)$(prefix)/libexec/uke-charge-control"
