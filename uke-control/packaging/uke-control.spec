@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.1.0
+Version: 1.1.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -90,6 +90,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.1-1
+- Exclude ordinary class attributes from hardware device and policy inventories.
+- Retain directory containment and unknown metadata without reading controls.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
 - Include cached CPU cache, frequency-policy, DRM and accelerator inventories.
 - Keep unknown geometry and configured DT paths separate from hardware acceptance.

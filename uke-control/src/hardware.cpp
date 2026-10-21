@@ -24,6 +24,10 @@ std::optional<std::string> raw(const fs::path& root,const fs::path& path) {
     if(input.bad())return {};
     return value;
 }
+bool directory(const fs::path& root,const fs::path& path) {
+    const auto target=resolved(root,path);std::error_code error;
+    return target&&fs::is_directory(*target,error)&&!error;
+}
 bool numbered(const fs::path& path,std::string_view prefix) {
     const auto name=path.filename().string();
     return name.starts_with(prefix)&&name.size()>prefix.size()&&
@@ -76,11 +80,11 @@ std::string snapshot(const fs::path& requested_root) {
     out+=",\"read_only\":true,\"device_nodes_opened\":false,\"firmware_rpcs_performed\":false";
     out+=",\"coherence\":\"sequential_metadata_reads\",\"physical_acceptance\":null";
     out+=",\"speaker_stimulus_admitted\":false,\"capture_admitted\":false,\"feature_support_inferred\":false";
-    const auto group=[&](const char* name,const char* directory,const std::vector<std::string>& fields) {
-        check();out+=','+quote(name)+":{\"class_present\":"+std::string(exists(root,root/directory)?"true":"false")+",\"devices\":[";
+    const auto group=[&](const char* name,const char* class_path,const std::vector<std::string>& fields) {
+        check();out+=','+quote(name)+":{\"class_present\":"+std::string(exists(root,root/class_path)?"true":"false")+",\"devices\":[";
         bool first=true;
-        for(const auto& node:entries(root,root/directory)) {
-            check();if(!resolved(root,node))continue;
+        for(const auto& node:entries(root,root/class_path)) {
+            check();if(!directory(root,node))continue;
             if(!first)out+=',';
             first=false;auto item=object(root,node,fields);
             if(std::string_view(name)=="input"&&node.filename().string().starts_with("input")) {
@@ -109,14 +113,14 @@ std::string snapshot(const fs::path& requested_root) {
     group("devfreq","sys/class/devfreq",{"governor","available_frequencies","min_freq","max_freq"});
     out+=",\"cpu_caches\":[";bool first_cpu=true;
     for(const auto& cpu:entries(root,root/"sys/devices/system/cpu")) {
-        check();if(!numbered(cpu,"cpu")||!resolved(root,cpu))continue;
+        check();if(!numbered(cpu,"cpu")||!directory(root,cpu))continue;
         if(!first_cpu)out+=',';
         first_cpu=false;
         out+="{\"cpu\":"+quote(cpu.filename().string())+",\"class_present\":"+
             std::string(exists(root,cpu/"cache")?"true":"false")+",\"caches\":[";
         bool first_cache=true;
         for(const auto& cache:entries(root,cpu/"cache")) {
-            check();if(!numbered(cache,"index")||!resolved(root,cache))continue;
+            check();if(!numbered(cache,"index")||!directory(root,cache))continue;
             if(!first_cache)out+=',';
             first_cache=false;
             out+=object(root,cache,{"level","type","size","shared_cpu_list","coherency_line_size","number_of_sets","ways_of_associativity"});

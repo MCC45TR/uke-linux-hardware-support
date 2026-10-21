@@ -5,7 +5,10 @@ version equal to its signed Rawhide archive. RPM-generated and ancestor Git
 history no longer determines that metadata. All rebuilt child revisions advance;
 the installed Release-4 functional baseline and separate native/target gates remain.
 
-21 October 2026: core/control 1.1.0-1 adds cached chipset/cache/accelerator metadata
+21 October 2026: core/control 1.1.1-1 excludes ordinary sysfs attributes from the
+device and policy inventory after the 1.1.0 tablet readback exposed an extra record.
+
+Core/control 1.1.0-1 adds cached chipset/cache/accelerator metadata
 to the existing hardware status and private reports without hardware control writes.
 
 Core/control 1.0.24-1 scopes vendor exceptions to exact planned

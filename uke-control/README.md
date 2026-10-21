@@ -1,5 +1,9 @@
 # Uke Control
 
+21 October 2026: version 1.1.1 excludes ordinary sysfs attributes such as cpufreq
+boost and DRM version from the device/policy inventory. The 1.1.0 tablet readback
+exposed the extra record; the host regression reproduces it before correction.
+
 21 October 2026: version 1.1.0 extends the existing hardware snapshot and private
 report with cached CPU/GPU policy, cache and accelerator metadata. Missing values
 remain unknown; no cache, clock or firmware settings change. See [HARDWARE.md](HARDWARE.md).

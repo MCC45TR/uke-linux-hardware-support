@@ -41,6 +41,10 @@ int main() {
         put(cache.parent_path()/"index_fake/size","DO_NOT_COLLECT_FAKE_INDEX");
         put(root/"sys/devices/system/cpu/cpufreq/policy0/scaling_governor","schedutil\n");
         put(root/"sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq","1900800\n");
+        put(root/"sys/devices/system/cpu/cpufreq/boost","1\n");
+        put(root/"sys/class/drm/version","drm 1.1.0\n");
+        put(root/"sys/devices/system/cpu/cpu8","ordinary attribute\n");
+        put(cache.parent_path()/"index8","ordinary attribute\n");
         put(root/"sys/class/devfreq/gpu/available_frequencies","255000000 950000000\n");
         put(root/"sys/class/devfreq/gpu/governor","simple_ondemand\n");
         put(root/"sys/class/devfreq/gpu/cur_freq","DO_NOT_COLLECT_DYNAMIC_QUERY");
@@ -67,6 +71,10 @@ int main() {
         assert(data.find("\"cpu\":\"cpu0\",\"class_present\":true")!=std::string::npos);
         assert(data.find("\"size\":null")!=std::string::npos);
         assert(data.find("\"scaling_governor\":\"schedutil\"")!=std::string::npos);
+        assert(data.find("\"name\":\"boost\"")==std::string::npos);
+        assert(data.find("\"name\":\"version\"")==std::string::npos);
+        assert(data.find("\"cpu\":\"cpu8\"")==std::string::npos);
+        assert(data.find("\"name\":\"index8\"")==std::string::npos);
         assert(data.find("\"available_frequencies\":\"255000000 950000000\"")!=std::string::npos);
         assert(data.find("cpu99")==std::string::npos);
         assert(data.find("fake-cache")==std::string::npos);

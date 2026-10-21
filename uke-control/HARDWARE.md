@@ -16,6 +16,11 @@ No memory reservation, cache policy, clock, voltage, preemption or firmware
 setting changes. Adreno uses shared system memory; this command adds no VRAM
 size control. Multiple DRM nodes do not prove multiple physical displays or MST.
 
+Version 1.1.1 accepts contained directories as device, CPU and cache records.
+Ordinary class attributes such as cpufreq boost and DRM version are excluded.
+The 1.1.0 tablet readback exposed this distinction; a host regression fails on
+that source and passes after correction. Native/device follow-up is separate.
+
 ```sh
 uke-control hardware status
 uke-control test hardware
