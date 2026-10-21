@@ -124,12 +124,13 @@
       ],
       "watch_paths": [
         "uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch",
-        "uke-desktop-packaging/src/native-runtime",
         "uke-desktop-packaging/packaging/mesa",
         "uke-desktop-packaging/packaging/libstdcxx-uke-runtime",
         "uke-desktop-packaging/packaging/accountsservice",
         "uke-desktop-packaging/tests/accountsservice-tcb.sh",
-        "uke-desktop-packaging/tests/turnip-display-fd.sh"
+        "uke-desktop-packaging/tests/turnip-display-fd.sh",
+        "uke-desktop-packaging/src/native-runtime/runtime-smoke.cpp",
+        "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt"
       ],
       "release": 4
     },

@@ -35,3 +35,11 @@
   charging. It cannot add a wireless receiver or qualify charge control.
 - Next validation: full native production recipe/tests, pinned signatures,
   payload/dependency/ABI audit, DNF update and actual UPower/desktop observations.
+
+Build-admission follow-up: full CI 39581486647 passed its tests and requested
+power 11182115 once. Its final request loop then rejected an unrelated additional
+revision because that family's directory watch included the shared power/sensor
+adapter. Additional inputs now watch their actual C++ sources explicitly; a
+fixture uses the production watch configuration to reject this regression.
+This metadata correction changes no runtime source and requests no repeated
+native build at the existing power/additional revisions.

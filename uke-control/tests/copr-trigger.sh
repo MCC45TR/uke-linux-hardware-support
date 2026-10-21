@@ -141,3 +141,15 @@ if UKE_COPR_FAMILY=uke-power bash "$script"; then exit 1; fi
 UKE_COPR_FAMILY=uke-extras bash "$script"
 test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
 printf '%s\n' 'PASS: service migration changes require their own family revision.'
+jq --slurpfile production "$source_root/../packaging/families/families.json" '.families += [$production[0].families[]|select(.name=="uke-additional")]' packaging/families/families.json >families.new
+mv families.new packaging/families/families.json
+mkdir -p uke-desktop-packaging/src/native-runtime
+printf 'shared power adapter\n' >uke-desktop-packaging/src/native-runtime/power-sensors.awk
+git add .; git commit -qm shared-adapter-base
+export UKE_CONTROL_BEFORE=$(git rev-parse HEAD)
+printf 'changed power adapter\n' >>uke-desktop-packaging/src/native-runtime/power-sensors.awk
+git add .; git commit -qm shared-adapter-change
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+UKE_COPR_FAMILY=uke-additional bash "$script"
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
+printf '%s\n' 'PASS: production additional watch paths exclude the shared power/sensor adapter.'
