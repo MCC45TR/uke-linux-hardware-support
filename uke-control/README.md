@@ -244,10 +244,19 @@ file and receipt while retaining the rest of the bundle; disk-write failures
 still fail the command. Collection can be partial; inspect collection.log.
 This source change adds no startup work, sampler or automatic upload.
 
-Process CPU is a lifetime average; vmstat's first sample covers time since boot.
+The process snapshot's CPU column is a lifetime average; vmstat's first sample covers time since boot.
 RSS and hierarchical cgroup memory overlap and must not be summed as independent
 physical usage. These observations do not replace process PSS, active UI frame
 measurements, calibrated energy or bootloader/physical first-frame timing.
+On 21 October 2026, version 1.1.2 adds five-second per-CPU and per-thread CPU,
+memory and I/O samples from original Fedora `sysstat`, process PSS from original
+`procps-ng`, plus driver-reported CPU
+and GPU frequencies. GPU execution counters bracket the interval samples and
+include uptime for rate calculation; they are cached reads and do not wake the
+GPU. The optional tests RPM requires original `sysstat` and `drm-utils`.
+Unavailable tools or interfaces remain explicit collection failures. This
+capture does not change governors, refresh policy or charging settings.
+
 Bundles are root-private under `/var/lib/uke-control/reports`; raw logs may contain
 identifiers and must not be committed or attached to public issues. Calibration,
 credential files, process environments and filesystem contents are not collected.

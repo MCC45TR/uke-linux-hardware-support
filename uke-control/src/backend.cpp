@@ -276,7 +276,7 @@ Result cdc_set(bool enabled) {
 }
 std::string status() {
     std::string selected=geteuid()==0?policy():"root-private (sudo to inspect)";
-    return "uke-control 0.1.0\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
+    return "uke-control 1.1.2\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
 }
 void boot() {
     root();board();(void)inventory(true);swap_apply();
@@ -294,7 +294,14 @@ std::string report() {
       {"failed-units",{"/usr/bin/systemctl","--failed","--no-pager"}},
       {"services",{"/usr/bin/systemctl","list-units","--all","--no-pager"}},
       {"processes",{"/usr/bin/ps","-e","-o","pid,ppid,comm,stat,etimes,pcpu,pmem,rss,wchan:32","--sort=-rss"}},
+      {"proportional-memory",{"/usr/bin/ps","-e","-o","pid,ppid,comm,pss,rss,pmem","--sort=-pss"}},
+      {"gpu-time-before",{"/usr/bin/cat","/sys/class/devfreq/3d00000.qcom,kgsl-3d0/gpu_engine_ns","/proc/uptime"}},
       {"resource-sample",{"/usr/bin/vmstat","-w","1","5"}},
+      {"cpu-sample",{"/usr/bin/mpstat","-P","ALL","1","5"}},
+      {"process-sample",{"/usr/bin/pidstat","-h","-u","-r","-d","-t","-p","ALL","1","5"}},
+      {"gpu-time-after",{"/usr/bin/cat","/sys/class/devfreq/3d00000.qcom,kgsl-3d0/gpu_engine_ns","/proc/uptime"}},
+      {"gpu-frequency",{"/usr/bin/cat","/sys/class/devfreq/3d00000.qcom,kgsl-3d0/cur_freq","/sys/class/devfreq/3d00000.qcom,kgsl-3d0/min_freq","/sys/class/devfreq/3d00000.qcom,kgsl-3d0/max_freq","/sys/class/devfreq/3d00000.qcom,kgsl-3d0/governor"}},
+      {"cpu-frequencies",{"/usr/bin/cat","/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq","/sys/devices/system/cpu/cpufreq/policy3/scaling_cur_freq","/sys/devices/system/cpu/cpufreq/policy7/scaling_cur_freq"}},
       {"cgroup-memory",{"/usr/bin/systemd-cgtop","--batch","--iterations=1","--depth=3","--order=memory"}},
       {"boot-time",{"/usr/bin/systemd-analyze","time"}},
       {"boot-critical-chain",{"/usr/bin/systemd-analyze","critical-chain","--no-pager"}},
@@ -339,7 +346,7 @@ std::string report() {
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 0.1.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.1.2\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {

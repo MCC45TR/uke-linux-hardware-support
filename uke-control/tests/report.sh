@@ -32,6 +32,15 @@ static Result execute(const std::vector<std::string>& args,unsigned) {
     if(args.size()==2&&args[0]=="/usr/bin/uname"&&args[1]=="-r")return {0,"7.2.11-fixture\n"};
     if(args[0]=="/usr/bin/uke-battery") {assert(args.size()==1);return {0,"private battery snapshot\n"};}
     if(args[0]=="/usr/bin/uke-control") {assert((args==std::vector<std::string>{"/usr/bin/uke-control","desktop","status"}));return {0,"private desktop interfaces\n"};}
+    if(args[0]=="/usr/bin/pidstat") {assert((args==std::vector<std::string>{"/usr/bin/pidstat","-h","-u","-r","-d","-t","-p","ALL","1","5"}));return {0,"private process sample\n"};}
+    if(args[0]=="/usr/bin/mpstat") {assert((args==std::vector<std::string>{"/usr/bin/mpstat","-P","ALL","1","5"}));return {127,"missing optional sampler\n"};}
+    if(args[0]=="/usr/bin/cat") {
+        assert(args.size()>=2 && args[1].starts_with("/sys/"));
+        if(args[1].ends_with("gpu_engine_ns")) {
+            assert(args.size()==3 && args[2]=="/proc/uptime");return {0,"1000000\n42.00 40.00\n"};
+        }
+        return {0,"private frequency snapshot\n"};
+    }
     if(args[0]=="/usr/libexec/uke-charge-control") {
         assert(args.size()==2 && (args[1]=="status" || args[1]=="admission" || args[1]=="protocols" || args[1]=="protection-status"));
         return {69,"private unavailable battery metadata\n"};
@@ -54,6 +63,10 @@ int main(int argc,char** argv) {
         assert(receipt.find("dmesg exit=3")!=std::string::npos);
         assert(read((output/"battery-snapshot.log").string())=="private battery snapshot\n");
         assert(read((output/"desktop-interfaces.log").string())=="private desktop interfaces\n");
+        assert(read((output/"process-sample.log").string())=="private process sample\n");
+        assert(receipt.find("cpu-sample exit=127")!=std::string::npos);
+        for(auto name:{"gpu-time-before","gpu-time-after"})
+            assert(read((output/(std::string(name)+".log")).string())=="1000000\n42.00 40.00\n");
         for(auto name:{"battery-control","battery-admission","battery-protocols","battery-protection"}) {
             assert(read((output/(std::string(name)+".log")).string())=="private unavailable battery metadata\n");
             assert(receipt.find(std::string(name)+" exit=69")!=std::string::npos);
@@ -73,6 +86,9 @@ int main(int argc,char** argv) {
         assert(summary.find("private_hardware")==std::string::npos);
         assert(summary.find("hardware cache unavailable")==std::string::npos);
         assert(summary.find("private unavailable battery")==std::string::npos);
+        assert(summary.find("private process sample")==std::string::npos);
+        assert(summary.find("private frequency snapshot")==std::string::npos);
+        assert(summary.find("Application: uke-control 1.1.2")!=std::string::npos);
     }
 }
 CPP

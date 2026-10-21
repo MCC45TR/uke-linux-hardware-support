@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.1.1
+Version: 1.1.2
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -25,6 +25,7 @@ are never formatted. Charge and USB controls follow real driver capabilities.
 %package tests
 Summary: Development-only Uke display, touch and sensor diagnostics
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: sysstat drm-utils
 
 %description tests
 Development diagnostics for DPU refresh measurement, Wayland presentation,
@@ -90,6 +91,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.2-1
+- Capture bounded interval CPU/thread samples and cached GPU execution counters.
+- Provide original Fedora diagnostic tools with the optional tests package.
+- Correct the backend and private report application version.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.1-1
 - Exclude ordinary class attributes from hardware device and policy inventories.
 - Retain directory containment and unknown metadata without reading controls.
