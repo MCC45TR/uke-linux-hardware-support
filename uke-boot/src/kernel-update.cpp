@@ -14,6 +14,7 @@
 #include <memory>
 #include <set>
 #include <sstream>
+#include <optional>
 #include <stdexcept>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -435,7 +436,7 @@ int main(int argc,char **argv) {
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 userdata_update("accept",running_bundle,baseline,state,current.release,filesystem);
-                if(decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::trial)return 0;
+                if(decode(file(state/"userdata.state")).policy.phase!=uke_install::Phase::stable)return 0;
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
             }
             userdata_update(automatic?"apply":action,bundle,bytes,state,current.release,filesystem);return 0;
@@ -464,12 +465,26 @@ int main(int argc,char **argv) {
         const auto rollback=installed_files({{"-core",{{old_core,digest(old_kernel)}}}},current.release);
         rollback_modules(rollback);
         need(le32(previous,16)==le32(bytes,16),"Boot OS metadata differs; a separately reviewed update is required");
+        const auto previous_hash=digest(previous),next_hash=digest(bytes);
+        std::optional<UserdataUpdate> accepted,current_trial;
+        if(current_only) {
+            need(fs::exists(state/"userdata.state"),"Accept the healthy running userdata kernel before a current-slot update");
+            accepted=decode(file(state/"userdata.state"));
+            auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
+            need(boot_id.ends_with('\n'),"Missing current-slot staging boot identity");boot_id.pop_back();
+            current_trial=current_slot_trial(*accepted,current.release,previous_hash,release,next_hash,boot_id);
+        }
         if(!apply) {std::cout<<"Matched boot/module bundle and physical boot_b checks passed; no partition write\n";return 0;}
         need(charging(),"Verified battery must be at least 50%, or at least 30% with external power");
         need(fs::space(state).available>capacity+16*1024*1024,"Insufficient durable backup space");
         auto inhibitor=inhibit_shutdown();
-        const auto backup=state/(digest(previous)+"-"+digest(bytes)+"-previous.img");
-        replace_verified(boot.value,bytes,backup);
+        const auto backup=state/(previous_hash+"-"+next_hash+"-previous.img");
+        if(current_trial)save_update(state/"userdata.state",*current_trial);
+        try {replace_verified(boot.value,bytes,backup);}
+        catch(...) {
+            if(accepted && read_fd(boot.value,capacity)==previous)save_update(state/"userdata.state",*accepted);
+            throw;
+        }
         std::cout<<"boot_b updated, synced and read back; previous image retained at "<<backup<<". Reboot manually.\n";
         return 0;
     } catch(const std::exception &e) {std::cerr<<"uke-kernel-update: "<<e.what()<<'\n';return 1;}

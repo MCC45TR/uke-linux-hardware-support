@@ -118,7 +118,7 @@ inline Slot opposite(Slot value) {
     require(value == Slot::a || value == Slot::b, "Invalid boot slot");
     return value == Slot::a ? Slot::b : Slot::a;
 }
-enum class Phase { stable, staging, verified, trial };
+enum class Phase { stable, staging, verified, trial, current_slot_trial };
 struct Update {
     Profile profile;
     Slot good;
@@ -131,6 +131,7 @@ inline void userdata(const Update &state) {
     require(state.profile == Profile::userdata, "Alternating updates disabled for Linux root");
     require(release_token(state.good_release), "Invalid accepted kernel release");
     (void)opposite(state.good);
+    require(state.phase != Phase::current_slot_trial || state.good == Slot::b, "Current-slot trials require an accepted B baseline");
     if (state.phase != Phase::stable) require(release_token(state.candidate) && state.candidate != state.good_release, "Invalid candidate release");
 }
 inline Slot stage(Update &state, Slot running, const std::string &running_release, const std::string &candidate) {
@@ -148,6 +149,14 @@ inline void verified(Update &state) {
     require(state.phase == Phase::staging, "Only a staging transaction can be verified");
     state.phase = Phase::verified;
 }
+inline void stage_current(Update &state, Slot running, const std::string &running_release, const std::string &candidate) {
+    userdata(state);
+    require(state.phase == Phase::stable && running == Slot::b && state.good == running && running_release == state.good_release,
+            "Current-slot staging requires the stable running B baseline");
+    require(release_token(candidate) && candidate != running_release && candidate != state.failed, "Same, malformed or previously failed release refused");
+    state.candidate = candidate;
+    state.phase = Phase::current_slot_trial;
+}
 inline Slot arm(Update &state) {
     userdata(state);
     require(state.phase == Phase::verified, "Verify the inactive image before selecting it");
@@ -156,7 +165,9 @@ inline Slot arm(Update &state) {
 }
 inline void accept(Update &state, Slot running, const std::string &release, bool healthy) {
     userdata(state);
-    require(state.phase == Phase::trial && running == opposite(state.good) && release == state.candidate && healthy,
+    const bool matching_slot = (state.phase == Phase::trial && running == opposite(state.good)) ||
+        (state.phase == Phase::current_slot_trial && running == state.good);
+    require(matching_slot && release == state.candidate && healthy,
             "Only the matching healthy trial may be accepted");
     state.good = running;
     state.good_release = state.candidate;
@@ -165,7 +176,7 @@ inline void accept(Update &state, Slot running, const std::string &release, bool
 }
 inline void returned(Update &state, Slot running, const std::string &release) {
     userdata(state);
-    require(state.phase == Phase::trial && running == state.good && release == state.good_release,
+    require((state.phase == Phase::trial || state.phase == Phase::current_slot_trial) && running == state.good && release == state.good_release,
             "Fallback must match the accepted baseline");
     state.failed = state.candidate;
     state.candidate.clear();

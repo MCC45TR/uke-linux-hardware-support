@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.3.0
+Version: 1.3.1
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -250,6 +250,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.1-1
+- Record current-slot trials before replacing the accepted boot-B image.
+- Accept only the matching healthy same-slot candidate and retain restored baselines.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-1
 - Admit explicit F2FS, EXT4, XFS and single-device Btrfs userdata roots.
 - Require the v2 kernel capability for new formats and complete online growth once.

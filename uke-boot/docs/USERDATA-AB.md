@@ -1,6 +1,6 @@
 # Userdata boot A/B updates
 
-22 October 2026. Version 1.3.0 source and native host fixtures, Fedora Rawhide x86-64.
+22 October 2026. Version 1.3.1 source and native host fixtures, Fedora Rawhide x86-64.
 This implementation has not yet passed an on-tablet A/B update or power-loss test.
 
 The `senemos-uke-linux-kernel-mainline-singleboot` profile selects the physical
@@ -80,6 +80,19 @@ interactive performance. Returning to the accepted slot on a later boot records
 the failed candidate and refuses an automatic retry of the same release.
 
 ## Validation and limits
+
+An explicit current-slot update requires an already accepted stable B baseline.
+Before writing boot B, the updater atomically records a `current-slot-trial`
+with the old accepted release/hash, new candidate release/hash and staging boot
+identity. It retains the old state until the matching healthy candidate boots
+in B. An interrupted write restores the prior state only after the old image
+is read back exactly. A later boot of the restored old image records the failed
+candidate. This path cannot replace an outstanding alternating-slot trial or
+select slot A. It does not provide automatic recovery for a damaged boot B.
+
+Native state/refusal fixtures cover both trial types and repeated current-slot
+transitions. Full physical current-slot update, reboot, acceptance and restored
+baseline tests remain separate gates for this revision.
 
 On 20 October, read-only tablet comparison found different early firmware in
 the two slots, including XBL and ABL. Automatic A/B is therefore refused on that

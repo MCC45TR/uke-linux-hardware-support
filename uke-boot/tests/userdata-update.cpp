@@ -32,6 +32,34 @@ int main() {
     char temporary[]="/tmp/uke-userdata-state.XXXXXX";assert(mkdtemp(temporary));const fs::path root=temporary;
     UserdataUpdate saved{{uke_install::Profile::userdata,uke_install::Slot::b,"7.2.11-14",uke_install::Phase::stable,{},{}},std::string(64,'a'),{}, {}};
     save_update(root/"state",saved);assert(encode(decode(file(root/"state")))==encode(saved));
+    {
+        const auto baseline=saved;
+        const auto next_hash=std::string(64,'b');
+        const std::string boot_id="00000000-1234-5678-aaaa-ffffffffffff";
+        auto manual=current_slot_trial(baseline,"7.2.11-14",baseline.good_image,"7.2.11-16",next_hash,boot_id);
+        save_update(root/"manual",manual);manual=decode(file(root/"manual"));
+        assert(manual.policy.phase==uke_install::Phase::current_slot_trial && manual.policy.good_release=="7.2.11-14" && manual.good_image==baseline.good_image);
+        reject([&]{uke_install::arm(manual.policy);});
+        reject([&]{uke_install::stage(manual.policy,uke_install::Slot::b,"7.2.11-14","7.2.11-17");});
+        reject([&]{uke_install::accept(manual.policy,uke_install::Slot::a,"7.2.11-16",true);});
+        reject([&]{uke_install::accept(manual.policy,uke_install::Slot::b,"7.2.11-17",true);});
+        reject([&]{uke_install::accept(manual.policy,uke_install::Slot::b,"7.2.11-16",false);});
+        auto fallback=manual;
+        uke_install::returned(fallback.policy,uke_install::Slot::b,"7.2.11-14");
+        fallback.candidate_image.clear();fallback.staged_boot_id.clear();save_update(root/"manual",fallback);
+        assert(fallback.policy.failed=="7.2.11-16" && fallback.good_image==baseline.good_image);
+        reject([&]{current_slot_trial(fallback,"7.2.11-14",baseline.good_image,"7.2.11-16",next_hash,boot_id);});
+        uke_install::accept(manual.policy,uke_install::Slot::b,"7.2.11-16",true);
+        manual.good_image=manual.candidate_image;manual.candidate_image.clear();manual.staged_boot_id.clear();save_update(root/"manual",manual);
+        assert(decode(file(root/"manual")).policy.good_release=="7.2.11-16" && manual.good_image==next_hash);
+        const auto following=current_slot_trial(manual,"7.2.11-16",next_hash,"7.2.11-17",std::string(64,'c'),boot_id);
+        assert(following.policy.good_release=="7.2.11-16" && following.policy.candidate=="7.2.11-17" && following.good_image==next_hash);
+        reject([&]{current_slot_trial(baseline,"7.2.11-14",next_hash,"7.2.11-16",next_hash,boot_id);});
+        reject([&]{current_slot_trial(baseline,"7.2.11-14",baseline.good_image,"7.2.11-16",next_hash,"bad");});
+        auto wrong_slot=baseline;wrong_slot.policy.good=uke_install::Slot::a;
+        reject([&]{current_slot_trial(wrong_slot,"7.2.11-14",baseline.good_image,"7.2.11-16",next_hash,boot_id);});
+        assert(encode(baseline)==encode(saved));
+    }
     assert(uke_install::stage(saved.policy,uke_install::Slot::b,"7.2.11-14","7.2.11-16")==uke_install::Slot::a);
     saved.candidate_image=std::string(64,'b');saved.staged_boot_id="00000000-1234-5678-aaaa-ffffffffffff";save_update(root/"state",saved);
     auto restored=decode(file(root/"state"));reject([&]{uke_install::arm(restored.policy);});
@@ -87,5 +115,5 @@ int main() {
     auto unaligned=boots[1];capability(unaligned,page+257);reject([&]{userdata_vrr(unaligned,true,manifest);});
     auto truncated=boots[1];capability(truncated,page+460);reject([&]{userdata_vrr(truncated,true,manifest);});
     fs::remove_all(root);
-    std::cout<<"Userdata durable states, staged/verified/trial gates, healthy acceptance/fallback, stale/symlink/hardlink refusals, unique running Image identity and bounded VRR derivation passed; regular files only\n";
+    std::cout<<"Userdata durable states, alternating and current-slot trials, healthy acceptance/fallback, stale/symlink/hardlink refusals, unique running Image identity and bounded VRR derivation passed; regular files only\n";
 }

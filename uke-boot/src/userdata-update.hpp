@@ -20,6 +20,7 @@ static std::string phase_name(uke_install::Phase phase) {
     case uke_install::Phase::staging:return "staging";
     case uke_install::Phase::verified:return "verified";
     case uke_install::Phase::trial:return "trial";
+    case uke_install::Phase::current_slot_trial:return "current-slot-trial";
     }
     throw std::runtime_error("Invalid update phase");
 }
@@ -48,6 +49,7 @@ static UserdataUpdate decode(const Bytes &bytes) {
     else if(phase=="staging")saved.policy.phase=uke_install::Phase::staging;
     else if(phase=="verified")saved.policy.phase=uke_install::Phase::verified;
     else if(phase=="trial")saved.policy.phase=uke_install::Phase::trial;
+    else if(phase=="current-slot-trial")saved.policy.phase=uke_install::Phase::current_slot_trial;
     else throw std::runtime_error("Unknown userdata update phase");
     if(values.at("candidate")!="-")saved.policy.candidate=values.at("candidate");
     if(values.at("candidate_image")!="-")saved.candidate_image=values.at("candidate_image");
@@ -68,6 +70,14 @@ static void save_update(const fs::path &path,const UserdataUpdate &saved) {
     write_fd(next.value,Bytes(value.begin(),value.end()));
     need(!renameat(dir.value,temporary.c_str(),dir.value,path.filename().c_str()) && !fsync(dir.value),"Cannot commit userdata update state");
     need(encode(decode(file(path)))==value,"Userdata state readback differs");
+}
+static UserdataUpdate current_slot_trial(UserdataUpdate saved,const std::string &running_release,const std::string &previous_hash,
+                                        const std::string &release,const std::string &next_hash,const std::string &boot_id) {
+    need(hex(previous_hash) && hex(next_hash) && previous_hash!=next_hash && saved.good_image==previous_hash,
+         "Current boot bytes differ from the accepted baseline");
+    need(valid_boot_id(boot_id),"Malformed current-slot staging boot identity");
+    uke_install::stage_current(saved.policy,uke_install::Slot::b,running_release,release);
+    saved.candidate_image=next_hash;saved.staged_boot_id=boot_id;return saved;
 }
 static unsigned identify_slot(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
     std::array<bool,2> matches{};
@@ -230,14 +240,15 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
             saved=decode(file(statefile));
-            if(saved.policy.phase==uke_install::Phase::trial && running!=unsigned(saved.policy.good)) {
+            if((saved.policy.phase==uke_install::Phase::trial && running!=unsigned(saved.policy.good)) ||
+               (saved.policy.phase==uke_install::Phase::current_slot_trial && running==unsigned(saved.policy.good) && release==saved.policy.candidate)) {
                 need(saved.candidate_image==good_hash,"Trial image differs from its verified transaction");
                 uke_install::accept(saved.policy,static_cast<uke_install::Slot>(running),release,true);
                 saved.good_image=good_hash;saved.candidate_image.clear();
                 saved.staged_boot_id.clear();
             } else {
                 need(running==unsigned(saved.policy.good) && release==saved.policy.good_release && good_hash==saved.good_image,"Accepted baseline identity differs");
-                if(saved.policy.phase==uke_install::Phase::trial) {
+                if(saved.policy.phase==uke_install::Phase::trial || saved.policy.phase==uke_install::Phase::current_slot_trial) {
                     if(read_text("/proc/sys/kernel/random/boot_id")==saved.staged_boot_id+"\n") {
                         std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";return;
                     }
