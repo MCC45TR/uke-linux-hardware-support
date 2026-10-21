@@ -23,7 +23,7 @@ function check() {
 /^Source0:/ {
     sources++; print
     if (name=="upower") {
-        print "Patch9997: 0001-required-threshold-write-errors.patch\nPatch9998: 0002-preserve-reported-health-capacity.patch"
+        print "Patch9997: 0001-required-threshold-write-errors.patch\nPatch9998: 0002-preserve-reported-health-capacity.patch\nPatch9999: 0003-recognize-standard-wireless-supplies.patch"
         print "Source9996: upower-threshold-contract.sh\nSource9997: upower-health-contract.sh\nSource9998: upower-fixture.sh\nSource9999: ac-net-discharge.umockdev"
         print "BuildRequires: glib2-devel >= 2.76\nBuildRequires: gcc python3 umockdev dbus-daemon systemd-rpm-macros"
     } else {

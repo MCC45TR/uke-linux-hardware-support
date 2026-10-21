@@ -2,6 +2,7 @@
 
 | ID | Date | Finding | Validation |
 |---|---|---|---|
+| [UKE-BAT-WLS001](2026-10-21-WIRELESS-TYPE.md) | 2026-10-21 | Standard Wireless supply classification preserves online state and unknown diagnostics | Private-bus host model and production recipe preparation; native/device gates separate |
 | UKE-BAT-MATH001 | 2026-10-20 | Explicit pack basis and elapsed-time charge curves; reject stale/nonfinite estimates | Native/sanitizer fixtures and separate package/device receipts; physical calibration remains open |
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
 

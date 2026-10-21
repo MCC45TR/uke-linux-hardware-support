@@ -1,5 +1,11 @@
 # Fedora UPower overlay — 18 October 2026
 
+21 October 2026: the active producer uses the original signed Rawhide source
+lock and family `uke-power 1.1.0-4`, with `uke-upower 1.91.5-8`. The standalone
+reference spec retains a numeric Release; the family remains the COPR
+publication path. Earlier release identities and test results below describe
+their original scope.
+
 This candidate targets the original `upower-1.91.5-1.fc46.aarch64` version
 observed on Uke. The follow-up release is `1.91.5-2.uke4`; earlier source-only
 notes are superseded by the host results below. Tablet installation and
@@ -62,7 +68,7 @@ does not add a coil, enable charging, alter current limits or qualify bypass.
 The tablet's existing wireless provider was offline during observation.
 
 The existing private-bus umockdev fixture now also checks online 0, online 1,
-malformed online data and retained unknown-type diagnostics. On an isolated
+malformed and missing online data, and retained unknown-type diagnostics. On an isolated
 Fedora x86_64 build host the original daemon fails the new warning assertion;
 the patched native daemon passes the extended fixture. Existing AC-online,
 net-discharge and low-battery assertions remain. Host Meson 1.12.1 and Python
@@ -75,3 +81,10 @@ The earlier 18 October package results above retain their original two-patch
 scope. This follow-up requires a fresh coherent COPR family revision, signature
 and dependency admission, and a DNF install with real-device readback. The
 legacy standalone release identity is not a publication target for this change.
+
+The production RPM Git patch backend rejected the first zero-context patch,
+although the host's GNU patch model accepted it. The patch now has standard
+unified context and the complete family `%prep` passes without changing its
+semantics. The extended model also returns offline for a missing `online`
+attribute. Production native build, signature/dependency admission and real
+device readback remain separate gates.

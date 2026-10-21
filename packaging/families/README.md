@@ -1,5 +1,11 @@
 # COPR source families
 
+21 October 2026: power source 1.1.0-4 recognizes the standard Wireless supply
+type in original Rawhide UPower 1.91.5, retaining kernel online values and
+unknown-type diagnostics. Every rebuilt child advances; UPower is 1.91.5-8.
+The private-bus fixture includes offline, online, malformed and missing values.
+This classification establishes no physical wireless-charging capability.
+
 21 October 2026: additional source 1.0.0-4 includes the original Rawhide
 AccountsService base, an optional-directory correction and bounded Turnip
 display-fd handling. The source watch now covers ten Fedora-derived bases.

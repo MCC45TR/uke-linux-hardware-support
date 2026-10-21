@@ -40,7 +40,7 @@ busctl --address="$DBUS_SYSTEM_BUS_ADDRESS" --auto-start=no get-property org.fre
 grep -Fx 'b true' "$work/ac-online"
 grep -Fx 'u 2' "$work/display-state"
 grep -E '^u [345]$' "$work/warning"
-for item in WIRELESS0:false WIRELESS1:true WIRELESS_INVALID:false; do
+for item in WIRELESS0:false WIRELESS1:true WIRELESS_INVALID:false WIRELESS_MISSING:false; do
     name=${item%:*}; expected=${item#*:}
     busctl --address="$DBUS_SYSTEM_BUS_ADDRESS" --auto-start=no get-property org.freedesktop.UPower \
         "/org/freedesktop/UPower/devices/line_power_$name" org.freedesktop.UPower.Device Online > "$work/$name"

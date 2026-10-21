@@ -19,6 +19,11 @@ E: POWER_SUPPLY_NAME=AC
 A: type=Mains
 A: online=1
 
+P: /devices/platform/uke-fixture/power_supply/WIRELESS_MISSING
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=WIRELESS_MISSING
+A: type=Wireless
+
 P: /devices/platform/uke-fixture/power_supply/WIRELESS0
 E: SUBSYSTEM=power_supply
 E: POWER_SUPPLY_NAME=WIRELESS0
