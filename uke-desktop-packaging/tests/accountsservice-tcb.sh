@@ -3,11 +3,12 @@
 set -euo pipefail
 project=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 source_dir=${1:?Usage: accountsservice-tcb.sh extracted-source-directory}
+[[ $# == 1 || ( $# == 2 && $2 == --patched ) ]]
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
 mkdir -p "$tmp/src"
 cp -- "$source_dir/src/daemon.c" "$tmp/src/daemon.c"
-patch --batch --fuzz=0 -d "$tmp" -p1 < "$project/packaging/accountsservice/0001-ignore-absent-optional-tcb-directory.patch"
+if [[ $# == 1 ]]; then patch --batch --fuzz=0 -d "$tmp" -p1 < "$project/packaging/accountsservice/0001-ignore-absent-optional-tcb-directory.patch"; fi
 cat > "$tmp/check.cpp" <<'CPP'
 #include <glib.h>
 #include <dirent.h>

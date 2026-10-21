@@ -8,7 +8,7 @@ mkdir -p "$stage/repo/packaging/families/host" "$stage/repo/packaging/families/k
 cp "$root/packaging/families/host/track-rawhide.sh" "$stage/repo/packaging/families/host/"
 touch "$stage/repo/packaging/families/keys/fedora-46.asc"
 cat >"$stage/base.json" <<'JSON'
-{"packages":[{"name":"upower","binary_name":"upower","family":"uke-power","version":"1.0","release":"1.fc46","native_release":"4","sha256":"old"}],"tracking":{"key_fingerprints":["D924B10D3E810DABDD8B56B596E7E91491211FCE"]},"build_tools":{"python3":"3.15.0-1.fc46"}}
+{"packages":[{"name":"upower","binary_name":"upower","family":"uke-power","version":"1.0","release":"1.fc46","native_release":"4","sha256":"old","host_tools":{"python3-dbusmock":"0.1-1.fc46"}}],"tracking":{"key_fingerprints":["D924B10D3E810DABDD8B56B596E7E91491211FCE"]},"build_tools":{"python3":"3.15.0-1.fc46"}}
 JSON
 cat >"$stage/families.json" <<'JSON'
 {"families":[{"name":"uke-power","release":1,"requires":["uke-upower"],"suggests":["uke-adaptive-display = 1.0.15-2%{?dist}"]}],"release_overrides":{"upower":"4.fc46","uke-adaptive-display":"2.fc46"}}
@@ -38,6 +38,7 @@ set -Eeuo pipefail
 if [[ $* == *repoquery* ]]; then
     name=${!#}; version=${FIXTURE_VERSION:-2.0}
     if [[ $name == python3 ]]; then printf 'python3|0|3.15.0|1.fc46|python3-3.15.0-1.fc46.src.rpm\n'; exit 0; fi
+    if [[ $name == python3-dbusmock ]]; then printf 'python3-dbusmock|0|0.2|1.fc46|python-dbusmock-0.2-1.fc46.src.rpm\n'; exit 0; fi
     epoch=0; [[ $FIXTURE_MODE != epoch ]] || epoch=1
     printf 'upower|%s|%s|1.fc46|upower-%s-1.fc46.src.rpm\n' "$epoch" "$version" "$version"
 else
@@ -70,7 +71,7 @@ done
 reset_fixture
 export FIXTURE_MODE=good FIXTURE_VERSION=2.0
 bash "$watcher" >"$stage/log" 2>&1 || { cat "$stage/log"; exit 1; }
-jq -e '.packages[0].version=="2.0" and (.packages[0].source_payload_sha256|length==64)' "$manifest" >/dev/null
+jq -e '.packages[0].version=="2.0" and .packages[0].host_tools["python3-dbusmock"]=="0.2-1.fc46" and (.packages[0].source_payload_sha256|length==64)' "$manifest" >/dev/null
 jq -e '.families[0].release==2 and .release_overrides.upower=="6.fc46" and .release_overrides["uke-battery-observer"]=="2.fc46" and .families[0].suggests[0]=="uke-adaptive-display = 1.0.15-3%{?dist}"' "$families" >/dev/null
 sha256sum "$manifest" "$families" >"$stage/unchanged"
 bash "$watcher" >"$stage/log" 2>&1 || { cat "$stage/log"; exit 1; }

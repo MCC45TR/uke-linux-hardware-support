@@ -2,6 +2,7 @@
 
 | ID | Date | Finding | Validation |
 |---|---|---|---|
+| [UKE-DESKTOP-013](2026-10-21-RUNTIME-COHORT.md) | 2026-10-21 | Real Mesa CPU producer, bounded display-fd handling and optional TCB correction | Source/host checks; native and tablet gates remain separate |
 | [UKE-DESKTOP-012](2026-10-21-RAWHIDE-TRACKING.md) | 2026-10-21 | Nine Fedora-derived source bases follow signed Rawhide cohorts | Source/host fixtures; native package and tablet acceptance remain separate |
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
 

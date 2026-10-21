@@ -112,6 +112,12 @@ while IFS= read -r package; do
     jq --arg package "$package" --arg evr "$version-$release" '.build_tools[$package]=$evr' "$stage/new.json" >"$stage/next.json"
     mv "$stage/next.json" "$stage/new.json"
 done <"$stage/tools"
+jq -r '.packages[]|.name as $name|(.host_tools // {}|keys[])|[$name,.]|@tsv' "$manifest" >"$stage/profile-tools"
+while IFS=$'\t' read -r name package; do
+    query "$package"
+    jq --arg name "$name" --arg package "$package" --arg evr "$version-$release" '.packages |= map(if .name==$name then .host_tools[$package]=$evr else . end)' "$stage/new.json" >"$stage/next.json"
+    mv "$stage/next.json" "$stage/new.json"
+done <"$stage/profile-tools"
 cp "$families" "$stage/families.json"
 for family in uke-additional uke-power uke-sensors; do
     jq -Sc --arg family "$family" '{packages:[.packages[]|select(.family==$family)],build_tools}' "$manifest" >"$stage/old-family"

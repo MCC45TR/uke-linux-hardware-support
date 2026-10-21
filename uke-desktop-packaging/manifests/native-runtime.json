@@ -115,6 +115,21 @@
       "delta": "Native Uke backend built from current Fedora PPD source; retain governors, thermal limits, readback/rollback and native driver tests; no Python CLI overlay",
       "signed_mirror_sha256": "8bcf753cd8f64900883d2552b24850f94728c1221be47ca7110fcbdac8f72abc",
       "source_payload_sha256": "d0d1c2d8481a9f46532ec84a7edba951d3859100a3753afa8436b66e949ea240"
+    },
+    {
+      "name": "accountsservice",
+      "binary_name": "accountsservice",
+      "family": "uke-additional",
+      "version": "26.27.3",
+      "release": "2.fc45",
+      "native_release": "3",
+      "sha256": "394b5016ef1a895b2c8ecf348be692830b483fe6f4612a771c0d6b764f2171e6",
+      "delta": "Ignore only ENOENT for the optional TCB directory; preserve normal shadow accounts and permission/I/O diagnostics; original Fedora daemon and native libraries",
+      "signed_mirror_sha256": "eb2c9144d0df68228840f0fcc8a7f4085f2f98fecc0dabd8a6200f026448682e",
+      "source_payload_sha256": "ca7e2e1c3d36e2a182c1553a27315b37a0e3a92958cb3afd6f5fef0c145d841d",
+      "host_tools": {
+        "python3-dbusmock": "0.38.0-3.fc45"
+      }
     }
   ],
   "baseline": {

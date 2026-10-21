@@ -17,8 +17,9 @@ stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
 map=packaging/families/families.json
 pins=packaging/families/source-inputs.json
+migrations=packaging/families/migrations.json
 native=uke-desktop-packaging/manifests/native-runtime.json
-paths=(.copr/Makefile packaging/families/host/compose.sh packaging/families/host/split-spec.awk packaging/families/host/service-rename.sh uke-desktop-packaging/Makefile uke-desktop-packaging/src/native-runtime/prepare-source.sh uke-desktop-packaging/src/native-runtime/power-sensors.awk "$native")
+paths=(.copr/Makefile packaging/families/host/compose.sh packaging/families/host/split-spec.awk packaging/families/host/service-rename.sh uke-desktop-packaging/Makefile uke-desktop-packaging/src/native-runtime/prepare-source.sh uke-desktop-packaging/src/native-runtime/power-sensors.awk "$native" "$migrations")
 own_paths=()
 if git cat-file -e "$commit:$map" 2>/dev/null; then
     git show "$commit:$map" >"$stage/families.json"
@@ -29,6 +30,14 @@ if git cat-file -e "$commit:$map" 2>/dev/null; then
     own_paths=("${watched[@]}")
     jq -Sc 'del(.watch_paths)' "$stage/new.json" >"$stage/new-policy"
     git show "$commit:$pins" | jq -Sc --arg f "$family" '[.[]|select(.family==$f)]' >"$stage/new-pins"
+    if git cat-file -e "$commit:$migrations" 2>/dev/null; then
+        git show "$commit:$migrations" | jq -Sc --arg f "$family" '[.[]|select(.family==$f)]' >"$stage/new-migrations"
+        if git cat-file -e "$base:$migrations" 2>/dev/null; then
+            git show "$base:$migrations" | jq -Sc --arg f "$family" '[.[]|select(.family==$f)]' >"$stage/old-migrations"
+        else
+            printf '[]\n' >"$stage/old-migrations"
+        fi
+    fi
     if git cat-file -e "$commit:$native" 2>/dev/null; then
         git show "$commit:$native" | jq -Sc --arg f "$family" '{packages:[.packages[]|select(.family==$f)],build_tools:(if any(.packages[];.family==$f) then .build_tools else null end),baseline:(if $f=="uke-additional" then .baseline else null end)}' >"$stage/new-native"
         if git cat-file -e "$base:$native" 2>/dev/null; then
@@ -68,6 +77,7 @@ if ((${#own_paths[@]})) && ! git diff --quiet "$base" "$commit" -- "${own_paths[
 if [[ -e $stage/new.json ]]; then
     if [[ ! -e $stage/old.json ]] || ! cmp -s "$stage/new-policy" "$stage/old-policy" || ! cmp -s "$stage/new-pins" "$stage/old-pins"; then changed=true; own_changed=true; fi
     if [[ -e $stage/new-native ]] && { [[ ! -e $stage/old-native ]] || ! cmp -s "$stage/new-native" "$stage/old-native"; }; then changed=true; own_changed=true; fi
+    if [[ -e $stage/new-migrations ]] && ! cmp -s "$stage/new-migrations" "$stage/old-migrations"; then changed=true; own_changed=true; fi
 fi
 if [[ $changed == false ]]; then
     printf 'No %s package input change; no build requested.\n' "$family"; exit 0

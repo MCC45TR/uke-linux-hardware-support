@@ -3,11 +3,12 @@
 set -euo pipefail
 project=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 source_dir=${1:?Usage: turnip-display-fd.sh extracted-Mesa-source-directory}
+[[ $# == 1 || ( $# == 2 && $2 == --patched ) ]]
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
 mkdir -p "$tmp/src/freedreno/vulkan"
 cp -- "$source_dir/src/freedreno/vulkan/tu_knl.cc" "$tmp/src/freedreno/vulkan/tu_knl.cc"
-patch --batch --fuzz=0 -d "$tmp" -p1 < "$project/packaging/mesa/0003-turnip-reject-render-only-display-fd.patch"
+if [[ $# == 1 ]]; then patch --batch --fuzz=0 -d "$tmp" -p1 < "$project/packaging/mesa/0003-turnip-reject-render-only-display-fd.patch"; fi
 cat > "$tmp/check.cpp" <<'CPP'
 #include <cassert>
 #include <cerrno>

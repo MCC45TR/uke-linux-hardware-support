@@ -131,3 +131,13 @@ export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
 UKE_COPR_FAMILY=uke-extras bash "$script"
 test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
 printf '%s\n' 'PASS: shared desktop source-factory maintenance does not rebuild unchanged extras.'
+printf '[]\n' >packaging/families/migrations.json
+git add .; git commit -qm migration-base
+export UKE_CONTROL_BEFORE=$(git rev-parse HEAD)
+printf '%s\n' '[{"family":"uke-power","old":"upower","new":"uke-upower","unit":"upower.service"}]' >packaging/families/migrations.json
+git add .; git commit -qm unversioned-migration
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+if UKE_COPR_FAMILY=uke-power bash "$script"; then exit 1; fi
+UKE_COPR_FAMILY=uke-extras bash "$script"
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
+printf '%s\n' 'PASS: service migration changes require their own family revision.'

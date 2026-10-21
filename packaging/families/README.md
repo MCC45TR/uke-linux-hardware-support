@@ -1,7 +1,15 @@
 # COPR source families
 
+21 October 2026: additional source 1.0.0-4 includes the original Rawhide
+AccountsService base, an optional-directory correction and bounded Turnip
+display-fd handling. The source watch now covers ten Fedora-derived bases.
+Mesa's feature fixture links its real CPU producer and runs before the complete
+driver build. Native source 1.0.0-3 stopped at that fixture after compilation;
+no successful package or device result is inferred from it. Release-4 native
+build and tablet acceptance are separate gates.
+
 21 October 2026: [Rawhide tracking](RAWHIDE-TRACKING.md) replaces historical
-frozen inputs for all nine modified Fedora source bases, including UPower,
+frozen inputs for the modified Fedora source bases, including UPower,
 SensorProxy and the native PPD backend. The six-hour watcher verifies signed
 source payloads, advances complete child cohorts and uses validated test-build
 admission. Initial refreshed source revisions are additional 1.0.0-3,

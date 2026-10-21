@@ -1,8 +1,8 @@
 # Python-free Fedora native runtime variants
 
-21 October 2026 update: the active lock now tracks nine Fedora bases through the
+21 October 2026 update: the active lock now tracks ten Fedora bases through the
 [Rawhide source workflow](../../packaging/families/RAWHIDE-TRACKING.md), including
-UPower, SensorProxy and the native PPD backend. Source/tool pins below describe
+UPower, SensorProxy, AccountsService and the native PPD backend. Source/tool pins below describe
 earlier measurements; the JSON lock records the current complete inputs.
 Original KDE application variants remain withdrawn.
 

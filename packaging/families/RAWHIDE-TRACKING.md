@@ -18,6 +18,7 @@ dispatch performs the same check.
 | upower | uke-power | 1.91.5-1.fc46 |
 | power-profiles-daemon, native Uke backend | uke-power | 0.30-4.fc45 |
 | iio-sensor-proxy | uke-sensors | 3.9-3.fc45 |
+| accountsservice | uke-additional | 26.27.3-2.fc45 |
 
 An inherited `.fc45` release can remain the newest Rawhide build. The repository
 query establishes currency; the distribution suffix alone does not.
@@ -46,7 +47,7 @@ scheduled check. Recorded build attempts are not automatically repeated at the
 same NVR; an uncertain source-stage failure requires inspection. Stable
 promotion and tablet installation retain their own acceptance gates.
 
-The factory regenerates all nine Fedora variants and retains the reviewed
+The factory regenerates all ten Fedora variants and retains the reviewed
 native accessibility/media/runtime deltas, UPower threshold/health contracts and
 AC-online/net-discharge fixture, SSC/dual-light behavior and native PPD driver
 tests. UPower and SensorProxy retain their original Fedora recipes. Standalone
@@ -60,6 +61,22 @@ local hunk is omitted, while the exact upstream function must still preserve
 every enabled and disabled LLVM feature. The Adreno identity patch remains
 independent. Patch, recipe-layout, ABI, build or payload failures remain visible
 and cannot silently remove a required delta. Binary no-Python gates remain.
+
+Additional source Release 4 adds a narrow optional-TCB correction to the original
+Fedora AccountsService recipe and a Turnip unsupported-KMS-fd correction. Account
+enumeration, real errors, fd ownership and the existing no-display WSI path stay
+covered by native fixtures. AccountsService's original Python D-Bus mock is an
+unavoidable host test/discovery dependency, pinned per source profile to
+`0.38.0-3.fc45`; its interpreter remains the shared pinned Python host tool.
+The helper and installed-test code are excluded from binary payloads.
+Profile-specific host pins advance only their owning family.
+
+The Mesa host-feature executable now links the actual Mesa CPU-capability
+producer through a non-installed Meson target. It checks all LLVM attributes,
+the detected NEON case and both guard states. Its target builds and runs before
+the full driver build, then participates in `%check`. This corrects the missing
+producer dependency caught by native build 11181620; that failed source revision
+was not repeated or installed. Native Release-4 and tablet results remain separate.
 
 Original KDE applications remain distribution packages. Project applications,
 OEM firmware and upstream-only components retain separate source locks.

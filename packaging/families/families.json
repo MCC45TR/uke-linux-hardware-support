@@ -126,9 +126,12 @@
         "uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch",
         "uke-desktop-packaging/src/native-runtime",
         "uke-desktop-packaging/packaging/mesa",
-        "uke-desktop-packaging/packaging/libstdcxx-uke-runtime"
+        "uke-desktop-packaging/packaging/libstdcxx-uke-runtime",
+        "uke-desktop-packaging/packaging/accountsservice",
+        "uke-desktop-packaging/tests/accountsservice-tcb.sh",
+        "uke-desktop-packaging/tests/turnip-display-fd.sh"
       ],
-      "release": 3
+      "release": 4
     },
     {
       "name": "uke-metas",
@@ -211,12 +214,13 @@
     "libssc": "11.fc46",
     "uke-ssc-fileservice": "14.fc46",
     "uke-front-color": "6.fc46",
-    "at-spi2-core": "4.fc46",
-    "gstreamer1": "4.fc46",
-    "libaccounts-glib": "32.fc46",
-    "libwacom": "5.fc46",
-    "libstdcxx-uke-runtime": "6.fc46",
-    "mesa": "6.fc46",
-    "uke-battery-observer": "3.fc46"
+    "at-spi2-core": "5.fc46",
+    "gstreamer1": "5.fc46",
+    "libaccounts-glib": "33.fc46",
+    "libwacom": "6.fc46",
+    "libstdcxx-uke-runtime": "7.fc46",
+    "mesa": "7.fc46",
+    "uke-battery-observer": "3.fc46",
+    "accountsservice": "4.fc46"
   }
 }

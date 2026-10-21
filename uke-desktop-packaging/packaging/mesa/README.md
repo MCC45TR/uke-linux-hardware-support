@@ -52,4 +52,12 @@ branch with host fakes. Disabled-display, failed-open, valid-resource,
 unsupported-KMS, ENOMEM, EIO, EACCES and ENOTTY cases check ownership and failure
 preservation. Complete Mesa compilation, signed coherent COPR integration,
 DNF deployment and separate Vulkan/Wayland tablet tests remain required.
-The candidate is not yet added to automatic package inputs in this branch.
+Source family `uke-additional` Release 4 includes this candidate. The fixture
+accepts `--patched` for its already prepared build tree. Native builds and
+physical acceptance remain separate; no support claim follows from inclusion.
+
+The host-feature executable is a non-installed Meson target linked to the real
+Mesa CPU-capability producer and LLVM dependency. It preserves every enabled
+and disabled LLVM attribute, then checks Mesa's detected NEON state and both
+single-threaded guard branches. Missing LLVM-map and missing-guard mutations
+fail independently. The target runs before the full build and again in `%check`.

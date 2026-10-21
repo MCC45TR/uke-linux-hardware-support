@@ -128,7 +128,7 @@ spec="$output/SPECS/$family.spec"
     for part in "$stage/parts/"*; do
         [[ -f $part/preamble ]] || continue
         awk '
-          /^%description -n uke-(iio-sensor-proxy|upower)$/ {
+          /^%description -n uke-(iio-sensor-proxy|upower|accountsservice)$/ {
             print "Requires(pre): rpm systemd coreutils sed"
             print "Requires(posttrans): systemd coreutils sed"
             if($3=="uke-iio-sensor-proxy")print "Requires(posttrans): /usr/bin/semodule /usr/bin/selinuxenabled selinux-policy-targeted"
