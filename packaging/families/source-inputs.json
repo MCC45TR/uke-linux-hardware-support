@@ -40,19 +40,6 @@
   },
   {
     "family": "uke-sensors",
-    "name": "libssc",
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179111/libssc-0.4.4-5.src.rpm",
-    "sha256": "100688bf175fecf5ee3002cfc16a33f3bbef20c7fc4c6415218014edc3599de7",
-    "build": 11167839,
-    "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/srpm-builds/11167839/libssc-0.4.4-5.src.rpm",
-    "original_build": 11167839,
-    "archive_build": 11179111,
-    "archive_method": "project-fork",
-    "original_sha256": "3c798141f355cfe2f9ce00565c14f6d4a4d5a50675bf7e4a94c6ec7bcd34d8a7",
-    "original_payload_sha256": "3c2f0751f5f7c8b04492f6ccfabc0765d446915e869bebe41e6eee8b69d9c137"
-  },
-  {
-    "family": "uke-sensors",
     "name": "uke-front-color",
     "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179102/uke-front-color-0.1.0-2.fc46.src.rpm",
     "sha256": "fa423d8305473d2bbaef7010b368c42de33e030999577dc5bbc96df12acdc7f1",

@@ -38,9 +38,12 @@ uke-core)
     controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
     printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-sensors)
-    make -C uke-sensors srpm PACKAGE=uke-ssc-fileservice outdir="$stage/ssc" >"$stage/local.log"
+    make -C uke-sensors srpm PACKAGE=libssc outdir="$stage/libssc" >"$stage/local.log"
+    libraries=("$stage/libssc/"*.src.rpm); [[ ${#libraries[@]} == 1 && -f ${libraries[0]} ]]
+    printf '%s\t%s\n' libssc "${libraries[0]}" >"$stage/inputs"
+    make -C uke-sensors srpm PACKAGE=uke-ssc-fileservice outdir="$stage/ssc" >>"$stage/local.log"
     services=("$stage/ssc/"*.src.rpm); [[ ${#services[@]} == 1 && -f ${services[0]} ]]
-    printf '%s\t%s\n' uke-ssc-fileservice "${services[0]}" >"$stage/inputs";;
+    printf '%s\t%s\n' uke-ssc-fileservice "${services[0]}" >>"$stage/inputs";;
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
