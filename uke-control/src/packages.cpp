@@ -19,6 +19,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <vector>
 #include <stdexcept>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -43,6 +44,25 @@ bool managed_repo(const std::string& id) {
     for(const auto& p:{std::string("uke-linux"),std::string("uke-linux-test")})
         if(id==p||id==prefix+p||id.starts_with(prefix+p+":custom:"))return true;
     return false;
+}
+bool managed_source(const std::string& id,const std::vector<std::string>& urls) {
+    if(managed_repo(id))return true;
+    for(const auto& url:urls)for(const auto& p:{"uke-linux/","uke-linux-test/"})
+        if(url.starts_with(std::string("https://download.copr.fedorainfracloud.org/results/mcc45tr/")+p))return true;
+    return false;
+}
+std::set<std::string> enabled_managed_repos(libdnf5::Base& base) {
+    std::set<std::string> result;
+    for(const auto& repo:libdnf5::repo::RepoQuery(base))
+        if(repo->get_config().get_enabled_option().get_value() &&
+           managed_source(repo->get_id(),repo->get_config().get_baseurl_option().get_value()))result.insert(repo->get_id());
+    return result;
+}
+std::string infer_channel(const std::set<std::string>& enabled) {
+    if(enabled.size()!=1)return {};
+    for(const auto& selection:{"stable","test"})
+        if(*enabled.begin()==project(selection)||*enabled.begin()==prefix+project(selection))return selection;
+    return {};
 }
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
 bool protected_package(const Package& p) {
@@ -106,7 +126,19 @@ void atomic_write(const fs::path& path,const std::string& value,mode_t mode=0644
     Fd parent(open(path.parent_path().c_str(),O_DIRECTORY|O_RDONLY|O_CLOEXEC));need(parent.n>=0&&fsync(parent.n)==0,"Cannot sync configuration directory");
 }
 std::string saved(const fs::path& path) {
-    auto s=read_file(path);if(s.empty())return {};
+    Fd input(open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC));
+    if(input.n<0){need(errno==ENOENT,"Cannot read channel record: "+path.string());return {};}
+    struct stat st{},parent{};
+    need(fstat(input.n,&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1&&!(st.st_mode&0022)&&
+         lstat(path.parent_path().c_str(),&parent)==0&&S_ISDIR(parent.st_mode)&&parent.st_uid==0&&!(parent.st_mode&0022),
+         "Untrusted channel record: "+path.string());
+    std::string s;std::array<char,64> bytes{};
+    for(;;) {
+        const auto n=read(input.n,bytes.data(),bytes.size());if(n<0&&errno==EINTR)continue;
+        need(n>=0&&s.size()+size_t(n)<=bytes.size(),"Unreadable or oversized channel record: "+path.string());
+        if(!n)break;
+        s.append(bytes.data(),size_t(n));
+    }
     if(s.ends_with('\n'))s.pop_back();
     need(channel(s),"Invalid channel record: "+path.string());return s;
 }
@@ -160,14 +192,10 @@ void unique_repository_ids(libdnf5::Base& base) {
     }
 }
 Repositories configure(libdnf5::Base& base,const std::string& selected) {
-    unique_repository_ids(base);
-    auto sack=base.get_repo_sack();sack->create_repos_from_system_configuration();
+    auto sack=base.get_repo_sack();
     Repositories result;
     for(const auto& repo:libdnf5::repo::RepoQuery(base)) {
-        bool ours=managed_repo(repo->get_id());
-        for(const auto& url:repo->get_config().get_baseurl_option().get_value())
-            for(const auto& p:{"uke-linux/","uke-linux-test/"})
-                if(url.starts_with(std::string("https://download.copr.fedorainfracloud.org/results/mcc45tr/")+p))ours=true;
+        const bool ours=managed_source(repo->get_id(),repo->get_config().get_baseurl_option().get_value());
         if(ours){result.ids.insert(repo->get_id());repo->get_config().get_enabled_option().set(priority,false);}
         repo->get_config().get_pkg_gpgcheck_option().set(priority,true);
     }
@@ -345,11 +373,12 @@ void boot_kernel(const std::string& release) {
 void run(Options o) {
     const fs::path state="/var/lib/uke-control", config="/etc/uke-control";
     if(o.status) {
-        auto current=saved(config/"channel");auto pending=saved(state/"channel-pending");
+        auto current=saved(config/"channel");const auto pending=geteuid()==0?saved(state/"channel-pending"):std::string{};
+        libdnf5::Base base;base.load_config();base.setup();unique_repository_ids(base);base.get_repo_sack()->create_repos_from_system_configuration();
+        const bool inferred=current.empty();if(inferred)current=infer_channel(enabled_managed_repos(base));
         utsname u{};uname(&u);
-        std::cout<<"selected="<<(current.empty()?"stable (default; not synchronized)":current)<<"\npending="<<(geteuid()!=0?"unknown (requires root)":pending.empty()?"none":pending)<<"\nrunning_kernel="<<u.release<<"\n";
-        libdnf5::Base base;base.load_config();base.setup();base.get_repo_sack()->create_repos_from_system_configuration();
-        for(const auto& repo:libdnf5::repo::RepoQuery(base))if(managed_repo(repo->get_id()))std::cout<<"repo="<<repo->get_id()<<" enabled="<<repo->get_config().get_enabled_option().get_value()<<'\n';
+        std::cout<<"selected="<<(current.empty()?"unknown (choose brunch stable|test|unstable)":current+(inferred?" (inferred from enabled COPR; not synchronized)":""))<<"\npending="<<(geteuid()!=0?"unknown (requires root)":pending.empty()?"none":pending)<<"\nrunning_kernel="<<u.release<<"\n";
+        for(const auto& repo:libdnf5::repo::RepoQuery(base))if(managed_source(repo->get_id(),repo->get_config().get_baseurl_option().get_value()))std::cout<<"repo="<<repo->get_id()<<" enabled="<<repo->get_config().get_enabled_option().get_value()<<'\n';
         return;
     }
     need(geteuid()==0,"Package operations require root; use sudo uke-control (preview also requires the system RPM lock)");
@@ -360,14 +389,17 @@ void run(Options o) {
     need(lock.n>=0&&flock(lock.n,LOCK_EX|LOCK_NB)==0,"Another uke-control operation is running");
     auto pending=saved(state/"channel-pending");
     if(!pending.empty()){need(o.sync,"An interrupted channel transaction exists; run brunch sync");o.selected=pending;}
-    if(o.selected.empty()){o.selected=saved(config/"channel");if(o.selected.empty())o.selected="stable";}
+    if(o.selected.empty())o.selected=saved(config/"channel");
     libdnf5::Base base;base.load_config();
     base.get_config().get_installonly_limit_option().set(priority,0);
     base.get_config().get_protect_running_kernel_option().set(priority,true);
     base.get_config().get_pkg_gpgcheck_option().set(priority,true);
     base.get_config().get_best_option().set(priority,true);
     base.get_config().get_skip_unavailable_option().set(priority,false);
-    base.setup();auto repos=configure(base,o.selected);
+    base.setup();unique_repository_ids(base);base.get_repo_sack()->create_repos_from_system_configuration();
+    if(o.selected.empty())o.selected=infer_channel(enabled_managed_repos(base));
+    need(channel(o.selected),"No unambiguous saved or enabled main COPR channel; choose brunch stable|test|unstable explicitly");
+    auto repos=configure(base,o.selected);
     base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING);
     base.get_repo_sack()->load_repos();
     const auto p=plan(base,o.selected,repos.ids);auto tx=resolve(base,p,o.selected,o.update);

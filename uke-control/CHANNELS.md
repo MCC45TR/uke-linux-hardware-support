@@ -1,5 +1,13 @@
 # Package channels
 
+21 October 2026 correction: without a saved selection, status and implicit
+operations use exactly one enabled normal stable/test COPR. They do not silently
+select stable over an enabled test repository. Missing, multiple or custom-only
+repositories require an explicit selection. Unstable preference must be saved
+explicitly because it shares the test repository. Unreadable, empty, malformed,
+symlink or hardlinked channel records are refused. Status reads no package
+metadata from the network; private pending state remains root-only.
+
 18 October 2026. Native C++ implementation against libdnf5 5.4.6 or later,
 initially scoped to Fedora Rawhide AArch64 on Uke. Host fixture results and
 tablet acceptance are separate. The original Fedora repositories and unrelated

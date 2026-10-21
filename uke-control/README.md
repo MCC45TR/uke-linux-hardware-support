@@ -1,5 +1,12 @@
 # Uke Control
 
+21 October 2026: version 1.0.22 corrects channel discovery when no saved choice
+exists. One enabled normal Uke COPR determines stable or test; ambiguous or
+custom-only configurations require an explicit choice. Existing choices and
+interrupted transactions retain priority. Empty, malformed, oversized and
+untrusted records fail closed. Native host and signed repository fixtures pass;
+this source result does not establish a tablet channel transition.
+
 20 October 2026: [hardware path diagnostics](HARDWARE.md) separate configured
 audio/camera nodes, effective parent status, driver bindings and exported
 endpoints. `uke-control hardware status` performs no device open, firmware

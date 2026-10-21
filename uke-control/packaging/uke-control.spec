@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.0.21
+Version: 1.0.22
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -90,6 +90,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.22-1
+- Infer an unset channel only from one enabled normal Uke COPR repository.
+- Refuse malformed channel records and ambiguous defaults; preserve explicit choices.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.21-1
 - Restore moisture notifications, desktop and hardware inspection, and USB routing reports.
 - Preserve the F2FS swap allocator and signed DNF channel management.
