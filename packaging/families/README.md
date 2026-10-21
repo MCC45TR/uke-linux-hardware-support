@@ -1,5 +1,10 @@
 # COPR source families
 
+21 October 2026 source follow-up: core 1.0.23 retains the exact device-private
+touchscreen-data package during public synchronization and excludes public
+candidates for that identity. Generic legacy firmware replacement remains
+explicit. No private data enter a family source or binary RPM.
+
 21 October 2026 source follow-up: hardware family 1.1.3-1 includes the bounded
 journal-filesystem policy in the existing installation classifier. Its base
 data package is an exact classifier dependency. Other rebuilt children retain

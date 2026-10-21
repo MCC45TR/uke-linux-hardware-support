@@ -1,5 +1,12 @@
 # Package channels
 
+21 October 2026 private-data correction: `uke-local-touch-data` is a retained
+device-private package, outside public channel synchronization. Its absence from
+COPR does not prevent sync/update. Public candidates with that exact name are
+excluded; any indirect transaction that replaces or removes it is refused.
+The exception does not cover other `uke-local-*` names or obsolete generic
+firmware providers. Calibration is never uploaded or substituted from COPR.
+
 21 October 2026 correction: without a saved selection, status and implicit
 operations use exactly one enabled normal stable/test COPR. They do not silently
 select stable over an enabled test repository. Missing, multiple or custom-only

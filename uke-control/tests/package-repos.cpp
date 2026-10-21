@@ -25,7 +25,7 @@ int main(int argc,char** argv) {
     const fs::path repo=std::string(selected)=="stable"?stable:test;
     session(root,repo,selected,[&](libdnf5::Base& base) {
         const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test"};
-        if(phase=="rename-upper-bound"||phase=="ambiguous-rename"||phase=="provides-only"||phase=="missing-fedora-fastfetch") {
+        if(phase=="rename-upper-bound"||phase=="ambiguous-rename"||phase=="provides-only"||phase=="missing-fedora-fastfetch"||phase=="private-obsolete") {
             bool refused=false;try{auto p=plan(base,selected,ids);resolve(base,p,selected,false);}catch(const std::exception& e){std::cout<<e.what()<<'\n';refused=true;}assert(refused);return;
         }
         if(phase=="missing"||phase=="shared-uname"||phase=="old-manager") {
@@ -41,6 +41,7 @@ int main(int argc,char** argv) {
         auto tx=resolve(base,p,selected,phase=="upgrade"||phase=="downgrade-update");
         unsigned downgrades=0,reinstalls=0;
         for(const auto& item:tx.get_transaction_packages()) {
+            assert(!private_package(item.get_package().get_name()));
             std::cout<<libdnf5::transaction::transaction_item_action_to_string(item.get_action())<<' '<<item.get_package().get_nevra()<<'\n';
             if(item.get_action()==Action::DOWNGRADE)downgrades++;
             if(item.get_action()==Action::REINSTALL)reinstalls++;

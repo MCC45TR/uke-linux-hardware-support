@@ -16,6 +16,8 @@ int main() {
         bool rejected=false;try{options(args);}catch(const std::exception&){rejected=true;}assert(rejected);
     }
     assert(project("unstable")=="uke-linux-test"&&project("stable")=="uke-linux");
+    assert(private_package("uke-local-touch-data"));
+    assert(!private_package("uke-local-sensor-data")&&!private_package("uke-local-touch-data-extra"));
     assert(managed_repo(prefix+"uke-linux-test:custom:experiment"));assert(!managed_repo(prefix+"unrelated"));
     assert(infer_channel({prefix+"uke-linux-test"})=="test");
     assert(infer_channel({"uke-linux"})=="stable");

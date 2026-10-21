@@ -65,7 +65,9 @@ std::string infer_channel(const std::set<std::string>& enabled) {
     return {};
 }
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
+bool private_package(const std::string& name){return name=="uke-local-touch-data";}
 bool protected_package(const Package& p) {
+    if(private_package(p.get_name()))return true;
     if(p.get_name().starts_with("uke-senemos-kernel-"))return true;
     if(kernel_package(p.get_name())||p.get_name()=="kernel"||p.get_name().starts_with("kernel-"))return true;
     for(const auto& dep:p.get_provides())if(std::string_view(dep.get_name())=="installonlypkg(kernel)")return true;
@@ -317,14 +319,16 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     libdnf5::rpm::PackageQuery available(base);available.filter_available();
     for(const auto& pkg:available) {
         const auto k=key(pkg);auto chosen=p.targets.find(k);
-        if((kernel_package(pkg.get_name())&&(chosen==p.targets.end()||chosen->second.get_id()!=pkg.get_id()))||
+        // Factory calibration belongs to the device, including when a public repo advertises its name.
+        if(private_package(pkg.get_name())||
+           (kernel_package(pkg.get_name())&&(chosen==p.targets.end()||chosen->second.get_id()!=pkg.get_id()))||
            (p.scope.contains(k)&&pkg.get_repo_id()!=(chosen==p.targets.end()?prefix+project(selected):chosen->second.get_repo_id())))excluded.add(pkg);
     }
     base.get_rpm_package_sack()->add_user_excludes(excluded);
     for(const auto& [k,target]:p.targets) {
         bool same=false,foreign=false;
         for(const auto& old:installed)if(key(old)==k&&old.get_nevra()==target.get_nevra()){same=true;foreign=old.get_from_repo_id()!=target.get_repo_id();}
-        // Existing kernels are retained byte-for-byte, including foreign-channel fallbacks.
+        // Protected installed packages are retained byte-for-byte.
         if(same&&protected_package(target))continue;
         if(same&&foreign)goal.add_rpm_reinstall(target);
         else if(!same)goal.add_rpm_install(target);
@@ -343,7 +347,7 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
         if(action==Action::REPLACED&&p.renames.contains(pkg.get_nevra())) {
             renamed_outbound.insert(pkg.get_nevra());
         }
-        if(protected_package(pkg))need(!libdnf5::transaction::transaction_item_action_is_outbound(action)&&action!=Action::REINSTALL,"Transaction would replace a retained kernel: "+pkg.get_nevra());
+        if(protected_package(pkg))need(!libdnf5::transaction::transaction_item_action_is_outbound(action)&&action!=Action::REINSTALL,"Transaction would replace a protected package: "+pkg.get_nevra());
         if(libdnf5::transaction::transaction_item_action_is_inbound(action)) {
             if(p.scope.contains(key(pkg))) {
                 const auto chosen=p.targets.find(key(pkg));

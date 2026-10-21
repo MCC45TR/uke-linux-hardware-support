@@ -1,5 +1,13 @@
 # Uke Control
 
+21 October 2026: version 1.0.23 preserves the device-private touchscreen data
+package during public channel synchronization. The tablet's read-only update
+preview exposed the missing-replacement refusal in 1.0.22; no package or channel
+changed during that refusal. The correction excludes public candidates for the
+exact private identity and rejects indirect replacement. Signed host fixtures
+retain its original RPM and data while updating other packages; physical
+calibration accuracy remains a separate gate.
+
 21 October 2026: version 1.0.22 corrects channel discovery when no saved choice
 exists. One enabled normal Uke COPR determines stable or test; ambiguous or
 custom-only configurations require an explicit choice. Existing choices and
