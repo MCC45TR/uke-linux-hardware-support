@@ -108,8 +108,7 @@
         "material-decoration"
       ],
       "watch_paths": [
-        "uke-desktop-packaging/packaging/plymouth-uke",
-        "uke-desktop-packaging/Makefile"
+        "uke-desktop-packaging/packaging/plymouth-uke"
       ],
       "release": 2
     },

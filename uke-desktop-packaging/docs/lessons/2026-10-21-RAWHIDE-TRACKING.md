@@ -15,6 +15,9 @@
   hours, regenerate the nine reviewed overlays, advance every rebuilt child and
   exact dependency together, then use the existing validated single-build path.
   Preserve rollback, original desktop packages and device-private calibration.
+  The shared desktop Makefile is watched as common factory code; changes to
+  Fedora source production must not require an unrelated extras revision.
+  A dedicated build-admission fixture covers that distinction.
 - Corrections: Fedora source RPM headers can report the source builder's CPU;
   check `SOURCEPACKAGE` and source NVR instead of expecting `ARCH=src`. DNF5's
   `--repo` cannot be combined with `--enable-repo`; select both exact repositories

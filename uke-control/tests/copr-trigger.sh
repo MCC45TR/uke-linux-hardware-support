@@ -120,3 +120,14 @@ export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
 UKE_COPR_FAMILY=uke-power bash "$script"
 test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
 printf '%s\n' 'PASS: Rawhide source locks require a family revision and submit only the affected family.'
+jq '.families += [{"name":"uke-extras","version":"1.0.2","release":2,"watch_paths":[]}]' packaging/families/families.json >families.new
+mv families.new packaging/families/families.json
+printf 'shared factory\n' >uke-desktop-packaging/Makefile
+git add .; git commit -qm shared-desktop-factory-base
+export UKE_CONTROL_BEFORE=$(git rev-parse HEAD)
+printf 'changed shared factory\n' >>uke-desktop-packaging/Makefile
+git add .; git commit -qm shared-desktop-factory-change
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+UKE_COPR_FAMILY=uke-extras bash "$script"
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
+printf '%s\n' 'PASS: shared desktop source-factory maintenance does not rebuild unchanged extras.'

@@ -18,7 +18,7 @@ trap 'rm -rf -- "$stage"' EXIT
 map=packaging/families/families.json
 pins=packaging/families/source-inputs.json
 native=uke-desktop-packaging/manifests/native-runtime.json
-paths=(.copr/Makefile packaging/families/host/compose.sh packaging/families/host/split-spec.awk packaging/families/host/service-rename.sh uke-desktop-packaging/src/native-runtime/prepare-source.sh uke-desktop-packaging/src/native-runtime/power-sensors.awk "$native")
+paths=(.copr/Makefile packaging/families/host/compose.sh packaging/families/host/split-spec.awk packaging/families/host/service-rename.sh uke-desktop-packaging/Makefile uke-desktop-packaging/src/native-runtime/prepare-source.sh uke-desktop-packaging/src/native-runtime/power-sensors.awk "$native")
 own_paths=()
 if git cat-file -e "$commit:$map" 2>/dev/null; then
     git show "$commit:$map" >"$stage/families.json"
