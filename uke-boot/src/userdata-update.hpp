@@ -81,12 +81,36 @@ static unsigned identify_slot(const std::string &cmdline,const std::array<Bytes,
     }
     need(matches[0]!=matches[1],"Current slot requires a unique matching running Image; active-slot guessing refused");return matches[1]?1:0;
 }
-static Bytes userdata_vrr(Bytes bytes,bool enabled) {
+static std::map<std::string,std::string> userdata_policy(const std::string &text) {
+    const auto config=properties(text);
+    need(config.size()==2 && config.contains("vrr_min_hz") && config.contains("automatic") &&
+         (config.at("automatic")=="0"||config.at("automatic")=="1") &&
+         (config.at("vrr_min_hz")=="0"||config.at("vrr_min_hz")=="30"),"Invalid userdata update policy");
+    return config;
+}
+static bool automatic_updates(const std::string &global,const std::string &userdata) {
+    std::istringstream input(global);std::string row,settings;
+    while(std::getline(input,row))if(!row.empty() && row.front()!='#')settings+=row+'\n';
+    const auto config=properties(settings),profile=userdata_policy(userdata);
+    need(config.size()==1 && config.contains("automatic") &&
+         (config.at("automatic")=="0"||config.at("automatic")=="1"),"Invalid global automatic update policy");
+    return config.at("automatic")=="1" && profile.at("automatic")=="1";
+}
+static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest) {
     const auto kernel=boot_kernel(bytes);
     need(std::string(reinterpret_cast<const char*>(bytes.data()+44))=="senemos.root=userdata","Canonical installed userdata wrapper required");
     if(enabled) {
-        const std::string contract="msm.o82_vrr_test_min_hz=";
-        need(std::search(kernel.begin(),kernel.end(),contract.begin(),contract.end())!=kernel.end(),"Kernel lacks the bounded userdata VRR argument contract");
+        need(manifest.contains("root_selector_capability") && manifest.at("root_selector_capability")=="uke-elfnote-v1",
+             "Signed manifest lacks the userdata root-selector capability");
+        // Match the retained note ABI, not compiler-dependent executable string literals.
+        Bytes note{4,0,0,0,53,0,0,0,1,0x45,0x4b,0x55,'U','K','E',0};
+        constexpr char descriptor[]="root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30";
+        static_assert(sizeof(descriptor)==53);
+        note.insert(note.end(),descriptor,descriptor+sizeof(descriptor));note.resize(72,0);
+        const auto found=std::search(kernel.begin(),kernel.end(),note.begin(),note.end());
+        need(found!=kernel.end() && (found-kernel.begin())%4==0 &&
+             std::search(found+1,kernel.end(),note.begin(),note.end())==kernel.end(),
+             "Kernel lacks a unique aligned userdata root-selector capability note");
         const std::string command="senemos.root=userdata msm.o82_vrr_test_min_hz=30";
         memcpy(bytes.data()+44,command.data(),command.size());
     }
@@ -161,10 +185,7 @@ static void matched_early_firmware() {
     }
 }
 static bool vrr_policy() {
-    const auto raw=file("/etc/senemos/userdata-update.conf");const auto config=properties(std::string(raw.begin(),raw.end()));
-    need(config.size()==2 && config.contains("vrr_min_hz") && config.contains("automatic") &&
-         (config.at("automatic")=="0"||config.at("automatic")=="1") &&
-         (config.at("vrr_min_hz")=="0"||config.at("vrr_min_hz")=="30"),"Invalid userdata VRR update policy");
+    const auto raw=file("/etc/senemos/userdata-update.conf");const auto config=userdata_policy(std::string(raw.begin(),raw.end()));
     return config.at("vrr_min_hz")=="30";
 }
 static void health() {
@@ -233,8 +254,8 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     }
     need(fs::exists(statefile),"Run the packaged userdata acceptance service before the first automatic update");
     auto saved=decode(file(statefile));need(saved.good_image==good_hash,"Running boot bytes differ from the accepted baseline");
-    const auto bytes=userdata_vrr(package_bytes,vrr_policy());
-    const auto raw=file(bundle/"manifest");const auto next=properties(std::string(raw.begin(),raw.end())).at("kernel_release");
+    const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+    const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest);const auto next=manifest.at("kernel_release");
     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next));
     saved.candidate_image=digest(bytes);
     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();

@@ -1,5 +1,12 @@
 # COPR source families
 
+21 October 2026 source follow-up: hardware family 1.1.2-1 carries updater 1.1.2.
+The native automatic entry point requires both strict global and userdata
+policies before any acceptance or staging operation. Private VRR derivation
+requires a signed manifest capability and a retained structured Image note.
+All rebuilt children receive fresh package revisions. Hardware Release 4 was
+published but was not installed on the tablet during this maintenance pass.
+
 21 October 2026 correction: hardware source Release 4 keeps the current boot
 implementation and the reviewed Fastfetch 1.0.1 physical-storage profile. Its
 exact boot, classifier and updater requirements match the generated Release 3

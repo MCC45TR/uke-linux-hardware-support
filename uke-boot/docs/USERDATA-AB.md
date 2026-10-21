@@ -1,6 +1,6 @@
 # Userdata boot A/B updates
 
-20 October 2026. Source and native host fixtures, Fedora Rawhide x86-64.
+21 October 2026. Version 1.1.2 source and native host fixtures, Fedora Rawhide x86-64.
 This implementation has not yet passed an on-tablet A/B update or power-loss test.
 
 The `senemos-uke-linux-kernel-mainline-singleboot` profile selects the physical
@@ -19,9 +19,22 @@ required. Replacing the running module directory is refused.
 
 `/etc/senemos/userdata-update.conf` is an administrator-preserving RPM config.
 It defaults to `automatic=1` and the bounded userdata VRR argument at 30 Hz.
-Setting `automatic=0` stops automatic staging. VRR arguments alter only the
+Automatic acceptance and staging require the exact value `automatic=1` in both
+this file and `/etc/senemos/kernel-update.conf`. The global default is
+`automatic=0`. Missing, duplicate or malformed settings fail closed before any
+state directory, slot, GPT or boot-LUN operation. A valid disabled policy returns
+without accepting a boot or staging a kernel. VRR arguments alter only the
 checked Android v4 wrapper; the package Image remains byte-identical. This
 argument does not establish physical VRR quality or cadence.
+
+Enabling the private VRR argument requires the RPM-verified manifest field
+`root_selector_capability=uke-elfnote-v1` and exactly one aligned 72-byte retained
+`UKE` capability note in the signed Image. Its type is `0x554b4501` and its
+NUL-terminated descriptor is
+`root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30`. Old executable string
+literals do not satisfy this contract. A disabled VRR policy preserves the
+canonical wrapper without requiring that capability. Older bundles without the
+note remain ineligible for the enabled private VRR policy.
 
 A transaction file trigger runs after all package post-transaction scripts.
 It acts only on an exact Uke userdata installation. An ordinary Linux root or

@@ -92,6 +92,17 @@ int main() {
     assert(validate_bundle(bundle,modules,"linux",running,fake_rpm)==lp);
     assert(validate_bundle(bundle,modules,"linux",release,fake_rpm)==lp);
     assert(validate_bundle(bundle,modules,"userdata",running,fake_rpm)==up);
+    const auto boot_package="senemos-uke-linux-kernel-mainline-boot-0:7.2.9-1.40.fc46.aarch64";
+    const auto boot_dump=dumps[boot_package];
+    text(bundle/"manifest",manifest+"root_selector_capability=uke-elfnote-v1\n");
+    auto &dump=dumps[boot_package];const auto old_digest=digest(Bytes(manifest.begin(),manifest.end()));
+    dump.replace(dump.find(old_digest),old_digest.size(),digest(file(bundle/"manifest")));
+    assert(validate_bundle(bundle,modules,"userdata",running,fake_rpm)==up);
+    text(bundle/"manifest",manifest+"root_selector_capability=unknown\n");
+    reject([&]{validate_bundle(bundle,modules,"userdata",running,fake_rpm);});
+    text(bundle/"manifest",manifest+"unknown=uke-elfnote-v1\n");
+    reject([&]{validate_bundle(bundle,modules,"userdata",running,fake_rpm);});
+    text(bundle/"manifest",manifest);dumps[boot_package]=boot_dump;
     const auto good_owner=owners.at(module.string());owners[module.string()]="other\t0\t7.2.9\t1.40.fc46\taarch64\t8\n";
     reject([&]{validate_bundle(bundle,modules,"linux",running,fake_rpm);});owners[module.string()]=good_owner;
     owners[module.string()]="senemos-uke-linux-kernel-mainline-modules\t0\t7.2.9\t1.41.fc46\taarch64\t8\n";

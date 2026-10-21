@@ -1,5 +1,11 @@
 # Stock-ABL kernel updates
 
+21 October 2026 correction: updater 1.1.2 also enforces the global disable inside
+its native automatic userdata entry point, before boot acceptance or staging.
+Both global and userdata flags must be valid and enabled. The explicit manual
+commands retain their independent validation. The prior userdata implementation
+did not enforce the global flag; its package description was insufficient.
+
 20 October 2026 source update: version 1.1.0 adds a separate guarded
 [userdata boot A/B path](USERDATA-AB.md). The Linux-root writer and its explicit
 enablement policy remain. The 15 October device results below describe that
@@ -22,7 +28,9 @@ never update targets. The tool does not reboot or select a slot.
 Each Linux-only bundle has `linux.img`, `modules.sha256` and a strict
 key/value `manifest` containing `format=1`, `kernel_release`,
 `linux_image_sha256`, `userdata_image_sha256`, `linux_kernel_sha256`,
-`userdata_kernel_sha256` and `modules_sha256`. The module inventory contains
+`userdata_kernel_sha256` and `modules_sha256`. New root-selecting bundles may
+also declare `root_selector_capability=uke-elfnote-v1`; unknown capabilities and
+other extra fields are refused. The module inventory contains
 SHA-256 rows relative to `/usr/lib/modules/KERNEL_RELEASE`, limited to the exact
 `kernel/` module file set. The installed core Image must match the Linux variant;
 both userdata manifest values must be `unsupported` for this supported layout.

@@ -310,7 +310,9 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     const auto raw_manifest=file(bundle/"manifest");
     const auto manifest=properties(std::string(raw_manifest.begin(),raw_manifest.end()));
     const std::set<std::string> keys={"format","kernel_release","linux_image_sha256","userdata_image_sha256","linux_kernel_sha256","userdata_kernel_sha256","modules_sha256"};
-    need(manifest.size()==keys.size(),"Unexpected update manifest fields");
+    need(manifest.size()==keys.size() ||
+         (manifest.size()==keys.size()+1 && manifest.contains("root_selector_capability") &&
+          manifest.at("root_selector_capability")=="uke-elfnote-v1"),"Unexpected update manifest fields");
     for(const auto &key:keys) need(manifest.contains(key),"Missing manifest field");
     need(manifest.at("format")=="1" && token(manifest.at("kernel_release")),"Unsupported bundle format");
     const auto release=manifest.at("kernel_release");
@@ -392,6 +394,10 @@ int main(int argc,char **argv) {
         if(automatic && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
+        if(automatic) {
+            const auto global=file("/etc/senemos/kernel-update.conf"),profile=file("/etc/senemos/userdata-update.conf");
+            if(!automatic_updates(std::string(global.begin(),global.end()),std::string(profile.begin(),profile.end())))return 0;
+        }
         const auto label=root_label(read_text("/proc/cmdline"));
         if(automatic && label!="userdata")return 0;
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
@@ -400,9 +406,6 @@ int main(int argc,char **argv) {
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
         fs::path bundle=action=="accept"?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if(automatic) {
-            const auto raw=file("/etc/senemos/userdata-update.conf");
-            const auto config=properties(std::string(raw.begin(),raw.end()));
-            (void)vrr_policy();if(config.at("automatic")=="0")return 0;
             auto parent=directory("/usr/lib/senemos");struct stat link{};
             need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
             const auto target=fs::read_symlink("/usr/lib/senemos/default-boot.img");
@@ -418,6 +421,9 @@ int main(int argc,char **argv) {
         auto bytes=validate_bundle(bundle,"/usr/lib/modules",label,current.release);
         if(label=="userdata" && !current_only) {
             if(automatic) {
+                const auto raw=file(bundle/"manifest");
+                (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())));
+                matched_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 userdata_update("accept",running_bundle,baseline,state,current.release);
@@ -436,7 +442,8 @@ int main(int argc,char **argv) {
             auto other=physical_boot(partition("boot_a"));
             const std::array<Bytes,2> images{read_fd(other.value,capacity),previous};
             require_current_b(read_text("/proc/cmdline"),images,file(fs::path("/usr/lib/modules")/current.release/"vmlinuz"));
-            bytes=userdata_vrr(std::move(bytes),vrr_policy());
+            const auto raw=file(bundle/"manifest");
+            bytes=userdata_vrr(std::move(bytes),vrr_policy(),properties(std::string(raw.begin(),raw.end())));
         }
         if(previous==bytes){std::cout<<"boot_b already matches the verified installed bundle; no partition write\n";return 0;}
         const auto raw=file(bundle/"manifest");const auto release=properties(std::string(raw.begin(),raw.end())).at("kernel_release");

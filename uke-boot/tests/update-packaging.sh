@@ -16,4 +16,5 @@ grep -Fxq 'ExecStart=/usr/bin/uke-kernel-update auto' src/units/uke-userdata-acc
 ! grep -Eq '^After=.*graphical.target|^ProtectSystem=strict|^ExecStart=.*(bash|sh -c)' src/units/uke-userdata-accept.service
 grep -Fq 'docs/USERDATA-AB.md' Makefile
 grep -Fq 'Provides: uke-kernel-update(userdata-ab) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'Provides: uke-kernel-update(guarded-automatic) = 1' packaging/uke-boot-integration.spec
 printf '%s\n' 'Bounded transaction hooks, separate Linux/userdata policy, unit ordering and source export checked'

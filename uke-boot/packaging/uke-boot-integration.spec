@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.1.1
+Version: 1.1.2
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -71,13 +71,15 @@ Summary: Native checked installation of matched Uke stock-ABL kernel bundles
 Requires: senemos-native-runtime(libstdc++) openssl-libs systemd rpm
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
+Provides: uke-kernel-update(guarded-automatic) = 1
 %description -n uke-kernel-update
 Validates matched installed boot-v4 payloads and module inventories. The Linux
 root profile retains its opt-in boot_b writer. The userdata profile writes an
 inactive boot slot and selects the QTI slot only after full readback, coherent
 GPT/boot-LUN checks and durable backups. Boot health accepts a matching trial.
-The packaged userdata policy enables automatic staging after transactions;
-reboot remains manual. Physical power-loss recovery requires device validation.
+Automatic staging requires both the global and userdata policies to be enabled;
+the global default is disabled. Reboot remains manual. Physical power-loss
+recovery requires device validation.
 
 %package -n uke-installation-profile
 Summary: Native classification of the Uke Linux root partition
@@ -230,6 +232,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.2-1
+- Honor both strict automatic policies before any slot acceptance or staging.
+- Require the signed manifest and retained capability note for userdata VRR.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.1-1
 - Add explicit checked boot-B updates for userdata without changing firmware slots.
 - Retain the automatic A/B refusal for unmatched early firmware cohorts.
