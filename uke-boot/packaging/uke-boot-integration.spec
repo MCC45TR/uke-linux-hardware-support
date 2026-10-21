@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.1.2
+Version: 1.1.3
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -84,6 +84,7 @@ recovery requires device validation.
 %package -n uke-installation-profile
 Summary: Native classification of the Uke Linux root partition
 Requires: senemos-native-runtime(libstdc++) systemd
+Requires: %{name} = %{version}-%{release}
 %description -n uke-installation-profile
 Verifies the physical UFS root and exact Linux or userdata selector. Repairs
 only the legacy unknown record after fresh inspection. State is private and
@@ -161,6 +162,12 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %postun -n uke-kernel-update
 %systemd_postun uke-userdata-accept.service
 
+%preun -n uke-installation-profile
+# Retire only our generated policy, including when downgrading to an older classifier.
+if [ "$(readlink /etc/tmpfiles.d/journal-nocow.conf 2>/dev/null)" = '%{_datadir}/senemos/boot/uke/journal-nocow-disabled.conf' ]; then
+    rm -f /etc/tmpfiles.d/journal-nocow.conf
+fi
+
 %posttrans -n uke-installation-profile
 if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
     %{_libexecdir}/senemos-uke/uke-install-profile reconcile || :
@@ -232,6 +239,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.3-1
+- Inspect the actual journal filesystem before suppressing an unsupported NOCOW rule.
+- Preserve administrator overrides and retire only the generated policy on removal or downgrade.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.2-1
 - Honor both strict automatic policies before any slot acceptance or staging.
 - Require the signed manifest and retained capability note for userdata VRR.

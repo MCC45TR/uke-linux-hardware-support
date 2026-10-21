@@ -5,6 +5,7 @@ diff -u <(cat <<'HOOKS'
 %post -n uke-kernel-update
 %preun -n uke-kernel-update
 %postun -n uke-kernel-update
+%preun -n uke-installation-profile
 %posttrans -n uke-installation-profile
 %transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates
 HOOKS

@@ -1,5 +1,14 @@
 # Uke boot integration
 
+21 October 2026 source follow-up: version 1.1.3 reconciles the journal's actual
+filesystem after verifying the physical installation profile. On ext4 or F2FS,
+the existing classifier overrides only the separate vendor NOCOW rule, which
+these filesystems cannot apply. Original journal ownership, ACL and retention
+rules remain active. Existing administrative overrides are preserved; removal,
+downgrade or a later filesystem change retires only this generated override.
+No additional service or process is introduced. Native fixtures cover repeated
+reconciliation and file/symlink substitutions; tablet deployment is separate.
+
 18 October 2026 source update: manual CDC API2 uses the existing root helper
 once per explicit on/off command. The continuous CDC watcher unit is removed;
 commands enable no service, root console or network gadget and save no startup

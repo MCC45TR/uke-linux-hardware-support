@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/vfs.h>
+#include <linux/magic.h>
 #include <unistd.h>
 
 namespace fs = std::filesystem;
@@ -110,6 +112,50 @@ static uke_install::Profile stored_profile(int directory_fd) {
     require(value == "format=1\nroot=userdata\n", "Malformed installation profile");
     return uke_install::Profile::userdata;
 }
+static constexpr const char *journal_override = "/usr/share/senemos/boot/uke/journal-nocow-disabled.conf";
+static bool journal_nocow_unavailable(long filesystem) {
+    return filesystem == F2FS_SUPER_MAGIC || filesystem == EXT4_SUPER_MAGIC;
+}
+static void journal_policy(int etc_fd, bool disable_nocow) {
+    trusted(etc_fd, true);
+    bool created = false;
+    if (disable_nocow) {
+        if (mkdirat(etc_fd, "tmpfiles.d", 0755) == 0) created = true;
+        else require(errno == EEXIST, "Cannot create tmpfiles policy directory");
+    }
+    const int raw = openat(etc_fd, "tmpfiles.d", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (raw < 0 && errno == ENOENT && !disable_nocow) return;
+    ProfileFd policies(raw);
+    if (created) require(fchmod(policies.value, 0755) == 0, "Cannot set tmpfiles policy directory mode");
+    trusted(policies.value, true);
+    constexpr const char *name = "journal-nocow.conf";
+    bool changed = false;
+    if (disable_nocow) {
+        if (symlinkat(journal_override, policies.value, name) == 0) changed = true;
+        else require(errno == EEXIST, "Cannot install journal filesystem policy");
+    } else {
+        std::array<char, 256> target{};
+        const auto length = readlinkat(policies.value, name, target.data(), target.size());
+        if (length < 0) require(errno == ENOENT || errno == EINVAL, "Cannot inspect journal filesystem policy");
+        if (length > 0 && std::string_view(target.data(), static_cast<size_t>(length)) == journal_override) {
+            require(unlinkat(policies.value, name, 0) == 0, "Cannot retire journal filesystem policy");
+            changed = true;
+        }
+    }
+    if (changed) require(fsync(policies.value) == 0, "Cannot sync journal filesystem policy");
+    if (created) require(fsync(etc_fd) == 0, "Cannot sync tmpfiles policy directory");
+}
+static void reconcile_journal_policy() {
+    const int raw = open("/var/log/journal", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (raw < 0 && errno == ENOENT) return;
+    ProfileFd journal(raw);
+    trusted(journal.value, true);
+    struct statfs filesystem{};
+    require(fstatfs(journal.value, &filesystem) == 0, "Cannot inspect journal filesystem");
+    auto etc = directory("/etc", false);
+    // The vendor's separate journal ownership, ACL and retention rules remain active.
+    journal_policy(etc.value, journal_nocow_unavailable(filesystem.f_type));
+}
 #ifndef UKE_INSTALL_PROFILE_TEST
 int main(int argc, char **argv) {
     try {
@@ -145,6 +191,8 @@ int main(int argc, char **argv) {
             }
             save_value(state.value, std::string("format=1\nroot=") + uke_install::name(profile) + "\n");
         }
+        require(inspect_root() == profile, "Installation profile differs from the observed root");
+        reconcile_journal_policy();
         if (profile == uke_install::Profile::linux) {
             mask_unit(units.value, "uke-userdata-update.service");
             mask_unit(units.value, "uke-userdata-accept.service");

@@ -59,6 +59,26 @@ int main() {
         assert(observation(root / "custom.service", 32) == "preserved unit\n");
         std::ofstream(root / "too-large") << std::string(33, 'x');
         refuse([&] { observation(root / "too-large", 32); });
+        assert(journal_nocow_unavailable(F2FS_SUPER_MAGIC));
+        assert(journal_nocow_unavailable(EXT4_SUPER_MAGIC));
+        assert(!journal_nocow_unavailable(BTRFS_SUPER_MAGIC));
+        assert(!journal_nocow_unavailable(0));
+        journal_policy(dir.value, false);
+        assert(!fs::exists(root / "tmpfiles.d"));
+        const auto override = root / "tmpfiles.d/journal-nocow.conf";
+        journal_policy(dir.value, true);journal_policy(dir.value, true);
+        assert(fs::read_symlink(override) == journal_override);
+        journal_policy(dir.value, false);assert(!fs::is_symlink(override));
+        std::ofstream(override) << "administrator rule\n";
+        journal_policy(dir.value, true);journal_policy(dir.value, false);
+        assert(observation(override, 64) == "administrator rule\n");
+        fs::remove(override);fs::create_symlink("/dev/null", override);
+        journal_policy(dir.value, true);journal_policy(dir.value, false);
+        assert(fs::read_symlink(override) == "/dev/null");
+        fs::remove_all(root / "tmpfiles.d");fs::create_directory(root / "outside-dir");
+        fs::create_directory_symlink(root / "outside-dir", root / "tmpfiles.d");
+        refuse([&] { journal_policy(dir.value, true); });
+        assert(fs::is_empty(root / "outside-dir"));
     }
     fs::remove_all(root);
     std::cout << "Atomic profile state, stale-write recovery, masks and path-substitution refusals passed; regular files only.\n";

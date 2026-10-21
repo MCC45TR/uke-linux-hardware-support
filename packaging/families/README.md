@@ -1,5 +1,12 @@
 # COPR source families
 
+21 October 2026 source follow-up: hardware family 1.1.3-1 includes the bounded
+journal-filesystem policy in the existing installation classifier. Its base
+data package is an exact classifier dependency. Other rebuilt children retain
+their source inputs and receive fresh RPM revisions; firmware content is
+unchanged. Core 1.0.22 corrects inference of an unset channel from the one enabled
+normal Uke COPR. No automatic channel transition or boot activation is added.
+
 21 October 2026 sensor source follow-up: family 1.0.3-1 builds the file-service
 recipe from its owning component, including the cache-generation correction.
 The upstream archive remains pinned in that recipe; the historical frozen SRPM
