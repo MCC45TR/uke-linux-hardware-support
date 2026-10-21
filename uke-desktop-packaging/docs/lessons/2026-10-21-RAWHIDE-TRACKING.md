@@ -1,6 +1,20 @@
 # UKE-DESKTOP-012 — track complete Fedora-derived source cohorts
 
 - Date: 21 October 2026.
+- Current scope: AccountsService extends the initial nine-base record below to
+  ten Fedora-derived bases. Its D-Bus mock is a host-only pin scoped to the
+  additional family; unrelated power/sensor revisions do not advance.
+- Remote receipt: validation `39583785611` at source
+  `139d5eb7c4d3a3c033f16ede38959941cddf4369` succeeds. Manual scheduled-workflow
+  execution `39584476351` verifies the current ten-source/host-tool locks and
+  exits unchanged without another native request. The workflow is enabled;
+  its six-hour schedule and all 13 test-family automatic-rebuild flags remain
+  active. Original KDE packages retain their distribution source and identity.
+- Native receipts: power `11181615`, sensors `11181654`, refreshed power
+  `11182115` and additional `11182019` succeed. Sensor build `11181617` failed
+  provider ordering and additional `11181620` failed the real-producer fixture;
+  corrections use new complete family revisions, preserving failed receipts.
+  Native success does not qualify device installation or physical behavior.
 - Environment: official Rawhide AArch64 repository metadata; isolated pinned-key
   source verification; Fedora x86_64 host recipe and native contract fixtures.
 - Evidence: nine exact source/payload locks in `manifests/native-runtime.json`,

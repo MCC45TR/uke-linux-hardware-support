@@ -41,6 +41,32 @@
   tracking includes AccountsService and its host-only D-Bus mock pin. Service
   alias migration preserves existing unit state and requires a family revision.
   Original KDE applications and the successful power/sensor cohorts are retained.
-- Uncertainty: complete native build, signed binary/ABI/solver checks and target
-  DNF/API/Wayland/Vulkan regressions remain required. No recoverable new-kernel
+- Native follow-up: additional `11182019` succeeds. The actual native producer
+  preserves ten LLVM states and both NEON guards; WSI and TCB fixtures pass.
+  All 34 source/binary RPMs pass the pinned test key's signatures and digests.
+  All binary ELF identities are AArch64; direct payload, requirement, scriptlet
+  and shebang checks find no Python. All 51 bundled source hashes, the complete
+  family metadata and seven exact original Fedora source identities match.
+  Native libstdc++ retains SONAME 6 and all 6,100 admitted Fedora exports, with
+  6,155 total exports. Target solver/transitive dependencies remain separate.
+- Compiler diagnostic: optimized Mesa linking emits range warnings in its
+  unchanged BLAKE3 1.8.2 parent-compression code. NEON degree is four, and the
+  documented subtree contract bounds the final parent output at two chaining
+  values. An invariant review alone is not memory-safety acceptance. No source
+  algorithm, hardening option or warning setting was changed to hide it.
+- Isolated native check: side-repository build `11182181` compiles the exact
+  vendored files with pinned GCC 16.2.1-2.fc46.1, Fedora optimization/LTO/hardening
+  and NDEBUG. Both NEON and portable variants pass optimized and ASan/UBSan
+  runs: 35 official lengths through 102,400 bytes, three hash modes, nine update
+  patterns, 945 combinations per variant and 32/131-byte plus seek outputs.
+  No sanitizer violation occurs for these inputs. Answers come from BLAKE3 tag
+  1.8.2, commit `df610ddc3b93841ffc59a87e3da659a15910eb46`, vector SHA-256
+  `dcb91ea8accc77e6d6e632af7cdc1a99a9f3ae78cf648da595c7d064db32f624`.
+  The host negative control rejects a changed expected answer under NDEBUG.
+  The first side build `11182167` failed because an install receipt was generated
+  only by the later check phase; no vectors ran and no pass is attributed to it.
+  The corrected test revision runs before installation. It adds no main-family
+  entry or device payload. Tested inputs do not prove every possible input safe.
+- Uncertainty: target DNF/transitive dependency, API, Wayland and Vulkan
+  regressions remain required. No recoverable new-kernel
   boot, physical display pacing, sensor calibration or audio result is inferred.

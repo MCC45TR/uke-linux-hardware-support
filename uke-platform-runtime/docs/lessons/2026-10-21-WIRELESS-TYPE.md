@@ -43,3 +43,12 @@ adapter. Additional inputs now watch their actual C++ sources explicitly; a
 fixture uses the production watch configuration to reject this regression.
 This metadata correction changes no runtime source and requests no repeated
 native build at the existing power/additional revisions.
+
+Native follow-up, 21 October 2026: power build `11182115` succeeds with the
+original production authentication/documentation/introspection settings. Its
+actual daemon passes the full AC, low-battery, Wireless online/offline/malformed/
+missing and unknown-type fixture; control, offline-sampler and PPD contracts
+also pass. All 11 RPMs, including source, pass the pinned COPR signature and
+digest checks. Binary payloads pass AArch64 ELF and direct Python checks.
+UPower retains SONAME 3 and the same 197 exports as Release 7. These are native
+build/package results; target transaction and physical charging remain separate.
