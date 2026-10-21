@@ -1,6 +1,6 @@
 # Userdata boot A/B updates
 
-21 October 2026. Version 1.1.2 source and native host fixtures, Fedora Rawhide x86-64.
+22 October 2026. Version 1.2.1 source and native host fixtures, Fedora Rawhide x86-64.
 This implementation has not yet passed an on-tablet A/B update or power-loss test.
 
 The `senemos-uke-linux-kernel-mainline-singleboot` profile selects the physical
@@ -19,11 +19,11 @@ required. Replacing the running module directory is refused.
 
 `/etc/senemos/userdata-update.conf` is an administrator-preserving RPM config.
 It defaults to `automatic=1` and the bounded userdata VRR argument at 30 Hz.
-Automatic acceptance and staging require the exact value `automatic=1` in both
+Automatic staging requires the exact value `automatic=1` in both
 this file and `/etc/senemos/kernel-update.conf`. The global default is
 `automatic=0`. Missing, duplicate or malformed settings fail closed before any
 state directory, slot, GPT or boot-LUN operation. A valid disabled policy returns
-without accepting a boot or staging a kernel. VRR arguments alter only the
+from the `auto` command without accepting a boot or staging a kernel. VRR arguments alter only the
 checked Android v4 wrapper; the package Image remains byte-identical. This
 argument does not establish physical VRR quality or cadence.
 
@@ -39,8 +39,13 @@ note remain ineligible for the enabled private VRR policy.
 A transaction file trigger runs after all package post-transaction scripts.
 It acts only on an exact Uke userdata installation. An ordinary Linux root or
 an offline composition does not enter the slot writer. At graphical startup,
-the packaged service retries software-health acceptance and stages an installed
-default bundle if necessary. The command never reboots the device.
+the packaged service first runs explicit software-health acceptance, then runs
+the separately gated automatic command. A disabled automatic policy therefore
+does not skip marking a proven healthy running slot successful. Acceptance
+retains the physical root, running Image, signed package/module, UFS boot-LUN,
+GPT identity and software-health checks. It does not select the other slot or
+enable automatic staging. A failed acceptance prevents the subsequent command.
+The command never reboots the device.
 
 Before a write, the updater requires a unique physical UFS root and 96 MiB boot
 slots, the matching running Image, coherent GPT active flags and UFS boot LUN.
