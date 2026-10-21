@@ -1,5 +1,10 @@
 # COPR source families
 
+21 October 2026: core/control 1.0.24-1 scopes vendor exceptions to exact planned
+package/repository/vendor jobs while retaining global vendor restrictions.
+Signed repository fixtures include combined update/rename and an unrelated
+foreign-vendor candidate. Native packaging and target transactions are separate.
+
 21 October 2026: power source 1.1.0-4 recognizes the standard Wireless supply
 type in original Rawhide UPower 1.91.5, retaining kernel online values and
 unknown-type diagnostics. Every rebuilt child advances; UPower is 1.91.5-8.

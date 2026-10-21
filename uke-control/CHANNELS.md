@@ -1,5 +1,22 @@
 # Package channels
 
+21 October 2026 vendor correction: planned replacements use an exact package
+NEVRA with its selected repository and vendor as per-job constraints. This
+permits declared renames under `allow_vendor_change=False` without changing
+that global setting or allowing unrelated vendor transitions. libdnf5 5.4.6
+applies these exceptions through spec jobs; its explicit package-ID jobs ignore
+the vendor setting. The resolved transaction must still contain each exact
+replacement and may not remove packages or alter protected identities.
+
+Reviewed implementation: DNF5 5.4.6.0, commit
+`1b2de4bdc2f25a6de2884fb2cf81f80a8ce2a567`,
+[`add_rpms_to_goal`, `add_install_to_goal` and `add_reinstall_to_goal`](https://github.com/rpm-software-management/dnf5/blob/1b2de4bdc2f25a6de2884fb2cf81f80a8ce2a567/libdnf5/base/goal.cpp).
+Signed host fixtures run with global vendor changes disabled; downgrade,
+same-NEVRA replacement, combined update/rename and original Fastfetch return
+pass, while an unrelated foreign-vendor candidate remains unchanged. The old
+package-ID path reproduces the vendor refusal. These fixtures do not activate
+a tablet kernel or establish physical behavior.
+
 21 October 2026 private-data correction: `uke-local-touch-data` is a retained
 device-private package, outside public channel synchronization. Its absence from
 COPR does not prevent sync/update. Public candidates with that exact name are

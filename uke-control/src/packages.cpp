@@ -330,8 +330,12 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
         for(const auto& old:installed)if(key(old)==k&&old.get_nevra()==target.get_nevra()){same=true;foreign=old.get_from_repo_id()!=target.get_repo_id();}
         // Protected installed packages are retained byte-for-byte.
         if(same&&protected_package(target))continue;
-        if(same&&foreign)goal.add_rpm_reinstall(target);
-        else if(!same)goal.add_rpm_install(target);
+        // libdnf5 applies vendor exceptions to spec jobs, not explicit package-ID jobs.
+        libdnf5::GoalJobSettings settings;
+        settings.set_to_repo_ids({target.get_repo_id()});
+        settings.set_to_vendors({target.get_vendor()});
+        if(same&&foreign)goal.add_rpm_reinstall(target.get_nevra(),settings);
+        else if(!same)goal.add_rpm_install(target.get_nevra(),settings);
     }
     if(update)goal.add_rpm_upgrade();
     auto tx=goal.resolve();

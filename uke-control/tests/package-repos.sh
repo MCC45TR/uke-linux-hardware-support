@@ -133,9 +133,19 @@ root providescase
 rpm --root "$fixture/providescase" -i "$fixture/test/uke-old-1-1.noarch.rpm"
 build/test-package-repos "$fixture/providescase" "$fixture/provides-only" "$fixture/test" provides-only
 mkdir "$fixture/fedora"
+mkdir "$fixture/vendorforeign"
+build outside-vendor 1 fedora
+build outside-vendor 2 vendorforeign
+mv "$fixture/vendorforeign/"*.rpm "$fixture/fedora/"
 build fastfetch 1 fedora
 build fastfetch 2 test
 createrepo_c --quiet "$fixture/fedora"
+root vendorguard
+rpm --root "$fixture/vendorguard" -i "$fixture/test/uke-old-1-1.noarch.rpm" "$fixture/fedora/outside-vendor-1-1.noarch.rpm"
+build/test-package-repos "$fixture/vendorguard" "$fixture/stable" "$fixture/test" rename-update-vendor
+rpm --root "$fixture/vendorguard" -q uke-renamed | grep -Fx uke-renamed-2-1.noarch
+rpm --root "$fixture/vendorguard" -q outside-vendor | grep -Fx outside-vendor-1-1.noarch
+! rpm --root "$fixture/vendorguard" -q uke-old
 root originalfastfetch
 rpm --root "$fixture/originalfastfetch" -i "$fixture/test/fastfetch-2-1.noarch.rpm"
 build/test-package-repos "$fixture/originalfastfetch" "$fixture/stable" "$fixture/test" missing-fedora-fastfetch
@@ -157,4 +167,4 @@ root privateerasure
 rpm --root "$fixture/privateerasure" -i "$fixture/test/uke-private-replacer-1-1.noarch.rpm"
 build/test-package-repos "$fixture/privateerasure" "$fixture/private-replacement" "$fixture/test" private-obsolete
 rpm --root "$fixture/privateerasure" -q uke-local-touch-data | grep -Fx uke-local-touch-data-1-1.noarch
-printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, RC fallback/selection, update, missing-package refusal, shared-module refusal and unsigned rejection'
+printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, bounded vendor transitions, RC fallback/selection, update, missing-package refusal, shared-module refusal and unsigned rejection'

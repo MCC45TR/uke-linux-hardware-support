@@ -1,5 +1,12 @@
 # Uke Control
 
+21 October 2026: version 1.0.24 permits reviewed Fedora/COPR replacements while
+retaining `allow_vendor_change=False`. Each planned install/reinstall uses its
+exact NEVRA, repository and vendor through libdnf5's spec-job API; package-ID
+jobs do not apply its vendor exception. Unrelated upgrades keep the normal
+vendor policy. Kernel, private-data, removal, signature and exact-cohort checks
+remain in force. Host fixtures and tablet transactions are separate evidence.
+
 21 October 2026: version 1.0.23 preserves the device-private touchscreen data
 package during public channel synchronization. The tablet's read-only update
 preview exposed the missing-replacement refusal in 1.0.22; no package or channel
