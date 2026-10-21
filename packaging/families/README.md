@@ -1,5 +1,12 @@
 # COPR source families
 
+21 October 2026: [Rawhide tracking](RAWHIDE-TRACKING.md) replaces historical
+frozen inputs for all nine modified Fedora source bases, including UPower,
+SensorProxy and the native PPD backend. The six-hour watcher verifies signed
+source payloads, advances complete child cohorts and uses validated test-build
+admission. Initial refreshed source revisions are additional 1.0.0-3,
+power 1.1.0-3 and sensors 1.0.3-2. Native package and tablet results remain separate.
+
 21 October 2026 source follow-up: core 1.0.23 retains the exact device-private
 touchscreen-data package during public synchronization and excludes public
 candidates for that identity. Generic legacy firmware replacement remains
@@ -177,8 +184,8 @@ sources, policy or pinned inputs without a revision bump still fail admission.
 The COPR source definitions track the published branch with auto-rebuild enabled.
 The direct GitHub integration accepts tag creation events; validated CI requests
 changed families through the existing custom hook. This avoids two builds for
-one branch push. Frozen third-party source inputs require an explicit hash and
-revision refresh; auto-rebuild does not silently replace upstream sources.
+one branch push. Remaining upstream-only frozen inputs require an explicit hash
+and revision refresh. Fedora-derived inputs use the signed Rawhide watcher.
 
 Primary contracts: [RPM spec format](https://rpm.org/docs/6.0.x/manual/spec.html),
 [DNF5 native transaction API](https://dnf5.readthedocs.io/en/latest/tutorial/transaction.html)

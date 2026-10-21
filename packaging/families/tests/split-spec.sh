@@ -37,3 +37,10 @@ for capability in ssc uke-dual-light; do
     grep -Fxq "Provides: uke-iio-sensor-proxy($capability) = 1" "$stage/sensor/preamble"
 done
 printf '%s\n' 'PASS: native version conversion resets Release once; later packaging revisions are retained.'
+mkdir "$stage/licenses"
+awk '/^%build/ {print "%package docs\nSummary: Documentation fixture\nLicense: GFDL-1.1-or-later\n%description docs\nDocumentation."} {print}' "$stage/input" >"$stage/licenses-input"
+awk -v out="$stage/licenses" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/licenses-input"
+[[ $(grep -c '^License:' "$stage/licenses/preamble") == 2 ]]
+grep -Fx 'License: MIT' "$stage/licenses/preamble"
+grep -Fx 'License: GFDL-1.1-or-later' "$stage/licenses/preamble"
+printf '%s\n' 'PASS: explicit subpackage licenses are retained once without inheriting the parent license.'

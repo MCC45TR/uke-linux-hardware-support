@@ -11,3 +11,4 @@ check:
 	bash tests/cohort.sh
 	bash tests/service-rename.sh
 	bash tests/contracts.sh
+	bash tests/rawhide.sh

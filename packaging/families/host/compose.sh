@@ -59,12 +59,23 @@ uke-metas)
     done;;
 esac
 touch "$stage/inputs"
+# Fedora variants are regenerated from the current verified Rawhide source lock.
+jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' uke-desktop-packaging/manifests/native-runtime.json >"$stage/native-packages"
+while IFS= read -r package; do
+    make -C uke-desktop-packaging srpm PACKAGE="$package" outdir="$stage/native/$package" >"$stage/native-$package.log"
+    files=("$stage/native/$package/"*.src.rpm)
+    [[ ${#files[@]} == 1 && -s ${files[0]} ]]
+    printf '%s\t%s\n' "$package" "${files[0]}" >>"$stage/inputs"
+done <"$stage/native-packages"
 while IFS=$'\t' read -r key url hash; do
     input="$root/packaging/families/referances/inputs/$key.src.rpm"
     mkdir -p "$(dirname "$input")"
     if [[ ! -s $input ]]; then
-        [[ $url == https://download.copr.fedorainfracloud.org/results/mcc45tr/* ]]
-        curl --fail --silent --show-error --proto '=https' --max-time 240 "$url" -o "$input.part"
+        case "$key:$url" in
+        *:https://download.copr.fedorainfracloud.org/results/mcc45tr/*) ;;
+        *) echo 'Unreviewed source RPM URL' >&2; exit 1;;
+        esac
+        curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' --max-time 240 "$url" -o "$input.part"
         mv "$input.part" "$input"
     fi
     printf '%s  %s\n' "$hash" "$input" | sha256sum -c - >&2
@@ -79,12 +90,6 @@ while IFS=$'\t' read -r key input; do
     awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}' "$part/source-files"
     (cd "$source"; cpio -idm --quiet --no-absolute-filenames <"$part/source.cpio")
     specs=("$source/"*.spec); [[ ${#specs[@]} == 1 ]]
-    # The original LLVM pin disappeared from Rawhide; preserve the input spec.
-    if [[ $key == mesa ]]; then
-        cp "${specs[0]}" "$source/mesa.spec.original"
-        sed -i 's/^BuildRequires: llvm-devel = 23\.1\.2-1\.fc46$/BuildRequires: llvm-devel = 23.1.3-1.fc46/' "${specs[0]}"
-        grep -Fx 'BuildRequires: llvm-devel = 23.1.3-1.fc46' "${specs[0]}" >/dev/null
-    fi
     if [[ $key == uke-firmware ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
         # Mandatory paths must resolve without DNF's optional filelists metadata.
@@ -93,11 +98,6 @@ while IFS=$'\t' read -r key input; do
         sed -i '/^Provides: uke-owner-.*1\.owner$/ {p;s/1\.owner$/1.owner%{?dist}/;}; /^Obsoletes: uke-owner-/s/1\.owner$/1.owner%{?dist}/' "${specs[0]}"
         # Compare only this child's files in the shared buildroot.
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
-    fi
-    if [[ $key == libaccounts-glib ]]; then
-        cp "${specs[0]}" "$source/libaccounts-glib.spec.original"
-        cp uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch "$source/"
-        sed -i '/^Source0:/aPatch9999: 0001-fix-uncommitted-changes-cleanup.patch' "${specs[0]}"
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"

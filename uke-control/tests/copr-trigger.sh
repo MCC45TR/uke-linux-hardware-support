@@ -99,3 +99,24 @@ export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
 if bash "$script"; then exit 1; fi
 test "$(wc -l <"$FIXTURE_REQUESTS")" = 2
 printf '%s\n' 'PASS: unchanged source, NVR admission, deduplication, uncertain POST, source advance and family-scoped shared tooling'
+mkdir -p uke-desktop-packaging/manifests
+jq '.families += [{"name":"uke-power","version":"1.0.0","release":1,"watch_paths":[]},{"name":"uke-sensors","version":"1.0.0","release":1,"watch_paths":[]}]' packaging/families/families.json >families.new
+mv families.new packaging/families/families.json
+printf '%s\n' '{"packages":[{"name":"upower","family":"uke-power","version":"1.0"},{"name":"iio-sensor-proxy","family":"uke-sensors","version":"1.0"}],"build_tools":{"meson":"1.0"}}' >uke-desktop-packaging/manifests/native-runtime.json
+git add .; git commit -qm native-source-base
+export UKE_CONTROL_BEFORE=$(git rev-parse HEAD)
+sed -i 's/"upower","family":"uke-power","version":"1.0"/"upower","family":"uke-power","version":"2.0"/' uke-desktop-packaging/manifests/native-runtime.json
+git add .; git commit -qm unversioned-native-source
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+if UKE_COPR_FAMILY=uke-power bash "$script"; then exit 1; fi
+# A shared manifest edit must not request an unrelated sensor rebuild.
+UKE_COPR_FAMILY=uke-sensors bash "$script"
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 2
+jq '(.families[]|select(.name=="uke-power")|.release)=2' packaging/families/families.json >families.new
+mv families.new packaging/families/families.json
+git add .; git commit -qm native-source-release2
+git push -q origin main
+export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
+UKE_COPR_FAMILY=uke-power bash "$script"
+test "$(wc -l <"$FIXTURE_REQUESTS")" = 3
+printf '%s\n' 'PASS: Rawhide source locks require a family revision and submit only the affected family.'

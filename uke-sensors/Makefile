@@ -12,9 +12,12 @@ validate:
 	done
 srpm: validate
 	case '$(PACKAGE)' in libssc|iio-sensor-proxy|uke-ssc-fileservice) ;; *) echo 'Unreviewed sensor package' >&2; exit 1;; esac
+	if [[ '$(PACKAGE)' == iio-sensor-proxy ]]; then
+		$(MAKE) -C ../uke-desktop-packaging srpm PACKAGE=iio-sensor-proxy outdir='$(outdir)'
+		exit 0
+	fi
 	case '$(PACKAGE)' in
 	libssc) archive=referances/libssc/libssc-v0.4.4.tar.gz; url=https://codeberg.org/DylanVanAssche/libssc/archive/v0.4.4.tar.gz; hash=716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587; name=libssc-v0.4.4.tar.gz;;
-	iio-sensor-proxy) archive=referances/iio-sensor-proxy/source/iio-sensor-proxy-3.9.tar.bz2; url=https://gitlab.freedesktop.org/hadess/iio-sensor-proxy/-/archive/3.9/iio-sensor-proxy-3.9.tar.bz2; hash=19a4ae99b1b8af603fc789841025f9747bf445418d69ec7389e75adb6c8186bf; name=iio-sensor-proxy-3.9.tar.bz2;;
 	uke-ssc-fileservice) archive=referances/hexagonrpc-write/source.tar.gz; url=https://api.github.com/repos/linux-msm/hexagonrpc/tarball/510c87e5c89026ee2bd2034776fc4d15994f353d; hash=ed7b0e704a5e8c20b77b013b4b34f3cddbe41d4cf546edc73f029501f7ebdec5; name=hexagonrpc-510c87e5.tar.gz;;
 	esac
 	mkdir -p "$$(dirname "$$archive")"
@@ -25,7 +28,6 @@ srpm: validate
 	cp "$$archive" "$$top/SOURCES/$$name"
 	case '$(PACKAGE)' in
 	libssc) cp patches/libssc/*.patch tests/libssc-light-constructor.cpp tests/libssc-proximity-context.cpp tests/libssc-mount-matrix.sh "$$top/SOURCES/";;
-	iio-sensor-proxy) cp patches/iio-sensor-proxy/*.patch packaging/selinux/uke-ssc.cil src/dual-light.h tests/dual-light.cpp "$$top/SOURCES/";;
 	uke-ssc-fileservice) cp patches/hexagonrpc/*.patch packaging/systemd/*.service packaging/systemd/iio-ssc-order.conf packaging/systemd/70-uke-ssc.rules src/ssc-cache.cpp tests/hexagon-registry.cpp tests/hexagon-shell.c tests/hexagon-readiness.c "$$top/SOURCES/"; cp tests/ssc-cache.cpp "$$top/SOURCES/ssc-cache-test.cpp";;
 	esac
 	cp packaging/$(PACKAGE)/$(PACKAGE).spec "$$top/SPECS/"

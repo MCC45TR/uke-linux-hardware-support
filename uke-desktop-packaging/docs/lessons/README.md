@@ -2,6 +2,7 @@
 
 | ID | Date | Finding | Validation |
 |---|---|---|---|
+| [UKE-DESKTOP-012](2026-10-21-RAWHIDE-TRACKING.md) | 2026-10-21 | Nine Fedora-derived source bases follow signed Rawhide cohorts | Source/host fixtures; native package and tablet acceptance remain separate |
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
 
 ## UKE-INITIAL-001

@@ -4,6 +4,7 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 jq -e '.schema==1 and ([.families[].name]|(length==9) and (unique|length==9))' packaging/families/families.json >/dev/null
 jq -e 'all(.[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/")))' packaging/families/source-inputs.json >/dev/null
+jq -e '(.packages|length==9) and all(.packages[]; (.sha256|test("^[a-f0-9]{64}$")) and (.signed_mirror_sha256|test("^[a-f0-9]{64}$")) and (.source_payload_sha256|test("^[a-f0-9]{64}$")) and (.family|test("^uke-(additional|power|sensors)$")))' uke-desktop-packaging/manifests/native-runtime.json >/dev/null
 jq -e 'any(.[]; .name=="material-decoration" and .family=="uke-extras")' packaging/families/source-inputs.json >/dev/null
 jq -e '.rename["material-decoration"]=="material-decoration" and (.exceptions|length)==4' packaging/families/families.json >/dev/null
 for script in packaging/families/host/*.sh; do bash -n "$script"; done
@@ -28,6 +29,6 @@ grep -Fx 'Version: 1.0.23' uke-control/packaging/uke-control.spec
 grep -Fx 'Version: 1.0.15' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then
-    grep -Fx 'BuildRequires: llvm-devel = 23.1.3-1.fc46' packaging/families/build/uke-additional/SPECS/uke-additional.spec
+    grep -Fx "BuildRequires: llvm-devel = $(jq -er '.build_tools[\"llvm-devel\"]' uke-desktop-packaging/manifests/native-runtime.json)" packaging/families/build/uke-additional/SPECS/uke-additional.spec
 fi
 printf '%s\n' 'PASS: family/source identity, prefix, pinned inputs, native versions and no Fastfetch fork.'

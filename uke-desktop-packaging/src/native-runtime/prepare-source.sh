@@ -12,29 +12,105 @@ source_name=$(jq -er '.source_name // .name' <<< "$profile")
 archive="$project/referances/fedora-srpms/$source_name-$version-$release.src.rpm"
 mkdir -p "$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS} "$(dirname "$archive")"
 if [[ ! -s $archive ]]; then
-    curl -fL --retry 3 "https://kojipkgs.fedoraproject.org/packages/$source_name/$version/$release/src/$source_name-$version-$release.src.rpm" -o "$archive.part"
+    curl -fL --retry 3 --proto '=https' --proto-redir '=https' "https://kojipkgs.fedoraproject.org/packages/$source_name/$version/$release/src/$source_name-$version-$release.src.rpm" -o "$archive.part"
     mv "$archive.part" "$archive"
 fi
 [[ $(sha256sum "$archive" | cut -d ' ' -f1) == "$(jq -er .sha256 <<< "$profile")" ]]
-(cd "$top/SOURCES"; rpm2cpio "$archive" | cpio -idmu --quiet)
+rpm2cpio "$archive" > "$top/input.cpio"
+cpio -t --quiet < "$top/input.cpio" > "$top/input-files"
+! grep -E '(^/|(^|/)[.][.](/|$))' "$top/input-files"
+(cd "$top/SOURCES"; cpio -idm --quiet --no-absolute-filenames < "$top/input.cpio")
+build_source() {
+    local spec="$top/SPECS/$name.spec"
+    if [[ $name != libstdcxx-uke-runtime ]]; then
+        ! grep -Eq '^Source9995:' "$spec"
+        cp "$archive" "$top/SOURCES/"
+        sed -i "/^Source0:/aSource9995: $source_name-$version-$release.src.rpm" "$spec"
+    fi
+    jq -r '.build_tools|to_entries[]|[.key,.value]|@tsv' "$project/manifests/native-runtime.json" > "$top/host-tools"
+    awk '
+      NR==FNR {tools[$1]=$2;next}
+      /^BuildRequires:/ {
+        if(NF==4 && $3=="=" && ($2 in tools)) {print "BuildRequires: " $2 " = " tools[$2];seen[$2]=1;next}
+        print
+        for(i=2;i<=NF;i++)if(($i in tools) && !seen[$i]++)print "BuildRequires: " $i " = " tools[$i]
+        next
+      }
+      {print}
+    ' "$top/host-tools" "$spec" > "$spec.part"
+    mv "$spec.part" "$spec"
+    rpmbuild -bs --nodeps --target aarch64 --define "_topdir $top" "$spec"
+}
 if [[ $name == libstdcxx-uke-runtime ]]; then
     cp "$project/packaging/$name/$name.spec" "$top/SPECS/"
     cp "$project/src/native-runtime/runtime-smoke.cpp" "$top/SOURCES/"
     cp "$project/src/native-runtime/fedora-exported-symbols.txt" "$top/SOURCES/"
     cp "$project/packaging/$name/LICENSE.Boost" "$top/SOURCES/"
     cp "$archive" "$top/SOURCES/"
-    rpmbuild -bs --nodeps --target aarch64 --define "_topdir $top" "$top/SPECS/$name.spec"
+    sources=("$top/SOURCES/gcc-$version-"*.tar.xz)
+    [[ ${#sources[@]} == 1 && -s ${sources[0]} ]]
+    source_date=${sources[0]##*/}; source_date=${source_date#"gcc-$version-"}; source_date=${source_date%.tar.xz}
+    [[ $source_date =~ ^[0-9]{8}$ ]]
+    soname=$(jq -er .baseline.soname_file "$project/manifests/native-runtime.json")
+    [[ $soname =~ ^libstdc\+\+[.]so[.]6[.]0[.][0-9]+$ ]]
+    sed -i -e "s/^%global source_date .*/%global source_date $source_date/" \
+        -e "s/^Version:.*/Version: $version/" -e "s/^Release:.*/Release: $native_release%{?dist}/" \
+        -e "s/^Source99:.*/Source99: $source_name-$version-$release.src.rpm/" \
+        -e "s/libstdc++[.]so[.]6[.]0[.]36/$soname/g" "$top/SPECS/$name.spec"
+    build_source
+    exit 0
+fi
+if [[ $name == uke-power-profile-backend ]]; then
+    owner="$project/../uke-desktop-integration"
+    # The backend is a separate native daemon overlay; never install Fedora's
+    # CLI/service from this source. New Fedora patches require an explicit port.
+    ! grep -Eq '^Patch[0-9]*:' "$top/SOURCES/power-profiles-daemon.spec"
+    upstream=("$top/SOURCES/power-profiles-daemon-$version.tar."*)
+    [[ ${#upstream[@]} == 1 && -s ${upstream[0]} ]]
+    cp "$owner/packaging/$name.spec" "$top/SPECS/$name.spec"
+    native_version=$(jq -er --arg name "$name" '.native_versions[$name]' "$project/../packaging/families/families.json")
+    overlay="$name-$native_version.tar.gz"
+    tar --sort=name --mtime=@1792531200 --owner=0 --group=0 --numeric-owner -czf "$top/SOURCES/$overlay" -C "$owner" \
+        src/ppd-driver-uke-cpufreq.cpp src/ppd-driver-uke-cpufreq.h patches/0001-ppd-native-uke-cpu-driver.patch tests/ppd-cpufreq.cpp \
+        packaging/60-uke-cpufreq.conf packaging/uke-power-profile.conf packaging/uke-power-profile.cil docs/POWER-PROFILES.md
+    sed -i -e "s/^Version:.*/Version: $native_version/" -e "s/^Release:.*/Release: $native_release%{?dist}/" \
+        -e "s/^Source0:.*/Source0: ${upstream[0]##*/}/" -e "s/^Source1:.*/Source1: $overlay/" \
+        -e "s/^Requires: power-profiles-daemon = .*/Requires: power-profiles-daemon = $version/" \
+        -e "s@^echo .*%{SOURCE0}.*@echo '$(sha256sum "${upstream[0]}" | cut -d' ' -f1)  %{SOURCE0}' | sha256sum -c -@" \
+        -e "s/power-profiles-daemon-0[.]30/power-profiles-daemon-$version/g" "$top/SPECS/$name.spec"
+    build_source
     exit 0
 fi
 spec="$top/SOURCES/$name.spec"
 [[ -s $spec ]]
+if [[ $name == upower || $name == iio-sensor-proxy ]]; then
+    owner="$project/../uke-platform-runtime"
+    if [[ $name == iio-sensor-proxy ]]; then owner="$project/../uke-sensors"; fi
+    cp "$owner/patches/$name/"*.patch "$top/SOURCES/"
+    if [[ $name == upower ]]; then
+        cp "$owner/tests/"upower-{threshold-contract,health-contract,fixture}.sh "$top/SOURCES/"
+        cp "$owner/tests/fixtures/upower/ac-net-discharge.umockdev" "$top/SOURCES/"
+    else
+        cp "$owner/packaging/selinux/uke-ssc.cil" "$owner/src/dual-light.h" "$owner/tests/dual-light.cpp" "$top/SOURCES/"
+    fi
+    awk -v name="$name" -v release="$native_release" -f "$project/src/native-runtime/power-sensors.awk" "$spec" > "$top/SPECS/$name.spec"
+    mv "$spec" "$top/SPECS/$name.fedora-original.spec"
+    build_source
+    exit 0
+fi
 if [[ $name == mesa ]]; then
     cp "$project/packaging/mesa/"*.patch "$project/packaging/mesa/mesa-host-features.cpp" "$top/SOURCES/"
-    awk -v release="$native_release" '
+    tar -xOf "$top/SOURCES/mesa-$version.tar.xz" "mesa-$version/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp" > "$top/mesa-host-source.cpp"
+    awk '/^lp_build_fill_mattrs\(/{copy=1} copy {print} copy && /^}/ {exit}' "$top/mesa-host-source.cpp" > "$top/mesa-host-function.cpp"
+    host_patch=1
+    # Newer Fedora sources already contain this correction; the native fixture
+    # still checks the exact upstream function and every enabled/disabled feature.
+    if grep -Fxq '#if DETECT_ARCH_ARM || DETECT_ARCH_AARCH64' "$top/mesa-host-function.cpp"; then host_patch=0; fi
+    awk -v release="$native_release" -v host_patch="$host_patch" '
         BEGIN { print "%global debug_package %{nil}" }
         /^Release:/ { print "Release: " release "%{?dist}"; next }
         /^License:/ { print; print "ExclusiveArch: aarch64"; next }
-        /^Source0:/ { print; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9999: mesa-host-features.cpp"; next }
+        /^Source0:/ { print; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; if(host_patch)print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9999: mesa-host-features.cpp"; next }
         /^BuildRequires:.*meson/ { print "BuildRequires: meson = 1.12.1-2.fc46"; next }
         /^BuildRequires:.*python3-devel/ { print "BuildRequires: python3-devel = 3.15.0-1.fc46"; next }
         /^BuildRequires:.*python3-mako/ { print "BuildRequires: python3-mako = 1.4.1-2.fc46"; next }
@@ -60,7 +136,7 @@ if [[ $name == mesa ]]; then
         { print }
     ' "$spec" > "$top/SPECS/mesa.spec"
     mv "$spec" "$top/SPECS/mesa.fedora-original.spec"
-    rpmbuild -bs --nodeps --target aarch64 --define "_topdir $top" "$top/SPECS/mesa.spec"
+    build_source
     exit 0
 fi
 case $name in
@@ -156,4 +232,4 @@ awk -v name="$name" -v release="$native_release" -v cleanup="$cleanup" '
 mv "$spec" "$top/SPECS/$name.fedora-original.spec"
 [[ $(grep -c '^%install' "$top/SPECS/$name.spec") == 1 ]]
 grep -F 'Senemos Uke: keep Python outside every target payload.' "$top/SPECS/$name.spec" >/dev/null
-rpmbuild -bs --nodeps --target aarch64 --define "_topdir $top" "$top/SPECS/$name.spec"
+build_source

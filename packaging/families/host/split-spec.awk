@@ -40,6 +40,7 @@ BEGIN {
 /^Release:/ && phase=="header" {release=$2;next}
 /^Epoch:/ && phase=="header" {epoch=$2;next}
 /^License:/ && phase=="header" {license=substr($0,index($0,":")+1);next}
+/^License:/ && phase=="package" {licenses[package]=substr($0,index($0,":")+1);next}
 /^BuildArch:/ && phase=="header" {arch=$2;next}
 /^ExclusiveArch:/ && phase=="header" {next}
 /^Source[0-9]*:/ || /^Patch[0-9]*:/ || /^URL:/ {if(phase=="header")next}
@@ -85,7 +86,7 @@ END {
         pkg=original
         if(i>0){split(headers[i],a,/[[:space:]]+/);pkg=a[2]=="-n"?a[3]:original "-" a[2]}
         output("preamble","%package -n " renamed(pkg))
-        output("preamble","Version: " newversion "\nRelease: " newrelease "\nLicense:" license)
+        output("preamble","Version: " newversion "\nRelease: " newrelease "\nLicense:" (i in licenses?licenses[i]:license))
         if(epoch!="")output("preamble","Epoch: " epoch)
         if(arch!="")output("preamble","BuildArch: " arch)
         h=mapped_dependency(header[i]);oldevr=version "-" release;newevr=newversion "-" newrelease
