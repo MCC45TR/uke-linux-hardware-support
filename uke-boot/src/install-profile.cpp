@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Classifies one installation. This executable never opens or writes block devices.
+// Classifies an installation and delegates explicit one-time growth to original systemd.
 #include "installation-policy.hpp"
 #include "boot-common.hpp"
 #include <array>
@@ -9,6 +9,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
+#include <sys/wait.h>
 #include <linux/magic.h>
 #include <unistd.h>
 
@@ -72,7 +73,8 @@ static uke_install::Profile inspect_root() {
             fs::is_regular_file(real / "partition"), "Physical partition root required");
     const bool physical = path.find("/1d84000.ufshc/") != std::string::npos && path.find("/block/") != std::string::npos;
     const auto profile = uke_install::classify(observation(real / "uevent", 8192), observation("/proc/cmdline", 8192), physical);
-    require(root.filesystem == (profile == uke_install::Profile::userdata ? "f2fs" : "ext4"), "Root profile and filesystem differ");
+    require(profile == uke_install::Profile::userdata ? uke_install::userdata_filesystem(root.filesystem) : root.filesystem == "ext4",
+            "Root profile and filesystem differ");
     return profile;
 }
 static void write_all(int fd, const std::string &value) {
@@ -94,12 +96,42 @@ static void mask_unit(int directory_fd, const char *unit) {
     }
     require(fsync(directory_fd) == 0, "Cannot sync permanent unit mask");
 }
-static void save_value(int directory_fd, const std::string &value) {
-    ProfileFd temporary(openat(directory_fd, "profile.tmp", O_WRONLY | O_CREAT | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK, 0600));
+static void save_value(int directory_fd, const std::string &value, const std::string &name = "profile") {
+    const auto pending = name + ".tmp";
+    ProfileFd temporary(openat(directory_fd, pending.c_str(), O_WRONLY | O_CREAT | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK, 0600));
     trusted(temporary.value, false);
     require(fchmod(temporary.value, 0600) == 0 && ftruncate(temporary.value, 0) == 0, "Cannot prepare profile state");
     write_all(temporary.value, value);
-    require(renameat(directory_fd, "profile.tmp", directory_fd, "profile") == 0 && fsync(directory_fd) == 0, "Cannot commit profile state");
+    require(renameat(directory_fd, pending.c_str(), directory_fd, name.c_str()) == 0 && fsync(directory_fd) == 0, "Cannot commit profile state");
+}
+static void run_growfs() {
+    const auto child = fork();
+    require(child >= 0, "Cannot start original systemd-growfs");
+    if (!child) {
+        execl("/usr/lib/systemd/systemd-growfs", "systemd-growfs", "/", static_cast<char *>(nullptr));
+        _exit(127);
+    }
+    int status = 0;
+    pid_t result;
+    do { result = waitpid(child, &status, 0); } while (result < 0 && errno == EINTR);
+    require(result == child && WIFEXITED(status) && WEXITSTATUS(status) == 0,
+            "Filesystem growth failed; completion was not recorded");
+}
+static void grow_once(int state_fd, const std::string &filesystem, void (*resize)() = run_growfs) {
+    require(uke_install::userdata_filesystem(filesystem), "Unsupported userdata filesystem");
+    constexpr const char *name = "online-grow-complete";
+    const auto expected = "format=1\nfilesystem=" + filesystem + "\n";
+    const int saved = openat(state_fd, name, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    if (saved >= 0) {
+        ProfileFd record(saved);
+        trusted(record.value, false);
+        require(bounded_read(record.value, 128) == expected, "Filesystem completion record differs");
+        return;
+    }
+    require(errno == ENOENT, "Cannot inspect filesystem completion record");
+    // F2FS is handled before mounting root; only these three use an online ioctl.
+    if (filesystem != "f2fs") resize();
+    save_value(state_fd, expected, name);
 }
 static std::string profile_value(int directory_fd) {
     ProfileFd fd(openat(directory_fd, "profile", O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK));
@@ -114,7 +146,7 @@ static uke_install::Profile stored_profile(int directory_fd) {
 }
 static constexpr const char *journal_override = "/usr/share/senemos/boot/uke/journal-nocow-disabled.conf";
 static bool journal_nocow_unavailable(long filesystem) {
-    return filesystem == F2FS_SUPER_MAGIC || filesystem == EXT4_SUPER_MAGIC;
+    return filesystem == F2FS_SUPER_MAGIC || filesystem == EXT4_SUPER_MAGIC || filesystem == XFS_SUPER_MAGIC;
 }
 static void journal_policy(int etc_fd, bool disable_nocow) {
     trusted(etc_fd, true);
@@ -159,17 +191,25 @@ static void reconcile_journal_policy() {
 #ifndef UKE_INSTALL_PROFILE_TEST
 int main(int argc, char **argv) {
     try {
-        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check");
+        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow");
         const std::string action = argv[1];
-        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check", "Unknown profile operation");
+        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow", "Unknown profile operation");
         if (action != "status") require(uke_device(observation("/sys/firmware/devicetree/base/compatible", 4096)), "Exact Uke/SM7675 device required");
         if (action == "check") { std::cout << uke_install::name(inspect_root()) << '\n'; return 0; }
         require(geteuid() == 0, "Root privileges required for system installation state");
-        auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile");
+        auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow");
         if (action == "status") { std::cout << uke_install::name(stored_profile(state.value)) << '\n'; return 0; }
         ProfileFd lock(openat(state.value, "lock", O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, 0600));
         trusted(lock.value, false);
         require(flock(lock.value, LOCK_EX | LOCK_NB) == 0, "Installation classification already running");
+        if (action == "grow") {
+            require(inspect_root() == uke_install::Profile::userdata, "Online growth requires the provisioned userdata root");
+            const auto root = uke_install::root_mount(observation("/proc/self/mountinfo", 1024 * 1024));
+            require(root.writable, "Writable root required for online growth");
+            grow_once(state.value, root.filesystem);
+            std::cout << "Userdata online growth phase complete; subsequent boots skip this operation.\n";
+            return 0;
+        }
         struct stat st{};
         const bool exists = fstatat(state.value, "profile", &st, AT_SYMLINK_NOFOLLOW) == 0;
         require(exists || errno == ENOENT, "Cannot inspect installation state");

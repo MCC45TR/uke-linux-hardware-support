@@ -1,10 +1,11 @@
 # Userdata boot A/B updates
 
-22 October 2026. Version 1.2.2 source and native host fixtures, Fedora Rawhide x86-64.
+22 October 2026. Version 1.3.0 source and native host fixtures, Fedora Rawhide x86-64.
 This implementation has not yet passed an on-tablet A/B update or power-loss test.
 
 The `senemos-uke-linux-kernel-mainline-singleboot` profile selects the physical
-F2FS `userdata` root. `uke-kernel-update` 1.1.0 adds a separate boot A/B path for
+`userdata` root, using F2FS, EXT4, XFS or single-device Btrfs.
+`uke-kernel-update` 1.1.0 adds a separate boot A/B path for
 that profile. The existing EXT4 `linux` profile retains its opt-in `boot_b`
 writer. Userdata boot A/B uses one mutable root filesystem; it does not roll
 back userspace packages, user data or the entire operating system.
@@ -27,14 +28,14 @@ from the `auto` command without accepting a boot or staging a kernel. VRR argume
 checked Android v4 wrapper; the package Image remains byte-identical. This
 argument does not establish physical VRR quality or cadence.
 
-Enabling the private VRR argument requires the RPM-verified manifest field
-`root_selector_capability=uke-elfnote-v1` and exactly one aligned 72-byte retained
-`UKE` capability note in the signed Image. Its type is `0x554b4501` and its
-NUL-terminated descriptor is
-`root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30`. Old executable string
-literals do not satisfy this contract. A disabled VRR policy preserves the
-canonical wrapper without requiring that capability. Older bundles without the
-note remain ineligible for the enabled private VRR policy.
+The RPM-verified manifest and unique aligned `UKE` note must agree. Its type is
+`0x554b4501`. Retained F2FS images use the 72-byte v1 note with descriptor
+`root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30`; v2 is 84 bytes with
+`root-selector-v2;userdata=f2fs,ext4,xfs,btrfs;slot=a,b;vrr-min=0,30`.
+Descriptors include their terminating NUL. Non-F2FS roots require v2 even with
+VRR disabled. F2FS retains legacy no-note admission only when VRR is disabled.
+Old executable string literals do not satisfy the note contract. The RPM exposes
+`uke-kernel-update(root-filesystem-v2)` for coordinated image/kernel dependencies.
 
 A transaction file trigger runs after all package post-transaction scripts.
 It acts only on an exact Uke userdata installation. An ordinary Linux root or

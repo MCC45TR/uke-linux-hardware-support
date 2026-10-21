@@ -1,5 +1,17 @@
 // SPDX-License-Identifier: MIT
 #pragma once
+#include <algorithm>
+#include <cstring>
+#include <fcntl.h>
+#include <iterator>
+#include <linux/btrfs.h>
+#include <linux/magic.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <sys/sysmacros.h>
+#include <unistd.h>
+#include <utility>
 #include <charconv>
 #include <sstream>
 #include <stdexcept>
@@ -12,14 +24,37 @@ inline void require(bool value, const char *message) {
 }
 enum class Profile { linux, userdata };
 inline const char *name(Profile value) { return value == Profile::linux ? "linux" : "userdata"; }
-struct RootMount { unsigned major, minor; std::string filesystem; };
+struct RootMount { unsigned major, minor; std::string filesystem; bool writable; };
+inline bool userdata_filesystem(const std::string &value) {
+    return value == "f2fs" || value == "ext4" || value == "xfs" || value == "btrfs";
+}
+inline std::pair<unsigned, unsigned> btrfs_root_device(unsigned major_number, unsigned minor_number) {
+    struct RootFd { int value; ~RootFd() { if (value >= 0) close(value); } } fd{open("/", O_RDONLY | O_DIRECTORY | O_CLOEXEC)};
+    struct stat root{}, device{};
+    struct statfs filesystem{};
+    btrfs_ioctl_fs_info_args info{};
+    require(fd.value >= 0 && fstat(fd.value, &root) == 0 &&
+            major(root.st_dev) == major_number && minor(root.st_dev) == minor_number &&
+            fstatfs(fd.value, &filesystem) == 0 && filesystem.f_type == BTRFS_SUPER_MAGIC &&
+            ioctl(fd.value, BTRFS_IOC_FS_INFO, &info) == 0 && info.num_devices == 1 && info.max_id != 0,
+            "Single-device Btrfs root identity required");
+    btrfs_ioctl_dev_info_args member{};
+    member.devid = info.max_id;
+    require(ioctl(fd.value, BTRFS_IOC_DEV_INFO, &member) == 0 &&
+            std::memchr(member.path, 0, sizeof(member.path)) && member.path[0] == '/' &&
+            std::any_of(std::begin(member.uuid), std::end(member.uuid), [](auto byte) { return byte != 0; }) &&
+            stat(reinterpret_cast<const char *>(member.path), &device) == 0 && S_ISBLK(device.st_mode),
+            "Btrfs root member is missing or is not a block device");
+    return {major(device.st_rdev), minor(device.st_rdev)};
+}
 inline unsigned decimal(std::string_view value) {
     unsigned result = 0;
     const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result);
     require(!value.empty() && parsed.ec == std::errc{} && parsed.ptr == value.data() + value.size(), "Invalid root device number");
     return result;
 }
-inline RootMount root_mount(const std::string &text) {
+using BtrfsRootDevice = std::pair<unsigned, unsigned> (*)(unsigned, unsigned);
+inline RootMount root_mount(const std::string &text, BtrfsRootDevice btrfs_device = btrfs_root_device) {
     require(!text.empty() && text.size() <= 1024 * 1024, "Missing or oversized mount table");
     std::istringstream input(text);
     std::string line;
@@ -36,10 +71,17 @@ inline RootMount root_mount(const std::string &text) {
         const auto flags = "," + options + ",";
         require((flags.find(",rw,") != std::string::npos) != (flags.find(",ro,") != std::string::npos), "Invalid root mount access mode");
         while (row >> field && field != "-") {}
-        require(field == "-" && bool(row >> filesystem) && (filesystem == "ext4" || filesystem == "f2fs"), "Physical ext4 or F2FS root required");
+        require(field == "-" && bool(row >> filesystem) && userdata_filesystem(filesystem), "Supported physical root filesystem required");
         const auto colon = device.find(':');
         require(colon != std::string::npos && device.find(':', colon + 1) == std::string::npos, "Invalid root device");
-        result = {decimal(std::string_view(device).substr(0, colon)), decimal(std::string_view(device).substr(colon + 1)), filesystem};
+        result = {decimal(std::string_view(device).substr(0, colon)), decimal(std::string_view(device).substr(colon + 1)), filesystem,
+                  flags.find(",rw,") != std::string::npos};
+        // Btrfs mountinfo uses an anonymous device number; resolve its actual member through read-only ioctls.
+        if (filesystem == "btrfs") {
+            const auto physical = btrfs_device(result.major, result.minor);
+            result.major = physical.first;
+            result.minor = physical.second;
+        }
         require(result.major != 0, "Virtual root refused");
         found = true;
     }

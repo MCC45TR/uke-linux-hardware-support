@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Matched stock-ABL payloads only; Android v4 layout follows the existing boot-image codec.
 #include "boot-common.hpp"
+#include "installation-policy.hpp"
 #include <openssl/evp.h>
 #include <algorithm>
 #include <array>
@@ -212,19 +213,12 @@ static std::pair<std::string,dev_t> partition(const std::string &label,const fs:
     }
     need(!result.first.empty(),"Physical "+label+" partition unavailable"); return result;
 }
-[[maybe_unused]] static void root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo"),const std::string &label="linux") {
-    std::istringstream input(mounts);std::string row;
-    bool found=false;
-    while(std::getline(input,row)) {
-        std::istringstream line(row);std::string id,parent,device,root,mount,options;
-        if(!(line>>id>>parent>>device>>root>>mount>>options)||mount!="/") continue;
-        unsigned a=0,b=0; char tail=0;
-        need(label=="linux"||label=="userdata","Unsupported root profile");
-        const auto filesystem=label=="userdata"?" - f2fs ":" - ext4 ";
-        need(!found && root=="/" && sscanf(device.c_str(),"%u:%u%c",&a,&b,&tail)==2 && makedev(a,b)==expected &&
-             row.find(filesystem)!=std::string::npos && (","+options+",").find(",rw,")!=std::string::npos,"Root must be the selected writable physical filesystem");found=true;
-    }
-    need(found,"Root mount identity unavailable");
+[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo"),const std::string &label="linux") {
+    need(label=="linux"||label=="userdata","Unsupported root profile");
+    const auto root=uke_install::root_mount(mounts);
+    need(root.writable && makedev(root.major,root.minor)==expected &&
+         (label=="userdata" || root.filesystem=="ext4"),"Root must be the selected writable physical filesystem");
+    return root.filesystem;
 }
 static bool charging(const fs::path &sys="/sys/class/power_supply") {
     bool battery=false,full=false,external=false;unsigned count=0;
@@ -326,7 +320,7 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     const std::set<std::string> keys={"format","kernel_release","linux_image_sha256","userdata_image_sha256","linux_kernel_sha256","userdata_kernel_sha256","modules_sha256"};
     need(manifest.size()==keys.size() ||
          (manifest.size()==keys.size()+1 && manifest.contains("root_selector_capability") &&
-          manifest.at("root_selector_capability")=="uke-elfnote-v1"),"Unexpected update manifest fields");
+          (manifest.at("root_selector_capability")=="uke-elfnote-v1" || manifest.at("root_selector_capability")=="uke-elfnote-v2")),"Unexpected update manifest fields");
     for(const auto &key:keys) need(manifest.contains(key),"Missing manifest field");
     need(manifest.at("format")=="1" && token(manifest.at("kernel_release")),"Unsupported bundle format");
     const auto release=manifest.at("kernel_release");
@@ -416,7 +410,7 @@ int main(int argc,char **argv) {
         if(automatic && label!="userdata")return 0;
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
         need(label=="userdata"||action!="accept","Boot acceptance is specific to userdata A/B installations");
-        const auto root=partition(label);root_mount(root.second,read_text("/proc/self/mountinfo"),label);
+        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_text("/proc/self/mountinfo"),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
         fs::path bundle=action=="accept"?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if(automatic) {
@@ -436,15 +430,15 @@ int main(int argc,char **argv) {
         if(label=="userdata" && !current_only) {
             if(automatic) {
                 const auto raw=file(bundle/"manifest");
-                (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())));
+                (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
                 matched_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
-                userdata_update("accept",running_bundle,baseline,state,current.release);
+                userdata_update("accept",running_bundle,baseline,state,current.release,filesystem);
                 if(decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::trial)return 0;
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
             }
-            userdata_update(automatic?"apply":action,bundle,bytes,state,current.release);return 0;
+            userdata_update(automatic?"apply":action,bundle,bytes,state,current.release,filesystem);return 0;
         }
         const auto target=partition("boot_b");
         need(ufs_controller(fs::path("/sys/class/block")/target.first)==ufs_controller(fs::path("/sys/class/block")/root.first),"Root and boot_b must share the measured UFS controller");
@@ -457,7 +451,7 @@ int main(int argc,char **argv) {
             const std::array<Bytes,2> images{read_fd(other.value,capacity),previous};
             require_current_b(read_text("/proc/cmdline"),images,file(fs::path("/usr/lib/modules")/current.release/"vmlinuz"));
             const auto raw=file(bundle/"manifest");
-            bytes=userdata_vrr(std::move(bytes),vrr_policy(),properties(std::string(raw.begin(),raw.end())));
+            bytes=userdata_vrr(std::move(bytes),vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
         }
         if(previous==bytes){std::cout<<"boot_b already matches the verified installed bundle; no partition write\n";return 0;}
         const auto raw=file(bundle/"manifest");const auto release=properties(std::string(raw.begin(),raw.end())).at("kernel_release");

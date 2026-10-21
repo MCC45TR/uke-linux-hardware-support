@@ -3,6 +3,8 @@
 #include "../src/install-profile.cpp"
 #include <cassert>
 #include <fstream>
+static unsigned grow_calls = 0;
+static void simulated_grow() { ++grow_calls; }
 template<class F> static void refuse(F action) {
     bool refused = false;
     try { action(); } catch (const std::runtime_error &) { refused = true; }
@@ -16,6 +18,19 @@ int main() {
     {
         ProfileFd dir(open(root.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
         trusted(dir.value, true);
+        for (const auto *type : {"ext4", "xfs", "btrfs", "f2fs"}) {
+            grow_calls = 0;
+            grow_once(dir.value, type, simulated_grow);
+            grow_once(dir.value, type, simulated_grow);
+            assert(grow_calls == (std::string(type) == "f2fs" ? 0 : 1));
+            refuse([&] { grow_once(dir.value, "invalid", simulated_grow); });
+            assert(unlinkat(dir.value, "online-grow-complete", 0) == 0);
+        }
+        refuse([&] { grow_once(dir.value, "ext4", +[] { throw std::runtime_error("simulated resize failure"); }); });
+        assert(!fs::exists(root / "online-grow-complete"));
+        fs::create_symlink("absent", root / "online-grow-complete");
+        refuse([&] { grow_once(dir.value, "ext4", simulated_grow); });
+        fs::remove(root / "online-grow-complete");
         save_value(dir.value, "format=1\nroot=linux\n");
         assert(stored_profile(dir.value) == uke_install::Profile::linux);
         save_value(dir.value, "format=1\nroot=userdata\n");
@@ -61,6 +76,7 @@ int main() {
         refuse([&] { observation(root / "too-large", 32); });
         assert(journal_nocow_unavailable(F2FS_SUPER_MAGIC));
         assert(journal_nocow_unavailable(EXT4_SUPER_MAGIC));
+        assert(journal_nocow_unavailable(XFS_SUPER_MAGIC));
         assert(!journal_nocow_unavailable(BTRFS_SUPER_MAGIC));
         assert(!journal_nocow_unavailable(0));
         journal_policy(dir.value, false);
@@ -81,5 +97,5 @@ int main() {
         assert(fs::is_empty(root / "outside-dir"));
     }
     fs::remove_all(root);
-    std::cout << "Atomic profile state, stale-write recovery, masks and path-substitution refusals passed; regular files only.\n";
+    std::cout << "One-time growth state, resize failure, atomic profile state, stale-write recovery, masks and path-substitution refusals passed; regular files only.\n";
 }

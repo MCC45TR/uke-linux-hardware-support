@@ -6,9 +6,12 @@
 #include <functional>
 static void reject(const std::function<void()> &call){bool refused=false;try{call();}catch(const std::exception&){refused=true;}assert(refused);}
 static void put32(Bytes &bytes,size_t offset,uint32_t value){for(unsigned i=0;i<4;++i)bytes.at(offset+i)=value>>(i*8);}
-static void capability(Bytes &bytes,size_t offset=page+256) {
-    put32(bytes,offset,4);put32(bytes,offset+4,53);put32(bytes,offset+8,0x554b4501);
-    memcpy(bytes.data()+offset+12,"UKE\0root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30",57);
+static void capability(Bytes &bytes,size_t offset=page+256,bool version2=false) {
+    const std::string descriptor=version2?"root-selector-v2;userdata=f2fs,ext4,xfs,btrfs;slot=a,b;vrr-min=0,30":
+                                           "root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30";
+    put32(bytes,offset,4);put32(bytes,offset+4,descriptor.size()+1);put32(bytes,offset+8,0x554b4501);
+    memcpy(bytes.data()+offset+12,"UKE",4);
+    memcpy(bytes.data()+offset+16,descriptor.c_str(),descriptor.size()+1);
 }
 static Bytes image(const std::string &release) {
     Bytes bytes(capacity);memcpy(bytes.data(),"ANDROID!",8);put32(bytes,8,512);put32(bytes,20,1584);put32(bytes,40,4);
@@ -58,6 +61,21 @@ int main() {
     assert(userdata_vrr(boots[1],false,{})==boots[1]);
     reject([&]{userdata_vrr(boots[1],true,manifest);}); // The old executable literal is not a capability.
     auto capable=boots[1];capability(capable);const auto vrr=userdata_vrr(capable,true,manifest);
+    const std::map<std::string,std::string> manifest2{{"root_selector_capability","uke-elfnote-v2"}};
+    auto four_filesystems=boots[1];capability(four_filesystems,page+256,true);
+    for (const auto *type : {"f2fs", "ext4", "xfs", "btrfs"}) {
+        assert(userdata_vrr(four_filesystems,false,manifest2,type)==four_filesystems);
+        assert(boot_kernel(userdata_vrr(four_filesystems,true,manifest2,type))==boot_kernel(four_filesystems));
+        if (std::string(type)!="f2fs") {
+            reject([&]{userdata_vrr(capable,false,manifest,type);});
+            reject([&]{userdata_vrr(boots[1],false,{},type);});
+        }
+    }
+    reject([&]{userdata_vrr(capable,false,manifest2,"ext4");});
+    reject([&]{userdata_vrr(four_filesystems,false,manifest,"ext4");});
+    reject([&]{userdata_vrr(four_filesystems,false,manifest2,"overlay");});
+    auto duplicate2=four_filesystems;capability(duplicate2,page+352,true);
+    reject([&]{userdata_vrr(duplicate2,false,manifest2,"btrfs");});
     assert(boot_kernel(vrr)==boot_kernel(capable) && std::string(reinterpret_cast<const char*>(vrr.data()+44))=="senemos.root=userdata msm.o82_vrr_test_min_hz=30");
     reject([&]{userdata_vrr(vrr,true,manifest);});
     reject([&]{userdata_vrr(capable,true,{});});

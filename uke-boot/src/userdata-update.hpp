@@ -96,21 +96,26 @@ static bool automatic_updates(const std::string &global,const std::string &userd
          (config.at("automatic")=="0"||config.at("automatic")=="1"),"Invalid global automatic update policy");
     return config.at("automatic")=="1" && profile.at("automatic")=="1";
 }
-static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest) {
+static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest,const std::string &filesystem="f2fs") {
     const auto kernel=boot_kernel(bytes);
     need(std::string(reinterpret_cast<const char*>(bytes.data()+44))=="senemos.root=userdata","Canonical installed userdata wrapper required");
-    if(enabled) {
-        need(manifest.contains("root_selector_capability") && manifest.at("root_selector_capability")=="uke-elfnote-v1",
+    need(uke_install::userdata_filesystem(filesystem),"Unsupported userdata filesystem");
+    const bool version2=manifest.contains("root_selector_capability") && manifest.at("root_selector_capability")=="uke-elfnote-v2";
+    if(enabled || filesystem!="f2fs" || version2) {
+        need(manifest.contains("root_selector_capability") && (manifest.at("root_selector_capability")=="uke-elfnote-v1" || version2),
              "Signed manifest lacks the userdata root-selector capability");
+        need(filesystem=="f2fs" || version2,"This kernel cannot boot the installed userdata filesystem");
         // Match the retained note ABI, not compiler-dependent executable string literals.
-        Bytes note{4,0,0,0,53,0,0,0,1,0x45,0x4b,0x55,'U','K','E',0};
-        constexpr char descriptor[]="root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30";
-        static_assert(sizeof(descriptor)==53);
-        note.insert(note.end(),descriptor,descriptor+sizeof(descriptor));note.resize(72,0);
+        const std::string descriptor=version2?"root-selector-v2;userdata=f2fs,ext4,xfs,btrfs;slot=a,b;vrr-min=0,30":
+                                               "root-selector-v1;userdata=f2fs;slot=a,b;vrr-min=0,30";
+        Bytes note{4,0,0,0,static_cast<uint8_t>(descriptor.size()+1),0,0,0,1,0x45,0x4b,0x55,'U','K','E',0};
+        note.insert(note.end(),descriptor.begin(),descriptor.end());note.push_back(0);note.resize((note.size()+3)/4*4,0);
         const auto found=std::search(kernel.begin(),kernel.end(),note.begin(),note.end());
         need(found!=kernel.end() && (found-kernel.begin())%4==0 &&
              std::search(found+1,kernel.end(),note.begin(),note.end())==kernel.end(),
              "Kernel lacks a unique aligned userdata root-selector capability note");
+    }
+    if(enabled) {
         const std::string command="senemos.root=userdata msm.o82_vrr_test_min_hz=30";
         memcpy(bytes.data()+44,command.data(),command.size());
     }
@@ -205,7 +210,7 @@ static void health() {
         display|=read_text(entry.path()/"status")=="connected\n" && read_text(entry.path()/"enabled")=="enabled\n";
     need(display,"Internal display has not reached an enabled DRM output");
 }
-static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release) {
+static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem) {
     need(read_text("/var/lib/senemos/installation/profile")=="format=1\nroot=userdata\n","A classified userdata installation is required");
     const auto a=partition("boot_a"),b=partition("boot_b"),root=partition("userdata");
     const auto controller=ufs_controller(fs::path("/sys/class/block")/root.first);
@@ -255,7 +260,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     need(fs::exists(statefile),"Run the packaged userdata acceptance service before the first automatic update");
     auto saved=decode(file(statefile));need(saved.good_image==good_hash,"Running boot bytes differ from the accepted baseline");
     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
-    const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest);const auto next=manifest.at("kernel_release");
+    const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next));
     saved.candidate_image=digest(bytes);
     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();

@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.2.2
+Version: 1.3.0
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -72,6 +72,7 @@ Requires: senemos-native-runtime(libstdc++) openssl-libs systemd rpm
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
+Provides: uke-kernel-update(root-filesystem-v2) = 1
 %description -n uke-kernel-update
 Validates matched installed boot-v4 payloads and module inventories. The Linux
 root profile retains its opt-in boot_b writer. The userdata profile writes an
@@ -84,6 +85,7 @@ recovery requires device validation.
 %package -n uke-installation-profile
 Summary: Native classification of the Uke Linux root partition
 Requires: senemos-native-runtime(libstdc++) systemd
+Requires: /usr/lib/systemd/systemd-growfs
 Requires: %{name} = %{version}-%{release}
 %description -n uke-installation-profile
 Verifies the physical UFS root and exact Linux or userdata selector. Repairs
@@ -144,6 +146,7 @@ install -Dm644 src/profiles/80-uke-boot.preset %{buildroot}%{_presetdir}/80-uke-
 install -Dm644 src/units/uke-userdata-accept.service %{buildroot}%{_unitdir}/uke-userdata-accept.service
 install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
 install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
+install -Dm644 src/units/uke-root-grow.service %{buildroot}%{_unitdir}/uke-root-grow.service
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
 install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
 install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-reboot.conf
@@ -162,11 +165,18 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %postun -n uke-kernel-update
 %systemd_postun uke-userdata-accept.service
 
+%post -n uke-installation-profile
+%systemd_post uke-root-grow.service
+
 %preun -n uke-installation-profile
+%systemd_preun uke-root-grow.service
 # Retire only our generated policy, including when downgrading to an older classifier.
 if [ "$(readlink /etc/tmpfiles.d/journal-nocow.conf 2>/dev/null)" = '%{_datadir}/senemos/boot/uke/journal-nocow-disabled.conf' ]; then
     rm -f /etc/tmpfiles.d/journal-nocow.conf
 fi
+
+%postun -n uke-installation-profile
+%systemd_postun uke-root-grow.service
 
 %posttrans -n uke-installation-profile
 if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
@@ -226,6 +236,7 @@ fi
 %doc docs/USERDATA-AB.md
 %{_libexecdir}/senemos-uke/uke-install-profile
 %{_unitdir}/uke-install-profile.service
+%{_unitdir}/uke-root-grow.service
 
 %files -n uke-boot-recovery
 %license LICENSE
@@ -239,6 +250,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-1
+- Admit explicit F2FS, EXT4, XFS and single-device Btrfs userdata roots.
+- Require the v2 kernel capability for new formats and complete online growth once.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.2-1
 - Serialize GPT changes privately before writing validated slot metadata.
 - Preserve the protective MBR and verify every restored metadata region.

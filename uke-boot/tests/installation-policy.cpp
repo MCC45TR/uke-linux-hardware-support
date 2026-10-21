@@ -12,13 +12,25 @@ int main() {
     const std::string mount = "21 1 8:17 / / rw,relatime - ext4 /dev/sdb1 rw\n";
     const auto root = root_mount(mount);
     assert(root.major == 8 && root.minor == 17);
+    assert(root.writable);
     refuse([&] { root_mount(mount + mount); });
     refuse([] { root_mount("21 1 0:17 / / rw - overlay overlay rw\n"); });
     refuse([] { root_mount("21 1 8:17 /subdir / rw - ext4 /dev/sdb1 rw\n"); });
     assert(root_mount("21 1 8:17 / / rw - f2fs /dev/sdb1 rw\n").filesystem == "f2fs");
     refuse([] { root_mount("21 1 8:17 / / rw - btrfs /dev/sdb1 rw\n"); });
+    assert(root_mount("21 1 8:17 / / rw - xfs /dev/sdb1 rw\n").filesystem == "xfs");
+    const auto btrfs = root_mount("21 1 0:17 / / rw - btrfs /dev/sdb1 rw\n", +[](unsigned a, unsigned b) {
+        assert(a == 0 && b == 17);
+        return std::pair<unsigned, unsigned>{8, 17};
+    });
+    assert(btrfs.major == 8 && btrfs.minor == 17 && btrfs.filesystem == "btrfs" && btrfs.writable);
+    refuse([] { root_mount("21 1 0:17 / / rw - btrfs /dev/sdb1 rw\n", +[](unsigned, unsigned) {
+        return std::pair<unsigned, unsigned>{0, 17};
+    }); });
+    refuse([] { root_mount("21 1 0:17 / / rw - ext4 /dev/sdb1 rw\n"); });
     assert(root_mount("21 1 8:17 / / ro - ext4 /dev/sdb1 ro\n").filesystem=="ext4");
     assert(root_mount("21 1 8:17 / / ro - f2fs /dev/sdb1 ro\n").filesystem=="f2fs");
+    assert(!root_mount("21 1 8:17 / / ro - xfs /dev/sdb1 ro\n").writable);
     refuse([] { root_mount("21 1 8:17 / / ro,rw - ext4 /dev/sdb1 ro\n"); });
     refuse([] { root_mount("21 1 8:17 / / rw ext4 /dev/sdb1 rw\n"); });
     refuse([] { root_mount("21 1 999999999999999999:17 / / rw - ext4 /dev/sdb1 rw\n"); });

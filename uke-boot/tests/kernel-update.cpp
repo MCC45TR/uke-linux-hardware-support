@@ -103,6 +103,12 @@ int main() {
     fs::create_directory_symlink(root/"virtual/sdc1",root/"sys/sdc1");reject([&]{partition("linux",root/"sys");});
     root_mount(makedev(8,1),"1 2 8:1 / / rw - ext4 /dev/sda1 rw\n");
     root_mount(makedev(8,1),"1 2 8:1 / / rw,noatime - f2fs /dev/sda1 rw\n","userdata");
+    for (const auto *type : {"ext4", "xfs"}) {
+        const auto mount = std::string("1 2 8:1 / / rw - ") + type + " /dev/sda1 rw\n";
+        assert(root_mount(makedev(8,1),mount,"userdata") == type);
+    }
+    reject([]{root_mount(makedev(8,1),"1 2 8:1 / / rw - xfs /dev/sda1 rw\n","linux");});
+    reject([]{root_mount(makedev(8,1),"1 2 0:17 / / rw - btrfs /dev/sda1 rw\n","userdata");});
     reject([]{root_mount(makedev(8,1),"1 2 8:1 / / ro - f2fs /dev/sda1 ro\n","userdata");});
     reject([]{root_mount(makedev(8,1),"1 2 8:1 /subdir / rw - ext4 /dev/sda1 rw\n");});
     reject([]{root_mount(makedev(8,1),"1 2 8:2 / / rw - ext4 /dev/sda2 rw\n");});
