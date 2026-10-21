@@ -11,6 +11,7 @@ Source3:        upower-fixture.sh
 Source4:        ac-net-discharge.umockdev
 Patch0:         0001-required-threshold-write-errors.patch
 Patch1:         0002-preserve-reported-health-capacity.patch
+Patch2:         0003-recognize-standard-wireless-supplies.patch
 
 BuildRequires:  meson
 BuildRequires:  git
