@@ -47,7 +47,7 @@ uke-sensors)
 uke-power)
     make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
     make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
-    printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.15-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
+    printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.16-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
     batteries=("$stage/battery/rpmbuild/SRPMS/"*.src.rpm)
     [[ ${#batteries[@]} == 1 && -f ${batteries[0]} ]]
     printf '%s\t%s\n' uke-battery-observer "${batteries[0]}" >>"$stage/inputs";;

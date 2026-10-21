@@ -1,5 +1,17 @@
 # COPR source families
 
+21 October 2026: power 1.1.1-1 supplies adaptive display 1.0.16 with original
+KWin's `Always` VRR policy for `DSI-1`. Existing user settings remain
+authoritative. The O82 kernel opt-in and physical variable-cadence acceptance
+are separate. Other power children retain their sources and receive fresh
+RPM revisions.
+
+21 October 2026: sensors 1.0.4-1 builds libssc from its owning component recipe
+and rejects invalid proximity values without aborting the client or changing
+its last valid state. The actual callback passes host fault fixtures, including
+fractional and non-finite vendor values. All sensor children receive fresh RPM
+revisions. Native package and physical sensor acceptance remain separate gates.
+
 21 October 2026: additional 1.0.0-5 keeps AccountsService's compiled release
 version equal to its signed Rawhide archive. RPM-generated and ancestor Git
 history no longer determines that metadata. All rebuilt child revisions advance;
