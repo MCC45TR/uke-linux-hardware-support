@@ -199,7 +199,13 @@ awk -v name="$name" -v release="$native_release" -v cleanup="$cleanup" '
     /^Release:/ { print "Release: " release "%{?dist}"; next }
     /^Source0:/ && name=="libaccounts-glib" { print; print "Patch9999: 0001-fix-uncommitted-changes-cleanup.patch"; next }
     /^Source0:/ && name=="accountsservice" { print; print "Patch9999: 0001-ignore-absent-optional-tcb-directory.patch\nSource9998: accountsservice-tcb.sh\nBuildRequires: gcc-c++"; next }
-    /^%ldconfig_scriptlets/ && name=="accountsservice" { print "%check\nbash %{SOURCE9998} \"$PWD\" --patched\n"; print; next }
+    /^%build([[:space:]]|$)/ && name=="accountsservice" {
+        print "# RPM patch history is not upstream release history."
+        print "rm -rf -- .git"
+        print "test \"$(GIT_CEILING_DIRECTORIES=\"$(dirname \"$PWD\")\" ./generate-version.sh)\" = \"%{version}\""
+        print; print "export GIT_CEILING_DIRECTORIES=\"$(dirname \"$PWD\")\""; next
+    }
+    /^%ldconfig_scriptlets/ && name=="accountsservice" { print "%check\ngrep -Fx '\''#define VERSION \"%{version}\"'\'' %{_vpath_builddir}/config.h\nbash %{SOURCE9998} \"$PWD\" --patched\n"; print; next }
     /^BuildRequires:.*%\{majmin_ver_kf6\}/ && name=="plasma-workspace" { sub(/%\{majmin_ver_kf6\}/,"6.7.91"); print; next }
     /^%install([[:space:]]|$)/ {
         if (name=="plasma-workspace") print "%{__cxx} -std=c++20 %{build_cxxflags} %{build_ldflags} $(pkg-config --cflags Qt6Core) %{SOURCE9999} -o senemos-calendar-migration $(pkg-config --libs Qt6Core)"

@@ -1,5 +1,10 @@
 # COPR source families
 
+21 October 2026: additional 1.0.0-5 keeps AccountsService's compiled release
+version equal to its signed Rawhide archive. RPM-generated and ancestor Git
+history no longer determines that metadata. All rebuilt child revisions advance;
+the installed Release-4 functional baseline and separate native/target gates remain.
+
 21 October 2026: core/control 1.0.24-1 scopes vendor exceptions to exact planned
 package/repository/vendor jobs while retaining global vendor restrictions.
 Signed repository fixtures include combined update/rename and an unrelated

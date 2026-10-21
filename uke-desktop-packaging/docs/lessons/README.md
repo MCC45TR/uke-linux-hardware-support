@@ -2,6 +2,7 @@
 
 | ID | Date | Finding | Validation |
 |---|---|---|---|
+| [UKE-DESKTOP-014](2026-10-21-ACCOUNTS-RELEASE-VERSION.md) | 2026-10-21 | Fence synthetic/ancestor Git metadata from release archive versions | Actual source preparation and host contamination checks; native/target follow-up pending |
 | [UKE-DESKTOP-013](2026-10-21-RUNTIME-COHORT.md) | 2026-10-21 | Real Mesa CPU producer, bounded display-fd handling and optional TCB correction | Native build, signatures, ABI and isolated BLAKE3 vectors pass; tablet acceptance separate |
 | [UKE-DESKTOP-012](2026-10-21-RAWHIDE-TRACKING.md) | 2026-10-21 | Ten Fedora-derived source bases follow signed Rawhide cohorts | Remote unchanged-source run and three native families pass; physical acceptance separate |
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
