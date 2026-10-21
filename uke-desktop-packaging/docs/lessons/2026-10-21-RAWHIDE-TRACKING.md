@@ -43,3 +43,14 @@
   separate runtime evidence.
 - Next validation: record native COPR IDs/results, verify signed RPM payload and
   ABI closure, then coordinate the DNF transaction and measured tablet tests.
+
+Native follow-up: source/native/signed-repository/private-bus checks in CI
+39568465850 passed. Its submission stage requested power 11181615 and sensors
+11181617, then refused the shared factory's old extras ownership. Source
+a4a0bc58c0d504307fdb0347f6a73831bfc3417d corrects that classification; the
+unsubmitted additional family was requested exactly once as 11181620 after
+checking that no current or active build existed. Sensor build 11181617 then
+correctly stopped before producing packages: the newly generated proxy preceded
+its archived libssc provider. Ordering now covers the combined input list.
+Sensor source Release 3 and every rebuilt child advance for this correction;
+the failed Release 2 is not repeated. This failure is not device evidence.

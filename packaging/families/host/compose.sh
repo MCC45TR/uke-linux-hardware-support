@@ -81,6 +81,10 @@ while IFS=$'\t' read -r key url hash; do
     printf '%s  %s\n' "$hash" "$input" | sha256sum -c - >&2
     printf '%s\t%s\n' "$key" "$input" >>"$stage/inputs"
 done < <(jq -r --arg family "$family" 'map(select(.family==$family))|sort_by(if .name=="libssc" then 0 else 1 end)[]|[.name,.url,.sha256]|@tsv' packaging/families/source-inputs.json)
+# Generated SensorProxy inputs need the same provider-first order as archives.
+awk -F '\t' '$1=="libssc"' "$stage/inputs" >"$stage/ordered-inputs"
+awk -F '\t' '$1!="libssc"' "$stage/inputs" >>"$stage/ordered-inputs"
+mv "$stage/ordered-inputs" "$stage/inputs"
 while IFS=$'\t' read -r key input; do
     [[ $key =~ ^[a-zA-Z0-9+_.-]+$ ]]
     source="$bundle/inputs/$key"; part="$stage/parts/$key"
