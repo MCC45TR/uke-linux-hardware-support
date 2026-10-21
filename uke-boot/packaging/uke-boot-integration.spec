@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.2.1
+Version: 1.2.2
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -239,6 +239,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.2-1
+- Serialize GPT changes privately before writing validated slot metadata.
+- Preserve the protective MBR and verify every restored metadata region.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.1-1
 - Accept a healthy running userdata slot independently of automatic staging policy.
 

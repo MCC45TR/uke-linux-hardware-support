@@ -1,6 +1,6 @@
 # Userdata boot A/B updates
 
-22 October 2026. Version 1.2.1 source and native host fixtures, Fedora Rawhide x86-64.
+22 October 2026. Version 1.2.2 source and native host fixtures, Fedora Rawhide x86-64.
 This implementation has not yet passed an on-tablet A/B update or power-loss test.
 
 The `senemos-uke-linux-kernel-mainline-singleboot` profile selects the physical
@@ -55,6 +55,12 @@ the active slot as proof of the running slot. Paired early firmware must match;
 different firmware cohorts require separate qualification. Firmware contents,
 partition geometry, names, unique GUIDs, Android `misc`, persist and calibration
 are not write targets.
+
+GPT changes are serialized by original libfdisk into an anonymous sparse memory
+file. Geometry, partition identities, CRCs and the allowed slot-field changes
+are checked before writing the physical GPT arrays and headers. The protective
+MBR is preserved byte for byte; libfdisk's PMBR normalization remains in memory.
+Restoration verifies both headers, both arrays and the protective MBR.
 
 The accepted slot and GPT metadata receive synced private backups. With at least
 50% measured battery, or 30% plus external power, the inactive boot slot is

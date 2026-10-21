@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // QTI slot semantics: Lineage bootctrl 25092672 and reviewed OpenABL aef4e86045bd.
-// GPT writes use original util-linux libfdisk; firmware contents are never written.
+// libfdisk serializes GPT in private memory; only validated metadata reaches UFS.
 #pragma once
 #include <libfdisk/libfdisk.h>
 #include <linux/bsg.h>
@@ -8,6 +8,7 @@
 #include <scsi/scsi_bsg_ufs.h>
 #include <endian.h>
 #include <zlib.h>
+#include <sys/mman.h>
 
 namespace slot {
 constexpr uint64_t active=uint64_t(1)<<50, successful=uint64_t(1)<<54,
@@ -76,8 +77,13 @@ static Snapshot snapshot(int fd,uint64_t size,unsigned sector) {
     return s;
 }
 struct Part {size_t number;std::string name,type,uuid;uint64_t start,size,attrs;};
+static void write_metadata(int fd,const Snapshot &value) {
+    write_at(fd,value.backup_entries,value.entries);write_at(fd,value.last*value.sector,value.backup);
+    write_at(fd,value.primary_entries,value.entries);write_at(fd,value.sector,value.primary);
+}
 class Disk {
     bool warning=false;
+    Fd staged{memfd_create("uke-slot-metadata",MFD_CLOEXEC)};
     std::unique_ptr<fdisk_context,decltype(&fdisk_unref_context)> context{fdisk_new_context(),fdisk_unref_context};
     static int ask(fdisk_context*,fdisk_ask *ask,void *data) {
         if(fdisk_is_ask(ask,WARN)||fdisk_is_ask(ask,WARNX))*static_cast<bool*>(data)=true;
@@ -89,11 +95,13 @@ public:
     std::map<std::string,Part> parts;
     std::map<std::string,std::pair<std::string,uint64_t>> expected;
     explicit Disk(int descriptor,uint64_t bytes,unsigned logical_sector):fd(descriptor),size(bytes),sector(logical_sector),before(snapshot(fd,size,sector)) {
+        need(!ftruncate(staged.value,size),"Cannot size private GPT staging file");
+        write_at(staged.value,0,before.mbr);write_metadata(staged.value,before);
         need(bool(context),"Cannot allocate libfdisk context");
         need(!fdisk_set_ask(context.get(),ask,&warning) &&
              !fdisk_save_user_sector_size(context.get(),sector,sector) &&
              !fdisk_enable_bootbits_protection(context.get(),1) &&
-             !fdisk_assign_device_by_fd(context.get(),fd,"Uke UFS slot metadata",0),"Cannot inspect GPT with libfdisk");
+             !fdisk_assign_device_by_fd(context.get(),staged.value,"Uke UFS slot metadata",0),"Cannot inspect GPT with libfdisk");
         need(fdisk_is_label(context.get(),GPT) && !fdisk_gpt_is_hybrid(context.get()) &&
              !fdisk_verify_disklabel(context.get()) && !warning,"GPT validation reported damage or a hybrid layout");
         fdisk_table *raw=nullptr;need(!fdisk_get_partitions(context.get(),&raw),"Cannot enumerate GPT partitions");
@@ -154,10 +162,11 @@ public:
         const auto fresh=snapshot(fd,size,sector);
         need(fresh.primary==before.primary && fresh.backup==before.backup && fresh.entries==before.entries && fresh.mbr==before.mbr,
              "GPT changed after admission; concurrent storage mutation refused");
-        need(!writer(context.get()) && !fsync(fd) && !warning,"GPT write/sync failed");
-        const auto after=snapshot(fd,size,sector);
-        need(after.mbr==before.mbr && after.primary_entries==before.primary_entries &&
-             after.backup_entries==before.backup_entries,"GPT write changed geometry or protective MBR");
+        need(!writer(context.get()) && !fsync(staged.value) && !warning,"Private GPT serialization failed");
+        const auto after=snapshot(staged.value,size,sector);
+        // libfdisk normalizes a valid OEM PMBR; that sector is never copied to UFS.
+        need(after.primary_entries==before.primary_entries &&
+             after.backup_entries==before.backup_entries,"GPT write changed geometry");
         auto same_header=[](const Bytes &a,const Bytes &b) {
             if(a.size()!=b.size() || a.size()<92)return false;
             for(size_t i=0;i<a.size();++i) {
@@ -174,18 +183,26 @@ public:
             need(p!=parts.end() && p->first.size()>2 && (p->first.ends_with("_a")||p->first.ends_with("_b")) &&
                  ((offset<16)||offset==54),"GPT changed outside slot type GUIDs and flags");
         }
-        Disk checked(fd,size,sector);
+        Disk checked(staged.value,size,sector);
         need(checked.parts.size()==parts.size(),"GPT partition count changed");
         for(const auto &[name,p]:parts) {
             need(checked.parts.contains(name),"GPT partition disappeared");const auto &actual=checked.parts.at(name);
             need(actual.number==p.number && actual.uuid==p.uuid && actual.start==p.start && actual.size==p.size &&
                  actual.type==expected.at(name).first && actual.attrs==expected.at(name).second,"GPT slot metadata readback differs");
         }
+        const auto current=snapshot(fd,size,sector);
+        need(current.primary==before.primary && current.backup==before.backup && current.entries==before.entries && current.mbr==before.mbr,
+             "GPT changed during serialization; concurrent storage mutation refused");
+        write_metadata(fd,after);
+        const auto committed=snapshot(fd,size,sector);
+        need(committed.mbr==before.mbr && committed.primary==after.primary && committed.backup==after.backup &&
+             committed.entries==after.entries,"Committed GPT metadata differs");
     }
     void restore() const {
-        write_at(fd,before.backup_entries,before.entries);write_at(fd,before.last*sector,before.backup);
-        write_at(fd,before.primary_entries,before.entries);write_at(fd,sector,before.primary);
-        need(snapshot(fd,size,sector).entries==before.entries,"GPT restoration differs");
+        write_metadata(fd,before);write_at(fd,0,before.mbr);
+        const auto restored=snapshot(fd,size,sector);
+        need(restored.mbr==before.mbr && restored.primary==before.primary && restored.backup==before.backup &&
+             restored.entries==before.entries,"GPT restoration differs");
     }
 };
 [[maybe_unused]] static uint32_t boot_lun(int fd,unsigned target=0) {
