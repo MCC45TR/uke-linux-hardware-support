@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.1.3
+version := 1.1.4
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
@@ -12,7 +12,6 @@ validate:
 	bash -n src/audit-kernel-inputs.sh
 	sh -n src/uke-usb-network.sh
 	bash -n tests/startup-native.sh src/dracut/93uke-boot-guard/module-setup.sh
-	jq -e '.modules | (map(if type == "string" then . else .type end) | index("display") != null and index("gpu") != null) and all(.[]; if type == "object" and .type == "custom" then .key == "Panel (specification)" and .format == "11.2-inch (advertised)" else true end)' src/profiles/fastfetch.jsonc >/dev/null
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh

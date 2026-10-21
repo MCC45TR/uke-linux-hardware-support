@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.1.3
+Version: 1.1.4
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -239,6 +239,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.4-1
+- Permit the classifier's narrowly scoped journal policy directory.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.3-1
 - Inspect the actual journal filesystem before suppressing an unsupported NOCOW rule.
 - Preserve administrator overrides and retire only the generated policy on removal or downgrade.

@@ -199,12 +199,12 @@ system integration. Do not manufacture SMBIOS data or probe legacy PC memory
 ranges on ARM to satisfy a display field. Full root all-module captures remain
 unqualified until the original distribution program safely handles that case.
 
-`uke-fastfetch-config` installs a noreplace system profile for original Fedora
-Fastfetch, with dynamic CPU vendor/name, online cores and maximum-frequency
-fields. It uses no command callbacks, BIOS/board/host detection or physical
-memory module. Platform and advertised panel text are explicitly profile
-metadata. Per-user configuration still overrides the system default. This is a
-small data RPM with no helper or resident process, not a Fastfetch fork.
+On 21 October 2026, `uke-hw 1.1.4` retires `uke-fastfetch-config` and requires
+the original Fedora `fastfetch` directly. No project Fastfetch configuration is
+built or installed. RPM preserves any locally modified configuration as an
+`.rpmsave`; an unmodified vendor profile is removed. Model, panel geometry, CPU
+and storage information must come from their actual operating-system interfaces.
+Native identity and physical-device validation remain separate from this change.
 
 On Rawhide AArch64, build a source family with
 `make -C packaging/families srpm FAMILY=uke-core`. The source-generation host

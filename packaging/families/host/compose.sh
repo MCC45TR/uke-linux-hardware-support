@@ -23,9 +23,6 @@ printf '%s\n' '20 October 2026. Source-family packaging; device acceptance remai
 cp packaging/families/{families.json,source-inputs.json} "$bundle/"
 cp LICENSE "$bundle/LICENSE"
 cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
-if [[ $family == uke-hw ]]; then
-    cp uke-desktop-packaging/src/fastfetch/config.jsonc "$bundle/fastfetch.jsonc"
-fi
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
@@ -123,6 +120,7 @@ spec="$output/SPECS/$family.spec"
     if [[ $family == uke-hw ]]; then
         # DSP firmware ELF data is not a host executable and has no build-id link.
         printf '%%global _build_id_links none\n%%global _binaries_in_noarch_packages_terminate_build 0\n'
+        printf 'Obsoletes: uke-fastfetch-config <= 1.0.1-4.fc46\n'
     fi
     jq -r '.requires[]|"Requires: "+.' <<<"$profile"
     jq -r '.suggests[]|"Suggests: "+.' <<<"$profile"
@@ -139,11 +137,6 @@ spec="$output/SPECS/$family.spec"
           {print}
         ' "$part/preamble"
     done
-    if [[ $family == uke-hw ]]; then
-        fastfetch_release=$(jq -er '.release_overrides["uke-fastfetch-config"] // "1.fc46"' packaging/families/families.json)
-        [[ $fastfetch_release =~ ^[1-9][0-9]*[.]fc46$ ]]
-        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.1\nRelease: %s\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n' "$fastfetch_release"
-    fi
     printf '\n%%prep\n%%setup -q\n'
     for phase in prep generate_buildrequires build install check; do
         if [[ $phase == generate_buildrequires ]] && ! find "$stage/parts" -name generate_buildrequires -print -quit | grep -q .; then continue; fi
@@ -173,7 +166,6 @@ spec="$output/SPECS/$family.spec"
             printf ')\n'
         done <"$stage/inputs"
         if [[ $family == uke-hw && $phase == install ]]; then
-            printf 'install -Dm644 "%%{_builddir}/%s-%s/fastfetch.jsonc" "%%{buildroot}/etc/fastfetch/config.jsonc"\n' "$family" "$version"
             # RPM's native post-install processing runs before %check.
             printf 'mv "%%{buildroot}/usr/lib/firmware" "%%{_builddir}/%s-%s/firmware-unprocessed"\n' "$family" "$version"
         fi
@@ -191,9 +183,6 @@ spec="$output/SPECS/$family.spec"
           {if(!files)gsub(/%/,"%%");print replace($0,source,base "/inputs/" key)}
         ' "$part/tail"
     done <"$stage/inputs"
-    if [[ $family == uke-hw ]]; then
-        printf '\n%%files -n uke-fastfetch-config\n%%config(noreplace) /etc/fastfetch/config.jsonc\n'
-    fi
     while IFS=$'\t' read -r old new unit; do
         printf '\n%%pre -n %s\n' "$new"
         printf 'old=%s; new=%s; unit=%s; phase=save\n' "$old" "$new" "$unit"

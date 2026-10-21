@@ -18,7 +18,7 @@ ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
 NoNewPrivileges=yes
-ReadWritePaths=/etc/systemd/system
+ReadWritePaths=/etc/systemd/system /etc/tmpfiles.d
 
 [Install]
 WantedBy=multi-user.target

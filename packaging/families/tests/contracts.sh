@@ -24,7 +24,13 @@ if [[ -f $hw_spec ]]; then
     done
 fi
 [[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
-jq -e '(.modules[]|select(type=="object" and .type=="cpu")|.format)=="{vendor} {name} ({cores-online} cores) @ {freq-max}" and all(.modules[]; if type=="string" then (test("^(bios|board|host|physicalmemory|command)$")|not) else (.type|test("^(bios|board|host|physicalmemory|command)$")|not) end)' uke-desktop-packaging/src/fastfetch/config.jsonc >/dev/null
+[[ ! -e uke-desktop-packaging/src/fastfetch/config.jsonc && ! -e uke-boot/src/profiles/fastfetch.jsonc ]]
+jq -e '.families[]|select(.name=="uke-hw")|(.requires|index("fastfetch")!=null) and all(.requires[]; (startswith("uke-fastfetch-config")|not))' packaging/families/families.json >/dev/null
+if [[ -f $hw_spec ]]; then
+    ! rpmspec --target aarch64 -q --qf '%{NAME}\n' "$hw_spec" | grep -Fxq uke-fastfetch-config
+    rpmspec --target aarch64 -q --qf '[%{OBSOLETENAME}\t%{OBSOLETEVERSION}\n]' "$hw_spec" | grep -Fxq $'uke-fastfetch-config\t1.0.1-4.fc46'
+    ! grep -Fq /etc/fastfetch/ "$hw_spec"
+fi
 grep -Fx 'Version: 1.1.1' uke-control/packaging/uke-control.spec
 grep -Fx 'Version: 1.0.16' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
