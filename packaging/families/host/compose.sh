@@ -83,6 +83,8 @@ while IFS=$'\t' read -r key input; do
     fi
     if [[ $key == uke-firmware ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
+        # Mandatory paths must resolve without DNF's optional filelists metadata.
+        sed -i '/^AutoReqProv: no/aProvides: /usr/lib/firmware/qcom/uke/sensors/sns_tppe.so\nProvides: /usr/share/uke-sensors/odm/json.lst\nProvides: /usr/share/uke-sensors/sns_reg.conf' "${specs[0]}"
         # Retain unsuffixed virtual versions and cover the installed Fedora builds.
         sed -i '/^Provides: uke-owner-.*1\.owner$/ {p;s/1\.owner$/1.owner%{?dist}/;}; /^Obsoletes: uke-owner-/s/1\.owner$/1.owner%{?dist}/' "${specs[0]}"
         # Compare only this child's files in the shared buildroot.
@@ -129,7 +131,7 @@ spec="$output/SPECS/$family.spec"
     if [[ $family == uke-hw ]]; then
         fastfetch_release=$(jq -er '.release_overrides["uke-fastfetch-config"] // "1.fc46"' packaging/families/families.json)
         [[ $fastfetch_release =~ ^[1-9][0-9]*[.]fc46$ ]]
-        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.0\nRelease: %s\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n' "$fastfetch_release"
+        printf '\n%%package -n uke-fastfetch-config\nVersion: 1.0.1\nRelease: %s\nSummary: Standard Fedora Fastfetch configuration for Uke\nLicense: MIT\nBuildArch: noarch\nRequires: fastfetch >= 2.68.0\n%%description -n uke-fastfetch-config\nA data-only profile for the original Fedora application. CPU vendor and name\nare read by upstream Fastfetch. Platform and advertised panel text are profile\nmetadata, not measured capabilities. Local configuration is preserved.\n' "$fastfetch_release"
     fi
     printf '\n%%prep\n%%setup -q\n'
     for phase in prep generate_buildrequires build install check; do
@@ -191,6 +193,7 @@ spec="$output/SPECS/$family.spec"
     done < <(jq -r --arg family "$family" '.[]|select(.family==$family)|[.old,.new,.unit]|@tsv' packaging/families/migrations.json)
     printf '\n%%changelog\n* Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %s-%s\n- Build reviewed child recipes under one source family without binary repackaging.\n' "$version" "$release"
 } >"$spec"
+bash packaging/families/host/check-cohort.sh "$spec" "$target"
 # The archive contains complete upstream sources, patches, licenses and original specs.
 (cd "$bundle"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum >SOURCE-SHA256SUMS)
 tar --sort=name --mtime='2026-10-20 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$output/SOURCES/$family-$version.tar.xz" -C "$stage" "$family-$version"

@@ -1,5 +1,14 @@
 # COPR source families
 
+21 October 2026 correction: hardware source Release 4 keeps the current boot
+implementation and the reviewed Fastfetch 1.0.1 physical-storage profile. Its
+exact boot, classifier and updater requirements match the generated Release 3
+children. The source composer refuses inconsistent exact child dependencies,
+including ISA-qualified dependencies. Each rebuilt child has a fresh RPM
+revision. Required firmware file paths remain explicit primary-metadata
+providers. Host source generation and dependency fixtures do not establish
+tablet installation or hardware acceptance.
+
 20 October 2026. Fedora Rawhide AArch64. This directory owns the Uke source
 package map. COPR lists source packages in a flat list; it has no nested package
 folders. Each family is one source RPM producing separately installable child
