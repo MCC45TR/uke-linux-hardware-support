@@ -10,11 +10,15 @@
 #include <unistd.h>
 #include "charge-notify.hpp"
 #include "desktop.hpp"
+#include "wake.hpp"
 static void help() {
-    std::cout << "uke-control 1.1.2 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.2.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
+      "  wake status                 Driver wake permissions and unsupported event controls\n"
+      "  wake set SOURCE on|off      Save and apply one wake permission (root)\n"
+      "  wake apply                  Restore saved permissions before suspend (root)\n"
       "  brunch stable|test|unstable  Switch Uke COPR and synchronize its packages (root)\n"
       "  brunch sync|status          Repair selected channel, or show selection\n"
       "  branch ...                  Alias for brunch; --dry-run and --yes supported\n"
@@ -59,6 +63,16 @@ int main(int argc,char** argv) {
         }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="wake") {
+            if(argc==3&&std::string_view(argv[2])=="check") return uke::wake::applicable()?0:1;
+            if(argc==3&&std::string_view(argv[2])=="status") {std::cout<<uke::wake_status();return 0;}
+            if(argc==3&&std::string_view(argv[2])=="apply") {uke::wake_apply();return 0;}
+            if(argc==5&&std::string_view(argv[2])=="set") {
+                const std::string_view value=argv[4];
+                if(value!="on"&&value!="off")throw std::runtime_error("Wake permission must be on or off");
+                uke::wake_set(argv[3],value=="on");std::cout<<uke::wake_status();return 0;
+            }
+        }
         if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::desktop::status();return 0;}
         if(command=="brunch"||command=="branch"||command=="update") {
             execv("/usr/libexec/uke-control/packages",argv+1);

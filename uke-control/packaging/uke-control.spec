@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.1.2
+Version: 1.2.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -51,6 +51,9 @@ install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/te
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
 install -Dm644 packaging/uke-control.service %{buildroot}%{_unitdir}/uke-control.service
+install -Dm644 packaging/uke-control-wake.service %{buildroot}%{_unitdir}/uke-control-wake.service
+install -d %{buildroot}%{_unitdir}/sleep.target.requires
+ln -s ../uke-control-wake.service %{buildroot}%{_unitdir}/sleep.target.requires/uke-control-wake.service
 install -Dm644 packaging/80-uke-control.preset %{buildroot}%{_presetdir}/80-uke-control.preset
 install -Dm644 packaging/uke-control-moisture-notify.service %{buildroot}%{_userunitdir}/uke-control-moisture-notify.service
 install -Dm644 packaging/80-uke-control-user.preset %{buildroot}%{_userpresetdir}/80-uke-control-user.preset
@@ -61,13 +64,13 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %make_build check
 
 %post
-%systemd_post uke-control.service
+%systemd_post uke-control.service uke-control-wake.service
 %systemd_user_post uke-control-moisture-notify.service
 %preun
-%systemd_preun uke-control.service
+%systemd_preun uke-control.service uke-control-wake.service
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
-%systemd_postun uke-control.service
+%systemd_postun uke-control.service uke-control-wake.service
 %systemd_user_postun uke-control-moisture-notify.service
 
 %files
@@ -79,6 +82,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_libdir}/libuke-control.so.0
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
+%{_unitdir}/uke-control-wake.service
+%dir %{_unitdir}/sleep.target.requires
+%{_unitdir}/sleep.target.requires/uke-control-wake.service
 %{_presetdir}/80-uke-control.preset
 %{_userunitdir}/uke-control-moisture-notify.service
 %{_userpresetdir}/80-uke-control-user.preset
@@ -91,6 +97,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.0-1
+- Persist native wake permissions and apply them before system sleep.
+- Retain a recovery key and disable unqualified Bluetooth UART wake by default.
+- Report unsupported charge-event and touch-gesture controls explicitly.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.2-1
 - Capture bounded interval CPU/thread samples and cached GPU execution counters.
 - Provide original Fedora diagnostic tools with the optional tests package.

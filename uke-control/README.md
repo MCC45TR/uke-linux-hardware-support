@@ -306,3 +306,25 @@ an atomic cross-device snapshot. Missing interfaces remain unknown.
 without discarding other logs. This content is excluded from the anonymous
 GitHub summary. Serial numbers, network addresses, firmware blobs, calibration,
 crash dumps and power-supply attributes are not read by this command.
+
+## Wake permissions
+
+The source candidate `1.2.0` adds `uke-control wake status`,
+`sudo uke-control wake set SOURCE on|off` and `sudo uke-control wake apply`.
+Named sources are `power-key`, `volume-up`, `volume-down`, `usb`,
+`bluetooth-uart`, `charge-connect`, `charge-disconnect` and `double-tap`.
+Unavailable controls return their actual reason and cannot be written.
+
+Settings persist in root-private state and are restored before each sleep,
+after input providers are available. The native helper admits only Uke/SM7675, unique canonical sysfs
+providers and the expected key capability. It verifies writes, restores
+previous permissions on failure and refuses to disable every recovery key.
+USB attach/removal share one device wake permission. Independent firmware
+charge-event filters and touch-gesture wake remain unimplemented.
+
+On the 21 October tablet trial, an enabled Bluetooth UART wake permission
+caused an immediate s2idle return through IRQ135. Temporarily disabling that
+permission allowed the 25-second RTC trial to complete. Its default policy is
+therefore disabled until Bluetooth accessory wake is qualified; this does not
+power Bluetooth off. An explicit saved setting overrides that default.
+Permission readback is not a physical wake or low-power acceptance result.

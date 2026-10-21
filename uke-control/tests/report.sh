@@ -52,6 +52,7 @@ static std::string inventory(bool){if(bad_inventory)throw std::runtime_error("in
 static std::string status(){if(bad_status)throw std::runtime_error("charge helper unavailable");return "fixture status\n";}
 static std::string firmware_status(){if(bad_firmware)throw std::runtime_error("firmware cache unavailable");return "{\"fixture\":true}\n";}
 static std::string hardware_status(){if(bad_firmware)throw std::runtime_error("hardware cache unavailable");return "{\"private_hardware\":true}\n";}
+static std::string wake_status(){return "{\"physical_acceptance\":null}\n";}
 #include "report.inc"
 int main(int argc,char** argv) {
     assert(argc==2);
@@ -88,7 +89,7 @@ int main(int argc,char** argv) {
         assert(summary.find("private unavailable battery")==std::string::npos);
         assert(summary.find("private process sample")==std::string::npos);
         assert(summary.find("private frequency snapshot")==std::string::npos);
-        assert(summary.find("Application: uke-control 1.1.2")!=std::string::npos);
+        assert(summary.find("Application: uke-control 1.2.0")!=std::string::npos);
     }
 }
 CPP

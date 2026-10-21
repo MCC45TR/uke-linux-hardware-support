@@ -3,6 +3,7 @@
 #include "rpm-api.hpp"
 #include "charge-client.hpp"
 #include "usb-request.hpp"
+#include "wake.hpp"
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -109,6 +110,63 @@ static void atomic_file(const fs::path& path,const std::string& value) {
 static uint64_t decimal(const std::string& value) {
     uint64_t n{};auto p=std::from_chars(value.data(),value.data()+value.size(),n);
     need(p.ec==std::errc{}&&p.ptr==value.data()+value.size(),"Expected an unsigned integer");return n;
+}
+std::string wake_status() { return wake::snapshot(); }
+static void wake_write(const wake::Source& source, bool enabled) {
+    need(!source.path.empty(), "Wake control unavailable: " + source.name + ": " + source.reason);
+    Fd fd{open(source.path.c_str(), O_WRONLY|O_CLOEXEC|O_NOFOLLOW)};
+    struct statfs type{};
+    need(fd.n >= 0 && !fstatfs(fd.n, &type) && type.f_type == SYSFS_MAGIC, "Wake permission is not a sysfs attribute");
+    write_all(fd.n, enabled ? "enabled\n" : "disabled\n");
+    need(read(source.path.string(), 32) == (enabled ? "enabled\n" : "disabled\n"), "Wake permission readback differs");
+}
+void wake_set(const std::string& name, bool enabled) {
+    root(); need(wake::applicable(), "Wake policy requires exact Uke / SM7675 identity"); Lock lock;
+    auto sources = wake::sources();
+    auto selected = std::find_if(sources.begin(), sources.end(), [&](const auto& s) { return s.name == name; });
+    need(selected != sources.end(), "Unknown wake source");
+    const bool previous = selected->enabled;
+    selected->enabled = enabled;
+    need(wake::recovery_key(sources), "At least one recovery key must remain enabled");
+    try {
+        wake_write(*selected, enabled);
+        atomic_file(state/("wake-"+name), enabled ? "enabled\n" : "disabled\n");
+    } catch (...) {
+        if (!selected->path.empty()) try { wake_write(*selected, previous); } catch (...) {
+            throw std::runtime_error("Wake update and rollback failed; inspect wake status before suspending");
+        }
+        throw;
+    }
+}
+void wake_apply() {
+    root(); need(wake::applicable(), "Wake policy requires exact Uke / SM7675 identity"); Lock lock;
+    const auto previous = wake::sources();
+    auto requested = previous;
+    for (auto& source : requested) {
+        const auto path = state/("wake-"+source.name);
+        if (fs::exists(path)) {
+            const auto value = read(path.string(), 32);
+            need(value == "enabled\n" || value == "disabled\n", "Invalid saved wake permission");
+            need(!source.path.empty(), "Saved wake source is no longer available: " + source.name);
+            source.enabled = value == "enabled\n";
+        } else if (source.name == "bluetooth-uart") {
+            // shortcut: keep unqualified UART wake off until accessory wake and RTC trials qualify it.
+            source.enabled = false;
+        }
+    }
+    need(wake::recovery_key(requested), "Saved policy disables every recovery key");
+    try {
+        // Enable recovery paths before disabling any existing permission.
+        for (bool enabled : {true, false}) for (size_t i = 0; i < requested.size(); ++i)
+            if (!requested[i].path.empty() && requested[i].enabled != previous[i].enabled && requested[i].enabled == enabled)
+                wake_write(requested[i], enabled);
+    } catch (...) {
+        bool restored = true;
+        for (bool enabled : {true, false}) for (const auto& source : previous)
+            if (!source.path.empty() && source.enabled == enabled) try { wake_write(source, enabled); } catch (...) { restored = false; }
+        need(restored, "Wake policy and rollback failed; inspect wake status before suspending");
+        throw;
+    }
 }
 uint64_t swap_mib(const std::string& policy,uint64_t memory) {
     uint64_t size=policy=="half"?memory/(2*MiB):policy=="full"?memory/MiB:decimal(policy);
@@ -276,7 +334,7 @@ Result cdc_set(bool enabled) {
 }
 std::string status() {
     std::string selected=geteuid()==0?policy():"root-private (sudo to inspect)";
-    return "uke-control 1.1.2\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
+    return "uke-control 1.2.0\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
 }
 void boot() {
     root();board();(void)inventory(true);swap_apply();
@@ -341,12 +399,13 @@ std::string report() {
     capture("device-status.log",[]{return status();});
     capture("firmware.json",[]{return firmware_status();});
     capture("hardware.json",[]{return hardware_status();});
+    capture("wake.json",[]{return wake_status();});
     atomic_file(path/"collection.log",receipt.str());
     auto kernel=execute({"/usr/bin/uname","-r"},5);
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.1.2\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.2.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {
