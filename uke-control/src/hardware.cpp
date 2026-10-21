@@ -24,6 +24,11 @@ std::optional<std::string> raw(const fs::path& root,const fs::path& path) {
     if(input.bad())return {};
     return value;
 }
+bool numbered(const fs::path& path,std::string_view prefix) {
+    const auto name=path.filename().string();
+    return name.starts_with(prefix)&&name.size()>prefix.size()&&
+        std::all_of(name.begin()+prefix.size(),name.end(),[](char c){return c>='0'&&c<='9';});
+}
 bool compatible(const std::string& list,std::string_view item) {
     for(std::size_t at=0;at<list.size();) {
         const auto end=list.find('\0',at);
@@ -98,6 +103,28 @@ std::string snapshot(const fs::path& requested_root) {
     group("soundwire","sys/bus/soundwire/devices",{"modalias"});
     group("input","sys/class/input",{"name","capabilities/ev","capabilities/key","capabilities/abs","properties"});
     group("leds","sys/class/leds",{"max_brightness"});
+    group("drm","sys/class/drm",{"dev"});
+    group("accelerators","sys/class/accel",{"dev"});
+    group("cpu_policies","sys/devices/system/cpu/cpufreq",{"affected_cpus","scaling_driver","scaling_governor","scaling_min_freq","scaling_max_freq","cpuinfo_max_freq"});
+    group("devfreq","sys/class/devfreq",{"governor","available_frequencies","min_freq","max_freq"});
+    out+=",\"cpu_caches\":[";bool first_cpu=true;
+    for(const auto& cpu:entries(root,root/"sys/devices/system/cpu")) {
+        check();if(!numbered(cpu,"cpu")||!resolved(root,cpu))continue;
+        if(!first_cpu)out+=',';
+        first_cpu=false;
+        out+="{\"cpu\":"+quote(cpu.filename().string())+",\"class_present\":"+
+            std::string(exists(root,cpu/"cache")?"true":"false")+",\"caches\":[";
+        bool first_cache=true;
+        for(const auto& cache:entries(root,cpu/"cache")) {
+            check();if(!numbered(cache,"index")||!resolved(root,cache))continue;
+            if(!first_cache)out+=',';
+            first_cache=false;
+            out+=object(root,cache,{"level","type","size","shared_cpu_list","coherency_line_size","number_of_sets","ways_of_associativity"});
+            if(out.size()>1024*1024)throw std::runtime_error("Hardware snapshot exceeds 1 MiB");
+        }
+        out+="]}";
+    }
+    out+=']';
     out+=",\"configured_nodes\":[";bool first=true;
     const auto base=root/"sys/firmware/devicetree/base";
     if(const auto target=resolved(root,base)) {
@@ -111,7 +138,12 @@ std::string snapshot(const fs::path& requested_root) {
             {"qcom,audio_prm","audio_oem_service"},{"qcom,spf-core-platform","audio_oem_machine"},
             {"qcom,pineapple-asoc-snd","audio_oem_machine"},{"foursemi,fs16xx","speaker_amplifier"},
             {"qcom,wcd9390-codec","audio_codec"},{"qcom,wcd9395-codec","audio_codec"},
-            {"qcom,wcd939x-codec","audio_oem_codec"},{"xiaomi,uke-wcd939x-typec","usb_switch"}};
+            {"qcom,wcd939x-codec","audio_oem_codec"},{"xiaomi,uke-wcd939x-typec","usb_switch"},
+            {"qcom,adreno-43030b00","gpu"},{"qcom,adreno-gmu-732","gpu_controller"},
+            {"qcom,cliffs7-llcc","system_cache"},{"qcom,sm7675-llcc","system_cache"},
+            {"qcom,bwmon4","bandwidth_monitor"},{"qcom,bwmon5","bandwidth_monitor"},
+            {"qcom,memlat","memory_latency_policy"},{"qcom,dcvs","memory_frequency_policy"},
+            {"qcom,cliffs-cdsp-pas","compute_dsp"},{"qcom,sm7675-cdsp-pas","compute_dsp"}};
         std::error_code error;std::size_t count=0;
         for(fs::recursive_directory_iterator it(*target,error),end;!error&&it!=end;it.increment(error)) {
             check();if(++count>32768)throw std::runtime_error("Device tree metadata exceeds node budget");

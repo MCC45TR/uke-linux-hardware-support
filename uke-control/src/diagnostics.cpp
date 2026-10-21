@@ -166,7 +166,7 @@ static void help() {
         "  touch /dev/input/eventN seconds  Require continuous accepted contact (1..300s)\n"
         "  sensors [seconds]          SensorProxy and processed IIO/hwmon readings\n"
         "  desktop                    Existing UPower, profiles, sensors, logind and KDE interfaces\n"
-        "  hardware                   Cached audio/media/input paths; no PCM or camera opens\n"
+        "  hardware                   Cached chipset/audio/media/input paths; no device opens\n"
         "  discover [all|datatype]    Bounded existing SSC metadata helper\n"
         "  sample datatype           Bounded existing SSC sample helper\n"
         "  --self-test               Host checks; no device or bus access\n"

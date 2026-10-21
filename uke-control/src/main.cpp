@@ -11,10 +11,10 @@
 #include "charge-notify.hpp"
 #include "desktop.hpp"
 static void help() {
-    std::cout << "uke-control 1.0.24 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.1.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
-      "  hardware status             Cached audio/media/input paths; no device access\n"
+      "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
       "  brunch stable|test|unstable  Switch Uke COPR and synchronize its packages (root)\n"
       "  brunch sync|status          Repair selected channel, or show selection\n"
       "  branch ...                  Alias for brunch; --dry-run and --yes supported\n"

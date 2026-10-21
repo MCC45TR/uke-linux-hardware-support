@@ -1,6 +1,10 @@
 # Uke Control
 
-21 October 2026: version 1.0.24 permits reviewed Fedora/COPR replacements while
+21 October 2026: version 1.1.0 extends the existing hardware snapshot and private
+report with cached CPU/GPU policy, cache and accelerator metadata. Missing values
+remain unknown; no cache, clock or firmware settings change. See [HARDWARE.md](HARDWARE.md).
+
+Version 1.0.24 permits reviewed Fedora/COPR replacements while
 retaining `allow_vendor_change=False`. Each planned install/reinstall uses its
 exact NEVRA, repository and vendor through libdnf5's spec-job API; package-ID
 jobs do not apply its vendor exception. Unrelated upgrades keep the normal

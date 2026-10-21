@@ -5,7 +5,10 @@ version equal to its signed Rawhide archive. RPM-generated and ancestor Git
 history no longer determines that metadata. All rebuilt child revisions advance;
 the installed Release-4 functional baseline and separate native/target gates remain.
 
-21 October 2026: core/control 1.0.24-1 scopes vendor exceptions to exact planned
+21 October 2026: core/control 1.1.0-1 adds cached chipset/cache/accelerator metadata
+to the existing hardware status and private reports without hardware control writes.
+
+Core/control 1.0.24-1 scopes vendor exceptions to exact planned
 package/repository/vendor jobs while retaining global vendor restrictions.
 Signed repository fixtures include combined update/rename and an unrelated
 foreign-vendor candidate. Native packaging and target transactions are separate.

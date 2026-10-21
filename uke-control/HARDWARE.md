@@ -2,6 +2,20 @@
 
 Date: 20 October 2026. Native C++ backend; original Fedora desktop applications.
 
+21 October 2026: version 1.1.0 adds CPU cache geometry and sharing, CPU frequency
+policies, devfreq policy bounds, DRM nodes and accelerator class metadata to the
+existing snapshot, test alias and private report. Missing geometry remains null;
+no capacity is guessed from a CPU name. Frequency policy values use the kernel's
+original units: cpufreq kHz and devfreq Hz. Current frequencies and live hardware
+counters are excluded from this metadata command.
+
+The DT allowlist also identifies the exact Adreno 732, Cliffs7/SM7675 LLCC,
+bandwidth monitor, MEMLAT/DCVS and compute-DSP nodes. Configured nodes do not
+establish a bound provider, active cache slice, running DSP or NPU inference.
+No memory reservation, cache policy, clock, voltage, preemption or firmware
+setting changes. Adreno uses shared system memory; this command adds no VRAM
+size control. Multiple DRM nodes do not prove multiple physical displays or MST.
+
 ```sh
 uke-control hardware status
 uke-control test hardware
@@ -40,3 +54,7 @@ module load or firmware operation is opened or requested. There is no new daemon
 or dependency. Speaker stimulus and camera/audio capture admission remain false;
 physical acceptance remains null. This command supplies the next investigation's
 evidence; it cannot admit a speaker or manufacture camera/pen support.
+
+2026-10-21: cached chipset inventory checks pass on the host. The new native
+RPM and tablet readback remain separate validation gates. Cache records sharing
+shared_cpu_list overlap and must not be summed as independent capacity.
