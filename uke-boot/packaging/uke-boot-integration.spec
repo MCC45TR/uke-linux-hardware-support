@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.1.4
+Version: 1.2.0
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -239,6 +239,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.0-1
+- Admit only matched mainline, KVM and unstable kernel package families.
+- Require variant Image ABI capabilities and retain family-specific rollback verification.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.4-1
 - Permit the classifier's narrowly scoped journal policy directory.
 

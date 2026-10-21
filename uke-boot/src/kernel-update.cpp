@@ -277,8 +277,13 @@ static bool same_tuple(const Package &a,const Package &b) {
     return a.epoch==b.epoch && a.version==b.version && a.release==b.release && a.arch==b.arch;
 }
 using Query=std::string(*)(const std::vector<std::string>&);
-static Package installed_files(const std::map<std::string,std::map<fs::path,std::string>> &groups,Query query=rpm) {
+static std::string kernel_family(const std::string &release) {
     const std::string base="senemos-uke-linux-kernel-mainline";
+    for(const std::string suffix:{"-kvm","-unstable"})if(release.ends_with(suffix))return base+suffix;
+    return base;
+}
+static Package installed_files(const std::map<std::string,std::map<fs::path,std::string>> &groups,const std::string &release,Query query=rpm) {
+    const auto base=kernel_family(release);
     Package first{};bool have_first=false;
     for(const auto &[suffix,files]:groups) {
         need(!files.empty(),"Missing package file set");
@@ -286,6 +291,12 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
         const auto p=package(query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n","--",files.begin()->first.string()}),expected);
         need(!have_first||same_tuple(first,p),"Boot, core and modules RPM versions differ");first=p;have_first=true;
         const auto nevra=p.name+"-"+p.epoch+":"+p.version+"-"+p.release+"."+p.arch;
+        if(suffix=="-core" && base!="senemos-uke-linux-kernel-mainline") {
+            const auto capabilities=query({"-q","--qf","[%{PROVIDENAME}\n]","--",nevra});
+            std::istringstream input(capabilities);std::string name;unsigned matches=0;
+            while(std::getline(input,name))matches+=name=="kernel-uname-r("+release+")";
+            need(matches==1,"Kernel variant RPM does not provide the exact Image ABI");
+        }
         const auto rows=query({"-q","--qf","[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",nevra});
         std::map<fs::path,std::string> owned;std::istringstream input(rows);std::string row;
         while(std::getline(input,row)) {
@@ -298,7 +309,10 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
     need(have_first,"No installed package files selected");return first;
 }
 static void rollback_modules(const Package &core,Query query=rpm) {
-    const std::string name="senemos-uke-linux-kernel-mainline-modules";
+    std::string name;
+    for(const std::string base:{"senemos-uke-linux-kernel-mainline","senemos-uke-linux-kernel-mainline-kvm","senemos-uke-linux-kernel-mainline-unstable"})
+        if(core.name==base+"-core")name=base+"-modules";
+    need(!name.empty(),"Unreviewed rollback kernel family");
     const auto nevra=name+"-"+core.epoch+":"+core.version+"-"+core.release+"."+core.arch;
     const auto modules=package(query({"-q","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n","--",nevra}),name);
     need(same_tuple(core,modules),"Rollback core/modules RPM versions differ");
@@ -343,7 +357,7 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     if(label=="userdata")need(kernel==core && manifest.at("userdata_kernel_sha256")==manifest.at("linux_kernel_sha256"),"A shared root-selecting Image is required");
     const auto dtb=modules/release/"dtb/qcom/sm7675-xiaomi-uke.dtb";
     installed_files({{"-boot",{{bundle/"manifest",digest(raw_manifest)},{bundle/"modules.sha256",digest(inventory)},{image,digest(bytes)}}},
-                     {"-core",{{modules/release/"vmlinuz",digest(core)}}},{"-dtbs",{{dtb,digest(file(dtb))}}},{"-modules",module_files}},query);
+                     {"-core",{{modules/release/"vmlinuz",digest(core)}}},{"-dtbs",{{dtb,digest(file(dtb))}}},{"-modules",module_files}},release,query);
     return bytes;
 }
 static bool replace_verified(int target,const Bytes &next,const fs::path &backup,void(*writer)(int,const Bytes&)=write_fd) {
@@ -453,7 +467,7 @@ int main(int argc,char **argv) {
         need(std::search(old_kernel.begin(),old_kernel.end(),banner.begin(),banner.end())!=old_kernel.end(),"Existing boot_b does not match the running kernel; rollback is unqualified");
         const fs::path old_core=fs::path("/usr/lib/modules")/current.release/"vmlinuz";
         need(file(old_core)==old_kernel,"Installed rollback Image differs from the current boot partition");
-        const auto rollback=installed_files({{"-core",{{old_core,digest(old_kernel)}}}});
+        const auto rollback=installed_files({{"-core",{{old_core,digest(old_kernel)}}}},current.release);
         rollback_modules(rollback);
         need(le32(previous,16)==le32(bytes,16),"Boot OS metadata differs; a separately reviewed update is required");
         if(!apply) {std::cout<<"Matched boot/module bundle and physical boot_b checks passed; no partition write\n";return 0;}

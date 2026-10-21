@@ -17,11 +17,11 @@ static Bytes synthetic_boot(const std::string &release,const std::string &label)
     const auto words="Linux version "+release+" test root=PARTLABEL="+label+" rw";
     memcpy(b.data()+page+128,words.data(),words.size());return b;
 }
-static std::map<std::string,std::string> owners,dumps;
+static std::map<std::string,std::string> owners,dumps,capabilities;
 static std::string fake_rpm(const std::vector<std::string> &args) {
     assert(args.size()==5 && args[3]=="--");
     if(args[0]=="-qf")return owners.at(args[4]);
-    assert(args[0]=="-q");return dumps.at(args[4]);
+    assert(args[0]=="-q");return args[2]=="[%{PROVIDENAME}\n]"?capabilities.at(args[4]):dumps.at(args[4]);
 }
 static void record_package(const std::string &suffix,const std::vector<fs::path> &files) {
     const auto name="senemos-uke-linux-kernel-mainline"+suffix;
@@ -30,6 +30,12 @@ static void record_package(const std::string &suffix,const std::vector<fs::path>
     for(const auto &path:files) {owners[path.string()]=identity;dumps[nevra]+=path.string()+"\t"+digest(file(path))+"\n";}
 }
 static unsigned attempts=0;
+static std::string variant_module_nevra,variant_module_identity;
+static std::string fake_variant_rollback(const std::vector<std::string> &args) {
+    assert(args.back()==variant_module_nevra);
+    if(args.front()=="-q")return variant_module_identity;
+    assert(args.front()=="-V" && args[1]=="--noscripts");return "";
+}
 static std::string fake_rollback_rpm(const std::vector<std::string> &args) {
     assert(args.back()=="senemos-uke-linux-kernel-mainline-modules-0:7.2.9-1.40.fc46.aarch64");
     if(args.front()=="-q")return "senemos-uke-linux-kernel-mainline-modules\t0\t7.2.9\t1.40.fc46\taarch64\t8\n";
@@ -50,6 +56,34 @@ int main() {
     assert(uke_device(std::string("xiaomi,uke\0qcom,sm7675\0",24)));
     reject([]{properties("format=1\nformat=1\n");});reject([]{properties("format=\n");});
     const std::string hash(64,'a');
+    for(const std::string variant:{"-kvm","-unstable"}) {
+        const auto version=variant=="-kvm"?"7.2.12":"7.3.0";
+        const auto abi=std::string(version)+"-2"+variant;
+        const auto family="senemos-uke-linux-kernel-mainline"+variant;
+        assert(kernel_family(abi)==family);
+        std::map<std::string,std::map<fs::path,std::string>> groups;
+        for(const std::string suffix:{"-boot","-core","-dtbs","-modules"}) {
+            const auto path=root/(variant+suffix);
+            const auto name=family+suffix,nevra=name+"-0:"+version+"-2.fc46.aarch64";
+            owners[path.string()]=name+"\t0\t"+version+"\t2.fc46\taarch64\t8\n";
+            dumps[nevra]=path.string()+"\t"+hash+"\n";groups[suffix][path]=hash;
+            if(suffix=="-core")capabilities[nevra]="kernel-uname-r("+abi+")\n";
+        }
+        installed_files(groups,abi,fake_rpm);
+        const auto core_nevra=family+"-core-0:"+version+"-2.fc46.aarch64";
+        capabilities[core_nevra]="kernel-uname-r(unmatched)\n";
+        reject([&]{installed_files(groups,abi,fake_rpm);});
+        capabilities[core_nevra]="kernel-uname-r("+abi+")\n";
+        reject([&]{installed_files(groups,abi+"-foreign",fake_rpm);});
+        const auto mixed=root/(variant+"-modules");const auto saved_owner=owners[mixed.string()];
+        owners[mixed.string()]="senemos-uke-linux-kernel-mainline-modules\t0\t"+std::string(version)+"\t2.fc46\taarch64\t8\n";
+        reject([&]{installed_files(groups,abi,fake_rpm);});owners[mixed.string()]=saved_owner;
+        const auto core=package(owners[(root/(variant+"-core")).string()],family+"-core");
+        variant_module_nevra=family+"-modules-0:"+version+"-2.fc46.aarch64";
+        variant_module_identity=owners[mixed.string()];rollback_modules(core,fake_variant_rollback);
+    }
+    reject([]{rollback_modules(Package{"other-core","0","7.3.0","2.fc46","aarch64","8"},fake_variant_rollback);});
+    owners.clear();dumps.clear();capabilities.clear();
     reject([&]{module_inventory(hash+"  ../wrong.ko.zst\n");});
     reject([&]{module_inventory(hash+"  kernel/../wrong.ko.zst\n");});
     reject([&]{module_inventory(hash+"  kernel/right.ko\n"+hash+"  kernel/right.ko\n");});

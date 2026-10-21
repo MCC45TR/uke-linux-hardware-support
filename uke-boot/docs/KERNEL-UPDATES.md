@@ -97,3 +97,17 @@ with SELinux enforcing; exact readback and an idempotent no-write check passed.
 
 The v4 layout follows the [AOSP boot image header specification](https://source.android.com/docs/core/architecture/bootloader/boot-image-header).
 Package admission follows the [DNF5 signature configuration](https://dnf5.readthedocs.io/en/latest/dnf5.conf.5.html).
+
+## Matched kernel variants
+
+21 October 2026, updater 1.2.0: package verification admits only the mainline,
+mainline-KVM and mainline-unstable source families. Core, modules, DTBs and boot
+files must share that family and the exact RPM tuple. KVM and unstable core RPMs
+must also provide the exact `kernel-uname-r(...)` capability named by the bundle;
+a matching version number in another namespace is insufficient. Rollback module
+verification follows the running core's admitted family and checks its RPM files.
+
+This extends package verification without enabling automatic updates. It does
+not qualify alternating-slot firmware, suspend, KVM or an unstable kernel boot.
+The manual current-slot path retains its physical boot identity, power, durable
+backup, readback and protected-partition checks.

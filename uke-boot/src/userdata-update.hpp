@@ -214,7 +214,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     for(unsigned i=0;i<2;++i){auto fd=physical_boot(i?b:a);images[i]=read_fd(fd.value,capacity);}
     const fs::path core=fs::path("/usr/lib/modules")/release/"vmlinuz";const auto running_image=file(core);
     const auto running=identify_slot(read_text("/proc/cmdline"),images,running_image);
-    const auto rollback=installed_files({{"-core",{{core,digest(running_image)}}}});rollback_modules(rollback);
+    const auto rollback=installed_files({{"-core",{{core,digest(running_image)}}}},release);rollback_modules(rollback);
     auto bsg=ufs_bsg(controller);need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
     auto disks=metadata(controller);slot::Disk *boot_table=nullptr;
     for(auto &disk:disks)if(disk->gpt->parts.contains("boot_a") && disk->gpt->parts.contains("boot_b"))boot_table=disk->gpt.get();
