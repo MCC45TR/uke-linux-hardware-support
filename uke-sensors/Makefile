@@ -62,6 +62,7 @@ touchscreen-rpm: touchscreen-srpm
 	rpmbuild -ba --define "_topdir $$(realpath -m build/rpmbuild)" "$$(realpath -m build/rpmbuild)/SPECS/uke-touchscreen.spec"
 test-native:
 	bash tests/source-contract.sh
+	$(MAKE) test-cache
 	mkdir -p build
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/ssc-discovery.cpp -o build/ssc-contract
 	./build/ssc-contract

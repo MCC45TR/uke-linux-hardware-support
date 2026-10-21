@@ -1,5 +1,15 @@
 # Uke sensors
 
+21 October 2026 source correction: the native RAM cache compares its packaged
+DSP helper and configuration with installed inputs. A changed generation is
+published with an atomic directory exchange while preserving the current RAM
+registry. Both file services hold shared lifetime locks through an `exec` of
+the original daemon; no additional resident process is added. Cache preparation
+requires the exclusive lock and refuses active readers. The RPM transaction
+trigger restarts the cache, providers and SensorProxy in dependency order after
+firmware/configuration changes. Factory persist remains read-only. Host fixtures
+do not establish acceptance of a changed DSP binary on the tablet.
+
 18 October 2026: the separate, disabled-by-default native front-color publisher
 exposes raw CCT vectors with explicit freshness, wire status and
 unverified units/calibration. It preserves the original SensorProxy ALS API.

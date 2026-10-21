@@ -64,7 +64,7 @@
     },
     {
       "name": "uke-sensors",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "requires": [
         "uke-libssc",
         "uke-iio-sensor-proxy"
@@ -74,7 +74,17 @@
         "uke-front-color"
       ],
       "release": 1,
-      "watch_paths": []
+      "watch_paths": [
+        "uke-sensors/src/ssc-cache.cpp",
+        "uke-sensors/tests/ssc-cache.cpp",
+        "uke-sensors/packaging/uke-ssc-fileservice",
+        "uke-sensors/packaging/systemd",
+        "uke-sensors/Makefile",
+        "uke-sensors/patches/hexagonrpc",
+        "uke-sensors/tests/hexagon-registry.cpp",
+        "uke-sensors/tests/hexagon-shell.c",
+        "uke-sensors/tests/hexagon-readiness.c"
+      ]
     },
     {
       "name": "uke-extras",
@@ -172,7 +182,7 @@
     "uke-installation-profile": "1.1.2"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "10.fc46",
+    "iio-sensor-proxy": "11.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-bluetooth": "5.fc46",
     "uke-touchscreen": "5.fc46",
@@ -183,8 +193,8 @@
     "uke-adaptive-display": "2.fc46",
     "uke-firmware": "4.fc46",
     "uke-fastfetch-config": "3.fc46",
-    "libssc": "8.fc46",
-    "uke-ssc-fileservice": "11.fc46",
-    "uke-front-color": "3.fc46"
+    "libssc": "9.fc46",
+    "uke-ssc-fileservice": "12.fc46",
+    "uke-front-color": "4.fc46"
   }
 }

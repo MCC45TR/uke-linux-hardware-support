@@ -1,5 +1,12 @@
 # COPR source families
 
+21 October 2026 sensor source follow-up: family 1.0.3-1 builds the file-service
+recipe from its owning component, including the cache-generation correction.
+The upstream archive remains pinned in that recipe; the historical frozen SRPM
+input is no longer active for this component. Other sensor children retain their
+pinned source inputs and receive fresh package revisions. Installed firmware and
+active RAM/DSP content remain separate evidence.
+
 21 October 2026 source follow-up: hardware family 1.1.2-1 carries updater 1.1.2.
 The native automatic entry point requires both strict global and userdata
 policies before any acceptance or staging operation. Private VRR derivation
