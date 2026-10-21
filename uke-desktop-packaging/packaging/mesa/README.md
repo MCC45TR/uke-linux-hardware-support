@@ -28,3 +28,28 @@ Actual worker dependency versions stay in COPR logs. Every binary subpackage is
 checked for Python files/shebangs before packaging and needs independent native
 payload/dependency admission before delivery. Detailed physical evidence remains
 in the private documentation journal.
+
+## Render-only primary node candidate — 21 October 2026
+
+Current Fedora `mesa-26.2.5-1.fc46.src.rpm`, SHA-256
+`38209e85ce96607b65b0b60109b4e3b6959c75ad1e04e5ebfcd422ab3755c7e5`,
+retains the reviewed Turnip primary-node open and common WSI behavior. On the
+tablet running kernel 14/Mesa 26.2.4, bounded native tracing of the selected
+Freedreno ICD shows `DRM_IOCTL_MODE_GETRESOURCES` returning `EOPNOTSUPP` on the
+render-only primary device. The display controller is a separate DRM device.
+Common WSI translates that failed resource query to host-memory exhaustion;
+the same run has no measured memory pressure. Surfaceless EGL initializes
+FD732 successfully. This does not qualify Vulkan presentation or performance.
+
+Candidate `0003` probes the opened primary node before transferring its fd.
+Only `EOPNOTSUPP` selects the existing no-display path. Valid KMS resources are
+freed, rejected fds close once, and other failures retain the old path. It does
+not choose another card, suppress extensions or alter GPU/clock properties.
+The upstream MIT source attribution remains unchanged.
+
+`bash tests/turnip-display-fd.sh SOURCE_DIRECTORY` compiles the exact patched
+branch with host fakes. Disabled-display, failed-open, valid-resource,
+unsupported-KMS, ENOMEM, EIO, EACCES and ENOTTY cases check ownership and failure
+preservation. Complete Mesa compilation, signed coherent COPR integration,
+DNF deployment and separate Vulkan/Wayland tablet tests remain required.
+The candidate is not yet added to automatic package inputs in this branch.
