@@ -18,6 +18,12 @@ test-native:
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/adreno-stats/tests.cpp -o build/adreno-counter-test
 	build/adreno-counter-test
 
+.PHONY: test-bluetooth
+test-bluetooth:
+	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-function tests/bluetooth-address.cpp -o build/bluetooth-address-test
+	build/bluetooth-address-test
+
 test-plugin:
 	cmake -S src/adreno-stats -B build/adreno-stats -DCMAKE_BUILD_TYPE=RelWithDebInfo
 	cmake --build build/adreno-stats --parallel 4

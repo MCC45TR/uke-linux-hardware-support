@@ -21,8 +21,6 @@ test-native: validate
 	bash tests/kernel-inputs.sh
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o build/tests/wifi-factory
 	build/tests/wifi-factory
-	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-function ../uke-desktop-integration/tests/bluetooth-address.cpp -o build/tests/bluetooth-address
-	build/tests/bluetooth-address
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 src/esp32-cdc.cpp -o build/tests/uke-esp32-cdc
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/esp32-tty.cpp -o build/tests/esp32-tty -lutil
 	build/tests/esp32-tty
