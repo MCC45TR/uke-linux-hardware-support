@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.3.1
+version := 1.3.2
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
@@ -12,6 +12,7 @@ validate:
 	bash -n src/audit-kernel-inputs.sh
 	sh -n src/uke-usb-network.sh
 	bash -n tests/startup-native.sh src/dracut/93uke-boot-guard/module-setup.sh
+	bash -n tests/native-profile-ready.sh tests/native-profile-udev.sh
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh
@@ -20,6 +21,15 @@ test-native: validate
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 src/esp32-cdc.cpp -o build/tests/uke-esp32-cdc
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/esp32-tty.cpp -o build/tests/esp32-tty -lutil
 	build/tests/esp32-tty
+	$(MAKE) test-native-profile
+.PHONY: test-native-profile
+test-native-profile:
+	mkdir -p build/tests
+	c++ -std=c++17 -Wall -Wextra -Werror -O2 src/native-profile-ready.cpp $$(pkg-config --cflags --libs libsystemd) -o build/tests/uke-native-power-profile-ready
+	c++ -std=c++17 -Wall -Wextra -Werror -O2 -pthread tests/native-profile-ready.cpp $$(pkg-config --cflags --libs libsystemd) -o build/tests/native-profile-ready
+	bash tests/native-profile-ready.sh build/tests/native-profile-ready
+	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/native-profile-udev.cpp $$(pkg-config --cflags --libs umockdev-1.0) -o build/tests/native-profile-udev
+	timeout --signal=KILL 25 umockdev-wrapper build/tests/native-profile-udev "$$(pwd)/tests/native-profile-udev.sh"
 test-startup:
 	bash tests/startup-contract.sh
 	bash tests/startup-native.sh
@@ -40,7 +50,7 @@ test-usb:
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
-	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USERDATA-AB.md docs/USB-TYPEC.md packaging/uke-boot-integration.spec
+	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USERDATA-AB.md docs/USB-TYPEC.md docs/NATIVE-POWER-PROFILES.md packaging/uke-boot-integration.spec
 	cp packaging/uke-boot-integration.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-boot-integration.spec"
 	mkdir -p "$(outdir)"

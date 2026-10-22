@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.3.1
+Version: 1.3.2
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -13,11 +13,14 @@ BuildRequires: openssl-devel
 BuildRequires: pkgconfig(fdisk) pkgconfig(zlib) util-linux
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: jq
+BuildRequires: dbus-daemon systemd-udev pkgconfig(umockdev-1.0)
 Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
+Requires: systemd-udev
 Provides: uke-usb-gadget-ownership-api = 2
 Provides: uke-usb-manual-cdc-api = 2
+Provides: uke-boot-integration(native-platform-profile-ready-v1) = 1
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -103,6 +106,7 @@ durable; classification does not write block devices or select a boot slot.
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs fdisk zlib openssl libsystemd) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/install-profile.cpp -o uke-install-profile %{build_ldflags}
+%{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/native-profile-ready.cpp -o uke-native-power-profile-ready $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
 %check
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
@@ -118,9 +122,16 @@ bash tests/startup-contract.sh
 bash tests/startup-native.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
 ./kernel-update-contract
+%{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror -pthread tests/native-profile-ready.cpp -o native-profile-ready-contract $(pkg-config --cflags --libs libsystemd)
+bash tests/native-profile-ready.sh ./native-profile-ready-contract
+%{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/native-profile-udev.cpp -o native-profile-udev-contract $(pkg-config --cflags --libs umockdev-1.0)
+timeout --signal=KILL 25 umockdev-wrapper ./native-profile-udev-contract "$PWD/tests/native-profile-udev.sh"
 %install
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
+install -Dm755 uke-native-power-profile-ready %{buildroot}%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
+install -Dm644 src/units/uke-native-power-profile-ready.service %{buildroot}%{_unitdir}/uke-native-power-profile-ready.service
+install -Dm644 src/profiles/72-uke-native-power-profile.rules %{buildroot}%{_udevrulesdir}/72-uke-native-power-profile.rules
 install -Dm755 uke-usb-port %{buildroot}%{_bindir}/uke-usb-port
 install -Dm644 src/units/uke-usb-observer.service %{buildroot}%{_unitdir}/uke-usb-observer.service
 install -Dm644 src/profiles/org.senemos.Uke.USB1.conf %{buildroot}%{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
@@ -193,6 +204,10 @@ fi
 %license LICENSE
 %doc README.md
 %doc docs/USB-TYPEC.md
+%doc docs/NATIVE-POWER-PROFILES.md
+%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
+%{_unitdir}/uke-native-power-profile-ready.service
+%{_udevrulesdir}/72-uke-native-power-profile.rules
 %{_bindir}/uke-boot-status
 %{_bindir}/uke-usb-port
 %{_unitdir}/uke-usb-observer.service
@@ -250,6 +265,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.2-1
+- Refresh an admitted active power-profile daemon after native provider readiness.
+- Use standard udev device readiness without enabling or unmasking the daemon.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.1-1
 - Record current-slot trials before replacing the accepted boot-B image.
 - Accept only the matching healthy same-slot candidate and retain restored baselines.
