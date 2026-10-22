@@ -8,6 +8,7 @@
 
 static constexpr auto ppd_unit = "power-profiles-daemon.service";
 static constexpr auto manager = "org.freedesktop.systemd1";
+static constexpr auto manager_interface = "org.freedesktop.systemd1.Manager";
 static constexpr auto manager_path = "/org/freedesktop/systemd1";
 using BusReply = std::unique_ptr<sd_bus_message, decltype(&sd_bus_message_unref)>;
 
@@ -36,7 +37,7 @@ static std::string profile_unit_property(sd_bus *bus, const char *path, const ch
 static bool request_profile_refresh(sd_bus *bus) {
     sd_bus_message *raw = nullptr;
     sd_bus_error error = SD_BUS_ERROR_NULL;
-    const int result = sd_bus_call_method(bus, manager, manager_path, manager,
+    const int result = sd_bus_call_method(bus, manager, manager_path, manager_interface,
         "GetUnit", &error, &raw, "s", ppd_unit);
     BusReply reply(raw, sd_bus_message_unref);
     const bool absent = sd_bus_error_has_name(&error, "org.freedesktop.systemd1.NoSuchUnit");
@@ -52,7 +53,7 @@ static bool request_profile_refresh(sd_bus *bus) {
         admitted |= state == allowed;
     if (!admitted) return false;
     raw = nullptr;
-    const int requested = sd_bus_call_method(bus, manager, manager_path, manager,
+    const int requested = sd_bus_call_method(bus, manager, manager_path, manager_interface,
         "TryRestartUnit", nullptr, &raw, "ss", ppd_unit, "replace");
     BusReply job(raw, sd_bus_message_unref);
     need_profile(requested >= 0, "Cannot request a power-profile refresh");

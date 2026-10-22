@@ -72,7 +72,8 @@ int main(int argc, char **argv) {
         SD_BUS_PROPERTY("ActiveState", "s", property, 0, 0),
         SD_BUS_PROPERTY("UnitFileState", "s", property, 0, 0), SD_BUS_VTABLE_END};
     sd_bus_slot *manager_slot = nullptr, *unit_slot = nullptr;
-    assert(sd_bus_add_object_vtable(server, &manager_slot, manager_path, manager, methods, &state) >= 0);
+    assert(sd_bus_add_object_vtable(server, &manager_slot, manager_path,
+        "org.freedesktop.systemd1.Manager", methods, &state) >= 0);
     assert(sd_bus_add_object_vtable(server, &unit_slot, "/org/freedesktop/systemd1/unit/profile",
         "org.freedesktop.systemd1.Unit", properties, &state) >= 0);
     assert(sd_bus_request_name(server, manager, 0) >= 0);

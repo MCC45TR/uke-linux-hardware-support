@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.3.3
+Version: 1.3.4
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -265,6 +265,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.4-1
+- Call the standard systemd Manager interface for native profile refreshes.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.3-1
 - Admit the native kernel readiness value without a trailing newline.
 
