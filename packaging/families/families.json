@@ -71,7 +71,9 @@
         "uke-platform-runtime/tests/fixtures/upower",
         "uke-desktop-integration/patches/0001-ppd-native-uke-cpu-driver.patch",
         "uke-desktop-integration/tests/ppd-cpufreq.cpp",
-        "uke-desktop-integration/docs/POWER-PROFILES.md"
+        "uke-desktop-integration/docs/POWER-PROFILES.md",
+        ":(exclude)uke-desktop-integration/src/bluetooth-address.cpp",
+        ":(exclude)uke-desktop-integration/packaging/uke-bluetooth-address.service"
       ],
       "release": 1
     },
