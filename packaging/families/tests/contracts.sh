@@ -23,6 +23,15 @@ if [[ -f $hw_spec ]]; then
         grep -Fxq "Obsoletes: uke-owner-$name <= 3.0.304.0-1.owner.fc46" "$hw_spec"
     done
 fi
+power_spec=packaging/families/build/uke-power/SPECS/uke-power.spec
+if [[ -f $power_spec ]]; then
+    rpmspec --target aarch64 -q --qf '[%{OBSOLETENAME}\t%{OBSOLETEVERSION}\n]' "$power_spec" | grep -Fxq $'uke-power-profile-backend\t1.3.2'
+    rpmspec --target aarch64 -q --qf '[%{CONFLICTNAME}\n]' "$power_spec" | grep -Fxq uke-power-profile-backend
+    grep -Fxq 'Requires: uke-kernel(platform-profile-qos-v1) >= 1' "$power_spec"
+    grep -Fxq 'Requires: power-profiles-daemon' "$power_spec"
+    grep -Fxq 'old=uke-power-profile-backend; new=uke-power; unit=power-profiles-daemon.service; phase=save' "$power_spec"
+    grep -Fxq 'old=uke-power-profile-backend; new=uke-power; unit=power-profiles-daemon.service; phase=restore' "$power_spec"
+fi
 [[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
 boot_spec=uke-boot/packaging/uke-boot-integration.spec
 if rpmspec --target aarch64 -q --qf '%{NAME}\n' "$boot_spec" | grep -Fxq uke-wifi-factory; then exit 1; fi

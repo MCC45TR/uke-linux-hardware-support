@@ -45,7 +45,7 @@
     },
     {
       "name": "uke-power",
-      "version": "1.3.1",
+      "version": "1.3.2",
       "requires": [
         "uke-upower",
         "power-profiles-daemon",
@@ -53,7 +53,7 @@
         "uke-boot-integration >= 1.3.4"
       ],
       "suggests": [
-        "uke-adaptive-display = 1.0.16-2%{?dist}",
+        "uke-adaptive-display = 1.0.16-3%{?dist}",
         "uke-battery-observer",
         "uke-charge-control"
       ],
@@ -215,8 +215,8 @@
     "uke-touchscreen": "1.fc46",
     "uke-plymonth": "2.fc46",
     "uke-orangefox-recovery": "3.fc46",
-    "upower": "10.fc46",
-    "uke-adaptive-display": "2.fc46",
+    "upower": "11.fc46",
+    "uke-adaptive-display": "3.fc46",
     "uke-firmware": "5.fc46",
     "libssc": "12.fc46",
     "uke-ssc-fileservice": "15.fc46",
@@ -227,7 +227,7 @@
     "libwacom": "7.fc46",
     "libstdcxx-uke-runtime": "8.fc46",
     "mesa": "8.fc46",
-    "uke-battery-observer": "6.fc46",
+    "uke-battery-observer": "7.fc46",
     "accountsservice": "5.fc46"
   }
 }

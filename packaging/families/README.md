@@ -1,5 +1,14 @@
 # COPR source families
 
+22 October 2026: power 1.3.2-1 replaces the retired
+`uke-power-profile-backend` package and requires the original Fedora
+`power-profiles-daemon`, the native kernel profile provider and boot readiness
+integration. The migration preserves enabled, active and masked service state;
+it supplies no legacy capability alias. This allows the existing kernel boot
+dependency to remain strict while removing the obsolete backend. All rebuilt
+power children receive fresh revisions. Resolver checks and COPR results are
+recorded separately from tablet power-profile and Bluetooth validation.
+
 22 October 2026: hardware `1.5.2` applies the reviewed panel-start patch to
 the pinned touchscreen source. Touchscreen `1.0.14` can wait for the kernel's
 panel notification while DPMS is off. It reports standby explicitly, creates no

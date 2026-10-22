@@ -127,6 +127,10 @@ spec="$output/SPECS/$family.spec"
         printf '%%global _build_id_links none\n%%global _binaries_in_noarch_packages_terminate_build 0\n'
         printf 'Obsoletes: uke-fastfetch-config <= 1.0.1-4.fc46\n'
     fi
+    if [[ $family == uke-power ]]; then
+        printf 'Obsoletes: uke-power-profile-backend < 1.3.2\nConflicts: uke-power-profile-backend\n'
+        printf 'Requires(pre): rpm systemd coreutils sed\nRequires(posttrans): systemd coreutils sed\n'
+    fi
     jq -r '.requires[]|"Requires: "+.' <<<"$profile"
     jq -r '.suggests[]|"Suggests: "+.' <<<"$profile"
     for part in "$stage/parts/"*; do [[ ! -f $part/buildrequires ]] || cat "$part/buildrequires"; done | LC_ALL=C sort -u | if [[ $family == uke-sensors ]]; then sed '/^BuildRequires: libssc-devel /d;s/pkgconfig(libssc)//g'; else cat; fi
