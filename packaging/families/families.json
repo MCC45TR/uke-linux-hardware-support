@@ -114,17 +114,20 @@
     },
     {
       "name": "uke-extras",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "requires": [],
       "suggests": [
-        "uke-plymonth = 1.0.2-2%{?dist}",
+        "uke-plymonth = 1.0.2-3%{?dist}",
         "uke-orangefox-recovery",
         "material-decoration"
       ],
       "watch_paths": [
-        "uke-desktop-packaging/packaging/plymouth-uke"
+        "uke-desktop-packaging/packaging/plymouth-uke",
+        "uke-desktop-packaging/src/plymouth-uke",
+        "uke-desktop-packaging/Makefile",
+        "uke-desktop-packaging/tests/plymouth-parser.cpp"
       ],
-      "release": 2
+      "release": 1
     },
     {
       "name": "uke-additional",
@@ -150,9 +153,9 @@
     },
     {
       "name": "uke-metas",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "requires": [
-        "uke-core-meta >= 1.0.4"
+        "uke-core-meta >= 1.0.5"
       ],
       "suggests": [
         "uke-core-meta",
@@ -216,8 +219,8 @@
     "iio-sensor-proxy": "15.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-touchscreen": "2.fc46",
-    "uke-plymonth": "2.fc46",
-    "uke-orangefox-recovery": "3.fc46",
+    "uke-plymonth": "3.fc46",
+    "uke-orangefox-recovery": "4.fc46",
     "upower": "12.fc46",
     "uke-adaptive-display": "4.fc46",
     "uke-firmware": "6.fc46",

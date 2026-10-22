@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-core-meta
-Version: 1.0.4
+Version: 1.0.5
 Release: 1%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
@@ -21,6 +21,7 @@ Requires: uke-ssc-fileservice uke-upower
 Requires: bash coreutils util-linux-core kmod
 Requires: NetworkManager openssh-server sudo
 Requires: senemos-native-runtime(libstdc++)
+Recommends: uke-plymonth >= 1.0.2-3
 %description
 A minimal console package selection and explicit Uke readiness record.
 No unqualified firmware, Nabu hardware services or boot selection is installed.
@@ -36,6 +37,9 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.5-1
+- Recommend the removable Uke Plymouth theme on normal DNF upgrades.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.4-1
 - Select factory Bluetooth identity through the owning boot-integration capability.
 

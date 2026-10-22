@@ -50,7 +50,7 @@ uke-power)
     printf '%s\t%s\n' uke-battery-observer "${batteries[0]}" >>"$stage/inputs";;
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
-    printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+    printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-3$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-metas)
     for component in uke-core-meta uke-desktop-metas; do
         make -C "$component" srpm outdir="$stage/$component" >"$stage/local.log"

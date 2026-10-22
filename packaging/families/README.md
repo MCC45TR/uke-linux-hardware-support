@@ -1,5 +1,14 @@
 # COPR source families
 
+22 October 2026: extras `1.0.3` delivers `uke-plymonth 1.0.2-3`, adapting the
+attributed Xiaomi/Fedora artwork from Nabu. Metas `1.0.5` adds it as a Core
+recommendation. Normal DNF upgrades install the new weak dependency; removing
+the theme preserves Core and subsequent upgrades respect that removal under
+the default DNF policy. Original Fedora Plymouth units show the graphical theme
+after root mount and during shutdown. No Nabu repository, boot image update or
+slot operation is introduced. RPM scriptlet, parser and isolated DNF fixtures
+are separate from physical Uke display and shutdown acceptance.
+
 22 October 2026: skipped-release resolver checks cover the earliest retained
 `7.2.9-1` component baseline, the pre-family `7.2.11-9` package set and the
 reported mixed `7.2.12` kernel list. Each resolves directly against current
