@@ -1,5 +1,16 @@
 # COPR source families
 
+22 October 2026: skipped-release resolver checks cover the earliest retained
+`7.2.9-1` component baseline, the pre-family `7.2.11-9` package set and the
+reported mixed `7.2.12` kernel list. Each resolves directly against current
+test COPR and Fedora Rawhide metadata in one transaction. No intermediate
+repository, sequential upgrade or dependency-ignore option is required.
+Name-based replacements cover the first retired power backend and standalone
+Bluetooth packages, with the existing service-state migration. These checks
+use isolated RPM header databases; they do not execute target scriptlets or
+establish tablet installation. Default kernel retention may replace an old
+kernel set, so the proposed transaction remains relevant to rollback planning.
+
 22 October 2026: power `1.3.3` and additional `1.0.0-6` restrict upstream file
 globs to their owning source. UPower no longer includes sibling Uke service,
 D-Bus and udev files; libaccounts-glib-devel no longer includes AccountsService
