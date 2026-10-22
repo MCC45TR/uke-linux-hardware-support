@@ -60,3 +60,23 @@ COPR 11164959 passes the release-4 fixture. DNF installs the signed RPM on the
 same .4056 tablet; all three CPU/GPU profile choices pass the repeated bounded
 test and power saver is restored. This adds rollback coverage without changing
 the frequency/thermal qualification limits above.
+
+## Native provider handoff candidate, 22 October 2026
+
+The compatibility candidate retains legacy behavior on kernels without the
+`uke_platform_profile` module ABI. ABI version `1` reports read-only
+`parameters/probe_status`: `0` is pending, `1` is ready and `-1` is permanently
+unavailable. While pending, this driver defers. Once ready, it declines probing
+and refuses stale activation calls, allowing PPD's standard platform-profile
+driver to own CPU/GPU preferences. A permanent native-probe failure retains the
+existing backend. Missing or unknown ABI data defers rather than guessing.
+Provider change events request a fresh probe without a fixed startup delay.
+
+Install the compatible backend before booting the native-profile kernel.
+After actual native profile tests, explicitly keep the original Fedora
+`power-profiles-daemon` package installed, remove this overlay through DNF and
+restart the standard service. Retain the signed overlay RPM alongside older
+boot/module cohorts: an older-kernel rollback needs that overlay restored for
+its three profile choices. Manual native-provider rebinds require a balanced
+handoff first; neither the shim nor the kernel overrides an external governor.
+Host fixtures and source preparation do not qualify a tablet migration.
