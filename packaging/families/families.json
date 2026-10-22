@@ -234,6 +234,8 @@
     "libstdcxx-uke-runtime": "9.fc46",
     "mesa": "9.fc46",
     "uke-battery-observer": "8.fc46",
-    "accountsservice": "6.fc46"
+    "accountsservice": "6.fc46",
+    "material-decoration": "5.fc46",
+    "uke-desktop-metas": "8.fc46"
   }
 }
