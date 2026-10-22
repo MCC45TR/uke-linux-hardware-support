@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.3.4
+Version: 1.4.0
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT
@@ -21,6 +21,9 @@ Requires: systemd-udev
 Provides: uke-usb-gadget-ownership-api = 2
 Provides: uke-usb-manual-cdc-api = 2
 Provides: uke-boot-integration(native-platform-profile-ready-v1) = 1
+Provides: uke-boot-integration(factory-wlan-v1) = 1
+Provides: uke-wifi-factory = %{version}-%{release}
+Obsoletes: uke-wifi-factory < %{version}-%{release}
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -59,15 +62,6 @@ Requires: bash systemd
 Original Bash development console over the standard CDC ACM gadget. It requires
 the explicit senemos.debug=cdc-acm kernel argument and manual service enablement.
 The console grants local root access over USB. USB networking stays optional.
-
-%package -n uke-wifi-factory
-Summary: Read-only Uke factory WLAN identity for NetworkManager
-Requires: systemd NetworkManager senemos-native-runtime(libstdc++)
-%description -n uke-wifi-factory
-Reads and validates each installation's factory WLAN address from its physical
-read-only persist partition. Publishes a private runtime NetworkManager default
-before network startup. No device address or factory record is redistributed.
-The image must provide the protected persist mount and enable the service.
 
 %package -n uke-kernel-update
 Summary: Native checked installation of matched Uke stock-ABL kernel bundles
@@ -208,6 +202,8 @@ fi
 %{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 %{_unitdir}/uke-native-power-profile-ready.service
 %{_udevrulesdir}/72-uke-native-power-profile.rules
+%{_libexecdir}/senemos-uke/uke-wifi-factory
+%{_unitdir}/uke-wifi-factory.service
 %{_bindir}/uke-boot-status
 %{_bindir}/uke-usb-port
 %{_unitdir}/uke-usb-observer.service
@@ -230,11 +226,6 @@ fi
 
 %files -n uke-cdc-debug
 %{_unitdir}/uke-cdc-shell.service
-
-%files -n uke-wifi-factory
-%license LICENSE
-%{_libexecdir}/senemos-uke/uke-wifi-factory
-%{_unitdir}/uke-wifi-factory.service
 
 %files -n uke-kernel-update
 %license LICENSE
@@ -265,6 +256,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
+- Own factory WLAN provisioning in boot integration and retire its separate RPM.
+- Preserve the native helper, protected persist input and existing service state.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.4-1
 - Call the standard systemd Manager interface for native profile refreshes.
 

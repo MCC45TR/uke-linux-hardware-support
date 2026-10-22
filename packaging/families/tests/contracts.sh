@@ -24,6 +24,9 @@ if [[ -f $hw_spec ]]; then
     done
 fi
 [[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
+boot_spec=uke-boot/packaging/uke-boot-integration.spec
+if rpmspec --target aarch64 -q --qf '%{NAME}\n' "$boot_spec" | grep -Fxq uke-wifi-factory; then exit 1; fi
+rpmspec --target aarch64 -q --qf '[%{PROVIDENAME}\n]' "$boot_spec" | grep -Fx 'uke-boot-integration(factory-wlan-v1)'
 [[ ! -e uke-desktop-packaging/src/fastfetch/config.jsonc && ! -e uke-boot/src/profiles/fastfetch.jsonc ]]
 jq -e '.families[]|select(.name=="uke-hw")|(.requires|index("fastfetch")!=null) and all(.requires[]; (startswith("uke-fastfetch-config")|not))' packaging/families/families.json >/dev/null
 if [[ -f $hw_spec ]]; then

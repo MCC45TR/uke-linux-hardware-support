@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate srpm
-version := 1.0.2
+version := 1.0.3
 package := $(notdir $(CURDIR))
 outdir ?= $(CURDIR)/build/srpm
 validate:

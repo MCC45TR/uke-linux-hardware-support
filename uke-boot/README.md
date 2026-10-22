@@ -1,5 +1,13 @@
 # Uke boot integration
 
+22 October 2026. Version `1.4.0` owns the factory WLAN helper and its existing
+service directly. It replaces the separate `uke-wifi-factory` RPM while keeping
+its legacy package capability for dependency migration. The native helper,
+protected persist reads, NetworkManager ordering and per-network overrides are
+unchanged. Existing service enablement is preserved; installation adds no
+startup hook or network restart. A cold-boot address check remains a separate
+device gate. No per-device address is placed in kernel or DT source.
+
 21 October 2026 source follow-up: version 1.1.3 reconciles the journal's actual
 filesystem after verifying the physical installation profile. On ext4 or F2FS,
 the existing classifier overrides only the separate vendor NOCOW rule, which
