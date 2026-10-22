@@ -1,5 +1,12 @@
 # COPR source families
 
+22 October 2026: hardware `1.6.0` adds the native updater's guarded restoration
+of a booted, unaccepted current-slot trial to its recorded accepted B image.
+The failed trial is not marked healthy. Package/module verification, physical
+storage checks, battery admission, durable backup and write/readback remain
+mandatory. Other hardware children retain their inputs with fresh revisions.
+Host tests do not establish tablet restoration or interrupted-write recovery.
+
 22 October 2026: skipped-release resolver checks cover the earliest retained
 `7.2.9-1` component baseline, the pre-family `7.2.11-9` package set and the
 reported mixed `7.2.12` kernel list. Each resolves directly against current

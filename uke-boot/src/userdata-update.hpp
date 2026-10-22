@@ -79,6 +79,19 @@ static UserdataUpdate current_slot_trial(UserdataUpdate saved,const std::string 
     uke_install::stage_current(saved.policy,uke_install::Slot::b,running_release,release);
     saved.candidate_image=next_hash;saved.staged_boot_id=boot_id;return saved;
 }
+static void require_current_restore(const UserdataUpdate &saved,const std::string &running_release,
+                                    const std::string &previous_hash,const std::string &release,
+                                    const std::string &next_hash,const std::string &boot_id) {
+    uke_install::userdata(saved.policy);
+    need(saved.policy.phase==uke_install::Phase::current_slot_trial && saved.policy.good==uke_install::Slot::b &&
+         running_release==saved.policy.candidate && release==saved.policy.good_release,
+         "Restore requires the running current-slot trial and its accepted B release");
+    need(hex(previous_hash) && hex(next_hash) && previous_hash!=next_hash &&
+         previous_hash==saved.candidate_image && next_hash==saved.good_image,
+         "Restore images differ from the recorded trial and accepted baseline");
+    need(valid_boot_id(boot_id) && valid_boot_id(saved.staged_boot_id) && boot_id!=saved.staged_boot_id,
+         "Restore requires a booted trial, not the staging boot");
+}
 static unsigned identify_slot(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
     std::array<bool,2> matches{};
     for(unsigned i=0;i<2;++i)try {

@@ -393,13 +393,15 @@ static Fd inhibit_shutdown() {
 int main(int argc,char **argv) {
     try {
         need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
-                         std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current")) ||
+                         std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
+                         std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current")) ||
              (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="auto")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current BUNDLE | accept | auto");
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current BUNDLE | accept | auto");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto";
-        const bool current_only=action=="check-current"||action=="apply-current";
-        const bool apply=action=="apply"||action=="apply-current";
+        const bool restore=action=="check-restore-current"||action=="restore-current";
+        const bool current_only=restore||action=="check-current"||action=="apply-current";
+        const bool apply=action=="restore-current"||action=="apply"||action=="apply-current";
         if(automatic && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
@@ -472,7 +474,8 @@ int main(int argc,char **argv) {
             accepted=decode(file(state/"userdata.state"));
             auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
             need(boot_id.ends_with('\n'),"Missing current-slot staging boot identity");boot_id.pop_back();
-            current_trial=current_slot_trial(*accepted,current.release,previous_hash,release,next_hash,boot_id);
+            if(restore)require_current_restore(*accepted,current.release,previous_hash,release,next_hash,boot_id);
+            else current_trial=current_slot_trial(*accepted,current.release,previous_hash,release,next_hash,boot_id);
         }
         if(!apply) {std::cout<<"Matched boot/module bundle and physical boot_b checks passed; no partition write\n";return 0;}
         need(charging(),"Verified battery must be at least 50%, or at least 30% with external power");
