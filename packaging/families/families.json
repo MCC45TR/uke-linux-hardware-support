@@ -5,9 +5,9 @@
     {
       "name": "uke-core",
       "version": "1.3.0",
-      "release": 2,
+      "release": 3,
       "requires": [
-        "uke-control = 1.3.0-2%{?dist}"
+        "uke-control = 1.3.0-3%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"

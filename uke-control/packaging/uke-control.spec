@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.3.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -98,6 +98,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-3
+- Keep sensor, display and power reports within their selected subsystem.
+- Read existing SensorProxy and UPower interfaces without activation.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-2
 - Construct collection results directly for GCC 16 LTO compatibility.
 - Retain compiler warnings, fixture coverage and collector error receipts.

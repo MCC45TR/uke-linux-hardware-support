@@ -33,7 +33,11 @@ int main() {
         const auto catalog=jobs("all");assert(catalog.size()>150);
         for(const auto& topic:topics) {
             const auto selected=jobs(topic);assert(!selected.empty());
-            for(const auto& job:selected)assert(job.topic==topic);
+            for(const auto& job:selected) {
+                assert(job.topic==topic);
+                assert(job.args!=std::vector<std::string>({"/usr/bin/uke-control","desktop","status"}));
+                if(topic!="hardware")assert(job.args!=std::vector<std::string>({"/usr/bin/uke-control","hardware","status"}));
+            }
             assert(std::count_if(catalog.begin(),catalog.end(),[&](const auto& job){return job.topic==topic;})==long(selected.size()));
         }
         for(const auto& job:catalog) {

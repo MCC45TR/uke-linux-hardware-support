@@ -34,7 +34,7 @@ An ordinary user can collect a partial report with explicit permission failures.
 | `sleep` | Supported sleep states, wake permissions/counters, inhibitors, suspend statistics/configuration and related logs |
 | `power` | Battery/charger metadata, cached protection, power profiles, thermal/cooling/CPU policy exports and related logs |
 | `usb` | Cached USB/Type-C topology, USB IDs/drivers/speed, port/data/power roles and related logs |
-| `display` | Cached display/GPU paths, connector/mode/backlight/devfreq exports, desktop interfaces and related logs |
+| `display` | Display/GPU driver modules, connector/mode/backlight/devfreq paths and exports, and related logs |
 | `audio` | ALSA inventory, audio/DSP paths, existing PipeWire session and related logs |
 | `input` | Input nodes/aliases, advertised capabilities/properties and related logs |
 | `camera` | Video/media node metadata and related logs |

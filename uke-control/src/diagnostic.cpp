@@ -82,7 +82,7 @@ std::vector<Job> jobs(const std::string& topic) {
     add("bluetooth","Radio blocks",{"/usr/sbin/rfkill","list"});
     add("bluetooth","Existing BlueZ controller paths (no activation)",{"/usr/bin/busctl","--system","--auto-start=no","--no-pager","tree","org.bluez"});
     add("sensors","Exported sensor channels",{"/usr/bin/uke-control","sensors","list"});
-    add("sensors","Cached desktop sensor interfaces",{"/usr/bin/uke-control","desktop","status"});
+    add("sensors","Existing SensorProxy interface (no activation)",{"/usr/bin/busctl","--system","--auto-start=no","--no-pager","introspect","net.hadess.SensorProxy","/net/hadess/SensorProxy","net.hadess.SensorProxy"});
     add("sensors","Front color snapshot (no acquisition)",{"/usr/bin/uke-control","display","sensor"});
     add("sleep","Wake permissions",{"/usr/bin/uke-control","wake","status"});
     add("sleep","Sleep inhibitors",{"/usr/bin/systemd-inhibit","--list","--no-pager"});
@@ -96,12 +96,11 @@ std::vector<Job> jobs(const std::string& topic) {
     add("power","Charging protocols",{"/usr/libexec/uke-charge-control","protocols"});
     add("power","Cached protection state",{"/usr/libexec/uke-charge-control","protection-status"});
     add("power","Power profiles",{"/usr/bin/powerprofilesctl","list"});
-    add("power","Desktop power interfaces",{"/usr/bin/uke-control","desktop","status"});
+    add("power","Existing UPower interface (no activation)",{"/usr/bin/busctl","--system","--auto-start=no","--no-pager","introspect","org.freedesktop.UPower","/org/freedesktop/UPower","org.freedesktop.UPower"});
     add("usb","Cached USB/Type-C topology",{"/usr/bin/uke-control","usb","status"});
     add("usb","USB inventory",{"/usr/bin/lsusb"});
     add("usb","USB topology and drivers",{"/usr/bin/lsusb","-t"});
-    add("display","Cached GPU and display paths",{"/usr/bin/uke-control","hardware","status"});
-    add("display","Existing desktop interfaces",{"/usr/bin/uke-control","desktop","status"});
+    add("display","Display and GPU driver modules",{"/usr/bin/modinfo","msm","drm","gpu_sched"});
     add("audio","ALSA cards",{"/usr/bin/cat","/proc/asound/cards","/proc/asound/pcm","/proc/asound/devices"});
     add("audio","PipeWire session (current user)",{"/usr/bin/wpctl","status"});
     add("input","Input devices and paths",{"/usr/bin/cat","/proc/bus/input/devices","/proc/bus/input/handlers"});
@@ -217,7 +216,7 @@ std::string collect(const std::string& topic) {
         "\nEffective UID: "+std::to_string(geteuid())+
         "\nPRIVATE LOCAL LOG: may contain IP/MAC addresses, host/user names, device identifiers, repository URLs and journal contents. Review before sharing. No upload is performed."
         "\nCollection: IN PROGRESS until the final COLLECTION COMPLETE marker."
-        "\nNo active scan, pairing, stream, suspend, firmware request, device setting or package transaction is requested."
+        "\nNo active scan, pairing, stream, suspend, firmware control request, device setting or package transaction is requested."
         "\nLimits: 20 seconds and 8 MiB per command; 256 MiB and 15 minutes overall. Files: first 65536 bytes each, 4096 matches per pattern. Sysfs file sizes may not indicate truncation. Truncation and failures are recorded."
         "\nMissing tools, permissions, services and cached repository metadata remain unavailable. Collection success does not establish hardware support."
         "\nUser-session tools use this process's existing session; sudo may have no desktop/audio session.\n");
