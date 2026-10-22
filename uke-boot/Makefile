@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.3.2
+version := 1.3.3
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null

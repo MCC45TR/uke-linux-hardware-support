@@ -17,9 +17,10 @@ static void need_profile(bool value, const char *message) {
 
 static bool native_profile_ready(const std::filesystem::path &sysfs) {
     std::error_code error;
+    const auto status = read_text(sysfs / "module/uke_platform_profile/parameters/probe_status");
     return uke_device(read_text(sysfs / "firmware/devicetree/base/compatible")) &&
         read_text(sysfs / "module/uke_platform_profile/version") == "1\n" &&
-        read_text(sysfs / "module/uke_platform_profile/parameters/probe_status") == "1\n" &&
+        (status == "1" || status == "1\n") &&
         std::filesystem::is_regular_file(sysfs / "firmware/acpi/platform_profile", error) && !error;
 }
 

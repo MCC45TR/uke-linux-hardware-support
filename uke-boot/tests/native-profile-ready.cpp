@@ -52,9 +52,11 @@ int main(int argc, char **argv) {
     write_file(version, "1\n"); write_file(status, "1\n");
     write_file(sysfs / "firmware/acpi/platform_profile", "balanced\n");
     assert(native_profile_ready(sysfs));
+    write_file(status, "1");
+    assert(native_profile_ready(sysfs));
     for (const char *bad : {"", "2\n", "1\nextra\n"}) { write_file(version, bad); assert(!native_profile_ready(sysfs)); }
     write_file(version, "1\n");
-    for (const char *bad : {"0\n", "-1\n", "", "2\n"}) { write_file(status, bad); assert(!native_profile_ready(sysfs)); }
+    for (const char *bad : {"0", "-1", "0\n", "-1\n", "", "2\n", "11", "1\nextra\n", "1 "}) { write_file(status, bad); assert(!native_profile_ready(sysfs)); }
     write_file(status, "1\n");
     write_file(sysfs / "firmware/devicetree/base/compatible", std::string("xiaomi,other\0qcom,sm7675\0", 25));
     assert(!native_profile_ready(sysfs));

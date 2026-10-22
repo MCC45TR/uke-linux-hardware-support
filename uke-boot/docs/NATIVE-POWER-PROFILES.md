@@ -1,7 +1,9 @@
 # Native power-profile startup integration
 
-22 October 2026. Source and host tests only; tablet startup and profile
-qualification remain open.
+22 October 2026. Source and host tests cover readiness admission. Tablet
+kernel `7.2.12-9` exposes ABI v1 and ready status without a trailing newline;
+boot integration `1.3.3` accepts that exact value and its newline-terminated
+form. Original-daemon cold boot and complete profile qualification remain open.
 
 Original Power Profiles daemon 0.30 does not retain a platform monitor when
 the legacy interface is absent at its first probe. The native Uke provider
