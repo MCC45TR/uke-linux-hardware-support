@@ -46,3 +46,13 @@ Boot integration `1.5.0` builds this unchanged native bridge and replaces the
 separate Bluetooth RPM. Source, tests and license remain here. Its source recipe
 reuses the family's state-preservation fragment; enablement is not inferred from
 an installed package. The old standalone spec is retained as historical source.
+
+Boot integration `1.5.3` adds `CAP_DAC_READ_SEARCH` to the oneshot helper.
+Android-owned private directories can deny reads even to UID 0 after the
+service removes DAC capabilities. A host namespace fixture reproduces the
+directory-open failure with network-only capabilities and admits the same six
+synthetic bytes with the read/search capability; write-open remains refused.
+Protected read-only persist, physical partition identity and no-symlink checks
+remain mandatory. No persist mode or owner is changed. Tablet startup and
+pairing require separate validation; retry a previously failed oneshot after
+the corrected package is installed.

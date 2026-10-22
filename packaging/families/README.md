@@ -1,5 +1,12 @@
 # COPR source families
 
+22 October 2026: hardware `1.5.3` grants the existing Bluetooth factory helper
+read/search access through Android-owned directory permissions. The service
+retains protected read-only persist and its exact identity and input checks.
+A host capability fixture verifies read admission and write refusal. No service
+is newly enabled and no factory permissions are modified. Tablet controller
+startup and pairing remain separate validation.
+
 22 October 2026: power 1.3.2-1 replaces the retired
 `uke-power-profile-backend` package and requires the original Fedora
 `power-profiles-daemon`, the native kernel profile provider and boot readiness
