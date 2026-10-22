@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-core-meta
-Version: 1.0.1
+Version: 1.0.2
 Release: 1%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
@@ -12,7 +12,9 @@ Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-k
 Requires: uke-core >= 1.0.21 uke-hw >= 1.1.1 uke-power >= 1.0.15 uke-sensors
 Requires: uke-control uke-kernel-update uke-installation-profile
 Requires: uke-touchscreen uke-bluetooth uke-wifi-factory
-Requires: uke-adaptive-display uke-power-profile-backend uke-battery-observer
+Requires: uke-adaptive-display uke-battery-observer
+Requires: power-profiles-daemon
+Requires: (uke-kernel(platform-profile-qos-v1) >= 1 or uke-power-profile-backend)
 Requires: uke-ssc-fileservice uke-upower
 Requires: bash coreutils util-linux-core kmod
 Requires: NetworkManager openssh-server sudo
@@ -32,6 +34,10 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.2-1
+- Accept the native kernel profile provider with the original distribution daemon.
+- Retain the compatibility backend dependency for older kernel installations.
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.1-1
 - Require device runtime packages without changing the installed boot profile.
 - Allow the unmodified Fedora desktop packages and their original dependencies.

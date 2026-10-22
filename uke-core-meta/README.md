@@ -13,6 +13,13 @@ and actual install/upgrade/removal results are recorded separately in `reports/`
 No repository, kernel boot selection, Android partition or service preset is
 modified by this package's own payload; it has no scriptlets.
 
+22 October 2026: version `1.0.2` accepts either the native kernel profile
+capability or the compatibility backend, together with the original Fedora
+Power Profiles daemon. This dependency permits a separately qualified native
+migration; it does not remove the backend automatically. Reinstall the retained
+signed backend through DNF before returning to a kernel without that capability.
+Installed package capabilities do not establish which kernel is running.
+
 The [development COPR](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-test/)
 and [package catalog](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
 track each independently admitted component. Source archives stay in `referances/`.
