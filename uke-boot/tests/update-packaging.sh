@@ -28,5 +28,6 @@ grep -Fq 'docs/USERDATA-AB.md' Makefile
 grep -Fq 'Provides: uke-kernel-update(userdata-ab) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(guarded-automatic) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(root-filesystem-v2) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'Provides: uke-kernel-update(current-slot-restore) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Requires: /usr/lib/systemd/systemd-growfs' packaging/uke-boot-integration.spec
 printf '%s\n' 'Bounded transaction hooks, separate Linux/userdata policy, unit ordering and source export checked'

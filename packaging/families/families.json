@@ -21,11 +21,11 @@
     },
     {
       "name": "uke-hw",
-      "version": "1.5.3",
+      "version": "1.6.0",
       "requires": [
-        "uke-boot-integration = 1.5.3-1%{?dist}",
-        "uke-installation-profile = 1.5.3-1%{?dist}",
-        "uke-kernel-update = 1.5.3-1%{?dist}",
+        "uke-boot-integration = 1.6.0-1%{?dist}",
+        "uke-installation-profile = 1.6.0-1%{?dist}",
+        "uke-kernel-update = 1.6.0-1%{?dist}",
         "fastfetch"
       ],
       "suggests": [
@@ -217,16 +217,16 @@
   "native_versions": {
     "uke-control": "1.4.0",
     "uke-adaptive-display": "1.0.16",
-    "uke-boot-integration": "1.5.3",
+    "uke-boot-integration": "1.6.0",
     "uke-touchscreen": "1.0.14",
     "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
-    "uke-installation-profile": "1.5.3"
+    "uke-installation-profile": "1.6.0"
   },
   "release_overrides": {
     "iio-sensor-proxy": "16.fc46",
     "uke-boot-integration": "1.fc46",
-    "uke-touchscreen": "2.fc46",
+    "uke-touchscreen": "3.fc46",
     "uke-plymonth": "4.fc46",
     "uke-orangefox-recovery": "5.fc46",
     "upower": "12.fc46",

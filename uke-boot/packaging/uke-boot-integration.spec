@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.5.3
+Version: 1.6.0
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later
@@ -81,6 +81,7 @@ Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
+Provides: uke-kernel-update(current-slot-restore) = 1
 %description -n uke-kernel-update
 Validates matched installed boot-v4 payloads and module inventories. The Linux
 root profile retains its opt-in boot_b writer. The userdata profile writes an
@@ -285,6 +286,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.6.0-1
+- Restore only the accepted installed bundle from a booted current-slot trial.
+- Retain the unaccepted trial state until the restored kernel passes boot health.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.3-1
 - Permit read-only factory Bluetooth access through Android directory permissions.
 
