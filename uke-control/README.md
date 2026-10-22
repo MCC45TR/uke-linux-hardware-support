@@ -1,5 +1,11 @@
 # Uke Control
 
+22 October 2026: version 1.3.0 adds `uke-control diagnostic all` and focused
+subsystem reports. Each command creates `uke-diagnostic-TOPIC.log` in the current
+directory with mode 0600, preserving existing files. See [diagnostic collection](DIAGNOSTIC.md)
+for scope, private-data handling, limits and optional tools. Source/host checks,
+COPR packaging and tablet execution are separate evidence classes.
+
 21 October 2026: version 1.1.1 excludes ordinary sysfs attributes such as cpufreq
 boost and DRM version from the device/policy inventory. The 1.1.0 tablet readback
 exposed the extra record; the host regression reproduces it before correction.

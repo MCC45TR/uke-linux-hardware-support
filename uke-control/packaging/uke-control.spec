@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.2.0
+Version: 1.3.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -12,6 +12,7 @@ BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon
 Requires: util-linux-core util-linux systemd procps-ng
+Requires: coreutils findutils rpm
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
 %{?systemd_requires}
@@ -75,7 +76,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md
 %{_bindir}/uke-control
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
@@ -97,6 +98,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-1
+- Collect private single-file diagnostics in the caller's working directory.
+- Include hardware paths, subsystem logs, RPM/DNF, boot and service evidence.
+- Bound collection and preserve existing reports and unavailable-source receipts.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.0-1
 - Persist native wake permissions and apply them before system sleep.
 - Retain a recovery key and disable unqualified Bluetooth UART wake by default.

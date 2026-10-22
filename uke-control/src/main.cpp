@@ -11,8 +11,9 @@
 #include "charge-notify.hpp"
 #include "desktop.hpp"
 #include "wake.hpp"
+#include "diagnostic.hpp"
 static void help() {
-    std::cout << "uke-control 1.2.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.3.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
@@ -50,6 +51,8 @@ static void help() {
       "  usb request data host|device Request a Type-C data-role swap (root)\n"
       "  set cdc on|off              Explicit CDC ACM opt-in; default off (root)\n"
       "  test [--help]               Hz, Wayland cadence, touch and sensor diagnostics\n"
+      "  diagnostic all|TOPIC        Save uke-diagnostic-TOPIC.log in the current directory\n"
+      "  diagnostic --help           Wi-Fi, Bluetooth, sensors, sleep and other topics\n"
       "  report                      Save comprehensive private logs locally (root)\n"
       "  report github DIR OWNER/REPO Submit only the generated anonymous summary via gh\n"
       "  --self-test                 Host refusal and arithmetic checks\n"
@@ -63,6 +66,7 @@ int main(int argc,char** argv) {
         }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="diagnostic")return uke::diagnostic::command(argc-2,argv+2);
         if(command=="wake") {
             if(argc==3&&std::string_view(argv[2])=="check") return uke::wake::applicable()?0:1;
             if(argc==3&&std::string_view(argv[2])=="status") {std::cout<<uke::wake_status();return 0;}
