@@ -230,9 +230,10 @@ std::string collect(const std::string& topic) {
         for(const auto& arg:args)write_text(fd," "+sysfs::quote(arg));
         write_text(fd,"\n");
         const auto begin=std::chrono::steady_clock::now();
-        Result result;
-        try {result=execute(args,20,8*1024*1024);}
-        catch(const std::exception& error){result={1,std::string("Collector error: ")+error.what()};}
+        const auto result=[&] {
+            try {return execute(args,20,8*1024*1024);}
+            catch(const std::exception& error){return Result{1,std::string("Collector error: ")+error.what()};}
+        }();
         write_text(fd,text_output(result.output));
         const auto ms=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-begin).count();
         write_text(fd,"\n[exit="+std::to_string(result.status)+" elapsed_ms="+std::to_string(ms)+"]\n");
