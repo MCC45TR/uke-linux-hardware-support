@@ -1,5 +1,15 @@
 # COPR source families
 
+22 October 2026: hardware `1.5.2` applies the reviewed panel-start patch to
+the pinned touchscreen source. Touchscreen `1.0.14` can wait for the kernel's
+panel notification while DPMS is off. It reports standby explicitly, creates no
+input device and performs no firmware transfer until the panel is ready. This
+allows the graphical target to start without a failed-service retry loop.
+Missing/malformed providers still fail admission; cancellation closes the
+transport. Existing firmware, CRC, geometry, watchdog and input tests remain.
+This source correction is separate from the pending touchscreen kernel port
+and requires signed-package and tablet lifecycle validation.
+
 21 October 2026: power 1.1.1-1 supplies adaptive display 1.0.16 with original
 KWin's `Always` VRR policy for `DSI-1`. Existing user settings remain
 authoritative. The O82 kernel opt-in and physical variable-cadence acceptance

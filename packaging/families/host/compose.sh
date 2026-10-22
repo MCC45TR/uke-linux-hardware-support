@@ -94,6 +94,11 @@ while IFS=$'\t' read -r key input; do
     awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}' "$part/source-files"
     (cd "$source"; cpio -idm --quiet --no-absolute-filenames <"$part/source.cpio")
     specs=("$source/"*.spec); [[ ${#specs[@]} == 1 ]]
+    if [[ $key == uke-touchscreen ]]; then
+        cp packaging/families/patches/touch-panel-start.patch "$source/"
+        sed -i '/^Source0:/aPatch0: touch-panel-start.patch' "${specs[0]}"
+        sed -i 's/^%autosetup$/%autosetup -p1/' "${specs[0]}"
+    fi
     if [[ $key == uke-firmware ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
         # Mandatory paths must resolve without DNF's optional filelists metadata.
