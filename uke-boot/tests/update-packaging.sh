@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 diff -u <(cat <<'HOOKS'
+%pre
+%posttrans
 %post -n uke-kernel-update
 %preun -n uke-kernel-update
 %postun -n uke-kernel-update

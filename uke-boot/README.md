@@ -1,5 +1,14 @@
 # Uke boot integration
 
+22 October 2026. Version `1.5.0` also owns the existing native Bluetooth
+factory-address bridge, service and udev rule. Its canonical C++ source and
+GPL-3.0-or-later license remain in `uke-desktop-integration`; the boot source RPM
+exports them without changing the protocol or protected persist checks. The
+existing shared RPM migration fragment preserves admitted unit enablement and
+activity across the old package's removal, including disabled and masked states.
+This is userspace BlueZ integration, not a kernel driver or an embedded address.
+Signed-package migration and physical controller checks are separate gates.
+
 22 October 2026. Version `1.4.0` owns the factory WLAN helper and its existing
 service directly. It replaces the separate `uke-wifi-factory` RPM while keeping
 its legacy package capability for dependency migration. The native helper,

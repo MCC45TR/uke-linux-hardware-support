@@ -23,17 +23,6 @@ test-plugin:
 	cmake --build build/adreno-stats --parallel 4
 	ctest --test-dir build/adreno-stats --output-on-failure
 
-.PHONY: bluetooth-srpm
-bluetooth-srpm:
-	top="$$(realpath -m build/bluetooth-srpm/rpmbuild)"
-	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792195200 --owner=0 --group=0 --numeric-owner \
-	 --transform='s,^,uke-bluetooth-0.1.0/,' -cf - LICENSE LICENSE.GPL-3.0 src/bluetooth-address.cpp \
-	 tests/bluetooth-address.cpp packaging/uke-bluetooth-address.service packaging/70-uke-bluetooth.rules \
-	 docs/BLUETOOTH.md | gzip -n > "$$top/SOURCES/uke-bluetooth-0.1.0.tar.gz"
-	cp packaging/uke-bluetooth.spec "$$top/SPECS/"
-	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-bluetooth.spec"
-
 # Host-only OEM data conversion; this executable is not a tablet startup task.
 .PHONY: test-oem-brightness
 test-oem-brightness:

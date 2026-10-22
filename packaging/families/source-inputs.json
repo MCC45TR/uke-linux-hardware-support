@@ -14,19 +14,6 @@
   },
   {
     "family": "uke-hw",
-    "name": "uke-bluetooth",
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179049/uke-bluetooth-0.1.0-6.fc46.src.rpm",
-    "sha256": "e901369690c862b6faaebf6b5b1b29c84196312384122176e4772d71a4345c83",
-    "build": 11167582,
-    "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/srpm-builds/11167582/uke-bluetooth-0.1.0-6.fc46.src.rpm",
-    "original_build": 11167582,
-    "archive_build": 11179049,
-    "archive_method": "project-fork",
-    "original_sha256": "a1e31bfe8c729dc407f694acd54e9c1877a0864002b2db1ba7f0dc00c266539f",
-    "original_payload_sha256": "75443ccfba20be0ee07315a36b046c916cb7d3a9e22c3b8f27ddf7e6634f804f"
-  },
-  {
-    "family": "uke-hw",
     "name": "uke-touchscreen",
     "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179043/uke-touchscreen-0.1.0-13.fc46.src.rpm",
     "sha256": "960c8abc638fd0051f4e1dcceea73e811251412167544d6052e0a0ea9234c91a",

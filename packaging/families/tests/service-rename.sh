@@ -57,4 +57,14 @@ export FIXTURE_SELINUX=1
 : >"$stage/calls"
 phase=restore sh "$stage/fragment"
 grep -Fx 'policy:-n -s targeted -i /usr/share/selinux/packages/uke-ssc.cil' "$stage/calls"
-printf '%s\n' 'PASS: admitted active/enabled state, disabled/masked refusal, retained failed restoration and symlink rejection; host stubs only.'
+export old=uke-bluetooth new=uke-boot-integration unit=uke-bluetooth-address.service FIXTURE_OLD=uke-bluetooth FIXTURE_START_FAIL=0
+export FIXTURE_ENABLED=enabled FIXTURE_ACTIVE=inactive
+: >"$stage/calls"
+phase=save sh "$stage/fragment"
+# Model the obsolete package's preun disabling its shared oneshot unit.
+export FIXTURE_ENABLED=disabled
+phase=restore sh "$stage/fragment"
+grep -Fx 'enable uke-bluetooth-address.service' "$stage/calls"
+! grep -Eq '^start ' "$stage/calls"
+test ! -e "$stage/state/$new"
+printf '%s\n' 'PASS: admitted active/enabled state, disabled/masked refusal, retained failed restoration, symlink rejection and Bluetooth ownership transfer; host stubs only.'

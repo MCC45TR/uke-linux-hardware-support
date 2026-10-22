@@ -1,5 +1,10 @@
 # Uke core package selection
 
+22 October 2026. Version `1.0.4` selects the factory WLAN and Bluetooth bridges
+through their boot-integration capabilities. The touchscreen remains a separate
+native runtime. Package ownership does not imply a kernel port or hardware
+acceptance.
+
 `uke-core-meta` is a real AArch64 RPM/SRPM with a minimal console dependency
 selection and a machine-readable Uke readiness profile. It requires the reviewed
 Senemos Uke kernel family, NetworkManager, OpenSSH and basic native/shell tools.

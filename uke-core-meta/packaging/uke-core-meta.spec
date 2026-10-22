@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-core-meta
-Version: 1.0.3
+Version: 1.0.4
 Release: 1%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
@@ -11,7 +11,8 @@ BuildRequires: tar xz
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
 Requires: uke-core >= 1.0.21 uke-hw >= 1.1.1 uke-power >= 1.0.15 uke-sensors
 Requires: uke-control uke-kernel-update uke-installation-profile
-Requires: uke-touchscreen uke-bluetooth
+Requires: uke-touchscreen
+Requires: uke-boot-integration(factory-bluetooth-v1) >= 1
 Requires: uke-boot-integration(factory-wlan-v1) >= 1
 Requires: uke-adaptive-display uke-battery-observer
 Requires: power-profiles-daemon
@@ -35,6 +36,9 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.4-1
+- Select factory Bluetooth identity through the owning boot-integration capability.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.3-1
 - Select factory WLAN provisioning through the owning boot-integration capability.
 

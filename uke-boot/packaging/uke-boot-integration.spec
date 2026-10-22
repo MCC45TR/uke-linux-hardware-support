@@ -1,13 +1,14 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.4.0
+Version: 1.5.0
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
-License: MIT
+License: MIT AND GPL-3.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: gcc-c++ make systemd-rpm-macros
+BuildRequires: bluez-libs-devel
 BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland-server)
 BuildRequires: openssl-devel
 BuildRequires: pkgconfig(fdisk) pkgconfig(zlib) util-linux
@@ -18,12 +19,18 @@ Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Requires: systemd-udev
+Requires: bluez
+Requires(pre): rpm systemd coreutils sed
+Requires(posttrans): systemd coreutils sed
 Provides: uke-usb-gadget-ownership-api = 2
 Provides: uke-usb-manual-cdc-api = 2
 Provides: uke-boot-integration(native-platform-profile-ready-v1) = 1
 Provides: uke-boot-integration(factory-wlan-v1) = 1
 Provides: uke-wifi-factory = %{version}-%{release}
 Obsoletes: uke-wifi-factory < %{version}-%{release}
+Provides: uke-boot-integration(factory-bluetooth-v1) = 1
+Provides: uke-bluetooth = %{version}-%{release}
+Obsoletes: uke-bluetooth < %{version}-%{release}
 
 %description
 Reviewed Uke partition-role, command-line and dracut input templates, with a
@@ -34,6 +41,7 @@ No UEFI firmware or proprietary firmware blob is included. Package success
 does not establish RAM/UFS/firmware handoff or physical tablet boot.
 
 %package -n uke-esp32-cdc
+License: MIT
 Summary: Native ESP32-S3 CDC journal forwarding for the Uke Core debug profile
 Requires: %{name} = %{version}-%{release}
 Requires: systemd senemos-native-runtime(libstdc++)
@@ -44,6 +52,7 @@ systemd debug-shell override for HID-driven VT2 commands and journal output.
 Installation activates no service, gadget, boot entry or partition write.
 
 %package -n uke-boot-recovery
+License: MIT
 Summary: Native Uke reboot commands and a three-minute startup recovery guard
 Requires: %{name} = %{version}-%{release}
 Requires: systemd systemd-udev
@@ -55,6 +64,7 @@ The host composer must include its dracut module to cover initramfs stalls.
 No Android, boot, EFI or partition data is written by package installation.
 
 %package -n uke-cdc-debug
+License: MIT
 Summary: Explicit local USB serial development console for Uke
 Requires: %{name} = %{version}-%{release}
 Requires: bash systemd
@@ -64,6 +74,7 @@ the explicit senemos.debug=cdc-acm kernel argument and manual service enablement
 The console grants local root access over USB. USB networking stays optional.
 
 %package -n uke-kernel-update
+License: MIT
 Summary: Native checked installation of matched Uke stock-ABL kernel bundles
 Requires: senemos-native-runtime(libstdc++) openssl-libs systemd rpm
 Requires: uke-installation-profile = %{version}-%{release}
@@ -80,6 +91,7 @@ the global default is disabled. Reboot remains manual. Physical power-loss
 recovery requires device validation.
 
 %package -n uke-installation-profile
+License: MIT
 Summary: Native classification of the Uke Linux root partition
 Requires: senemos-native-runtime(libstdc++) systemd
 Requires: /usr/lib/systemd/systemd-growfs
@@ -96,6 +108,7 @@ durable; classification does not write block devices or select a boot slot.
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/usb-port.cpp -o uke-usb-port $(pkg-config --cflags --libs libsystemd libdrm) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -ffile-prefix-map=$PWD=. src/esp32-cdc.cpp -o uke-esp32-cdc %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/wifi-factory.cpp -o uke-wifi-factory %{build_ldflags}
+%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/bluetooth-address.cpp -o uke-bluetooth-address %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/boot-guard.cpp -o uke-boot-guard $(pkg-config --cflags --libs libsystemd wayland-client) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/reboot.cpp -o uke-reboot $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/kernel-update.cpp -o uke-kernel-update $(pkg-config --cflags --libs fdisk zlib openssl libsystemd) %{build_ldflags}
@@ -112,6 +125,8 @@ bash tests/usb-auto.sh
 bash tests/usb-ownership.sh
 %{__cxx} -std=c++17 -Wall -Wextra -Werror -O2 tests/wifi-factory.cpp -o wifi-factory-contract
 ./wifi-factory-contract
+%{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-function tests/bluetooth-address.cpp -o bluetooth-address-contract
+./bluetooth-address-contract
 bash tests/startup-contract.sh
 bash tests/startup-native.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
@@ -131,6 +146,9 @@ install -Dm644 src/units/uke-usb-observer.service %{buildroot}%{_unitdir}/uke-us
 install -Dm644 src/profiles/org.senemos.Uke.USB1.conf %{buildroot}%{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
 install -Dm755 uke-wifi-factory %{buildroot}%{_libexecdir}/senemos-uke/uke-wifi-factory
 install -Dm644 src/units/uke-wifi-factory.service %{buildroot}%{_unitdir}/uke-wifi-factory.service
+install -Dm755 uke-bluetooth-address %{buildroot}%{_libexecdir}/uke-bluetooth-address
+install -Dm644 packaging/uke-bluetooth-address.service %{buildroot}%{_unitdir}/uke-bluetooth-address.service
+install -Dm644 packaging/70-uke-bluetooth.rules %{buildroot}%{_udevrulesdir}/70-uke-bluetooth.rules
 install -d %{buildroot}%{_datadir}/senemos/boot/uke
 install -m644 src/profiles/* %{buildroot}%{_datadir}/senemos/boot/uke/
 install -Dm644 src/units/uke-cdc-acm.service %{buildroot}%{_unitdir}/uke-cdc-acm.service
@@ -160,6 +178,12 @@ install -d %{buildroot}%{_unitdir}/sysinit.target.wants %{buildroot}/usr/local/{
 ln -s ../uke-boot-guard.service %{buildroot}%{_unitdir}/sysinit.target.wants/uke-boot-guard.service
 ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/bin/reboot
 ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
+
+%pre
+# @bluetooth-migration-save
+
+%posttrans
+# @bluetooth-migration-restore
 
 %post -n uke-kernel-update
 %systemd_post uke-userdata-accept.service
@@ -196,7 +220,9 @@ if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]
 fi
 %files
 %license LICENSE
+%license LICENSE.GPL-3.0
 %doc README.md
+%doc docs/BLUETOOTH.md
 %doc docs/USB-TYPEC.md
 %doc docs/NATIVE-POWER-PROFILES.md
 %{_libexecdir}/senemos-uke/uke-native-power-profile-ready
@@ -204,6 +230,9 @@ fi
 %{_udevrulesdir}/72-uke-native-power-profile.rules
 %{_libexecdir}/senemos-uke/uke-wifi-factory
 %{_unitdir}/uke-wifi-factory.service
+%{_libexecdir}/uke-bluetooth-address
+%{_unitdir}/uke-bluetooth-address.service
+%{_udevrulesdir}/70-uke-bluetooth.rules
 %{_bindir}/uke-boot-status
 %{_bindir}/uke-usb-port
 %{_unitdir}/uke-usb-observer.service
@@ -256,6 +285,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.0-1
+- Own the unchanged native BlueZ factory identity bridge and its license.
+- Preserve admitted service state when retiring the separate Bluetooth RPM.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
 - Own factory WLAN provisioning in boot integration and retire its separate RPM.
 - Preserve the native helper, protected persist input and existing service state.
