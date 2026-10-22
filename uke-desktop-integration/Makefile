@@ -23,10 +23,6 @@ test-plugin:
 	cmake --build build/adreno-stats --parallel 4
 	ctest --test-dir build/adreno-stats --output-on-failure
 
-.PHONY: power-srpm
-power-srpm:
-	$(MAKE) -C ../uke-desktop-packaging srpm PACKAGE=uke-power-profile-backend outdir="$(CURDIR)/build/power-srpm"
-
 .PHONY: bluetooth-srpm
 bluetooth-srpm:
 	top="$$(realpath -m build/bluetooth-srpm/rpmbuild)"

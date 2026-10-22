@@ -8,7 +8,6 @@
   "package_build_ready": true,
   "expected_packages": [
     "uke-adaptive-display",
-    "uke-power-profile-backend",
     "uke-bluetooth"
   ],
   "nabu_reference_packages": [

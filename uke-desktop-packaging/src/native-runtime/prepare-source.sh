@@ -60,27 +60,6 @@ if [[ $name == libstdcxx-uke-runtime ]]; then
     build_source
     exit 0
 fi
-if [[ $name == uke-power-profile-backend ]]; then
-    owner="$project/../uke-desktop-integration"
-    # The backend is a separate native daemon overlay; never install Fedora's
-    # CLI/service from this source. New Fedora patches require an explicit port.
-    ! grep -Eq '^Patch[0-9]*:' "$top/SOURCES/power-profiles-daemon.spec"
-    upstream=("$top/SOURCES/power-profiles-daemon-$version.tar."*)
-    [[ ${#upstream[@]} == 1 && -s ${upstream[0]} ]]
-    cp "$owner/packaging/$name.spec" "$top/SPECS/$name.spec"
-    native_version=$(jq -er --arg name "$name" '.native_versions[$name]' "$project/../packaging/families/families.json")
-    overlay="$name-$native_version.tar.gz"
-    tar --sort=name --mtime=@1792531200 --owner=0 --group=0 --numeric-owner -czf "$top/SOURCES/$overlay" -C "$owner" \
-        src/ppd-driver-uke-cpufreq.cpp src/ppd-driver-uke-cpufreq.h patches/0001-ppd-native-uke-cpu-driver.patch tests/ppd-cpufreq.cpp \
-        packaging/60-uke-cpufreq.conf packaging/uke-power-profile.conf packaging/uke-power-profile.cil docs/POWER-PROFILES.md
-    sed -i -e "s/^Version:.*/Version: $native_version/" -e "s/^Release:.*/Release: $native_release%{?dist}/" \
-        -e "s/^Source0:.*/Source0: ${upstream[0]##*/}/" -e "s/^Source1:.*/Source1: $overlay/" \
-        -e "s/^Requires: power-profiles-daemon = .*/Requires: power-profiles-daemon = $version/" \
-        -e "s@^echo .*%{SOURCE0}.*@echo '$(sha256sum "${upstream[0]}" | cut -d' ' -f1)  %{SOURCE0}' | sha256sum -c -@" \
-        -e "s/power-profiles-daemon-0[.]30/power-profiles-daemon-$version/g" "$top/SPECS/$name.spec"
-    build_source
-    exit 0
-fi
 spec="$top/SOURCES/$name.spec"
 [[ -s $spec ]]
 if [[ $name == upower || $name == iio-sensor-proxy ]]; then

@@ -1,5 +1,23 @@
 # Uke CPU and GPU power profiles
 
+22 October 2026. POCO Pad X1, Fedora Rawhide AArch64, kernel `7.2.12-9`,
+boot integration `1.3.4` and original Fedora Power Profiles daemon `0.30-4`.
+The compatibility backend was removed through DNF. All three native profiles,
+normal boot, event-driven daemon refresh and one RTC s2idle/resume cycle passed
+with SELinux enforcing. CPU policies retain schedutil; native QoS selects the
+hardware minimum, unrestricted range or hardware maximum. GPU preferences
+remain 500/950 MHz. Independent tighter CPU/GPU user limits were preserved and
+restored after testing. Thermal fault injection and energy qualification remain
+open.
+
+The source family withdraws new compatibility-backend builds and uses the
+original distribution daemon. Retained signed backend archives are required
+before returning to an older kernel without the native profile provider.
+The legacy implementation and fixtures below are retained as historical source
+evidence; they are not a current COPR build selection.
+
+## Legacy backend observations
+
 18 October 2026. Tested on POCO Pad X1, Fedora Rawhide AArch64, original KDE,
 Linux `7.2.10-senemos.1.4056` and COPR `uke-power-profile-backend-0.1.0-3`.
 All three profiles appeared through the standard Power Profiles daemon D-Bus

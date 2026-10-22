@@ -104,19 +104,6 @@
       "source_payload_sha256": "2141860ad82a0d38fceab8d6621821ee549bae55db5848950c024181539ef47c"
     },
     {
-      "name": "uke-power-profile-backend",
-      "source_name": "power-profiles-daemon",
-      "binary_name": "power-profiles-daemon",
-      "family": "uke-power",
-      "version": "0.30",
-      "release": "4.fc45",
-      "native_release": "6",
-      "sha256": "f1058d02c2472a9153c98962d96e8d186ccde71ac95c940925b8dc5e45e152c2",
-      "delta": "Native Uke backend built from current Fedora PPD source; retain governors, thermal limits, readback/rollback and native driver tests; no Python CLI overlay",
-      "signed_mirror_sha256": "8bcf753cd8f64900883d2552b24850f94728c1221be47ca7110fcbdac8f72abc",
-      "source_payload_sha256": "d0d1c2d8481a9f46532ec84a7edba951d3859100a3753afa8436b66e949ea240"
-    },
-    {
       "name": "accountsservice",
       "binary_name": "accountsservice",
       "family": "uke-additional",
@@ -158,6 +145,22 @@
       "sha256": "63bc209615c39f7e928b5f42728a7da5ae25a0748d67557be6ee58fb362bd5e0",
       "delta": "Replace toolbar and split-view shortcut configuration migrations with atomic native C++/Qt helpers",
       "reason": "Owner forbids cloning or producing KDE desktop application variants; use original distribution applications",
+      "automatic_build": false,
+      "target_admitted": false
+    },
+    {
+      "name": "uke-power-profile-backend",
+      "source_name": "power-profiles-daemon",
+      "binary_name": "power-profiles-daemon",
+      "family": "uke-power",
+      "version": "0.30",
+      "release": "4.fc45",
+      "native_release": "6",
+      "sha256": "f1058d02c2472a9153c98962d96e8d186ccde71ac95c940925b8dc5e45e152c2",
+      "delta": "Native Uke backend built from current Fedora PPD source; retain governors, thermal limits, readback/rollback and native driver tests; no Python CLI overlay",
+      "signed_mirror_sha256": "8bcf753cd8f64900883d2552b24850f94728c1221be47ca7110fcbdac8f72abc",
+      "source_payload_sha256": "d0d1c2d8481a9f46532ec84a7edba951d3859100a3753afa8436b66e949ea240",
+      "reason": "Native kernel profiles replace this overlay; use the original distribution daemon. Retained signed archives cover explicit older-kernel rollback.",
       "automatic_build": false,
       "target_admitted": false
     }

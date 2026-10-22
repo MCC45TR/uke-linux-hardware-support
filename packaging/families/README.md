@@ -232,3 +232,12 @@ and revision refresh. Fedora-derived inputs use the signed Rawhide watcher.
 Primary contracts: [RPM spec format](https://rpm.org/docs/6.0.x/manual/spec.html),
 [DNF5 native transaction API](https://dnf5.readthedocs.io/en/latest/tutorial/transaction.html)
 and [COPR source methods](https://docs.copr.fedorainfracloud.org/user_documentation.html#build-source-types).
+
+22 October 2026: power family `1.3.0` withdraws the compatibility PPD overlay.
+It requires the native kernel profile capability, boot integration `1.3.4` or
+newer and the original distribution daemon. Images must select a matching
+native-profile kernel. Existing installations need a qualified running provider
+before removing the old backend through DNF; package presence alone does not
+establish the running kernel. Retain signed backend RPMs for explicit rollback
+to an older kernel. Historical COPR removal requires a complete replacement
+cohort and separately retained signed archives.
