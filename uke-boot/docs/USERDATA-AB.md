@@ -1,5 +1,13 @@
 # Userdata boot A/B updates
 
+23 October 2026 tablet follow-up: updater 1.6.0 restored the recorded accepted
+`7.2.12-14` image from an unaccepted release 16 trial on POCO Pad X1 running
+Fedora Rawhide AArch64. Independent full-image readback and normal boot passed;
+the saved state retained accepted B/14 and recorded release 16 as failed.
+The trial was not marked healthy. Android boot A and the growth-completion
+record were unchanged. This supersedes the source-only restoration limit below.
+Physical power-loss recovery and two-slot A/B operation remain unqualified.
+
 22 October 2026 source update: version 1.6.0 adds explicit restoration of an
 unaccepted current-slot trial. This addition has passed native host fixtures;
 it has not yet passed a tablet restoration or power-loss test.

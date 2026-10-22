@@ -1,5 +1,13 @@
 # Stock-ABL kernel updates
 
+23 October 2026 tablet follow-up: signed updater 1.6.0 from COPR `11194565`
+restored the unaccepted `7.2.12-16` current-slot trial to the recorded accepted
+`7.2.12-14` on POCO Pad X1, Fedora Rawhide AArch64. Complete write/readback,
+normal boot and the returned-trial state transition passed. Android boot A and
+the filesystem-growth completion record were unchanged. This supersedes the
+pending tablet-restoration statement below; interrupted writes, power loss and
+physical two-slot A/B qualification remain open.
+
 22 October 2026 source update: updater 1.6.0 adds a guarded return from a booted,
 unaccepted userdata current-slot trial to its recorded accepted B image. See
 [userdata restoration](USERDATA-AB.md#restore-an-unaccepted-current-slot-trial).
