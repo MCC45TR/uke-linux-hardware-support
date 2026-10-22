@@ -9,6 +9,11 @@ activity across the old package's removal, including disabled and masked states.
 This is userspace BlueZ integration, not a kernel driver or an embedded address.
 Signed-package migration and physical controller checks are separate gates.
 
+Version `1.5.1` corrects RPM macro expansion in the state-preservation query.
+The source recipe now checks RPM's expanded scriptlet for its literal query
+tag. Version `1.5.0` did not preserve a previously enabled unit on replacement;
+that general migration result is superseded.
+
 22 October 2026. Version `1.4.0` owns the factory WLAN helper and its existing
 service directly. It replaces the separate `uke-wifi-factory` RPM while keeping
 its legacy package capability for dependency migration. The native helper,

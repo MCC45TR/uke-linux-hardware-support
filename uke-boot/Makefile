@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.5.0
+version := 1.5.1
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
@@ -16,6 +16,7 @@ validate:
 	sh -n src/uke-usb-network.sh
 	bash -n tests/startup-native.sh src/dracut/93uke-boot-guard/module-setup.sh
 	bash -n tests/native-profile-ready.sh tests/native-profile-udev.sh
+	bash -n tests/bluetooth-packaging.sh
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh
@@ -54,8 +55,10 @@ srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
 	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USERDATA-AB.md docs/USB-TYPEC.md docs/NATIVE-POWER-PROFILES.md packaging/uke-boot-integration.spec -C ../uke-desktop-integration LICENSE.GPL-3.0 src/bluetooth-address.cpp tests/bluetooth-address.cpp packaging/uke-bluetooth-address.service packaging/70-uke-bluetooth.rules docs/BLUETOOTH.md
-	awk -v fragment=../packaging/families/host/service-rename.sh '/^# @bluetooth-migration-(save|restore)$$/ {phase=$$2; sub(/^@bluetooth-migration-/, "", phase); print "old=uke-bluetooth; new=uke-boot-integration; unit=uke-bluetooth-address.service; phase=" phase; while ((getline line < fragment)>0) print line; close(fragment); next} {print}' packaging/uke-boot-integration.spec > "$$top/SPECS/uke-boot-integration.spec"
+	awk -v fragment=../packaging/families/host/service-rename.sh '/^# @bluetooth-migration-(save|restore)$$/ {phase=$$2; sub(/^@bluetooth-migration-/, "", phase); print "old=uke-bluetooth; new=uke-boot-integration; unit=uke-bluetooth-address.service; phase=" phase; while ((getline line < fragment)>0) {gsub(/%/, "%%", line); print line} close(fragment); next} {print}' packaging/uke-boot-integration.spec > "$$top/SPECS/uke-boot-integration.spec"
 	! grep -q '@bluetooth-migration-' "$$top/SPECS/uke-boot-integration.spec"
+	rpmspec --parse --target aarch64 --define "_sourcedir $$top/SOURCES" "$$top/SPECS/uke-boot-integration.spec" > "$$top/parsed.spec"
+	bash tests/bluetooth-packaging.sh "$$top/parsed.spec"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-boot-integration.spec"
 	mkdir -p "$(outdir)"
 	install -m644 "$$top/SRPMS/"*.src.rpm "$(outdir)/"

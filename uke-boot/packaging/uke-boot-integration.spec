@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.5.0
+Version: 1.5.1
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later
@@ -285,6 +285,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.1-1
+- Retain literal RPM query tags in embedded state-preservation scriptlets.
+- Require an expanded-spec migration check before creating the source RPM.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.0-1
 - Own the unchanged native BlueZ factory identity bridge and its license.
 - Preserve admitted service state when retiring the separate Bluetooth RPM.
