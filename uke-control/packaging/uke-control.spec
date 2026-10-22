@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.3.0
-Release: 3%{?dist}
+Version: 1.4.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -13,6 +13,9 @@ BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
+Requires: dracut >= 111
+Requires: f2fs-tools >= 1.16.0
+Requires: policycoreutils
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
 %{?systemd_requires}
@@ -43,6 +46,7 @@ package selections. Numeric readings alone do not establish physical acceptance.
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
 install -Dm755 build/uke-control-packages %{buildroot}%{_libexecdir}/uke-control/packages
+install -Dm755 build/resize-system %{buildroot}%{_libexecdir}/uke-control/resize-system
 install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.so.0
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
 install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
@@ -76,10 +80,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md
 %{_bindir}/uke-control
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
+%{_libexecdir}/uke-control/resize-system
 %{_libdir}/libuke-control.so.0
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
@@ -98,6 +103,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
+- Prepare explicit offline F2FS userdata expansion at the next normal reboot.
+- Verify physical root, power, geometry, identity and unmounted exclusive access.
+- Preserve existing shutdown environments and retain read-only capacity checks.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-3
 - Keep sensor, display and power reports within their selected subsystem.
 - Read existing SensorProxy and UPower interfaces without activation.

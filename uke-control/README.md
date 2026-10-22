@@ -1,5 +1,10 @@
 # Uke Control
 
+22 October 2026: version 1.4.0 adds `uke-control resize system --check` and
+explicit offline F2FS userdata growth at the next normal reboot. It prepares
+maintenance in RAM without changing GPT, boot partitions or the selected slot.
+See [filesystem expansion](RESIZE.md) for admission, power and verification.
+
 22 October 2026: version 1.3.0 adds `uke-control diagnostic all` and focused
 subsystem reports. Each command creates `uke-diagnostic-TOPIC.log` in the current
 directory with mode 0600, preserving existing files. See [diagnostic collection](DIAGNOSTIC.md)
