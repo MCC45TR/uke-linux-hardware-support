@@ -1,5 +1,12 @@
 # COPR source families
 
+22 October 2026: power `1.3.3` and additional `1.0.0-6` restrict upstream file
+globs to their owning source. UPower no longer includes sibling Uke service,
+D-Bus and udev files; libaccounts-glib-devel no longer includes AccountsService
+interfaces. Shared-root fixtures retain each source's own files and reject
+sibling capture. Rebuilt children receive fresh revisions. Bluetooth source
+changes are watched by the hardware family only.
+
 22 October 2026: hardware `1.5.3` grants the existing Bluetooth factory helper
 read/search access through Android-owned directory permissions. The service
 retains protected read-only persist and its exact identity and input checks.
