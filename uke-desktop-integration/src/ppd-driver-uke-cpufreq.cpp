@@ -3,8 +3,10 @@
 #include "ppd-driver-uke-cpufreq.h"
 extern "C" {
 #include "ppd-utils.h"
+#include <glib/gstdio.h>
 #include <gudev/gudev.h>
 }
+#include <cerrno>
 #include <cstring>
 #include <initializer_list>
 
@@ -21,10 +23,15 @@ static constexpr const char *gpu = "/sys/class/devfreq/3d00000.qcom,kgsl-3d0/";
 enum class NativeHandoff { legacy, pending, ready };
 static NativeHandoff native_handoff() {
     g_autofree char *version_path = ppd_utils_get_sysfs_path("/sys/module/uke_platform_profile/version");
-    if (!g_file_test(version_path, G_FILE_TEST_EXISTS)) return NativeHandoff::legacy;
     g_autofree char *version = nullptr;
-    if (!g_file_get_contents(version_path, &version, nullptr, nullptr) ||
-        strcmp(g_strchomp(version), "1")) return NativeHandoff::pending;
+    g_autoptr(GError) error = nullptr;
+    if (!g_file_get_contents(version_path, &version, nullptr, &error)) {
+        if (!g_error_matches(error, G_FILE_ERROR, G_FILE_ERROR_NOENT)) return NativeHandoff::pending;
+        g_autofree char *module = g_path_get_dirname(version_path);
+        GStatBuf metadata{};
+        return g_stat(module, &metadata) < 0 && errno == ENOENT ? NativeHandoff::legacy : NativeHandoff::pending;
+    }
+    if (strcmp(g_strchomp(version), "1")) return NativeHandoff::pending;
     g_autofree char *status_path = ppd_utils_get_sysfs_path("/sys/module/uke_platform_profile/parameters/probe_status");
     g_autofree char *status = nullptr;
     if (!g_file_get_contents(status_path, &status, nullptr, nullptr)) return NativeHandoff::pending;

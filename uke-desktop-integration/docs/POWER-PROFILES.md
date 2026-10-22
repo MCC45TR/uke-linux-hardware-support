@@ -80,3 +80,10 @@ boot/module cohorts: an older-kernel rollback needs that overlay restored for
 its three profile choices. Manual native-provider rebinds require a balanced
 handoff first; neither the shim nor the kernel overrides an external governor.
 Host fixtures and source preparation do not qualify a tablet migration.
+
+The corrected backend probes its Uke admission before the standard platform
+driver. If the native interface appears during startup, this retains the
+deferred monitor before the standard probe can miss it. An absent module
+retains the legacy path; unreadable metadata, an incomplete module or an
+unknown ABI defers. Use `1.1.1-8` or newer for the tablet migration; the initial
+`1.1.0-7` handoff build did not cover this startup ordering.

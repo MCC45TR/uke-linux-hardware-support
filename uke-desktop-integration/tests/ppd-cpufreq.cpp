@@ -108,6 +108,8 @@ int main(int argc, char **argv) {
     assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_FAIL);
     write("/sys/firmware/devicetree/base/compatible", std::string("xiaomi,uke\0qcom,sm7675\0", 23));
     const std::string native = "/sys/module/uke_platform_profile/";
+    std::filesystem::create_directories(root + native);
+    assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_DEFER);
     write(native + "version", "1\n");
     const unsigned before_handoff = writes;
     assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_DEFER);
@@ -137,5 +139,8 @@ int main(int argc, char **argv) {
     assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_DEFER);
     std::filesystem::remove_all(root + native);
     assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_SUCCESS);
+    std::filesystem::create_directories(root + native);
+    std::filesystem::create_symlink("version", root + native + "version");
+    assert(probe(PPD_DRIVER(driver)) == PPD_PROBE_RESULT_DEFER);
     g_print("Uke PPD: CPU/GPU profiles, delayed GPU probe, thermal clamp, write/readback rollback and unsupported inputs passed\n");
 }

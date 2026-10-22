@@ -110,7 +110,7 @@
       "family": "uke-power",
       "version": "0.30",
       "release": "4.fc45",
-      "native_release": "5",
+      "native_release": "6",
       "sha256": "f1058d02c2472a9153c98962d96e8d186ccde71ac95c940925b8dc5e45e152c2",
       "delta": "Native Uke backend built from current Fedora PPD source; retain governors, thermal limits, readback/rollback and native driver tests; no Python CLI overlay",
       "signed_mirror_sha256": "8bcf753cd8f64900883d2552b24850f94728c1221be47ca7110fcbdac8f72abc",

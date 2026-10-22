@@ -1,6 +1,6 @@
 Name: uke-power-profile-backend
 Version: 0.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 Summary: Native Uke CPU and GPU backend for Power Profiles daemon
 License: GPL-3.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -65,6 +65,10 @@ if [ "$1" -eq 0 ]; then semodule -r uke-power-profile; fi
 %{_datadir}/selinux/packages/uke-power-profile.cil
 
 %changelog
+* Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
+- Admit the native handoff before the standard platform probe to retain startup events.
+- Defer on unreadable or incomplete native module metadata.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
 - Defer to the native Uke profile provider without competing CPU/GPU writes.
 - Retain the legacy backend when the native provider reports a permanent failure.
