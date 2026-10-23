@@ -13,7 +13,7 @@
 #include "wake.hpp"
 #include "diagnostic.hpp"
 static void help() {
-    std::cout << "uke-control 1.4.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.5.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
@@ -49,7 +49,8 @@ static void help() {
       "  firmware status             Cached SCMI discovery and remote-processor JSON\n"
       "  usb watch [SECONDS]         Observe changes at 1 Hz for 1..300 seconds\n"
       "  usb request data host|device Request a Type-C data-role swap (root)\n"
-      "  set cdc on|off              Explicit CDC ACM opt-in; default off (root)\n"
+      "  set cdc on|off              One-shot CDC ACM request (root)\n"
+      "  set cdc on|off --persistent Save and apply CDC startup policy (root)\n"
       "  test [--help]               Hz, Wayland cadence, touch and sensor diagnostics\n"
       "  diagnostic all|TOPIC        Save uke-diagnostic-TOPIC.log in the current directory\n"
       "  diagnostic --help           Wi-Fi, Bluetooth, sensors, sleep and other topics\n"
@@ -99,10 +100,15 @@ int main(int argc,char** argv) {
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="sensor") {
             std::cout<<uke::display::front_color_status();return 0;
         }
-        if(command=="set"&&argc==4&&std::string_view(argv[2])=="cdc") {
+        if(command=="cdc"&&argc==3&&std::string_view(argv[2])=="apply") {
+            auto result=uke::cdc_apply();std::cout<<result.output;return result.status;
+        }
+        if(command=="set"&&(argc==4||argc==5)&&std::string_view(argv[2])=="cdc") {
             const std::string_view setting=argv[3];
             if(setting!="on"&&setting!="off")throw std::runtime_error("CDC setting must be on or off");
-            auto result=uke::cdc_set(setting=="on");std::cout<<result.output;return result.status;
+            if(argc==5&&std::string_view(argv[4])!="--persistent")throw std::runtime_error("Expected --persistent");
+            auto result=argc==5?uke::cdc_persistent(setting=="on"):uke::cdc_set(setting=="on");
+            std::cout<<result.output;return result.status;
         }
         if(command=="test"){execv("/usr/libexec/uke-control/tests",argv+1);throw std::runtime_error("Install uke-control-tests from the development repository");}
         if(command=="--self-test"&&argc==2){uke::self_test();return 0;}

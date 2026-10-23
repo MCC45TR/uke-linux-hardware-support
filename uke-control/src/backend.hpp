@@ -29,6 +29,8 @@ std::string hardware_status();
 void usb_watch(unsigned seconds);
 Result usb_request_data(const std::string& role);
 Result cdc_set(bool enabled);
+Result cdc_persistent(bool enabled);
+Result cdc_apply();
 std::string report();
 void report_github(const std::string& directory,const std::string& repository);
 void self_test();
