@@ -1,5 +1,10 @@
 # Uke Control
 
+23 October 2026: version 1.5.1 makes `uke-control resize system` ask for explicit
+approval before preparing offline growth and requesting normal reboot. The
+read-only `--check` explains the next command. Full-capacity systems exit without
+prompting or rebooting. See [filesystem capacity repair](RESIZE.md).
+
 23 October 2026: version 1.5.0 adds saved CDC ACM startup policy:
 
 ```sh

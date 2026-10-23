@@ -13,7 +13,7 @@
 #include "wake.hpp"
 #include "diagnostic.hpp"
 static void help() {
-    std::cout << "uke-control 1.5.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.5.1 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
@@ -54,7 +54,7 @@ static void help() {
       "  test [--help]               Hz, Wayland cadence, touch and sensor diagnostics\n"
       "  diagnostic all|TOPIC        Save uke-diagnostic-TOPIC.log in the current directory\n"
       "  diagnostic --help           Wi-Fi, Bluetooth, sensors, sleep and other topics\n"
-      "  resize system [--check]     Prepare offline F2FS growth at normal reboot (root)\n"
+      "  resize system [--check]     Check capacity, or confirm offline growth and reboot (root)\n"
       "  report                      Save comprehensive private logs locally (root)\n"
       "  report github DIR OWNER/REPO Submit only the generated anonymous summary via gh\n"
       "  --self-test                 Host refusal and arithmetic checks\n"
@@ -71,14 +71,9 @@ int main(int argc,char** argv) {
         if(command=="resize") {
             if(argc!=3&&argc!=4)throw std::runtime_error("Usage: uke-control resize system [--check]");
             if(std::string_view(argv[2])!="system"||(argc==4&&std::string_view(argv[3])!="--check"))throw std::runtime_error("Usage: uke-control resize system [--check]");
-            if(argc==4) {
-                const char* arguments[]={"/usr/libexec/uke-control/resize-system","--check",nullptr};
-                execv(arguments[0],const_cast<char* const*>(arguments));
-            } else {
-                const char* arguments[]={"/usr/bin/systemd-inhibit","--what=shutdown:sleep","--mode=block","--who=uke-control","--why=Prepare offline userdata filesystem expansion","/usr/libexec/uke-control/resize-system","--prepare",nullptr};
-                execv(arguments[0],const_cast<char* const*>(arguments));
-            }
-            throw std::runtime_error("The native resize helper or systemd inhibitor is unavailable");
+            const char* arguments[]={"/usr/libexec/uke-control/resize-system",argc==4?"--check":"--interactive",nullptr};
+            execv(arguments[0],const_cast<char* const*>(arguments));
+            throw std::runtime_error("The native resize helper is unavailable");
         }
         if(command=="diagnostic")return uke::diagnostic::command(argc-2,argv+2);
         if(command=="wake") {
