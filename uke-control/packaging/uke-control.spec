@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.5.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -110,6 +110,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.0-2
+- Keep the CDC fixture process stub separate for GCC 16 AArch64 diagnostics.
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.0-1
 - Save explicit CDC ACM startup policy and reconcile USB readiness events.
 - Retain one-shot requests, device-role guards and owned-gadget cleanup.

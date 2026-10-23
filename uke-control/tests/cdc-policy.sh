@@ -51,6 +51,10 @@ static void atomic_file(const fs::path& path,const std::string& value) {
 #define lstat test_lstat
 #include "policy.inc"
 #undef lstat
+// Preserve the process boundary; GCC 16 AArch64 misdiagnoses IPA of the stub.
+#if defined(__GNUC__) && !defined(__clang__)
+[[gnu::noipa]]
+#endif
 Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limit) {
  (void)seconds;(void)limit;
  if(args[0]=="/usr/bin/rpm")return {api_ok?0:1,api_ok?"uke-usb-manual-cdc-api\t2\n":""};
