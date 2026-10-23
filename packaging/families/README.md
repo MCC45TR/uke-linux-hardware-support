@@ -1,5 +1,9 @@
 # COPR source families
 
+23 October 2026: hardware `1.8.1-2` advances boot children to `1.8.1-2` and
+the unchanged firmware payload to `3.0.304.0-8`. Build `11199340` was cancelled
+before publication after detecting its unchanged firmware RPM revision.
+
 23 October 2026: hardware `1.8.1` corrects repeated DNF hooks before an A/B
 trial reboot and narrowly restores a stale backup array CRC during acceptance
 or fallback. Both GPT arrays, valid primary data, header identity and header
