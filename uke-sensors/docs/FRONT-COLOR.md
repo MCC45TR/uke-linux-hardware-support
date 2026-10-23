@@ -1,5 +1,19 @@
 # Raw front-color endpoint
 
+23 October 2026 correction: release 8 remains in `starting` for more than four
+minutes after a normal Uke boot; one later publisher restart receives a sample.
+Keeping the subscription alone therefore does not qualify automatic readiness.
+The publisher now matches exact OEM SUID discovery delivery: request 512
+uses APSS/wakeup, while measurement requests 513/514 remain non-wakeup. No
+resend, startup delay or DSP restart is added. A new boot must test this candidate.
+
+Static comparison uses OS3.0.304.0 `libqsh.so` SHA-256
+`b7a6e9762119e16fe36b1cce391dc0461bb51058ac9aea839126763347cae663`,
+`suid_lookup::request_suid` at `0xc860`. The exact `libsnsapi-full.so` serializer
+at `0x17a438` confirms the delivery/processor fields. Original libssc 0.4.4
+likewise selects wakeup delivery. Proprietary code is read only and is not
+executed or included; the shared enum contract is the pinned Qualcomm API below.
+
 23 October 2026: the publisher retains its existing SUID-update subscription
 while the endpoint initializes. An empty initial lookup no longer becomes a
 permanent failure after 30 seconds. Unavailable `starting` snapshots continue

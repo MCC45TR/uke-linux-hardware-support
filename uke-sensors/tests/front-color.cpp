@@ -42,6 +42,20 @@ int main() {
     std::size_t offset = 0;
     assert(varint(one(lookup_fields,2,0),offset) == 1);
     offset = 0; assert(varint(one(lookup_fields,3,0),offset) == 0);
+    const auto lookup_packet = color_client_request(lookup_uid,512,lookup_payload);
+    const Bytes wakeup_lookup{
+        0,1,0,0x20,0,0x37,0,1,0x34,0,0x32,0,
+        0x0a,18,9,0xab,0xab,0xab,0xab,0xab,0xab,0xab,0xab,
+        0x11,0xab,0xab,0xab,0xab,0xab,0xab,0xab,0xab,
+        0x15,0,2,0,0,0x1a,4,8,1,0x10,0,
+        0x22,17,0x12,15,0x0a,9,'c','c','t','_','f','r','o','n','t',0x10,1,0x18,0
+    };
+    assert(lookup_packet == wakeup_lookup);
+    auto lookup_client = fields(tlv(tlvs(lookup_packet),1).subspan(2));
+    assert(little(one(fields(one(lookup_client,3,2)),2,0)) == 0);
+    const auto sample_packet = color_client_request({1,2},514,{});
+    auto sample_client = fields(tlv(tlvs(sample_packet),1).subspan(2));
+    assert(little(one(fields(one(sample_client,3,2)),2,0)) == 1);
     Bytes lookup_result;
     const std::string_view type = "cct_front";
     length_field(lookup_result,1,View(reinterpret_cast<const std::uint8_t *>(type.data()),type.size()));

@@ -76,6 +76,17 @@ static void gate_metadata(View event, Uid selected) {
     }
     require(type_ok && available && physical && on_change, "Front-color endpoint metadata unavailable");
 }
+static Bytes color_client_request(Uid sensor, unsigned message, View payload) {
+    auto packet = client_request(sensor, message, payload);
+    if (message == 512) {
+        // Match OEM discovery delivery without changing shared sample/diagnostic policy.
+        const auto client = fields(tlv(tlvs(packet), 1).subspan(2));
+        const auto delivery = one(fields(one(client, 3, 2)), 2, 0);
+        require(delivery.size() == 1 && delivery[0] == 1, "Unexpected discovery delivery encoding");
+        packet.at(delivery.data() - packet.data()) = 0;
+    }
+    return packet;
+}
 struct Connection {
     Fd fd{socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)};
     sockaddr_qrtr server{};
@@ -110,7 +121,7 @@ struct Connection {
             found = true; break;
         }
         require(found && !stopped, "SSC service lookup unavailable");
-        send(fd.value, server, client_request(selected, message_id, payload));
+        send(fd.value, server, color_client_request(selected, message_id, payload));
         while (!stopped && packets++ < 64) {
             auto data = receive(fd.value, peer, deadline);
             if (peer.sq_node != server.sq_node || peer.sq_port != server.sq_port) continue;
