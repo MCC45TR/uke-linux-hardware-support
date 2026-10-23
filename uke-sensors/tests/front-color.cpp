@@ -56,6 +56,16 @@ int main() {
     const auto sample_packet = color_client_request({1,2},514,{});
     auto sample_client = fields(tlv(tlvs(sample_packet),1).subspan(2));
     assert(little(one(fields(one(sample_client,3,2)),2,0)) == 1);
+    const auto metadata_packet = color_client_request({1,2},1,{});
+    const Bytes wakeup_metadata{
+        0,1,0,0x20,0,40,0,1,37,0,35,0,
+        0x0a,18,9,1,0,0,0,0,0,0,0,0x11,2,0,0,0,0,0,0,0,
+        0x15,1,0,0,0,0x1a,4,8,1,0x10,0,0x22,2,0x12,0
+    };
+    assert(metadata_packet == wakeup_metadata);
+    const auto diagnostic_metadata = request("",{1,2},1);
+    const auto diagnostic_client = fields(tlv(tlvs(diagnostic_metadata),1).subspan(2));
+    assert(little(one(fields(one(diagnostic_client,3,2)),2,0)) == 1);
     Bytes lookup_result;
     const std::string_view type = "cct_front";
     length_field(lookup_result,1,View(reinterpret_cast<const std::uint8_t *>(type.data()),type.size()));

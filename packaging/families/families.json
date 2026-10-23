@@ -80,7 +80,7 @@
     },
     {
       "name": "uke-sensors",
-      "version": "1.0.7",
+      "version": "1.0.8",
       "requires": [
         "uke-libssc",
         "uke-iio-sensor-proxy"
@@ -228,7 +228,7 @@
     "uke-installation-profile": "1.5.3"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "18.fc46",
+    "iio-sensor-proxy": "19.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-touchscreen": "2.fc46",
     "uke-plymonth": "4.fc46",
@@ -236,9 +236,9 @@
     "upower": "12.fc46",
     "uke-adaptive-display": "4.fc46",
     "uke-firmware": "6.fc46",
-    "libssc": "15.fc46",
-    "uke-ssc-fileservice": "18.fc46",
-    "uke-front-color": "10.fc46",
+    "libssc": "16.fc46",
+    "uke-ssc-fileservice": "19.fc46",
+    "uke-front-color": "11.fc46",
     "at-spi2-core": "7.fc46",
     "gstreamer1": "7.fc46",
     "libaccounts-glib": "35.fc46",
@@ -249,6 +249,6 @@
     "accountsservice": "6.fc46",
     "material-decoration": "6.fc46",
     "uke-desktop-metas": "8.fc46",
-    "uke-proximity-capture": "2.fc46"
+    "uke-proximity-capture": "3.fc46"
   }
 }

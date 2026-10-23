@@ -1,5 +1,14 @@
 # Raw front-color endpoint
 
+23 October 2026 startup correction: a recorded normal boot of `1.0.2-10` fails
+with a transport timeout at 12.357 seconds and publishes no sample. Warm-session
+reception did not establish automatic readiness. Attribute request 1 now also
+uses the exact OEM APSS/wakeup contract; requests 513/514 remain non-wakeup.
+Four bounded startup phase messages distinguish discovery from attribute
+admission without raw identities or values. A new boot must test this candidate.
+Static comparison uses the same exact HAL below: `sensor_factory::create_attr_request`
+at `0x54c98` sets delivery 0 and processor 1, confirmed by the API serializer.
+
 23 October 2026 correction: release 8 remains in `starting` for more than four
 minutes after a normal Uke boot; one later publisher restart receives a sample.
 Keeping the subscription alone therefore does not qualify automatic readiness.

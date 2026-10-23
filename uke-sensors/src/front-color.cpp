@@ -78,11 +78,11 @@ static void gate_metadata(View event, Uid selected) {
 }
 static Bytes color_client_request(Uid sensor, unsigned message, View payload) {
     auto packet = client_request(sensor, message, payload);
-    if (message == 512) {
-        // Match OEM discovery delivery without changing shared sample/diagnostic policy.
+    if (message == 512 || message == 1) {
+        // Match OEM discovery/attribute delivery; measurement requests stay non-wakeup.
         const auto client = fields(tlv(tlvs(packet), 1).subspan(2));
         const auto delivery = one(fields(one(client, 3, 2)), 2, 0);
-        require(delivery.size() == 1 && delivery[0] == 1, "Unexpected discovery delivery encoding");
+        require(delivery.size() == 1 && delivery[0] == 1, "Unexpected metadata delivery encoding");
         packet.at(delivery.data() - packet.data()) = 0;
     }
     return packet;
@@ -205,7 +205,9 @@ static Uid discover_color(uke::color::State &state, int directory, std::uint64_t
     Uid selected;
     {
         const auto payload = color_lookup_payload();
+        std::cerr << "Front-color discovery starting\n";
         Connection lookup(lookup_uid, 512, payload);
+        std::cerr << "Front-color discovery acknowledged\n";
         // Keep the existing subscription until the endpoint publishes readiness.
         selected = wait_for_color_endpoint(lookup, [&] {
             const auto now = boottime_ns();
@@ -217,7 +219,9 @@ static Uid discover_color(uke::color::State &state, int directory, std::uint64_t
     }
     Fd metadata(socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
     require(metadata.value >= 0, "QRTR metadata socket unavailable");
-    gate_metadata(rpc(metadata.value, request("", selected, 1), 128), selected);
+    std::cerr << "Front-color endpoint discovered; requesting attributes\n";
+    gate_metadata(rpc(metadata.value, color_client_request(selected, 1, {}), 128), selected);
+    std::cerr << "Front-color metadata admitted\n";
     return selected;
 }
 static void update(uke::color::State &state, View event, Uid selected, std::uint64_t now_ns) {
@@ -245,6 +249,7 @@ static void wait_for_stop() {
 #ifndef UKE_FRONT_COLOR_TEST
 int main(int argc, char **) {
     (void)&attributes;
+    (void)&request;
     if (argc != 1) { std::cerr << "Service accepts no arguments; collection requires explicit service activation\n"; return 2; }
     std::signal(SIGTERM, stop_handler); std::signal(SIGINT, stop_handler);
     try {
