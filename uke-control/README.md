@@ -1,5 +1,11 @@
 # Uke Control
 
+23 October 2026: version 1.5.3 reapplies saved CDC policy through a synchronous
+service reload. Successful USB notifications no longer consume repeated service
+starts; real start limits and application failures remain visible. Persistent
+on explicitly reapplies an already-active policy. Device-role and ownership
+guards are unchanged. Host manager tests do not establish USB enumeration.
+
 23 October 2026: version 1.5.2 avoids CPU spin while waiting for a child that
 has closed its output. The real-process regression covers EOF, exit status,
 timeouts and output limits. Host results do not establish tablet energy gains.

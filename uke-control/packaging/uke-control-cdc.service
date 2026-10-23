@@ -7,7 +7,9 @@ ConditionPathExists=/var/lib/uke-control/cdc-on
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=/usr/bin/uke-control cdc apply
+ExecReload=/usr/bin/uke-control cdc apply
 TimeoutStartSec=120
 StateDirectory=uke-control
 StateDirectoryMode=0700

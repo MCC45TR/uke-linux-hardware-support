@@ -60,10 +60,11 @@ Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limi
  if(args[0]=="/usr/bin/rpm")return {api_ok?0:1,api_ok?"uke-usb-manual-cdc-api\t2\n":""};
  if(args[0]=="/usr/bin/systemctl") {
   assert(!locked);service_calls++;
-  assert(args.size()==4 && args[2]=="--now" && args[3]=="uke-control-cdc.service");
+  assert(args.back()=="uke-control-cdc.service");
+  if(args[1]=="disable")assert(args.size()==4 && args[2]=="--now");
+  else assert(args.size()==3 && (args[1]=="enable" || args[1]=="reload-or-restart"));
   if(service_failure)return {service_failure,"fixture service failure\n"};
-  if(args[1]=="enable") {auto result=cdc_apply();assert(result.status==0);}
-  else assert(args[1]=="disable");
+  if(args[1]=="reload-or-restart")return cdc_apply();
   return {0,"Created symlink \"fixture\"\n"};
  }
  assert(args[0]=="/usr/libexec/senemos-uke/uke-usb-network" && locked);
@@ -84,11 +85,13 @@ int main(int argc,char** argv) {
  assert(cdc_set(true).status==0 && !fs::exists(state/"cdc-on"));
  assert(cdc_set(false).status==0 && !fs::exists(state/"cdc-on"));
  auto on=cdc_persistent(true);
- assert(on.status==0 && cdc_saved() && service_calls==1);
+ assert(on.status==0 && cdc_saved() && service_calls==2);
  assert(on.output.find("\"policy_saved\":true")!=std::string::npos);
  assert(on.output.find("\"automatic_startup_requested\":true")!=std::string::npos);
  assert(on.output.find("\\\"fixture\\\"\\u000a")!=std::string::npos);
  assert(cdc_apply().status==0 && cdc_saved()); // A fresh apply retains saved intent.
+ int reapplies=helper_calls;
+ assert(cdc_persistent(true).status==0 && helper_calls==reapplies+1);
  auto off=cdc_persistent(false);
  assert(off.status==0 && !cdc_saved() && runtime["/run/senemos-uke/usb-gadget-profile"].empty());
  int calls=helper_calls;
@@ -100,6 +103,9 @@ int main(int argc,char** argv) {
  disk_failure=true;refuses([]{cdc_persistent(true);});assert(!cdc_saved());disk_failure=false;
  service_failure=42;auto failed=cdc_persistent(true);
  assert(failed.status==42 && cdc_saved() && failed.output.find("\"operation_completed\":false")!=std::string::npos);
+ service_failure=0;helper_failure=74;
+ auto failed_apply=cdc_persistent(true);
+ assert(failed_apply.status==74 && cdc_saved() && failed_apply.output.find("\"operation_completed\":false")!=std::string::npos);
  service_failure=0;helper_failure=69;
  runtime["/run/senemos-uke/usb-gadget-profile"]="";
  assert(cdc_apply().status==0 && cdc_saved());
@@ -122,6 +128,8 @@ sanitize=()
 grep -Fx 'ConditionPathExists=/var/lib/uke-control/cdc-on' "$root/packaging/uke-control-cdc.service"
 grep -Fx 'After=sys-kernel-config.mount systemd-udev-trigger.service uke-control.service' "$root/packaging/uke-control-cdc.service"
 grep -Fx 'RuntimeDirectoryPreserve=yes' "$root/packaging/uke-control-cdc.service"
+grep -Fx 'RemainAfterExit=yes' "$root/packaging/uke-control-cdc.service"
+grep -Fx 'ExecReload=/usr/bin/uke-control cdc apply' "$root/packaging/uke-control-cdc.service"
 grep -Fx 'disable uke-control-cdc.service' "$root/packaging/80-uke-control.preset"
-[[ $(grep -c 'TEST=="/var/lib/uke-control/cdc-on".*--no-block start uke-control-cdc.service' "$root/packaging/90-uke-control-cdc.rules") == 3 ]]
+[[ $(grep -c 'TEST=="/var/lib/uke-control/cdc-on".*--no-block reload-or-restart uke-control-cdc.service' "$root/packaging/90-uke-control-cdc.rules") == 3 ]]
 printf 'Production CDC policy: persistence, fresh apply, off, identity/API, ownership, storage and service failure checks passed\n'
