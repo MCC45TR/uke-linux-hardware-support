@@ -3,7 +3,7 @@ set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 jq -e '.schema==1 and ([.families[].name]|(length==9) and (unique|length==9))' packaging/families/families.json >/dev/null
-jq -e 'all(.[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/")))' packaging/families/source-inputs.json >/dev/null
+jq -e 'all(.[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|(startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/") or (startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/") and endswith(".src.rpm")))))' packaging/families/source-inputs.json >/dev/null
 jq -e '(.packages|length==9) and all(.packages[]; .name!="uke-power-profile-backend" and (.sha256|test("^[a-f0-9]{64}$")) and (.signed_mirror_sha256|test("^[a-f0-9]{64}$")) and (.source_payload_sha256|test("^[a-f0-9]{64}$")) and (.family|test("^uke-(additional|power|sensors)$"))) and any(.withdrawn_packages[]; .name=="uke-power-profile-backend" and .automatic_build==false and .target_admitted==false)' uke-desktop-packaging/manifests/native-runtime.json >/dev/null
 jq -e 'any(.[]; .name=="material-decoration" and .family=="uke-extras")' packaging/families/source-inputs.json >/dev/null
 jq -e '.rename["material-decoration"]=="material-decoration" and (.exceptions|length)==4' packaging/families/families.json >/dev/null
