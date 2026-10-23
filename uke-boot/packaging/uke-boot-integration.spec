@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.7.0
-Release: 2%{?dist}
+Version: 1.8.0
+Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -81,20 +81,24 @@ The console grants local root access over USB. USB networking stays optional.
 %package -n uke-kernel-update
 License: MIT
 Summary: Native checked installation of matched Uke stock-ABL kernel bundles
-Requires: senemos-native-runtime(libstdc++) openssl-libs systemd rpm
+Requires: senemos-native-runtime(libstdc++) openssl-libs rpm
+Requires: systemd >= 254
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
+Provides: uke-kernel-update(userdata-fallback-v1) = 1
+Provides: uke-kernel-update(qualified-firmware-cohort-v1) = 1
 %description -n uke-kernel-update
 Validates matched installed boot-v4 payloads and module inventories. The Linux
 root profile retains its opt-in boot_b writer. The userdata profile writes an
 inactive boot slot and selects the QTI slot only after full readback, coherent
 GPT/boot-LUN checks and durable backups. Boot health accepts a matching trial.
 Automatic staging requires both the global and userdata policies to be enabled;
-the global default is disabled. Reboot remains manual. Physical power-loss
+the global default is disabled. Failed alternating trials select the verified
+accepted slot and request a normal reboot after bounded health retries. Physical power-loss
 recovery requires device validation.
 
 %package -n uke-installation-profile
@@ -195,6 +199,7 @@ install -Dm644 src/profiles/kernel-update.conf %{buildroot}%{_sysconfdir}/senemo
 install -Dm644 src/profiles/userdata-update.conf %{buildroot}%{_sysconfdir}/senemos/userdata-update.conf
 install -Dm644 src/profiles/80-uke-boot.preset %{buildroot}%{_presetdir}/80-uke-boot.preset
 install -Dm644 src/units/uke-userdata-accept.service %{buildroot}%{_unitdir}/uke-userdata-accept.service
+install -Dm644 src/units/uke-userdata-fallback.service %{buildroot}%{_unitdir}/uke-userdata-fallback.service
 install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
 install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm644 src/units/uke-root-grow.service %{buildroot}%{_unitdir}/uke-root-grow.service
@@ -318,6 +323,7 @@ fi
 %config(noreplace) %{_sysconfdir}/senemos/kernel-update.conf
 %config(noreplace) %{_sysconfdir}/senemos/userdata-update.conf
 %{_unitdir}/uke-userdata-accept.service
+%{_unitdir}/uke-userdata-fallback.service
 
 %files -n uke-installation-profile
 %license LICENSE
@@ -338,6 +344,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.0-1
+- Return failed alternating userdata trials to the verified accepted boot slot.
+- Bound health retries independently of service run time; retain firmware admission guards.
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.7.0-2
 - Compile the retained touch processor with the matching Fedora hardening flags.
 

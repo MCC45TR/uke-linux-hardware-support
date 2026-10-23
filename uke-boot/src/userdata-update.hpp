@@ -147,6 +147,29 @@ static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,st
 static void require_current_b(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
     need(identify_slot(cmdline,images,running)==1,"Explicit current-slot update requires a proven running boot_b");
 }
+static bool booted_ab_trial(const UserdataUpdate &saved,unsigned running,const std::string &release,
+                            const std::string &image_hash,const std::string &boot_id) {
+    (void)encode(saved);need(running<2 && valid_boot_id(boot_id),"Invalid fallback boot identity");
+    if(saved.policy.phase!=uke_install::Phase::trial)return false;
+    if(running==unsigned(saved.policy.good)) {
+        need(release==saved.policy.good_release && image_hash==saved.good_image,"Fallback baseline identity differs");return false;
+    }
+    need(release==saved.policy.candidate && image_hash==saved.candidate_image && boot_id!=saved.staged_boot_id,
+         "Fallback requires the booted, recorded alternating trial");return true;
+}
+static constexpr const char *firmware_names[]={"xbl","xbl_config","xbl_config_nof","multiimgqti","multiimgoem","uefi","aop","aop_config","tz","hyp","abl","devcfg","qupfw","uefisecapp","imagefv","shrm","cpucp","keymaster","featenabler","cpucp_dtb","pvmfw"};
+static bool admitted_early_firmware(const std::map<std::string,std::string> &hashes) {
+    need(hashes.size()==2*std::size(firmware_names),"Incomplete early firmware inventory");
+    bool identical=true;std::string canonical;
+    for(const auto name:firmware_names) {
+        const auto a=std::string(name)+"_a",b=std::string(name)+"_b";
+        need(hashes.contains(a) && hashes.contains(b) && hex(hashes.at(a)) && hex(hashes.at(b)),"Malformed early firmware inventory");
+        identical&=hashes.at(a)==hashes.at(b);
+        canonical+=a+"="+hashes.at(a)+"\n"+b+"="+hashes.at(b)+"\n";
+    }
+    // Exact immutable cohort entered Linux in both slots on Uke, 23 October 2026.
+    return identical || digest(Bytes(canonical.begin(),canonical.end()))=="7aa233025d51221ff142c8940d696671e18e2d53c82611683fb9610d070f47c7";
+}
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
     Fd fd(open(("/dev/"+part.first).c_str(),(write?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));
@@ -200,17 +223,20 @@ static std::vector<std::unique_ptr<SlotMetadata>> metadata(const std::string &co
     }
     need(!result.empty() && result.size()<=8,"UFS slot metadata unavailable");return result;
 }
-static void matched_early_firmware() {
+static void verify_early_firmware() {
     // Switching boot LUNs must not silently select a different early firmware cohort.
-    for(const std::string name:{"xbl","xbl_config","xbl_config_nof","multiimgqti","multiimgoem","uefi","aop","aop_config","tz","hyp","abl","devcfg","qupfw","uefisecapp","imagefv","shrm","cpucp","keymaster","featenabler","cpucp_dtb","pvmfw"}) {
-        const auto a=partition(name+"_a"),b=partition(name+"_b");
+    std::map<std::string,std::string> hashes;
+    for(const auto name:firmware_names) {
+        const std::string base=name;
+        const auto a=partition(base+"_a"),b=partition(base+"_b");
         auto bytes=[](const std::pair<std::string,dev_t> &part) {
             Fd fd(open(("/dev/"+part.first).c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK));struct stat st{};uint64_t size=0;
             need(!fstat(fd.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==part.second && !ioctl(fd.value,BLKGETSIZE64,&size) && size<=capacity,"Cannot verify paired early firmware");
             return read_fd(fd.value,size);
         };
-        need(digest(bytes(a))==digest(bytes(b)),"Early firmware slots differ: "+name+"; separately qualify the alternate boot chain");
+        hashes.emplace(base+"_a",digest(bytes(a)));hashes.emplace(base+"_b",digest(bytes(b)));
     }
+    need(admitted_early_firmware(hashes),"Early firmware slots differ outside the entry-tested cohort; separately qualify the alternate boot chain");
 }
 static bool vrr_policy() {
     const auto raw=file("/etc/senemos/userdata-update.conf");const auto config=userdata_policy(std::string(raw.begin(),raw.end()));
@@ -233,8 +259,25 @@ static void health() {
         display|=read_text(entry.path()/"status")=="connected\n" && read_text(entry.path()/"enabled")=="enabled\n";
     need(display,"Internal display has not reached an enabled DRM output");
 }
+static void request_fallback_reboot() {
+    sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Fallback selected; system bus unavailable for reboot");
+    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);
+    need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound fallback reboot request");
+    char *parameter=nullptr;
+    const auto status=sd_bus_get_property_string(bus.get(),"org.freedesktop.login1","/org/freedesktop/login1",
+                                                "org.freedesktop.login1.Manager","RebootParameter",nullptr,&parameter);
+    std::unique_ptr<char,decltype(&free)> value(parameter,free);
+    need(status>=0 && parameter && !*parameter,"Accepted slot selected; clear the pending special reboot target before rebooting");
+    need(sd_bus_call_method(bus.get(),"org.freedesktop.login1","/org/freedesktop/login1","org.freedesktop.login1.Manager",
+                           "RebootWithFlags",nullptr,nullptr,"t",uint64_t(1))>=0,
+         "Accepted slot selected; reboot refused or inhibited, retain trial state and reboot normally");
+}
 static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem) {
     need(read_text("/var/lib/senemos/installation/profile")=="format=1\nroot=userdata\n","A classified userdata installation is required");
+    const auto statefile=state/"userdata.state";
+    if(action=="fallback" && (!fs::exists(statefile) || decode(file(statefile)).policy.phase!=uke_install::Phase::trial)) {
+        std::cout<<"No alternating trial needs fallback; no slot change or reboot\n";return;
+    }
     const auto a=partition("boot_a"),b=partition("boot_b"),root=partition("userdata");
     const auto controller=ufs_controller(fs::path("/sys/class/block")/root.first);
     need(ufs_controller(fs::path("/sys/class/block")/a.first)==controller && ufs_controller(fs::path("/sys/class/block")/b.first)==controller,"Boot slots and root must share the measured UFS controller");
@@ -242,12 +285,65 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     for(unsigned i=0;i<2;++i){auto fd=physical_boot(i?b:a);images[i]=read_fd(fd.value,capacity);}
     const fs::path core=fs::path("/usr/lib/modules")/release/"vmlinuz";const auto running_image=file(core);
     const auto running=identify_slot(read_text("/proc/cmdline"),images,running_image);
-    const auto rollback=installed_files({{"-core",{{core,digest(running_image)}}}},release);rollback_modules(rollback);
-    auto bsg=ufs_bsg(controller);need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
+    const auto rollback=installed_files({{"-core",{{core,digest(running_image)}}}},release);
+    if(action!="fallback")rollback_modules(rollback);
+    auto bsg=ufs_bsg(controller);
     auto disks=metadata(controller);slot::Disk *boot_table=nullptr;
     for(auto &disk:disks)if(disk->gpt->parts.contains("boot_a") && disk->gpt->parts.contains("boot_b"))boot_table=disk->gpt.get();
-    need(boot_table && (boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::active),"GPT active boot slot differs from the running Image");
-    const auto statefile=state/"userdata.state";const auto good_hash=digest(images[running]);
+    need(boot_table,"Boot slot GPT unavailable");const auto good_hash=digest(images[running]);
+    if(action=="fallback") {
+        const auto saved=decode(file(statefile));auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
+        need(boot_id.ends_with('\n'),"Missing fallback boot identity");boot_id.pop_back();
+        if(!booted_ab_trial(saved,running,release,good_hash,boot_id)) {
+            std::cout<<"Accepted slot is running; no fallback reboot\n";return;
+        }
+        const auto good=unsigned(saved.policy.good);
+        need(digest(images[good])==saved.good_image,"Accepted fallback boot image changed");
+        const auto accepted=validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/saved.policy.good_release,
+                                            "/usr/lib/modules","userdata",saved.policy.good_release);
+        need(boot_kernel(accepted)==boot_kernel(images[good]),"Fallback package Image differs from the accepted slot");
+        const auto selected=slot::boot_lun(bsg.value)-1;
+        std::vector<SlotMetadata*> changed;
+        for(auto &disk:disks) {
+            for(const auto &[name,a]:disk->gpt->parts)if(name.ends_with("_a")) {
+                const auto other=name.substr(0,name.size()-1)+"b";
+                need(disk->gpt->parts.contains(other),"Unpaired fallback slot partition");
+                const auto &bpart=disk->gpt->parts.at(other);
+                need(bool(a.attrs&slot::active)==(selected==0) && bool(bpart.attrs&slot::active)==(selected==1),
+                     "Fallback GPT and UFS boot LUN selection differ; use external recovery");
+            }
+            if(selected==running && disk->gpt->fallback(running,good))changed.push_back(disk.get());
+        }
+        if(selected==good) {
+            const auto accepted_flags=boot_table->parts.at(good?"boot_b":"boot_a").attrs;
+            const auto failed_flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
+            need((accepted_flags&slot::successful) && !(accepted_flags&slot::unbootable) && (failed_flags&slot::unbootable),
+                 "Pending fallback flags differ; use external recovery");
+        } else {
+            need(!changed.empty(),"No consistent fallback metadata found");
+            need(charging(),"Fallback metadata requires at least 50% battery, or 30% with external power");
+            auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+            const auto transaction=state/(saved.policy.candidate+"-"+saved.candidate_image)/"fallback";
+            auto transaction_dir=directory(transaction,true);
+            for(auto *disk:changed)disk->gpt->backup(transaction/(disk->name+".gpt"));
+            try {
+                for(auto *disk:changed)disk->gpt->commit();
+                (void)slot::boot_lun(bsg.value,good+1);
+            }catch(...) {
+                try {
+                    for(auto *disk:changed)disk->gpt->restore();
+                    (void)slot::boot_lun(bsg.value,running+1);
+                }catch(...){throw std::runtime_error("Fallback selection and restoration failed; use external recovery before rebooting");}
+                throw std::runtime_error("Fallback selection failed; trial metadata restored and verified");
+            }
+        }
+        auto retained=physical_boot(good?b:a);
+        need(read_fd(retained.value,capacity)==images[good],"Accepted boot changed during fallback selection");
+        std::cout<<"Accepted slot selected; trial state retained until the accepted kernel boots\n"<<std::flush;
+        request_fallback_reboot();return;
+    }
+    need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
+    need(boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::active,"GPT active boot slot differs from the running Image");
     if(action=="accept") {
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
@@ -288,7 +384,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next));
     saved.candidate_image=digest(bytes);
     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();
-    need(valid_boot_id(boot_id),"Malformed staging boot identity");saved.staged_boot_id=boot_id;matched_early_firmware();
+    need(valid_boot_id(boot_id),"Malformed staging boot identity");saved.staged_boot_id=boot_id;verify_early_firmware();
     std::vector<SlotMetadata*> changed;
     for(auto &disk:disks)if(disk->gpt->prepare(running,target))changed.push_back(disk.get());
     need(!changed.empty(),"No consistent QTI slot metadata found");

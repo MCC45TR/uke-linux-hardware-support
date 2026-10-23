@@ -1,5 +1,11 @@
 # COPR source families
 
+23 October 2026: hardware `1.8.0` adds pending-trial fallback after bounded
+health retries and admits one exact firmware cohort after external-fastboot
+Linux entry in both slots. Unknown cohorts remain refused. The matching kernel
+contact client waits for valid frames before reporting readiness. Native/DNF
+A/B, hard-hang recovery, power-loss and independent recovery tests remain open.
+
 23 October 2026: sensors `1.0.6` adds the separately installable, root-only
 `uke-proximity-capture` diagnostic. It is not a default dependency or service.
 Fixed bounded modes compare the captured Uke format with libssc's request;

@@ -414,8 +414,8 @@ int main(int argc,char **argv) {
         need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current")) ||
-             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="auto")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current BUNDLE | accept | auto");
+             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current BUNDLE | accept | fallback | auto");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto";
         const bool restore=action=="check-restore-current"||action=="restore-current";
@@ -431,10 +431,10 @@ int main(int argc,char **argv) {
         const auto label=root_label(read_text("/proc/cmdline"));
         if(automatic && label!="userdata")return 0;
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
-        need(label=="userdata"||action!="accept","Boot acceptance is specific to userdata A/B installations");
+        need(label=="userdata"||(action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
         const auto root=partition(label);const auto filesystem=root_mount(root.second,read_text("/proc/self/mountinfo"),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
-        fs::path bundle=action=="accept"?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
+        fs::path bundle=(action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if(automatic) {
             auto parent=directory("/usr/lib/senemos");struct stat link{};
             need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
@@ -448,12 +448,12 @@ int main(int argc,char **argv) {
         Fd state_dir=directory(state,true);need(!fchmod(state_dir.value,0700),"Cannot protect update state");
         Fd lock(openat(state_dir.value,"lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));trusted_fd(lock.value);
         need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update is active");
-        auto bytes=validate_bundle(bundle,"/usr/lib/modules",label,current.release);
+        auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release);
         if(label=="userdata" && !current_only) {
             if(automatic) {
                 const auto raw=file(bundle/"manifest");
                 (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
-                matched_early_firmware();
+                verify_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 userdata_update("accept",running_bundle,baseline,state,current.release,filesystem);

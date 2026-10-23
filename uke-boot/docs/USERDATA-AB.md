@@ -1,5 +1,10 @@
 # Userdata boot A/B updates
 
+23 October 2026. Version 1.8.0 adds a failed-trial fallback action. Native
+Fedora Rawhide host fixtures cover both selection directions and refusal
+controls. Physical A/B transitions, bootloader retry exhaustion, interrupted
+metadata writes, power loss and independent recovery remain unqualified.
+
 22 October 2026 source update: version 1.6.0 adds explicit restoration of an
 unaccepted current-slot trial. This addition has passed native host fixtures;
 it has not yet passed a tablet restoration or power-loss test.
@@ -50,7 +55,7 @@ does not skip marking a proven healthy running slot successful. Acceptance
 retains the physical root, running Image, signed package/module, UFS boot-LUN,
 GPT identity and software-health checks. It does not select the other slot or
 enable automatic staging. A failed acceptance prevents the subsequent command.
-The command never reboots the device.
+Normal acceptance and staging do not reboot the device.
 
 Before a write, the updater requires a unique physical UFS root and 96 MiB boot
 slots, the matching running Image, coherent GPT active flags and UFS boot LUN.
@@ -82,6 +87,44 @@ active and the internal DRM output enabled is accepted. This is a software
 health check; it cannot prove visible output, touch quality, sensor accuracy or
 interactive performance. Returning to the accepted slot on a later boot records
 the failed candidate and refuses an automatic retry of the same release.
+
+## Failed alternating trials
+
+The acceptance service permits five starts per boot, with a finite timeout for
+each start. Its start-limit interval is infinite so long-running failures cannot
+expire the counter and retry indefinitely. Only terminal failure activates
+`uke-userdata-fallback.service`. Stable installations, staging/verified states,
+current-slot maintenance and the pre-reboot staging boot do not trigger a
+fallback reboot.
+
+The native `fallback` action requires the booted candidate's exact slot,
+release, image digest and a different boot ID. It verifies the retained accepted
+image and its complete installed RPM/module bundle, coherent paired GPT active
+flags and the UFS boot LUN. It then backs up metadata, selects the accepted slot
+as successful and marks the failed trial unbootable without writing either boot
+image. Metadata or UFS selection failures attempt verified restoration. An
+already selected accepted slot is recognized for a repeated request.
+
+Trial state remains durable until the accepted kernel actually boots. A normal
+logind reboot request respects shutdown inhibitors and refuses a pending special
+reboot target. Refused reboots leave the accepted slot selected and the trial
+unaccepted. Subsequent healthy acceptance records the candidate as failed.
+Missing or changed accepted images/modules and incoherent metadata fail closed.
+
+This path requires a working userspace and completed startup ordering. It does
+not recover initramfs stalls or hard hangs. Hardware watchdog reset, stock ABL
+retry behavior and independent recovery need physical qualification. Converting
+both boot slots to Linux must preserve a separately verified recovery route;
+the existing kernel-less OrangeFox image inherits the selected boot stack.
+Different early-firmware cohorts remain blocked unless all 42 hashes match the
+single entry-tested Uke cohort. Its canonical inventory digest is
+`7aa233025d51221ff142c8940d696671e18e2d53c82611683fb9610d070f47c7`.
+On 23 October, stock fastboot selected A with release 21, then returned to the
+retained B/release 14. Authenticated Linux reads and complete boot-image digests
+confirmed both entries; firmware contents and update policies stayed unchanged.
+Release 21 failed touch startup, so it was not accepted as healthy. These were
+external-fastboot tests, not native/DNF A/B, retry-exhaustion or power-loss tests.
+Unknown, reversed or altered cohorts fail closed. No firmware is copied.
 
 ## Validation and limits
 

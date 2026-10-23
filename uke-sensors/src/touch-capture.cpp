@@ -10,6 +10,10 @@
 
 static volatile std::sig_atomic_t capture_running=1;
 static void stop_capture(int) {capture_running=0;}
+static void notify_first_frame(unsigned frames) {
+    if(frames==1)require(sd_notify(0,"READY=1\nSTATUS=Calibrated input receiving valid kernel THP frames")>=0,
+                        "THP service readiness notification failed");
+}
 
 int main(int argc,char **argv) {
     std::optional<TouchCapture> capture;
@@ -44,7 +48,7 @@ int main(int argc,char **argv) {
         require(input>=0,"Kernel uinput is unavailable");
         input_setup(input,geometry);
         std::signal(SIGTERM,stop_capture);std::signal(SIGINT,stop_capture);
-        require(sd_notify(0,"READY=1\nSTATUS=Calibrated input registered; waiting for kernel THP frames")>=0,
+        require(sd_notify(0,"STATUS=Calibrated input registered; waiting for kernel THP frames")>=0,
                 "THP service readiness notification failed");
         unsigned frames=0,rejected=0;
         while(capture_running) {
@@ -66,6 +70,7 @@ int main(int argc,char **argv) {
                         const auto result=core.process(frame->matrix,frame->counter,frame->scan_mode);
                         input_report(input,result.slots,ids,geometry);
                         ++frames;
+                        notify_first_frame(frames);
                     } else {++rejected;reset();}
                     continue;
                 }

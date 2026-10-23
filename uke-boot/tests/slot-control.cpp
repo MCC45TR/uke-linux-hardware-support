@@ -62,6 +62,23 @@ int main(int argc,char **argv) {
     auto corrupt=back.before.backup;corrupt[16]^=1;slot::write_at(fd.value,back.before.last*sector,corrupt);
     reject([&]{slot::Disk damaged(fd.value,st.st_size,sector);});back.restore();
     a.restore();assert(slot::snapshot(fd.value,st.st_size,sector).entries==original.entries);
+    for(unsigned good=0;good<2;++good) {
+        if(good==1) {
+            slot::Disk first(fd.value,st.st_size,sector);assert(first.prepare(0,1));first.commit();
+            slot::Disk healthy(fd.value,st.st_size,sector);healthy.success(1);healthy.commit();
+        }
+        const unsigned failed=1-good;
+        slot::Disk stage(fd.value,st.st_size,sector);assert(stage.prepare(good,failed));stage.commit();
+        slot::Disk trial(fd.value,st.st_size,sector);assert(trial.fallback(failed,good));trial.commit();
+        slot::Disk returned(fd.value,st.st_size,sector);
+        const auto good_flags=returned.parts.at(good?"boot_b":"boot_a").attrs;
+        const auto failed_flags=returned.parts.at(failed?"boot_b":"boot_a").attrs;
+        assert((good_flags&slot::active) && (good_flags&slot::successful) && !(good_flags&slot::unbootable));
+        assert(!(failed_flags&(slot::active|slot::successful|slot::retries)) && (failed_flags&slot::unbootable));
+        assert(returned.parts.at("userdata").uuid==a.parts.at("userdata").uuid);
+        reject([&]{returned.fallback(good,failed);});
+        a.restore();
+    }
     auto stale=original.entries;stale[0]^=1;slot::write_at(fd.value,original.primary_entries,stale);
     reject([&]{slot::snapshot(fd.value,st.st_size,sector);});a.restore();
     slot::Disk interrupted(fd.value,st.st_size,sector);assert(interrupted.prepare(0,1));

@@ -1,5 +1,15 @@
 # Uke boot integration
 
+23 October 2026. Version `1.8.0` adds bounded health retries and a native
+fallback for a matching booted userdata A/B trial. Host state, GPT and UFS
+fixtures pass; physical alternate-slot boot, retry exhaustion, interruption,
+watchdog reset and independent recovery remain required. See
+[userdata boot A/B](docs/USERDATA-AB.md).
+
+The exact differing firmware cohort that entered A/release 21 and returned to
+B/release 14 on 23 October is pinned for further native A/B testing. Unknown
+cohorts remain refused. The release 21 touch failure is not a healthy-trial result.
+
 22 October 2026. Version `1.5.0` also owns the existing native Bluetooth
 factory-address bridge, service and udev rule. Its canonical C++ source and
 GPL-3.0-or-later license remain in `uke-desktop-integration`; the boot source RPM

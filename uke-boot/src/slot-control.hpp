@@ -158,6 +158,20 @@ public:
         need(!fdisk_gpt_set_partition_attrs(context.get(),p.number,p.attrs|successful),"Cannot stage successful boot flag");
         expected[name]={p.type,p.attrs|successful};
     }
+    bool fallback(unsigned running,unsigned good) {
+        need(running<2 && good==1-running,"Fallback requires the other accepted slot");
+        const auto accepted=std::string("boot_")+(good?'b':'a');
+        const auto failed=std::string("boot_")+(running?'b':'a');
+        if(parts.contains(accepted))need((parts.at(accepted).attrs&successful) && !(parts.at(accepted).attrs&unbootable),
+                                        "Fallback slot was not marked successful");
+        const bool changed=prepare(running,good);
+        for(const auto &name:{accepted,failed})if(parts.contains(name)) {
+            auto &attrs=expected.at(name).second;
+            attrs=name==accepted?attrs|successful:(attrs&~(successful|retries))|unbootable;
+            need(!fdisk_gpt_set_partition_attrs(context.get(),parts.at(name).number,attrs),"Cannot stage fallback boot flags");
+        }
+        need(!warning,"libfdisk reported a fallback staging warning");return changed;
+    }
     void commit(int(*writer)(fdisk_context*)=fdisk_write_disklabel) {
         const auto fresh=snapshot(fd,size,sector);
         need(fresh.primary==before.primary && fresh.backup==before.backup && fresh.entries==before.entries && fresh.mbr==before.mbr,

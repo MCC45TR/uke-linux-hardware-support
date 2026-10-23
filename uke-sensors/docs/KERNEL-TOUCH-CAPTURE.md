@@ -1,5 +1,11 @@
 # Kernel THP contact consumer
 
+23 October 2026 follow-up: the client reports systemd readiness only after its
+first valid captured frame. Registering an input device alone cannot make a
+failed firmware stream healthy for boot acceptance. The source exporter runs
+the production notification fixture before constructing the kernel payload.
+Physical contact and cold-start acceptance remain separate tests.
+
 23 October 2026. Source/host validation on x86_64 and AArch64; no tablet
 deployment of this consumer is claimed.
 
