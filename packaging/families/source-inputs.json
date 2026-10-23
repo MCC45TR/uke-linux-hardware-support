@@ -14,19 +14,6 @@
   },
   {
     "family": "uke-hw",
-    "name": "uke-touchscreen",
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179043/uke-touchscreen-0.1.0-13.fc46.src.rpm",
-    "sha256": "960c8abc638fd0051f4e1dcceea73e811251412167544d6052e0a0ea9234c91a",
-    "build": 11173836,
-    "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/srpm-builds/11173836/uke-touchscreen-0.1.0-13.fc46.src.rpm",
-    "original_build": 11173836,
-    "archive_build": 11179043,
-    "archive_method": "project-fork",
-    "original_sha256": "e4a2d7b0858127eee9e2b90f922dfead41101967f59122c36a5915ff6cba6aaa",
-    "original_payload_sha256": "896f46a2ebd5582e586f7c3ff96ec8c0af7c19eeb9e0d822934d09d322459e55"
-  },
-  {
-    "family": "uke-hw",
     "name": "uke-firmware",
     "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179541/uke-firmware-3.0.304.0-1.fc46.src.rpm",
     "sha256": "375f1f7a0d2e73668820752e48504978b31916a115061604d97d81a291ad8b4c",

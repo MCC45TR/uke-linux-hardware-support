@@ -7,6 +7,7 @@
 #include <array>
 #include <cerrno>
 #include <cstring>
+#include <elf.h>
 #include <fcntl.h>
 #include <iostream>
 #include <linux/fs.h>
@@ -319,9 +320,12 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     const auto raw_manifest=file(bundle/"manifest");
     const auto manifest=properties(std::string(raw_manifest.begin(),raw_manifest.end()));
     const std::set<std::string> keys={"format","kernel_release","linux_image_sha256","userdata_image_sha256","linux_kernel_sha256","userdata_kernel_sha256","modules_sha256"};
-    need(manifest.size()==keys.size() ||
-         (manifest.size()==keys.size()+1 && manifest.contains("root_selector_capability") &&
-          (manifest.at("root_selector_capability")=="uke-elfnote-v1" || manifest.at("root_selector_capability")=="uke-elfnote-v2")),"Unexpected update manifest fields");
+    for(const auto &[key,value]:manifest) {
+        (void)value;
+        need(keys.contains(key) || key=="root_selector_capability" || key=="touch_client_sha256","Unexpected update manifest fields");
+    }
+    if(manifest.contains("root_selector_capability"))
+        need(manifest.at("root_selector_capability")=="uke-elfnote-v1" || manifest.at("root_selector_capability")=="uke-elfnote-v2","Unknown root selector capability");
     for(const auto &key:keys) need(manifest.contains(key),"Missing manifest field");
     need(manifest.at("format")=="1" && token(manifest.at("kernel_release")),"Unsupported bundle format");
     const auto release=manifest.at("kernel_release");
@@ -337,6 +341,21 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     need(actual.size()==expected.size(),"Module set differs from build inventory");
     std::map<fs::path,std::string> module_files;
     for(const auto &[path,hash]:expected) {trusted(modules/release/path);need(actual.contains(path) && digest(file(modules/release/path))==hash,"Module bytes differ: "+path);module_files.emplace(modules/release/path,hash);}
+    const bool capture=expected.contains("kernel/drivers/media/spi/nt36532-uke/nt36532-uke-thp.ko.zst");
+    need(capture==manifest.contains("touch_client_sha256"),"Kernel THP transport and client inventory must be paired");
+    if(capture) {
+        const auto path=modules/release/"uke/uke-touch-capture";
+        Fd client=regular(path);struct stat st{};
+        need(fstat(client.value,&st)==0 && (st.st_mode&S_IXUSR),"Kernel THP client is not executable");
+        const auto bytes=read_fd(client.value,st.st_size);
+        need(bytes.size()>=sizeof(Elf64_Ehdr) && !memcmp(bytes.data(),ELFMAG,SELFMAG) &&
+             bytes[EI_CLASS]==ELFCLASS64 && bytes[EI_DATA]==ELFDATA2LSB &&
+             bytes[EI_VERSION]==EV_CURRENT && (bytes[16]==ET_EXEC || bytes[16]==ET_DYN) && !bytes[17] &&
+             bytes[18]==(EM_AARCH64&255) && bytes[19]==(EM_AARCH64>>8),"Kernel THP client must be AArch64 ELF");
+        const auto &hash=manifest.at("touch_client_sha256");
+        need(hex(hash) && digest(bytes)==hash,"Kernel THP client digest differs");
+        module_files.emplace(path,hash);
+    }
     const auto image=bundle/(label+".img");trusted(image);
     const auto bytes=file(image),kernel=boot_kernel(bytes);
     const std::string selector(reinterpret_cast<const char*>(bytes.data()+44));
