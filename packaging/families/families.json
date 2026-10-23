@@ -89,7 +89,7 @@
         "uke-ssc-fileservice",
         "uke-front-color"
       ],
-      "release": 2,
+      "release": 3,
       "watch_paths": [
         "uke-sensors/packaging/libssc",
         "uke-sensors/patches/libssc",
@@ -227,16 +227,16 @@
     "uke-installation-profile": "1.8.2"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "21.fc46",
+    "iio-sensor-proxy": "22.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-plymonth": "4.fc46",
     "uke-orangefox-recovery": "5.fc46",
     "upower": "13.fc46",
     "uke-adaptive-display": "5.fc46",
     "uke-firmware": "9.fc46",
-    "libssc": "17.fc46",
-    "uke-ssc-fileservice": "21.fc46",
-    "uke-front-color": "12.fc46",
+    "libssc": "18.fc46",
+    "uke-ssc-fileservice": "22.fc46",
+    "uke-front-color": "13.fc46",
     "at-spi2-core": "8.fc46",
     "gstreamer1": "8.fc46",
     "libaccounts-glib": "36.fc46",
@@ -247,6 +247,6 @@
     "accountsservice": "7.fc46",
     "material-decoration": "6.fc46",
     "uke-desktop-metas": "8.fc46",
-    "uke-proximity-capture": "4.fc46"
+    "uke-proximity-capture": "5.fc46"
   }
 }

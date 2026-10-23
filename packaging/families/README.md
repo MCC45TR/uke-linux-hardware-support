@@ -1,5 +1,12 @@
 # COPR source families
 
+23 October 2026: sensors `1.0.9-3` advances every rebuilt child revision before
+integrating the published hardware sources into main. The shared sensor
+Makefile gained touch-capture host targets and is included in the Front Color
+and proximity source archives. Their compiled inputs and runtime behavior are
+unchanged. A source revision still requires new RPM identities; existing
+same-NEVRA and duplicate-build guards remain mandatory.
+
 23 October 2026: hardware `1.8.2-1` carries the DSI connector health correction
 in its matched native children. Unchanged firmware advances to release 9 for
 a coherent, monotonic rebuild. Host checks and tablet validation are distinct.
