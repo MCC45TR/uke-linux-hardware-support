@@ -13,7 +13,7 @@
 #include "wake.hpp"
 #include "diagnostic.hpp"
 static void help() {
-    std::cout << "uke-control 1.5.1 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.5.2 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
