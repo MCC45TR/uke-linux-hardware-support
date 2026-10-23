@@ -23,13 +23,13 @@
       "name": "uke-hw",
       "version": "1.7.0",
       "requires": [
-        "uke-boot-integration = 1.7.0-1%{?dist}",
-        "uke-installation-profile = 1.7.0-1%{?dist}",
-        "uke-kernel-update = 1.7.0-1%{?dist}",
+        "uke-boot-integration = 1.7.0-2%{?dist}",
+        "uke-installation-profile = 1.7.0-2%{?dist}",
+        "uke-kernel-update = 1.7.0-2%{?dist}",
         "fastfetch"
       ],
       "suggests": [],
-      "release": 1,
+      "release": 2,
       "watch_paths": [
         "uke-boot/src",
         "uke-boot/packaging/uke-installation-profile.spec",
@@ -224,7 +224,7 @@
   },
   "release_overrides": {
     "iio-sensor-proxy": "16.fc46",
-    "uke-boot-integration": "1.fc46",
+    "uke-boot-integration": "2.fc46",
     "uke-plymonth": "4.fc46",
     "uke-orangefox-recovery": "5.fc46",
     "upower": "12.fc46",

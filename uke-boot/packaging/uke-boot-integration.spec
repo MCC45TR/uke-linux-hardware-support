@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 1.7.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -123,7 +123,7 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/install-profile.cpp -o uke-install-profile %{build_ldflags}
 %{__cxx} %{optflags} -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/native-profile-ready.cpp -o uke-native-power-profile-ready $(pkg-config --cflags --libs libsystemd) %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/touch-launcher.cpp -o uke-touchscreen %{build_ldflags}
-%{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
+%{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
 %check
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
@@ -338,6 +338,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.7.0-2
+- Compile the retained touch processor with the matching Fedora hardening flags.
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.7.0-1
 - Own the calibrated legacy touch service and select the matched kernel client.
 - Preserve private data, independent Bluetooth/touch migration and kernel rollback.
