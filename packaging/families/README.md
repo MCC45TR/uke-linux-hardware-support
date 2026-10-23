@@ -1,5 +1,9 @@
 # COPR source families
 
+23 October 2026: hardware `1.8.2-1` carries the DSI connector health correction
+in its matched native children. Unchanged firmware advances to release 9 for
+a coherent, monotonic rebuild. Host checks and tablet validation are distinct.
+
 23 October 2026: hardware `1.8.1-2` advances boot children to `1.8.1-2` and
 the unchanged firmware payload to `3.0.304.0-8`. Build `11199340` was cancelled
 before publication after detecting its unchanged firmware RPM revision.

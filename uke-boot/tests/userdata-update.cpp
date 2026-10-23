@@ -47,6 +47,25 @@ int main() {
     for(const std::string profile:{"","automatic=2\nvrr_min_hz=30\n","automatic=1\n","automatic=1\nvrr_min_hz=31\n","automatic=1\nautomatic=1\nvrr_min_hz=30\n"})
         reject([&]{automatic_updates("automatic=0\n",profile);});
     char temporary[]="/tmp/uke-userdata-state.XXXXXX";assert(mkdtemp(temporary));const fs::path root=temporary;
+    {
+        const auto drm=root/"drm";fs::create_directory(drm);
+        auto connector=[&](const std::string &name,const std::string &status,const std::string &enabled) {
+            fs::create_directories(drm/name);
+            std::ofstream(drm/name/"status")<<status;std::ofstream(drm/name/"enabled")<<enabled;
+        };
+        assert(!internal_display_enabled(drm));
+        connector("card0-DP-1","connected\n","enabled\n");
+        connector("card0-HDMI-A-1","connected\n","enabled\n");
+        assert(!internal_display_enabled(drm));
+        for(const auto name:{"card1-DSI-1","card2-DSI-2","card3-DSI-12"}) {
+            connector(name,"connected\n","enabled\n");assert(internal_display_enabled(drm));
+            connector(name,"disconnected\n","enabled\n");assert(!internal_display_enabled(drm));
+            connector(name,"connected\n","disabled\n");assert(!internal_display_enabled(drm));
+            fs::remove(drm/name/"enabled");assert(!internal_display_enabled(drm));
+            fs::remove_all(drm/name);
+        }
+        fs::remove_all(drm);
+    }
     UserdataUpdate saved{{uke_install::Profile::userdata,uke_install::Slot::b,"7.2.11-14",uke_install::Phase::stable,{},{}},std::string(64,'a'),{}, {}};
     for(const auto good:{uke_install::Slot::a,uke_install::Slot::b}) {
         auto trial=saved;trial.policy.good=good;

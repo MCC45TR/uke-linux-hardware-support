@@ -177,6 +177,13 @@ static bool admitted_early_firmware(const std::map<std::string,std::string> &has
     // Exact immutable cohort entered Linux in both slots on Uke, 23 October 2026.
     return identical || digest(Bytes(canonical.begin(),canonical.end()))=="7aa233025d51221ff142c8940d696671e18e2d53c82611683fb9610d070f47c7";
 }
+static bool internal_display_enabled(const fs::path &directory) {
+    bool display=false;
+    // DRM connector indices depend on probe order.
+    for(const auto &entry:fs::directory_iterator(directory))if(entry.path().filename().string().find("-DSI-")!=std::string::npos)
+        display|=read_text(entry.path()/"status")=="connected\n" && read_text(entry.path()/"enabled")=="enabled\n";
+    return display;
+}
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
     Fd fd(open(("/dev/"+part.first).c_str(),(write?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));
@@ -261,10 +268,7 @@ static void health() {
         std::unique_ptr<char,decltype(&free)> value(state,free);
         need(status>=0 && state && std::string(state)=="active",std::string("Boot health unit is not active: ")+unit);
     }
-    bool display=false;
-    for(const auto &entry:fs::directory_iterator("/sys/class/drm"))if(entry.path().filename().string().ends_with("-DSI-1"))
-        display|=read_text(entry.path()/"status")=="connected\n" && read_text(entry.path()/"enabled")=="enabled\n";
-    need(display,"Internal display has not reached an enabled DRM output");
+    need(internal_display_enabled("/sys/class/drm"),"Internal display has not reached an enabled DRM output");
 }
 static void request_fallback_reboot() {
     sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Fallback selected; system bus unavailable for reboot");

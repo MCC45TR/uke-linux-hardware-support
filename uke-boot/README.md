@@ -1,5 +1,11 @@
 # Uke boot integration
 
+23 October 2026. Version `1.8.2` recognizes an enabled internal DSI output
+without assuming connector index 1. A POCO Pad X1 repeat boot exposed DSI-2;
+the former health check refused that connected, enabled output. Host fixtures
+cover changing indices and reject external-only, disconnected, disabled and
+missing-data cases. Signed-package and corrected tablet validation are pending.
+
 23 October 2026. Version `1.8.1` verifies a staged A/B trial before returning
 from repeated DNF hooks. Acceptance and fallback may restore a stale backup
 array CRC only when both entry arrays match a valid primary and both header

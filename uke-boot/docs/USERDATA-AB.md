@@ -104,6 +104,11 @@ health check; it cannot prove visible output, touch quality, sensor accuracy or
 interactive performance. Returning to the accepted slot on a later boot records
 the failed candidate and refuses an automatic retry of the same release.
 
+Internal-output admission requires a connected, enabled DSI connector. Its
+numeric suffix is allocated during DRM registration and may change with probe
+order; DSI-2 is not evidence of a different panel. An active external DP/HDMI
+output alone does not satisfy this check.
+
 ## Failed alternating trials
 
 The acceptance service permits five starts per boot, with a finite timeout for
