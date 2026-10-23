@@ -21,7 +21,13 @@ std::string snapshot(const fs::path& requested_root) {
     std::string out="{\"schema\":\"org.uke.control.usb.v1\",\"live\":"+std::string(root=="/"?"true":"false");
     out+=",\"coherence\":\"sequential_sysfs_reads\",\"power_supply_reads\":false";
     out+=",\"boot_profile\":"+attribute(root,root/"sys/firmware/devicetree/base/chosen/senemos,usb-profile");
-    out+=",\"cdc_saved_policy\":"+attribute(root,root/"etc/senemos/usb-sharing");
+    const auto policy=root/"var/lib/uke-control/cdc-on";
+    std::error_code error;
+    const auto kind=fs::symlink_status(policy,error);
+    const auto saved=error==std::errc::no_such_file_or_directory||kind.type()==fs::file_type::not_found?
+        quote("disabled"):error?"null":fs::is_regular_file(kind)?attribute(root,policy):quote("invalid");
+    out+=",\"cdc_saved_policy\":"+saved;
+    out+=",\"cdc_legacy_policy\":"+attribute(root,root/"etc/senemos/usb-sharing");
     out+=",\"cdc_manager_state\":"+attribute(root,root/"run/senemos-uke/usb-auto-state");
     const auto group=[&](const std::string& name,const fs::path& directory,const std::vector<std::string>& fields,auto include) {
         out+=','+quote(name)+":[";bool first=true;
