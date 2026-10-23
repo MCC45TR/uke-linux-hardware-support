@@ -78,7 +78,7 @@ while IFS=$'\t' read -r key url hash; do
     mkdir -p "$(dirname "$input")"
     if [[ ! -s $input ]]; then
         case "$key:$url" in
-        *:https://download.copr.fedorainfracloud.org/results/mcc45tr/*) ;;
+        *:https://download.copr.fedorainfracloud.org/results/mcc45tr/*|*:https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/*.src.rpm) ;;
         *) echo 'Unreviewed source RPM URL' >&2; exit 1;;
         esac
         curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' --max-time 240 "$url" -o "$input.part"

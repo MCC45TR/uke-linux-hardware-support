@@ -6,6 +6,14 @@ Linux entry in both slots. Unknown cohorts remain refused. The matching kernel
 contact client waits for valid frames before reporting readiness. Native/DNF
 A/B, hard-hang recovery, power-loss and independent recovery tests remain open.
 
+23 October 2026: the active Uke COPR projects are `uke-linux` and
+`uke-linux-test`. The four frozen SRPM inputs use the
+[permanent source archive](https://github.com/MCC45TR/uke-linux-hardware-support/releases/tag/copr-migration-archive-20261020)
+with their original SHA-256 values. Historical COPR build identifiers remain
+provenance records. A byte-identical URL relocation requires no binary rebuild;
+changed source hashes still require a family revision. Source contract and
+trigger fixtures cover this distinction; tablet state is unaffected.
+
 23 October 2026: sensors `1.0.6` adds the separately installable, root-only
 `uke-proximity-capture` diagnostic. It is not a default dependency or service.
 Fixed bounded modes compare the captured Uke format with libssc's request;
@@ -300,7 +308,11 @@ Native identity and physical-device validation remain separate from this change.
 On Rawhide AArch64, build a source family with
 `make -C packaging/families srpm FAMILY=uke-core`. The source-generation host
 must match the target: RPM's `--target` does not retarget every build/host
-triplet in an expanded recipe. The normal COPR source worker is AArch64.
+triplet in an expanded recipe. COPR source workers can use another architecture;
+generate and upload the SRPM from a native target worker in that case. The
+source host also needs each recipe's RPM macro providers, including
+`cargo-rpm-macros` for current Mesa. Unexpanded build commands are rejected
+before composition instead of being escaped into a broken family recipe.
 Use `TARGET_ARCH=x86_64` only for isolated x86_64 host fixtures.
 Run `make -C packaging/families check` and the original component/native solver
 checks. Before changing COPR, validate every generated package name, dependency,
