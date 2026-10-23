@@ -1,5 +1,14 @@
 # Raw front-color endpoint
 
+23 October 2026 packaging correction: families 1.0.7 and 1.0.8 selected the
+retained local source RPM release 3 after producing a newer source RPM. Thus
+front-color releases 10/11 did not contain the reviewed wakeup changes or phase
+logs. Their warm samples do not validate that source candidate. Composition
+now uses a fresh private output directory, accepts exactly one generated RPM
+and compares all publisher/helper/test sources inside it with the working tree.
+Sensors 1.0.9 delivers the current source as front-color 1.0.2-12. A subsequent
+normal boot must qualify automatic readiness.
+
 23 October 2026 startup correction: a recorded normal boot of `1.0.2-10` fails
 with a transport timeout at 12.357 seconds and publishes no sample. Warm-session
 reception did not establish automatic readiness. Attribute request 1 now also

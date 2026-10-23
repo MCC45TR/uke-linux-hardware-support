@@ -35,10 +35,12 @@ uke-core)
     controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
     printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-sensors)
-    make -C uke-sensors proximity-capture-srpm >"$stage/local.log"
-    printf '%s\t%s\n' uke-proximity-capture "$root/uke-sensors/build/proximity-capture-rpmbuild/SRPMS/uke-proximity-capture-0.1.0-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
-    make -C uke-sensors front-color-srpm >"$stage/local.log"
-    printf '%s\t%s\n' uke-front-color "$root/uke-sensors/build/front-color-rpmbuild/SRPMS/uke-front-color-0.1.0-3$(rpm --eval '%{?dist}').src.rpm" >>"$stage/inputs"
+    make -C uke-sensors proximity-capture-srpm outdir="$stage/proximity-capture" >"$stage/local.log"
+    captures=("$stage/proximity-capture/SRPMS/"*.src.rpm); [[ ${#captures[@]} == 1 && -s ${captures[0]} ]]
+    printf '%s\t%s\n' uke-proximity-capture "${captures[0]}" >"$stage/inputs"
+    make -C uke-sensors front-color-srpm outdir="$stage/front-color" >>"$stage/local.log"
+    colors=("$stage/front-color/SRPMS/"*.src.rpm); [[ ${#colors[@]} == 1 && -s ${colors[0]} ]]
+    printf '%s\t%s\n' uke-front-color "${colors[0]}" >>"$stage/inputs"
     make -C uke-sensors srpm PACKAGE=libssc outdir="$stage/libssc" >"$stage/local.log"
     libraries=("$stage/libssc/"*.src.rpm); [[ ${#libraries[@]} == 1 && -f ${libraries[0]} ]]
     printf '%s\t%s\n' libssc "${libraries[0]}" >>"$stage/inputs"
@@ -97,6 +99,11 @@ while IFS=$'\t' read -r key input; do
     cpio -t --quiet <"$part/source.cpio" >"$part/source-files"
     awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}' "$part/source-files"
     (cd "$source"; cpio -idm --quiet --no-absolute-filenames <"$part/source.cpio")
+    if [[ $key == uke-front-color ]]; then
+        for path in src/front-color.cpp src/front-color-state.hpp src/front-color-file.hpp src/ssc-discovery.cpp src/ssc-sample.cpp tests/front-color.cpp; do
+            cmp "$root/uke-sensors/$path" <(tar -xOf "$source/uke-front-color-0.1.0.tar.gz" "uke-front-color-0.1.0/$path")
+        done
+    fi
     specs=("$source/"*.spec); [[ ${#specs[@]} == 1 ]]
     if [[ $key == uke-touchscreen ]]; then
         cp packaging/families/patches/touch-panel-start.patch "$source/"

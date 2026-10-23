@@ -41,8 +41,9 @@ build/uke-front-color: src/front-color.cpp src/front-color-state.hpp src/front-c
 test-front-color: build/uke-front-color
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(LDFLAGS) tests/front-color.cpp -o build/front-color-test
 	./build/front-color-test
+front-color-srpm: outdir = $(CURDIR)/build/front-color-rpmbuild
 front-color-srpm:
-	top="$$(realpath -m build/front-color-rpmbuild)"
+	top="$$(realpath -m '$(outdir)')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
 	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner \
 	 --transform='s#^#uke-front-color-0.1.0/#' -czf "$$top/SOURCES/uke-front-color-0.1.0.tar.gz" \
@@ -57,8 +58,9 @@ test-proximity-capture:
 	$(CXX) $(CXXFLAGS) -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(LDFLAGS) tests/proximity-capture.cpp -o build/proximity-capture-test
 	./build/proximity-capture-test
 	./build/uke-proximity-capture --help
+proximity-capture-srpm: outdir = $(CURDIR)/build/proximity-capture-rpmbuild
 proximity-capture-srpm:
-	top="$$(realpath -m build/proximity-capture-rpmbuild)"
+	top="$$(realpath -m '$(outdir)')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
 	tar --sort=name --mtime=@1792702800 --owner=0 --group=0 --numeric-owner \
 	 --transform='s#^#uke-proximity-capture-0.1.0/#' -cJf "$$top/SOURCES/uke-proximity-capture-0.1.0.tar.xz" \
