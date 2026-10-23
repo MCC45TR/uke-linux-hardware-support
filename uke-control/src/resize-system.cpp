@@ -135,12 +135,24 @@ static void request_matches(const Request& saved,const Request& actual,std::uint
     need(saved.device==actual.device&&saved.uuid==actual.uuid&&saved.boot==actual.boot&&saved.bytes==actual.bytes&&saved.before==actual.before,"Userdata identity or geometry changed after preparation");
     need(now>=saved.prepared&&now-saved.prepared<=600,"Resize preparation expired; run uke-control resize system immediately before reboot");
 }
+static bool dracut_device(const fs::path& relative,const struct stat& st) {
+    if(!S_ISCHR(st.st_mode)||st.st_uid!=0||st.st_nlink!=1)return false;
+    const struct {const char* path;unsigned major,minor;} devices[]={
+        {"dev/null",1,3},{"dev/random",1,8},{"dev/urandom",1,9},{"dev/kmsg",1,11},{"dev/console",5,1}
+    };
+    for(const auto& device:devices)if(relative==device.path&&st.st_rdev==makedev(device.major,device.minor))return true;
+    return false;
+}
 static void audit(const fs::path& root) {
     std::uintmax_t total=0;
     for(const auto& entry:fs::recursive_directory_iterator(root)) {
         const auto name=entry.path().filename().string();
         need(name.find("python")==std::string::npos&&name.find("pypy")==std::string::npos&&!entry.path().string().ends_with(".py")&&!entry.path().string().ends_with(".pyc"),"Python is not admitted in resize RAM environment");
-        const auto status=entry.symlink_status();need(fs::is_regular_file(status)||fs::is_directory(status)||fs::is_symlink(status),"Special file in resize RAM environment");
+        const auto status=entry.symlink_status();
+        if(!fs::is_regular_file(status)&&!fs::is_directory(status)&&!fs::is_symlink(status)) {
+            struct stat st{};
+            need(lstat(entry.path().c_str(),&st)==0&&dracut_device(entry.path().lexically_relative(root),st),"Unexpected special file in resize RAM environment");
+        }
         if(fs::is_regular_file(status))total+=entry.file_size();
         need(total<=128*1024*1024,"Resize RAM environment exceeds 128 MiB");
     }
@@ -187,6 +199,13 @@ static void expand(int fd,const std::string& device,std::uint64_t bytes) {
     need(fsync(fd)==0,"Cannot synchronize expansion");
     std::cout<<"UKE_RESIZE_SYSTEM: verified expansion from "<<before<<" to "<<userdata::filesystem_bytes(after,copy,bytes)<<" bytes; partition table unchanged\n";
 }
+static bool confirm_reboot(std::istream& input,bool terminal) {
+    need(terminal,"Interactive terminal required; run sudo uke-control resize system in a terminal. Nothing was prepared");
+    std::cout<<"Close applications and keep a backup and power connected.\n"
+               "Prepare offline expansion and reboot now? Type yes to continue: "<<std::flush;
+    std::string answer;
+    return bool(std::getline(input,answer))&&answer=="yes";
+}
 int command(const std::string& action) {
     need(geteuid()==0,"Use sudo uke-control resize system");
     need(compatible(read("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
@@ -214,8 +233,27 @@ int command(const std::string& action) {
     root_device(read("/proc/self/mountinfo",1024*1024),number);
     std::cout<<"Filesystem bytes: "<<before<<"\nUserdata partition bytes: "<<bytes<<"\n";
     if(!userdata::needs_growth(first,second,bytes)){std::cout<<"Filesystem already fills userdata within F2FS section alignment.\n";return 0;}
-    std::cout<<"Offline growth is required. The mounted filesystem will not be resized.\n";
-    if(action=="--check")return 0;
+    std::cout<<"Growth is required: F2FS must be unmounted. Expansion runs during normal reboot, before the next boot.\n";
+    if(action=="--check") {
+        std::cout<<"Check only; nothing was prepared. Run sudo uke-control resize system to confirm preparation and reboot.\n";return 0;
+    }
+    if(action=="--interactive") {
+        power();
+        if(!confirm_reboot(std::cin,isatty(STDIN_FILENO))) {
+            std::cout<<"Cancelled; no new maintenance or reboot was requested.\n";return 0;
+        }
+        run({"/usr/bin/systemd-inhibit","--what=shutdown:sleep","--mode=block","--who=uke-control","--why=Prepare offline userdata filesystem expansion","/usr/libexec/uke-control/resize-system","--prepare"});
+        request_matches(decode(private_request("/run/initramfs/etc/uke-resize-system.request")),actual,uptime());
+        power();
+        // Wait for preparation's inhibitor to exit before asking for normal reboot.
+        std::cout<<"Preparation verified. Requesting normal reboot; keep power connected until checking and expansion finish.\n"<<std::flush;
+        try {run({"/usr/bin/systemctl","--check-inhibitors=yes","reboot"});}
+        catch(...) {
+            std::cerr<<"Reboot was not accepted; it was not forced. RAM maintenance remains pending for ten minutes after preparation.\n"
+                         "Resolve the reboot blocker and rerun sudo uke-control resize system.\n";throw;
+        }
+        return 0;
+    }
     power();trusted_directory("/run");struct statfs runtime{};
     need(statfs("/run",&runtime)==0&&runtime.f_type==TMPFS_MAGIC&&!(runtime.f_flags&ST_NOEXEC),"Executable tmpfs at /run is required for offline maintenance");
     Fd lock(open("/run/uke-control-resize.lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600));
@@ -236,11 +274,11 @@ int command(const std::string& action) {
     fs::remove(stage/"tree/etc/uke-resize-system.request");save(stage/"tree/etc/uke-resize-system.request",encode(actual));
     label_environment(stage/"tree");
     activate(stage,"/run/initramfs");
-    std::cout<<"Offline resize prepared in RAM. No filesystem, GPT or boot partition was changed.\nReboot normally within ten minutes with power connected: sudo systemctl reboot\nDo not interrupt power during fsck/resize. After boot, verify with: sudo uke-control resize system --check\n";
+    std::cout<<"Offline resize prepared in RAM. No filesystem, GPT or boot partition was changed.\nA normal reboot within ten minutes will run checking and expansion before the next boot.\nDo not interrupt power during fsck/resize. After boot, verify with: sudo uke-control resize system --check\n";
     return 0;
 }
 }
 int main(int argc,char** argv) {
-    try {if(argc!=2||(std::string(argv[1])!="--check"&&std::string(argv[1])!="--prepare"&&std::string(argv[1])!="--offline"))throw std::runtime_error("Internal resize helper: expected --check, --prepare or --offline");return uke::resize::command(argv[1]);}
+    try {if(argc!=2||(std::string(argv[1])!="--check"&&std::string(argv[1])!="--interactive"&&std::string(argv[1])!="--prepare"&&std::string(argv[1])!="--offline"))throw std::runtime_error("Internal resize helper: expected --check, --interactive, --prepare or --offline");return uke::resize::command(argv[1]);}
     catch(const std::exception& error){std::cerr<<"UKE_RESIZE_SYSTEM_REFUSED: "<<error.what()<<'\n';return 1;}
 }

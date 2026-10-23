@@ -33,6 +33,13 @@ int main() {
         const auto empty=uke::usb::snapshot(root);
         assert(empty.find("\"live\":false")!=std::string::npos);
         assert(empty.find("\"usb_devices\":[]")!=std::string::npos);
+        assert(empty.find("\"cdc_saved_policy\":\"disabled\"")!=std::string::npos);
+        put(root/"var/lib/uke-control/cdc-on","on\n");
+        assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"on\"")!=std::string::npos);
+        fs::remove(root/"var/lib/uke-control/cdc-on");
+        fs::create_symlink("/etc/passwd",root/"var/lib/uke-control/cdc-on");
+        assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"invalid\"")!=std::string::npos);
+        fs::remove(root/"var/lib/uke-control/cdc-on");
         put(root/"sys/class/typec/port0/data_role","[host] device\n");
         put(root/"sys/class/typec/port0/power_role","source [sink]\n");
         put(root/"sys/bus/usb/devices/1-1/idVendor","0bda\n");

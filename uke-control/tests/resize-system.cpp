@@ -13,6 +13,22 @@ static void put(const fs::path& path,const std::string& value="fixture") {
     fs::create_directories(path.parent_path());std::ofstream(path)<<value;
 }
 int main(int argc,char** argv) {
+    std::ostringstream prompts;auto* output=std::cout.rdbuf(prompts.rdbuf());
+    for(const auto* answer:{"no\n","\n","y\n","YES\n","yes please\n",""}) {
+        std::istringstream input(answer);assert(!confirm_reboot(input,true));
+    }
+    std::istringstream approved("yes\n");assert(confirm_reboot(approved,true));
+    std::istringstream piped("yes\n");refuse([&]{confirm_reboot(piped,false);});assert(piped.peek()=='y');
+    std::cout.rdbuf(output);assert(prompts.str().find("reboot now?")!=std::string::npos);
+    struct stat node{};node.st_mode=S_IFCHR|0600;node.st_uid=0;node.st_nlink=1;
+    for(const auto& item:std::map<std::string,dev_t>{{"dev/null",makedev(1,3)},{"dev/random",makedev(1,8)},{"dev/urandom",makedev(1,9)},{"dev/kmsg",makedev(1,11)},{"dev/console",makedev(5,1)}}) {
+        node.st_rdev=item.second;assert(dracut_device(item.first,node));
+    }
+    node.st_rdev=makedev(1,3);assert(!dracut_device("dev/sda",node));assert(!dracut_device("other/null",node));
+    node.st_rdev=makedev(8,0);assert(!dracut_device("dev/null",node));node.st_rdev=makedev(1,3);
+    node.st_mode=S_IFBLK|0600;assert(!dracut_device("dev/null",node));node.st_mode=S_IFCHR|0600;
+    node.st_uid=1000;assert(!dracut_device("dev/null",node));node.st_uid=0;
+    node.st_nlink=2;assert(!dracut_device("dev/null",node));
     const Request request{"8:42","00112233445566778899aabbccddeeff","01234567-89ab-cdef-0123-456789abcdef",1024ULL*1024*1024,512ULL*1024*1024,100};
     const auto text=encode(request);const auto decoded=decode(text);assert(encode(decoded)==text);
     request_matches(decoded,request,700);
@@ -67,7 +83,9 @@ int main(int argc,char** argv) {
         refuse([&]{activate(root/"rollback-stage",root/"rollback-target");});assert(read(root/"rollback-target/log")=="rollback");
         fs::remove_all(root);
     } catch(...) {fs::remove_all(root);throw;}
-    if(argc==3&&std::string(argv[1])=="--grow-fixture") {
+    if(argc==3&&std::string(argv[1])=="--audit-fixture") {
+        audit(fs::canonical(argv[2]));std::cout<<"Existing dracut payload audit passed\n";
+    } else if(argc==3&&std::string(argv[1])=="--grow-fixture") {
         const auto image=fs::canonical(argv[2]);struct stat st{};assert(stat(image.c_str(),&st)==0&&S_ISREG(st.st_mode));
         Fd fd(open(image.c_str(),O_RDWR|O_CLOEXEC|O_NOFOLLOW));expand(fd.value,image.string(),st.st_size);
     } else if(argc==2) {

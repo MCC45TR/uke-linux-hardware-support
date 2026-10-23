@@ -1,5 +1,25 @@
 # Uke Control
 
+23 October 2026: version 1.5.1 makes `uke-control resize system` ask for explicit
+approval before preparing offline growth and requesting normal reboot. The
+read-only `--check` explains the next command. Full-capacity systems exit without
+prompting or rebooting. See [filesystem capacity repair](RESIZE.md).
+
+23 October 2026: version 1.5.0 adds saved CDC ACM startup policy:
+
+```sh
+sudo uke-control set cdc on --persistent
+sudo uke-control set cdc off --persistent
+sudo uke-control usb status
+```
+
+The saved opt-in applies at boot and on Type-C, USB-role and controller readiness
+events. It uses the existing owned ACM gadget; it exports no root shell or USB
+network and does not force a data/power role. No polling daemon or boot delay
+is added. Without `--persistent`, `set cdc on|off` remains a one-shot request.
+Use persistent off to prevent a saved on policy from reapplying on the next
+USB event. A successful bind does not prove host enumeration or net charging.
+
 22 October 2026: version 1.4.0 adds `uke-control resize system --check` and
 explicit offline F2FS userdata growth at the next normal reboot. It prepares
 maintenance in RAM without changing GPT, boot partitions or the selected slot.

@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.4.0
+Version: 1.5.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -13,6 +13,7 @@ BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
+Requires: systemd-udev
 Requires: dracut >= 111
 Requires: f2fs-tools >= 1.16.0
 Requires: policycoreutils
@@ -57,6 +58,8 @@ install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-di
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
 install -Dm644 packaging/uke-control.service %{buildroot}%{_unitdir}/uke-control.service
 install -Dm644 packaging/uke-control-wake.service %{buildroot}%{_unitdir}/uke-control-wake.service
+install -Dm644 packaging/uke-control-cdc.service %{buildroot}%{_unitdir}/uke-control-cdc.service
+install -Dm644 packaging/90-uke-control-cdc.rules %{buildroot}%{_udevrulesdir}/90-uke-control-cdc.rules
 install -d %{buildroot}%{_unitdir}/sleep.target.requires
 ln -s ../uke-control-wake.service %{buildroot}%{_unitdir}/sleep.target.requires/uke-control-wake.service
 install -Dm644 packaging/80-uke-control.preset %{buildroot}%{_presetdir}/80-uke-control.preset
@@ -69,13 +72,15 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %make_build check
 
 %post
-%systemd_post uke-control.service uke-control-wake.service
+%systemd_post uke-control.service uke-control-wake.service uke-control-cdc.service
+/usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 %systemd_user_post uke-control-moisture-notify.service
 %preun
-%systemd_preun uke-control.service uke-control-wake.service
+%systemd_preun uke-control.service uke-control-wake.service uke-control-cdc.service
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
-%systemd_postun uke-control.service uke-control-wake.service
+%systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service
+/usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 %systemd_user_postun uke-control-moisture-notify.service
 
 %files
@@ -89,6 +94,8 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
 %{_unitdir}/uke-control-wake.service
+%{_unitdir}/uke-control-cdc.service
+%{_udevrulesdir}/90-uke-control-cdc.rules
 %dir %{_unitdir}/sleep.target.requires
 %{_unitdir}/sleep.target.requires/uke-control-wake.service
 %{_presetdir}/80-uke-control.preset
@@ -103,6 +110,17 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.1-1
+- Confirm offline expansion and normal reboot; clarify read-only capacity checks
+- Admit only the exact standard dracut character nodes in the audited RAM payload
+
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.0-2
+- Keep the CDC fixture process stub separate for GCC 16 AArch64 diagnostics.
+
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.0-1
+- Save explicit CDC ACM startup policy and reconcile USB readiness events.
+- Retain one-shot requests, device-role guards and owned-gadget cleanup.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
 - Prepare explicit offline F2FS userdata expansion at the next normal reboot.
 - Verify physical root, power, geometry, identity and unmounted exclusive access.
