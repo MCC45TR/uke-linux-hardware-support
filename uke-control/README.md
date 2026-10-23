@@ -1,5 +1,10 @@
 # Uke Control
 
+24 October 2026: version 1.6.1 combines the CDC notification fix with the existing
+VRR minimum controls from 1.6.0-2. It preserves their module loader and fallback
+on older kernels. The display implementation is unchanged; build and package
+checks do not establish physical touch, USB or charging acceptance.
+
 23 October 2026: version 1.5.3 reapplies saved CDC policy through a synchronous
 service reload. Successful USB notifications no longer consume repeated service
 starts; real start limits and application failures remain visible. Persistent

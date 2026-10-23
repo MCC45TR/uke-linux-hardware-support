@@ -1,5 +1,27 @@
 # Display controls and raw front-color data
 
+## VRR minimum, 24 October 2026
+
+On Uke / SM7675, use `sudo uke-control display vrr-min status` to read the
+loaded minimum, saved minimum and whether a reboot is required. Save a minimum
+with `sudo uke-control display vrr-min set 30` (or another integer from 30 to
+143 Hz, below the currently selected mode). Select the 144 Hz mode in the
+distribution's original KDE display settings for the full 30–144 Hz range.
+KDE continues to control whether Adaptive Sync is enabled.
+
+The command requires the kernel's O82 VRR floor API version 1 and an active,
+VRR-capable internal display. Unsupported kernels refuse the write. The saved
+policy takes effect when MSM loads on the next boot; the command does not
+restart the desktop. The packaged loader appends the validated value after
+firmware defaults. Without a valid saved policy or the driver API it preserves
+normal module loading. The managed file is
+`/var/lib/uke-control/vrr-min`. It contains only the numeric policy; no module
+options leak into older rollback kernels that lack the required API.
+
+The setting exposes the driver's range; it does not certify touch stability at
+every minimum. Each minimum requires separate physical validation. A 1 Hz
+minimum is not supported.
+
 ## Cached external-display diagnosis, 20 October 2026
 
 `uke-control usb status` includes standard Type-C alternate modes and cached

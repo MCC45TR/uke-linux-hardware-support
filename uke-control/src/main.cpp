@@ -12,8 +12,9 @@
 #include "desktop.hpp"
 #include "wake.hpp"
 #include "diagnostic.hpp"
+#include "vrr.hpp"
 static void help() {
-    std::cout << "uke-control 1.5.3 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.6.1 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
@@ -28,6 +29,8 @@ static void help() {
       "  sensors list                List exported channels and SensorProxy capabilities\n"
       "  sensors -n5 --count=3       Three snapshots, five seconds apart; Ctrl-C stops\n"
       "  display sensor              Read the existing front-color node; never starts collection\n"
+      "  display vrr-min [status]    Loaded/saved VRR minimum and restart requirement (root)\n"
+      "  display vrr-min set HZ      Save 30 Hz or higher, below the selected mode (root)\n"
       "  inventory [--refresh]       Partition/filesystem inventory; refresh requires root\n"
       "  swap status                 Active swaps and saved policy\n"
       "  swap set half|full|MiB      Save policy and apply (root); prefer linux_swap\n"
@@ -94,6 +97,22 @@ int main(int argc,char** argv) {
         if(command=="sensors")return uke::sensors::command(argc-2,argv+2);
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="sensor") {
             std::cout<<uke::display::front_color_status();return 0;
+        }
+        if(command=="display"&&argc>=3&&std::string_view(argv[2])=="vrr-min") {
+            if(argc==3||(argc==4&&std::string_view(argv[3])=="status")) {
+                if(geteuid()!=0)throw std::runtime_error("Use sudo uke-control display vrr-min status to read the current driver floor");
+                std::cout<<uke::vrr::status();return 0;
+            }
+            if(argc==4&&std::string_view(argv[3])=="configured") {
+                const auto value=uke::wake::applicable()?uke::vrr::configured():std::nullopt;
+                std::cout<<(value?std::to_string(*value):"unset")<<'\n';return 0;
+            }
+            if(argc==5&&std::string_view(argv[3])=="set") {
+                uke::display_vrr_set(uke::vrr::minimum(argv[4]));
+                std::cout<<uke::vrr::status();
+                std::cerr<<"Saved for the next boot. Restart to apply a changed minimum.\n";return 0;
+            }
+            throw std::runtime_error("Usage: uke-control display vrr-min [status|set HZ]");
         }
         if(command=="cdc"&&argc==3&&std::string_view(argv[2])=="apply") {
             auto result=uke::cdc_apply();std::cout<<result.output;return result.status;

@@ -212,7 +212,7 @@ std::string collect(const std::string& topic) {
     const auto started=std::chrono::steady_clock::now();
     const auto now=std::time(nullptr);std::tm utc{};char date[32]{};
     gmtime_r(&now,&utc);std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc);
-    write_text(fd,"Uke Control diagnostic 1.5.3\nUTC: "+std::string(date)+"\nTopic: "+topic+
+    write_text(fd,"Uke Control diagnostic 1.6.1\nUTC: "+std::string(date)+"\nTopic: "+topic+
         "\nEffective UID: "+std::to_string(geteuid())+
         "\nPRIVATE LOCAL LOG: may contain IP/MAC addresses, host/user names, device identifiers, repository URLs and journal contents. Review before sharing. No upload is performed."
         "\nCollection: IN PROGRESS until the final COLLECTION COMPLETE marker."
