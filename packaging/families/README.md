@@ -1,5 +1,10 @@
 # COPR source families
 
+23 October 2026: sensors `1.0.6` adds the separately installable, root-only
+`uke-proximity-capture` diagnostic. It is not a default dependency or service.
+Fixed bounded modes compare the captured Uke format with libssc's request;
+they do not replace the decoder, set calibration or establish near/far support.
+
 23 October 2026: sensors `1.0.5` builds the front-color publisher from its
 current owning source instead of the archived release-2 source RPM. It retains
 the SUID readiness subscription while publishing unavailable startup state,

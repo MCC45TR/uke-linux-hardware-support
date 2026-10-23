@@ -1,5 +1,13 @@
 # Uke sensors
 
+23 October 2026: the optional native `uke-proximity-capture` package compares
+small/large report transport and empty-body presence using one metadata-gated
+default endpoint. Passive/non-wakeup is the default; fixed active modes use
+the same bounded on-change request as libssc. Raw output remains private.
+No unknown vendor vector is converted into a near/far decision. See
+[the capture contract](docs/PROXIMITY-CAPTURE.md). This is a source/package
+diagnostic, not physical proximity acceptance.
+
 21 October 2026 source correction: the native RAM cache compares its packaged
 DSP helper and configuration with installed inputs. A changed generation is
 published with an atomic directory exchange while preserving the current RAM

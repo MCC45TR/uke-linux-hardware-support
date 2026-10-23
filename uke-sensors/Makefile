@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate srpm test-native test-cache test-hexagonrpc test-touch-normal test-touch-thp touchscreen-rpm
+.PHONY: validate srpm test-native test-cache test-hexagonrpc test-touch-normal test-touch-thp touchscreen-rpm test-proximity-capture proximity-capture-srpm
 PACKAGE ?= libssc
 outdir ?= $(CURDIR)/build/srpm/$(PACKAGE)
 validate:
@@ -51,6 +51,21 @@ front-color-srpm:
 	 packaging/systemd/90-uke-front-color.preset docs/FRONT-COLOR.md Makefile LICENSE
 	cp packaging/uke-front-color/uke-front-color.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-front-color.spec"
+test-proximity-capture:
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) -std=c++20 -O2 -Wall -Wextra -Werror $(LDFLAGS) src/ssc-proximity-capture.cpp -o build/uke-proximity-capture
+	$(CXX) $(CXXFLAGS) -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(LDFLAGS) tests/proximity-capture.cpp -o build/proximity-capture-test
+	./build/proximity-capture-test
+	./build/uke-proximity-capture --help
+proximity-capture-srpm:
+	top="$$(realpath -m build/proximity-capture-rpmbuild)"
+	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
+	tar --sort=name --mtime=@1792702800 --owner=0 --group=0 --numeric-owner \
+	 --transform='s#^#uke-proximity-capture-0.1.0/#' -cJf "$$top/SOURCES/uke-proximity-capture-0.1.0.tar.xz" \
+	 src/ssc-proximity-capture.cpp src/ssc-discovery.cpp tests/proximity-capture.cpp \
+	 docs/PROXIMITY-CAPTURE.md Makefile LICENSE
+	cp packaging/uke-proximity-capture/uke-proximity-capture.spec "$$top/SPECS/"
+	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-proximity-capture.spec"
 touchscreen-srpm:
 	test -s src/upstream/nt36532-thp/nvt_touch_core.cpp
 	top="$$(realpath -m build/rpmbuild)"; mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
@@ -64,6 +79,7 @@ touchscreen-rpm: touchscreen-srpm
 	rpmbuild -ba --define "_topdir $$(realpath -m build/rpmbuild)" "$$(realpath -m build/rpmbuild)/SPECS/uke-touchscreen.spec"
 test-native:
 	bash tests/source-contract.sh
+	$(MAKE) test-proximity-capture
 	$(MAKE) test-cache
 	mkdir -p build
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/ssc-discovery.cpp -o build/ssc-contract

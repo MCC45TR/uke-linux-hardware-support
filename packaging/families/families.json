@@ -80,7 +80,7 @@
     },
     {
       "name": "uke-sensors",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "requires": [
         "uke-libssc",
         "uke-iio-sensor-proxy"
@@ -117,7 +117,11 @@
         "uke-sensors/src/ssc-sample.cpp",
         "uke-sensors/tests/front-color.cpp",
         "uke-sensors/packaging/uke-front-color",
-        "uke-sensors/docs/FRONT-COLOR.md"
+        "uke-sensors/docs/FRONT-COLOR.md",
+        "uke-sensors/src/ssc-proximity-capture.cpp",
+        "uke-sensors/tests/proximity-capture.cpp",
+        "uke-sensors/packaging/uke-proximity-capture",
+        "uke-sensors/docs/PROXIMITY-CAPTURE.md"
       ]
     },
     {
@@ -224,7 +228,7 @@
     "uke-installation-profile": "1.5.3"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "16.fc46",
+    "iio-sensor-proxy": "17.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-touchscreen": "2.fc46",
     "uke-plymonth": "4.fc46",
@@ -232,9 +236,9 @@
     "upower": "12.fc46",
     "uke-adaptive-display": "4.fc46",
     "uke-firmware": "6.fc46",
-    "libssc": "13.fc46",
-    "uke-ssc-fileservice": "16.fc46",
-    "uke-front-color": "8.fc46",
+    "libssc": "14.fc46",
+    "uke-ssc-fileservice": "17.fc46",
+    "uke-front-color": "9.fc46",
     "at-spi2-core": "7.fc46",
     "gstreamer1": "7.fc46",
     "libaccounts-glib": "35.fc46",
@@ -244,6 +248,7 @@
     "uke-battery-observer": "8.fc46",
     "accountsservice": "6.fc46",
     "material-decoration": "6.fc46",
-    "uke-desktop-metas": "8.fc46"
+    "uke-desktop-metas": "8.fc46",
+    "uke-proximity-capture": "1.fc46"
   }
 }
