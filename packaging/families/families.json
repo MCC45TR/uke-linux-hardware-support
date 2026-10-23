@@ -54,7 +54,7 @@
         "uke-boot-integration >= 1.3.4"
       ],
       "suggests": [
-        "uke-adaptive-display = 1.0.16-4%{?dist}",
+        "uke-adaptive-display = 1.0.16-5%{?dist}",
         "uke-battery-observer",
         "uke-charge-control"
       ],
@@ -76,7 +76,7 @@
         ":(exclude)uke-desktop-integration/src/bluetooth-address.cpp",
         ":(exclude)uke-desktop-integration/packaging/uke-bluetooth-address.service"
       ],
-      "release": 1
+      "release": 2
     },
     {
       "name": "uke-sensors",
@@ -89,7 +89,7 @@
         "uke-ssc-fileservice",
         "uke-front-color"
       ],
-      "release": 1,
+      "release": 2,
       "watch_paths": [
         "uke-sensors/packaging/libssc",
         "uke-sensors/patches/libssc",
@@ -161,7 +161,7 @@
         "uke-desktop-packaging/src/native-runtime/runtime-smoke.cpp",
         "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt"
       ],
-      "release": 6
+      "release": 7
     },
     {
       "name": "uke-metas",
@@ -228,25 +228,25 @@
     "uke-installation-profile": "1.5.3"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "20.fc46",
+    "iio-sensor-proxy": "21.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-touchscreen": "2.fc46",
     "uke-plymonth": "4.fc46",
     "uke-orangefox-recovery": "5.fc46",
-    "upower": "12.fc46",
-    "uke-adaptive-display": "4.fc46",
+    "upower": "13.fc46",
+    "uke-adaptive-display": "5.fc46",
     "uke-firmware": "6.fc46",
     "libssc": "17.fc46",
-    "uke-ssc-fileservice": "20.fc46",
+    "uke-ssc-fileservice": "21.fc46",
     "uke-front-color": "12.fc46",
-    "at-spi2-core": "7.fc46",
-    "gstreamer1": "7.fc46",
-    "libaccounts-glib": "35.fc46",
-    "libwacom": "8.fc46",
-    "libstdcxx-uke-runtime": "9.fc46",
-    "mesa": "9.fc46",
-    "uke-battery-observer": "8.fc46",
-    "accountsservice": "6.fc46",
+    "at-spi2-core": "8.fc46",
+    "gstreamer1": "8.fc46",
+    "libaccounts-glib": "36.fc46",
+    "libwacom": "9.fc46",
+    "libstdcxx-uke-runtime": "10.fc46",
+    "mesa": "10.fc46",
+    "uke-battery-observer": "9.fc46",
+    "accountsservice": "7.fc46",
     "material-decoration": "6.fc46",
     "uke-desktop-metas": "8.fc46",
     "uke-proximity-capture": "4.fc46"
