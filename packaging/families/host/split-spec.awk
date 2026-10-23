@@ -78,6 +78,9 @@ BEGIN {
 /^: __UKE_CWD__=/ {cwd=substr($0,index($0,"=")+1);next}
 /^: __UKE_BUILDROOT__=/ {buildroot=substr($0,index($0,"=")+1);next}
 /^: __UKE_BUILDDIR__=/ {builddir=substr($0,index($0,"=")+1);next}
+phase ~ /^(prep|generate_buildrequires|build|install|check)$/ && /^[[:space:]]*%[A-Za-z_]/ {
+    fail("Unexpanded build macro; install its RPM macro provider before composition: " $0)
+}
 {
     if(phase=="header" || phase=="package") header[package]=header[package] $0 "\n"
     else if(phase=="description") description[package]=description[package] $0 "\n"
