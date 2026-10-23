@@ -1,5 +1,11 @@
 # COPR source families
 
+23 October 2026: sensors `1.0.5` builds the front-color publisher from its
+current owning source instead of the archived release-2 source RPM. It retains
+the SUID readiness subscription while publishing unavailable startup state,
+with no timed retry or DSP reset. Host fixtures cover late readiness,
+cancellation and event limits; cold-boot tablet acceptance remains separate.
+
 23 October 2026: extras `1.0.4` delivers `uke-plymonth 1.0.2-4` with a required
 original Fedora label plugin. The first tablet boot exposed a script-plugin
 crash when text rendering was absent. The package build now exercises the

@@ -174,26 +174,40 @@ static std::optional<Uid> color_endpoint(View event) {
     require(found.size() <= 1, "Ambiguous front-color endpoint");
     return found.empty() ? std::nullopt : std::optional<Uid>(found[0]);
 }
-static Uid discover_color() {
+template<class Lookup, class Progress>
+static Uid wait_for_color_endpoint(Lookup &lookup, Progress progress) {
     std::optional<Uid> selected;
-    {
-        const auto payload = color_lookup_payload();
-        Connection lookup(lookup_uid, 512, payload);
-        const auto deadline = boottime_ns() + 30'000'000'000ULL;
-        unsigned events = 0;
-        while (!stopped && !selected && boottime_ns() < deadline && events < 64) {
-            auto event = lookup.next();
-            if (!event) continue;
+    unsigned events = 0;
+    while (!stopped && !selected && events < 64) {
+        auto event = lookup.next();
+        if (event) {
             ++events;
             selected = color_endpoint(*event);
         }
+        progress();
     }
     require(!stopped, "Front-color discovery interrupted");
-    require(selected.has_value(), "Front-color endpoint not ready within bounded discovery");
+    require(selected.has_value(), "Front-color lookup event limit reached before endpoint readiness");
+    return *selected;
+}
+static Uid discover_color(uke::color::State &state, int directory, std::uint64_t &published) {
+    Uid selected;
+    {
+        const auto payload = color_lookup_payload();
+        Connection lookup(lookup_uid, 512, payload);
+        // Keep the existing subscription until the endpoint publishes readiness.
+        selected = wait_for_color_endpoint(lookup, [&] {
+            const auto now = boottime_ns();
+            if (now - published >= 1'000'000'000ULL) {
+                uke::color::write_snapshot(directory, state.json(now));
+                published = now;
+            }
+        });
+    }
     Fd metadata(socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
     require(metadata.value >= 0, "QRTR metadata socket unavailable");
-    gate_metadata(rpc(metadata.value, request("", *selected, 1), 128), *selected);
-    return *selected;
+    gate_metadata(rpc(metadata.value, request("", selected, 1), 128), selected);
+    return selected;
 }
 static void update(uke::color::State &state, View event, Uid selected, std::uint64_t now_ns) {
     auto root = fields(event), uid = fields(one(root, 1, 2));
@@ -235,7 +249,7 @@ int main(int argc, char **) {
         uke::color::write_snapshot(directory.value, state.json(published));
         auto stage = uke::color::Error::metadata;
         try {
-            auto selected = discover_color();
+            auto selected = discover_color(state, directory.value, published);
             stage = uke::color::Error::transport;
             Connection connection(selected);
             state.connect();

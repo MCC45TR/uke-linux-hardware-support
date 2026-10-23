@@ -26,19 +26,6 @@
     "original_payload_sha256": "896f46a2ebd5582e586f7c3ff96ec8c0af7c19eeb9e0d822934d09d322459e55"
   },
   {
-    "family": "uke-sensors",
-    "name": "uke-front-color",
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179102/uke-front-color-0.1.0-2.fc46.src.rpm",
-    "sha256": "fa423d8305473d2bbaef7010b368c42de33e030999577dc5bbc96df12acdc7f1",
-    "build": 11167823,
-    "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/srpm-builds/11167823/uke-front-color-0.1.0-2.fc46.src.rpm",
-    "original_build": 11167823,
-    "archive_build": 11179102,
-    "archive_method": "project-fork",
-    "original_sha256": "64032afc94bf21cb2b77a6e116a8a985c2cc57db6231e77919f526d306eef928",
-    "original_payload_sha256": "fe7f537ed3c0c5890a08c3043079002e087de00b2c465960c024b70ecd5259d1"
-  },
-  {
     "family": "uke-hw",
     "name": "uke-firmware",
     "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179541/uke-firmware-3.0.304.0-1.fc46.src.rpm",

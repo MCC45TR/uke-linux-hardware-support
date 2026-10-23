@@ -35,9 +35,11 @@ uke-core)
     controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
     printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-sensors)
+    make -C uke-sensors front-color-srpm >"$stage/local.log"
+    printf '%s\t%s\n' uke-front-color "$root/uke-sensors/build/front-color-rpmbuild/SRPMS/uke-front-color-0.1.0-3$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
     make -C uke-sensors srpm PACKAGE=libssc outdir="$stage/libssc" >"$stage/local.log"
     libraries=("$stage/libssc/"*.src.rpm); [[ ${#libraries[@]} == 1 && -f ${libraries[0]} ]]
-    printf '%s\t%s\n' libssc "${libraries[0]}" >"$stage/inputs"
+    printf '%s\t%s\n' libssc "${libraries[0]}" >>"$stage/inputs"
     make -C uke-sensors srpm PACKAGE=uke-ssc-fileservice outdir="$stage/ssc" >>"$stage/local.log"
     services=("$stage/ssc/"*.src.rpm); [[ ${#services[@]} == 1 && -f ${services[0]} ]]
     printf '%s\t%s\n' uke-ssc-fileservice "${services[0]}" >>"$stage/inputs";;

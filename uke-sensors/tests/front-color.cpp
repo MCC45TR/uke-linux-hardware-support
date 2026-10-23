@@ -49,6 +49,28 @@ int main() {
     Bytes uid{9}; put(uid,1,8); uid.push_back(0x11); put(uid,2,8);
     length_field(lookup_result,2,uid);
     assert((color_endpoint(event(lookup_uid,768,lookup_result)) == Uid{1,2}));
+    struct Lookup {
+        std::vector<std::optional<Bytes>> events;
+        std::size_t consumed = 0;
+        std::optional<Bytes> next() { return events.at(consumed++); }
+    };
+    Lookup late;
+    late.events.resize(45); // Simulated one-second transport polls before readiness.
+    late.events.push_back(event(lookup_uid,768,lookup_result));
+    std::uint64_t elapsed = 0;
+    assert((wait_for_color_endpoint(late,[&] { elapsed += 1'000'000'000ULL; }) == Uid{1,2}));
+    assert(elapsed > 30'000'000'000ULL && late.consumed == 46);
+    Lookup cancelled;
+    cancelled.events.resize(2);
+    rejects([&] { wait_for_color_endpoint(cancelled,[] { stopped = 1; }); });
+    assert(cancelled.consumed == 1);
+    stopped = 0;
+    Bytes empty_result;
+    length_field(empty_result,1,View(reinterpret_cast<const std::uint8_t *>(type.data()),type.size()));
+    Lookup excessive;
+    excessive.events.assign(65,event(lookup_uid,768,empty_result));
+    rejects([&] { wait_for_color_endpoint(excessive,[] {}); });
+    assert(excessive.consumed == 64);
     rejects([&] { color_endpoint(event({1,2},768,lookup_result)); });
     length_field(lookup_result,2,uid);
     rejects([&] { color_endpoint(event(lookup_uid,768,lookup_result)); });

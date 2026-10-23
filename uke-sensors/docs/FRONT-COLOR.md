@@ -1,5 +1,12 @@
 # Raw front-color endpoint
 
+23 October 2026: the publisher retains its existing SUID-update subscription
+while the endpoint initializes. An empty initial lookup no longer becomes a
+permanent failure after 30 seconds. Unavailable `starting` snapshots continue
+at most once per second; no sample is invented and no request is resent.
+Cancellation, the 64-event bound, transport limits and metadata admission remain.
+Late readiness still requires a separate cold-boot tablet result.
+
 18 October 2026. Release 1 is installed on Fedora Rawhide AArch64 / Uke and
 publishes raw `cct_front` samples through event 1025 after on-change request 514.
 The kernel-25 boot instead reports metadata unavailable; an explicit later
@@ -9,8 +16,9 @@ units, spectral calibration or persistent operation.
 Release 2 waits for SUID readiness updates before admitting metadata and
 collection. It uses the pinned Qualcomm sensinghub
 `329551963bcc063f6a89f6cbca259c5b5c9c4e0b` `sns_suid.proto` subscription,
-retains all matching endpoints and refuses ambiguity. Discovery ends after
-30 seconds or 64 events; it does not resend requests or restart a failed DSP.
+retains all matching endpoints and refuses ambiguity. That release's 30-second
+discovery limit is superseded by the readiness change above; the 64-event bound
+remains. It does not resend requests or restart a failed DSP.
 The metadata reply must contain event 128 and the existing type, physical,
 availability and on-change checks still apply. A failure logs one reason
 without raw identifiers. Host framing/state/file and empty-to-ready endpoint

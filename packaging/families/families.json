@@ -80,7 +80,7 @@
     },
     {
       "name": "uke-sensors",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "requires": [
         "uke-libssc",
         "uke-iio-sensor-proxy"
@@ -109,7 +109,15 @@
         "uke-sensors/patches/iio-sensor-proxy",
         "uke-sensors/src/dual-light.h",
         "uke-sensors/tests/dual-light.cpp",
-        "uke-sensors/packaging/selinux/uke-ssc.cil"
+        "uke-sensors/packaging/selinux/uke-ssc.cil",
+        "uke-sensors/src/front-color.cpp",
+        "uke-sensors/src/front-color-state.hpp",
+        "uke-sensors/src/front-color-file.hpp",
+        "uke-sensors/src/ssc-discovery.cpp",
+        "uke-sensors/src/ssc-sample.cpp",
+        "uke-sensors/tests/front-color.cpp",
+        "uke-sensors/packaging/uke-front-color",
+        "uke-sensors/docs/FRONT-COLOR.md"
       ]
     },
     {
@@ -216,7 +224,7 @@
     "uke-installation-profile": "1.5.3"
   },
   "release_overrides": {
-    "iio-sensor-proxy": "15.fc46",
+    "iio-sensor-proxy": "16.fc46",
     "uke-boot-integration": "1.fc46",
     "uke-touchscreen": "2.fc46",
     "uke-plymonth": "4.fc46",
@@ -224,9 +232,9 @@
     "upower": "12.fc46",
     "uke-adaptive-display": "4.fc46",
     "uke-firmware": "6.fc46",
-    "libssc": "12.fc46",
-    "uke-ssc-fileservice": "15.fc46",
-    "uke-front-color": "7.fc46",
+    "libssc": "13.fc46",
+    "uke-ssc-fileservice": "16.fc46",
+    "uke-front-color": "8.fc46",
     "at-spi2-core": "7.fc46",
     "gstreamer1": "7.fc46",
     "libaccounts-glib": "35.fc46",
