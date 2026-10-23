@@ -279,7 +279,11 @@ Native identity and physical-device validation remain separate from this change.
 On Rawhide AArch64, build a source family with
 `make -C packaging/families srpm FAMILY=uke-core`. The source-generation host
 must match the target: RPM's `--target` does not retarget every build/host
-triplet in an expanded recipe. The normal COPR source worker is AArch64.
+triplet in an expanded recipe. COPR source workers can use another architecture;
+generate and upload the SRPM from a native target worker in that case. The
+source host also needs each recipe's RPM macro providers, including
+`cargo-rpm-macros` for current Mesa. Unexpanded build commands are rejected
+before composition instead of being escaped into a broken family recipe.
 Use `TARGET_ARCH=x86_64` only for isolated x86_64 host fixtures.
 Run `make -C packaging/families check` and the original component/native solver
 checks. Before changing COPR, validate every generated package name, dependency,
