@@ -57,6 +57,13 @@ int main() {
         uke_install::verified(trial.policy);
         assert(!booted_ab_trial(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
         (void)uke_install::arm(trial.policy);const auto before=encode(trial);
+        assert(awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id));
+        assert(!awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.good_image,boot_id));
+        assert(!awaiting_ab_reboot(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
+        reject([&]{awaiting_ab_reboot(trial,unsigned(good),"7.2.11-15",trial.good_image,trial.staged_boot_id);});
+        reject([&]{awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.candidate_image,trial.staged_boot_id);});
+        reject([&]{awaiting_ab_reboot(trial,2,"7.2.11-14",trial.good_image,trial.staged_boot_id);});
+        reject([&]{awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.good_image,"bad");});
         assert(booted_ab_trial(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
         assert(!booted_ab_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id));
         assert(!booted_ab_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,boot_id));

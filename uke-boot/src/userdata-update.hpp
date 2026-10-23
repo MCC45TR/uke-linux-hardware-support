@@ -157,6 +157,13 @@ static bool booted_ab_trial(const UserdataUpdate &saved,unsigned running,const s
     need(release==saved.policy.candidate && image_hash==saved.candidate_image && boot_id!=saved.staged_boot_id,
          "Fallback requires the booted, recorded alternating trial");return true;
 }
+static bool awaiting_ab_reboot(const UserdataUpdate &saved,unsigned running,const std::string &release,
+                               const std::string &image_hash,const std::string &boot_id) {
+    (void)encode(saved);need(running<2 && valid_boot_id(boot_id),"Invalid pending-trial boot identity");
+    if(saved.policy.phase!=uke_install::Phase::trial || running!=unsigned(saved.policy.good) || boot_id!=saved.staged_boot_id)return false;
+    need(release==saved.policy.good_release && image_hash==saved.good_image,"Pending-trial baseline identity differs");
+    return true;
+}
 static constexpr const char *firmware_names[]={"xbl","xbl_config","xbl_config_nof","multiimgqti","multiimgoem","uefi","aop","aop_config","tz","hyp","abl","devcfg","qupfw","uefisecapp","imagefv","shrm","cpucp","keymaster","featenabler","cpucp_dtb","pvmfw"};
 static bool admitted_early_firmware(const std::map<std::string,std::string> &hashes) {
     need(hashes.size()==2*std::size(firmware_names),"Incomplete early firmware inventory");
@@ -193,15 +200,15 @@ struct SlotMetadata {
     std::string name;
     Fd fd;
     std::unique_ptr<slot::Disk> gpt;
-    SlotMetadata(const std::string &name,dev_t expected):name(name),fd(open(("/dev/"+name).c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK)) {
+    SlotMetadata(const std::string &name,dev_t expected,bool allow_backup_crc):name(name),fd(open(("/dev/"+name).c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK)) {
         struct stat st{};uint64_t bytes=0;unsigned sector=0;
         need(!fstat(fd.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==expected &&
              !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector) &&
              !flock(fd.value,LOCK_EX|LOCK_NB),"Cannot lock the physical UFS GPT descriptor");
-        gpt=std::make_unique<slot::Disk>(fd.value,bytes,sector);
+        gpt=std::make_unique<slot::Disk>(fd.value,bytes,sector,allow_backup_crc);
     }
 };
-static std::vector<std::unique_ptr<SlotMetadata>> metadata(const std::string &controller) {
+static std::vector<std::unique_ptr<SlotMetadata>> metadata(const std::string &controller,bool allow_backup_crc=false) {
     std::map<std::string,fs::path> labels;
     for(const auto &entry:fs::directory_iterator("/sys/class/block")) {
         if(!fs::exists(entry.path()/"partition"))continue;
@@ -219,7 +226,7 @@ static std::vector<std::unique_ptr<SlotMetadata>> metadata(const std::string &co
     for(const auto &path:disks) {
         const auto name=path.filename().string();unsigned major=0,minor=0;char tail=0;
         need(token(name) && sscanf(read_text(path/"dev").c_str(),"%u:%u %c",&major,&minor,&tail)==2,"Invalid UFS disk identity");
-        result.push_back(std::make_unique<SlotMetadata>(name,makedev(major,minor)));
+        result.push_back(std::make_unique<SlotMetadata>(name,makedev(major,minor),allow_backup_crc));
     }
     need(!result.empty() && result.size()<=8,"UFS slot metadata unavailable");return result;
 }
@@ -288,9 +295,31 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     const auto rollback=installed_files({{"-core",{{core,digest(running_image)}}}},release);
     if(action!="fallback")rollback_modules(rollback);
     auto bsg=ufs_bsg(controller);
-    auto disks=metadata(controller);slot::Disk *boot_table=nullptr;
+    const auto good_hash=digest(images[running]);
+    auto current_boot_id=read_text("/proc/sys/kernel/random/boot_id");need(current_boot_id.ends_with('\n'),"Missing current boot identity");current_boot_id.pop_back();
+    const auto prior=fs::exists(statefile)?std::optional<UserdataUpdate>(decode(file(statefile))):std::nullopt;
+    const bool awaiting=prior && awaiting_ab_reboot(*prior,running,release,good_hash,current_boot_id);
+    auto disks=metadata(controller,!awaiting && (action=="accept" || action=="fallback"));slot::Disk *boot_table=nullptr;
     for(auto &disk:disks)if(disk->gpt->parts.contains("boot_a") && disk->gpt->parts.contains("boot_b"))boot_table=disk->gpt.get();
-    need(boot_table,"Boot slot GPT unavailable");const auto good_hash=digest(images[running]);
+    need(boot_table,"Boot slot GPT unavailable");
+    if(std::any_of(disks.begin(),disks.end(),[](const auto &disk){return disk->gpt->needs_backup_crc_repair();}))verify_early_firmware();
+    if(awaiting) {
+        const auto target=1-running;
+        need(slot::boot_lun(bsg.value)==target+1 && digest(images[target])==prior->candidate_image,
+             "Pending trial image or UFS selection differs from its verified transaction");
+        for(auto &disk:disks)disk->gpt->require_selected(target);
+        const auto good_flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
+        const auto next_flags=boot_table->parts.at(target?"boot_b":"boot_a").attrs;
+        need((good_flags&slot::successful) && !(good_flags&slot::unbootable) &&
+             (next_flags&slot::priority) && (next_flags&slot::retries) && !(next_flags&(slot::successful|slot::unbootable)),
+             "Pending trial or accepted fallback flags differ");
+        if(action!="accept" && action!="fallback") {
+            const auto raw=file(bundle/"manifest");
+            need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==prior->policy.candidate,
+                 "A different candidate cannot replace the pending trial");
+        }
+        std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";return;
+    }
     if(action=="fallback") {
         const auto saved=decode(file(statefile));auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
         need(boot_id.ends_with('\n'),"Missing fallback boot identity");boot_id.pop_back();
@@ -305,22 +334,17 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         const auto selected=slot::boot_lun(bsg.value)-1;
         std::vector<SlotMetadata*> changed;
         for(auto &disk:disks) {
-            for(const auto &[name,a]:disk->gpt->parts)if(name.ends_with("_a")) {
-                const auto other=name.substr(0,name.size()-1)+"b";
-                need(disk->gpt->parts.contains(other),"Unpaired fallback slot partition");
-                const auto &bpart=disk->gpt->parts.at(other);
-                need(bool(a.attrs&slot::active)==(selected==0) && bool(bpart.attrs&slot::active)==(selected==1),
-                     "Fallback GPT and UFS boot LUN selection differ; use external recovery");
-            }
-            if(selected==running && disk->gpt->fallback(running,good))changed.push_back(disk.get());
+            disk->gpt->require_selected(selected);
+            if(selected==running) {if(disk->gpt->fallback(running,good))changed.push_back(disk.get());}
+            else if(disk->gpt->needs_backup_crc_repair())changed.push_back(disk.get());
         }
         if(selected==good) {
             const auto accepted_flags=boot_table->parts.at(good?"boot_b":"boot_a").attrs;
             const auto failed_flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
             need((accepted_flags&slot::successful) && !(accepted_flags&slot::unbootable) && (failed_flags&slot::unbootable),
                  "Pending fallback flags differ; use external recovery");
-        } else {
-            need(!changed.empty(),"No consistent fallback metadata found");
+        } else need(!changed.empty(),"No consistent fallback metadata found");
+        if(!changed.empty()) {
             need(charging(),"Fallback metadata requires at least 50% battery, or 30% with external power");
             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
             const auto transaction=state/(saved.policy.candidate+"-"+saved.candidate_image)/"fallback";
@@ -328,11 +352,11 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
             for(auto *disk:changed)disk->gpt->backup(transaction/(disk->name+".gpt"));
             try {
                 for(auto *disk:changed)disk->gpt->commit();
-                (void)slot::boot_lun(bsg.value,good+1);
+                if(selected!=good)(void)slot::boot_lun(bsg.value,good+1);
             }catch(...) {
                 try {
                     for(auto *disk:changed)disk->gpt->restore();
-                    (void)slot::boot_lun(bsg.value,running+1);
+                    if(selected!=good)(void)slot::boot_lun(bsg.value,running+1);
                 }catch(...){throw std::runtime_error("Fallback selection and restoration failed; use external recovery before rebooting");}
                 throw std::runtime_error("Fallback selection failed; trial metadata restored and verified");
             }
@@ -343,7 +367,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         request_fallback_reboot();return;
     }
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
-    need(boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::active,"GPT active boot slot differs from the running Image");
+    for(auto &disk:disks)disk->gpt->require_selected(running);
     if(action=="accept") {
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
@@ -370,10 +394,16 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
                 saved.staged_boot_id.clear();
             }
         }
-        if(!(boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::successful)) {
+        const bool mark_success=!(boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::successful);
+        std::vector<SlotMetadata*> changed;
+        for(auto &disk:disks)if(disk->gpt->needs_backup_crc_repair() || (disk->gpt.get()==boot_table && mark_success))changed.push_back(disk.get());
+        if(!changed.empty()) {
             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
-            boot_table->backup(state/("accept-"+digest(boot_table->before.entries)+".gpt"));
-            try{boot_table->success(running);boot_table->commit();}catch(...){boot_table->restore();throw;}
+            for(auto *disk:changed)disk->gpt->backup(state/("accept-"+digest(disk->gpt->before.entries)+"-"+disk->name+".gpt"));
+            try {
+                if(mark_success)boot_table->success(running);
+                for(auto *disk:changed)disk->gpt->commit();
+            } catch(...) {for(auto *disk:changed)disk->gpt->restore();throw;}
         }
         save_update(statefile,saved);std::cout<<"Healthy userdata kernel accepted in slot "<<(running?'b':'a')<<"; physical display/sensor accuracy is not inferred\n";return;
     }

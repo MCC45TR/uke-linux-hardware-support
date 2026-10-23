@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-archive-20261020/srpm-builds/11179043/uke-touchscreen-0.1.0-13.fc46.src.rpm",
+  "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/uke-touchscreen-0.1.0-13.fc46.src.rpm",
   "sha256": "960c8abc638fd0051f4e1dcceea73e811251412167544d6052e0a0ea9234c91a",
   "archive": "uke-touchscreen-0.1.0.tar.xz",
   "root": "uke-touchscreen-0.1.0",

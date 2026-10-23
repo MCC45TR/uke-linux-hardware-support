@@ -1,5 +1,11 @@
 # COPR source families
 
+23 October 2026: hardware `1.8.1` corrects repeated DNF hooks before an A/B
+trial reboot and narrowly restores a stale backup array CRC during acceptance
+or fallback. Both GPT arrays, valid primary data, header identity and header
+CRCs remain mandatory. Host fixtures pass; package and tablet validation are
+separate. The observed B/7.2.12-14 to A/7.2.12-22 boot remains unaccepted.
+
 23 October 2026: hardware `1.8.0` adds pending-trial fallback after bounded
 health retries and admits one exact firmware cohort after external-fastboot
 Linux entry in both slots. Unknown cohorts remain refused. The matching kernel

@@ -1,5 +1,11 @@
 # Uke boot integration
 
+23 October 2026. Version `1.8.1` verifies a staged A/B trial before returning
+from repeated DNF hooks. Acceptance and fallback may restore a stale backup
+array CRC only when both entry arrays match a valid primary and both header
+identities and header CRCs are valid. Raw metadata is backed up before commit.
+Native host fixtures pass; signed-package and tablet validation remain pending.
+
 23 October 2026. Version `1.8.0` adds bounded health retries and a native
 fallback for a matching booted userdata A/B trial. Host state, GPT and UFS
 fixtures pass; physical alternate-slot boot, retry exhaustion, interruption,

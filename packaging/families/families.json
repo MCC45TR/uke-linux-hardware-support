@@ -21,11 +21,11 @@
     },
     {
       "name": "uke-hw",
-      "version": "1.8.0",
+      "version": "1.8.1",
       "requires": [
-        "uke-boot-integration = 1.8.0-1%{?dist}",
-        "uke-installation-profile = 1.8.0-1%{?dist}",
-        "uke-kernel-update = 1.8.0-1%{?dist}",
+        "uke-boot-integration = 1.8.1-1%{?dist}",
+        "uke-installation-profile = 1.8.1-1%{?dist}",
+        "uke-kernel-update = 1.8.1-1%{?dist}",
         "fastfetch"
       ],
       "suggests": [],
@@ -221,10 +221,10 @@
   "native_versions": {
     "uke-control": "1.5.2",
     "uke-adaptive-display": "1.0.16",
-    "uke-boot-integration": "1.8.0",
+    "uke-boot-integration": "1.8.1",
     "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
-    "uke-installation-profile": "1.8.0"
+    "uke-installation-profile": "1.8.1"
   },
   "release_overrides": {
     "iio-sensor-proxy": "21.fc46",

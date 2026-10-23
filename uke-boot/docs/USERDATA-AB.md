@@ -1,5 +1,21 @@
 # Userdata boot A/B updates
 
+23 October 2026. Version 1.8.1 corrects repeated DNF hooks while a verified
+trial awaits reboot. The recorded boot ID, accepted running Image, candidate
+digest, GPT selection and UFS boot LUN must agree; another candidate is refused.
+On Uke, DNF staging from B/7.2.12-14 reached A/7.2.12-22, but acceptance was
+blocked by a stale backup-header array CRC. This boot is not yet an accepted
+A/B update or a physical fallback result.
+
+Acceptance and fallback can restore that CRC only if the primary array CRC,
+both header CRCs, immutable header identities and both identical entry arrays
+validate. Admission normalizes a private memory copy without physical writes.
+Raw observed metadata is backed up; commit uses the existing concurrency,
+allowed-field and strict readback checks. Error restoration retains the original
+partition selection with a valid backup CRC. Corrupt primary data, divergent
+arrays, invalid headers or changed identities remain refused. Normal staging
+and check commands still require two fully valid GPT copies.
+
 23 October 2026. Version 1.8.0 adds a failed-trial fallback action. Native
 Fedora Rawhide host fixtures cover both selection directions and refusal
 controls. Physical A/B transitions, bootloader retry exhaustion, interrupted

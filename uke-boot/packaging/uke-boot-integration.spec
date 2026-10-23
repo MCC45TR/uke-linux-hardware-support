@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.0
+Version: 1.8.1
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -344,6 +344,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.1-1
+- Verify and retain a staged alternating trial until the next boot.
+- Restore only a stale backup array CRC with matching validated GPT arrays.
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.0-1
 - Return failed alternating userdata trials to the verified accepted boot slot.
 - Bound health retries independently of service run time; retain firmware admission guards.
