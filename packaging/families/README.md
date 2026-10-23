@@ -1,5 +1,13 @@
 # COPR source families
 
+23 October 2026: the active Uke COPR projects are `uke-linux` and
+`uke-linux-test`. The four frozen SRPM inputs use the
+[permanent source archive](https://github.com/MCC45TR/uke-linux-hardware-support/releases/tag/copr-migration-archive-20261020)
+with their original SHA-256 values. Historical COPR build identifiers remain
+provenance records. A byte-identical URL relocation requires no binary rebuild;
+changed source hashes still require a family revision. Source contract and
+trigger fixtures cover this distinction; tablet state is unaffected.
+
 23 October 2026: sensors `1.0.6` adds the separately installable, root-only
 `uke-proximity-capture` diagnostic. It is not a default dependency or service.
 Fixed bounded modes compare the captured Uke format with libssc's request;
