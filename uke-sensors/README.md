@@ -67,6 +67,11 @@ COPR contains neither. Registry updates stay in private RAM storage.
 
 ## Persistent touch candidate
 
+23 October 2026: the [kernel capture migration candidate](docs/KERNEL-TOUCH-CAPTURE.md)
+adds a C++ consumer for complete V4L2 THP packets. Host/AArch64 compilation and
+queue/refusal fixtures pass. Kernel/DT packaging and tablet validation remain
+required before the current SPI service can be retired.
+
 14 October 2026: `make touchscreen-rpm` builds a separate AArch64
 `uke-touchscreen` candidate from the reviewed native NT36532 processor. It
 uses standard Linux direct multitouch input and starts as a foreground service.

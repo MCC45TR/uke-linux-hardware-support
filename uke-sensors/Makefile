@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate srpm test-native test-cache test-hexagonrpc test-touch-normal test-touch-thp touchscreen-rpm test-proximity-capture proximity-capture-srpm
+.PHONY: validate srpm test-native test-cache test-hexagonrpc test-touch-normal test-touch-thp test-touch-capture test-touch-capture-queue touchscreen-rpm test-proximity-capture proximity-capture-srpm
 PACKAGE ?= libssc
 outdir ?= $(CURDIR)/build/srpm/$(PACKAGE)
 validate:
@@ -95,6 +95,7 @@ test-native:
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-readonly.cpp -o build/touch-contract
 	./build/touch-contract
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-readonly.cpp -o build/uke-touch-readonly
+	$(MAKE) test-touch-capture-queue
 test-cache:
 	mkdir -p build
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/ssc-cache.cpp -o build/ssc-cache-contract
@@ -143,3 +144,16 @@ test-touch-thp:
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-replay.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -o build/touch-replay
 	bash tests/touch-replay.sh ./build/touch-replay "$(TOUCH_CONFIG)" "$(TOUCH_FRAME_REFERENCE)"
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-thp.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o build/uke-touch-thp
+
+test-touch-capture-queue:
+	mkdir -p build
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-capture.cpp -o build/test-touch-capture
+	./build/test-touch-capture
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-capture-stream.cpp -o build/test-touch-capture-stream
+	./build/test-touch-capture-stream
+
+# Host only; the new consumer is not installed or selected by this target.
+test-touch-capture: test-touch-capture-queue
+	test -n "$(TOUCH_CORE_REFERENCE)"
+	bash src/prepare-touch-core.sh "$(TOUCH_CORE_REFERENCE)"
+	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/touch-capture.cpp src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o build/uke-touch-capture

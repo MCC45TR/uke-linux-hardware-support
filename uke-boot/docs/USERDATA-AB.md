@@ -1,5 +1,9 @@
 # Userdata boot A/B updates
 
+22 October 2026 source update: version 1.6.0 adds explicit restoration of an
+unaccepted current-slot trial. This addition has passed native host fixtures;
+it has not yet passed a tablet restoration or power-loss test.
+
 22 October 2026. Version 1.3.1 source and native host fixtures, Fedora Rawhide x86-64.
 This implementation has not yet passed an on-tablet A/B update or power-loss test.
 
@@ -127,6 +131,30 @@ the UFS boot-LUN attribute are not one atomic hardware transaction. Abrupt power
 loss between them can require external recovery. Actual repeated upgrades,
 fallback, interruption and recovery tests remain required before a release
 claim. A successful DNF transaction does not prove that a boot write occurred.
+
+## Restore an unaccepted current-slot trial
+
+For a booted current-slot trial that should not be accepted as healthy, use its
+already installed, recorded accepted kernel bundle:
+
+```sh
+uke-kernel-update check-restore-current /usr/lib/senemos/kernel-updates/ACCEPTED_RELEASE
+uke-kernel-update restore-current /usr/lib/senemos/kernel-updates/ACCEPTED_RELEASE
+```
+
+The first command checks admission without a partition write. The second writes
+only physical boot B, using the same complete backup, power check, sync, readback
+and write-error restoration as `apply-current`. It requires the currently running
+release and boot B hash to match the recorded candidate, and the target release
+and image hash to match the accepted B baseline. The trial must have booted since
+staging. Other phases, slots, releases and images are refused.
+
+Restoration leaves the trial state unchanged and does not mark the candidate
+healthy. After an explicit reboot into the accepted kernel, normal acceptance
+records the returned trial as failed. The command does not reboot, select a slot,
+write boot A or restore shared userdata packages. Keep matching modules, the
+complete backup and external recovery available. A single-slot write remains
+non-atomic under power loss. Host tests do not qualify physical recovery.
 
 ## Source comparison
 

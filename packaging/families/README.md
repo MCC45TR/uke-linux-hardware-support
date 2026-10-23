@@ -5,6 +5,14 @@
 Fixed bounded modes compare the captured Uke format with libssc's request;
 they do not replace the decoder, set calibration or establish near/far support.
 
+23 October 2026: hardware `1.7.0` is a source migration candidate. Boot
+integration owns the existing calibrated touch service and its legacy rollback
+client, with a native launcher for a client supplied by the running kernel's
+module package. The separate `uke-touchscreen` child is no longer built.
+Private data remains separate. Native source generation, host boot/update/USB
+fixtures and source-family checks pass; COPR and tablet migration are pending.
+See [touch runtime migration](../../uke-boot/docs/TOUCH-RUNTIME.md).
+
 23 October 2026: sensors `1.0.5` builds the front-color publisher from its
 current owning source instead of the archived release-2 source RPM. It retains
 the SUID readiness subscription while publishing unavailable startup state,
@@ -25,6 +33,13 @@ the default DNF policy. Original Fedora Plymouth units show the graphical theme
 after root mount and during shutdown. No Nabu repository, boot image update or
 slot operation is introduced. RPM scriptlet, parser and isolated DNF fixtures
 are separate from physical Uke display and shutdown acceptance.
+
+22 October 2026: hardware `1.6.0` adds the native updater's guarded restoration
+of a booted, unaccepted current-slot trial to its recorded accepted B image.
+The failed trial is not marked healthy. Package/module verification, physical
+storage checks, battery admission, durable backup and write/readback remain
+mandatory. Other hardware children retain their inputs with fresh revisions.
+Host tests do not establish tablet restoration or interrupted-write recovery.
 
 22 October 2026: skipped-release resolver checks cover the earliest retained
 `7.2.9-1` component baseline, the pre-family `7.2.11-9` package set and the
@@ -165,7 +180,7 @@ belong to kernel/DT, original distribution services and bounded Uke helpers.
 | Source family | Child responsibilities |
 |---|---|
 | uke-core | uke-control and optional development diagnostics |
-| uke-hw | retained boot/USB/Wi-Fi integration, separate installation classifier, firmware, Bluetooth factory-address oneshot, touchscreen and original Fastfetch configuration |
+| uke-hw | boot/USB/Wi-Fi integration, installation classifier, firmware, Bluetooth factory address, touch runtime with matched-kernel dispatch and original Fedora Fastfetch |
 | uke-power | original UPower with reviewed corrections, battery observation/control gates, PPD backend, adaptive display |
 | uke-sensors | SSC library, standard SensorProxy with SSC, bounded file service and opt-in front color |
 | uke-additional | AT-SPI, GStreamer, libaccounts-glib, libwacom, C++ runtime and Mesa; original upstream versions retained |

@@ -21,17 +21,15 @@
     },
     {
       "name": "uke-hw",
-      "version": "1.5.3",
+      "version": "1.7.0",
       "requires": [
-        "uke-boot-integration = 1.5.3-1%{?dist}",
-        "uke-installation-profile = 1.5.3-1%{?dist}",
-        "uke-kernel-update = 1.5.3-1%{?dist}",
+        "uke-boot-integration = 1.7.0-2%{?dist}",
+        "uke-installation-profile = 1.7.0-2%{?dist}",
+        "uke-kernel-update = 1.7.0-2%{?dist}",
         "fastfetch"
       ],
-      "suggests": [
-        "uke-touchscreen"
-      ],
-      "release": 1,
+      "suggests": [],
+      "release": 2,
       "watch_paths": [
         "uke-boot/src",
         "uke-boot/packaging/uke-installation-profile.spec",
@@ -41,7 +39,9 @@
         "uke-desktop-integration/packaging/uke-bluetooth-address.service",
         "uke-desktop-integration/packaging/70-uke-bluetooth.rules",
         "uke-desktop-integration/LICENSE.GPL-3.0",
-        "packaging/families/patches/touch-panel-start.patch"
+        "packaging/families/patches/touch-panel-start.patch",
+        "uke-sensors/src/prepare-touch-runtime.sh",
+        "uke-sensors/manifests/touch-runtime-source.json"
       ]
     },
     {
@@ -221,16 +221,14 @@
   "native_versions": {
     "uke-control": "1.5.1",
     "uke-adaptive-display": "1.0.16",
-    "uke-boot-integration": "1.5.3",
-    "uke-touchscreen": "1.0.14",
+    "uke-boot-integration": "1.7.0",
     "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
-    "uke-installation-profile": "1.5.3"
+    "uke-installation-profile": "1.7.0"
   },
   "release_overrides": {
     "iio-sensor-proxy": "21.fc46",
-    "uke-boot-integration": "1.fc46",
-    "uke-touchscreen": "2.fc46",
+    "uke-boot-integration": "2.fc46",
     "uke-plymonth": "4.fc46",
     "uke-orangefox-recovery": "5.fc46",
     "upower": "13.fc46",
