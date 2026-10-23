@@ -37,7 +37,10 @@ build/ssc-sample: shared/ssc-sample.cpp shared/ssc-discovery.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
 build/test-front-color: tests/front-color.cpp src/front-color.cpp src/front-color.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
-check: all build/test-front-color
+build/test-execute: tests/execute.cpp src/backend.hpp build/libuke-control.so.0
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -Lbuild -l:libuke-control.so.0 -o $@
+check: all build/test-front-color build/test-execute
+	LD_LIBRARY_PATH=build build/test-execute
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/resize-system.cpp -o build/test-resize-system
 	build/test-resize-system
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/diagnostic.cpp -o build/test-diagnostic
@@ -94,7 +97,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.5.1/#' -czf "$$top/SOURCES/uke-control-1.5.1.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.5.2/#' -czf "$$top/SOURCES/uke-control-1.5.2.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.5.1
+Version: 1.5.2
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -110,6 +110,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.2-1
+- Wait without spinning when a child closes its output before exiting
+- Test the actual runner's EOF, exit status, timeout and output bounds
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.1-1
 - Confirm offline expansion and normal reboot; clarify read-only capacity checks
 - Admit only the exact standard dracut character nodes in the audited RAM payload
