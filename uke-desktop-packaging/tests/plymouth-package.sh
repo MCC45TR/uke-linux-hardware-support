@@ -2,6 +2,7 @@
 # Host fixture: real RPM scriptlets and Fedora's original theme selector.
 set -Eeuo pipefail
 package=$(realpath "${1:?binary theme RPM}")
+rpm -qp --requires "$package" | grep -Fxq plymouth-plugin-label
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
 mkdir -p "$stage/payload" "$stage/config" "$stage/policy"

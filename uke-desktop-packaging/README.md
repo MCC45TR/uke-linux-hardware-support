@@ -11,6 +11,8 @@ This repository owns decoration, theme and native runtime sources for Fedora Raw
 - `uke-plymonth`: removable Xiaomi/Fedora boot, shutdown and update visuals,
   adapted from the MIT-licensed Nabu theme. Original Fedora Plymouth services
   start the graphical theme after mounting root, with pixel scaling fixed to one.
+  The original label plugin and fonts are required for text and console rendering;
+  the package build checks actual text dimensions as well as script syntax.
   No initramfs, boot image or slot is modified. See the
   [source and validation record](src/plymouth-uke/README.md).
 

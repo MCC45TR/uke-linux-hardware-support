@@ -1,5 +1,11 @@
 # COPR source families
 
+23 October 2026: extras `1.0.4` delivers `uke-plymonth 1.0.2-4` with a required
+original Fedora label plugin. The first tablet boot exposed a script-plugin
+crash when text rendering was absent. The package build now exercises the
+engine's real space-glyph rendering check as well as the theme parser. This
+dependency correction does not establish physical theme visibility.
+
 22 October 2026: extras `1.0.3` delivers `uke-plymonth 1.0.2-3`, adapting the
 attributed Xiaomi/Fedora artwork from Nabu. Metas `1.0.5` adds it as a Core
 recommendation. Normal DNF upgrades install the new weak dependency; removing

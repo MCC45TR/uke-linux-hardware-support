@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-plymonth
 Version: 1.0.2
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Senemos Uke boot and shutdown Plymouth theme
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-packaging
@@ -9,8 +9,8 @@ Source0: %{name}-%{version}.tar.xz
 BuildArch: noarch
 BuildRequires: tar xz
 BuildRequires: systemd-rpm-macros
-BuildRequires: gcc-c++ plymouth-plugin-script
-Requires: plymouth plymouth-plugin-script
+BuildRequires: gcc-c++ plymouth-plugin-script plymouth-plugin-label abattis-cantarell-fonts
+Requires: plymouth plymouth-plugin-script plymouth-plugin-label
 Requires: abattis-cantarell-fonts
 Requires(post): plymouth-scripts
 Requires(preun): plymouth-scripts
@@ -67,6 +67,10 @@ fi
 %{_unitdir}/plymouth-halt.service.d/
 
 %changelog
+* Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.2-4
+- Require the original text renderer used by the theme and script console viewer.
+- Check actual label rendering as well as script syntax in the package build.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.2-3
 - Adapt the attributed Nabu artwork for removable Uke boot and shutdown visuals.
 - Use original Fedora services without rebuilding or writing a boot image.
