@@ -1,5 +1,12 @@
 # Userdata boot A/B updates
 
+23 October 2026. Version 1.8.2 discovers one connected, enabled DSI output from
+the original DRM sysfs interface. Connector numbering may differ between boots;
+the observed `DSI-1` to `DSI-2` change must not reject the same internal panel.
+Absent, disabled, ambiguous or external-only displays remain refused. Original
+KDE is retained. This correction is separate from the observed kernel-22 Oops
+during another early boot and does not establish reliable repeated startup.
+
 23 October 2026. Version 1.8.1 corrects repeated DNF hooks while a verified
 trial awaits reboot. The recorded boot ID, accepted running Image, candidate
 digest, GPT selection and UFS boot LUN must agree; another candidate is refused.

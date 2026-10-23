@@ -1,5 +1,10 @@
 # COPR source families
 
+23 October 2026: hardware `1.8.2-1` corrects internal-panel discovery after
+the observed DRM connector renumbering. All native children advance to `1.8.2-1`
+and unchanged firmware to `3.0.304.0-9`. Screen enablement remains required;
+kernel-22 early-boot reliability remains unresolved.
+
 23 October 2026: hardware `1.8.1-2` advances boot children to `1.8.1-2` and
 the unchanged firmware payload to `3.0.304.0-8`. Build `11199340` was cancelled
 before publication after detecting its unchanged firmware RPM revision.

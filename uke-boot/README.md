@@ -1,5 +1,11 @@
 # Uke boot integration
 
+23 October 2026. Version `1.8.2` discovers the connected internal DSI output
+without fixing its connector number. Uke enumerated `DSI-2` on a later boot;
+the `DSI-1` health assumption falsely refused it. Enabled-state and unique-output
+checks remain mandatory. Kernel 7.2.12-22 also has an unresolved early-boot Oops;
+the display-name correction does not qualify that kernel's restart reliability.
+
 23 October 2026. Version `1.8.1` verifies a staged A/B trial before returning
 from repeated DNF hooks. Acceptance and fallback may restore a stale backup
 array CRC only when both entry arrays match a valid primary and both header

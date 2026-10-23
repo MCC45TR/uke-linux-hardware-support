@@ -164,6 +164,18 @@ static bool awaiting_ab_reboot(const UserdataUpdate &saved,unsigned running,cons
     need(release==saved.policy.good_release && image_hash==saved.good_image,"Pending-trial baseline identity differs");
     return true;
 }
+static bool internal_display_enabled(const fs::path &root) {
+    unsigned connected=0;bool enabled=false;
+    for(const auto &entry:fs::directory_iterator(root)) {
+        const auto name=entry.path().filename().string();const auto dsi=name.find("-DSI-");
+        if(!name.starts_with("card") || dsi==std::string::npos || dsi==4 ||
+           name.find_first_not_of("0123456789",4)!=dsi || dsi+5==name.size() ||
+           name.find_first_not_of("0123456789",dsi+5)!=std::string::npos)continue;
+        if(read_text(entry.path()/"status")!="connected\n")continue;
+        ++connected;enabled|=read_text(entry.path()/"enabled")=="enabled\n";
+    }
+    return connected==1 && enabled;
+}
 static constexpr const char *firmware_names[]={"xbl","xbl_config","xbl_config_nof","multiimgqti","multiimgoem","uefi","aop","aop_config","tz","hyp","abl","devcfg","qupfw","uefisecapp","imagefv","shrm","cpucp","keymaster","featenabler","cpucp_dtb","pvmfw"};
 static bool admitted_early_firmware(const std::map<std::string,std::string> &hashes) {
     need(hashes.size()==2*std::size(firmware_names),"Incomplete early firmware inventory");
@@ -261,10 +273,7 @@ static void health() {
         std::unique_ptr<char,decltype(&free)> value(state,free);
         need(status>=0 && state && std::string(state)=="active",std::string("Boot health unit is not active: ")+unit);
     }
-    bool display=false;
-    for(const auto &entry:fs::directory_iterator("/sys/class/drm"))if(entry.path().filename().string().ends_with("-DSI-1"))
-        display|=read_text(entry.path()/"status")=="connected\n" && read_text(entry.path()/"enabled")=="enabled\n";
-    need(display,"Internal display has not reached an enabled DRM output");
+    need(internal_display_enabled("/sys/class/drm"),"Internal display has not reached one unambiguous enabled DRM output");
 }
 static void request_fallback_reboot() {
     sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Fallback selected; system bus unavailable for reboot");

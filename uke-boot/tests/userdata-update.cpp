@@ -47,6 +47,25 @@ int main() {
     for(const std::string profile:{"","automatic=2\nvrr_min_hz=30\n","automatic=1\n","automatic=1\nvrr_min_hz=31\n","automatic=1\nautomatic=1\nvrr_min_hz=30\n"})
         reject([&]{automatic_updates("automatic=0\n",profile);});
     char temporary[]="/tmp/uke-userdata-state.XXXXXX";assert(mkdtemp(temporary));const fs::path root=temporary;
+    {
+        const auto drm=root/"drm";fs::create_directory(drm);
+        const auto connector=[&](const std::string &name,const std::string &status,const std::string &enabled) {
+            const auto path=drm/name;fs::create_directories(path);
+            std::ofstream(path/"status")<<status+'\n';std::ofstream(path/"enabled")<<enabled+'\n';
+        };
+        assert(!internal_display_enabled(drm));
+        connector("card2-DP-1","connected","enabled");connector("card3-HDMI-A-1","connected","enabled");
+        assert(!internal_display_enabled(drm));
+        connector("card2-DSI-1","connected","disabled");assert(!internal_display_enabled(drm));
+        connector("card2-DSI-1","disconnected","enabled");assert(!internal_display_enabled(drm));
+        connector("card2-DSI-1","connected","enabled");assert(internal_display_enabled(drm));
+        fs::rename(drm/"card2-DSI-1",drm/"card7-DSI-2");assert(internal_display_enabled(drm));
+        for(const auto name:{"card-DSI-1","cardx-DSI-1","card0-DSI-x","gpu0-DSI-1"})connector(name,"connected","enabled");
+        assert(internal_display_enabled(drm));
+        connector("card0-DSI-3","connected","disabled");assert(!internal_display_enabled(drm));
+        connector("card0-DSI-3","disconnected","disabled");assert(internal_display_enabled(drm));
+        fs::remove(drm/"card7-DSI-2"/"enabled");assert(!internal_display_enabled(drm));
+    }
     UserdataUpdate saved{{uke_install::Profile::userdata,uke_install::Slot::b,"7.2.11-14",uke_install::Phase::stable,{},{}},std::string(64,'a'),{}, {}};
     for(const auto good:{uke_install::Slot::a,uke_install::Slot::b}) {
         auto trial=saved;trial.policy.good=good;
