@@ -11,7 +11,7 @@ srpm:
 	if [[ "$$subdir" == packaging/families/uke-* ]]; then
 		family="$${subdir##*/}"
 		case "$$family" in uke-core|uke-hw|uke-power|uke-sensors|uke-extras|uke-additional|uke-metas|uke-camera|uke-sound) ;; *) exit 1;; esac
-		dnf -y --setopt=install_weak_deps=False install make curl jq xz tar gzip rpm-build coreutils cpio gawk bash kf6-rpm-macros systemd-rpm-macros cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros
+		dnf -y --setopt=install_weak_deps=False install git make curl jq xz tar gzip rpm-build coreutils cpio gawk bash kf6-rpm-macros systemd-rpm-macros cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros
 		stage="$$root/packaging/families/build/$$family"
 		$(MAKE) -C "$$root/packaging/families" srpm FAMILY="$$family" outdir="$$stage"
 		mkdir -p "$(outdir)"

@@ -17,7 +17,8 @@ archive=$(jq -er .archive "$manifest") prefix=$(jq -er .root "$manifest")
 mkdir -p "$(dirname -- "$output")"
 stage=$(mktemp -d "$(dirname -- "$output")/.uke-touch-export.XXXXXX")
 trap 'rm -rf -- "$stage"' EXIT
-rpm2cpio "$source_rpm" | cpio --extract --quiet --to-stdout "./$archive" > "$stage/source.tar.xz"
+rpm2cpio "$source_rpm" > "$stage/source.cpio"
+cpio --extract --quiet --to-stdout "./$archive" < "$stage/source.cpio" > "$stage/source.tar.xz"
 tar -tJf "$stage/source.tar.xz" > "$stage/paths"
 awk -v prefix="$prefix/" 'index($0,prefix)!=1 || /^\/|(^|\/)\.\.($|\/)/ {bad=1} END{exit bad}' "$stage/paths"
 tar -tvJf "$stage/source.tar.xz" | awk 'substr($0,1,1)!="-" && substr($0,1,1)!="d"{bad=1} END{exit bad}'
