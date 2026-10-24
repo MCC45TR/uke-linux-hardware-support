@@ -2,13 +2,37 @@
 
 Uke rotation, cover, brightness, power and audio desktop policies for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
 
-This is an initial project-owned source and packaging repository. The manifest
-lists the intended packages, Uke evidence gates and current build readiness.
-There is no functional hardware payload or device acceptance at this checkpoint.
+This repository contains platform policies and their packaging. The manifest
+describes the wider integration scope; individual hardware results are recorded
+separately.
 
 ## Package scope
 
 - `uke-desktop-integration`
+- `uke-displayport-audio`: digital-only ALSA UCM and protected THP discovery policy.
+
+On 24 October 2026, POCO Pad X1 with kernel 7.2.12-31 and signed policy 0.1.0-3
+plays native stereo PCM and Chromium video sound through Juo JH925 to a
+ViewSonic VA3209-QHD. Internal speakers, capture, reconnect endurance and the
+other integration policies are not established by that result.
+
+## DisplayPort monitor labels
+
+`make pipewire-monitor-srpm FEDORA_PIPEWIRE_SRPM=<original-source-rpm>` applies
+the bounded monitor-label patch to the exact Fedora PipeWire 1.6.10-1.fc46
+source RPM. The host helper checks its SHA-256 before extraction and retains
+Fedora's build flags, dependencies, tests and package family. The added check
+exercises the actual route collector with two monitor models, absent/empty
+ELD, an unrelated card and separate active device/profile selections.
+
+The patch uses actual ELD product names only for `POCO-Pad-X1-HDMI`. It changes
+Pulse sink/port labels without changing audio formats, routing or EDID. The
+matching UCM ELD mapping and a separate tablet label test are required. Rebase
+and validate this patch when Fedora changes the PipeWire source version.
+No KDE application is copied or rebuilt. Fedora's existing Meson and docutils
+build tools are host-only upstream dependencies; their implementation is
+retained rather than replaced. No project Python code or Python target payload
+is introduced.
 
 Nabu reference families: `nabu-desktop-integration`.
 These are process references; Uke wiring, firmware and runtime behavior require

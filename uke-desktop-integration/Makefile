@@ -1,7 +1,10 @@
 SHELL := /bin/bash
 .PHONY: validate srpm
 .PHONY: displayport-audio-srpm
+.PHONY: pipewire-monitor-srpm
 BUILD_DIR ?= build
+pipewire-monitor-srpm:
+	bash scripts/build-pipewire-monitor-srpm.sh "$(FEDORA_PIPEWIRE_SRPM)" "$(abspath $(BUILD_DIR))/pipewire-monitor/rpmbuild"
 displayport-audio-srpm:
 	mkdir -p $(BUILD_DIR)/displayport-audio/rpmbuild/{SOURCES,SRPMS,SPECS}
 	tar --sort=name --mtime=@1792800000 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-displayport-audio-0.1.0/,' -czf $(BUILD_DIR)/displayport-audio/rpmbuild/SOURCES/uke-displayport-audio-0.1.0.tar.gz LICENSE src/ucm2 src/wireplumber
