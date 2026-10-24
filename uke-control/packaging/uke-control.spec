@@ -1,18 +1,19 @@
 Name: uke-control
-Version: 1.8.1
+Version: 1.9.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
 Source0: %{name}-%{version}.tar.gz
 ExclusiveArch: aarch64 x86_64
-BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd)
+BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
+Requires: ethtool >= 7.1
 Requires: systemd-udev
 Requires: dracut >= 111
 Requires: f2fs-tools >= 1.16.0
@@ -116,6 +117,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.9.0-1
+- Add disconnected DP lane ceilings, per-device USB power and RTL8153 link profiles.
+- Query original ethtool capabilities and require link-down speed changes with readback.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.1-1
 - Resolve exactly one internal DSI output instead of assuming connector numbering.
 - Preserve the published DisplayPort profile commands and their admission checks.

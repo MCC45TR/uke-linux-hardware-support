@@ -2,6 +2,37 @@
 
 ## USB-C DisplayPort profiles, 24 October 2026
 
+`sudo uke-control display lane-limit 1|2|4` sets the matching kernel's
+disconnected-only training ceiling. It resets to four at driver initialization
+and never changes the Type-C pin assignment. The resulting link remains bounded
+by the firmware route, source, sink and repeaters. In particular, selecting four
+cannot turn JH925's observed two-lane route into four lanes. `display profiles`
+reports this ceiling separately from the observed link and standard pin control.
+Disconnect the USB-C display before changing it; an attached or starting stream
+returns `EBUSY`. A successful readback confirms policy, not physical link training.
+
+`uke-control usb status` includes negotiated device speed and runtime power,
+autosuspend, wakeup and persistence attributes. To prevent runtime autosuspend
+for one external USB device under Uke's controller, use
+`sudo uke-control usb power 2-1 performance`; restore kernel-managed autosuspend
+with `sudo uke-control usb power 2-1 auto`. Discover the current device name in
+the status output. These one-shot settings neither force USB generations nor
+change charger/PD policy; they reset on device removal. System sleep remains
+separate from runtime autosuspend.
+
+`uke-control ethernet status IFACE` queries the original Fedora `ethtool` for
+the RTL8153's link/advertisement, offloads, EEE, pause, rings, coalescing and
+channels. Unsupported operations report their error, without invented values.
+The cached section includes RX/TX errors and drops. Use
+`sudo uke-control ethernet profile IFACE auto|1000-full|100-full|10-full` to
+restrict auto-negotiation to supported modes. First disconnect that interface
+through the original NetworkManager controls and bring it administratively
+down; an up interface is refused. Reconnect afterwards. Driver readback checks
+advertised modes, while cable/peer negotiation and throughput need a separate
+physical test. Keep Wi-Fi available. These settings are not saved as a
+NetworkManager connection profile. Advanced EEE/offload controls remain with
+the original `ethtool`; this release inventories them and preserves their values.
+
 Use `uke-control display profiles` to list profiles, the standard Type-C
 selection interface and the active DP driver's cached lane count, rate and
 wire bits per pixel. A missing cache, unsupported version, inactive stream or

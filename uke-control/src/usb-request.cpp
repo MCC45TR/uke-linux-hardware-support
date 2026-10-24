@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "usb-request.hpp"
+#include "link-policy.hpp"
 #include "rpm-api.hpp"
 #include "sysfs.hpp"
 #include <algorithm>
@@ -229,6 +230,10 @@ std::string display_profiles(const fs::path& requested_root) {
         nodes.empty()?"unavailable":"ambiguous");
     out+=",\"pin_assignments\":"+(nodes.size()==1?sysfs::attribute(root,nodes.front()):"null");
     out+=",\"observed_link\":"+dp_link(root);
+    const auto limits=links::lane_controls(root);
+    out+=",\"training_ceiling\":{\"available\":"+std::string(limits.size()==1?"true":"false")+
+        ",\"values\":[1,2,4],\"current\":"+(limits.size()==1?sysfs::attribute(root,limits.front()):"null")+
+        ",\"requires_disconnected\":true,\"changes_typec_pin_assignment\":false}";
     out+=",\"physical_validation\":\"NOT_ESTABLISHED\",\"persisted\":false";
     out+=",\"profiles\":[{\"id\":\"usb3-display\",\"requested_dp_lanes\":2,\"usb3_lanes_reserved\":true},";
     out+="{\"id\":\"display4\",\"requested_dp_lanes\":4,\"usb3_lanes_reserved\":false,";

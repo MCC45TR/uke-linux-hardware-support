@@ -1,5 +1,12 @@
 # Uke Control
 
+24 October 2026: version 1.9.0 adds a disconnected DP training ceiling (1/2/4),
+per-device USB runtime-power selection and RTL8153 capability queries/link
+advertisement profiles through the original Fedora ethtool. It retains the
+published 1.8.1 internal-panel correction and 1.8.0 Type-C admission guards.
+Host fixtures and package checks are separate from physical link acceptance.
+See [display and dock controls](DISPLAY.md).
+
 24 October 2026: version 1.8.1 resolves the unique internal DSI output for
 session controls. A connected external display can change its connector number;
 multiple internal outputs remain an explicit refusal. The published 1.8.0

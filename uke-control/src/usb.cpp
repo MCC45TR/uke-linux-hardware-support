@@ -47,7 +47,7 @@ std::string snapshot(const fs::path& requested_root) {
     group("phy_routes","sys/bus/platform/drivers/qcom-qmp-combo-phy",{"uke_route_state"},[&](const fs::path& p){return driver(root,p)==quote("qcom-qmp-combo-phy");});
     group("aux_routes","sys/bus/i2c/drivers/wcd939x-uke-typec",{"route_state"},[&](const fs::path& p){return driver(root,p)==quote("wcd939x-uke-typec");});
     group("gadgets","sys/class/udc",{"state","function","current_speed","maximum_speed"},all);
-    group("usb_devices","sys/bus/usb/devices",{"idVendor","idProduct","bcdDevice","bDeviceClass","busnum","devnum","devpath","speed","version","bMaxPower","authorized","configuration"},[&](const fs::path& p){return exists(root,p/"idVendor");});
+    group("usb_devices","sys/bus/usb/devices",{"idVendor","idProduct","bcdDevice","bDeviceClass","busnum","devnum","devpath","speed","version","bMaxPower","authorized","configuration","power/control","power/runtime_status","power/autosuspend_delay_ms","power/wakeup","power/persist"},[&](const fs::path& p){return exists(root,p/"idVendor");});
     group("usb_interfaces","sys/bus/usb/devices",{"bInterfaceClass","bInterfaceSubClass","bInterfaceProtocol"},[&](const fs::path& p){return exists(root,p/"bInterfaceClass");});
     group("usb_network","sys/class/net",{"operstate","carrier","speed","duplex","statistics/rx_bytes","statistics/tx_bytes","statistics/rx_errors","statistics/tx_errors","statistics/rx_dropped","statistics/tx_dropped"},[&](const fs::path& p){return exists(root,p/"device/bInterfaceClass");});
     group("displays","sys/class/drm",{"status","enabled","modes"},[](const fs::path& p){return p.filename().string().find("-DP-")!=std::string::npos||p.filename().string().find("-HDMI-A-")!=std::string::npos;});

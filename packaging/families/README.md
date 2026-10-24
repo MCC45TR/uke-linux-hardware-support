@@ -1,6 +1,8 @@
 # COPR source families
 
-24 October 2026: core `1.8.1` provides bounded native KScreen session controls.
+24 October 2026: core `1.9.0` adds disconnected DP training ceilings,
+per-device USB runtime power and RTL8153 link capability/profile controls.
+It preserves core `1.8.1`'s bounded native KScreen session controls.
 Metas `1.1.0-2` contains the separate `uke-plasma-controls` RPM, recommended only
 by `uke-kde-plasma-meta`. Removing the widget retains the KDE meta package.
 The applet delegates all settings to `uke-control`, uses standard Polkit for
