@@ -1,21 +1,21 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
-BuildRequires: tar xz bash jq diffutils firewalld-filesystem libxml2
+BuildRequires: tar xz bash jq diffutils firewalld-filesystem firewalld libxml2
 Requires: uke-core-meta >= 1.0.0-3
 %description
 Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-9
-Obsoletes: kde-plasma-uke-meta < 1.0.0-9
+Provides: kde-plasma-uke-meta = 1.0.0-10
+Obsoletes: kde-plasma-uke-meta < 1.0.0-10
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
@@ -131,6 +131,9 @@ fi
 %{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-10
+- Require the package that owns the firewalld policy schema for the mandatory native check.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-9
 - Allow original Fedora KDE Connect discovery and connections from local addresses by default.
 - Reload the vendor firewalld policy without changing pairing, zone definitions or session overrides.

@@ -1,5 +1,11 @@
 # COPR source families
 
+24 October 2026: metas `1.0.6-2` requires original Fedora `firewalld` for
+the policy XSD used by the mandatory native check. `firewalld-filesystem` owns
+the RPM macro and directories but not that schema. Build `11202425` stopped
+at this missing build dependency and produced no installable correction.
+Desktop children advance to `1.0.0-10`, Core metadata to `1.0.5-4`.
+
 24 October 2026: metas `1.0.6-1` delivers Plasma selection `1.0.0-9` with
 original Fedora KDE Connect autostart and a vendor firewalld policy limited to
 private IPv4 and local IPv6 sources. Pairing and administrator overrides remain
