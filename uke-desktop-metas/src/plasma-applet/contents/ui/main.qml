@@ -15,6 +15,7 @@ PlasmoidItem {
     property var panel: ({})
     property var desktop: ({})
     property var usb: ({})
+    property var lights: ({})
     property var requests: ({})
     property string errorText: ""
     property int serial: 0
@@ -34,6 +35,7 @@ PlasmoidItem {
         execute("plasma")
         execute("desktop")
         execute("usb")
+        execute("lights")
     }
     function change(action) {
         if (pending > 0) return
@@ -45,7 +47,7 @@ PlasmoidItem {
         if (!action) return
         delete requests[source]
         --pending
-        const query = action === "plasma" || action === "desktop" || action === "usb"
+        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights"
         if (query) {
             let value = {}
             try {
@@ -56,7 +58,8 @@ PlasmoidItem {
             }
             if (action === "plasma") panel = value
             else if (action === "desktop") desktop = value
-            else usb = value
+            else if (action === "usb") usb = value
+            else lights = value
         } else {
             if (data["exit code"] !== 0)
                 errorText = i18n("The change failed or authorization was cancelled.")
@@ -85,6 +88,13 @@ PlasmoidItem {
     toolTipMainText: i18n("Uke Tablet Controls")
     toolTipSubText: i18n("Display, cover and USB")
     onExpandedChanged: { if (expanded) refresh() }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: root.expanded && root.lights.flashlight?.on === true
+        onTriggered: { if (root.pending === 0) root.execute("lights") }
+    }
 
     Plasma5Support.DataSource {
         id: executable
@@ -197,7 +207,31 @@ PlasmoidItem {
             ControlRow {
                 title: i18n("Flashlight")
                 iconName: "flashlight-off"
-                available: false
+                description: i18n("20 mA total; switches off within 60 seconds")
+                available: root.lights.flashlight?.available === true
+                busy: root.pending > 0
+                action: Component {
+                    PC.Switch {
+                        checked: root.lights.flashlight?.on === true
+                        Accessible.name: i18n("Flashlight")
+                        onToggled: root.change(checked ? "flashlightOn" : "flashlightOff")
+                    }
+                }
+            }
+            ControlRow {
+                title: i18n("Notification LED")
+                iconName: "color-management"
+                description: i18n("Low brightness; administrator authorization required")
+                available: root.lights.rgb?.available === true
+                busy: root.pending > 0
+                action: Component {
+                    RowLayout {
+                        PC.Button { text: i18n("Red"); onClicked: root.change("red") }
+                        PC.Button { text: i18n("Green"); onClicked: root.change("green") }
+                        PC.Button { text: i18n("Blue"); onClicked: root.change("blue") }
+                        PC.Button { text: i18n("Off"); onClicked: root.change("ledOff") }
+                    }
+                }
             }
             PC.Label {
                 Layout.fillWidth: true

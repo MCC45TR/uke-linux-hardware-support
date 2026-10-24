@@ -1,5 +1,9 @@
 # Uke desktop selections
 
+25 October 2026: release `1.0.0-15` adds a bounded flashlight switch and low-duty
+red/green/blue/off controls as clients of Control 1.10.0. Missing exact kernel
+providers keep the rows unavailable. The widget performs no hardware writes.
+
 24 October 2026: release `1.0.0-14` gives QML sources a distinct reproducible
 timestamp for each monotonic RPM revision. This invalidates Qt's older disk
 cache after an update. The package check covers the cached invalid-to-corrected

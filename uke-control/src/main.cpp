@@ -13,17 +13,20 @@
 #include "plasma.hpp"
 #include "wake.hpp"
 #include "diagnostic.hpp"
+#include "lights.hpp"
 #include "vrr.hpp"
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.9.1 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.10.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
       "  desktop rotation on|off     Set original KScreen automatic rotation policy\n"
       "  desktop brightness on|off   Set original KScreen automatic brightness policy\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
+      "  flashlight status|on|off    Supervised 20 mA torch; shuts off within 60 seconds\n"
+      "  led status|off|set R G B    RGB color 0..255 at fixed low PWM duty (root)\n"
       "  wake status                 Driver wake permissions and unsupported event controls\n"
       "  wake set SOURCE on|off      Save and apply one wake permission (root)\n"
       "  wake apply                  Restore saved permissions before suspend (root)\n"
@@ -83,6 +86,7 @@ int main(int argc,char** argv) {
         }
         if(const int result=uke::charge::policy_command(argc,argv);result>=0)return result;
         std::string command=argv[1];
+        if(command=="flashlight" || command=="led")return uke::lights::command(command=="led",argc-2,argv+2);
         if(command=="resize") {
             if(argc!=3&&argc!=4)throw std::runtime_error("Usage: uke-control resize system [--check]");
             if(std::string_view(argv[2])!="system"||(argc==4&&std::string_view(argv[3])!="--check"))throw std::runtime_error("Usage: uke-control resize system [--check]");

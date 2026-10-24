@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.9.1
+Version: 1.10.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -64,6 +64,7 @@ install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sampl
 install -Dm644 packaging/uke-control.service %{buildroot}%{_unitdir}/uke-control.service
 install -Dm644 packaging/uke-control-wake.service %{buildroot}%{_unitdir}/uke-control-wake.service
 install -Dm644 packaging/uke-control-cdc.service %{buildroot}%{_unitdir}/uke-control-cdc.service
+install -Dm644 packaging/uke-control-flashlight.service %{buildroot}%{_unitdir}/uke-control-flashlight.service
 install -Dm644 packaging/90-uke-control-cdc.rules %{buildroot}%{_udevrulesdir}/90-uke-control-cdc.rules
 install -d %{buildroot}%{_unitdir}/sleep.target.requires
 ln -s ../uke-control-wake.service %{buildroot}%{_unitdir}/sleep.target.requires/uke-control-wake.service
@@ -81,16 +82,16 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 %systemd_user_post uke-control-moisture-notify.service
 %preun
-%systemd_preun uke-control.service uke-control-wake.service uke-control-cdc.service
+%systemd_preun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
-%systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service
+%systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 %systemd_user_postun uke-control-moisture-notify.service
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
 %{_bindir}/uke-control
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
@@ -102,6 +103,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_unitdir}/uke-control.service
 %{_unitdir}/uke-control-wake.service
 %{_unitdir}/uke-control-cdc.service
+%{_unitdir}/uke-control-flashlight.service
 %{_udevrulesdir}/90-uke-control-cdc.rules
 %dir %{_unitdir}/sleep.target.requires
 %{_unitdir}/sleep.target.requires/uke-control-wake.service
@@ -117,6 +119,11 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.10.0-1
+- Add exact-profile torch and RGB control through original kernel LED class interfaces.
+- Limit torch to the 20 mA kernel profile and a supervised 60-second lifetime.
+- Keep RGB at low fixed PWM duty and refuse missing or mismatched providers.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.9.1-1
 - Restrict speed profiles to speed bits and preserve pause/other advertisements.
 - Withdraw the uninstalled 1.9.0 candidate before delivery.

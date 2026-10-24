@@ -1,5 +1,10 @@
 # Uke Control
 
+25 October 2026: version 1.10.0 adds a supervised, current-limited torch and
+low-duty RGB controls through original kernel LED interfaces. Exact board,
+driver, channel and limit checks refuse older or mismatched providers. See
+[light controls and remaining physical validation](LIGHTS.md).
+
 24 October 2026: version 1.9.1 adds a disconnected DP training ceiling (1/2/4),
 per-device USB runtime-power selection and RTL8153 capability queries/link
 advertisement profiles through the original Fedora ethtool. It retains the
