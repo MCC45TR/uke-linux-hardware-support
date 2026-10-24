@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.10.0
+Version: 1.10.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -119,6 +119,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.10.1-1
+- Stop the torch service before sleep and count suspended time in the worker deadline.
+- Exercise the actual worker's expiry, failure cleanup and ownership checks with simulated IO.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.10.0-1
 - Add exact-profile torch and RGB control through original kernel LED class interfaces.
 - Limit torch to the 20 mA kernel profile and a supervised 60-second lifetime.

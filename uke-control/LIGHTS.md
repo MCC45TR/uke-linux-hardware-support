@@ -1,6 +1,6 @@
 # Uke light controls
 
-25 October 2026. Control 1.10.0 uses original kernel LED class interfaces on
+25 October 2026. Control 1.10.1 uses original kernel LED class interfaces on
 Xiaomi Pad 7 / POCO Pad X1. Source and host checks do not establish physical
 light output or measured current/voltage.
 
@@ -16,7 +16,8 @@ sudo uke-control led off
 ```
 
 `on` starts a supervised torch worker. Its independent local deadline is
-55 seconds and systemd enforces a 60-second maximum. Normal stop, failure and
+55 seconds, counting suspended time, and systemd enforces a 60-second maximum.
+The service conflicts with and stops before `sleep.target`. Normal stop, failure and
 service cleanup request zero brightness. The service is never enabled at
 boot. Repeating `on` while active does not extend the original deadline.
 

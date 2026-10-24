@@ -1,5 +1,7 @@
 [Unit]
 Description=Bounded Uke torch control
+Before=sleep.target
+Conflicts=sleep.target
 
 [Service]
 Type=notify

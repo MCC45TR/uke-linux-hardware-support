@@ -1,5 +1,8 @@
 # Uke desktop selections
 
+25 October 2026: release `1.0.0-16` requires Control 1.10.1 so the flashlight
+supervisor includes sleep ordering and a suspend-aware deadline.
+
 25 October 2026: release `1.0.0-15` adds a bounded flashlight switch and low-duty
 red/green/blue/off controls as clients of Control 1.10.0. Missing exact kernel
 providers keep the rows unavailable. The widget performs no hardware writes.

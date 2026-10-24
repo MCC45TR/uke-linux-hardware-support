@@ -8,6 +8,7 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
+#include <ctime>
 #include <fcntl.h>
 #include <iostream>
 #include <linux/magic.h>
@@ -144,9 +145,15 @@ struct Lock {
 };
 static volatile sig_atomic_t stopped=0;
 static void stop(int) {stopped=1;}
+static uint64_t boot_seconds() {
+    timespec value{};
+    need(clock_gettime(CLOCK_BOOTTIME,&value)==0 && value.tv_sec>=0,"Suspend-aware clock unavailable");
+    return uint64_t(value.tv_sec);
+}
 static void hold() {
     root(); Lock lock(false); const auto source=required(false);
     need(source.brightness==0,"Torch already owned outside the managed service");
+    const auto until=boot_seconds()+55;
     for(int sig:{SIGTERM,SIGINT,SIGHUP})std::signal(sig,stop);
     Fd fd{open((source.path/"brightness").c_str(),O_WRONLY|O_NOFOLLOW|O_CLOEXEC)};
     struct Off {int fd;~Off(){try{write_fd(fd,"0\n");}catch(const std::exception& e){std::cerr<<e.what()<<'\n';}}} off{fd.n};
@@ -154,8 +161,7 @@ static void hold() {
     write_fd(fd.n,"255\n");
     need(raw("/sys",source.path/"brightness")=="255","Torch enable readback differs");
     need(sd_notify(0,"READY=1")>=0,"Cannot notify the torch supervisor");
-    const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(55);
-    while(!stopped && std::chrono::steady_clock::now()<until)std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while(!stopped && boot_seconds()<until)std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 int command(bool rgb,int argc,char** argv) {
     if(argc==1 && std::string_view(argv[0])=="status") {std::cout<<snapshot();return 0;}

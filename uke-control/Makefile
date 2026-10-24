@@ -42,6 +42,7 @@ build/test-execute: tests/execute.cpp src/backend.hpp build/libuke-control.so.0
 check: all build/test-front-color build/test-execute
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
+	bash tests/light-worker.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp -o build/test-plasma
 	build/test-plasma
 	LD_LIBRARY_PATH=build build/test-execute
@@ -106,7 +107,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.10.0/#' -czf "$$top/SOURCES/uke-control-1.10.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.10.1/#' -czf "$$top/SOURCES/uke-control-1.10.1.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

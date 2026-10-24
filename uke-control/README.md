@@ -1,5 +1,9 @@
 # Uke Control
 
+25 October 2026: version 1.10.1 stops the torch supervisor before system sleep
+and counts suspended time in its independent deadline. The actual worker's
+expiry and failure cleanup pass host tests with simulated clock and IO.
+
 25 October 2026: version 1.10.0 adds a supervised, current-limited torch and
 low-duty RGB controls through original kernel LED interfaces. Exact board,
 driver, channel and limit checks refuse older or mismatched providers. See
