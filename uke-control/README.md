@@ -1,5 +1,11 @@
 # Uke Control
 
+24 October 2026: version 1.7.0 adds `desktop plasma`, `desktop rotation on|off`
+and `desktop brightness on|off` for the original Fedora KScreen interface.
+Commands run as the desktop user and admit only controls advertised for DSI-1.
+The separate KDE tray applet uses this backend; no hardware control is copied
+into the widget. Missing or ambiguous panel capabilities remain unavailable.
+
 24 October 2026: version 1.6.2 records loaded display/touch module build IDs and
 taint in existing diagnostic reports. This separates running-module evidence
 from disk-package metadata without reading GPU registers or changing drivers.

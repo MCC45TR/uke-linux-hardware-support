@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate test-native srpm
+.PHONY: validate test-native test-applet srpm
 version := 1.0.0
 package := $(notdir $(CURDIR))
 outdir ?= $(CURDIR)/build/srpm
@@ -11,6 +11,8 @@ validate:
 	if grep -Eq '^(Requires|Recommends):.*(python|pypy|libpython|nabu)' packaging/*.spec; then exit 1; fi
 	bash tests/plasma-profile.sh
 test-native: validate
+test-applet:
+	node tests/applet.cjs
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}

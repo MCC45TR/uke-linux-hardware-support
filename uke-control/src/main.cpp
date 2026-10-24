@@ -10,13 +10,17 @@
 #include <unistd.h>
 #include "charge-notify.hpp"
 #include "desktop.hpp"
+#include "plasma.hpp"
 #include "wake.hpp"
 #include "diagnostic.hpp"
 #include "vrr.hpp"
 static void help() {
-    std::cout << "uke-control 1.6.2 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.7.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
+      "  desktop plasma              KDE panel control availability and saved policies\n"
+      "  desktop rotation on|off     Set original KScreen automatic rotation policy\n"
+      "  desktop brightness on|off   Set original KScreen automatic brightness policy\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
       "  wake status                 Driver wake permissions and unsupported event controls\n"
       "  wake set SOURCE on|off      Save and apply one wake permission (root)\n"
@@ -90,6 +94,8 @@ int main(int argc,char** argv) {
             }
         }
         if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::desktop::status();return 0;}
+        if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="plasma"){std::cout<<uke::desktop::plasma_status();return 0;}
+        if(command=="desktop"&&argc==4){auto result=uke::desktop::plasma_set(argv[2],argv[3]);std::cout<<result.output;return result.status;}
         if(command=="brunch"||command=="branch"||command=="update") {
             execv("/usr/libexec/uke-control/packages",argv+1);
             throw std::runtime_error("The native package manager helper is missing");

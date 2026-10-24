@@ -49,7 +49,7 @@ if [[ -f $hw_spec ]]; then
     rpmspec --target aarch64 -q --qf '[%{OBSOLETENAME}\t%{OBSOLETEVERSION}\n]' "$hw_spec" | grep -Fxq $'uke-fastfetch-config\t1.0.1-4.fc46'
     ! grep -Fq /etc/fastfetch/ "$hw_spec"
 fi
-grep -Fx 'Version: 1.6.2' uke-control/packaging/uke-control.spec
+grep -Fx 'Version: 1.7.0' uke-control/packaging/uke-control.spec
 grep -Fx 'Version: 1.0.16' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then

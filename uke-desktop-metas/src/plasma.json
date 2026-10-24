@@ -38,5 +38,7 @@
     "plasma-welcome", "plasma-workspace", "plasma5support", "powerdevil", "pulseaudio-utils",
     "spectacle", "system-config-printer", "systemd-pam", "tar", "udisks2", "vulkan-tools",
     "wireplumber", "xsettingsd"
-  ]
+  ],
+  "recommended_device_packages": ["uke-plasma-controls"],
+  "removable_recommendations": true
 }

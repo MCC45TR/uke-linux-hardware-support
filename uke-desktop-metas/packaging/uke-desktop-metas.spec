@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -14,13 +14,14 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-10
-Obsoletes: kde-plasma-uke-meta < 1.0.0-10
+Provides: kde-plasma-uke-meta = 1.0.0-11
+Obsoletes: kde-plasma-uke-meta < 1.0.0-11
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
 Requires(posttrans): firewalld
 Requires(postun): firewalld
+Recommends: uke-plasma-controls >= 1.0.0
 # Keep this optional selection independent of the Python-free console meta.
 # BEGIN ORIGINAL FEDORA PLASMA PACKAGES
 Requires: PackageKit
@@ -100,6 +101,19 @@ Hardware support is tested separately.
 KDE Connect uses Fedora's session autostart and a local-address-only firewalld
 policy. Pairing still requires confirmation in the original application.
 
+%package -n uke-plasma-controls
+Summary: Removable Plasma system tray controls using uke-control
+License: GPL-3.0-or-later
+BuildArch: noarch
+Requires: uke-control >= 1.7.0
+Requires: plasma-workspace plasma5support polkit
+
+%description -n uke-plasma-controls
+Uke Tablet Controls for the original Fedora Plasma system tray. Every device
+request goes through uke-control. Unsupported controls remain unavailable.
+This independent RPM is recommended by the KDE selection and can be removed
+without removing the KDE meta package. No GNOME integration is included.
+
 %prep
 %setup -q
 %build
@@ -107,6 +121,8 @@ policy. Pairing still requires confirmation in the original application.
 install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/desktops/profile.json
 install -Dm644 src/plasma.json %{buildroot}%{_datadir}/senemos/uke/desktops/plasma.json
 install -Dm644 src/uke-kdeconnect.xml %{buildroot}%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
+install -d %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls
+cp -a src/plasma-applet/. %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 %check
 xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
@@ -130,7 +146,16 @@ fi
 %{_datadir}/senemos/uke/desktops/plasma.json
 %{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 
+%files -n uke-plasma-controls
+%license src/plasma-applet/LICENSE
+%doc src/plasma-applet/SOURCE.md
+%{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
+
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-11
+- Add a separate removable Uke Controls applet recommended only by KDE.
+- Delegate all settings and device access to the native uke-control backend.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-10
 - Require the package that owns the firewalld policy schema for the mandatory native check.
 

@@ -1,5 +1,13 @@
 # COPR source families
 
+24 October 2026: core `1.7.0` provides bounded native KScreen session controls.
+Metas `1.1.0` contains the separate `uke-plasma-controls` RPM, recommended only
+by `uke-kde-plasma-meta`. Removing the widget retains the KDE meta package.
+The applet delegates all settings to `uke-control`, uses standard Polkit for
+USB administration and advertises no unavailable hardware control. GNOME has
+no widget dependency or integration. Source and package checks are separate
+from tablet UI acceptance.
+
 24 October 2026: metas `1.0.6-2` requires original Fedora `firewalld` for
 the policy XSD used by the mandatory native check. `firewalld-filesystem` owns
 the RPM macro and directories but not that schema. Build `11202425` stopped

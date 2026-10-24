@@ -1,5 +1,14 @@
 # Uke desktop selections
 
+24 October 2026: `uke-kde-plasma-meta` recommends the separate
+`uke-plasma-controls` RPM. The Uke Tablet Controls entry appears in the original
+Plasma system tray. Every device request goes through `uke-control`; the applet
+contains no hardware backend. The recommendation installs by default with KDE
+and can be removed with `sudo dnf remove uke-plasma-controls` while retaining
+the KDE meta package. Default DNF weak-dependency policy respects prior removal.
+No GNOME dependency or integration is installed. Tablet UI acceptance remains
+separate from package and host checks.
+
 `uke-desktop-metas` records the console-first desktop policy. The optional
 `uke-kde-plasma-meta` selects original Fedora Rawhide AArch64 Plasma applications.
 It includes Discover's PackageKit backend, Dolphin plugins and administrative

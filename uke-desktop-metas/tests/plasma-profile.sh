@@ -3,6 +3,10 @@ set -Eeuo pipefail
 cd "$(dirname "$0")/.."
 profile=src/plasma.json
 spec=packaging/uke-desktop-metas.spec
+[[ $(grep -c '^Recommends: uke-plasma-controls >= 1.0.0$' "$spec") == 1 ]]
+! grep -q '^Requires:.*uke-plasma-controls' "$spec"
+jq -e '.KPlugin.Id == "org.senemos.uke.controls" and ."X-Plasma-NotificationArea" == true' src/plasma-applet/metadata.json >/dev/null
+! grep -rE 'nabu-|/sys/|/dev/|systemctl|kscreen-doctor|busctl|kwriteconfig' src/plasma-applet/contents
 jq -e '
   .schema_version == 1 and .device == "uke" and .soc == "SM7675" and
   .package == "uke-kde-plasma-meta" and .architecture == "aarch64" and
