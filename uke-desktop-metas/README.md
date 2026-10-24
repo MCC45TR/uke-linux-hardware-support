@@ -1,5 +1,8 @@
 # Uke desktop selections
 
+25 October 2026: release `1.0.0-17` requires Control 1.10.2 with corrected
+original LED-class provider discovery and the bounded, suspend-aware supervisor.
+
 25 October 2026: release `1.0.0-16` requires Control 1.10.1 so the flashlight
 supervisor includes sleep ordering and a suspend-aware deadline.
 

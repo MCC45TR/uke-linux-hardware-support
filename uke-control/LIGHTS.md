@@ -1,6 +1,6 @@
 # Uke light controls
 
-25 October 2026. Control 1.10.1 uses original kernel LED class interfaces on
+25 October 2026. Control 1.10.2 uses original kernel LED class interfaces on
 Xiaomi Pad 7 / POCO Pad X1. Source and host checks do not establish physical
 light output or measured current/voltage.
 
@@ -37,6 +37,8 @@ Missing or mismatched board identity, provider, driver, current limit, channel
 mapping, scale or trigger ownership prevents changes. Older kernels report an
 unavailable provider. Installing a new kernel RPM alone does not activate its
 DT graph; the matched kernel must be booted separately.
+Provider identity follows the parent controller's DT link and the exact LED
+label; it does not depend on an optional per-LED OF symlink.
 
 Physical acceptance remains open: actual PMIC probe, visible torch/RGB output,
 color mapping, measured electrical/thermal behavior, stop/timeout and suspend

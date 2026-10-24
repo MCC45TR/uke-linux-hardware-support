@@ -24,7 +24,8 @@ int main() {
         fs::create_directories(led);fs::create_directories(node);fs::create_directories(sys/"class/leds");
         fs::create_directory_symlink(led,sys/"class/leds"/label);
         fs::create_directory_symlink(device,led/"device");
-        fs::create_directory_symlink(node,led/"of_node");
+        fs::create_directory_symlink(controller,device/"of_node");
+        put(node/"label",std::string(label)+'\0');
         const auto driver=sys/"bus/platform/drivers"/(rgb?"qcom-spmi-lpg":"leds-qcom-flash");
         fs::create_directories(driver);fs::create_directory_symlink(driver,device/"driver");
         const std::string compatible=rgb?"qcom,pm8350c-pwm":"qcom,spmi-flash-led";
@@ -35,7 +36,7 @@ int main() {
             for(unsigned i=1;i<=3;++i){auto child=node/("led@"+std::to_string(i));put(child/"reg",cell(i));put(child/"color",cell(i));}
             put(led/"multi_index","green blue red\n");
         } else {put(controller/"reg",cell(0xee00));put(node/"led-sources",cell(1)+cell(4));put(node/"led-max-microamp",cell(20000));}
-        assert(!discover(rgb,sys).path.empty());
+        assert(!fs::exists(led/"of_node") && !discover(rgb,sys).path.empty());
         put(led/"trigger","none [timer]\n");assert(discover(rgb,sys).path.empty());put(led/"trigger","[none]\n");
         put(led/"max_brightness","1000\n");assert(discover(rgb,sys).path.empty());put(led/"max_brightness",rgb?"511":"255");
         if(!rgb) {
@@ -44,8 +45,9 @@ int main() {
             put(node/"led-sources",cell(1)+cell(4));put(node/"flash-max-microamp",cell(100000));assert(discover(false,sys).path.empty());fs::remove(node/"flash-max-microamp");
         } else {put(node/"led@1/color",cell(2));assert(discover(true,sys).path.empty());put(node/"led@1/color",cell(1));}
         assert(!discover(rgb,sys).path.empty());
-        fs::remove(led/"of_node");fs::create_directory_symlink(stage,led/"of_node");assert(discover(rgb,sys).path.empty());
-        fs::remove(led/"of_node");fs::create_directory_symlink(node,led/"of_node");
+        put(node/"label",std::string("other:status\0",13));assert(discover(rgb,sys).path.empty());put(node/"label",std::string(label)+'\0');
+        fs::remove(device/"of_node");fs::create_directory_symlink(stage,device/"of_node");assert(discover(rgb,sys).path.empty());
+        fs::remove(device/"of_node");fs::create_directory_symlink(controller,device/"of_node");
     }
     assert(snapshot(sys).find("\"max_microamp\":20000")!=std::string::npos);
     put(base/"compatible",std::string("xiaomi,nabu\0qcom,sm7675\0",24));

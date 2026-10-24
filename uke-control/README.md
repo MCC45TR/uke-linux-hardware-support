@@ -1,5 +1,9 @@
 # Uke Control
 
+25 October 2026: version 1.10.2 validates the original LED class through its
+parent controller DT link and fixed child label. Host fixtures cover the
+standard layout without a per-LED OF symlink and refuse foreign parents/labels.
+
 25 October 2026: version 1.10.1 stops the torch supervisor before system sleep
 and counts suspended time in its independent deadline. The actual worker's
 expiry and failure cleanup pass host tests with simulated clock and IO.
