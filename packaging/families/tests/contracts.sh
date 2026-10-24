@@ -53,6 +53,6 @@ grep -Fx 'Version: 1.8.1' uke-control/packaging/uke-control.spec
 grep -Fx 'Version: 1.0.16' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then
-    grep -Fx "BuildRequires: llvm-devel = $(jq -er '.build_tools[\"llvm-devel\"]' uke-desktop-packaging/manifests/native-runtime.json)" packaging/families/build/uke-additional/SPECS/uke-additional.spec
+    grep -Fx "BuildRequires: llvm-devel = $(jq -er '.build_tools["llvm-devel"]' uke-desktop-packaging/manifests/native-runtime.json)" packaging/families/build/uke-additional/SPECS/uke-additional.spec
 fi
 printf '%s\n' 'PASS: family/source identity, prefix, pinned inputs, native versions and no Fastfetch fork.'
