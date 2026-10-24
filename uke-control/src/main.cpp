@@ -14,8 +14,9 @@
 #include "wake.hpp"
 #include "diagnostic.hpp"
 #include "vrr.hpp"
+#include "usb-request.hpp"
 static void help() {
-    std::cout << "uke-control 1.7.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.8.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -33,6 +34,8 @@ static void help() {
       "  sensors list                List exported channels and SensorProxy capabilities\n"
       "  sensors -n5 --count=3       Three snapshots, five seconds apart; Ctrl-C stops\n"
       "  display sensor              Read the existing front-color node; never starts collection\n"
+      "  display profiles            Display/USB lane profiles and actual Type-C control availability\n"
+      "  display profile NAME        Request usb3-display or display4; unsupported controls fail (root)\n"
       "  display vrr-min [status]    Loaded/saved VRR minimum and restart requirement (root)\n"
       "  display vrr-min set HZ      Save 30 Hz or higher, below the selected mode (root)\n"
       "  inventory [--refresh]       Partition/filesystem inventory; refresh requires root\n"
@@ -101,6 +104,13 @@ int main(int argc,char** argv) {
             throw std::runtime_error("The native package manager helper is missing");
         }
         if(command=="sensors")return uke::sensors::command(argc-2,argv+2);
+        if(command=="display"&&argc==3&&std::string_view(argv[2])=="profiles") {
+            std::cout<<uke::usb::display_profiles("/");return 0;
+        }
+        if(command=="display"&&argc==4&&std::string_view(argv[2])=="profile") {
+            const auto result=uke::display_profile_set(argv[3]);
+            std::cout<<result.output;return result.status;
+        }
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="sensor") {
             std::cout<<uke::display::front_color_status();return 0;
         }

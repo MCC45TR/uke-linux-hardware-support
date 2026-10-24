@@ -316,6 +316,10 @@ Result usb_request_data(const std::string& role) {
     Lock lock;
     return usb::request_data(role);
 }
+Result display_profile_set(const std::string& profile) {
+    Lock lock;
+    return usb::request_display_profile(profile);
+}
 static void cdc_validate() {
     board();
     auto marker=read("/sys/firmware/devicetree/base/chosen/senemos,usb-profile",64);
@@ -401,7 +405,7 @@ Result cdc_persistent(bool enabled) {
 }
 std::string status() {
     std::string selected=geteuid()==0?policy():"root-private (sudo to inspect)";
-    return "uke-control 1.7.0\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
+    return "uke-control 1.8.0\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
 }
 void boot() {
     root();board();(void)inventory(true);swap_apply();
@@ -472,7 +476,7 @@ std::string report() {
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.7.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.8.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {

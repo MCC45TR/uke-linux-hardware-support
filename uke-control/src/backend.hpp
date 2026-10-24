@@ -29,6 +29,7 @@ std::string firmware_status();
 std::string hardware_status();
 void usb_watch(unsigned seconds);
 Result usb_request_data(const std::string& role);
+Result display_profile_set(const std::string& profile);
 Result cdc_set(bool enabled);
 Result cdc_persistent(bool enabled);
 Result cdc_apply();
