@@ -27,8 +27,22 @@ if awk '/^%package -n uke-kde-plasma-meta$/ {selection=1; next}
   echo 'Plasma must not require the strict console meta' >&2
   exit 1
 fi
-if grep -Eq '^%(pre|post|preun|postun|pretrans|posttrans|trigger[a-z]*|transfiletrigger[a-z]*|filetrigger[a-z]*)([[:space:]]|$)' "$spec"; then
-  echo 'Desktop selection must not contain activation scriptlets' >&2
-  exit 1
-fi
-printf '%s\n' 'Original Fedora Plasma and login-manager selection checks passed'
+# Only the vendor firewall policy is reloaded; Fedora owns session autostart.
+diff -u <(printf '%s\n' '%posttrans -n uke-kde-plasma-meta' '%postun -n uke-kde-plasma-meta') \
+  <(grep -E '^%(pre|post|preun|postun|pretrans|posttrans|trigger[a-z]*|transfiletrigger[a-z]*|filetrigger[a-z]*)([[:space:]]|$)' "$spec")
+policy=src/uke-kdeconnect.xml
+xmllint --nonet --noout "$policy"
+[[ $(xmllint --xpath 'boolean(
+  /policy[@target="CONTINUE" and @priority < 0] and
+  count(/policy/ingress-zone)=1 and /policy/ingress-zone/@name="ANY" and
+  count(/policy/egress-zone)=1 and /policy/egress-zone/@name="HOST" and
+  not(/policy/service | /policy/protocol | /policy/disable) and
+  count(/policy/rule)=5 and
+  count(/policy/rule[count(*)=3 and count(source)=1 and not(source/@invert) and count(service)=1 and service/@name="kdeconnect" and accept])=5 and
+  count(/policy/rule[@family="ipv4"]/source[@address="10.0.0.0/8"])=1 and
+  count(/policy/rule[@family="ipv4"]/source[@address="172.16.0.0/12"])=1 and
+  count(/policy/rule[@family="ipv4"]/source[@address="192.168.0.0/16"])=1 and
+  count(/policy/rule[@family="ipv6"]/source[@address="fe80::/10"])=1 and
+  count(/policy/rule[@family="ipv6"]/source[@address="fc00::/7"])=1
+)' "$policy") == true ]]
+printf '%s\n' 'Original Fedora Plasma selection and local-only KDE Connect policy checks passed'
