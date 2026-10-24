@@ -89,6 +89,8 @@ Source discover(bool rgb,const fs::path& sys) {
         const auto actual=sysfs::resolved(sys,path/"device/of_node");
         need(actual && *actual==controller,"light_dt_identity_mismatch");
         need(raw(sys,node/"label")==std::string(name)+'\0',"light_dt_label_mismatch");
+        for(const auto& child:sysfs::entries(sys,controller))
+            need(!fs::is_directory(child) || child==node,"ambiguous_light_dt_children");
         need(sysfs::driver(sys,path)==sysfs::quote(rgb?"qcom-spmi-lpg":"leds-qcom-flash"),"light_driver_mismatch");
         need(compatible(sys,controller,rgb?"qcom,pm8350c-pwm":"qcom,spmi-flash-led"),"light_controller_mismatch");
         need(raw(sys,path/"max_brightness")== (rgb?"511":"255"),"light_scale_mismatch");

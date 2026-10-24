@@ -37,6 +37,7 @@ int main() {
             put(led/"multi_index","green blue red\n");
         } else {put(controller/"reg",cell(0xee00));put(node/"led-sources",cell(1)+cell(4));put(node/"led-max-microamp",cell(20000));}
         assert(!fs::exists(led/"of_node") && !discover(rgb,sys).path.empty());
+        fs::create_directory(controller/"other-led");assert(discover(rgb,sys).path.empty());fs::remove(controller/"other-led");
         put(led/"trigger","none [timer]\n");assert(discover(rgb,sys).path.empty());put(led/"trigger","[none]\n");
         put(led/"max_brightness","1000\n");assert(discover(rgb,sys).path.empty());put(led/"max_brightness",rgb?"511":"255");
         if(!rgb) {
