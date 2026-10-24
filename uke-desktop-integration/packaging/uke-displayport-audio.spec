@@ -1,6 +1,6 @@
 Name:           uke-displayport-audio
 Version:        0.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        DisplayPort playback policy for POCO Pad X1
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -38,5 +38,8 @@ test -r %{buildroot}%{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 %{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 
 %changelog
+* Sat Oct 24 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
+- Enable the sole DP backend before desktop PCM probing.
+
 * Sat Oct 24 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1
 - Add the digital-only DisplayPort playback policy.

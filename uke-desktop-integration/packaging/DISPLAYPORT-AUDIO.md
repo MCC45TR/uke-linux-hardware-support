@@ -25,3 +25,9 @@ make displayport-audio-srpm
 Source, package and parser checks do not establish monitor sound. Physical
 acceptance requires the new card, DMA domain, DSP graph, monitor jack and
 audible output on the tablet. Cover/USB stability remains separate.
+
+The first physical release-30 boot registers the expected card, PCM, DP jack,
+monitor ELD and DMA domain. The initial UCM package parses but desktop probing
+rejects the PCM while its sole backend is disabled. Release 0.1.0-2 moves that
+mixer sequence to verb activation, before the PCM probe. Playback and audible
+output remain separate acceptance gates.
