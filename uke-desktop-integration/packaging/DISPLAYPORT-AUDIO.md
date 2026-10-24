@@ -31,3 +31,11 @@ monitor ELD and DMA domain. The initial UCM package parses but desktop probing
 rejects the PCM while its sole backend is disabled. Release 0.1.0-2 moves that
 mixer sequence to verb activation, before the PCM probe. Playback and audible
 output remain separate acceptance gates.
+
+Release 31 plays 48 kHz/16-bit stereo directly through DP to the Juo HDMI
+monitor. The operator confirms the test tone. Desktop routing initially stalls
+in WirePlumber camera creation for the protected NT36532 raw THP interface.
+Release 0.1.0-3 excludes only its exact SPI bus path and raw product name from
+camera discovery. Raw access protection and USB cameras remain unchanged.
+A live configuration trial restores automatic stereo ports and completes
+PulseAudio playback. Browser playback and monitor naming need separate checks.
