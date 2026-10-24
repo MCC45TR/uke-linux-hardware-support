@@ -34,6 +34,19 @@ build tools are host-only upstream dependencies; their implementation is
 retained rather than replaced. No project Python code or Python target payload
 is introduced.
 
+On 24 October 2026, signed COPR builds 11202636 and 11202638 are installed
+through DNF on POCO Pad X1. The Pulse sink and active port both match the live
+`VA3209-QHD` ELD name, and normal stereo playback succeeds. A different physical
+monitor and reconnect endurance are not yet tested.
+
+A local repository allowlist must include `pipewire` and `pipewire-*` alongside
+the existing Uke packages. A system that prevents vendor changes needs a
+transaction-specific `--allow-vendor-change` for the initial selected Fedora
+to COPR PipeWire transition. Review the DNF preview and retain signed original
+rollback RPMs; the tested transaction upgrades four PipeWire packages and the
+Uke policy, with no erasures or new dependencies. Global vendor restrictions
+remain in place.
+
 Nabu reference families: `nabu-desktop-integration`.
 These are process references; Uke wiring, firmware and runtime behavior require
 independent implementation and validation.
