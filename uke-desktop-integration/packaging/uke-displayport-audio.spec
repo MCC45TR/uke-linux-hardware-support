@@ -1,6 +1,6 @@
 Name:           uke-displayport-audio
 Version:        0.1.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        DisplayPort playback policy for POCO Pad X1
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -8,6 +8,7 @@ Source0:        %{name}-%{version}.tar.gz
 BuildArch:      noarch
 Requires:       alsa-ucm
 Requires:       wireplumber >= 0.5
+Requires:       pipewire-pulseaudio >= 1.6.10-1.uke1
 
 %description
 ALSA Use Case Manager configuration for the POCO-Pad-X1-HDMI sound card.
@@ -27,7 +28,7 @@ ln -s ../../Qualcomm/sm7675/POCO-Pad-X1-HDMI.conf %{buildroot}%{_datadir}/alsa/u
 install -Dm0644 src/wireplumber/75-uke-thp-not-camera.conf %{buildroot}%{_datadir}/wireplumber/wireplumber.conf.d/75-uke-thp-not-camera.conf
 
 %check
-test "$(find %{buildroot} -type f | wc -l)" -eq 3
+test "$(find %{buildroot} -type f | wc -l)" -eq 4
 test "$(find %{buildroot} -type l | wc -l)" -eq 1
 test -r %{buildroot}%{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 
@@ -36,11 +37,15 @@ test -r %{buildroot}%{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 %dir %{_datadir}/alsa/ucm2/Qualcomm/sm7675
 %{_datadir}/alsa/ucm2/Qualcomm/sm7675/POCO-Pad-X1-HDMI.conf
 %{_datadir}/alsa/ucm2/Qualcomm/sm7675/DP-HiFi.conf
+%{_datadir}/alsa/ucm2/Qualcomm/sm7675/DP-ELD.conf
 %dir %{_datadir}/alsa/ucm2/conf.d/sm7675
 %{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 %{_datadir}/wireplumber/wireplumber.conf.d/75-uke-thp-not-camera.conf
 
 %changelog
+* Sat Oct 24 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
+- Expose the native DP backend ELD to frontend discovery and monitor labels.
+
 * Sat Oct 24 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-3
 - Exclude the protected THP raw interface from camera discovery to unblock media routing.
 
