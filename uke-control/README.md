@@ -1,5 +1,9 @@
 # Uke Control
 
+24 October 2026: version 1.6.2 records loaded display/touch module build IDs and
+taint in existing diagnostic reports. This separates running-module evidence
+from disk-package metadata without reading GPU registers or changing drivers.
+
 24 October 2026: version 1.6.1 combines the CDC notification fix with the existing
 VRR minimum controls from 1.6.0-2. It preserves their module loader and fallback
 on older kernels. The display implementation is unchanged; build and package

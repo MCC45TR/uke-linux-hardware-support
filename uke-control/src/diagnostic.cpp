@@ -101,6 +101,9 @@ std::vector<Job> jobs(const std::string& topic) {
     add("usb","USB inventory",{"/usr/bin/lsusb"});
     add("usb","USB topology and drivers",{"/usr/bin/lsusb","-t"});
     add("display","Display and GPU driver modules",{"/usr/bin/modinfo","msm","drm","gpu_sched"});
+    add("display","Loaded MSM module build ID",{"/usr/bin/od","-An","-v","-tx1","/sys/module/msm/notes/.note.gnu.build-id"});
+    add("display","Loaded O82 panel module build ID",{"/usr/bin/od","-An","-v","-tx1","/sys/module/panel_xiaomi_o82/notes/.note.gnu.build-id"});
+    add("display","Loaded THP module build ID",{"/usr/bin/od","-An","-v","-tx1","/sys/module/nt36532_uke_thp/notes/.note.gnu.build-id"});
     add("audio","ALSA cards",{"/usr/bin/cat","/proc/asound/cards","/proc/asound/pcm","/proc/asound/devices"});
     add("audio","PipeWire session (current user)",{"/usr/bin/wpctl","status"});
     add("input","Input devices and paths",{"/usr/bin/cat","/proc/bus/input/devices","/proc/bus/input/handlers"});
@@ -134,6 +137,7 @@ std::vector<Job> jobs(const std::string& topic) {
     files("power",{"/sys/class/power_supply/*/uevent","/sys/class/thermal/thermal_zone*/type","/sys/class/thermal/thermal_zone*/temp","/sys/class/thermal/thermal_zone*/trip_point_*_temp","/sys/class/thermal/cooling_device*/type","/sys/class/thermal/cooling_device*/cur_state","/sys/devices/system/cpu/cpufreq/policy*/scaling_*_freq","/sys/devices/system/cpu/cpufreq/policy*/scaling_governor"});
     files("usb",{"/sys/class/typec/*/uevent","/sys/class/typec/*/data_role","/sys/class/typec/*/power_role","/sys/class/typec/*/port_type","/sys/class/usb_role/*/role","/sys/class/udc/*/state","/sys/bus/usb/devices/*/uevent","/sys/bus/usb/devices/*/speed","/sys/bus/usb/devices/*/power/runtime_status"});
     files("display",{"/sys/class/drm/*/status","/sys/class/drm/*/enabled","/sys/class/drm/*/modes","/sys/class/backlight/*/type","/sys/class/backlight/*/brightness","/sys/class/backlight/*/actual_brightness","/sys/class/backlight/*/max_brightness","/sys/class/devfreq/*/name","/sys/class/devfreq/*/governor","/sys/class/devfreq/*/available_frequencies"});
+    files("display",{"/sys/module/msm/taint","/sys/module/panel_xiaomi_o82/taint","/sys/module/nt36532_uke_thp/taint"});
     files("audio",{"/sys/class/sound/*/id","/sys/bus/soundwire/devices/*/uevent","/sys/bus/aprbus/devices/*/uevent","/proc/asound/card*/codec*"});
     files("input",{"/sys/class/input/input*/name","/sys/class/input/input*/properties","/sys/class/input/input*/capabilities/*"});
     files("camera",{"/sys/class/video4linux/*/name","/sys/class/video4linux/*/uevent","/sys/class/media/*/uevent"});
@@ -212,7 +216,7 @@ std::string collect(const std::string& topic) {
     const auto started=std::chrono::steady_clock::now();
     const auto now=std::time(nullptr);std::tm utc{};char date[32]{};
     gmtime_r(&now,&utc);std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc);
-    write_text(fd,"Uke Control diagnostic 1.6.1\nUTC: "+std::string(date)+"\nTopic: "+topic+
+    write_text(fd,"Uke Control diagnostic 1.6.2\nUTC: "+std::string(date)+"\nTopic: "+topic+
         "\nEffective UID: "+std::to_string(geteuid())+
         "\nPRIVATE LOCAL LOG: may contain IP/MAC addresses, host/user names, device identifiers, repository URLs and journal contents. Review before sharing. No upload is performed."
         "\nCollection: IN PROGRESS until the final COLLECTION COMPLETE marker."

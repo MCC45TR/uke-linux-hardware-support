@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.6.1
+Version: 1.6.2
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -116,6 +116,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.6.2-1
+- Record loaded MSM, panel and touch module build IDs and taint in private diagnostics.
+- Preserve bounded collection, existing package dependencies and hardware policies.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.6.1-1
 - Combine saved CDC notification reload with the existing VRR minimum controls
 - Preserve the Release 2 module loader and older-kernel fallback

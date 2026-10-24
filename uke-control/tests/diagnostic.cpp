@@ -10,6 +10,10 @@ uke::Result uke::execute(const std::vector<std::string>& args,unsigned seconds,s
     assert(seconds==20&&limit==8*1024*1024);
     assert(!args.empty()&&args[0].starts_with("/usr/"));
     assert(args[0]!="/usr/bin/sh"&&args[0]!="/usr/bin/bash");
+    if(args[0]=="/usr/bin/od") {
+        assert(args.size()==5&&args[1]=="-An"&&args[2]=="-v"&&args[3]=="-tx1");
+        assert(args[4].starts_with("/sys/module/")&&args[4].ends_with("/notes/.note.gnu.build-id"));
+    }
     ++calls;
     if(args[0]=="/usr/bin/dnf5") {
         assert(args[1]=="--cacheonly"||args[1]=="--version");
@@ -31,6 +35,8 @@ int main() {
         std::filesystem::create_directory(root/"working directory");
         std::filesystem::current_path(root/"working directory");
         const auto catalog=jobs("all");assert(catalog.size()>150);
+        const auto display=jobs("display");
+        assert(std::count_if(display.begin(),display.end(),[](const auto& job){return job.args[0]=="/usr/bin/od";})==3);
         for(const auto& topic:topics) {
             const auto selected=jobs(topic);assert(!selected.empty());
             for(const auto& job:selected) {

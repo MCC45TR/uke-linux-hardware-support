@@ -1,5 +1,11 @@
 # Diagnostic logs
 
+24 October 2026. Version 1.6.2 adds loaded MSM, O82 panel and THP module build-ID
+notes and taint flags to `display` and `all` reports. Notes are recorded as hex
+through the existing bounded collector. Compare these loaded-image identities
+with installed package artifacts; `uname`, `modinfo` and RPM verification alone
+do not establish which module image is running. Missing notes remain explicit.
+
 22 October 2026. Uke Control 1.3.0 provides a single local log for support and
 hardware-variant comparisons. Run it from the directory where the log belongs:
 
@@ -34,7 +40,7 @@ An ordinary user can collect a partial report with explicit permission failures.
 | `sleep` | Supported sleep states, wake permissions/counters, inhibitors, suspend statistics/configuration and related logs |
 | `power` | Battery/charger metadata, cached protection, power profiles, thermal/cooling/CPU policy exports and related logs |
 | `usb` | Cached USB/Type-C topology, USB IDs/drivers/speed, port/data/power roles and related logs |
-| `display` | Display/GPU driver modules, connector/mode/backlight/devfreq paths and exports, and related logs |
+| `display` | Disk module metadata, loaded display/touch module build IDs and taint, connector/mode/backlight/devfreq exports, and related logs |
 | `audio` | ALSA inventory, audio/DSP paths, existing PipeWire session and related logs |
 | `input` | Input nodes/aliases, advertised capabilities/properties and related logs |
 | `camera` | Video/media node metadata and related logs |
