@@ -15,8 +15,9 @@
 #include "diagnostic.hpp"
 #include "vrr.hpp"
 #include "usb-request.hpp"
+#include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.8.1 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.9.1 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -36,6 +37,10 @@ static void help() {
       "  display sensor              Read the existing front-color node; never starts collection\n"
       "  display profiles            Display/USB lane profiles and actual Type-C control availability\n"
       "  display profile NAME        Request usb3-display or display4; unsupported controls fail (root)\n"
+      "  display lane-limit 1|2|4    DP training ceiling, disconnected only (root)\n"
+      "  usb power DEVICE POLICY     Runtime PM: performance or auto, per USB device (root)\n"
+      "  ethernet status IFACE       RTL8153 link, EEE, offload, pause, ring and channel capabilities\n"
+      "  ethernet profile IFACE NAME auto, 1000-full, 100-full or 10-full; interface down (root)\n"
       "  display vrr-min [status]    Loaded/saved VRR minimum and restart requirement (root)\n"
       "  display vrr-min set HZ      Save 30 Hz or higher, below the selected mode (root)\n"
       "  inventory [--refresh]       Partition/filesystem inventory; refresh requires root\n"
@@ -107,6 +112,15 @@ int main(int argc,char** argv) {
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="profiles") {
             std::cout<<uke::usb::display_profiles("/");return 0;
         }
+        if(command=="display"&&argc==4&&std::string_view(argv[2])=="lane-limit") {
+            const auto result=uke::display_lane_limit(argv[3]);std::cout<<result.output;return result.status;
+        }
+        if(command=="ethernet"&&argc==4&&std::string_view(argv[2])=="status") {
+            std::cout<<uke::links::ethernet_status(argv[3]);return 0;
+        }
+        if(command=="ethernet"&&argc==5&&std::string_view(argv[2])=="profile") {
+            const auto result=uke::ethernet_profile_set(argv[3],argv[4]);std::cout<<result.output;return result.status;
+        }
         if(command=="display"&&argc==4&&std::string_view(argv[2])=="profile") {
             const auto result=uke::display_profile_set(argv[3]);
             std::cout<<result.output;return result.status;
@@ -175,6 +189,9 @@ int main(int argc,char** argv) {
             }
         }
         if(command=="usb") {
+            if(argc==5&&std::string_view(argv[2])=="power") {
+                const auto result=uke::usb_power_set(argv[3],argv[4]);std::cout<<result.output;return result.status;
+            }
             if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::usb_status();return 0;}
             if(argc==5&&std::string_view(argv[2])=="request"&&std::string_view(argv[3])=="data") {
                 auto result=uke::usb_request_data(argv[4]);std::cout<<result.output;return result.status;
