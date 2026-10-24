@@ -1,5 +1,12 @@
 # COPR source families
 
+24 October 2026: metas `1.0.6-1` delivers Plasma selection `1.0.0-9` with
+original Fedora KDE Connect autostart and a vendor firewalld policy limited to
+private IPv4 and local IPv6 sources. Pairing and administrator overrides remain
+authoritative. The unchanged Core selection advances to `1.0.5-3` for the
+rebuilt cohort. Policy schema/source checks, native COPR packaging and actual
+tablet discovery remain separate validation steps.
+
 23 October 2026: sensors `1.0.9-3` advances every rebuilt child revision before
 integrating the published hardware sources into main. The shared sensor
 Makefile gained touch-capture host targets and is included in the Front Color

@@ -7,7 +7,7 @@ access, KWrite, Chromium, display settings and the common desktop utilities.
 Neither package contains a desktop application fork or a hardware service.
 
 The Plasma selection includes original Fedora `plasma-login-manager` and
-`kcm-plasmalogin`. It installs no login preset or activation scriptlet. On an
+`kcm-plasmalogin`. It installs no login preset or display-manager activation scriptlet. On an
 existing graphical installation, select the standard service explicitly:
 
 ```sh
@@ -17,6 +17,28 @@ sudo systemctl enable --force plasmalogin.service
 Remove any previous display manager's explicit startup links before rebooting;
 only one manager may run. Preserve the previous package for rollback during
 validation. Sensor startup does not depend on a specific login manager.
+
+24 October 2026: the Plasma selection keeps original Fedora `kde-connect` and
+its session autostart. The packaged `uke-kdeconnect` firewalld policy permits
+the distribution's KDE Connect service from private IPv4 ranges and IPv6
+link-local/unique-local addresses, including networks in the `public` zone.
+Other traffic continues through the existing firewall policy. No application
+fork, extra daemon, automatic pairing or user autostart override is installed.
+Installing, upgrading or removing the selection uses Fedora's firewall reload
+macro; a reload retains connections and replaces runtime-only firewall edits
+with permanent configuration. Globally routed and VPN-specific address ranges
+need an administrator's explicit rule if they are used for KDE Connect.
+
+To disable the packaged network permission, preserve an administrator override:
+
+```sh
+sudo firewall-cmd --permanent --policy=uke-kdeconnect --add-disable
+sudo firewall-cmd --reload
+```
+
+The override survives package updates. Existing KDE Connect pairing records and
+per-user autostart choices remain authoritative. Source/package validation and
+actual discovery on the tablet are recorded separately.
 The core console selection keeps
 its strict no-Python policy. Since 14 October 2026, unmodified original Fedora
 desktop RPMs may retain their Fedora-provided Python dependencies on the Fedora
@@ -29,7 +51,8 @@ The application list was compared with the Nabu KDE manifest and image profile a
 Nabu hardware packages and first-run setup are excluded. Uke display,
 touch, graphics and sensors require their own drivers and physical tests.
 
-Run `make validate`, `make test-native` and `make srpm` for source and policy
+With Fedora `firewalld-filesystem` and `libxml2` installed on the build host,
+run `make validate`, `make test-native` and `make srpm` for source and policy
 checks. COPR's root `.copr/Makefile` builds both RPMs from this source family.
 The optional Plasma RPM owns `plasma.json`, which records its exact application
 selection for image composition. Install it explicitly on a Fedora graphical

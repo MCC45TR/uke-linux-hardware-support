@@ -1,24 +1,26 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 7%{?dist}
+Release: 9%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
-BuildRequires: tar xz bash jq diffutils
+BuildRequires: tar xz bash jq diffutils firewalld-filesystem libxml2
 Requires: uke-core-meta >= 1.0.0-3
 %description
 Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-7
-Obsoletes: kde-plasma-uke-meta < 1.0.0-7
+Provides: kde-plasma-uke-meta = 1.0.0-9
+Obsoletes: kde-plasma-uke-meta < 1.0.0-9
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
+Requires(posttrans): firewalld
+Requires(postun): firewalld
 # Keep this optional selection independent of the Python-free console meta.
 # BEGIN ORIGINAL FEDORA PLASMA PACKAGES
 Requires: PackageKit
@@ -95,6 +97,8 @@ distribution-provided helpers. The selection installs no Uke desktop fork,
 display configuration or hardware startup service. Original Fedora Plasma Login
 Manager and its settings module are selected without activation scriptlets.
 Hardware support is tested separately.
+KDE Connect uses Fedora's session autostart and a local-address-only firewalld
+policy. Pairing still requires confirmation in the original application.
 
 %prep
 %setup -q
@@ -102,8 +106,19 @@ Hardware support is tested separately.
 %install
 install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/desktops/profile.json
 install -Dm644 src/plasma.json %{buildroot}%{_datadir}/senemos/uke/desktops/plasma.json
+install -Dm644 src/uke-kdeconnect.xml %{buildroot}%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 %check
+xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
+
+%posttrans -n uke-kde-plasma-meta
+%firewalld_reload
+
+%postun -n uke-kde-plasma-meta
+if [ "$1" -eq 0 ]; then
+    %firewalld_reload
+fi
+
 %files
 %license LICENSE
 %doc README.md
@@ -113,8 +128,13 @@ bash tests/plasma-profile.sh
 %license LICENSE
 %doc README.md
 %{_datadir}/senemos/uke/desktops/plasma.json
+%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-9
+- Allow original Fedora KDE Connect discovery and connections from local addresses by default.
+- Reload the vendor firewalld policy without changing pairing, zone definitions or session overrides.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-5
 - Select the original Fedora Plasma Login Manager and settings module.
 
