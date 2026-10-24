@@ -47,6 +47,17 @@ rollback RPMs; the tested transaction upgrades four PipeWire packages and the
 Uke policy, with no erasures or new dependencies. Global vendor restrictions
 remain in place.
 
+For Fedora 46 AArch64 on POCO Pad X1 with kernel 7.2.12-31 and the test COPR
+already enabled, the tested transition is:
+
+```bash
+sudo dnf --allow-vendor-change --setopt=install_weak_deps=False --assumeno install pipewire-1.6.10-1.uke1.fc46 pipewire-pulseaudio-1.6.10-1.uke1.fc46 uke-displayport-audio-0.1.0-4.fc46
+sudo dnf --allow-vendor-change --setopt=install_weak_deps=False install pipewire-1.6.10-1.uke1.fc46 pipewire-pulseaudio-1.6.10-1.uke1.fc46 uke-displayport-audio-0.1.0-4.fc46
+```
+
+Restart the audio services or log in again after installation. Existing audio
+streams may need to reconnect.
+
 Nabu reference families: `nabu-desktop-integration`.
 These are process references; Uke wiring, firmware and runtime behavior require
 independent implementation and validation.
