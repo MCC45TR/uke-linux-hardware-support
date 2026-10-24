@@ -209,13 +209,13 @@ PlasmoidItem {
         QQC2.Dialog {
             id: confirmation
             anchors.centerIn: parent
+            width: Kirigami.Units.gridUnit * 22
             modal: true
             title: i18n("Change USB configuration?")
             standardButtons: QQC2.Dialog.Ok | QQC2.Dialog.Cancel
             contentItem: PC.Label {
                 text: i18n("This can disconnect USB accessories or a remote session. Serial startup settings are saved. Administrator authorization is required.")
                 wrapMode: Text.WordWrap
-                implicitWidth: Kirigami.Units.gridUnit * 20
             }
             onAccepted: root.change(root.requestedAction)
         }

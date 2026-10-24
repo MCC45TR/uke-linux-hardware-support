@@ -22,3 +22,8 @@ The separate `uke-plasma-controls` RPM is recommended only by
 dependency or session integration is installed. Add it through Plasma's
 System Tray settings if an existing tray does not enable new entries.
 Source, package and physical tablet results are recorded separately.
+
+The package check loads the actual QML component with the original Plasma
+imports, without creating the widget or executing device commands. Release 13
+sizes the confirmation dialog directly; the label's implicit width is read-only
+on the tested original Fedora Qt 6.11 runtime.

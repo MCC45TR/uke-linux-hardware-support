@@ -1,21 +1,23 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz bash jq diffutils firewalld-filesystem firewalld libxml2
+BuildRequires: make gcc-c++ pkgconf-pkg-config pkgconfig(Qt6Gui) pkgconfig(Qt6Qml)
+BuildRequires: libplasma plasma5support kf6-kirigami
 Requires: uke-core-meta >= 1.0.0-3
 %description
 Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-12
-Obsoletes: kde-plasma-uke-meta < 1.0.0-12
+Provides: kde-plasma-uke-meta = 1.0.0-13
+Obsoletes: kde-plasma-uke-meta < 1.0.0-13
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
@@ -126,6 +128,7 @@ cp -a src/plasma-applet/. %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.u
 %check
 xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
+%make_build test-applet-load
 
 %posttrans -n uke-kde-plasma-meta
 %firewalld_reload
@@ -152,6 +155,10 @@ fi
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-13
+- Size the USB confirmation dialog without assigning a read-only label property.
+- Compile the actual QML component with the original Plasma imports in the package check.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-12
 - Document the backend's internal-panel discovery independently of connector numbering.
 

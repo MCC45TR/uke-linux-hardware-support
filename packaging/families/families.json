@@ -165,8 +165,8 @@
     },
     {
       "name": "uke-metas",
-      "version": "1.1.0",
-      "release": 2,
+      "version": "1.1.1",
+      "release": 1,
       "requires": [
         "uke-core-meta >= 1.0.5"
       ],
@@ -247,7 +247,7 @@
     "uke-battery-observer": "10.fc46",
     "accountsservice": "8.fc46",
     "material-decoration": "6.fc46",
-    "uke-desktop-metas": "12.fc46",
+    "uke-desktop-metas": "13.fc46",
     "uke-core-meta": "4.fc46",
     "uke-proximity-capture": "5.fc46"
   }

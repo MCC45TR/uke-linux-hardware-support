@@ -1,5 +1,12 @@
 # Uke desktop selections
 
+24 October 2026: release `1.0.0-13` fixes widget loading on the original
+Fedora Qt 6.11 stack by sizing the USB confirmation dialog instead of its
+label's read-only implicit width. The package check and source CI compile
+the actual applet QML component with original Plasma imports. This check
+does not create the widget or invoke device commands; tablet presentation
+and physical controls remain separate validation.
+
 24 October 2026: `uke-kde-plasma-meta` recommends the separate
 `uke-plasma-controls` RPM. The Uke Tablet Controls entry appears in the original
 Plasma system tray. Every device request goes through `uke-control`; the applet

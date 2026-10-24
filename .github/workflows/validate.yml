@@ -19,7 +19,7 @@ jobs:
     container: registry.fedoraproject.org/fedora:rawhide
     steps:
       - name: Install official host validation tools
-        run: dnf5 -y install git curl jq gcc-c++ make pkgconf-pkg-config qt6-qtbase-devel dtc libdrm-devel systemd-devel systemd-udev umockdev-devel libselinux-devel wayland-devel wayland-protocols-devel libdnf5-devel rpm-devel openssl-devel rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros 'pkgconfig(fdisk)' 'pkgconfig(zlib)' util-linux dbus-daemon
+        run: dnf5 -y install git curl jq gcc-c++ make pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel libplasma plasma5support kf6-kirigami dtc libdrm-devel systemd-devel systemd-udev umockdev-devel libselinux-devel wayland-devel wayland-protocols-devel libdnf5-devel rpm-devel openssl-devel rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros 'pkgconfig(fdisk)' 'pkgconfig(zlib)' util-linux dbus-daemon
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
