@@ -158,10 +158,11 @@
         "uke-desktop-packaging/packaging/accountsservice",
         "uke-desktop-packaging/tests/accountsservice-tcb.sh",
         "uke-desktop-packaging/tests/turnip-display-fd.sh",
+        "uke-desktop-packaging/tests/adreno732-ubwc-hint.sh",
         "uke-desktop-packaging/src/native-runtime/runtime-smoke.cpp",
         "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt"
       ],
-      "release": 8
+      "release": 9
     },
     {
       "name": "uke-metas",
@@ -243,7 +244,7 @@
     "libaccounts-glib": "37.fc46",
     "libwacom": "10.fc46",
     "libstdcxx-uke-runtime": "11.fc46",
-    "mesa": "11.fc46",
+    "mesa": "12.fc46",
     "uke-battery-observer": "10.fc46",
     "accountsservice": "8.fc46",
     "material-decoration": "6.fc46",
