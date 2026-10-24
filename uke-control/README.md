@@ -1,6 +1,6 @@
 # Uke Control
 
-24 October 2026: version 1.9.0 adds a disconnected DP training ceiling (1/2/4),
+24 October 2026: version 1.9.1 adds a disconnected DP training ceiling (1/2/4),
 per-device USB runtime-power selection and RTL8153 capability queries/link
 advertisement profiles through the original Fedora ethtool. It retains the
 published 1.8.1 internal-panel correction and 1.8.0 Type-C admission guards.

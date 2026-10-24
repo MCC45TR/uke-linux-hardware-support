@@ -17,7 +17,13 @@ int main() {
     const auto all=capabilities(full);
     for(const auto& [profile,mask]:std::vector<std::pair<std::string,std::string>>{{"auto","2f"},{"1000-full","20"},{"100-full","8"},{"10-full","2"}}) {
         const auto args=uke::links::ethernet_arguments("eth-test",profile,all);
-        assert(args==std::vector<std::string>({"--change","eth-test","autoneg","on","advertise",mask}));
+        assert(args==std::vector<std::string>({"--change","eth-test","autoneg","on","advertise",mask+"/3f"}));
+        const unsigned requested=std::stoul(mask,nullptr,16);
+        for(unsigned flags:{0u,0x2000u,0x4000u,0x6000u,0xffff0000u}) {
+            const unsigned before=flags|0x2f;
+            const unsigned after=(before&~0x3fu)|(requested&0x3f);
+            assert((after&~0x3fu)==(before&~0x3fu));
+        }
     }
     assert(uke::links::ethernet_matches("eth-test","1000-full",all));
     assert(!uke::links::ethernet_matches("eth-test","100-full",all));

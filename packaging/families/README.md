@@ -1,6 +1,6 @@
 # COPR source families
 
-24 October 2026: core `1.9.0` adds disconnected DP training ceilings,
+24 October 2026: core `1.9.1` adds disconnected DP training ceilings,
 per-device USB runtime power and RTL8153 link capability/profile controls.
 It preserves core `1.8.1`'s bounded native KScreen session controls.
 Metas `1.1.0-2` contains the separate `uke-plasma-controls` RPM, recommended only

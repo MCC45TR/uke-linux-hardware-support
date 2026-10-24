@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.9.0
+Version: 1.9.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -117,6 +117,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.9.1-1
+- Restrict speed profiles to speed bits and preserve pause/other advertisements.
+- Withdraw the uninstalled 1.9.0 candidate before delivery.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.9.0-1
 - Add disconnected DP lane ceilings, per-device USB power and RTL8153 link profiles.
 - Query original ethtool capabilities and require link-down speed changes with readback.

@@ -25,7 +25,9 @@ the RTL8153's link/advertisement, offloads, EEE, pause, rings, coalescing and
 channels. Unsupported operations report their error, without invented values.
 The cached section includes RX/TX errors and drops. Use
 `sudo uke-control ethernet profile IFACE auto|1000-full|100-full|10-full` to
-restrict auto-negotiation to supported modes. First disconnect that interface
+restrict auto-negotiation to supported modes. The ethtool value/mask changes
+only copper speed bits; pause and other advertised
+features are preserved. First disconnect that interface
 through the original NetworkManager controls and bring it administratively
 down; an up interface is refused. Reconnect afterwards. Driver readback checks
 advertised modes, while cable/peer negotiation and throughput need a separate

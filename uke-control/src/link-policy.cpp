@@ -119,7 +119,8 @@ std::vector<std::string> ethernet_arguments(const std::string& name,const std::s
     else if(profile=="10-full")mask=2;
     else throw std::runtime_error("INVALID_ETHERNET_PROFILE");
     need(mask&&(available&mask)==mask,"LINK_MODE_UNSUPPORTED");
-    return {"--change",name,"autoneg","on","advertise",mask_hex(mask)};
+    // Mask only RTL8153 speed bits; retain pause, port and other advertisements.
+    return {"--change",name,"autoneg","on","advertise",mask_hex(mask)+"/3f"};
 }
 bool ethernet_matches(const std::string& name,const std::string& profile,const std::string& capabilities) {
     const auto wanted=ethernet_arguments(name,profile,capabilities);
@@ -127,7 +128,7 @@ bool ethernet_matches(const std::string& name,const std::string& profile,const s
     auto* object=sd_json_variant_by_index(data.get(),0);
     auto* enabled=sd_json_variant_by_key(object,"auto-negotiation");
     if(!sd_json_variant_is_boolean(enabled)||!sd_json_variant_boolean(enabled))return false;
-    try{return mask_hex(mode_mask(sd_json_variant_by_key(object,"advertised-link-modes")))==wanted.back();}
+    try{return mask_hex(mode_mask(sd_json_variant_by_key(object,"advertised-link-modes")))+"/3f"==wanted.back();}
     catch(const std::exception&){return false;}
 }
 std::string ethernet_status(const std::string& name) {
