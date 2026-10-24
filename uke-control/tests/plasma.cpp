@@ -22,7 +22,12 @@ int main() {
     assert(calls.back() == std::vector<std::string>({"/usr/bin/kscreen-doctor", "output.DSI-1.autoRotatePolicy.never"}));
     uke::desktop::plasma_set("brightness", "on");
     assert(calls.back().back() == "output.DSI-1.autoBrightness.enable");
-    for (const auto& output : {panel + panel, std::string("Output: 2 DP-1\nAuto Rotate Policy: always\n"),
+    response.output = "Output: 1 DP-1\nAuto Rotate Policy: never\nAutomatic brightness: supported, disabled\n"
+        "Output: 2 DSI-2\nAuto Rotate Policy: inTabletMode\nAutomatic brightness: supported, enabled\n";
+    assert(uke::desktop::plasma_status().find("\"output\":\"DSI-2\",\"rotation\":false,\"automatic_brightness\":true") != std::string::npos);
+    uke::desktop::plasma_set("rotation", "on");
+    assert(calls.back().back() == "output.DSI-2.autoRotatePolicy.always");
+    for (const auto& output : {panel + panel, panel + response.output, std::string("Output: 2 DP-1\nAuto Rotate Policy: always\n"),
             std::string("Output: 1 DSI-1\nAuto Rotate Policy: incapable\nAutomatic brightness: unsupported\n"),
             panel + "Auto Rotate Policy: never\nAutomatic brightness: unsupported\n"}) {
         response.output = output;

@@ -1,7 +1,7 @@
 # Desktop interface and engineering contract
 
 24 October 2026: `desktop plasma` returns nullable automatic rotation and
-brightness policies for the original KScreen DSI-1 output. The bounded native
+brightness policies for the original KScreen unique internal DSI output. The bounded native
 reader strips terminal color sequences, isolates exactly one internal output
 and refuses missing, duplicate or unknown capability values. The explicit
 `desktop rotation on|off` and `desktop brightness on|off` commands recheck that

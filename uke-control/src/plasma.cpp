@@ -7,7 +7,7 @@
 
 namespace uke::desktop {
 namespace {
-struct State { std::string rotation = "null", brightness = "null"; };
+struct State { std::string rotation = "null", brightness = "null", output; };
 State inspect() {
     // kscreen-doctor's human-readable capability names are English.
     setenv("LC_ALL", "C", 1);
@@ -20,8 +20,9 @@ State inspect() {
     unsigned panels = 0, rotations = 0, brightnesses = 0;
     for (std::string line; std::getline(lines, line);) {
         if (line.starts_with("Output:")) {
-            panel = std::regex_search(line, std::regex("^Output: +[0-9]+ +DSI-1( |$)"));
-            if (panel) ++panels;
+            std::smatch match;
+            panel = std::regex_search(line, match, std::regex("^Output: +[0-9]+ +(DSI-[0-9]{1,3})( |$)"));
+            if (panel) { ++panels; state.output = match[1]; }
         }
         if (!panel) continue;
         const auto first = line.find_first_not_of(" \t\r");
@@ -49,7 +50,7 @@ State inspect() {
 }
 std::string plasma_status() {
     const auto state = inspect();
-    return "{\"schema\":\"org.uke.control.plasma.v1\",\"rotation\":" + state.rotation +
+    return "{\"schema\":\"org.uke.control.plasma.v1\",\"output\":" + (state.output.empty() ? "null" : '"' + state.output + '"') + ",\"rotation\":" + state.rotation +
         ",\"automatic_brightness\":" + state.brightness + "}\n";
 }
 Result plasma_set(const std::string& feature, const std::string& value) {
@@ -62,6 +63,6 @@ Result plasma_set(const std::string& feature, const std::string& value) {
     const std::string setting = feature == "rotation" ?
         std::string("autoRotatePolicy.") + (on ? "always" : "never") :
         std::string("autoBrightness.") + (on ? "enable" : "disable");
-    return execute({"/usr/bin/kscreen-doctor", "output.DSI-1." + setting}, 5, 65536);
+    return execute({"/usr/bin/kscreen-doctor", "output." + state.output + '.' + setting}, 5, 65536);
 }
 }

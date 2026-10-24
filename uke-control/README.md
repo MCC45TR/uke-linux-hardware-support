@@ -1,8 +1,12 @@
 # Uke Control
 
+24 October 2026: version 1.7.1 resolves the unique internal DSI output for
+session controls. A connected external display can change its connector number;
+multiple internal outputs remain an explicit refusal.
+
 24 October 2026: version 1.7.0 adds `desktop plasma`, `desktop rotation on|off`
 and `desktop brightness on|off` for the original Fedora KScreen interface.
-Commands run as the desktop user and admit only controls advertised for DSI-1.
+Commands run as the desktop user and admit only controls advertised for the unique internal DSI output.
 The separate KDE tray applet uses this backend; no hardware control is copied
 into the widget. Missing or ambiguous panel capabilities remain unavailable.
 

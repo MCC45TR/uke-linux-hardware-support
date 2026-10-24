@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.7.0
+Version: 1.7.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -116,6 +116,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.7.1-1
+- Resolve exactly one internal DSI output instead of assuming connector numbering.
+- Keep external displays isolated and refuse ambiguous internal outputs.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.7.0-1
 - Add bounded KScreen panel capability queries and session rotation/brightness commands.
 - Keep device operations in the native backend for the removable KDE tray applet.

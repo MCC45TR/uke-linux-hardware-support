@@ -11,7 +11,7 @@ passes only fixed commands to `uke-control`. Session controls run as the
 desktop user. USB requests use the original Polkit administrator prompt and
 the backend's existing admission checks; cancellation remains an error.
 
-Automatic rotation and brightness require KScreen's advertised DSI-1 control.
+Automatic rotation and brightness require KScreen's advertised internal DSI control.
 Cover state comes from the existing UPower interface. Unsupported flashlight,
 missing cover capability and unavailable display controls remain disabled.
 USB role changes and persistent serial settings require explicit confirmation.
