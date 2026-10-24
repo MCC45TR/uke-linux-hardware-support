@@ -1,5 +1,49 @@
 # Display controls and raw front-color data
 
+## USB-C DisplayPort profiles, 24 October 2026
+
+Use `uke-control display profiles` to list profiles, the standard Type-C
+selection interface and the active DP driver's cached lane count, rate and
+wire bits per pixel. A missing cache, unsupported version, inactive stream or
+invalid data remains `null`. These are sequential software observations;
+they do not establish a visible image or working USB devices.
+
+| Profile | Requested DP lanes | USB and display contract |
+| --- | --- | --- |
+| `usb3-display` | 2, pins D/F | Reserve lanes for USB3 alongside DP. |
+| `display4` | 4, pins C/E | Prioritize DP bandwidth, including direct monitor cables. USB2 uses separate pins; dock USB/Ethernet fallback needs physical testing. |
+| `dual-display` | 4 plus MST | Unavailable until the Uke driver implements MST stream/connector management. |
+
+Request an available standard profile with
+`sudo uke-control display profile display4` or
+`sudo uke-control display profile usb3-display`. This is a one-shot request;
+the command stores no boot preference. It accepts only an active, uniquely
+associated DP partner's advertised pin assignments. A kernel write acceptance
+and a matching pin cache are reported separately from link training and
+physical validation. Attached storage, active USB networking, a bound gadget,
+ambiguous ports or a changed attachment refuse the transition. Changing lanes
+can interrupt video and SuperSpeed devices; retain another management path.
+
+On POCO Pad X1 running 7.2.12-31 with Juo JH925, the firmware reports no UCSI
+alternate-mode details or override feature, and no standard DP alternate-mode
+control appears. Requests therefore return `DP_ALTMODE_CONTROL_UNAVAILABLE`.
+The existing firmware-negotiated display/USB path is retained. This failure
+does not establish that automatic four-lane negotiation with a direct DP cable
+is impossible. No forced PHY/mux setting or raw firmware command is used.
+
+Resolution, refresh rate, HDR, color depth and Adaptive Sync remain under the
+distribution's original KDE controls and actual DRM/monitor capabilities.
+A lane profile cannot manufacture those capabilities. Four HBR2 lanes provide
+17.28 Gbit/s of payload: a 594 MHz 4K60 RGB8 stream fits (14.256 Gbit/s), while
+RGB10 at the same timing needs 17.82 Gbit/s. Two such RGB8 4K60 streams also
+exceed that link. These calculations are limits, not Uke hardware acceptance.
+
+Current physical evidence covers one 2560x1440/75 Hz monitor, mouse, DP audio
+and a Gigabit Ethernet link on the two-lane path. Actual HDR, external VRR,
+four-lane USB/Ethernet fallback, two external monitors and DDC/CI brightness
+remain unqualified. The cached stream ABI requires a matching newer kernel;
+older kernels report `observed_link: null`.
+
 ## VRR minimum, 24 October 2026
 
 On Uke / SM7675, use `sudo uke-control display vrr-min status` to read the

@@ -1,8 +1,16 @@
 # Uke Control
 
-24 October 2026: version 1.7.1 resolves the unique internal DSI output for
+24 October 2026: version 1.8.1 resolves the unique internal DSI output for
 session controls. A connected external display can change its connector number;
-multiple internal outputs remain an explicit refusal.
+multiple internal outputs remain an explicit refusal. The published 1.8.0
+DisplayPort profile commands remain unchanged.
+
+24 October 2026: version 1.8.0 adds `display profiles` and explicit standard
+Type-C pin-assignment requests for USB3/display or four-lane display. It reports
+the driver cache separately from requested settings and refuses unavailable
+firmware controls. The current Uke firmware exposes no manual DP alternate-mode
+control; MST remains unavailable in the current driver. The original KScreen
+controls from 1.7.0 are retained. See [DISPLAY.md](DISPLAY.md).
 
 24 October 2026: version 1.7.0 adds `desktop plasma`, `desktop rotation on|off`
 and `desktop brightness on|off` for the original Fedora KScreen interface.

@@ -105,7 +105,7 @@ policy. Pairing still requires confirmation in the original application.
 Summary: Removable Plasma system tray controls using uke-control
 License: GPL-3.0-or-later
 BuildArch: noarch
-Requires: uke-control >= 1.7.1
+Requires: uke-control >= 1.8.1
 Requires: plasma-workspace plasma5support polkit
 
 %description -n uke-plasma-controls

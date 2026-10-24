@@ -1,6 +1,6 @@
 # COPR source families
 
-24 October 2026: core `1.7.1` provides bounded native KScreen session controls.
+24 October 2026: core `1.8.1` provides bounded native KScreen session controls.
 Metas `1.1.0-2` contains the separate `uke-plasma-controls` RPM, recommended only
 by `uke-kde-plasma-meta`. Removing the widget retains the KDE meta package.
 The applet delegates all settings to `uke-control`, uses standard Polkit for
