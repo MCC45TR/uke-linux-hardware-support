@@ -1,5 +1,10 @@
 # Uke desktop selections
 
+24 October 2026: release `1.0.0-14` gives QML sources a distinct reproducible
+timestamp for each monotonic RPM revision. This invalidates Qt's older disk
+cache after an update. The package check covers the cached invalid-to-corrected
+transition as well as the actual applet component.
+
 24 October 2026: release `1.0.0-13` fixes widget loading on the original
 Fedora Qt 6.11 stack by sizing the USB confirmation dialog instead of its
 label's read-only implicit width. The package check and source CI compile

@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 13%{?dist}
+Release: 14%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -16,8 +16,8 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-13
-Obsoletes: kde-plasma-uke-meta < 1.0.0-13
+Provides: kde-plasma-uke-meta = 1.0.0-14
+Obsoletes: kde-plasma-uke-meta < 1.0.0-14
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
@@ -155,6 +155,10 @@ fi
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-14
+- Give each RPM revision a distinct reproducible source timestamp for QML cache invalidation.
+- Exercise the cached invalid-to-corrected QML transition in the mandatory package check.
+
 * Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-13
 - Size the USB confirmation dialog without assigning a read-only label property.
 - Compile the actual QML component with the original Plasma imports in the package check.
