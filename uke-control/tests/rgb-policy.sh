@@ -23,6 +23,10 @@ grep -Fq '<associate own="org.senemos.Uke.Rgb" context="system_u:object_r:uke_rg
     exit 1
 }
 grep -Eq '^\(allow uke_rgb_t self \(dbus \([^)]*acquire_svc([ )])' "$cil"
+grep -Fq '<annotate key="org.freedesktop.policykit.owner">unix-user:uke-rgb</annotate>' "$root/packaging/org.senemos.uke.rgb.policy" || {
+    echo 'RGB mechanism lacks ownership of its Polkit authorization query' >&2
+    exit 1
+}
 # The host parse fixture uses the build UID without creating a service account.
 sed "s/policy user=\"uke-rgb\"/policy user=\"$(id -u)\"/" "$root/packaging/org.senemos.Uke.Rgb.conf" > "$stage/service.conf"
 cat > "$stage/bus.conf" <<EOF

@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.12.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-5
+- Let the unprivileged RGB mechanism query its own Polkit action for clients.
+- Preserve active-local-only authorization and the no-interaction request path.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-4
 - Associate the exact RGB bus name with the confined broker's SELinux domain.
 - Reload the running bus configuration without restarting the bus or desktop.

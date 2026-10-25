@@ -1,5 +1,13 @@
 # Uke Control
 
+25 October 2026: packaging revision 1.12.0-5 names `uke-rgb` as owner of its
+Polkit action so the non-root mechanism can query authorization for a client.
+Revision 4's transport is healthy, but Polkit refuses that cross-user query
+without the ownership annotation. Active-local-only defaults and the
+no-interaction flag are unchanged. Host configuration checks pass; signed
+target authorization and physical color validation remain separate gates.
+See [Polkit action ownership](https://polkit.pages.freedesktop.org/polkit/polkit.8.html).
+
 25 October 2026: packaging revision 1.12.0-4 associates the exact RGB bus name
 with the confined broker's SELinux context. Revision 3 reaches the kernel but
 cannot acquire its bus name without this mapping. The update reloads bus
