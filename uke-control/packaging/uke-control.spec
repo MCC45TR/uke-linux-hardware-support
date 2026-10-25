@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.12.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -148,6 +148,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-3
+- Allow the confined broker to read SELinux enforcement state.
+- Preserve the hardened domain transition and read-only policy checks.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-2
 - Admit the confined systemd transition with NoNewPrivileges enabled.
 - Check the compiled permission required by the hardened RGB service.

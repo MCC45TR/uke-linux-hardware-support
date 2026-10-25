@@ -4,6 +4,7 @@ type uke_rgb_t;
 type uke_rgb_exec_t;
 init_daemon_domain(uke_rgb_t, uke_rgb_exec_t)
 init_nnp_daemon_domain(uke_rgb_t)
+selinux_get_enforce_mode(uke_rgb_t)
 
 type uke_rgb_device_t;
 dev_node(uke_rgb_device_t)
