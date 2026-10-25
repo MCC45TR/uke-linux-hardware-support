@@ -73,7 +73,7 @@ std::vector<Source> sources(const fs::path& sys) {
         sys/"bus/platform/devices/a600000.ssusb");
     unsigned hosts = 0;
     const auto host_driver = sysfs::resolved(sys, sys/"bus/platform/drivers/xhci-hcd");
-    if (controller && host_driver) for (const auto& entry : sysfs::entries(sys, sys/"bus/platform/devices")) {
+    if (controller && host_driver) for (const auto& entry : sysfs::entries(sys, *controller)) {
         const auto leaf = entry.filename().string();
         if (!leaf.starts_with("xhci-hcd.") || !leaf.ends_with(".auto") || leaf.size() <= 14 ||
             leaf.substr(9, leaf.size()-14).find_first_not_of("0123456789") != leaf.npos)

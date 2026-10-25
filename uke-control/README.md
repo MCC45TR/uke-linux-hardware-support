@@ -1,5 +1,11 @@
 # Uke Control
 
+25 October 2026: version 1.13.2 searches only the verified USB controller's
+children for its xHCI host. The 1.13.1 platform-bus scan exceeds the tablet's
+bounded inventory limit and refuses wake-policy application. A fixture with
+300 unrelated platform entries reproduces that refusal and checks the scoped
+correction. The inventory bound and driver/containment checks remain unchanged.
+
 25 October 2026: version 1.13.1 also admits the xHCI host wake permission under
 the verified Uke controller and checks its bound driver. Release 1.13.0 enabled
 USB-device and hub permissions but missed this platform host. A physical mouse

@@ -79,6 +79,10 @@ int main() {
         fs::create_directory_symlink(duplicate, sys/"bus/platform/devices/xhci-hcd.5.auto");
         assert(source(sys, "usb-host").reason == "ambiguous_usb_host_provider");
         fs::remove(sys/"bus/platform/devices/xhci-hcd.5.auto");
+        fs::remove_all(duplicate);
+        for (unsigned i=0;i<300;i++)
+            fs::create_directories(sys/"bus/platform/devices"/("unrelated-"+std::to_string(i)));
+        assert(source(sys, "usb-host").path == host/"power/wakeup");
         fs::remove(sys/"bus/platform/devices/a600000.ssusb");
         fs::create_directory_symlink("/sys", sys/"bus/platform/devices/a600000.ssusb");
         assert(source(sys, "usb").path.empty());
