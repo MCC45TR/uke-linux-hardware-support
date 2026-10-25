@@ -77,6 +77,21 @@
         "sha256": "eb2c88cc8c4d8e1039f96e8d6435cd7002b6b5192a0ff6ea43b547dcc17bb7b0",
         "local_path": "referances/chromium-gpu-20261025/gpu_config_software_rendering_list.json",
         "upstream_path": "gpu/config/software_rendering_list.json"
+      },
+      {
+        "sha256": "dc086fa0014f9b7bbdf1cd2b6371998e04b3c333b5df55dc7264a48596aff591",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_vaapi_vaapi_video_decoder.cc",
+        "upstream_path": "media/gpu/vaapi/vaapi_video_decoder.cc"
+      },
+      {
+        "sha256": "3cd2c610e2531f47efef9105cc5f2b5e6ced7e598b04ed31d58ee2e8b01c3235",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_chromeos_video_decoder_pipeline.cc",
+        "upstream_path": "media/gpu/chromeos/video_decoder_pipeline.cc"
+      },
+      {
+        "sha256": "a3487445016152a8a52784fc89c4dd7e625ea40bed71fb1a0edd9ddeb1c5216e",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_gpu_video_decode_accelerator_factory.cc",
+        "upstream_path": "media/gpu/gpu_video_decode_accelerator_factory.cc"
       }
     ]
   },
@@ -157,6 +172,50 @@
     "webgpu_video_buffer_interop": false,
     "post_boot_render_mapping": false,
     "default_vainfo": false
+  },
+  "test_preparation": {
+    "local_date": "2026-10-26",
+    "coverage_document": "docs/BROWSER-VIDEO-TESTS.md",
+    "gpu_page": "tests/browser-gpu.html",
+    "gpu_page_sha256": "5b8434ed586f28c674e76c93f6cf730c7912e473330e0de82b0de59afe4e2b14",
+    "host_controller": "tests/capture-browser.mjs",
+    "host_controller_sha256": "c1e3ddf6e5528f24bd5c939a1b06ed891adfdcbadd0cd4f7f151d253bb876497",
+    "video_page": "tests/browser-video.html",
+    "video_page_sha256": "561e358029187b49685709bb66e89e5a4fedbe52d221624fbd18429245ef8d59",
+    "video_script": "tests/browser-video.js",
+    "video_script_sha256": "4f69f52d1df68b1c59c51cb864ebb0bfb8bea807d5fdfb8800688d068f67a0f2",
+    "host_api_fixtures_passed": true,
+    "host_packet_fixtures_passed": true,
+    "host_pixel_validator_fixtures_passed": true,
+    "real_software_packet_corpora": 7,
+    "software_frames_per_profile": 30,
+    "native_format_reference_sets": 14,
+    "reference_index_sha256": "54051197ffe4631bd3f2ef75f61f48d8a1b25f32e1e690ac4883abd35a368acd",
+    "source_corpus_transfer": "Eight SHA-guarded regular files from kernel 7.3.0-13; no device-node, codec or browser API access",
+    "host_reference_sdk_image": "5b8d09371cb043901718453edf84ee20d467e816328e6db5b6a9d0664d5e5ebe",
+    "host_reference_ffmpeg": "9.0.2-1.fc46.x86_64",
+    "actual_browser_workload_tested": false,
+    "encode_size": [
+      640,
+      360
+    ],
+    "decode_corpus_size": [
+      320,
+      240
+    ],
+    "chrome_va_encode_performance_floor": [
+      321,
+      241
+    ],
+    "performance_floor_policy_overridden": false,
+    "main10_source": "Little-endian I420P10; independent decoded precision not accepted",
+    "webrtc_codecs": [
+      "H264",
+      "H265 if exposed by the browser"
+    ],
+    "interop": "Opt-in decoded-frame external texture versus RGBA reference; native DMA-BUF/modifier/fence and zero-copy acceptance remain separate",
+    "node_target_runtime_required": false,
+    "python_target_runtime_required": false
   },
   "runtime_changes": [
     {

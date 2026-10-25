@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8">
+<title>Uke scoped browser video smoke</title>
+<style>body{font:16px system-ui;max-width:70rem;margin:2rem auto}button,select,input{font:inherit;margin:.4rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<h1>Browser video smoke</h1>
+<p>Run only inside the approved codec window. Each action starts a real workload.
+Functional output requires separate Iris/backend and independent pixel or bitstream evidence.</p>
+<select id="codec" aria-label="WebCodecs encode codec">
+<option value="avc1.42E01E">H264 constrained baseline</option>
+<option value="avc1.4D001E">H264 Main</option>
+<option value="avc1.64001E">H264 High</option>
+<option value="hvc1.1.6.L93.B0">HEVC Main</option>
+<option value="hvc1.2.4.L93.B0">HEVC Main10, backend qualification required</option></select>
+<button id="encode">Encode 30 frames</button>
+<p><label>Reviewed decode job JSON <input id="corpus" type="file" accept=".json"></label>
+<label><input id="interop" type="checkbox"> Also compare the WebGPU external texture</label>
+<button id="decode">Decode corpus</button>
+<select id="rtc-codec" aria-label="WebRTC codec"><option>video/H264</option><option>video/H265</option></select>
+<button id="rtc">Local WebRTC loopback</button></p>
+<pre id="result">No workload has run.</pre>
+<script src="browser-video.js"></script>
+<script>
+async function show(work) {
+  const result=document.querySelector('#result');
+  try {result.textContent=JSON.stringify(await work(),null,2);}
+  catch(error) {result.textContent=String(error);}
+}
+document.querySelector('#encode').onclick=()=>show(()=>ukeVideoProbe.encode(document.querySelector('#codec').value));
+document.querySelector('#decode').onclick=()=>show(async()=>{
+  const file=document.querySelector('#corpus').files[0];
+  if(!file) throw new Error('Select the reviewed corpus JSON first');
+  const job=JSON.parse(await file.text());
+  if(job.operation!=='decode') throw new Error('Select a decode job from the host corpus packer');
+  job.input.interop=document.querySelector('#interop').checked;
+  return ukeVideoProbe.decode(job.input);
+});
+document.querySelector('#rtc').onclick=()=>show(()=>ukeVideoProbe.webRtc(document.querySelector('#rtc-codec').value));
+</script></html>
