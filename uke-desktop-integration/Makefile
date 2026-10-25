@@ -3,6 +3,16 @@ SHELL := /bin/bash
 .ONESHELL:
 .PHONY: validate srpm test-native test-plugin
 outdir ?= $(CURDIR)/build/srpm
+BUILD_DIR ?= build
+.PHONY: displayport-audio-srpm pipewire-monitor-srpm
+displayport-audio-srpm:
+	top="$$(realpath -m '$(BUILD_DIR)/displayport-audio/rpmbuild')"
+	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
+	tar --sort=name --mtime=@1792800000 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-displayport-audio-0.1.0/,' -cf - LICENSE src/ucm2 src/wireplumber | gzip -n > "$$top/SOURCES/uke-displayport-audio-0.1.0.tar.gz"
+	cp packaging/uke-displayport-audio.spec "$$top/SPECS/"
+	rpmbuild -bs --define "_topdir $$top" --define '_buildhost copr-builder' "$$top/SPECS/uke-displayport-audio.spec"
+pipewire-monitor-srpm:
+	bash scripts/build-pipewire-monitor-srpm.sh "$(FEDORA_PIPEWIRE_SRPM)" "$(abspath $(BUILD_DIR))/pipewire-monitor/rpmbuild"
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | index("uke-adaptive-display") != null)' manifests/component.json >/dev/null
 	bash tests/adaptive-display.sh
