@@ -15,6 +15,10 @@
     {
       "path": "patches/0002-main10-p010-encode.patch",
       "sha256": "9384af785623eac2aba460f421edd16c6aca6112e34623d1fc38d0c9687a98fe"
+    },
+    {
+      "path": "patches/0003-runtime-encode-rate-limits.patch",
+      "sha256": "718a10615ac320b171d07e54c2e08413f827676b5b1d67a71494ba2e35b2a0d0"
     }
   ],
   "delivery": {
@@ -32,6 +36,16 @@
   "runtime_python_dependency": false,
   "fastcv": false,
   "automatic_alias": false,
+  "encode_rate_source_candidate": {
+    "rpm_release": "0.3.20261025git6d03c3f",
+    "host_build_passed": true,
+    "runtime_bitrate_and_q16_fixtures": true,
+    "copr_build": 11205969,
+    "source_rpm_sha256": "2ca41f9326819e43add76c3e2208efb8de8806d37bf68000f5201a8c14e78eca",
+    "installed_with_dnf": false,
+    "tablet_tested": false,
+    "dimension_limits_still_static": true
+  },
   "main10_source_candidate": {
     "rpm_release": "0.2.20261025git6d03c3f",
     "host_build_passed": true,

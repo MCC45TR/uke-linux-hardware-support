@@ -1,0 +1,97 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Validate encode rates against the Iris runtime API
+
+Use the current bitrate control range instead of a shared-IP ceiling. Let
+S_PARM enforce codec and macroblock-rate limits, and verify its returned
+fractional Q16 rate instead of imposing an unrelated 240-fps ceiling.
+This changes source validation; physical codec acceptance remains separate.
+
+---
+diff --git a/src/encoder.cpp b/src/encoder.cpp
+index 145fb67..798caae 100644
+--- a/src/encoder.cpp
++++ b/src/encoder.cpp
+@@ -26,6 +26,42 @@ void checked(int fd, unsigned long command, void *arg, const char *name) {
+     if (call(fd, command, arg) < 0)
+         throw Error(VA_STATUS_ERROR_ENCODING_ERROR, std::string(name) + ": " + strerror(errno));
+ }
++void set_bitrate(int fd, unsigned id, unsigned value) {
++    v4l2_queryctrl range{};
++    range.id = id;
++    checked(fd, VIDIOC_QUERYCTRL, &range, "query encoder bitrate range");
++    check(range.type == V4L2_CTRL_TYPE_INTEGER &&
++              !(range.flags & (V4L2_CTRL_FLAG_DISABLED | V4L2_CTRL_FLAG_READ_ONLY)) &&
++              range.minimum >= 0 && range.maximum >= range.minimum && range.step > 0,
++          "unavailable encoder bitrate control", VA_STATUS_ERROR_UNIMPLEMENTED);
++    check(value >= unsigned(range.minimum) && value <= unsigned(range.maximum) &&
++              (value - range.minimum) % range.step == 0,
++          "requested bitrate exceeds the Iris control range", VA_STATUS_ERROR_INVALID_PARAMETER);
++    v4l2_control control{};
++    control.id = id;
++    control.value = value;
++    checked(fd, VIDIOC_S_CTRL, &control, "encoder bitrate S_CTRL");
++    check(control.value == int(value), "Iris changed the requested bitrate",
++          VA_STATUS_ERROR_ENCODING_ERROR);
++}
++void set_frame_rate(int fd, unsigned type, unsigned numerator, unsigned denominator) {
++    check(denominator && numerator >= denominator, "invalid encoder frame rate",
++          VA_STATUS_ERROR_INVALID_PARAMETER);
++    const uint64_t rate_q16 = (uint64_t(numerator) << 16) / denominator;
++    check(rate_q16 <= std::numeric_limits<uint32_t>::max(), "encoder frame rate overflows Q16",
++          VA_STATUS_ERROR_INVALID_PARAMETER);
++    v4l2_streamparm parm{};
++    parm.type = type;
++    auto &rate = type == CAPTURE ? parm.parm.capture.timeperframe
++                                : parm.parm.output.timeperframe;
++    rate.numerator = denominator;
++    rate.denominator = numerator;
++    checked(fd, VIDIOC_S_PARM, &parm, "encoder S_PARM");
++    // Iris returns the firmware's Q16 rate, including fractional-rate truncation.
++    check(rate.numerator && rate.denominator &&
++              (uint64_t(rate.denominator) << 16) / rate.numerator == rate_q16,
++          "Iris changed the requested frame rate", VA_STATUS_ERROR_ENCODING_ERROR);
++}
+ struct QueueBuffer {
+     v4l2_plane plane{};
+     v4l2_buffer buffer{};
+@@ -182,13 +218,13 @@ void validate(const EncodeSettings &s, const EncodePicture &p, VAProfile profile
+         validate_hevc(s, p, profile, width, height);
+     else
+         validate_h264(s, p, width, height);
+-    check(s.fps_num && s.fps_den && s.fps_num >= s.fps_den &&
+-              uint64_t(s.fps_num) <= uint64_t(s.fps_den) * 240,
++    check(s.fps_num && s.fps_den && s.fps_num >= s.fps_den,
+           "unsupported encode frame rate", VA_STATUS_ERROR_INVALID_PARAMETER);
+     check(s.min_qp >= 1 && s.max_qp <= 51 && s.min_qp <= s.max_qp, "invalid encode QP limits",
+           VA_STATUS_ERROR_INVALID_PARAMETER);
+     if (s.rate_control != VA_RC_CQP)
+-        check(s.bitrate && s.bitrate <= s.peak_bitrate && s.peak_bitrate <= 245000000,
++        check(s.bitrate && s.bitrate <= s.peak_bitrate &&
++                  s.peak_bitrate <= unsigned(std::numeric_limits<int>::max()),
+               "invalid encode bitrate", VA_STATUS_ERROR_INVALID_PARAMETER);
+ }
+ } // namespace
+@@ -664,19 +700,14 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+         e.control(V4L2_CID_MPEG_VIDEO_BITRATE_MODE, s.rate_control == VA_RC_CBR
+                                                         ? V4L2_MPEG_VIDEO_BITRATE_MODE_CBR
+                                                         : V4L2_MPEG_VIDEO_BITRATE_MODE_VBR);
+-        e.control(V4L2_CID_MPEG_VIDEO_BITRATE, s.bitrate);
+-        e.control(V4L2_CID_MPEG_VIDEO_BITRATE_PEAK, s.peak_bitrate);
++        set_bitrate(e.fd, V4L2_CID_MPEG_VIDEO_BITRATE, s.bitrate);
++        set_bitrate(e.fd, V4L2_CID_MPEG_VIDEO_BITRATE_PEAK, s.peak_bitrate);
+     }
+     e.control(s.hevc ? V4L2_CID_MPEG_VIDEO_HEVC_MIN_QP : V4L2_CID_MPEG_VIDEO_H264_MIN_QP, s.min_qp);
+     e.control(s.hevc ? V4L2_CID_MPEG_VIDEO_HEVC_MAX_QP : V4L2_CID_MPEG_VIDEO_H264_MAX_QP, s.max_qp);
+     e.configure_deblocking();
+-    for (unsigned type : {CAPTURE, OUTPUT}) {
+-        v4l2_streamparm parm{};
+-        parm.type = type;
+-        parm.parm.output.timeperframe.numerator = s.fps_den;
+-        parm.parm.output.timeperframe.denominator = s.fps_num;
+-        checked(e.fd, VIDIOC_S_PARM, &parm, "encoder S_PARM");
+-    }
++    for (unsigned type : {CAPTURE, OUTPUT})
++        set_frame_rate(e.fd, type, s.fps_num, s.fps_den);
+     // Iris sizes coded buffers differently when rate control is disabled.
+     // Refresh CAPTURE after controls, before allocating either queue.
+     fmt = {};

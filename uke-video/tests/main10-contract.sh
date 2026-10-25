@@ -71,6 +71,9 @@ int main() {
     p.hevc_slices.emplace_back();
     p.hevc_slices[0].slice_type=2; p.hevc_slices[0].num_ctu_in_slice=40*30;
     validate(s,p,VAProfileHEVCMain10,320,240);
+    s.fps_num=480;
+    validate(s,p,VAProfileHEVCMain10,320,240);
+    s.fps_num=30;
     rejected([&]{validate(s,p,VAProfileHEVCMain,320,240);},VA_STATUS_ERROR_UNIMPLEMENTED);
     rejected([&]{validate(s,p,VAProfileH264High,320,240);},VA_STATUS_ERROR_INVALID_PARAMETER);
     seq.seq_fields.bits.bit_depth_chroma_minus8=0;

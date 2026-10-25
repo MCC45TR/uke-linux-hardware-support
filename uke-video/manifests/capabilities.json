@@ -21,6 +21,17 @@
     "display_fault_after_provider_activation": true,
     "device_experiments_on_hold": true
   },
+  "coordinator_provider_only_trial": {
+    "kernel_release": "7.3.0-10",
+    "kernel_commit": "3d145da265d44063fa8818d4c8f3f7e4d7bb1e5e",
+    "evidence": "Saved Juo coordinator trace, 2026-10-25 16:51:43-16:52:58 UTC",
+    "provider_load_utc": "2026-10-25T16:52:19Z",
+    "idle_inhibited": true,
+    "iris_loaded": false,
+    "display_fault_reproduced": false,
+    "codec_workload_run": false,
+    "device_experiments_on_hold": true
+  },
   "firmware": {
     "package": "uke-video-firmware-local-3.0.304.0-1.noarch",
     "path": "qcom/uke/vpu30_2v.mbn",

@@ -8,6 +8,9 @@ load is followed by display translation faults before Iris loads. Iris later
 registers a decoder and encoder; no codec workload is accepted. Further device
 experiments require the Juo coordinator's exact-command/window approval.
 `/dev/video0` belongs to NT36532 touch. No native codec session is accepted.
+A later coordinator-owned release-10 provider-only trace, with display idle
+inhibited and Iris absent, does not repeat the fault. The earlier load timing
+does not establish VIDEOCC as its cause; power-transition isolation is pending.
 
 The experimental package pins Radxa libva-v4l2 at
 `6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41`. It intersects the implemented
@@ -27,6 +30,12 @@ HEVC Main10 parameters;
 it advertises that profile only when the kernel exposes both P010 and the
 Main10 profile menu. Native bitstream, precision and GPU/import validation
 remain open. AV1 has no admitted Uke source/runtime evidence.
+
+Source revision 0.3 replaces the fixed 240-fps and 245-Mbit/s encode checks
+with runtime bitrate-control bounds and returned Q16 frame-rate validation.
+Host checks cover 480-fps requests, fractional rates and driver refusal or
+substitution. They do not establish tablet throughput. The fixed VA dimension
+bounds and the full native/application test matrix remain open.
 
 Build requires the original distribution Meson 1.12.1-2.fc46, which uses
 Python on the build host. Meson is the upstream build system; replacing it
