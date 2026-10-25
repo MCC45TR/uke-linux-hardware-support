@@ -1,5 +1,10 @@
 # Uke Control
 
+25 October 2026: version 1.11.0 adds torch brightness and independent RGB
+color/brightness percentages. The fixed torch deadline is removed; supervised
+stop/failure cleanup and stop-before-sleep remain. This requires the reviewed
+kernel's real torch current steps; physical electrical/lifecycle tests remain open.
+
 25 October 2026: version 1.10.2 validates the original LED class through its
 parent controller DT link and fixed child label. Host fixtures cover the
 standard layout without a per-LED OF symlink and refuse foreign parents/labels.

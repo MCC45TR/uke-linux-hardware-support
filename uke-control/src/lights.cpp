@@ -8,10 +8,10 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
-#include <ctime>
 #include <fcntl.h>
 #include <iostream>
 #include <linux/magic.h>
+#include <poll.h>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -62,6 +62,11 @@ static bool compatible(const fs::path& sys,const fs::path& node,const std::strin
     return false;
 }
 unsigned color(const std::string& value) {return number(value,255);}
+unsigned percent(const std::string& value) {return number(value,100);}
+unsigned level(unsigned value,unsigned maximum) {
+    need(value<=100 && maximum>0,"Invalid light percentage or scale");
+    return value?std::max(1U,value*maximum/100):0;
+}
 std::string intensities(const std::string& order,const std::array<unsigned,3>& rgb) {
     for(auto value:rgb)need(value<=255,"RGB component exceeds 255");
     std::istringstream in(order); std::string name,out; unsigned mask=0;
@@ -74,6 +79,18 @@ std::string intensities(const std::string& order,const std::array<unsigned,3>& r
     }
     need(mask==7,"RGB channel order is incomplete");
     return out;
+}
+std::array<unsigned,3> colors(const std::string& order,const std::string& values) {
+    (void)intensities(order,{0,0,0});
+    std::istringstream names(order),in(values);std::string name,value;
+    std::array<unsigned,3> result{};
+    while(names>>name) {
+        need(bool(in>>value),"RGB intensities are incomplete");
+        const unsigned index=name=="red"?0:name=="green"?1:2;
+        result[index]=(number(value,511)*255+255)/511;
+    }
+    need(!(in>>value),"RGB intensities are ambiguous");
+    return result;
 }
 Source discover(bool rgb,const fs::path& sys) {
     Source out;
@@ -93,7 +110,7 @@ Source discover(bool rgb,const fs::path& sys) {
             need(!fs::is_directory(child) || child==node,"ambiguous_light_dt_children");
         need(sysfs::driver(sys,path)==sysfs::quote(rgb?"qcom-spmi-lpg":"leds-qcom-flash"),"light_driver_mismatch");
         need(compatible(sys,controller,rgb?"qcom,pm8350c-pwm":"qcom,spmi-flash-led"),"light_controller_mismatch");
-        need(raw(sys,path/"max_brightness")== (rgb?"511":"255"),"light_scale_mismatch");
+        need(raw(sys,path/"max_brightness")== (rgb?"511":"2"),"light_scale_mismatch");
         need(raw(sys,path/"trigger").find("[none]")!=std::string::npos,"light_owned_by_another_trigger");
         if(rgb) {
             for(unsigned i=1;i<=3;++i) {
@@ -101,14 +118,14 @@ Source discover(bool rgb,const fs::path& sys) {
                 need(raw(sys,child/"reg")==cell(i) && raw(sys,child/"color")==cell(i),"rgb_channel_mapping_mismatch");
             }
             out.order=raw(sys,path/"multi_index");
-            (void)intensities(out.order,{0,0,0});
+            out.rgb=colors(out.order,raw(sys,path/"multi_intensity"));
         } else {
             need(raw(sys,controller/"reg")==cell(0xee00),"torch_register_mapping_mismatch");
             need(raw(sys,node/"led-sources")==cell(1)+cell(4),"torch_channel_mapping_mismatch");
             need(raw(sys,node/"led-max-microamp")==cell(20000),"torch_current_limit_mismatch");
             need(!sysfs::exists(sys,node/"flash-max-microamp") && !sysfs::exists(sys,path/"flash_strobe"),"flash_mode_not_admitted");
         }
-        out.brightness=number(raw(sys,path/"brightness"),rgb?511:255);
+        out.brightness=number(raw(sys,path/"brightness"),rgb?511:2);
         out.path=*target;
     } catch(const std::exception& e) {out.reason=e.what();out.path.clear();}
     return out;
@@ -119,8 +136,10 @@ std::string snapshot(const fs::path& sys) {
         const auto source=discover(rgb,sys); const bool ok=!source.path.empty();
         out+=std::string(",\"")+(rgb?"rgb":"flashlight")+"\":{\"available\":"+(ok?"true":"false")+
             ",\"on\":"+(ok?(source.brightness?"true":"false"):"null")+
+            ",\"brightness_percent\":"+(ok?std::to_string(rgb?std::min(100U,(source.brightness*100+4)/8):source.brightness*50):"null")+
             ",\"reason\":"+(ok?"null":sysfs::quote(source.reason))+
-            (rgb?",\"pwm_brightness_limit\":8,\"pwm_max\":511":",\"max_microamp\":20000,\"max_seconds\":60")+"}";
+            (rgb?",\"color\":"+(ok?"["+std::to_string(source.rgb[0])+","+std::to_string(source.rgb[1])+","+std::to_string(source.rgb[2])+"]":"null")+
+                 ",\"pwm_brightness_limit\":8,\"pwm_max\":511":",\"max_microamp\":20000,\"brightness_step_percent\":50,\"max_seconds\":null")+"}";
     }
     return out+"}\n";
 }
@@ -140,31 +159,43 @@ static void put(const fs::path& path,const std::string& value) {
 }
 struct Lock {
     Fd fd;
-    explicit Lock(bool rgb):fd{open(rgb?"/run/uke-control-rgb.lock":"/run/uke-control-torch.lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600)} {
+    explicit Lock(bool rgb,bool wait=false):fd{open(rgb?"/run/uke-control-rgb.lock":"/run/uke-control-torch.lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600)} {
         struct stat info{};
         need(fd.n>=0 && !fstat(fd.n,&info) && S_ISREG(info.st_mode) && info.st_uid==0 && info.st_nlink==1 && !(info.st_mode&0077),"Invalid light lock");
-        need(flock(fd.n,LOCK_EX|LOCK_NB)==0,"Another light operation is active");
+        need(flock(fd.n,LOCK_EX|(wait?0:LOCK_NB))==0,"Another light operation is active");
     }
 };
+static void save_target(unsigned value) {
+    need(value<=2,"Invalid torch target");Lock lock(false);
+    const char byte=char('0'+value);
+    need(pwrite(lock.fd.n,&byte,1,0)==1 && ftruncate(lock.fd.n,1)==0,"Cannot save torch target");
+}
+static unsigned read_target() {
+    Lock lock(false,true);char bytes[2];
+    need(pread(lock.fd.n,bytes,2,0)==1 && bytes[0]>='0' && bytes[0]<='2',"Invalid torch target");
+    return unsigned(bytes[0]-'0');
+}
 static volatile sig_atomic_t stopped=0;
 static void stop(int) {stopped=1;}
-static uint64_t boot_seconds() {
-    timespec value{};
-    need(clock_gettime(CLOCK_BOOTTIME,&value)==0 && value.tv_sec>=0,"Suspend-aware clock unavailable");
-    return uint64_t(value.tv_sec);
-}
 static void hold() {
-    root(); Lock lock(false); const auto source=required(false);
+    root(); const auto source=required(false);
     need(source.brightness==0,"Torch already owned outside the managed service");
-    const auto until=boot_seconds()+55;
     for(int sig:{SIGTERM,SIGINT,SIGHUP})std::signal(sig,stop);
     Fd fd{open((source.path/"brightness").c_str(),O_WRONLY|O_NOFOLLOW|O_CLOEXEC)};
     struct Off {int fd;~Off(){try{write_fd(fd,"0\n");}catch(const std::exception& e){std::cerr<<e.what()<<'\n';}}} off{fd.n};
-    need(!stopped,"Torch start interrupted");
-    write_fd(fd.n,"255\n");
-    need(raw("/sys",source.path/"brightness")=="255","Torch enable readback differs");
-    need(sd_notify(0,"READY=1")>=0,"Cannot notify the torch supervisor");
-    while(!stopped && boot_seconds()<until)std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    bool ready=false;unsigned previous=3;
+    while(!stopped) {
+        const unsigned desired=read_target();
+        if(stopped)break;
+        if(desired!=previous) {
+            write_fd(fd.n,std::to_string(desired)+"\n");
+            need(raw("/sys",source.path/"brightness")==std::to_string(desired),"Torch brightness readback differs");
+            previous=desired;
+        }
+        if(!ready) {need(sd_notify(0,"READY=1")>=0,"Cannot notify the torch supervisor");ready=true;}
+        if(!desired)break;
+        (void)poll(nullptr,0,100);
+    }
 }
 int command(bool rgb,int argc,char** argv) {
     if(argc==1 && std::string_view(argv[0])=="status") {std::cout<<snapshot();return 0;}
@@ -172,27 +203,36 @@ int command(bool rgb,int argc,char** argv) {
         const std::string action=argv[0];
         if(action=="hold") {hold();return 0;}
         if(action=="reset") {root();Lock lock(false);put(required(false).path/"brightness","0");return 0;}
-        if(action=="on" || action=="off") {
-            root();if(action=="on")(void)required(false);
-            const auto result=execute({"/usr/bin/systemctl",action=="on"?"start":"stop",unit},10,8192);
-            need(result.status==0,"Torch supervisor request failed: "+result.output);
-            if(action=="off") {Lock lock(false);put(required(false).path/"brightness","0");}
-            std::cout<<snapshot();return 0;
-        }
     }
-    if(rgb && ((argc==1 && std::string_view(argv[0])=="off") || (argc==4 && std::string_view(argv[0])=="set"))) {
+    if(!rgb && ((argc==1 && (std::string_view(argv[0])=="on" || std::string_view(argv[0])=="off")) ||
+                (argc==2 && std::string_view(argv[0])=="set"))) {
+        const unsigned desired=argc==2?level(percent(argv[1]),2):(std::string_view(argv[0])=="on"?2:0);
+        root();if(desired){(void)required(false);save_target(desired);}
+        const auto result=execute({"/usr/bin/systemctl",desired?"start":"stop",unit},10,8192);
+        need(result.status==0,"Torch supervisor request failed: "+result.output);
+        if(!desired) {save_target(0);Lock lock(false);put(required(false).path/"brightness","0");}
+        bool applied=false;
+        for(unsigned i=0;i<30;++i) {
+            if(required(false).brightness==desired){applied=true;break;}
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        need(applied,"Torch brightness was not applied");
+        std::cout<<snapshot();return 0;
+    }
+    if(rgb && ((argc==1 && std::string_view(argv[0])=="off") || ((argc==4 || argc==5) && std::string_view(argv[0])=="set"))) {
         std::array<unsigned,3> values{};
-        if(argc==4)for(unsigned i=0;i<3;++i)values[i]=color(argv[i+1]);
+        if(argc>=4)for(unsigned i=0;i<3;++i)values[i]=color(argv[i+1]);
+        const unsigned brightness=argc==5?level(percent(argv[4]),8):8;
         root();Lock lock(true);const auto source=required(true);
         put(source.path/"brightness","0");
         try {
-            if(argc==4) {
+            if(argc>=4) {
                 put(source.path/"multi_intensity",intensities(source.order,values));
-                if(std::any_of(values.begin(),values.end(),[](unsigned n){return n!=0;}))put(source.path/"brightness","8");
+                if(std::any_of(values.begin(),values.end(),[](unsigned n){return n!=0;}))put(source.path/"brightness",std::to_string(brightness));
             }
         } catch(...) {try{put(source.path/"brightness","0");}catch(...){}throw;}
         std::cout<<snapshot();return 0;
     }
-    throw std::runtime_error(rgb?"Usage: uke-control led status|off|set R G B (0..255)":"Usage: uke-control flashlight status|on|off");
+    throw std::runtime_error(rgb?"Usage: uke-control led status|off|set R G B [BRIGHTNESS] (RGB 0..255, brightness 0..100)":"Usage: uke-control flashlight status|on|off|set BRIGHTNESS (0..100; hardware steps 0, 50, 100)");
 }
 }

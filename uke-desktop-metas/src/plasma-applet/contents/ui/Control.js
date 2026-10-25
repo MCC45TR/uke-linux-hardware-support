@@ -1,5 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-function command(action) {
+function command(action, values) {
+    if (action === "flashlightSet" || action === "ledSet") {
+        const maxima = action === "flashlightSet" ? [100] : [255, 255, 255, 100]
+        if (!Array.isArray(values) || values.length !== maxima.length || values.some(function(value, index) {
+            return !Number.isInteger(value) || value < 0 || value > maxima[index]
+        })) return null
+        return "/usr/bin/pkexec /usr/bin/uke-control " +
+            (action === "flashlightSet" ? "flashlight set " : "led set ") + values.join(" ")
+    }
     const commands = {
         plasma: "/usr/bin/uke-control desktop plasma",
         desktop: "/usr/bin/uke-control desktop status",
@@ -7,9 +15,6 @@ function command(action) {
         lights: "/usr/bin/uke-control flashlight status",
         flashlightOn: "/usr/bin/pkexec /usr/bin/uke-control flashlight on",
         flashlightOff: "/usr/bin/pkexec /usr/bin/uke-control flashlight off",
-        red: "/usr/bin/pkexec /usr/bin/uke-control led set 255 0 0",
-        green: "/usr/bin/pkexec /usr/bin/uke-control led set 0 255 0",
-        blue: "/usr/bin/pkexec /usr/bin/uke-control led set 0 0 255",
         ledOff: "/usr/bin/pkexec /usr/bin/uke-control led off",
         rotationOn: "/usr/bin/uke-control desktop rotation on",
         rotationOff: "/usr/bin/uke-control desktop rotation off",
@@ -43,9 +48,14 @@ function parse(kind, output) {
         for (const name of ["flashlight", "rgb"]) {
             const light = value[name]
             if (!light || typeof light.available !== "boolean" ||
-                (light.available ? typeof light.on !== "boolean" : light.on !== null))
+                (light.available ? typeof light.on !== "boolean" || !Number.isInteger(light.brightness_percent) ||
+                    light.brightness_percent < 0 || light.brightness_percent > 100 :
+                    light.on !== null || light.brightness_percent !== null))
                 throw new Error("Malformed light state")
         }
+        if (value.rgb.available && (!Array.isArray(value.rgb.color) || value.rgb.color.length !== 3 ||
+            value.rgb.color.some(function(c) { return !Number.isInteger(c) || c < 0 || c > 255 })))
+            throw new Error("Malformed RGB color")
     }
     return value
 }

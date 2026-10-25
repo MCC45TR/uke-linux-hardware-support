@@ -22,8 +22,8 @@ PlasmoidItem {
     property int pending: 0
     property string requestedAction: ""
 
-    function execute(action) {
-        const command = Control.command(action)
+    function execute(action, values) {
+        const command = Control.command(action, values)
         if (!command) return
         const source = "UKE_TRAY_REQUEST=" + (++serial) + " " + command
         requests[source] = action
@@ -37,10 +37,10 @@ PlasmoidItem {
         execute("usb")
         execute("lights")
     }
-    function change(action) {
+    function change(action, values) {
         if (pending > 0) return
         errorText = ""
-        execute(action)
+        execute(action, values)
     }
     function finish(source, data) {
         const action = requests[source]
@@ -207,28 +207,33 @@ PlasmoidItem {
             ControlRow {
                 title: i18n("Flashlight")
                 iconName: "flashlight-off"
-                description: i18n("20 mA total; switches off within 60 seconds")
+                description: i18n("%1% brightness; 20 mA maximum", root.lights.flashlight?.brightness_percent ?? 0)
                 available: root.lights.flashlight?.available === true
                 busy: root.pending > 0
                 action: Component {
-                    PC.Switch {
-                        checked: root.lights.flashlight?.on === true
-                        Accessible.name: i18n("Flashlight")
-                        onToggled: root.change(checked ? "flashlightOn" : "flashlightOff")
+                    RowLayout {
+                        PC.Switch {
+                            checked: root.lights.flashlight?.on === true
+                            Accessible.name: i18n("Flashlight")
+                            onToggled: root.change(checked ? "flashlightOn" : "flashlightOff")
+                        }
+                        PC.ToolButton {
+                            icon.name: "configure"
+                            Accessible.name: i18n("Flashlight brightness")
+                            onClicked: lightSettings.configure(true)
+                        }
                     }
                 }
             }
             ControlRow {
                 title: i18n("Notification LED")
                 iconName: "color-management"
-                description: i18n("Low brightness; administrator authorization required")
+                description: i18n("%1% of the low brightness limit", root.lights.rgb?.brightness_percent ?? 0)
                 available: root.lights.rgb?.available === true
                 busy: root.pending > 0
                 action: Component {
                     RowLayout {
-                        PC.Button { text: i18n("Red"); onClicked: root.change("red") }
-                        PC.Button { text: i18n("Green"); onClicked: root.change("green") }
-                        PC.Button { text: i18n("Blue"); onClicked: root.change("blue") }
+                        PC.Button { text: i18n("Color and brightness"); onClicked: lightSettings.configure(false) }
                         PC.Button { text: i18n("Off"); onClicked: root.change("ledOff") }
                     }
                 }
@@ -239,6 +244,66 @@ PlasmoidItem {
                 wrapMode: Text.WordWrap
                 text: i18n("Unsupported controls remain unavailable. Refresh reads the current state.")
             }
+        }
+        QQC2.Dialog {
+            id: lightSettings
+            property bool torch: true
+            function configure(isTorch) {
+                torch = isTorch
+                const state = isTorch ? root.lights.flashlight : root.lights.rgb
+                lightBrightness.value = state.brightness_percent
+                if (!isTorch) {
+                    red.value = state.color[0]
+                    green.value = state.color[1]
+                    blue.value = state.color[2]
+                }
+                open()
+            }
+            anchors.centerIn: parent
+            width: Math.min(parent.width, Kirigami.Units.gridUnit * 24)
+            modal: true
+            title: torch ? i18n("Flashlight brightness") : i18n("Notification LED")
+            standardButtons: QQC2.Dialog.Ok | QQC2.Dialog.Cancel
+            contentItem: ColumnLayout {
+                GridLayout {
+                    visible: !lightSettings.torch
+                    Layout.fillWidth: true
+                    columns: 2
+                    PC.Label { text: i18n("R") }
+                    QQC2.SpinBox { id: red; Layout.fillWidth: true; from: 0; to: 255; editable: true; Accessible.name: i18n("Red") }
+                    PC.Label { text: i18n("G") }
+                    QQC2.SpinBox { id: green; Layout.fillWidth: true; from: 0; to: 255; editable: true; Accessible.name: i18n("Green") }
+                    PC.Label { text: i18n("B") }
+                    QQC2.SpinBox { id: blue; Layout.fillWidth: true; from: 0; to: 255; editable: true; Accessible.name: i18n("Blue") }
+                }
+                Rectangle {
+                    visible: !lightSettings.torch
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Kirigami.Units.gridUnit * 2
+                    color: Qt.rgba(red.value / 255, green.value / 255, blue.value / 255, 1)
+                    border.color: Kirigami.Theme.textColor
+                }
+                PC.Label { text: i18n("Brightness: %1%", Math.round(lightBrightness.value)) }
+                QQC2.Slider {
+                    id: lightBrightness
+                    Layout.fillWidth: true
+                    from: 0
+                    to: 100
+                    stepSize: lightSettings.torch ? 50 : 1
+                    snapMode: QQC2.Slider.SnapAlways
+                    Accessible.name: i18n("Brightness")
+                }
+                PC.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: lightSettings.torch
+                        ? i18n("Hardware steps: 0%, 50%, 100%. No automatic timeout; turns off before sleep.")
+                        : i18n("100% uses the low brightness limit. Administrator authorization is required to apply changes.")
+                }
+            }
+            onAccepted: root.change(torch ? "flashlightSet" : "ledSet", torch
+                ? [Math.round(lightBrightness.value)]
+                : [red.value, green.value, blue.value, Math.round(lightBrightness.value)])
         }
         QQC2.Dialog {
             id: confirmation

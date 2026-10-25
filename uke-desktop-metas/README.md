@@ -1,5 +1,11 @@
 # Uke desktop selections
 
+25 October 2026: source release `1.0.0-18` requires Control 1.11.0. The widget
+adds a 0–100 torch brightness dialog and RGB components/brightness with a color
+preview. Apply sends one validated backend request. Percentages stay within
+the retained limits; hardware torch steps are 0/50/100. No package or tablet
+result is claimed for this source revision.
+
 25 October 2026: release `1.0.0-17` requires Control 1.10.2 with corrected
 original LED-class provider discovery and the bounded, suspend-aware supervisor.
 
