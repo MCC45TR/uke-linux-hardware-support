@@ -1,0 +1,2 @@
+/usr/libexec/uke-control/rgb-led -- gen_context(system_u:object_r:uke_rgb_exec_t,s0)
+/dev/uke-rgb -c gen_context(system_u:object_r:uke_rgb_device_t,s0)

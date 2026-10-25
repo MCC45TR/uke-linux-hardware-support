@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "lights.hpp"
+#include "rgb.hpp"
 #include "backend.hpp"
 #include "sysfs.hpp"
 #include "wake.hpp"
@@ -111,7 +112,8 @@ Source discover(bool rgb,const fs::path& sys) {
         need(sysfs::driver(sys,path)==sysfs::quote(rgb?"qcom-spmi-lpg":"leds-qcom-flash"),"light_driver_mismatch");
         need(compatible(sys,controller,rgb?"qcom,pm8350c-pwm":"qcom,spmi-flash-led"),"light_controller_mismatch");
         need(raw(sys,path/"max_brightness")== (rgb?"511":"2"),"light_scale_mismatch");
-        need(raw(sys,path/"trigger").find("[none]")!=std::string::npos,"light_owned_by_another_trigger");
+        const auto trigger=raw(sys,path/"trigger");
+        need(trigger.find("[none]")!=std::string::npos,"light_owned_by_another_trigger");
         if(rgb) {
             for(unsigned i=1;i<=3;++i) {
                 auto child=node/("led@"+std::to_string(i));
@@ -198,6 +200,7 @@ static void hold() {
     }
 }
 int command(bool rgb,int argc,char** argv) {
+    if(rgb)return uke::rgb::command(argc,argv);
     if(argc==1 && std::string_view(argv[0])=="status") {std::cout<<snapshot();return 0;}
     if(!rgb && argc==1) {
         const std::string action=argv[0];
@@ -219,20 +222,6 @@ int command(bool rgb,int argc,char** argv) {
         need(applied,"Torch brightness was not applied");
         std::cout<<snapshot();return 0;
     }
-    if(rgb && ((argc==1 && std::string_view(argv[0])=="off") || ((argc==4 || argc==5) && std::string_view(argv[0])=="set"))) {
-        std::array<unsigned,3> values{};
-        if(argc>=4)for(unsigned i=0;i<3;++i)values[i]=color(argv[i+1]);
-        const unsigned brightness=argc==5?level(percent(argv[4]),8):8;
-        root();Lock lock(true);const auto source=required(true);
-        put(source.path/"brightness","0");
-        try {
-            if(argc>=4) {
-                put(source.path/"multi_intensity",intensities(source.order,values));
-                if(std::any_of(values.begin(),values.end(),[](unsigned n){return n!=0;}))put(source.path/"brightness",std::to_string(brightness));
-            }
-        } catch(...) {try{put(source.path/"brightness","0");}catch(...){}throw;}
-        std::cout<<snapshot();return 0;
-    }
-    throw std::runtime_error(rgb?"Usage: uke-control led status|off|set R G B [BRIGHTNESS] (RGB 0..255, brightness 0..100)":"Usage: uke-control flashlight status|on|off|set BRIGHTNESS (0..100; hardware steps 0, 50, 100)");
+    throw std::runtime_error("Usage: uke-control flashlight status|on|off|set BRIGHTNESS (0..100; hardware steps 0, 50, 100)");
 }
 }

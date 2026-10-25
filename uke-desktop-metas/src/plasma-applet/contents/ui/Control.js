@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 function command(action, values) {
-    if (action === "flashlightSet" || action === "ledSet") {
-        const maxima = action === "flashlightSet" ? [100] : [255, 255, 255, 100]
+    if (action === "flashlightSet") {
+        const maxima = [100]
         if (!Array.isArray(values) || values.length !== maxima.length || values.some(function(value, index) {
             return !Number.isInteger(value) || value < 0 || value > maxima[index]
         })) return null
-        return "/usr/bin/pkexec /usr/bin/uke-control " +
-            (action === "flashlightSet" ? "flashlight set " : "led set ") + values.join(" ")
+        return "/usr/bin/pkexec /usr/bin/uke-control flashlight set " + values.join(" ")
     }
     const commands = {
         plasma: "/usr/bin/uke-control desktop plasma",
         desktop: "/usr/bin/uke-control desktop status",
         usb: "/usr/bin/uke-control usb status",
         lights: "/usr/bin/uke-control flashlight status",
+        rgb: "/usr/bin/uke-control led status",
+        rgbTest: "/usr/bin/uke-control led test",
         flashlightOn: "/usr/bin/pkexec /usr/bin/uke-control flashlight on",
         flashlightOff: "/usr/bin/pkexec /usr/bin/uke-control flashlight off",
-        ledOff: "/usr/bin/pkexec /usr/bin/uke-control led off",
         rotationOn: "/usr/bin/uke-control desktop rotation on",
         rotationOff: "/usr/bin/uke-control desktop rotation off",
         brightnessOn: "/usr/bin/uke-control desktop brightness on",
@@ -34,7 +34,8 @@ function parse(kind, output) {
         plasma: "org.uke.control.plasma.v1",
         desktop: "org.uke.control.desktop.v1",
         usb: "org.uke.control.usb.v1",
-        lights: "org.uke.control.lights.v1"
+        lights: "org.uke.control.lights.v1",
+        rgb: "org.uke.control.rgb.v1"
     }
     if (!value || value.schema !== schemas[kind] || !schemas[kind])
         throw new Error("Unexpected uke-control response")
@@ -57,6 +58,11 @@ function parse(kind, output) {
             value.rgb.color.some(function(c) { return !Number.isInteger(c) || c < 0 || c > 255 })))
             throw new Error("Malformed RGB color")
     }
+    if (kind === "rgb" && (typeof value.available !== "boolean" || (value.available &&
+        (["off", "manual", "low-battery", "critical-battery", "front-camera", "test"].indexOf(value.mode) < 0 ||
+         !Number.isInteger(value.test_remaining_ms) || value.test_remaining_ms < 0 || value.test_remaining_ms > 10000 ||
+         !Number.isInteger(value.kernel_io_error) || value.kernel_io_error > 0 || value.kernel_io_error < -4095))))
+        throw new Error("Malformed kernel RGB state")
     return value
 }
 

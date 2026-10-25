@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.11.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.12.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -26,7 +26,7 @@ static void help() {
       "  desktop brightness on|off   Set original KScreen automatic brightness policy\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
       "  flashlight status|on|off|set P  Torch brightness 0..100; manual off (root)\n"
-      "  led status|off|set R G B [P] RGB color 0..255, brightness 0..100 (root)\n"
+      "  led status|auto|test|set HEX [P]  Kernel RGB control; no sudo\n"
       "  wake status                 Driver wake permissions and unsupported event controls\n"
       "  wake set SOURCE on|off      Save and apply one wake permission (root)\n"
       "  wake apply                  Restore saved permissions before suspend (root)\n"
@@ -38,6 +38,7 @@ static void help() {
       "  sensors list                List exported channels and SensorProxy capabilities\n"
       "  sensors -n5 --count=3       Three snapshots, five seconds apart; Ctrl-C stops\n"
       "  display sensor              Read the existing front-color node; never starts collection\n"
+      "  display bits                Actual active-stream bpc/bpp; use sudo for driver debugfs\n"
       "  display profiles            Display/USB lane profiles and actual Type-C control availability\n"
       "  display profile NAME        Request usb3-display or display4; unsupported controls fail (root)\n"
       "  display lane-limit 1|2|4    DP training ceiling, disconnected only (root)\n"
@@ -113,6 +114,9 @@ int main(int argc,char** argv) {
             throw std::runtime_error("The native package manager helper is missing");
         }
         if(command=="sensors")return uke::sensors::command(argc-2,argv+2);
+        if(command=="display"&&argc==3&&std::string_view(argv[2])=="bits") {
+            std::cout<<uke::links::display_bits_status("/");return 0;
+        }
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="profiles") {
             std::cout<<uke::usb::display_profiles("/");return 0;
         }

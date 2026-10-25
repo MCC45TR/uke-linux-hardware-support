@@ -62,6 +62,42 @@ int main() {
         assert(uke::links::lane_controls(root)==std::vector<fs::path>{dp/"uke_dp_lane_limit"});
         fs::remove(dp/"uke_dp_lane_limit");fs::create_symlink("/etc/passwd",dp/"uke_dp_lane_limit");
         assert(uke::links::lane_controls(root).empty());
+        const auto output=root/"sys/class/drm/card2-DP-1";
+        const auto bits=root/"sys/kernel/debug/dri/2/DP-1/output_bits";
+        put(output/"status","connected\n");put(output/"enabled","enabled\n");
+        put(output/"max_bpc","16\n");
+        auto status=uke::links::display_bits_status(root);
+        assert(status.find("\"bits_per_component\":null")!=status.npos);
+        put(bits,"version=1 active=1 bpc=8 bpp=24 dsc_bpp_x16=0\n");
+        status=uke::links::display_bits_status(root);
+        assert(status.find("\"bits_per_component\":8")!=status.npos);
+        assert(status.find("\"bits_per_pixel\":24")!=status.npos);
+        for(const auto* bad:{"", "version=2 active=1 bpc=10 bpp=30 dsc_bpp_x16=0",
+                "version=1 active=1 bpc=10 bpp=24 dsc_bpp_x16=0",
+                "version=1 active=0 bpc=8 bpp=24 dsc_bpp_x16=0",
+                "version=1 active=1 bpc=999999999999999999 bpp=30 dsc_bpp_x16=0",
+                "version=1 active=1 bpc=10 bpp=30 dsc_bpp_x16=999",
+                "version=1 active=1 bpc=10 bpp=30 dsc_bpp_x16=0 extra=1"}) {
+            put(bits,bad);status=uke::links::display_bits_status(root);
+            assert(status.find("invalid_driver_snapshot")!=status.npos);
+            assert(status.find("\"bits_per_component\":null")!=status.npos);
+        }
+        put(bits,"version=1 active=1 bpc=10 bpp=30 dsc_bpp_x16=128\n");
+        status=uke::links::display_bits_status(root);
+        assert(status.find("\"bits_per_component\":10")!=status.npos);
+        assert(status.find("\"dsc_bits_per_pixel_x16\":128")!=status.npos);
+        put(output/"status","disconnected\n");status=uke::links::display_bits_status(root);
+        assert(status.find("\"active\":false")!=status.npos);
+        assert(status.find("\"bits_per_component\":null")!=status.npos);
+        put(output/"status","connected\n");put(output/"enabled","disabled\n");
+        status=uke::links::display_bits_status(root);
+        assert(status.find("\"bits_per_component\":null")!=status.npos);
+        put(output/"enabled","enabled\n");put(bits,"version=1 active=0 bpc=0 bpp=0 dsc_bpp_x16=0\n");
+        status=uke::links::display_bits_status(root);
+        assert(status.find("\"active\":false")!=status.npos);
+        fs::remove(bits);fs::create_symlink("/etc/passwd",bits);
+        status=uke::links::display_bits_status(root);
+        assert(status.find("snapshot_unavailable")!=status.npos);
         fs::remove_all(root);
     }catch(...){fs::remove_all(root);throw;}
     std::cout<<"Link policy: interface/USB topology scope, sysfs containment, speed support, JSON errors and advertisement readback passed; host only\n";

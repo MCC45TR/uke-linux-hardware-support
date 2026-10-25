@@ -1,0 +1,24 @@
+policy_module(uke_control_rgb, 1.0)
+
+type uke_rgb_t;
+type uke_rgb_exec_t;
+init_daemon_domain(uke_rgb_t, uke_rgb_exec_t)
+
+type uke_rgb_device_t;
+dev_node(uke_rgb_device_t)
+allow uke_rgb_t uke_rgb_device_t:chr_file { getattr open read write ioctl };
+
+# This broker owns no sysfs, firmware, GPIO, regulator or raw-memory writer.
+auth_read_passwd(uke_rgb_t)
+libs_use_ld_so(uke_rgb_t)
+libs_use_shared_libs(uke_rgb_t)
+files_read_etc_files(uke_rgb_t)
+miscfiles_read_localization(uke_rgb_t)
+init_use_fds(uke_rgb_t)
+logging_send_syslog_msg(uke_rgb_t)
+dbus_system_bus_client(uke_rgb_t)
+allow uke_rgb_t self:dbus acquire_svc;
+gen_require(`attribute userdomain; class dbus { acquire_svc send_msg };')
+allow uke_rgb_t userdomain:dbus send_msg;
+allow userdomain uke_rgb_t:dbus send_msg;
+policykit_dbus_chat(uke_rgb_t)
