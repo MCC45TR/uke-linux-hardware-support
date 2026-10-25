@@ -4,7 +4,10 @@ Date: 25 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
 The latest approved tablet query uses Fedora and Linux 7.3.0-10. Explicit
 V4L2 selection initializes libva successfully; default selection fails because
-the MSM driver alias is absent. No codec workload is accepted. A prior
+the MSM driver alias was absent. A package-only kernel-12 window installs
+signed revision 0.4 through DNF at 19:36:49 UTC and verifies the relative alias,
+RPM and ELF. Video modules remain unloaded and the default query is not
+repeated. No codec workload is accepted. A prior
 release-9 display fault remains unexplained; the controlled release-10
 provider-only trial does not repeat it. Active-display coexistence and codec
 output remain separate acceptance gates. Iris uses video1/video2 in this
@@ -22,13 +25,13 @@ Select the backend explicitly during bring-up:
 LIBVA_DRIVER_NAME=v4l2 vainfo --display drm --device /dev/dri/renderD128
 ```
 
-Installed revision 0.2 omits the automatic MSM alias. Source revision 0.4
-retains the upstream alias so default discovery can be tested without an
-environment override. It is reserved for a separate test repository and is not
-installed at this checkpoint. Normal channel promotion still requires native
-codec and application acceptance.
+Revision 0.4, COPR 11206106, replaces installed revision 0.2 in a one-package
+signed DNF transaction. It retains the upstream MSM alias so default discovery
+can be tested without an environment override. It uses a separate test
+repository. Default VA initialization and normal-channel promotion still
+require the coordinated native query, codec and application acceptance.
 FastCV/CDSP VPP is disabled. Revision 0.1 does not advertise Main10 encode.
-Signed revision 0.2 is installed through DNF. It adds P010 input and matching
+The installed revision retains revision 0.2's P010 input and matching
 HEVC Main10 parameters;
 it advertises that profile only when the kernel exposes both P010 and the
 Main10 profile menu. Native bitstream, precision and GPU/import validation
@@ -38,7 +41,8 @@ Source revision 0.3 replaces the fixed 240-fps and 245-Mbit/s encode checks
 with runtime bitrate-control bounds and returned Q16 frame-rate validation.
 Host checks cover 480-fps requests, fractional rates and driver refusal or
 substitution. Native AArch64 COPR 11205969 and its build fixtures pass; the
-signed package is inspected but not installed. These checks do not establish
+signed 0.3 package is not installed separately, while its code is included in
+installed 0.4. These checks do not establish
 tablet throughput. The fixed VA dimension
 bounds and the full native/application test matrix remain open.
 

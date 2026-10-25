@@ -22,6 +22,15 @@
     }
   ],
   "delivery": {
+    "copr_build": 11206106,
+    "repository": "mcc45tr/uke-linux-test:custom:video-default-provider-20261025",
+    "source_rpm_sha256": "c0de78d3869cee19f6e05be4e2d9c06eb120df463346668251849b7df2bcf9ff",
+    "aarch64_rpm_sha256": "3744dafe5c0a0718683953ffd93eb373d11e394ff831304f2f552c6c65068880",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "installed_with_dnf": true,
+    "verified_utc": "2026-10-25T19:36:49Z"
+  },
+  "previous_delivery": {
     "copr_build": 11205659,
     "repository": "mcc45tr/uke-linux-test:custom:video-20261025",
     "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de",
@@ -35,7 +44,7 @@
   },
   "runtime_python_dependency": false,
   "fastcv": false,
-  "automatic_alias": false,
+  "automatic_alias": true,
   "encode_rate_source_candidate": {
     "rpm_release": "0.3.20261025git6d03c3f",
     "host_build_passed": true,
@@ -77,7 +86,10 @@
     "automatic_alias": true,
     "implementation_change": "Retain upstream relative MSM-to-V4L2 symlink; encoder/decoder code unchanged from revision 0.3",
     "copr_build": 11206106,
-    "installed_with_dnf": false,
+    "installed_with_dnf": true,
+    "rpm_verify_clean": true,
+    "installed_alias_verified": true,
+    "installed_utc": "2026-10-25T19:36:49Z",
     "default_vainfo_retested": false,
     "codec_workload_tested": false,
     "source_rpm_sha256": "c0de78d3869cee19f6e05be4e2d9c06eb120df463346668251849b7df2bcf9ff",

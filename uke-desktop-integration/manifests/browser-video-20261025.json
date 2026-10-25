@@ -158,7 +158,25 @@
     "post_boot_render_mapping": false,
     "default_vainfo": false
   },
-  "runtime_changes": [],
+  "runtime_changes": [
+    {
+      "utc": "2026-10-25T19:36:49Z",
+      "scope": "Package-only DNF upgrade on kernel 7.3.0-12; no device open, VA query, module load or browser restart",
+      "package": "uke-vaapi-v4l2-1.0.0-0.4.20261025git6d03c3f.fc46.aarch64",
+      "copr_build": 11206106,
+      "replaced_revision": "0.2",
+      "dnf_upgraded_package_count": 1,
+      "local_signature_check_required": true,
+      "rpm_verify_clean": true,
+      "backend_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
+      "installed_alias": "msm_drv_video.so -> v4l2_drv_video.so",
+      "video_modules_unloaded": true,
+      "verification_receipt_sha256": "03795f4ac371f87e58cec17f77f6e05b0fc1f1f59175c5e1dc6979267493cfe8",
+      "default_vainfo_retested": false,
+      "gpu_report_after": false,
+      "render_regression_tested": false
+    }
+  ],
   "donor_code_executed": false,
   "kernel_build_lock_changed": false,
   "standalone_va_trials": {

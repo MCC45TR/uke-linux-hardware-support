@@ -1,8 +1,9 @@
 # Uke video acceptance matrix
 
 Date: 25 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
-Linux 7.3.0-9, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
-separate from codec workload acceptance.
+Linux 7.3.0-10 for VA queries and 7.3.0-12 for package-only delivery. Mesa
+26.2.5-11 and libva 2.24.1 were captured in the query environment. Package and
+source checks are separate from codec workload acceptance.
 
 | Check | Observed result | Remaining gate |
 |---|---|---|
@@ -15,10 +16,11 @@ separate from codec workload acceptance.
 | Shared kernel 7.3.0-9 / VIDEOCC-only activation | Gate readback passed; display SID 0x1c00 / CB10 fault starts before Iris load; 60 Hz recovery reported by the coordinator | Approved provider-only trace and shared-resource correction before codec trials |
 | Coordinated 7.3.0-10 / VIDEOCC-only trace | Idle inhibited; no new display fault in the 16:51:43-16:52:58 UTC capture; provider loaded at 16:52:19, Iris absent | Separate power-transition isolation; no Iris session established |
 | Coordinated 7.3.0-10 / Iris load | Nodes register and background clients access the device; USB/DP disconnected four seconds before loading | Stable USB/DP topology, explicit firmware/API proof and approved codec workload |
-| VA revision 0.3 / COPR 11205969 | Prepared-source GPU-enabled host build, native AArch64 build fixtures, signature and payload checks passed; not installed | Approved delivery; physical rate/output correctness |
+| VA revision 0.3 / COPR 11205969 | Host/native build fixtures, signature and payload checks passed; not installed separately; its code is included in installed 0.4 | Physical rate/output correctness |
 | Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
 | Explicit VA initialization on 7.3.0-10 | Revision 0.2 initializes successfully as the desktop user; 7 decode and 4 encode profile/entrypoint pairs; no new non-audit kernel messages | Actual native/VA codec output and browser integration |
-| Default VA discovery on 7.3.0-10 | Reproduces `vaInitialize -1`: default libva searches for absent MSM alias | Signed revision 0.4 candidate, controlled install and default-query retest |
+| Default VA discovery on 7.3.0-10 | Reproduces `vaInitialize -1`: default libva searches for absent MSM alias | Default-query retest after coordinated Iris activation |
+| VA revision 0.4 / COPR 11206106 on 7.3.0-12 | Single signed DNF upgrade, RPM/ELF and relative MSM alias verified; modules remain unloaded; no VA query | Separate activation/query window, Chrome report and rendering regression |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |
