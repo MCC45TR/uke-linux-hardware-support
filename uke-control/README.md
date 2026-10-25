@@ -1,5 +1,11 @@
 # Uke Control
 
+25 October 2026: source version 1.13.0 adds passwordless active-local torch
+requests through a confined non-root service. The widget's 1–100 slider keeps
+the original 20 mA total ceiling and reports the two real lit steps separately
+from the requested percentage. No kernel electrical setting changes. Host
+fixtures and QML loading are separate from signed package and tablet validation.
+
 25 October 2026, POCO Pad X1, Linux 7.3.0-5: signed Control/core/tests
 1.12.0-5 from [COPR 11205434](https://copr.fedorainfracloud.org/coprs/build/11205434)
 are installed through DNF. RGB policy and animation run in the kernel; a

@@ -9,17 +9,19 @@ LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check check-rgb-policy check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
-all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/uke-control-rgb build/selinux/uke_control_rgb.pp
+all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
 build:
 	mkdir -p build
 build/uke-control-rgb: src/rgb-service.cpp src/rgb.hpp shared/uke-rgb.h build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/rgb-service.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux)
+build/torch-access: src/torch-access.cpp build/libuke-control.so.0
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $< -Lbuild -l:libuke-control.so.0
 build/selinux/uke_control_rgb.pp: packaging/selinux/uke_control_rgb.te packaging/selinux/uke_control_rgb.fc | build
 	mkdir -p build/selinux
 	cp packaging/selinux/uke_control_rgb.{te,fc} build/selinux/
 	$(MAKE) -C build/selinux -f /usr/share/selinux/devel/Makefile uke_control_rgb.pp
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/lights.cpp src/rgb.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
+build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
 build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
 build/uke-control-packages: src/packages.cpp | build
@@ -119,7 +121,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.12.0/#' -czf "$$top/SOURCES/uke-control-1.12.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.13.0/#' -czf "$$top/SOURCES/uke-control-1.13.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

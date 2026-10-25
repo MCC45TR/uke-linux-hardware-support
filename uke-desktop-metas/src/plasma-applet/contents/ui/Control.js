@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 function command(action, values) {
     if (action === "flashlightSet") {
-        const maxima = [100]
-        if (!Array.isArray(values) || values.length !== maxima.length || values.some(function(value, index) {
-            return !Number.isInteger(value) || value < 0 || value > maxima[index]
+        if (!Array.isArray(values) || values.length !== 1 || values.some(function(value) {
+            return !Number.isInteger(value) || value < 1 || value > 100
         })) return null
-        return "/usr/bin/pkexec /usr/bin/uke-control flashlight set " + values.join(" ")
+        return "/usr/bin/uke-control flashlight set " + values.join(" ")
     }
     const commands = {
         plasma: "/usr/bin/uke-control desktop plasma",
@@ -14,8 +13,8 @@ function command(action, values) {
         lights: "/usr/bin/uke-control flashlight status",
         rgb: "/usr/bin/uke-control led status",
         rgbTest: "/usr/bin/uke-control led test",
-        flashlightOn: "/usr/bin/pkexec /usr/bin/uke-control flashlight on",
-        flashlightOff: "/usr/bin/pkexec /usr/bin/uke-control flashlight off",
+        flashlightOn: "/usr/bin/uke-control flashlight on",
+        flashlightOff: "/usr/bin/uke-control flashlight off",
         rotationOn: "/usr/bin/uke-control desktop rotation on",
         rotationOff: "/usr/bin/uke-control desktop rotation off",
         brightnessOn: "/usr/bin/uke-control desktop brightness on",
@@ -54,6 +53,9 @@ function parse(kind, output) {
                     light.on !== null || light.brightness_percent !== null))
                 throw new Error("Malformed light state")
         }
+        if (value.flashlight.available && (!Number.isInteger(value.flashlight.requested_percent) ||
+            value.flashlight.requested_percent < 1 || value.flashlight.requested_percent > 100))
+            throw new Error("Malformed torch request state")
         if (value.rgb.available && (!Array.isArray(value.rgb.color) || value.rgb.color.length !== 3 ||
             value.rgb.color.some(function(c) { return !Number.isInteger(c) || c < 0 || c > 255 })))
             throw new Error("Malformed RGB color")

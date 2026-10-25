@@ -215,7 +215,7 @@ PlasmoidItem {
             ControlRow {
                 title: i18n("Flashlight")
                 iconName: "flashlight-off"
-                description: i18n("%1% brightness; 20 mA maximum", root.lights.flashlight?.brightness_percent ?? 0)
+                description: i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight?.brightness_percent ?? 0)
                 available: root.lights.flashlight?.available === true
                 busy: root.pending > 0
                 action: Component {
@@ -254,7 +254,7 @@ PlasmoidItem {
         QQC2.Dialog {
             id: lightSettings
             function configure() {
-                lightBrightness.value = root.lights.flashlight.brightness_percent
+                lightBrightness.value = root.lights.flashlight.requested_percent
                 open()
             }
             anchors.centerIn: parent
@@ -267,16 +267,16 @@ PlasmoidItem {
                 QQC2.Slider {
                     id: lightBrightness
                     Layout.fillWidth: true
-                    from: 0
+                    from: 1
                     to: 100
-                    stepSize: 50
+                    stepSize: 1
                     snapMode: QQC2.Slider.SnapAlways
                     Accessible.name: i18n("Brightness")
                 }
                 PC.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
-                    text: i18n("Hardware steps: 0%, 50%, 100%. No automatic timeout; turns off before sleep.")
+                    text: i18n("Hardware has two lit steps: 1–99% requests use 50%; 100% uses 100%. Maximum 20 mA. No automatic timeout; turns off before sleep.")
                 }
             }
             onAccepted: root.change("flashlightSet", [Math.round(lightBrightness.value)])

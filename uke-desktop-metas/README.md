@@ -3,6 +3,13 @@
 Chromium is recommended by default and can be removed while retaining the KDE
 meta package. This preserves the packaging correction in release 19.
 
+25 October 2026: source release `1.0.0-22` requires Control 1.13.0. Torch on/off
+and brightness use fixed unprivileged client commands. The 1–100 slider shows
+the requested percentage separately from the two physical lit steps. The
+separate widget package remains a removable KDE recommendation and is excluded
+from the GNOME selection. QML loading and command/schema fixtures pass on the host;
+signed package and tablet acceptance remain separate.
+
 25 October 2026: source release `1.0.0-21` requires Control 1.12.0. Regular
 RGB color/brightness controls are removed. One **Test colors** button requests
 the kernel's ten-second color transition without sudo or pkexec. It remains

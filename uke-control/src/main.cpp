@@ -18,14 +18,14 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.12.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.13.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
       "  desktop rotation on|off     Set original KScreen automatic rotation policy\n"
       "  desktop brightness on|off   Set original KScreen automatic brightness policy\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
-      "  flashlight status|on|off|set P  Torch brightness 0..100; manual off (root)\n"
+      "  flashlight status|on|off|set P  Torch request 1..100; zero means off (active local user)\n"
       "  led status|auto|test|set HEX [P]  Kernel RGB control; no sudo\n"
       "  wake status                 Driver wake permissions and unsupported event controls\n"
       "  wake set SOURCE on|off      Save and apply one wake permission (root)\n"
@@ -77,7 +77,7 @@ static void help() {
       "  report                      Save comprehensive private logs locally (root)\n"
       "  report github DIR OWNER/REPO Submit only the generated anonymous summary via gh\n"
       "  --self-test                 Host refusal and arithmetic checks\n"
-      "Settings require root, e.g. sudo uke-control swap set half. No setuid binary.\n";
+      "Storage/system changes require root; torch/RGB use active-local service authorization. No setuid binary.\n";
 }
 int main(int argc,char** argv) {
     try {

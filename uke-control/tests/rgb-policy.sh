@@ -18,6 +18,18 @@ for permission in read open; do
         exit 1
     }
 done
+grep -Fxq 'User=uke-rgb' "$root/packaging/uke-control-flashlight.service"
+grep -Fxq 'CapabilityBoundingSet=' "$root/packaging/uke-control-flashlight.service"
+grep -Fxq 'ReadWritePaths=/sys/class/leds/uke:white:torch/brightness' "$root/packaging/uke-control-flashlight.service"
+for permission in read write open; do
+    grep -Eq "^\\(allow uke_rgb_t uke_torch_brightness_t \\(file \\([^)]*${permission}([ )])" "$cil"
+done
+if grep -Eq '^\(allow uke_rgb_t sysfs_t \(file \([^)]*write([ )])' "$cil"; then
+    echo 'LED broker must not write generic sysfs attributes' >&2; exit 1
+fi
+grep -Eq '^\(allow uke_rgb_t uke_torch_runtime_t \(file \([^)]*lock([ )])' "$cil"
+grep -Fq '<associate own="org.senemos.Uke.Torch" context="system_u:object_r:uke_rgb_t:s0"/>' "$root/packaging/org.senemos.Uke.Torch.conf"
+grep -Fq '<annotate key="org.freedesktop.policykit.owner">unix-user:uke-rgb</annotate>' "$root/packaging/org.senemos.uke.torch.policy"
 grep -Fq '<associate own="org.senemos.Uke.Rgb" context="system_u:object_r:uke_rgb_t:s0"/>' "$root/packaging/org.senemos.Uke.Rgb.conf" || {
     echo 'RGB bus name lacks its admitted SELinux target context' >&2
     exit 1
@@ -28,7 +40,9 @@ grep -Fq '<annotate key="org.freedesktop.policykit.owner">unix-user:uke-rgb</ann
     exit 1
 }
 # The host parse fixture uses the build UID without creating a service account.
-sed "s/policy user=\"uke-rgb\"/policy user=\"$(id -u)\"/" "$root/packaging/org.senemos.Uke.Rgb.conf" > "$stage/service.conf"
+for name in Rgb Torch; do
+    sed "s/policy user=\"uke-rgb\"/policy user=\"$(id -u)\"/" "$root/packaging/org.senemos.Uke.$name.conf" > "$stage/$name.conf"
+done
 cat > "$stage/bus.conf" <<EOF
 <busconfig>
   <type>session</type>
@@ -39,7 +53,8 @@ cat > "$stage/bus.conf" <<EOF
     <allow send_destination="*"/>
     <allow receive_sender="*"/>
   </policy>
-  <include>$stage/service.conf</include>
+  <include>$stage/Rgb.conf</include>
+  <include>$stage/Torch.conf</include>
 </busconfig>
 EOF
 dbus-run-session --config-file="$stage/bus.conf" -- /usr/bin/true

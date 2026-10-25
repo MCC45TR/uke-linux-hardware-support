@@ -1,4 +1,4 @@
-policy_module(uke_control_rgb, 1.1)
+policy_module(uke_control_rgb, 1.2)
 
 type uke_rgb_t;
 type uke_rgb_exec_t;
@@ -10,7 +10,24 @@ type uke_rgb_device_t;
 dev_node(uke_rgb_device_t)
 allow uke_rgb_t uke_rgb_device_t:chr_file { getattr open read write ioctl };
 
-# This broker owns no sysfs, firmware, GPIO, regulator or raw-memory writer.
+# Only the admitted torch brightness attribute is writable; no raw hardware access.
+type uke_torch_brightness_t;
+files_type(uke_torch_brightness_t)
+dev_associate_sysfs(uke_torch_brightness_t)
+dev_read_sysfs(uke_rgb_t)
+allow uke_rgb_t uke_torch_brightness_t:file { getattr open read write };
+
+type uke_torch_runtime_t;
+files_pid_file(uke_torch_runtime_t)
+files_search_pids(uke_rgb_t)
+manage_dirs_pattern(uke_rgb_t, uke_torch_runtime_t, uke_torch_runtime_t)
+manage_files_pattern(uke_rgb_t, uke_torch_runtime_t, uke_torch_runtime_t)
+allow uke_rgb_t uke_torch_runtime_t:file lock;
+
+# Native package/udev initialization changes metadata, never light values.
+gen_require(`type udev_t, rpm_script_t, sysfs_t;')
+allow { udev_t rpm_script_t } sysfs_t:file { getattr open read setattr relabelfrom relabelto };
+allow { udev_t rpm_script_t } uke_torch_brightness_t:file { getattr open read setattr relabelfrom relabelto };
 auth_read_passwd(uke_rgb_t)
 libs_use_ld_so(uke_rgb_t)
 libs_use_shared_libs(uke_rgb_t)

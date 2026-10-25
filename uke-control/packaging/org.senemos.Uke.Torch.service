@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.senemos.Uke.Torch
+Exec=/usr/bin/false
+User=uke-rgb
+SystemdService=uke-control-flashlight.service

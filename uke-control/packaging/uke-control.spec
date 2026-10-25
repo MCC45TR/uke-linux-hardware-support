@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.12.0
-Release: 5%{?dist}
+Version: 1.13.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -51,6 +51,11 @@ package selections. Numeric readings alone do not establish physical acceptance.
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
 install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
+install -Dm755 build/torch-access %{buildroot}%{_libexecdir}/uke-control/torch-access
+install -Dm644 packaging/91-uke-control-torch.rules %{buildroot}%{_udevrulesdir}/91-uke-control-torch.rules
+install -Dm644 packaging/org.senemos.Uke.Torch.conf %{buildroot}%{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
+install -Dm644 packaging/org.senemos.Uke.Torch.service %{buildroot}%{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service
+install -Dm644 packaging/org.senemos.uke.torch.policy %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.torch.policy
 install -Dm644 build/selinux/uke_control_rgb.pp %{buildroot}%{_datadir}/selinux/packages/uke_control_rgb.pp
 install -Dm644 packaging/uke-control-rgb.service %{buildroot}%{_unitdir}/uke-control-rgb.service
 install -Dm644 packaging/uke-control-rgb.sysusers %{buildroot}%{_sysusersdir}/uke-control-rgb.conf
@@ -87,6 +92,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %check
 %make_build check
 
+%pre
+# Stop the previous root worker while its matching cleanup executable still exists.
+/usr/bin/systemctl stop uke-control-flashlight.service >/dev/null 2>&1 || :
+
 %post
 /usr/bin/systemd-sysusers %{_sysusersdir}/uke-control-rgb.conf || exit 1
 %{_sbindir}/semodule -i %{_datadir}/selinux/packages/uke_control_rgb.pp || exit 1
@@ -96,11 +105,15 @@ if /usr/bin/systemctl -q is-active dbus.service; then
     /usr/bin/busctl --system call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig >/dev/null || exit 1
 fi
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
+/usr/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+%{_libexecdir}/uke-control/torch-access || exit 1
+/usr/bin/udevadm trigger --action=add --subsystem-match=leds --sysname-match=uke:white:torch >/dev/null 2>&1 || :
 /usr/bin/udevadm trigger --action=add --subsystem-match=misc --sysname-match=uke-rgb >/dev/null 2>&1 || :
 %systemd_user_post uke-control-moisture-notify.service
 %preun
 %systemd_preun uke-control-rgb.service
 %systemd_preun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
+if [ "$1" = 0 ]; then %{_libexecdir}/uke-control/torch-access --remove || exit 1; fi
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
 %systemd_postun uke-control-rgb.service
@@ -118,6 +131,11 @@ fi
 %doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
+%{_libexecdir}/uke-control/torch-access
+%{_udevrulesdir}/91-uke-control-torch.rules
+%{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
+%{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service
+%{_datadir}/polkit-1/actions/org.senemos.uke.torch.policy
 %{_datadir}/selinux/packages/uke_control_rgb.pp
 %{_unitdir}/uke-control-rgb.service
 %{_sysusersdir}/uke-control-rgb.conf
@@ -151,6 +169,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.0-1
+- Broker active-local torch requests without root, sudo or interactive authorization.
+- Limit the confined service to the admitted brightness attribute and retain the 20 mA ceiling.
+- Preserve manual shutdown, sleep cleanup and independent kernel RGB operation.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-5
 - Let the unprivileged RGB mechanism query its own Polkit action for clients.
 - Preserve active-local-only authorization and the no-interaction request path.
