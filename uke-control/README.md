@@ -430,7 +430,7 @@ crash dumps and power-supply attributes are not read by this command.
 
 ## Wake permissions
 
-25 October 2026: source version `2.1.0` retains `uke-control wake status`,
+25 October 2026: source version `2.1.1` retains `uke-control wake status`,
 `sudo uke-control wake set SOURCE on|off` and `sudo uke-control wake apply`.
 Named sources are `power-key`, `volume-up`, `volume-down`, `usb`,
 `bluetooth-uart`, `charge-connect`, `charge-disconnect`, `double-tap` and
@@ -462,3 +462,9 @@ The explicit [boot layout wizard](BOOT-LAYOUT.md) adds `singleboot` and
 Live filesystem operations and a one-shot RAM shutdown route share the same
 reviewed plan. The source implementation does not establish physical conversion
 or fastboot acceptance.
+
+Control 2.1.1 pins the exact interactive consent, saves verified before/after GPT
+archives, stops metadata writes on I/O errors and reverses only completed kernel
+partition changes. F2FS preservation shrink is disabled following a VM integrity
+failure. F2FS growth preserves its native multicall alias; final capacity is
+checked independently, with mounted XFS geometry queried from the kernel.

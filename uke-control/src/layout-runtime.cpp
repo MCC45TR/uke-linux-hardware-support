@@ -17,10 +17,13 @@
 #include <sys/statfs.h>
 #include <sys/sysmacros.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
+#include <xfs/xfs.h>
 namespace uke::layout {
 namespace fs=std::filesystem;
 void need(bool condition,const std::string& message){if(!condition)throw std::runtime_error(message);}
+std::uint64_t boot_ms(){timespec now{};need(!clock_gettime(CLOCK_BOOTTIME,&now),"Cannot read boot elapsed time");return std::uint64_t(now.tv_sec)*1000+now.tv_nsec/1000000;}
 std::string read(const fs::path& path,std::size_t limit){
     if(path.string().starts_with("/sys/")||path.string().starts_with("/proc/")) {
         const auto resolved=fs::canonical(path);const auto prefix=path.string().starts_with("/sys/")?"/sys/":"/proc/";
@@ -37,7 +40,7 @@ Value load_private(const fs::path& path) {
 void save_private(const fs::path& path,const Value& data,bool replace){ure::private_directory(path.parent_path(),false).save_record(path.filename().string(),data,replace);}
 std::string native_tool(const std::string& name) {
     need(ure::identifier(name),"Invalid native tool name");std::error_code error;
-    auto path=fs::canonical("/usr/bin/"+name,error);if(error)path=fs::canonical("/usr/sbin/"+name,error);
+    fs::path alias="/usr/bin/"+name;auto path=fs::canonical(alias,error);if(error){alias="/usr/sbin/"+name;path=fs::canonical(alias,error);}
     need(!error&&(path.parent_path()=="/usr/bin"||path.parent_path()=="/usr/sbin"),"Required native tool is unavailable: "+name);
     ure::Fd fd(open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC));struct stat st{};std::array<char,20> magic{};
     need(fd.get()>=0&&!fstat(fd.get(),&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022)&&(st.st_mode&0111)&&pread(fd.get(),magic.data(),magic.size(),0)==ssize_t(magic.size())&&!memcmp(magic.data(),"\177ELF",4),"Only root-owned native ELF tools are admitted: "+name);
@@ -46,7 +49,8 @@ std::string native_tool(const std::string& name) {
 #elif defined(__x86_64__)
     need(static_cast<unsigned char>(magic[18])==62&&magic[19]==0,"Foreign native executable");
 #endif
-    return path;
+    // Multicall tools such as resize.f2fs select their operation from argv[0].
+    return alias;
 }
 Result run(const std::vector<std::string>& args,const fs::path& cwd,int inherited,bool terminal) {
     need(!args.empty()&&args[0].starts_with("/usr/"),"Absolute distribution executable required");
@@ -84,6 +88,17 @@ bool fastboot_available() {
         if(fs::is_regular_file(node/"mode-bootloader")&&read(node/"mode-bootloader",16)==std::string("\0\0\0\2",4))return true;
     }return false;
 }
+void xfs_geometry(Value& probe,const std::string& mount,const std::string& device) {
+    ure::Fd fd(open(mount.c_str(),O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC)),disk(open(device.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC));struct stat directory{},block{};xfs_fsop_geom_v1 geometry{};
+    need(fd.get()>=0&&disk.get()>=0&&!fstat(fd.get(),&directory)&&!fstat(disk.get(),&block)&&S_ISBLK(block.st_mode)&&directory.st_dev==block.st_rdev,"XFS mount no longer belongs to the admitted partition");
+    need(!ioctl(fd.get(),XFS_IOC_FSGEOMETRY_V1,&geometry)&&geometry.blocksize>=512&&geometry.blocksize<=65536&&(geometry.blocksize&(geometry.blocksize-1))==0&&geometry.datablocks>0&&geometry.datablocks<=ure::storage_bytes(disk.get())/geometry.blocksize,"Cannot verify mounted XFS geometry");
+    need(geometry.logstart>0&&geometry.rtblocks==0&&probe["ambiguous"]!=true,"External or ambiguous XFS dependencies are outside the userdata boundary");
+    std::string uuid;static constexpr char hex[]="0123456789abcdef";
+    for(unsigned i=0;i<16;++i){if(i==4||i==6||i==8||i==10)uuid+='-';uuid+=hex[geometry.uuid[i]>>4];uuid+=hex[geometry.uuid[i]&15];}
+    need(probe["uuid"].asString().empty()||probe["uuid"]==uuid,"Mounted XFS UUID differs from disk observations");
+    // Live XFS can retain the current superblock geometry in its committed log.
+    probe["uuid"]=uuid;probe["filesystem_bytes"]=Json::UInt64(geometry.datablocks*geometry.blocksize);probe["size_verified"]=true;
+}
 static std::string unescape(const std::string& s) {
     std::string out;for(size_t i=0;i<s.size();++i){if(s[i]=='\\'){need(i+3<s.size()&&s[i+1]>='0'&&s[i+1]<='7'&&s[i+2]>='0'&&s[i+2]<='7'&&s[i+3]>='0'&&s[i+3]<='7',"Invalid mountinfo escape");out+=char((s[i+1]-'0')*64+(s[i+2]-'0')*8+s[i+3]-'0');i+=3;}else out+=s[i];}return out;
 }
@@ -115,9 +130,13 @@ Inspection inspect() {
     need(user.isObject(),"Userdata partition is unavailable");
     out.target=ure::storage_select(system,"sysfs:"+user["parent_lun_sysfs"].asString());const auto& id=out.target.identity;
     need(id["kind"]=="live-block"&&id["partition"]==false&&id["unit_identity_available"]==true&&id["read_only_state"]==false&&id["logical_sector_bytes"]==4096&&id["sysfs_path"].asString().find("/1d84000.ufshc/")!=std::string::npos,"A writable identified Uke UFS LUN with 4 KiB sectors is required");
+    return inspect_storage(std::move(out.target),out.graph,user);
+}
+Inspection inspect_storage(StorageTarget target,const Value& graph,const Value& user) {
+    Inspection out;out.target=std::move(target);out.graph=graph;const auto& id=out.target.identity;
     auto& ev=out.evidence;ev.userdata_index=user["partition_index"].asUInt();ev.userdata_node="/dev/"+user["kernel_name"].asString();ev.partition_bytes=user["bytes"].asUInt64();
     const auto at=user["start_512_sectors"].asUInt64()*512;auto probe=filesystem_probe(out.target.descriptor.get(),at,ev.partition_bytes);
-    ev.filesystem=probe["type"].asString();ev.filesystem_uuid=probe["uuid"].asString();ev.filesystem_bytes=probe["filesystem_bytes"].asUInt64();ev.filesystem_size_verified=probe["size_verified"].asBool();ev.external_journal=probe["external_journal"].asBool();ev.single_device=true;
+    ev.filesystem=probe["type"].asString();ev.filesystem_uuid=probe["uuid"].asString();ev.filesystem_bytes=probe["filesystem_bytes"].asUInt64();ev.filesystem_size_verified=probe["size_verified"].asBool();ev.external_journal=probe["external_journal"].asBool();ev.single_device=probe["single_device"]!=false;
     std::map<std::string,unsigned> numbers;
     for(const auto& row:out.graph["objects"])if(row["parent_lun_sysfs"]==id["sysfs_path"]&&row["partition"]==true) {
         const auto index=row["partition_index"].asUInt();numbers[row["device_number"].asString()]=index;
@@ -142,7 +161,6 @@ Inspection inspect() {
         else if(S_ISREG(st.st_mode)){ure::Fd fd(open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW));const auto backing=btrfs_number(fd.get());if(numbers.contains(backing))ev.swaps.insert(numbers.at(backing));}
     }
     auto diskread=[&](std::uint64_t offset,std::size_t n){return ure::storage_read(out.target.descriptor.get(),at+offset,n);};
-    auto little=[](const std::string& bytes){std::uint64_t n=0;for(size_t i=0;i<bytes.size();++i)n|=std::uint64_t(static_cast<unsigned char>(bytes[i]))<<(8*i);return n;};
     if(ev.filesystem=="btrfs") {
         const auto raw=diskread(65536,sizeof(btrfs_super_block));btrfs_super_block super{};memcpy(&super,raw.data(),raw.size());
         ev.single_device=std::endian::native==std::endian::little&&super.num_devices==1;
@@ -153,13 +171,11 @@ Inspection inspect() {
             struct stat backing{},actual{};need(!stat(reinterpret_cast<const char*>(dev.path),&backing)&&!stat(ev.userdata_node.c_str(),&actual)&&backing.st_rdev==actual.st_rdev&&!memcmp(info.fsid,super.fsid,16),"Btrfs backing device differs from userdata");
             ev.filesystem_bytes=dev.total_bytes;
         }
+    } else if(ev.filesystem=="xfs"&&!ev.userdata_mount.empty()) {
+        xfs_geometry(probe,ev.userdata_mount,ev.userdata_node);ev.filesystem_uuid=probe["uuid"].asString();ev.filesystem_bytes=probe["filesystem_bytes"].asUInt64();ev.filesystem_size_verified=true;
     } else if(ev.filesystem=="f2fs") {
         // Linux 7.3 f2fs_super_block::devs: eight 68-byte descriptors after encryption fields.
         for(auto start:{1024U,5120U}){const auto devs=diskread(start+2201,8*68);ev.single_device=ev.single_device&&std::all_of(devs.begin(),devs.end(),[](char c){return c==0;});}
-    } else if(ev.filesystem=="ext4")ev.external_journal=ev.external_journal||little(diskread(1024+228,4))!=0;
-    else if(ev.filesystem=="xfs") {
-        // xfs_dsb: realtime blocks at 16; internal log start at 48, both big-endian.
-        auto nonzero=[](const std::string& s){return std::any_of(s.begin(),s.end(),[](char c){return c!=0;});};ev.external_journal=nonzero(diskread(16,8))||!nonzero(diskread(48,8));
     }
     ev.require_shutdown=fs::exists("/run/uke-control-layout-require-shutdown");
     out.summary["device"]="Uke";out.summary["userdata_filesystem"]=ev.filesystem;out.summary["userdata_bytes"]=Json::UInt64(ev.partition_bytes);out.summary["filesystem_bytes"]=Json::UInt64(ev.filesystem_bytes);out.summary["filesystem_size_verified"]=ev.filesystem_size_verified;out.summary["single_device"]=ev.single_device;out.summary["fastboot_available"]=fastboot_available();out.summary["filesystems"]=native_capabilities();out.summary["physical_test_record"]=false;

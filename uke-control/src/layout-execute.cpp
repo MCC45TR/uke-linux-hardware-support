@@ -5,9 +5,9 @@
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
+#include <iostream>
 #include <linux/blkpg.h>
 #include <linux/btrfs.h>
-#include <linux/f2fs.h>
 #include <linux/fs.h>
 #include <map>
 #include <memory>
@@ -29,22 +29,15 @@ void verify(int fd,const std::vector<StorageRange>& ranges) {
 }
 void commit(int fd,const std::vector<StorageRange>& before,const std::vector<StorageRange>& after) {
     verify(fd,before);
-    try {
-        for(const auto* name:{"backup_table","backup_header","primary_table","primary_header"}) {
+    for(const auto* name:{"backup_table","backup_header","primary_table","primary_header"}) {
             const auto& next=*std::find_if(after.begin(),after.end(),[&](const auto& r){return r.name==name;});
             const auto& old=*std::find_if(before.begin(),before.end(),[&](const auto& r){return r.name==name;});
             // Write only changed sectors; the protective MBR is never opened as a write range.
             for(size_t i=0;i<next.bytes.size();i+=4096)if(next.bytes.substr(i,4096)!=old.bytes.substr(i,4096))write_at(fd,next.bytes.substr(i,4096),next.offset+i);
             need(!fsync(fd)&&!posix_fadvise(fd,next.offset,next.bytes.size(),POSIX_FADV_DONTNEED),"Cannot synchronize GPT metadata");need(ure::storage_read(fd,next.offset,next.bytes.size())==next.bytes,"GPT metadata readback failed");
-        }
-        verify(fd,after);
-    } catch(...) {
-        // No format/growth has run yet; the preserved filesystem still fits the old partition.
-        for(const auto* name:{"backup_table","backup_header","primary_table","primary_header"}) {
-            const auto& r=*std::find_if(before.begin(),before.end(),[&](const auto& item){return item.name==name;});write_at(fd,r.bytes,r.offset);need(!fsync(fd),"GPT restore also failed; external recovery is required");
-        }
-        verify(fd,before);throw;
     }
+    verify(fd,after);
+    // After an I/O error, further writes could destroy the surviving valid GPT copy.
 }
 std::string node(const StorageTarget& disk,const Value& row) {
     const auto index=row["index"].asUInt();const auto diskname=disk.identity["kernel_name"].asString();
@@ -55,6 +48,11 @@ std::string node(const StorageTarget& disk,const Value& row) {
     std::istringstream number(read(sys/"dev",64));unsigned a=0,b=0;char colon=0;number>>a>>colon>>b;need(number&&colon==':',"Invalid partition device number");
     const fs::path directory="/run/uke-control-layout-nodes";ure::private_directory(directory,!fs::exists(directory));
     const auto path=directory/name;struct stat st{};
+    if(!lstat(path.c_str(),&st)) {
+        need(S_ISBLK(st.st_mode)&&st.st_uid==0&&(st.st_mode&0777)==0600&&st.st_nlink==1,"Untrusted private partition handle");
+        // DEL/ADD rollback can assign a new device number to the same verified partition.
+        if(st.st_rdev!=makedev(a,b))need(!unlink(path.c_str()),"Cannot replace the stale private partition handle");
+    }else need(errno==ENOENT,"Cannot inspect private partition handle");
     if(lstat(path.c_str(),&st)<0){need(errno==ENOENT&&!mknod(path.c_str(),S_IFBLK|0600,makedev(a,b)),"Cannot create a private partition handle");need(!lstat(path.c_str(),&st),"Cannot inspect private partition handle");}
     need(S_ISBLK(st.st_mode)&&st.st_uid==0&&(st.st_mode&0777)==0600&&st.st_nlink==1&&st.st_rdev==makedev(a,b),"Untrusted private partition handle");return path;
 }
@@ -114,9 +112,6 @@ void mounted_resize(const std::string& type,const std::string& mount,const std::
     if(type=="btrfs") {
         btrfs_ioctl_fs_info_args info{};need(!ioctl(fd.get(),BTRFS_IOC_FS_INFO,&info)&&info.num_devices==1,"Btrfs device set changed");
         btrfs_ioctl_vol_args args{};const auto text=std::to_string(devid)+":"+std::to_string(bytes);need(text.size()<sizeof(args.name),"Invalid Btrfs resize size");memcpy(args.name,text.c_str(),text.size()+1);need(!ioctl(fd.get(),BTRFS_IOC_RESIZE,&args),"Live Btrfs resize failed; no erase fallback was attempted");
-    } else if(type=="f2fs") {
-        ure::Fd disk(open(device.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC));const auto section=(1ULL<<le(ure::storage_read(disk.get(),1024+20,4)))*le(ure::storage_read(disk.get(),1024+24,4));
-        need(section>0&&section<=1024*1024*1024,"Invalid F2FS section geometry");std::uint64_t blocks=(bytes/4096)/section*section;need(blocks>0&&!ioctl(fd.get(),F2FS_IOC_RESIZE_FS,&blocks),"Live F2FS shrink failed; no erase fallback was attempted");
     } else if(type=="ext4") {
         ure::Fd disk(open(device.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC));const auto shift=le(ure::storage_read(disk.get(),1024+24,4));need(shift<=6,"Invalid Ext4 block size");std::uint64_t blocks=bytes/(1024ULL<<shift);need(!ioctl(fd.get(),_IOW('f',16,__u64),&blocks),"Live Ext4 growth failed");
     } else if(type=="xfs") {
@@ -126,6 +121,7 @@ void mounted_resize(const std::string& type,const std::string& mount,const std::
     need(!syncfs(fd.get()),"Cannot synchronize resized filesystem");
 }
 void resize(const Evidence& ev,const std::string& path,std::uint64_t bytes,bool shrink) {
+    need(ev.filesystem!="f2fs"||!shrink,"F2FS preservation shrink is not qualified; no resize was attempted");
     if(!ev.userdata_mount.empty()){mounted_resize(ev.filesystem,ev.userdata_mount,path,bytes);return;}
     View view(path,ev.userdata_index);fscheck(ev.filesystem,view.path);
     if(ev.filesystem=="ext4")checked({native_tool("resize2fs"),view.path,std::to_string(bytes/1024)+"K"});
@@ -142,9 +138,20 @@ void blkpg(int fd,int op,const Value& row) {
     blkpg_partition part{};part.pno=row["index"].asInt();part.start=static_cast<long long>(row["offset"].asUInt64());part.length=static_cast<long long>(row["bytes"].asUInt64());
     blkpg_ioctl_arg args{};args.op=op;args.datalen=sizeof(part);args.data=&part;need(!ioctl(fd,BLKPG,&args),"Kernel partition update was refused; no GPT commit is permitted");
 }
-void kernel_layout(int fd,const Value& old,const Value& next) {
-    for(const auto& row:old)if(row["label"]!="userdata")blkpg(fd,BLKPG_DEL_PARTITION,row);
-    for(const auto& row:next)blkpg(fd,row["role"]=="userdata"?BLKPG_RESIZE_PARTITION:BLKPG_ADD_PARTITION,row);
+struct KernelChange {int operation,inverse;Value row,previous;};
+std::vector<KernelChange> kernel_changes(const Value& old,const Value& next) {
+    std::vector<KernelChange> changes;changes.reserve(old.size()+next.size());
+    for(const auto& row:old)if(row["label"]!="userdata")changes.push_back({BLKPG_DEL_PARTITION,BLKPG_ADD_PARTITION,row,row});
+    for(const auto& row:next) {
+        if(row["role"]=="userdata")changes.push_back({BLKPG_RESIZE_PARTITION,BLKPG_RESIZE_PARTITION,row,old[0]});
+        else changes.push_back({BLKPG_ADD_PARTITION,BLKPG_DEL_PARTITION,row,row});
+    }return changes;
+}
+void kernel_layout(int fd,const std::vector<KernelChange>& changes,size_t& applied) {
+    for(const auto& change:changes){blkpg(fd,change.operation,change.row);++applied;}
+}
+void undo_kernel_layout(int fd,const std::vector<KernelChange>& changes,size_t& applied) {
+    while(applied){const auto& change=changes[applied-1];blkpg(fd,change.inverse,change.previous);--applied;}
 }
 }
 void execute(Inspection& current,const Proposal& proposal,const fs::path& job,bool shutdown,const Progress& progress) {
@@ -173,8 +180,11 @@ void execute(Inspection& current,const Proposal& proposal,const fs::path& job,bo
     if(shutdown){disk=ure::Fd(open(diskpath.c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC));need(disk.get()>=0,"Cannot retain writable disk handle");}
     Value state;state["schema"]="org.uke.control.layout.state.v1";state["plan_sha256"]=plan["sha256"];state["completed"]=false;
     auto phase=[&](const std::string& text){state["phase"]=text;state["updated_utc"]=ure::utc();save_private(job/"state.json",state,fs::exists(job/"state.json"));if(progress)progress(text);};
-    bool kernel_changed=false,gpt_committed=false;
+    const auto changes=kernel_changes(plan["old_rows"],plan["new_rows"]);size_t applied=0;bool gpt_committed=false;
     try {
+        verify(disk.get(),proposal.before);phase("saving-gpt-snapshots");
+        snapshot(current.target,proposal.before,job/"before-gpt",plan["firmware_profile"].asString(),"observed-before",plan["sha256"].asString());
+        snapshot(current.target,proposal.after,job/"after-gpt",plan["firmware_profile"].asString(),"planned-after",plan["sha256"].asString());
         verify(disk.get(),proposal.before);phase("checking-filesystems");
         const bool preserve=plan["preserve_userdata"].asBool();const auto targetbytes=plan["new_rows"][0]["bytes"].asUInt64();const auto userpath=node(current.target,plan["old_rows"][0]);
         if(preserve&&ev.userdata_mount.empty()){View view(userpath,ev.userdata_index);fscheck(ev.filesystem,view.path);view.close();}
@@ -185,7 +195,7 @@ void execute(Inspection& current,const Proposal& proposal,const fs::path& job,bo
         }
         phase("updating-kernel-partitions");
         if(!shutdown) {
-            try{kernel_changed=true;kernel_layout(disk.get(),plan["old_rows"],plan["new_rows"]);}
+            try{kernel_layout(disk.get(),changes,applied);}
             catch(...){std::ofstream hint("/run/uke-control-layout-require-shutdown");hint<<"Kernel refused a live partition update\n";throw;}
         }
         std::map<unsigned,std::unique_ptr<View>> claims;
@@ -200,17 +210,19 @@ void execute(Inspection& current,const Proposal& proposal,const fs::path& job,bo
             if(row["role"]=="userdata"&&preserve) {
                 auto after=ev;after.partition_bytes=row["bytes"].asUInt64();
                 const auto measured=filesystem_probe(disk.get(),row["offset"].asUInt64(),row["bytes"].asUInt64());
-                if(measured["filesystem_bytes"].asUInt64()+16*1048576<row["bytes"].asUInt64())resize(after,path,row["bytes"].asUInt64(),false);
+                if(measured["filesystem_bytes"].asUInt64()+16*1048576<row["bytes"].asUInt64()){state["payload_replacement_or_growth_started"]=true;phase("growing-userdata");resize(after,path,row["bytes"].asUInt64(),false);}
             }else {
                 const auto index=row["index"].asUInt();
                 if(!claims.contains(index))claims.emplace(index,std::make_unique<View>(path,index));
-                format(row,claims.at(index)->path);claims.at(index)->close();
+                state["payload_replacement_or_growth_started"]=true;phase("formatting-"+row["label"].asString());format(row,claims.at(index)->path);claims.at(index)->close();
             }
         }
         phase("verifying-layout");verify(disk.get(),proposal.after);need(ure::gpt_inspect(disk.get(),4096)["healthy"]==true,"Final GPT copies do not agree");
         if(plan["preserve_userdata"]==true) {
-            const auto& row=plan["new_rows"][0];const auto fs=filesystem_probe(disk.get(),row["offset"].asUInt64(),row["bytes"].asUInt64());
-            need(fs["size_verified"]==true&&fs["uuid"]==plan["userdata_uuid"]&&fs["filesystem_bytes"].asUInt64()<=row["bytes"].asUInt64(),"Final userdata geometry or preserved UUID failed verification");
+            const auto& row=plan["new_rows"][0];auto fs=filesystem_probe(disk.get(),row["offset"].asUInt64(),row["bytes"].asUInt64());
+            if(ev.filesystem=="xfs"&&!ev.userdata_mount.empty())xfs_geometry(fs,ev.userdata_mount,node(current.target,row));
+            const auto size=fs["filesystem_bytes"].asUInt64(),capacity=row["bytes"].asUInt64();
+            need(fs["size_verified"]==true&&fs["uuid"]==plan["userdata_uuid"]&&size<=capacity&&capacity-size<16*1048576,"Final userdata geometry, requested capacity or preserved UUID failed verification");
         }
         Value receipt;receipt["schema"]="org.uke.control.layout.ownership.v1";receipt["completed"]=true;
         for(const auto* key:{"disk_guid","unit_identity_sha256","lun_address"})receipt[key]=current.target.identity[key];
@@ -219,15 +231,19 @@ void execute(Inspection& current,const Proposal& proposal,const fs::path& job,bo
         receipt["plan_sha256"]=plan["sha256"];receipt["sha256"]=seal(receipt);save_private(job/"ownership.json",receipt);
         state["completed"]=true;phase("completed");
     }catch(const std::exception& error) {
-        if(kernel_changed&&!gpt_committed){try{for(const auto& row:plan["new_rows"])if(row["role"]!="userdata") {try{blkpg(disk.get(),BLKPG_DEL_PARTITION,row);}catch(...){}}for(const auto& row:plan["old_rows"])blkpg(disk.get(),row["label"]=="userdata"?BLKPG_RESIZE_PARTITION:BLKPG_ADD_PARTITION,row);}catch(...){state["kernel_restore_failed"]=true;}}
-        state["error"]=error.what();state["gpt_committed"]=gpt_committed;phase("failed-no-automatic-retry");throw;
+        state["completed"]=false;state["gpt_state"]="mixed-or-unreadable";
+        try{verify(disk.get(),proposal.before);state["gpt_state"]="before";}catch(...){try{verify(disk.get(),proposal.after);state["gpt_state"]="after";}catch(...){}}
+        if(applied&&!gpt_committed&&state["gpt_state"]=="before"){try{undo_kernel_layout(disk.get(),changes,applied);}catch(...){state["kernel_restore_failed"]=true;}}
+        else if(applied&&!gpt_committed)state["kernel_restore_skipped"]=true;
+        state["error"]=error.what();state["gpt_committed"]=gpt_committed;
+        try{phase("failed-no-automatic-retry");}catch(...){std::cerr<<"Cannot persist failure state. Retain the GPT snapshots. Original error: "<<error.what()<<'\n';}
+        throw;
     }
 }
-Value run_worker(const fs::path& request,bool shutdown,const Progress& progress) {
+Value run_worker(const fs::path& request,bool shutdown,const std::string& expected_consent,const Progress& progress) {
     ure::Fd lock(open("/run/uke-control-layout.lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));need(lock.get()>=0&&!flock(lock.get(),LOCK_EX|LOCK_NB),"Another layout operation is active");
     const auto job=fs::canonical(request.parent_path());auto plan=load_private(job/"plan.json");auto consent=load_private(request);
-    need(plan["schema"]=="org.uke.control.layout.plan.v1"&&plan["sha256"]==seal(plan)&&plan["engine_version"]==engine_version&&plan["recovery_source"]==recovery_source,"Layout plan schema, source or digest differs");
-    need(consent["plan_sha256"]==plan["sha256"]&&consent["sha256"]==seal(consent)&&consent["approvals"]==plan["confirmations_required"]&&consent["boot_id_sha256"]==ure::sha256(read("/proc/sys/kernel/random/boot_id"))&&consent["expires_ms"].asUInt64()>=ure::monotonic_ms(),"Layout consent is missing, stale, incomplete or belongs to another boot");
+    validate_authorization(plan,consent,expected_consent,ure::sha256(read("/proc/sys/kernel/random/boot_id")),boot_ms());
     need(!fs::exists(job/"state.json"),"This job already started; automatic retries and stale approvals are refused");
     auto current=inspect();ure::Root system("/");Value receipt;if(fs::exists(job/"previous-ownership.json"))receipt=load_private(job/"previous-ownership.json");
     auto fresh=propose(system,current.target,plan["request"],job/"original-gpt",plan["firmware_profile"].asString(),receipt,current.evidence,plan["preserve_userdata"].asBool(),plan["finish"]=="fastboot");

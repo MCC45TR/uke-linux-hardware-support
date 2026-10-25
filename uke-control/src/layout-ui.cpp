@@ -65,10 +65,6 @@ Value layout_request(bool single,const std::string& fs) {
         const auto order=input("Partition ROLE order, separated by spaces. Userdata must be first.",initial);std::istringstream stream(order);request["order"]=Value(Json::arrayValue);while(stream>>role)request["order"].append(role);
     }return request;
 }
-std::string finish_instructions(const Value& plan) {
-    std::string target="userdata";for(const auto& row:plan["new_rows"])if(row["role"]=="linux"){target=row["label"].asString();break;}
-    return "Storage conversion does not install an operating system.\n\nIn fastboot, flash the matching system image to: "+target+"\nCheck the matching boot image's root partition contract before booting. This manager never writes boot_a, boot_b, firmware, misc or other OEM partitions.\n\nKeep the external journal and an independent backup of files. A GPT metadata backup cannot restore erased files.";
-}
 }
 int wizard(bool singleboot,bool dry_run) {
     try {
@@ -85,8 +81,12 @@ int wizard(bool singleboot,bool dry_run) {
         const bool preserve=menu("Userdata file policy",{"preserve","Preserve the verified filesystem and files","recreate","Erase userdata and create a new Linux filesystem; two approvals"})=="preserve";
         const auto selectedfs=preserve?current.evidence.filesystem:filesystem(true,current.evidence.filesystem);
         auto request=layout_request(singleboot,selectedfs);
-        const bool finish_fastboot=menu("After successful conversion",{"fastboot","Enter fastboot and flash the matching system image","stay","Stay in Linux (only if the running root remains valid)"})=="fastboot";
-        auto proposal=propose(system,current.target,request,job/"original-gpt",firmware,receipt,current.evidence,preserve,finish_fastboot);
+        auto proposal=propose(system,current.target,request,job/"original-gpt",firmware,receipt,current.evidence,preserve,true);
+        bool finish_fastboot=true;
+        if(proposal.document["route"]=="direct") {
+            finish_fastboot=menu("After successful conversion",{"fastboot","Enter fastboot and flash the matching system image","stay","Stay in Linux"})=="fastboot";
+            if(!finish_fastboot)proposal=propose(system,current.target,request,job/"original-gpt",firmware,receipt,current.evidence,preserve,false);
+        }
         save_private(job/"plan.json",proposal.document);const auto preview_text=preview(proposal.document);std::cout<<preview_text;
         if(dry_run){notice(preview_text+"\nRead-only preview. No storage write or reboot was prepared.");return 0;}
         if(proposal.document["route"]=="blocked"){notice(preview_text+"\nNo storage change was prepared. To choose erase/recreate, start a fresh wizard and give two explicit approvals. Filesystem failures never select erase automatically.");return 1;}
@@ -99,13 +99,15 @@ int wizard(bool singleboot,bool dry_run) {
             const auto phrase="ERASE "+proposal.document["sha256"].asString().substr(0,12);
             need(input("FINAL DATA LOSS APPROVAL\n\nExisting project child volumes will be erased. Userdata preservation follows the reviewed plan.\n\nType exactly: "+phrase)==phrase,"Second approval did not match; nothing was prepared");++approvals;
         }
-        notice(finish_instructions(proposal.document));Value consent;consent["schema"]="org.uke.control.layout.consent.v1";consent["plan_sha256"]=proposal.document["sha256"];consent["approvals"]=approvals;consent["boot_id_sha256"]=ure::sha256(read("/proc/sys/kernel/random/boot_id"));consent["expires_ms"]=Json::UInt64(ure::monotonic_ms()+10*60*1000);consent["journal"]=journal_identity(job,current.target);consent["sha256"]=seal(consent);save_private(job/"consent.json",consent);
+        notice(finish_instructions(proposal.document));Value consent;consent["schema"]="org.uke.control.layout.consent.v1";consent["plan_sha256"]=proposal.document["sha256"];consent["approvals"]=approvals;consent["boot_id_sha256"]=ure::sha256(read("/proc/sys/kernel/random/boot_id"));consent["expires_ms"]=Json::UInt64(boot_ms()+10*60*1000);consent["journal"]=journal_identity(job,current.target);consent["sha256"]=seal(consent);save_private(job/"consent.json",consent);
         power();const bool shutdown=proposal.document["route"]=="shutdown";
         const auto unit="uke-layout-"+proposal.document["sha256"].asString().substr(0,12);
-        const auto result=run({native_tool("systemd-run"),"--unit="+unit,"--collect","--wait","--property=Type=exec","--property=UMask=0077","--property=NoNewPrivileges=yes","--property=SendSIGKILL=no","--property=KillMode=process","--property=TimeoutStopSec=infinity","--property=OOMScoreAdjust=-1000","--",native_tool("systemd-inhibit"),"--what=shutdown:sleep","--mode=block","--who=uke-control","--why=Complete confirmed userdata layout operation","/usr/libexec/uke-control/layout-manager",shutdown?"--prepare":"--worker",(job/"consent.json").string()});
+        const auto result=run({native_tool("systemd-run"),"--unit="+unit,"--collect","--wait","--property=Type=exec","--property=UMask=0077","--property=NoNewPrivileges=yes","--property=SendSIGKILL=no","--property=KillMode=process","--property=TimeoutStopSec=infinity","--property=OOMScoreAdjust=-1000","--",native_tool("systemd-inhibit"),"--what=shutdown:sleep","--mode=block","--who=uke-control","--why=Complete confirmed userdata layout operation","/usr/libexec/uke-control/layout-manager",shutdown?"--prepare":"--worker",(job/"consent.json").string(),consent["sha256"].asString()});
         std::cout<<result.output;need(result.status==0,"Layout worker failed. Inspect the external journal; do not retry an already-started job");
         if(shutdown) {
-            try{checked({native_tool("systemctl"),"--check-inhibitors=yes","reboot"});}catch(...){withdraw_shutdown(job);throw;}
+            const auto ready=load_private("/run/initramfs/etc/uke-layout/request.json");
+            need(ready["plan_sha256"]==proposal.document["sha256"]&&ready["sha256"]==seal(ready)&&ready["expires_ms"].asUInt64()>=boot_ms(),"The prepared shutdown task does not match the approved plan");
+            try{checked({native_tool("systemctl"),"--check-inhibitors=yes","reboot"});}catch(...){withdraw_shutdown(proposal.document["sha256"].asString());throw;}
         }else {
             const auto state=load_private(job/"state.json");need(state["completed"]==true,"Worker did not record verified completion");
             std::cout<<finish_instructions(proposal.document)<<"\nJournal: "<<job<<'\n';
@@ -117,8 +119,8 @@ int command(int argc,char** argv) {
     need(argc>=2,"Expected singleboot or multiboot");const std::string action=argv[1];
     if(action=="--offline"){need(argc==2,"Unexpected offline argument");return offline();}
     if(action=="--worker"||action=="--prepare") {
-        need(argc==3&&geteuid()==0,"A private root job request is required");const fs::path request=argv[2];
-        if(action=="--prepare")prepare_shutdown(request.parent_path());else run_worker(request,false,[](const auto& phase){std::cout<<phase<<std::endl;});return 0;
+        need(argc==4&&geteuid()==0,"A private root job request and the exact interactive consent digest are required");const fs::path request=argv[2];
+        if(action=="--prepare")prepare_shutdown(request.parent_path(),argv[3]);else run_worker(request,false,argv[3],[](const auto& phase){std::cout<<phase<<std::endl;});return 0;
     }
     need(action=="singleboot"||action=="multiboot","Unknown boot layout command");bool as_json=false,dry=false,status=false;
     for(int i=2;i<argc;++i){const std::string word=argv[i];if(word=="--json")as_json=true;else if(word=="--dry-run")dry=true;else if(word=="status")status=true;else throw cli::UsageError("expected "+action+" [status | --dry-run]");}

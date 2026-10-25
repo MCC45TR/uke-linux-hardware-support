@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 namespace uke::cli {
-inline constexpr const char* version="2.1.0";
+inline constexpr const char* version="2.1.1";
 struct UsageError:std::runtime_error {using std::runtime_error::runtime_error;};
 struct Arguments {std::vector<std::string> words;bool json=false,help=false,version=false;};
 Arguments arguments(int argc,char** argv);

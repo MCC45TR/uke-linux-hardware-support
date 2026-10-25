@@ -124,7 +124,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.1.0/#' -czf "$$top/SOURCES/uke-control-2.1.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.1.1/#' -czf "$$top/SOURCES/uke-control-2.1.1.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
@@ -140,10 +140,15 @@ build/layout-manager: src/layout-ui.cpp src/layout.hpp $(layout_sources) $(layou
 	! nm -C $@ | grep -E 'ure::(gpt_execute|gpt_rollback|multiboot_image_execute|storage_write_gate)\('
 build/test-layout: tests/layout.cpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout.cpp $(layout_sources) $(layout_recovery) $(layout_libs)
-check-layout: build/layout-manager build/test-layout
+check-layout: build/layout-manager build/test-layout build/test-layout-safety
 	build/test-layout
+	build/test-layout-safety
 	jq -r '.files | to_entries[] | "\(.value)  shared/recovery/\(.key)"' shared/recovery/source.json | sha256sum -c --status
-build/test-layout-vm: tests/layout-vm.cpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
+build/test-layout-vm: tests/layout-vm.cpp tests/layout-vm-common.hpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-vm.cpp src/layout-policy.cpp src/layout-runtime.cpp $(layout_recovery) $(layout_libs)
 build/test-layout-payload: tests/layout-payload.cpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-payload.cpp $(layout_sources) $(layout_recovery) $(layout_libs)
+build/test-layout-safety: tests/layout-safety.cpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-safety.cpp src/layout-policy.cpp src/layout-runtime.cpp src/layout-shutdown.cpp $(layout_recovery) $(layout_libs)
+build/test-layout-shutdown-vm: tests/layout-shutdown-vm.cpp tests/layout-vm-common.hpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-shutdown-vm.cpp src/layout-policy.cpp src/layout-runtime.cpp $(layout_recovery) $(layout_libs)

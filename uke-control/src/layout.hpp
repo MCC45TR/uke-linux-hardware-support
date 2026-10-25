@@ -9,7 +9,7 @@ using ure::Value;
 using ure::StorageTarget;
 using ure::StorageRange;
 inline constexpr const char* recovery_source="8395560393f78bcbe2adeaedc44057c0aa7141de";
-inline constexpr const char* engine_version="2.1.0";
+inline constexpr const char* engine_version="2.1.1";
 struct Evidence {
     unsigned userdata_index=0,root_index=0;
     std::string userdata_node,userdata_mount,filesystem,filesystem_uuid;
@@ -23,8 +23,11 @@ struct Proposal {
 };
 std::string seal(Value value,const char* field="sha256");
 Value filesystem_probe(int fd,std::uint64_t offset,std::uint64_t bytes);
+void xfs_geometry(Value& probe,const std::string& mount,const std::string& device);
 Value native_capabilities();
 Value backup(const StorageTarget& target,const std::filesystem::path& destination,const std::string& profile);
+Value snapshot(const StorageTarget& target,const std::vector<StorageRange>& ranges,const std::filesystem::path& destination,const std::string& profile,const std::string& kind,const std::string& plan_hash);
+void validate_authorization(const Value& plan,const Value& consent,const std::string& expected_consent,const std::string& boot_hash,std::uint64_t now);
 void require_ownership(const Value& inspection,const Value& receipt,const Value& identity);
 Proposal propose(const ure::Root& system,const StorageTarget& target,const Value& request,
                  const std::filesystem::path& original_backup,const std::string& profile,
@@ -32,12 +35,14 @@ Proposal propose(const ure::Root& system,const StorageTarget& target,const Value
 void validate_protected(const StorageTarget& target,const Value& inspection,
                         const std::vector<StorageRange>& before,const std::vector<StorageRange>& after);
 std::string preview(const Value& document);
+std::string finish_instructions(const Value& plan);
 using Progress=std::function<void(const std::string&)>;
 struct Inspection { StorageTarget target;Value graph,summary;Evidence evidence; };
 Inspection inspect();
+Inspection inspect_storage(StorageTarget target,const Value& graph,const Value& userdata);
 Value load_private(const std::filesystem::path& path);
 void save_private(const std::filesystem::path& path,const Value& data,bool replace=false);
-Value run_worker(const std::filesystem::path& request,bool shutdown,const Progress& progress={});
+Value run_worker(const std::filesystem::path& request,bool shutdown,const std::string& expected_consent,const Progress& progress={});
 int wizard(bool singleboot,bool dry_run);
 int command(int argc,char** argv);
 void need(bool condition,const std::string& message);
@@ -50,9 +55,10 @@ void power();
 bool fastboot_available();
 bool btrfs_mount(int fd,const std::string& device,std::uint64_t* devid=nullptr,std::uint64_t* bytes=nullptr);
 Value journal_identity(const std::filesystem::path& directory,const StorageTarget& target);
-void prepare_shutdown(const std::filesystem::path& job);
+void prepare_shutdown(const std::filesystem::path& job,const std::string& expected_consent);
 void build_shutdown_payload(const std::filesystem::path& stage,const Value& request);
-void withdraw_shutdown(const std::filesystem::path& job);
+void withdraw_shutdown(const std::string& expected_plan);
+std::uint64_t boot_ms();
 int offline();
 void execute(Inspection& current,const Proposal& proposal,const std::filesystem::path& job,bool shutdown,const Progress& progress);
 std::string profile();

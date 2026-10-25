@@ -46,7 +46,8 @@ Value filesystem_probe(int fd,std::uint64_t offset,std::uint64_t size) {
     blkid_probe_enable_partitions(probe.get(),0);
     blkid_probe_set_superblocks_flags(probe.get(),BLKID_SUBLKS_TYPE|BLKID_SUBLKS_UUID|BLKID_SUBLKS_FSINFO);
     result["size_verified"]=false;
-    if(blkid_do_safeprobe(probe.get())!=0)return result;
+    result["single_device"]=true;
+    const auto status=blkid_do_safeprobe(probe.get());need(status>=0||status==-2,"Filesystem probe failed; storage errors cannot authorize erasure");result["ambiguous"]=status==-2;
     auto field=[&](const char* key){const char* value=nullptr;size_t length=0;if(blkid_probe_lookup_value(probe.get(),key,&value,&length))return std::string();if(length&&value[length-1]=='\0')--length;std::string text(value,length);need(text.find('\0')==text.npos,"Embedded NUL in filesystem observation");return text;};
     auto type=field("TYPE");if(!type.empty())result["type"]=type;
     auto uuid=field("UUID");if(!uuid.empty())result["uuid"]=uuid;
@@ -68,13 +69,18 @@ Value filesystem_probe(int fd,std::uint64_t offset,std::uint64_t size) {
     }
     auto raw=[&](std::uint64_t at,std::size_t n){need(at<=size&&n<=size-at,"Filesystem field escapes its partition");return ure::storage_read(fd,offset+at,n);};
     auto nonzero=[](const std::string& value){return std::any_of(value.begin(),value.end(),[](char c){return c!=0;});};
-    if(result["type"]=="ext4")result["external_journal"]=result["external_journal"].asBool()||nonzero(raw(1024+228,4));
+    if(result["type"]=="ext4") {
+        const auto compat=raw(1024+92,4);
+        result["external_journal"]=result["external_journal"].asBool()||nonzero(raw(1024+228,4))||
+            ((static_cast<unsigned char>(compat[0])&4)&&!nonzero(raw(1024+224,4)));
+    }
     if(result["type"]=="xfs")result["external_journal"]=nonzero(raw(16,8))||!nonzero(raw(48,8));
     if(result["type"]=="btrfs") {
         const auto bytes=raw(65536,sizeof(btrfs_super_block));btrfs_super_block super{};memcpy(&super,bytes.data(),bytes.size());
         result["single_device"]=super.num_devices==1;
         result["filesystem_bytes"]=Json::UInt64(super.dev_item.total_bytes);result["size_verified"]=super.num_devices==1&&super.dev_item.total_bytes>0&&super.dev_item.total_bytes<=size;
     }
+    if(result["type"]=="f2fs")for(const auto start:{1024U,5120U})if(nonzero(raw(start+2201,8*68)))result["single_device"]=false;
     return result;
 }
 Value native_capabilities() {
@@ -110,6 +116,22 @@ Value backup(const StorageTarget& target,const std::filesystem::path& destinatio
     sums+=manifest["partition_table_sha256"].asString()+"  partition-table.json\n"+ure::sha256(ure::json(manifest))+"  manifest.json\n";save("SHA256SUMS",sums);
     ure::gpt_backup_verify(destination);return manifest;
 }
+Value snapshot(const StorageTarget& target,const std::vector<StorageRange>& ranges,const std::filesystem::path& destination,const std::string& profile,const std::string& kind,const std::string& plan_hash) {
+    need(kind=="observed-before"||kind=="planned-after","Invalid metadata snapshot purpose");
+    ure::Fd fd(memfd_create("uke-layout-snapshot",MFD_CLOEXEC));const auto size=target.identity["bytes"].asUInt64();
+    need(fd.get()>=0&&size<=INT64_MAX&&!ftruncate(fd.get(),size),"Cannot construct metadata snapshot");
+    for(const auto& range:ranges){need(range.offset<=size&&range.bytes.size()<=size-range.offset,"Snapshot range exceeds the selected disk");write(fd.get(),range.bytes,range.offset);}
+    StorageTarget image{std::move(fd),target.identity};auto manifest=backup(image,destination,profile);
+    Value provenance;provenance["kind"]=kind;provenance["plan_sha256"]=plan_hash;provenance["manifest_sha256"]=manifest["manifest_sha256"];provenance["sha256"]=seal(provenance);
+    save_private(destination/"snapshot.json",provenance);return manifest;
+}
+void validate_authorization(const Value& plan,const Value& consent,const std::string& expected,const std::string& boot,std::uint64_t now) {
+    need(ure::hash_valid(expected)&&consent["sha256"]==expected&&consent["sha256"]==seal(consent)&&consent["schema"]=="org.uke.control.layout.consent.v1","Approval changed after the interactive confirmation");
+    need(plan["schema"]=="org.uke.control.layout.plan.v1"&&plan["sha256"]==seal(plan)&&consent["plan_sha256"]==plan["sha256"]&&plan["engine_version"]==engine_version&&plan["recovery_source"]==recovery_source,"Approved layout plan, version or source differs");
+    need(plan["data_loss"].isBool()&&plan["confirmations_required"].asUInt()==(plan["data_loss"].asBool()?2U:1U)&&consent["approvals"]==plan["confirmations_required"],"Required data-loss approvals are missing");
+    need(consent["boot_id_sha256"]==boot&&consent["expires_ms"].isUInt64()&&consent["expires_ms"].asUInt64()>=now&&consent["expires_ms"].asUInt64()-now<=10*60*1000,"Approval is expired, belongs to another boot or exceeds the ten-minute lease");
+    need(plan["no_changes_required"]!=true&&(plan["route"]=="direct"||plan["route"]=="shutdown"),"There is no executable approved layout plan");
+}
 void require_ownership(const Value& inspection,const Value& receipt,const Value& identity) {
     if(inspection["existing_multiboot"]!=true)return;
     need(receipt["schema"]=="org.uke.control.layout.ownership.v1"&&receipt["sha256"]==seal(receipt)&&receipt["completed"]==true,
@@ -139,8 +161,8 @@ void validate_protected(const StorageTarget& target,const Value& inspection,cons
     for(const auto& r:after)write(image.get(),r.bytes,r.offset);
     const auto table=ure::gpt_inspect(image.get(),target.identity["logical_sector_bytes"].asUInt());need(table["healthy"]==true,"Proposed GPT does not have two healthy matching copies");
     need(table["disk_guid"]==inspection["current_table"]["disk_guid"],"Disk GUID modification is forbidden");
-    for(const auto* side:{"primary","backup"})for(const auto* field:{"first_usable_lba","last_usable_lba","entries_lba","entry_size"})
-        need(table[side][field]==inspection["current_table"][side][field],"Protected GPT geometry changed");
+    for(const auto* side:{"primary","backup"})for(const auto* field:{"first_usable_lba","last_usable_lba","table_lba","entry_size"})
+        need(!table[side][field].isNull()&&table[side][field]==inspection["current_table"][side][field],"Protected GPT geometry changed");
 }
 Proposal propose(const ure::Root& system,const StorageTarget& target,const Value& request,const std::filesystem::path& original,const std::string& profile,
                  const Value& receipt,const Evidence& ev,bool preserve,bool fastboot) {
@@ -175,8 +197,15 @@ Proposal propose(const ure::Root& system,const StorageTarget& target,const Value
     const bool shrink=ev.filesystem_bytes>new_bytes,grow=ev.filesystem_bytes<new_bytes;
     if(preserve&&(ev.filesystem.empty()||ev.filesystem!=request["userdata_filesystem"].asString()||ev.filesystem_uuid.empty()))block("Preservation requires a verified unchanged userdata filesystem and UUID");
     if(preserve&&shrink&&(ev.filesystem=="xfs"))block("This filesystem has no admitted shrink adapter; erase/recreate needs two new confirmations");
-    if(preserve&&!ev.single_device)block("Only verified single-device filesystems are admitted");
-    if(preserve&&ev.external_journal)block("External filesystem journals/devices are outside the userdata-only write boundary");
+    if(preserve&&shrink&&ev.filesystem=="f2fs")block("F2FS preservation shrink is disabled after an integrity failure in qualification; erase/recreate needs two new confirmations");
+    if(!ev.single_device&&!ev.filesystem.empty())block("A multi-device filesystem cannot be modified within a userdata-only boundary");
+    if(ev.external_journal)block("External filesystem journals/devices are outside the userdata-only write boundary");
+    Value observed_types;
+    for(const auto& row:inspected["old_rows"]) {
+        const auto fs=filesystem_probe(target.descriptor.get(),row["offset"].asUInt64(),row["bytes"].asUInt64());
+        observed_types[std::to_string(row["index"].asUInt())]=fs["type"];
+        if(fs["single_device"]==false||fs["external_journal"]==true||fs["ambiguous"]==true)block("An affected filesystem has ambiguous signatures or dependencies outside its admitted partition; erasure cannot override this boundary");
+    }
     if(preserve&&ev.filesystem!="ext4"&&ev.filesystem!="f2fs"&&ev.filesystem!="btrfs"&&ev.filesystem!="xfs")block("No reviewed userdata preservation adapter for this filesystem");
     if(preserve&&!ev.filesystem_size_verified)block("Filesystem geometry is not independently verified");
     bool shutdown=ev.require_shutdown||root_removed||active_children||ev.holders.contains(ev.userdata_index)||ev.swaps.contains(ev.userdata_index)||(!preserve&&ev.mounted.contains(ev.userdata_index));
@@ -187,7 +216,12 @@ Proposal propose(const ure::Root& system,const StorageTarget& target,const Value
     }
     const bool same=ure::json(descriptions(out.before))==ure::json(descriptions(out.after));
     const bool filesystem_full=ev.filesystem_size_verified&&ev.filesystem_bytes<=new_bytes&&new_bytes-ev.filesystem_bytes<16*1048576;
-    doc["no_changes_required"]=same&&preserve&&filesystem_full;
+    bool child_filesystems_match=true;
+    for(const auto& row:layout["rows"])if(row["role"]!="userdata") {
+        auto expected=row["filesystem"].asString();if(expected=="fat32")expected="vfat";if(expected=="linux-swap")expected="swap";
+        if(observed_types[std::to_string(row["index"].asUInt())]!=expected)child_filesystems_match=false;
+    }
+    doc["no_changes_required"]=same&&preserve&&filesystem_full&&child_filesystems_match;
     for(const auto& row:layout["rows"])if(doc["no_changes_required"]!=true&&(row["role"]!="userdata"||!preserve)) {
         bool available=false;for(const auto& cap:native_capabilities())if(cap["filesystem"]==row["filesystem"])available=cap["available"].asBool();
         if(!available)block(("Native format/check adapter is unavailable: "+row["filesystem"].asString()).c_str());
@@ -210,9 +244,16 @@ std::string preview(const Value& p) {
         out<<title<<"\n";for(const auto& row:p[key])out<<"  "<<std::left<<std::setw(17)<<row["label"].asString()<<std::setw(13)<<bytes(row["bytes"].asUInt64())<<row["filesystem"].asString()<<'\n';out<<'\n';
     }
     out<<"Preserve userdata files: "<<(p["preserve_userdata"].asBool()?"yes":"NO - ERASE")
-       <<"\nOther existing project volumes: "<<(p["old_rows"].size()>1?"will be removed/recreated":"none")
+       <<"\nOther existing project volumes: "<<(p["old_rows"].size()>1?(p["no_changes_required"]==true?"unchanged; no writes required":"will be removed/recreated"):"none")
        <<"\nFinish: "<<p["finish"].asString()<<"\nPlan: "<<p["sha256"].asString()<<"\n";
     for(const auto& reason:p["blockers"])out<<"BLOCKED: "<<reason.asString()<<'\n';
     return out.str();
+}
+std::string finish_instructions(const Value& plan) {
+    std::string target;
+    if(plan["request"]["action"]=="restore-default")target="userdata";
+    else for(const auto& row:plan["new_rows"])if(row["role"]=="linux"||row["role"]=="linux2"){target=row["label"].asString();break;}
+    std::string instruction=target.empty()?"No Linux root was selected. Do not flash a Linux system image to userdata. Install the selected operating system using its matching image and boot contract.":"In fastboot, flash the matching system image to: "+target+"\nCheck the matching boot image's root partition contract before booting.";
+    return "Storage conversion does not install an operating system.\n\n"+instruction+"\nThis manager never writes boot_a, boot_b, firmware, misc or other OEM partitions.\n\nKeep the external journal and an independent backup of files. GPT snapshots cannot restore erased files.";
 }
 }

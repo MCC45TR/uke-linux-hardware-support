@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.1.0
+Version: 2.1.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -13,6 +13,8 @@ BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon jq
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
+BuildRequires: xfsprogs-devel
+BuildRequires: e2fsprogs dosfstools f2fs-tools
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
 Requires: ethtool >= 7.1
@@ -178,6 +180,13 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.1.1-1
+- Pin interactive consent across worker handoff and retain before/after GPT snapshots.
+- Stop GPT writes on I/O failure and undo only completed kernel partition operations.
+- Reject external filesystem dependencies and correct Linux2 image instructions.
+- Disable F2FS preservation shrink after a VM integrity-check failure.
+- Preserve native multicall aliases and verify the requested final filesystem capacity.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.1.0-1
 - Add an explicit terminal singleboot/multiboot wizard scoped to original userdata.
 - Preserve OEM GPT records and require original proof, exact ownership and plan-bound approvals.
