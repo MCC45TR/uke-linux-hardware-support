@@ -1,7 +1,7 @@
 # Uke video acceptance matrix
 
 Date: 25 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
-Linux 7.3.0-6, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
+Linux 7.3.0-9, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
 separate from codec workload acceptance.
 
 | Check | Observed result | Remaining gate |
@@ -11,7 +11,8 @@ separate from codec workload acceptance.
 | Native AArch64 revision 0.2 / COPR 11205659 | Signature, payload, one-package DNF upgrade, installed RPM/ELF and dependencies passed | Native VPU and Main10 workloads |
 | DNF installation, RPM verification, ELF/hash | Passed on tablet | Native Iris platform |
 | Native kernel 7.3.0-6 / COPR 11205247 | Build/signatures, DNF, RPM verification, boot-B readback and recoverable boot passed | Native codec sessions |
-| Native Iris / VIDEOCC first open | Drivers bind; decoder/encoder register; MVS0C power-on times out | Configuration clocks, controller power and PAS/HFI |
+| Prior 7.3.0-6 native first open | Drivers bind; decoder/encoder register; MVS0C power-on times out | Configuration clocks, controller power and PAS/HFI |
+| Shared kernel 7.3.0-9 / VIDEOCC-only activation | Gate readback passed; display SID 0x1c00 / CB10 fault starts before Iris load; 60 Hz recovery reported by the coordinator | Approved provider-only trace and shared-resource correction before codec trials |
 | Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
 | Explicit VA initialization | Prior release-5 probe failed: no Iris stateful H264 decoder; not repeated after the native power failure | Successful native initialization, then VA retest |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |

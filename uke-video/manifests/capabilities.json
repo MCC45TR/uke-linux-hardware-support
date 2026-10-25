@@ -8,16 +8,18 @@
     "soc_id": 643,
     "soc_revision": "1.0",
     "sku_version": null,
-    "kernel_release": "7.3.0-6",
-    "kernel_commit": "f7d4ced2ba8153cc12b2a0cb0c3e8eaf0473bb32",
-    "iris_bound": false,
+    "kernel_release": "7.3.0-9",
+    "kernel_commit": "e5cce51e10da5123a1d83e02c3f3e15518ee7628",
+    "iris_bound": true,
     "video0": "NT36532 touch",
     "firmware_at_expected_path": true,
-    "videocc_bound": false,
-    "iris_decoder_node": null,
-    "iris_encoder_node": null,
-    "video_modules_loaded": false,
-    "controlled_load_blacklist": true
+    "videocc_bound": true,
+    "iris_decoder_node": "video1",
+    "iris_encoder_node": "video2",
+    "video_modules_loaded": true,
+    "controlled_load_blacklist": true,
+    "display_fault_after_provider_activation": true,
+    "device_experiments_on_hold": true
   },
   "firmware": {
     "package": "uke-video-firmware-local-3.0.304.0-1.noarch",
@@ -246,21 +248,23 @@
     "FFmpeg, GStreamer, mpv, VLC, browsers, OBS and A/V sync"
   ],
   "last_native_trial": {
-    "kernel_release": "7.3.0-6",
+    "kernel_release": "7.3.0-9",
     "iris_bound": true,
     "videocc_bound": true,
-    "decoder_node": "video3",
-    "encoder_node": "video4",
-    "native_open_success": false,
-    "error": "MVS0C power-on timeout before PAS/HFI"
+    "decoder_node": "video1",
+    "encoder_node": "video2",
+    "native_open_success": null,
+    "firmware_session_proven": false,
+    "codec_workload_run": false,
+    "error": "Display SID 0x1c00 / CB10 translation fault after VIDEOCC-only activation, before Iris load"
   },
   "kernel_next_candidate": {
     "release": "7.3.0-9",
     "source_commit": "e5cce51e10da5123a1d83e02c3f3e15518ee7628",
     "copr_build": 11205655,
     "includes_power_gate_commit": "714a77c",
-    "installed": false,
-    "booted": false
+    "installed": true,
+    "booted": true
   },
   "native_main10_source_candidate": {
     "local_kernel_release": "7.3.0-10",
@@ -273,6 +277,13 @@
     "copr_build": null,
     "installed": false,
     "booted": false,
-    "codec_tested": false
+    "codec_tested": false,
+    "publishable_as_local_tuple": false,
+    "conflicting_public_tuple": {
+      "kernel_release": "7.3.0-10",
+      "source_commit": "3d145da265d44063fa8818d4c8f3f7e4d7bb1e5e",
+      "copr_build": 11205684,
+      "scope": "ELD fix; does not contain native Main10 patch 0016"
+    }
   }
 }

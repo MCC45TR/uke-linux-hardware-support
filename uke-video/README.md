@@ -2,10 +2,11 @@
 
 Date: 25 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-The physical Fedora 46 tablet runs Linux 7.3.0-6. In the first explicit-load
-trial its native `qcom-iris` driver binds and registers a decoder and encoder,
-but node opens fail at MVS0C power-on before firmware initialization.
-The subsequent clean boot retains the temporary controlled-load blacklist.
+The last video-owned tablet observation uses Fedora 46 and Linux 7.3.0-9.
+It enables the missing video configuration gates, but a late VIDEOCC-only
+load is followed by display translation faults before Iris loads. Iris later
+registers a decoder and encoder; no codec workload is accepted. Further device
+experiments require the Juo coordinator's exact-command/window approval.
 `/dev/video0` belongs to NT36532 touch. No native codec session is accepted.
 
 The experimental package pins Radxa libva-v4l2 at
@@ -35,8 +36,9 @@ tool or Python runtime is included in the video RPM.
 The native Linux 7.3 platform candidate is integrated into the normal source
 preparation and built as kernel 7.3.0-6 in COPR 11205247. The signed matched
 RPMs are installed with DNF; RPM verification and the native current-slot
-preflight and recoverable boot pass. The controller power failure remains
-under investigation. The exact private runtime
+preflight and recoverable boot pass. Shared release 9 retains that source and
+the gate correction, but the provider-only display failure remains open.
+The exact private runtime
 firmware is installed through a local DNF package and stays outside the COPR
 source RPM.
 
