@@ -1,5 +1,11 @@
 # Uke Control
 
+25 October 2026: source version **2.0.0** defaults to human-readable terminal
+output. Scripts and the KDE widget request `--json` explicitly. Canonical command
+groups, contextual help, compatibility aliases and output/exit contracts are
+documented in [the CLI guide](CLI.md). Native COPR/DNF delivery and tablet
+validation remain on hold during the separate device-recovery window.
+
 25 October 2026: source version 1.13.0 adds passwordless active-local torch
 requests through a confined non-root service. The widget's 1–100 slider keeps
 the original 20 mA total ceiling and reports the two real lit steps separately
@@ -92,15 +98,15 @@ prompting or rebooting. See [filesystem capacity repair](RESIZE.md).
 23 October 2026: version 1.5.0 adds saved CDC ACM startup policy:
 
 ```sh
-sudo uke-control set cdc on --persistent
-sudo uke-control set cdc off --persistent
+sudo uke-control cdc on --persistent
+sudo uke-control cdc off --persistent
 sudo uke-control usb status
 ```
 
 The saved opt-in applies at boot and on Type-C, USB-role and controller readiness
 events. It uses the existing owned ACM gadget; it exports no root shell or USB
 network and does not force a data/power role. No polling daemon or boot delay
-is added. Without `--persistent`, `set cdc on|off` remains a one-shot request.
+is added. Without `--persistent`, `cdc on|off` remains a one-shot request.
 Use persistent off to prevent a saved on policy from reapplying on the next
 USB event. A successful bind does not prove host enumeration or net charging.
 
@@ -109,7 +115,7 @@ explicit offline F2FS userdata growth at the next normal reboot. It prepares
 maintenance in RAM without changing GPT, boot partitions or the selected slot.
 See [filesystem expansion](RESIZE.md) for admission, power and verification.
 
-22 October 2026: version 1.3.0 adds `uke-control diagnostic all` and focused
+22 October 2026: version 1.3.0 adds `uke-control diagnostics all` and focused
 subsystem reports. Each command creates `uke-diagnostic-TOPIC.log` in the current
 directory with mode 0600, preserving existing files. See [diagnostic collection](DIAGNOSTIC.md)
 for scope, private-data handling, limits and optional tools. Source/host checks,
@@ -216,11 +222,11 @@ from an actual channel transition.
 
 ```sh
 uke-control status
-uke-control brunch status
-sudo uke-control brunch stable --dry-run
-sudo uke-control brunch test
-sudo uke-control brunch unstable
-sudo uke-control brunch sync
+uke-control channel status
+sudo uke-control channel set stable --dry-run
+sudo uke-control channel set test
+sudo uke-control channel set unstable
+sudo uke-control channel sync
 sudo uke-control update --check
 sudo uke-control update
 uke-control sensors -n5
@@ -243,9 +249,9 @@ sudo uke-control charge mode automatic # requires qualified per-boot admission
 sudo uke-control charge limit 80 # same qualified native 80% request
 uke-control usb status
 uke-control usb watch 60
-sudo uke-control usb request data host
-sudo uke-control set cdc on
-sudo uke-control set cdc off
+sudo uke-control usb role host
+sudo uke-control cdc on
+sudo uke-control cdc off
 uke-control test display 60
 uke-control test display 30 --csv
 uke-control test cadence 144
@@ -287,7 +293,7 @@ or an automatic white-point setting.
 
 ## USB and CDC
 
-`usb status` returns bounded JSON containing cached Type-C and controller roles,
+`usb status --json` returns bounded JSON containing cached Type-C and controller roles,
 UDC state, USB device/interface IDs and speeds, bound drivers, USB NIC counters
 and external display modes. Missing values remain null. `usb watch` records one
 snapshot per second for a bounded interval. Neither command reads power-supply
@@ -296,7 +302,7 @@ attributes or EDID bytes. Interface names may still encode device identifiers;
 snapshots belong in private reports. These observations do not prove PD contracts, coherent
 attachment epochs, display depth or physical functionality.
 
-`usb request data host|device` requires root, the matched `typec-v1` Uke profile
+`usb role host|device` requires root, the matched `typec-v1` Uke profile
 and the shared gadget ownership API. It requests the standard Type-C `data_role`
 through the kernel's UCSI provider; it never writes `usb_role`, PHY registers or
 charger properties. Attached USB storage, an active USB NIC or enabled external
@@ -306,10 +312,10 @@ request. A successful sysfs write and a matching Type-C/controller readback are
 reported separately; neither establishes physical acceptance. There is no
 automatic retry or saved role override, and no power-source or lane-force control.
 
-CDC defaults to off. With manual CDC API2, `set cdc on` invokes the existing
+CDC defaults to off. With manual CDC API2, `cdc on` invokes the existing
 root helper once; a computer must already attach in device data role. A missing
 or ambiguous attachment is refused without a background watcher or retry.
-`set cdc off` removes only the recorded manual ACM gadget and refuses an old
+`cdc off` removes only the recorded manual ACM gadget and refuses an old
 automatic or foreign project gadget profile before disconnecting it. Neither
 command starts/enables a service, saves a startup opt-in, unloads an inherited
 serial owner or enables a root console, Ethernet gadget, hotspot or network
@@ -404,7 +410,7 @@ Release 18 keeps the class object ID in name and the kernel's descriptive name
 in device_name; release 17 emitted a duplicate name key for remote processors.
 Both identities are now preserved, with a regression for that observed output.
 
-`uke-control firmware status` returns a bounded JSON snapshot of SCMI base
+`uke-control firmware status --json` returns a bounded JSON snapshot of SCMI base
 identity, agent-visible protocol discovery, Linux protocol consumers and
 remote-processor state. It reads cached kernel interfaces only, without vendor
 RPCs, firmware loading, background polling, resets or policy changes. It shares

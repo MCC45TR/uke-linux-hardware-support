@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "diagnostic.hpp"
+#include "cli.hpp"
 #include "backend.hpp"
 #include "sysfs.hpp"
 #include <chrono>
@@ -207,7 +208,7 @@ std::string text_output(const std::string& raw) {
 }
 std::string collect(const std::string& topic) {
     if(topic!="all"&&std::find(topics.begin(),topics.end(),topic)==topics.end())
-        throw std::runtime_error("Unknown diagnostic topic; use uke-control diagnostic --help");
+        throw std::runtime_error("Unknown diagnostic topic; use uke-control diagnostics --help");
     const std::string name="uke-diagnostic-"+topic+".log";
     const int fd=open(name.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600);
     if(fd<0)throw std::runtime_error("Cannot create "+name+": "+strerror(errno)+". Existing reports are never overwritten; move the old file before retrying.");
@@ -273,17 +274,17 @@ std::string collect(const std::string& topic) {
     if(fsync(fd)!=0)throw std::runtime_error("Cannot sync diagnostic log");
     return name;
 }
-int command(int argc,char** argv) {
+int command(int argc,char** argv,bool as_json) {
     if(argc==0||(argc==1&&(std::string_view(argv[0])=="--help"||std::string_view(argv[0])=="help"))) {
-        std::cout<<"Usage: uke-control diagnostic TOPIC\nTopics: all";
+        std::cout<<"Usage: uke-control diagnostics TOPIC\nTopics: all";
         for(const auto& topic:topics)std::cout<<' '<<topic;
         std::cout<<"\nSaves uke-diagnostic-TOPIC.log in the current directory with mode 0600.\nUse sudo for system logs; existing output is never overwritten.\nReports are private and are not uploaded. Optional tools are not installed automatically.\n";
         return 0;
     }
-    if(argc!=1)throw std::runtime_error("Expected one diagnostic topic; use uke-control diagnostic --help");
+    if(argc!=1)throw std::runtime_error("Expected one diagnostic topic; use uke-control diagnostics --help");
     std::cerr<<"Collecting diagnostic "<<argv[0]<<"; the log is private. Optional collectors may be unavailable.\n";
     const auto path=collect(argv[0]);
-    std::cout<<path<<"\n";
+    uke::cli::print(path,as_json);
     return 0;
 }
 }

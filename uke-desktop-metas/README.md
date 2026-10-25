@@ -1,5 +1,10 @@
 # Uke desktop selections
 
+25 October 2026: source revision 23 requests explicit JSON from Control 2.0 and
+uses the canonical CDC/USB-role commands. The dependency/conflict pair requires
+the matching CLI/client cohort while preserving separate widget removal. Host
+command/schema and QML checks are separate from native packaging and tablet use.
+
 Chromium is recommended by default and can be removed while retaining the KDE
 meta package. This preserves the packaging correction in release 19.
 

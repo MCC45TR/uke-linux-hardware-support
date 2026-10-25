@@ -206,7 +206,7 @@ static bool confirm_reboot(std::istream& input,bool terminal) {
     std::string answer;
     return bool(std::getline(input,answer))&&answer=="yes";
 }
-int command(const std::string& action) {
+int command(const std::string& action,bool as_json=false) {
     need(geteuid()==0,"Use sudo uke-control resize system");
     need(compatible(read("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
     struct stat self_ns{},init_ns{};
@@ -231,6 +231,11 @@ int command(const std::string& action) {
         expand(fd.value,device.string(),bytes);return 0;
     }
     root_device(read("/proc/self/mountinfo",1024*1024),number);
+    if(as_json) {
+        std::cout<<"{\"schema\":\"org.uke.control.resize.v1\",\"filesystem_bytes\":"<<before<<",\"partition_bytes\":"<<bytes
+                 <<",\"growth_required\":"<<(userdata::needs_growth(first,second,bytes)?"true":"false")<<",\"prepared\":false,\"reboot_requested\":false}\n";
+        return 0;
+    }
     std::cout<<"Filesystem bytes: "<<before<<"\nUserdata partition bytes: "<<bytes<<"\n";
     if(!userdata::needs_growth(first,second,bytes)){std::cout<<"Filesystem already fills userdata within F2FS section alignment.\n";return 0;}
     std::cout<<"Growth is required: F2FS must be unmounted. Expansion runs during normal reboot, before the next boot.\n";
@@ -279,6 +284,12 @@ int command(const std::string& action) {
 }
 }
 int main(int argc,char** argv) {
-    try {if(argc!=2||(std::string(argv[1])!="--check"&&std::string(argv[1])!="--interactive"&&std::string(argv[1])!="--prepare"&&std::string(argv[1])!="--offline"))throw std::runtime_error("Internal resize helper: expected --check, --interactive, --prepare or --offline");return uke::resize::command(argv[1]);}
+    try {
+        const bool json=argc==3 && std::string_view(argv[2])=="--json";
+        if((argc!=2 && !json) || (json && std::string_view(argv[1])!="--check") ||
+           (std::string(argv[1])!="--check"&&std::string(argv[1])!="--interactive"&&std::string(argv[1])!="--prepare"&&std::string(argv[1])!="--offline"))
+            throw std::runtime_error("Internal resize helper: expected --check [--json], --interactive, --prepare or --offline");
+        return uke::resize::command(argv[1],json);
+    }
     catch(const std::exception& error){std::cerr<<"UKE_RESIZE_SYSTEM_REFUSED: "<<error.what()<<'\n';return 1;}
 }

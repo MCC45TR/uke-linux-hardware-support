@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "rgb.hpp"
+#include "cli.hpp"
 #include "lights.hpp"
 #include <charconv>
 #include <cstdio>
@@ -22,7 +23,7 @@ std::string hex(Color color) {
     for(auto n:color)need(n<=255,"RGB component exceeds 255");
     char value[8];std::snprintf(value,sizeof(value),"#%02x%02x%02x",color[0],color[1],color[2]);return value;
 }
-int command(int argc,char** argv) {
+int command(int argc,char** argv,bool as_json) {
     const bool status=argc==1 && std::string_view(argv[0])=="status";
     const bool test=argc==1 && std::string_view(argv[0])=="test";
     const bool off=argc==1 && (std::string_view(argv[0])=="off" || std::string_view(argv[0])=="auto");
@@ -47,10 +48,10 @@ int command(int argc,char** argv) {
     std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(answer,sd_bus_message_unref);
     const std::string message=error.message?error.message:"RGB service unavailable";sd_bus_error_free(&error);
     if(result<0) {
-        if(status){std::cout<<"{\"schema\":\"org.uke.control.rgb.v1\",\"available\":false,\"mode\":null,\"reason\":\"service_unavailable\"}\n";return 0;}
+        if(status){uke::cli::print("{\"schema\":\"org.uke.control.rgb.v1\",\"available\":false,\"mode\":null,\"reason\":\"service_unavailable\"}\n",as_json,"Notification LED");return 0;}
         throw std::runtime_error(message);
     }
     const char* text=nullptr;need(sd_bus_message_read(answer,"s",&text)>0&&text,"Invalid RGB service response");
-    std::cout<<text<<'\n';return 0;
+    uke::cli::print(text,as_json,"Notification LED");return 0;
 }
 }

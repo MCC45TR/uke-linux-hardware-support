@@ -20,6 +20,6 @@ public:
     void enable(bool on);
     std::string status();
 };
-int command(int argc,char** argv);
+int command(int argc,char** argv,bool as_json=false);
 int prepare_access(bool remove=false);
 }

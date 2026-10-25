@@ -10,12 +10,12 @@ do not establish which module image is running. Missing notes remain explicit.
 hardware-variant comparisons. Run it from the directory where the log belongs:
 
 ```sh
-sudo uke-control diagnostic all
-sudo uke-control diagnostic wifi
-sudo uke-control diagnostic bluetooth
-sudo uke-control diagnostic sensors
-sudo uke-control diagnostic sleep
-uke-control diagnostic --help
+sudo uke-control diagnostics all
+sudo uke-control diagnostics wifi
+sudo uke-control diagnostics bluetooth
+sudo uke-control diagnostics sensors
+sudo uke-control diagnostics sleep
+uke-control diagnostics --help
 ```
 
 The first command writes `uke-diagnostic-all.log`; focused commands write

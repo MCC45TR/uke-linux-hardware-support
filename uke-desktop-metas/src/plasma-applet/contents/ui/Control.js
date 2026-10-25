@@ -4,25 +4,25 @@ function command(action, values) {
         if (!Array.isArray(values) || values.length !== 1 || values.some(function(value) {
             return !Number.isInteger(value) || value < 1 || value > 100
         })) return null
-        return "/usr/bin/uke-control flashlight set " + values.join(" ")
+        return "/usr/bin/uke-control --json flashlight set " + values.join(" ")
     }
     const commands = {
-        plasma: "/usr/bin/uke-control desktop plasma",
-        desktop: "/usr/bin/uke-control desktop status",
-        usb: "/usr/bin/uke-control usb status",
-        lights: "/usr/bin/uke-control flashlight status",
-        rgb: "/usr/bin/uke-control led status",
-        rgbTest: "/usr/bin/uke-control led test",
-        flashlightOn: "/usr/bin/uke-control flashlight on",
-        flashlightOff: "/usr/bin/uke-control flashlight off",
-        rotationOn: "/usr/bin/uke-control desktop rotation on",
-        rotationOff: "/usr/bin/uke-control desktop rotation off",
-        brightnessOn: "/usr/bin/uke-control desktop brightness on",
-        brightnessOff: "/usr/bin/uke-control desktop brightness off",
-        cdcOn: "/usr/bin/pkexec /usr/bin/uke-control set cdc on --persistent",
-        cdcOff: "/usr/bin/pkexec /usr/bin/uke-control set cdc off --persistent",
-        host: "/usr/bin/pkexec /usr/bin/uke-control usb request data host",
-        device: "/usr/bin/pkexec /usr/bin/uke-control usb request data device"
+        plasma: "/usr/bin/uke-control --json desktop plasma",
+        desktop: "/usr/bin/uke-control --json desktop status",
+        usb: "/usr/bin/uke-control --json usb status",
+        lights: "/usr/bin/uke-control --json flashlight status",
+        rgb: "/usr/bin/uke-control --json led status",
+        rgbTest: "/usr/bin/uke-control --json led test",
+        flashlightOn: "/usr/bin/uke-control --json flashlight on",
+        flashlightOff: "/usr/bin/uke-control --json flashlight off",
+        rotationOn: "/usr/bin/uke-control --json desktop rotation on",
+        rotationOff: "/usr/bin/uke-control --json desktop rotation off",
+        brightnessOn: "/usr/bin/uke-control --json desktop brightness on",
+        brightnessOff: "/usr/bin/uke-control --json desktop brightness off",
+        cdcOn: "/usr/bin/pkexec /usr/bin/uke-control --json cdc on --persistent",
+        cdcOff: "/usr/bin/pkexec /usr/bin/uke-control --json cdc off --persistent",
+        host: "/usr/bin/pkexec /usr/bin/uke-control --json usb role host",
+        device: "/usr/bin/pkexec /usr/bin/uke-control --json usb role device"
     }
     return Object.prototype.hasOwnProperty.call(commands, action) ? commands[action] : null
 }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "lights.hpp"
+#include "cli.hpp"
 #include "rgb.hpp"
 #include "torch.hpp"
 #include "backend.hpp"
@@ -145,7 +146,7 @@ std::string snapshot(const fs::path& sys) {
     }
     return out+"}\n";
 }
-int command(bool rgb,int argc,char** argv) {
-    return rgb?uke::rgb::command(argc,argv):uke::torch::command(argc,argv);
+int command(bool rgb,int argc,char** argv,bool as_json) {
+    return rgb?uke::rgb::command(argc,argv,as_json):uke::torch::command(argc,argv,as_json);
 }
 }

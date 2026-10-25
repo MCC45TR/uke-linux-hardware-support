@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 22%{?dist}
+Release: 23%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -16,8 +16,8 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-22
-Obsoletes: kde-plasma-uke-meta < 1.0.0-22
+Provides: kde-plasma-uke-meta = 1.0.0-23
+Obsoletes: kde-plasma-uke-meta < 1.0.0-23
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
@@ -107,7 +107,7 @@ policy. Pairing still requires confirmation in the original application.
 Summary: Removable Plasma system tray controls using uke-control
 License: GPL-3.0-or-later
 BuildArch: noarch
-Requires: uke-control >= 1.13.0
+Requires: uke-control >= 2.0.0
 Requires: plasma-workspace plasma5support polkit
 
 %description -n uke-plasma-controls
@@ -155,6 +155,9 @@ fi
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-23
+- Request explicit JSON from Control 2.0 and use canonical CDC/USB-role commands.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-22
 - Send torch requests without privilege escalation through Control 1.13.0.
 - Add a 1–100 slider and show the requested percentage beside the applied hardware step.

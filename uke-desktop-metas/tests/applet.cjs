@@ -5,18 +5,18 @@ const vm = require("node:vm");
 const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(`${__dirname}/../src/plasma-applet/contents/ui/Control.js`, "utf8"), context);
 for (const action of ["plasma", "desktop", "usb", "rotationOn", "rotationOff", "brightnessOn", "brightnessOff", "cdcOn", "cdcOff", "host", "device"])
-    assert.match(context.command(action), /^(\/usr\/bin\/pkexec )?\/usr\/bin\/uke-control /);
+    assert.match(context.command(action), /^(\/usr\/bin\/pkexec )?\/usr\/bin\/uke-control --json /);
 for (const action of ["__proto__", "constructor", "usb; touch /tmp/unsafe", ""])
     assert.equal(context.command(action), null);
 for (const action of ["lights", "rgb", "rgbTest", "flashlightOn", "flashlightOff"])
-    assert.match(context.command(action), /^(\/usr\/bin\/pkexec )?\/usr\/bin\/uke-control /);
-assert.equal(context.command("flashlightSet", [50]), "/usr/bin/uke-control flashlight set 50");
+    assert.match(context.command(action), /^(\/usr\/bin\/pkexec )?\/usr\/bin\/uke-control --json /);
+assert.equal(context.command("flashlightSet", [50]), "/usr/bin/uke-control --json flashlight set 50");
 for (const p of [1, 99, 100])
-    assert.equal(context.command("flashlightSet", [p]), `/usr/bin/uke-control flashlight set ${p}`);
+    assert.equal(context.command("flashlightSet", [p]), `/usr/bin/uke-control --json flashlight set ${p}`);
 for (const action of ["flashlightOn", "flashlightOff"])
-    assert.match(context.command(action), /^\/usr\/bin\/uke-control flashlight (on|off)$/);
-assert.equal(context.command("rgbTest"), "/usr/bin/uke-control led test");
-assert.equal(context.command("rgb"), "/usr/bin/uke-control led status");
+    assert.match(context.command(action), /^\/usr\/bin\/uke-control --json flashlight (on|off)$/);
+assert.equal(context.command("rgbTest"), "/usr/bin/uke-control --json led test");
+assert.equal(context.command("rgb"), "/usr/bin/uke-control --json led status");
 for (const action of ["ledSet", "ledOff"])
     assert.equal(context.command(action, [255, 0, 128, 75]), null);
 for (const values of [[], [0], [101], [-1], [1.5], ["50"], ["0;reboot"], [0, 1], null])

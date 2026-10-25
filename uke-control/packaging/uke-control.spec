@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.13.0
+Version: 2.0.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -10,7 +10,7 @@ BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
-BuildRequires: dbus-daemon
+BuildRequires: dbus-daemon jq
 BuildRequires: selinux-policy-devel
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
@@ -23,6 +23,7 @@ Requires: polkit selinux-policy-targeted
 Requires: kmod
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
+Conflicts: uke-plasma-controls < 1.0.0-23
 %{?systemd_requires}
 
 %description
@@ -128,7 +129,7 @@ fi
 
 %files
 %license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
@@ -169,6 +170,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.0.0-1
+- Default to readable terminal output and require explicit --json for structured responses.
+- Standardize command groups, contextual help and channel/CDC/USB-role names with legacy aliases.
+- Update the widget client together with the CLI output contract.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.0-1
 - Broker active-local torch requests without root, sudo or interactive authorization.
 - Limit the confined service to the admitted brightness attribute and retain the 20 mA ceiling.

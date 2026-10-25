@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "torch.hpp"
+#include "cli.hpp"
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -106,7 +107,7 @@ int prepare_access(bool remove) {
          "Cannot set the admitted torch permissions");
     return 0;
 }
-int command(int argc,char** argv) {
+int command(int argc,char** argv,bool as_json) {
     const bool status=argc==1 && std::string_view(argv[0])=="status";
     const bool on=argc==1 && std::string_view(argv[0])=="on";
     const bool off=argc==1 && std::string_view(argv[0])=="off";
@@ -127,10 +128,10 @@ int command(int argc,char** argv) {
     std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(answer,sd_bus_message_unref);
     const std::string message=error.message?error.message:"Torch service unavailable";sd_bus_error_free(&error);
     if(result<0) {
-        if(status){std::cout<<"{\"schema\":\"org.uke.control.lights.v1\",\"physical_acceptance\":null,\"flashlight\":{\"available\":false,\"on\":null,\"brightness_percent\":null,\"requested_percent\":null,\"reason\":\"service_unavailable\"},\"rgb\":{\"available\":false,\"on\":null,\"brightness_percent\":null}}\n";return 0;}
+        if(status){uke::cli::print("{\"schema\":\"org.uke.control.lights.v1\",\"physical_acceptance\":null,\"flashlight\":{\"available\":false,\"on\":null,\"brightness_percent\":null,\"requested_percent\":null,\"reason\":\"service_unavailable\"},\"rgb\":{\"available\":false,\"on\":null,\"brightness_percent\":null}}\n",as_json,"Flashlight");return 0;}
         throw std::runtime_error(message);
     }
     const char* text=nullptr;need(sd_bus_message_read(answer,"s",&text)>0 && text,"Invalid torch service response");
-    std::cout<<text<<'\n';return 0;
+    uke::cli::print(text,as_json,"Flashlight");return 0;
 }
 }

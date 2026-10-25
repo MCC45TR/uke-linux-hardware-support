@@ -4,6 +4,7 @@
 #include "display-device.hpp"
 #include "desktop.hpp"
 #include "hardware.hpp"
+#include "cli.hpp"
 #include <systemd/sd-bus.h>
 #include <algorithm>
 #include <array>
@@ -162,7 +163,7 @@ static int helper(const char *name,std::string argument,unsigned seconds=30) {
 static void help() {
     std::puts("uke-control test — development diagnostics, excluded from release images\n"
         "  display [seconds] [--csv]  Measured DPU Hz, selected mode and DRM VRR state\n"
-        "  cadence [maximum-fps]      Bounded fullscreen Wayland/presentation test\n"
+        "  cadence [maximum-fps] [--csv] Bounded fullscreen Wayland/presentation test\n"
         "  touch /dev/input/eventN seconds  Require continuous accepted contact (1..300s)\n"
         "  sensors [seconds]          SensorProxy and processed IIO/hwmon readings\n"
         "  desktop                    Existing UPower, profiles, sensors, logind and KDE interfaces\n"
@@ -174,11 +175,17 @@ static void help() {
 }
 int main(int argc,char **argv) {
     try {
+        auto options=uke::cli::arguments(argc,argv);
+        if(options.help){help();return 0;}
+        std::vector<char*> words;for(auto& word:options.words)words.push_back(word.data());words.push_back(nullptr);
+        argc=int(words.size()-1);argv=words.data();
+        if(options.json && (argc!=2 || (std::string_view(argv[1])!="desktop" && std::string_view(argv[1])!="hardware")))
+            throw uke::cli::UsageError("--json supports desktop and hardware snapshots; use --csv for display measurements");
         std::signal(SIGINT,[](int){stopped=1;});std::signal(SIGTERM,[](int){stopped=1;});
         if(argc==1||std::string_view(argv[1])=="--help"){help();return 0;}
         const std::string_view command=argv[1];
-        if(command=="desktop"&&argc==2){std::cout<<uke::desktop::status();return 0;}
-        if(command=="hardware"&&argc==2){std::cout<<uke::hardware::snapshot("/");return 0;}
+        if(command=="desktop"&&argc==2){uke::cli::print(uke::desktop::status(),options.json,"Desktop interfaces");return 0;}
+        if(command=="hardware"&&argc==2){uke::cli::print(uke::hardware::snapshot("/"),options.json,"Hardware");return 0;}
         if(command=="--self-test") {
             if(period(UINT32_MAX,1000000,0,2000000)!=1000000||period(1,100,1,200)!=0||period(1,200,2,100)!=0)throw std::runtime_error("Vblank delta refusal failed");
             bool refused=false;try{(void)number("-1");}catch(...){refused=true;}if(!refused)throw std::runtime_error("Argument refusal failed");
@@ -195,6 +202,7 @@ int main(int argc,char **argv) {
             return display(seconds,csv);
         }
         if(command=="sensors"&&argc<=3)return sensors(argc==3?number(argv[2]):30);
-        help();return 64;
-    }catch(const std::exception &error){std::cerr<<"uke-control test: "<<error.what()<<'\n';return 1;}
+        throw uke::cli::UsageError("unknown development test; see 'uke-control test --help'");
+    }catch(const uke::cli::UsageError& error){std::cerr<<"uke-control test: "<<error.what()<<'\n';return 64;}
+    catch(const std::exception &error){std::cerr<<"uke-control test: "<<error.what()<<'\n';return 1;}
 }

@@ -158,6 +158,6 @@ public:
 };
 // Metadata-only CLI entry point. -1 means the arguments belong to another handler.
 // An unsupported apply returns EX_UNAVAILABLE and never persists an effective mode.
-int policy_command(int argc, char** argv);
+int policy_command(int argc, char** argv,bool as_json=false);
 std::string policy_modes_json();
 }

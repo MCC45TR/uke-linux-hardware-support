@@ -20,12 +20,12 @@ build/selinux/uke_control_rgb.pp: packaging/selinux/uke_control_rgb.te packaging
 	mkdir -p build/selinux
 	cp packaging/selinux/uke_control_rgb.{te,fc} build/selinux/
 	$(MAKE) -C build/selinux -f /usr/share/selinux/devel/Makefile uke_control_rgb.pp
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
+build/libuke-control.so.0: src/cli.cpp src/cli.hpp src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/cli.cpp src/backend.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
 build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
-build/uke-control-packages: src/packages.cpp | build
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(shell pkg-config --cflags --libs libdnf5 rpm)
+build/uke-control-packages: src/packages.cpp src/cli.cpp src/cli.hpp | build
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< src/cli.cpp -Isrc $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd)
 build/resize-system: src/resize-system.cpp shared/userdata-grow.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
 build/xdg-shell-client.h: | build
@@ -37,8 +37,8 @@ build/%-protocol.c: | build
 	wayland-scanner private-code "$$xml" $@
 build/%-protocol.o: build/%-protocol.c
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@ $(shell pkg-config --cflags wayland-client)
-build/uke-control-tests: src/diagnostics.cpp src/display-device.hpp src/cadence.cpp src/contact.cpp src/desktop.cpp src/desktop.hpp src/hardware.cpp src/hardware.hpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/diagnostics.cpp src/cadence.cpp src/contact.cpp src/desktop.cpp src/hardware.cpp build/*-protocol.o $(LDLIBS)
+build/uke-control-tests: src/cli.cpp src/cli.hpp src/diagnostics.cpp src/display-device.hpp src/cadence.cpp src/contact.cpp src/desktop.cpp src/desktop.hpp src/hardware.cpp src/hardware.hpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/cli.cpp src/diagnostics.cpp src/cadence.cpp src/contact.cpp src/desktop.cpp src/hardware.cpp build/*-protocol.o $(LDLIBS)
 build/ssc-discovery: shared/ssc-discovery.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
 build/ssc-sample: shared/ssc-sample.cpp shared/ssc-discovery.cpp | build
@@ -49,7 +49,10 @@ build/test-execute: tests/execute.cpp src/backend.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -Lbuild -l:libuke-control.so.0 -o $@
 check-rgb-policy: build/selinux/uke_control_rgb.pp
 	bash tests/rgb-policy.sh
-check: all check-rgb-policy build/test-front-color build/test-execute
+build/test-cli: tests/cli.cpp src/cli.cpp src/cli.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cli.cpp src/cli.cpp $(shell pkg-config --libs libsystemd) -o $@
+check: all check-rgb-policy build/test-front-color build/test-execute build/test-cli
+	bash tests/cli.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/rgb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-rgb
 	LD_LIBRARY_PATH=build build/test-rgb
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/rgb-bus.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux) -o build/test-rgb-bus
@@ -62,7 +65,7 @@ check: all check-rgb-policy build/test-front-color build/test-execute
 	LD_LIBRARY_PATH=build build/test-execute
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/resize-system.cpp -o build/test-resize-system
 	build/test-resize-system
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/diagnostic.cpp -o build/test-diagnostic
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/diagnostic.cpp src/cli.cpp $(shell pkg-config --libs libsystemd) -o build/test-diagnostic
 	build/test-diagnostic
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/wake.cpp src/wake.cpp -o build/test-wake
 	build/test-wake
@@ -102,11 +105,11 @@ check: all check-rgb-policy build/test-front-color build/test-execute
 	LD_LIBRARY_PATH=build build/uke-control --help
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/sensors.cpp src/sensors.cpp src/front-color.cpp $(shell pkg-config --libs libsystemd) -o build/test-sensors
 	build/test-sensors
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/packages.cpp $(shell pkg-config --cflags --libs libdnf5 rpm) -o build/test-packages
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/packages.cpp src/cli.cpp -Isrc $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd) -o build/test-packages
 	build/test-packages
 check-repositories: build/test-package-repos
 	bash tests/package-repos.sh
-build/test-package-repos: tests/package-repos.cpp src/packages.cpp | build
+build/test-package-repos: tests/package-repos.cpp src/packages.cpp src/cli.cpp src/cli.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(shell pkg-config --cflags --libs libdnf5 rpm) -o $@
 check-sensor-proxy: build/test-sensor-proxy
 	bash tests/sensor-proxy.sh
@@ -121,7 +124,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.13.0/#' -czf "$$top/SOURCES/uke-control-1.13.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.0.0/#' -czf "$$top/SOURCES/uke-control-2.0.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

@@ -18,5 +18,5 @@ unsigned percent(const std::string& text);
 unsigned level(unsigned percent, unsigned maximum);
 std::array<unsigned,3> colors(const std::string& order, const std::string& values);
 std::string intensities(const std::string& order, const std::array<unsigned,3>& rgb);
-int command(bool rgb, int argc, char** argv);
+int command(bool rgb,int argc,char** argv,bool as_json=false);
 }

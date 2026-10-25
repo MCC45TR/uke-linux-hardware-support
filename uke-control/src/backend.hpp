@@ -9,6 +9,7 @@ Result execute(const std::vector<std::string>& arguments, unsigned seconds=20, s
 uint64_t swap_mib(const std::string& policy, uint64_t memory_bytes);
 std::string read(const std::string& path, size_t limit=1024*1024);
 std::string status();
+std::string swap_status();
 std::string inventory(bool save);
 void swap_set(const std::string& policy);
 void swap_apply();
@@ -28,6 +29,7 @@ std::string usb_status();
 std::string firmware_status();
 std::string hardware_status();
 void usb_watch(unsigned seconds);
+void usb_watch(unsigned seconds,bool as_json);
 Result usb_request_data(const std::string& role);
 Result display_profile_set(const std::string& profile);
 Result display_lane_limit(const std::string& lanes);

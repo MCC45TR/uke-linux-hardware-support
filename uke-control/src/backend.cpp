@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "cli.hpp"
 #include "rpm-api.hpp"
 #include "charge-client.hpp"
 #include "usb-request.hpp"
@@ -281,7 +282,6 @@ static void apply_locked(const std::string& selected) {
         auto path=entry.path().string();if(path==target||!own_file(path)||std::any_of(live.begin(),live.end(),[&](const Swap& s){return s.path==path;}))continue;
         struct stat st{};if(lstat(path.c_str(),&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1)fs::remove(path);
     }
-    std::cout<<"Active swap source: "<<target<<"; policy="<<selected<<" (partition size takes precedence)\n";
 }
 void swap_set(const std::string& selected) {Lock lock;(void)swap_mib(selected,memory("MemTotal:"));apply_locked(selected);atomic_file(state/"swap-policy",selected+"\n");}
 void swap_apply(){Lock lock;apply_locked(policy());}
@@ -304,8 +304,10 @@ std::string charge_status() {
         need(result.status==0,"Charge-control status unavailable:\n"+result.output);
         return result.output;
     }
-    auto paths=thresholds();if(paths.empty())return "charge_limit=unsupported (no standard charge_control_end_threshold)\n";
-    std::string out;for(const auto& path:paths){auto value=read(path.string(),64);out+=path.string()+"="+(value.empty()?"unavailable\n":value);}return out;
+    auto paths=thresholds();
+    std::string out="{\"schema\":\"org.uke.control.charge.v1\",\"available\":"+std::string(paths.empty()?"false":"true")+",\"thresholds\":[";
+    for(const auto& path:paths){if(out.back()!= '[')out+=',';out+="{\"path\":"+sysfs::quote(path.string())+",\"value\":"+sysfs::quote(read(path.string(),64))+"}";}
+    return out+"]}\n";
 }
 void charge_set(unsigned percent) {
     Lock lock;auto paths=thresholds();need(paths.size()==1,"A unique standard charge threshold is required; no raw firmware writes are supported");
@@ -413,9 +415,19 @@ Result cdc_persistent(bool enabled) {
         ",\"operation_completed\":"+(service.status==0?"true":"false")+
         ",\"root_shell\":false,\"network_export\":false,\"detail\":"+sysfs::quote(service.output)+"}\n"};
 }
-std::string status() {
+std::string swap_status() {
     std::string selected=geteuid()==0?policy():"root-private (sudo to inspect)";
-    return "uke-control 1.10.2\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
+    std::string out="{\"schema\":\"org.uke.control.swap.v1\",\"policy\":"+sysfs::quote(selected)+",\"active\":[";
+    for(const auto& item:active()) {
+        if(out.back()!='[')out+=',';
+        out+="{\"path\":"+sysfs::quote(item.path)+",\"size_bytes\":"+std::to_string(item.size)+",\"used_bytes\":"+std::to_string(item.used)+"}";
+    }
+    return out+"]}\n";
+}
+std::string status() {
+    std::string charge;
+    try{charge=charge_status();}catch(const std::exception& e){charge="{\"available\":false,\"reason\":"+sysfs::quote(e.what())+"}";}
+    return "{\"schema\":\"org.uke.control.status.v1\",\"version\":"+sysfs::quote(cli::version)+",\"swap\":"+swap_status()+",\"charge\":"+charge+",\"usb\":"+usb_status()+"}\n";
 }
 void boot() {
     root();board();(void)inventory(true);swap_apply();
@@ -448,7 +460,7 @@ std::string report() {
       {"unit-overrides",{"/usr/bin/systemd-delta","--no-pager"}},
       {"packages",{"/usr/bin/rpm","-qa","--qf","%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\n"}},
       {"battery-snapshot",{"/usr/bin/uke-battery"}},
-      {"desktop-interfaces",{"/usr/bin/uke-control","desktop","status"}},
+      {"desktop-interfaces",{"/usr/bin/uke-control","--json","desktop","status"}},
       {"battery-control",{"/usr/libexec/uke-charge-control","status"}},
       {"battery-admission",{"/usr/libexec/uke-charge-control","admission"}},
       {"battery-protocols",{"/usr/libexec/uke-charge-control","protocols"}},
@@ -486,7 +498,7 @@ std::string report() {
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.10.2\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 2.0.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {
@@ -504,6 +516,5 @@ void self_test() {
     need(own_file((swaps/"swap-512").string())&&!own_file("/var/lib/uke-control/swap/../swap-512")&&!own_file((swaps/"swap-512.allocating").string())&&!own_file("/swapfile"),"Swap ownership boundary regression");
     auto result=execute({"/usr/bin/printf","%s","$HOME;`id`"},2);need(result.status==0&&result.output=="$HOME;`id`","Command arguments interpreted as shell code");
     auto timeout=execute({"/usr/bin/sleep","2"},1);need(timeout.status==124,"Command timeout failed");
-    std::cout<<"Backend sizing, ownership, command and refusal checks passed; no device access.\n";
 }
 }

@@ -61,7 +61,7 @@ int main() {
     std::ostringstream output; auto* original = std::cout.rdbuf(output.rdbuf());
     char exe[] = "uke-control", charge[] = "charge", mode[] = "plan", name[] = "charge80";
     char* argv[] = {exe, charge, mode, name};
-    assert(policy_command(4, argv) == 0);
+    assert(policy_command(4, argv,true) == 0);
     std::cout.rdbuf(original);
     assert(output.str().find("\"applied\":false") != std::string::npos);
     assert(output.str().find("\"effective\":null") != std::string::npos);
