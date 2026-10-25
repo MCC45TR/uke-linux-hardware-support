@@ -8,11 +8,30 @@
     "soc_id": 643,
     "soc_revision": "1.0",
     "sku_version": null,
-    "kernel_release": "7.3.0-3",
-    "kernel_commit": "470d18160dac9f9adf65ee8ff6f86472573504c1",
+    "kernel_release": "7.3.0-4",
+    "kernel_commit": "9b56bd4894fb72680d87c56cf500ccb1b54c3b11",
     "iris_bound": false,
     "video0": "NT36532 touch",
-    "firmware_at_expected_path": false
+    "firmware_at_expected_path": true
+  },
+  "firmware": {
+    "package": "uke-video-firmware-local-3.0.304.0-1.noarch",
+    "path": "qcom/uke/vpu30_2v.mbn",
+    "sha256": "2ad782a1eace4556f13178c82480e672bb2063818f438864f45067347ccdeb2a",
+    "installed_with_dnf": true,
+    "rpm_verify_clean": true,
+    "private_local_package": true,
+    "public_upload_allowed": false,
+    "pas_authentication_tested": false
+  },
+  "kernel_candidate": {
+    "release": "7.3.0-6",
+    "source_commit": "f7d4ced2ba8153cc12b2a0cb0c3e8eaf0473bb32",
+    "copr_build": 11205247,
+    "full_source_prepare_passed": true,
+    "binary_build_passed": false,
+    "installed": false,
+    "booted": false
   },
   "backend": {
     "upstream_commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",

@@ -1,7 +1,7 @@
 # Uke video acceptance matrix
 
 Date: 25 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
-Linux 7.3.0-3, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
+Linux 7.3.0-4, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
 separate from codec workload acceptance.
 
 | Check | Observed result | Remaining gate |
@@ -9,6 +9,8 @@ separate from codec workload acceptance.
 | Host backend/RPM and capability-query faults | Passed | Native codec workloads |
 | Native AArch64 COPR 11204584 | Passed, signed | Codec correctness and application use |
 | DNF installation, RPM verification, ELF/hash | Passed on tablet | Native Iris platform |
+| Native kernel 7.3.0-6 / COPR 11205247 | Source preparation passed; binary build running | Signed binary tuple and recoverable boot |
+| Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
 | Explicit VA initialization | Failed: no Iris stateful H264 decoder | Platform, firmware, HFI and codec nodes |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
@@ -34,8 +36,8 @@ separate from the clear video codec result.
 
 | Application path | Installed baseline / result | Required evidence |
 |---|---|---|
-| FFmpeg native V4L2 and VA | FFmpeg absent; not run | Wrapper/build features, exact backend/node, hardware surfaces, frame comparison |
-| GStreamer native V4L2 and modern VA | Good/Base 1.28.8; VA plugin absent | Runtime registration, pipeline, frames and no silent fallback |
+| FFmpeg native V4L2 and VA | Fedora ffmpeg-free 9.0.2-2 installed; native H264/HEVC decoders omitted | Full decoder build for those paths, exact backend/node, hardware surfaces and frame comparison |
+| GStreamer native V4L2 and modern VA | Good/Base/Bad 1.28.8; VA plugin installed with zero features | Runtime registration, pipeline, frames and no silent fallback |
 | mpv / VLC | Not qualified | Exact distribution package, VA and presentation/copy logs |
 | Firefox / Chromium | Not qualified | Exact package/build, sandboxed device access and decode logs |
 | OBS / Wayland recording | Not qualified | H264 SDR first, independent output decode, color and A/V sync |
@@ -45,3 +47,9 @@ driver/package/firmware identity, profile/bit depth, coded and visible size,
 crop, frame count/timestamps, bitrate/GOP/references, expected output, thermal
 state, power policy, copy path, CPU/RSS, duration and observed errors. Empty
 workload results in `manifests/capabilities.json` are intentional pending work.
+
+A private software-generated smoke corpus contains 30-frame 320x240 H264
+Constrained Baseline and VP9 Profile 0/2 streams. The Profile 2 stream preserves
+actual 10-bit sample values through independent software decoding, with all
+30 P010 frame hashes matching its input. This prepares test inputs; no Iris
+codec processed them. Broader references, HEVC and stress vectors remain due.

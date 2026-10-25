@@ -2,7 +2,7 @@
 
 Date: 25 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-The physical Fedora 46 tablet runs Linux 7.3.0-3. Its installed `qcom-iris`
+The physical Fedora 46 tablet runs Linux 7.3.0-4. Its installed `qcom-iris`
 module has no Cliffs/SM7675 match. The OEM `qcom,cliffs-vidc` node is unbound;
 `/dev/video0` belongs to NT36532 touch. No native codec session is accepted.
 
@@ -26,8 +26,12 @@ Python on the build host. Meson is the upstream build system; replacing it
 would create an unnecessary parallel build recipe. No Python file, build
 tool or Python runtime is included in the video RPM.
 
-Remaining work: complete the Linux 7.3 VideoCC/domain/reset/firmware/IOMMU
-platform port, validate native H264/HEVC/VP9 sessions, adapt the four upstream
-VA kernel deltas, implement real Main10 encode, and execute the codec,
-lifecycle, performance and application matrix from the 25 October research
-report. Firmware stays private and is not included in the COPR source RPM.
+The native Linux 7.3 platform candidate is integrated into the normal source
+preparation and submitted as kernel 7.3.0-6 in COPR 11205247. A full source
+preparation and the actual-source fixtures pass; binary and tablet acceptance
+remain open. The exact private runtime firmware is installed through a local
+DNF package and stays outside the COPR source RPM.
+
+Remaining work: verify the matched kernel build and recoverable boot, validate
+native H264/HEVC/VP9 sessions, implement real Main10 encode, and execute the
+codec, lifecycle, performance and application matrix from the research report.
