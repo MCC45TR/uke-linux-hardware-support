@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.11.0
+Version: 1.11.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -119,6 +119,10 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.1-1
+- Report active output component depth from the kernel stream snapshot.
+- Keep inactive, unavailable and malformed snapshots distinct from capabilities.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.0-1
 - Add torch and RGB brightness percentages with exact current/scale admission.
 - Remove the fixed torch deadline; retain supervised cleanup and stop-before-sleep.

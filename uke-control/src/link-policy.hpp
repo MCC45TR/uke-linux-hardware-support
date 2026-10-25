@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 namespace uke::links {
+std::string display_bits_status(const std::filesystem::path& root);
 std::vector<std::filesystem::path> lane_controls(const std::filesystem::path& root);
 std::filesystem::path usb_device(const std::filesystem::path& root,const std::string& name);
 std::filesystem::path ethernet_device(const std::filesystem::path& root,const std::string& name);

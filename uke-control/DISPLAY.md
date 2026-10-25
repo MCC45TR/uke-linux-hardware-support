@@ -165,3 +165,18 @@ while VRR is enabled and shows `Measured DPU` separately. For example, a 144 Hz
 configured mode can coexist with a 30 Hz measured vblank cadence. VRR changes frame
 timing inside that mode; the selected-mode label need not follow each interval.
 This measurement keeps interrupts referenced and is not optical panel metrology.
+
+## Active output depth
+
+`sudo uke-control display bits` reads each DP/DSI output's kernel stream
+snapshot. `bits_per_component` is the active component depth; `bits_per_pixel`
+is the uncompressed pixel depth. `dsc_bits_per_pixel_x16` reports the DSC wire
+rate separately (128 means 8 compressed bits per pixel). A 10-bpc DSC input
+therefore reports 30 uncompressed bits per pixel, independently of its wire rate.
+
+The command reports null depth for inactive, unavailable, malformed or changing
+outputs. It does not substitute the requested maximum or an EDID capability.
+Older kernels without `output_bits` snapshots require an update; debugfs access
+normally requires root. This read-only status does not qualify HDR or optical
+panel output. Host fixtures cover inactive/stale data, malformed values and
+path containment; tablet verification uses the matching kernel package.

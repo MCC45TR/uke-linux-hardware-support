@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.11.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.11.1 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -38,6 +38,7 @@ static void help() {
       "  sensors list                List exported channels and SensorProxy capabilities\n"
       "  sensors -n5 --count=3       Three snapshots, five seconds apart; Ctrl-C stops\n"
       "  display sensor              Read the existing front-color node; never starts collection\n"
+      "  display bits                Actual active-stream bpc/bpp; use sudo for driver debugfs\n"
       "  display profiles            Display/USB lane profiles and actual Type-C control availability\n"
       "  display profile NAME        Request usb3-display or display4; unsupported controls fail (root)\n"
       "  display lane-limit 1|2|4    DP training ceiling, disconnected only (root)\n"
@@ -113,6 +114,9 @@ int main(int argc,char** argv) {
             throw std::runtime_error("The native package manager helper is missing");
         }
         if(command=="sensors")return uke::sensors::command(argc-2,argv+2);
+        if(command=="display"&&argc==3&&std::string_view(argv[2])=="bits") {
+            std::cout<<uke::links::display_bits_status("/");return 0;
+        }
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="profiles") {
             std::cout<<uke::usb::display_profiles("/");return 0;
         }

@@ -5,6 +5,7 @@
 #include <charconv>
 #include <cstring>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
 #include <linux/magic.h>
@@ -75,6 +76,59 @@ std::string mask_hex(unsigned mask) {
     std::array<char,16> hex{};const auto converted=std::to_chars(hex.data(),hex.data()+hex.size(),mask,16);
     return std::string(hex.data(),converted.ptr);
 }
+}
+std::string display_bits_status(const fs::path& root) {
+    std::string out="{\"schema\":\"org.uke.control.display.bits.v1\",\"source\":\"kernel_active_stream\",\"outputs\":[";
+    bool comma=false;
+    for(const auto& entry:sysfs::entries(root,root/"sys/class/drm")) {
+        const auto name=entry.filename().string();
+        const auto dash=name.find('-',4);
+        if(!name.starts_with("card")||dash==name.npos||dash==4||
+           name.substr(4,dash-4).find_first_not_of("0123456789")!=name.npos)continue;
+        const auto connector=name.substr(dash+1);
+        if(!named(connector)||(!connector.starts_with("DSI-")&&!connector.starts_with("DP-")))continue;
+        const auto connected=value(entry/"status"),enabled=value(entry/"enabled");
+        std::string active="null",bpc="null",bpp="null",wire="null",reason="driver_snapshot_unavailable_use_sudo_or_update_kernel";
+        if(connected!="connected"||enabled!="enabled") {
+            active="false";reason="output_inactive";
+        } else {
+            const auto snapshot=sysfs::resolved(root,root/"sys/kernel/debug/dri"/name.substr(4,dash-4)/connector/"output_bits");
+            if(snapshot) {
+                std::istringstream input(value(*snapshot));
+                std::array<unsigned,5> numbers{};
+                const std::array<std::string,5> keys{"version=","active=","bpc=","bpp=","dsc_bpp_x16="};
+                bool valid=true;
+                for(size_t i=0;i<keys.size();++i) {
+                    std::string field;
+                    if(!(input>>field)||!field.starts_with(keys[i])){valid=false;break;}
+                    const auto raw=std::string_view(field).substr(keys[i].size());
+                    const auto parsed=std::from_chars(raw.data(),raw.data()+raw.size(),numbers[i]);
+                    if(raw.empty()||parsed.ec!=std::errc{}||parsed.ptr!=raw.data()+raw.size()){valid=false;break;}
+                }
+                std::string extra;
+                valid=valid&&!(input>>extra)&&numbers[0]==1&&numbers[1]<=1;
+                if(valid&&!numbers[1])valid=!numbers[2]&&!numbers[3]&&!numbers[4];
+                if(valid&&numbers[1])valid=(numbers[2]==6||numbers[2]==8||numbers[2]==10||numbers[2]==12||numbers[2]==16)&&
+                    numbers[3]==numbers[2]*3&&numbers[4]<=numbers[3]*16;
+                reason="invalid_driver_snapshot";
+                if(valid) {
+                    active=numbers[1]?"true":"false";reason=numbers[1]?"available":"output_inactive";
+                    if(numbers[1]) {
+                        bpc=std::to_string(numbers[2]);bpp=std::to_string(numbers[3]);wire=std::to_string(numbers[4]);
+                    }
+                }
+            }
+            if(value(entry/"status")!=connected||value(entry/"enabled")!=enabled) {
+                active=bpc=bpp=wire="null";reason="output_changed_during_snapshot";
+            }
+        }
+        if(comma)out+=',';
+        comma=true;
+        out+="{\"connector\":"+sysfs::quote(connector)+",\"connected\":"+(connected=="connected"?"true":"false")+
+            ",\"active\":"+active+",\"bits_per_component\":"+bpc+",\"bits_per_pixel\":"+bpp+
+            ",\"dsc_bits_per_pixel_x16\":"+wire+",\"reason\":"+sysfs::quote(reason)+'}';
+    }
+    return out+"]}\n";
 }
 std::vector<fs::path> lane_controls(const fs::path& root) {
     std::vector<fs::path> out;
