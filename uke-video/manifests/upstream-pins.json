@@ -11,6 +11,10 @@
     {
       "path": "patches/0001-runtime-capability-intersection.patch",
       "sha256": "3dfb63540c873aec98ebd4f84b42f67111446d1a504234f70be363ebe3e4f6f2"
+    },
+    {
+      "path": "patches/0002-main10-p010-encode.patch",
+      "sha256": "9384af785623eac2aba460f421edd16c6aca6112e34623d1fc38d0c9687a98fe"
     }
   ],
   "delivery": {
@@ -27,5 +31,14 @@
   },
   "runtime_python_dependency": false,
   "fastcv": false,
-  "automatic_alias": false
+  "automatic_alias": false,
+  "main10_source_candidate": {
+    "rpm_release": "0.2.20261025git6d03c3f",
+    "host_build_passed": true,
+    "runtime_profile_fault_fixtures": true,
+    "format_profile_precision_fixture": true,
+    "tablet_tested": false,
+    "copr_build": 11205659,
+    "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de"
+  }
 }

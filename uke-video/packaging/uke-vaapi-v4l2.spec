@@ -3,14 +3,16 @@
 
 Name:           uke-vaapi-v4l2
 Version:        1.0.0
-Release:        0.1.20261025git6d03c3f%{?dist}
+Release:        0.2.20261025git6d03c3f%{?dist}
 Summary:        Experimental stateful Iris VA-API backend
 License:        MIT
 URL:            https://github.com/radxa-pkg/libva-v4l2
 Source0:        libva-v4l2-%{upstream_commit}.tar.gz
 Source1:        runtime-caps.cpp
 Source2:        README.md
+Source3:        main10-contract.sh
 Patch0:         0001-runtime-capability-intersection.patch
+Patch1:         0002-main10-p010-encode.patch
 BuildRequires:  gcc-c++
 BuildRequires:  meson >= 0.61
 BuildRequires:  ninja-build
@@ -31,6 +33,7 @@ is omitted until native V4L2 and application acceptance are complete.
 echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
 %setup -q -n radxa-pkg-libva-v4l2-6d03c3f
 %patch -P 0 -p1
+%patch -P 1 -p1
 
 %build
 %meson -Dgpu_copy=enabled -Dfastcv=disabled
@@ -41,6 +44,7 @@ echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
     -Isrc src/runtime-caps.cpp %{SOURCE1} \
     -Wl,--wrap=open,--wrap=ioctl,--wrap=close -o runtime-caps-test
 ./runtime-caps-test
+bash %{SOURCE3} "$PWD"
 
 %install
 %meson_install
@@ -55,6 +59,12 @@ install -m 0644 %{SOURCE2} UKE-README.md
 %{_libdir}/dri/v4l2_drv_video.so
 
 %changelog
+* Sun Oct 25 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.2.20261025git6d03c3f
+- Select P010 input and matching HEVC Main10 parameters without 8-bit conversion.
+- Require runtime P010 and Main10 profile-menu support before advertising encode.
+- Test profile/depth refusal and padded P010 CPU-copy precision on the host.
+- Keep native codec and GPU/direct-import validation separate from source checks.
+
 * Sun Oct 25 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.1.20261025git6d03c3f
 - Pin the upstream backend and query runtime codec/profile availability.
 - Keep driver selection opt-in and FastCV VPP disabled for platform bring-up.

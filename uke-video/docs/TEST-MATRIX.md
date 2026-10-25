@@ -18,7 +18,7 @@ separate from codec workload acceptance.
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |
 | VP9 P0/P2 decode | Not run | 8/10-bit references, superframes, alt-ref/show-existing |
 | H264 / HEVC Main encode | Not run | Independent decode, RC/GOP/IDR, quality, color |
-| HEVC Main10 encode | Not implemented end to end | Kernel P010/HFI/allocation and backend precision/metadata |
+| HEVC Main10 encode | Native P010 and VA source candidates pass host checks; no native bitstream | Matched delivery, P010 MMAP/GPU/import, independent precision and metadata |
 | Advanced encode controls and mode limits | Not run | B/ROI/LTR/layers/intra-refresh, source/runtime intersection |
 | 4K60, 4096, minimum-size and high-FPS modes | Not run | Correctness followed by sustained tablet measurements |
 

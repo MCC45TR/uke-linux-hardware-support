@@ -8,7 +8,7 @@
 
 namespace {
 unsigned codec;
-bool hevc = true, vp9 = true, p010 = true, high = true, disabled, substitute, denied, interrupt,
+bool hevc = true, hevc10 = true, vp9 = true, p010 = true, high = true, disabled, substitute, denied, interrupt,
      encoding;
 unsigned closes;
 }
@@ -56,6 +56,10 @@ extern "C" int __wrap_ioctl(int fd, unsigned long request, ...) {
     }
     if (request == VIDIOC_QUERYMENU) {
         auto &menu = *static_cast<v4l2_querymenu *>(arg);
+        if (codec == V4L2_PIX_FMT_HEVC && !hevc10 &&
+            menu.index == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10) {
+            errno = EINVAL; return -1;
+        }
         if (codec == V4L2_PIX_FMT_H264 && !high &&
             menu.index == V4L2_MPEG_VIDEO_H264_PROFILE_HIGH) {
             errno = EINVAL; return -1;
@@ -83,12 +87,17 @@ int main() {
     assert(probe_profiles("mock", false).size() == 7);
     encoding = true;
     const auto encoded = probe_profiles("mock", true);
-    assert(encoded.size() == 4);
-    assert(std::find(encoded.begin(), encoded.end(), VAProfileHEVCMain10) == encoded.end());
+    assert(encoded.size() == 5);
+    assert(std::find(encoded.begin(), encoded.end(), VAProfileHEVCMain10) != encoded.end());
+    p010 = false;
+    assert(probe_profiles("mock", true).size() == 4);
+    p010 = true; hevc10 = false;
+    assert(probe_profiles("mock", true).size() == 4);
+    hevc10 = true;
     hevc = vp9 = false;
     assert(probe_profiles("mock", true).size() == 3);
     denied = true;
     try { probe_profiles("mock", false); assert(false); }
     catch (const Error &e) { assert(e.status == VA_STATUS_ERROR_OPERATION_FAILED); }
-    assert(closes == 9);
+    assert(closes == 11);
 }

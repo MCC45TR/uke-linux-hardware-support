@@ -19,8 +19,11 @@ LIBVA_DRIVER_NAME=v4l2 vainfo --display drm --device /dev/dri/renderD128
 ```
 
 The automatic MSM alias is held until native V4L2 and application validation.
-FastCV/CDSP VPP is disabled. Main10 encode remains implementation work; it is
-not advertised. AV1 has no admitted Uke source/runtime evidence.
+FastCV/CDSP VPP is disabled. Revision 0.1 does not advertise Main10 encode.
+The revision-0.2 source adds P010 input and matching HEVC Main10 parameters;
+it advertises that profile only when the kernel exposes both P010 and the
+Main10 profile menu. Native bitstream, precision and GPU/import validation
+remain open. AV1 has no admitted Uke source/runtime evidence.
 
 Build requires the original distribution Meson 1.12.1-2.fc46, which uses
 Python on the build host. Meson is the upstream build system; replacing it
@@ -36,5 +39,5 @@ firmware is installed through a local DNF package and stays outside the COPR
 source RPM.
 
 Remaining work: complete native power and firmware startup, validate
-H264/HEVC/VP9 sessions, implement real Main10 encode, and execute the
+H264/HEVC/VP9 sessions and end-to-end Main10 encode, and execute the
 codec, lifecycle, performance and application matrix from the research report.
