@@ -8,8 +8,8 @@
     "soc_id": 643,
     "soc_revision": "1.0",
     "sku_version": null,
-    "kernel_release": "7.3.0-4",
-    "kernel_commit": "9b56bd4894fb72680d87c56cf500ccb1b54c3b11",
+    "kernel_release": "7.3.0-5",
+    "kernel_commit": "c4feee0d717770f909a08038af51058ed806d747",
     "iris_bound": false,
     "video0": "NT36532 touch",
     "firmware_at_expected_path": true
@@ -29,8 +29,11 @@
     "source_commit": "f7d4ced2ba8153cc12b2a0cb0c3e8eaf0473bb32",
     "copr_build": 11205247,
     "full_source_prepare_passed": true,
-    "binary_build_passed": false,
-    "installed": false,
+    "binary_build_passed": true,
+    "rpm_signature_verified": true,
+    "rpm_verify_clean": true,
+    "current_slot_preflight_passed": true,
+    "installed": true,
     "booted": false
   },
   "backend": {
