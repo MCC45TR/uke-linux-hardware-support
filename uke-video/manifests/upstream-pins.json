@@ -18,10 +18,10 @@
     }
   ],
   "delivery": {
-    "copr_build": 11204584,
+    "copr_build": 11205659,
     "repository": "mcc45tr/uke-linux-test:custom:video-20261025",
-    "source_rpm_sha256": "737f9ae079f77bb36e80ce64d79812682f6609d04f96add7facccbe25842b876",
-    "aarch64_rpm_sha256": "ed5e753db70b9ba6f8141dcc57f8c8b0855b7bb76aa737a2995422254608c3f0",
+    "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de",
+    "aarch64_rpm_sha256": "6a757559b76fd48f144f5bdc2aa29ed0f428079c5d7628571ea765d5a281dd17",
     "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
   },
   "host_build_python": {
@@ -39,6 +39,16 @@
     "format_profile_precision_fixture": true,
     "tablet_tested": false,
     "copr_build": 11205659,
-    "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de"
+    "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de",
+    "copr_succeeded": true,
+    "installed_with_dnf": true,
+    "rpm_signature_verified": true
+  },
+  "initial_delivery": {
+    "copr_build": 11204584,
+    "repository": "mcc45tr/uke-linux-test:custom:video-20261025",
+    "source_rpm_sha256": "737f9ae079f77bb36e80ce64d79812682f6609d04f96add7facccbe25842b876",
+    "aarch64_rpm_sha256": "ed5e753db70b9ba6f8141dcc57f8c8b0855b7bb76aa737a2995422254608c3f0",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
   }
 }

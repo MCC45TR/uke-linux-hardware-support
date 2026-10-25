@@ -8,6 +8,7 @@ separate from codec workload acceptance.
 |---|---|---|
 | Host backend/RPM and capability-query faults | Passed | Native codec workloads |
 | Native AArch64 COPR 11204584 | Passed, signed | Codec correctness and application use |
+| Native AArch64 revision 0.2 / COPR 11205659 | Signature, payload, one-package DNF upgrade, installed RPM/ELF and dependencies passed | Native VPU and Main10 workloads |
 | DNF installation, RPM verification, ELF/hash | Passed on tablet | Native Iris platform |
 | Native kernel 7.3.0-6 / COPR 11205247 | Build/signatures, DNF, RPM verification, boot-B readback and recoverable boot passed | Native codec sessions |
 | Native Iris / VIDEOCC first open | Drivers bind; decoder/encoder register; MVS0C power-on times out | Configuration clocks, controller power and PAS/HFI |

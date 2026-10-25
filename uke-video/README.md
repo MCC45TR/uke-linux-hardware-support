@@ -2,9 +2,10 @@
 
 Date: 25 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-The physical Fedora 46 tablet runs Linux 7.3.0-6. Its native `qcom-iris`
-driver binds and registers a decoder and encoder, but the first node opens
-fail at MVS0C controller power-on before firmware initialization.
+The physical Fedora 46 tablet runs Linux 7.3.0-6. In the first explicit-load
+trial its native `qcom-iris` driver binds and registers a decoder and encoder,
+but node opens fail at MVS0C power-on before firmware initialization.
+The subsequent clean boot retains the temporary controlled-load blacklist.
 `/dev/video0` belongs to NT36532 touch. No native codec session is accepted.
 
 The experimental package pins Radxa libva-v4l2 at
@@ -20,7 +21,8 @@ LIBVA_DRIVER_NAME=v4l2 vainfo --display drm --device /dev/dri/renderD128
 
 The automatic MSM alias is held until native V4L2 and application validation.
 FastCV/CDSP VPP is disabled. Revision 0.1 does not advertise Main10 encode.
-The revision-0.2 source adds P010 input and matching HEVC Main10 parameters;
+Signed revision 0.2 is installed through DNF. It adds P010 input and matching
+HEVC Main10 parameters;
 it advertises that profile only when the kernel exposes both P010 and the
 Main10 profile menu. Native bitstream, precision and GPU/import validation
 remain open. AV1 has no admitted Uke source/runtime evidence.

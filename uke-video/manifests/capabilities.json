@@ -10,14 +10,14 @@
     "sku_version": null,
     "kernel_release": "7.3.0-6",
     "kernel_commit": "f7d4ced2ba8153cc12b2a0cb0c3e8eaf0473bb32",
-    "iris_bound": true,
+    "iris_bound": false,
     "video0": "NT36532 touch",
     "firmware_at_expected_path": true,
-    "videocc_bound": true,
-    "iris_decoder_node": "video3",
-    "iris_encoder_node": "video4",
-    "native_open_success": false,
-    "native_open_error": "MVS0C power-on timeout before PAS/HFI"
+    "videocc_bound": false,
+    "iris_decoder_node": null,
+    "iris_encoder_node": null,
+    "video_modules_loaded": false,
+    "controlled_load_blacklist": true
   },
   "firmware": {
     "package": "uke-video-firmware-local-3.0.304.0-1.noarch",
@@ -43,18 +43,21 @@
   },
   "backend": {
     "upstream_commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",
-    "package": "uke-vaapi-v4l2-1.0.0-0.1.20261025git6d03c3f.fc46.aarch64",
-    "copr_build": 11204584,
+    "package": "uke-vaapi-v4l2-1.0.0-0.2.20261025git6d03c3f.fc46.aarch64",
+    "copr_build": 11205659,
     "installed_with_dnf": true,
     "rpm_signature_verified": true,
     "rpm_verify_clean": true,
-    "sha256": "6f3faf5d68c7c51ed178d4b25fdc35dd72274ac94184d982304df4bad63e6cca",
+    "sha256": "23bb02a933d2c67c0fce4a24badf762c7608a913d28d9269f0c64e7a7ba06aa6",
     "vainfo_exit": 3,
     "observed_error": "no Iris stateful H264 decoder found",
     "automatic_alias": false,
     "fastcv": false,
     "observed_error_kernel_release": "7.3.0-5",
-    "retested_after_native6_failure": false
+    "retested_after_native6_failure": false,
+    "previous_package": "uke-vaapi-v4l2-1.0.0-0.1.20261025git6d03c3f.fc46.aarch64",
+    "codec_tested": false,
+    "vainfo_result_scope": "historical revision 0.1 on kernel 7.3.0-5"
   },
   "profiles": [
     {
@@ -241,5 +244,22 @@
     "100 open/close cycles per codec and 30-minute sustained modes",
     "Seek, EOS, DRC, malformed input, multi-session, runtime PM and suspend policy",
     "FFmpeg, GStreamer, mpv, VLC, browsers, OBS and A/V sync"
-  ]
+  ],
+  "last_native_trial": {
+    "kernel_release": "7.3.0-6",
+    "iris_bound": true,
+    "videocc_bound": true,
+    "decoder_node": "video3",
+    "encoder_node": "video4",
+    "native_open_success": false,
+    "error": "MVS0C power-on timeout before PAS/HFI"
+  },
+  "kernel_next_candidate": {
+    "release": "7.3.0-9",
+    "source_commit": "e5cce51e10da5123a1d83e02c3f3e15518ee7628",
+    "copr_build": 11205655,
+    "includes_power_gate_commit": "714a77c",
+    "installed": false,
+    "booted": false
+  }
 }
