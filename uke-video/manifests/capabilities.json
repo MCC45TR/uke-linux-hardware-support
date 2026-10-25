@@ -261,5 +261,18 @@
     "includes_power_gate_commit": "714a77c",
     "installed": false,
     "booted": false
+  },
+  "native_main10_source_candidate": {
+    "local_kernel_release": "7.3.0-10",
+    "source_commit": "0f17a73e0e8e97e9b1b454830a6215b504a7d499",
+    "base_commit": "e5cce51e10da5123a1d83e02c3f3e15518ee7628",
+    "source_rpm_sha256": "18f25a21b2fc5114e2b6ae45c270220e71cde13e5e2fdc68229206cea1e5234a",
+    "full_source_prepare_passed": true,
+    "aarch64_iris_object_passed": true,
+    "video_contract_count": 18,
+    "copr_build": null,
+    "installed": false,
+    "booted": false,
+    "codec_tested": false
   }
 }
