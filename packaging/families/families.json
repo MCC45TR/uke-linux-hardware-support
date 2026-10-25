@@ -186,7 +186,10 @@
     {
       "name": "uke-camera",
       "version": "1.0.0",
-      "requires": [],
+      "release": 2,
+      "requires": [
+        "pipewire-plugin-libcamera"
+      ],
       "suggests": [
         "plasma-camera"
       ],
