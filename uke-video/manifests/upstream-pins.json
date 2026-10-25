@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "upstream": {
+    "url": "https://github.com/radxa-pkg/libva-v4l2",
+    "commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",
+    "archive_sha256": "e8756bf642eb3fc458209b8dd2380571dcb52ec4b2201e9d09db208b7e995d52",
+    "license": "MIT; included upstream kernel patches GPL-2.0-only"
+  },
+  "patches": [
+    {
+      "path": "patches/0001-runtime-capability-intersection.patch",
+      "sha256": "3dfb63540c873aec98ebd4f84b42f67111446d1a504234f70be363ebe3e4f6f2"
+    }
+  ],
+  "delivery": {
+    "copr_build": 11204584,
+    "repository": "mcc45tr/uke-linux-test:custom:video-20261025",
+    "source_rpm_sha256": "737f9ae079f77bb36e80ce64d79812682f6609d04f96add7facccbe25842b876",
+    "aarch64_rpm_sha256": "ed5e753db70b9ba6f8141dcc57f8c8b0855b7bb76aa737a2995422254608c3f0",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
+  },
+  "host_build_python": {
+    "package": "meson-1.12.1-2.fc46",
+    "purpose": "unmodified upstream Meson build",
+    "tablet_payload": false
+  },
+  "runtime_python_dependency": false,
+  "fastcv": false,
+  "automatic_alias": false
+}
