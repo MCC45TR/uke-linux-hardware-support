@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.12.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -92,6 +92,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_sbindir}/semodule -i %{_datadir}/selinux/packages/uke_control_rgb.pp || exit 1
 %{_sbindir}/restorecon %{_libexecdir}/uke-control/rgb-led || exit 1
 %systemd_post uke-control.service uke-control-wake.service uke-control-cdc.service
+if /usr/bin/systemctl -q is-active dbus.service; then
+    /usr/bin/busctl --system call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig >/dev/null || exit 1
+fi
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 /usr/bin/udevadm trigger --action=add --subsystem-match=misc --sysname-match=uke-rgb >/dev/null 2>&1 || :
 %systemd_user_post uke-control-moisture-notify.service
@@ -148,6 +151,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-4
+- Associate the exact RGB bus name with the confined broker's SELinux domain.
+- Reload the running bus configuration without restarting the bus or desktop.
+- Check the name/context and compiled ownership-permission contract.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-3
 - Allow the confined broker to read SELinux enforcement state.
 - Preserve the hardened domain transition and read-only policy checks.

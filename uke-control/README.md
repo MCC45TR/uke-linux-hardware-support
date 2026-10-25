@@ -1,5 +1,13 @@
 # Uke Control
 
+25 October 2026: packaging revision 1.12.0-4 associates the exact RGB bus name
+with the confined broker's SELinux context. Revision 3 reaches the kernel but
+cannot acquire its bus name without this mapping. The update reloads bus
+configuration without restarting the bus or desktop. Compiled-policy and XML
+checks pass; corrected tablet startup remains to be verified. The
+[D-Bus manual](https://dbus.freedesktop.org/doc/dbus-daemon.1.html) documents the
+name's target context and the bus-context fallback when no association exists.
+
 25 October 2026: packaging revision 1.12.0-2 admits the RGB domain transition
 with systemd `NoNewPrivileges=yes`. The tablet's SELinux Enforcing run exposed
 the missing transition in revision 1. The compiled-policy regression check
