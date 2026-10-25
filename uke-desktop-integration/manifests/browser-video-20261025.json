@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-10-25",
-  "scope": "Supplied Chrome report and read-only tablet diagnosis; no runtime repair accepted",
+  "scope": "Supplied Chrome report, guarded VA queries and source/package repair; no codec or rendering acceptance",
   "browser": {
     "version": "156.0.8078.47",
     "revision": "1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775",
