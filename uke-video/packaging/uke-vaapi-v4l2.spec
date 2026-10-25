@@ -3,7 +3,7 @@
 
 Name:           uke-vaapi-v4l2
 Version:        1.0.0
-Release:        0.4.20261025git6d03c3f%{?dist}
+Release:        0.5.20261025git6d03c3f%{?dist}
 Summary:        Experimental stateful Iris VA-API backend
 License:        MIT
 URL:            https://github.com/radxa-pkg/libva-v4l2
@@ -12,9 +12,11 @@ Source1:        runtime-caps.cpp
 Source2:        README.md
 Source3:        main10-contract.sh
 Source4:        rate-negotiation.sh
+Source5:        dimension-contract.sh
 Patch0:         0001-runtime-capability-intersection.patch
 Patch1:         0002-main10-p010-encode.patch
 Patch2:         0003-runtime-encode-rate-limits.patch
+Patch3:         0004-runtime-frame-dimensions.patch
 BuildRequires:  gcc-c++
 BuildRequires:  meson >= 0.61
 BuildRequires:  ninja-build
@@ -38,6 +40,7 @@ echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
 %patch -P 0 -p1
 %patch -P 1 -p1
 %patch -P 2 -p1
+%patch -P 3 -p1
 
 %build
 %meson -Dgpu_copy=enabled -Dfastcv=disabled
@@ -50,6 +53,7 @@ echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
 ./runtime-caps-test
 bash %{SOURCE3} "$PWD"
 bash %{SOURCE4} "$PWD"
+bash %{SOURCE5} "$PWD"
 
 %install
 %meson_install
@@ -64,6 +68,11 @@ install -m 0644 %{SOURCE2} UKE-README.md
 %{_libdir}/dri/msm_drv_video.so
 
 %changelog
+* Sun Oct 25 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.5.20261025git6d03c3f
+- Query codec-specific V4L2 frame-size bounds for VA attributes and surfaces.
+- Validate visible encode dimensions and reject substituted crops.
+- Preserve decoder hints, kernel admission limits and separate device acceptance.
+
 * Sun Oct 25 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.4.20261025git6d03c3f
 - Retain the upstream MSM alias for default libva backend discovery.
 - Keep native codec output, browser integration and sandbox acceptance separate.

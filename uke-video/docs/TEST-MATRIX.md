@@ -21,6 +21,7 @@ source checks are separate from codec workload acceptance.
 | Explicit VA initialization on 7.3.0-10 | Revision 0.2 initializes successfully as the desktop user; 7 decode and 4 encode profile/entrypoint pairs; no new non-audit kernel messages | Actual native/VA codec output and browser integration |
 | Default VA discovery on 7.3.0-10 | Reproduces `vaInitialize -1`: default libva searches for absent MSM alias | Default-query retest after coordinated Iris activation |
 | VA revision 0.4 / COPR 11206106 on 7.3.0-12 | Single signed DNF upgrade, RPM/ELF and relative MSM alias verified; modules remain unloaded; no VA query | Separate activation/query window, Chrome report and rendering regression |
+| VA revision 0.5 dimension source candidate | Fresh package-source GPU-enabled host build and runtime/VA dimension fixtures pass; not installed | Native AArch64 package checks, controlled delivery and real boundary-mode output |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |

@@ -46,6 +46,14 @@ installed 0.4. These checks do not establish
 tablet throughput. The fixed VA dimension
 bounds and the full native/application test matrix remain open.
 
+Revision 0.5 is a separate source candidate. It queries V4L2 frame-size bounds
+per codec/direction and uses them in VA attributes, surface queries and encode
+validation. A fresh GPU-enabled host build and profile/dimension, VA-query,
+Main10/P010 and rate fixtures pass. It is not installed. These axis bounds do
+not promise every width/height pair or sustained rate; kernel macroblock
+admission and measured output remain required. Discrete-only enumeration is
+not advertised. The installed revision 0.4 remains the default-query baseline.
+
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10
 encode remains gated out. No new non-audit kernel message appears after either

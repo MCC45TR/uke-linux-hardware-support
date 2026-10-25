@@ -19,6 +19,10 @@
     {
       "path": "patches/0003-runtime-encode-rate-limits.patch",
       "sha256": "718a10615ac320b171d07e54c2e08413f827676b5b1d67a71494ba2e35b2a0d0"
+    },
+    {
+      "path": "patches/0004-runtime-frame-dimensions.patch",
+      "sha256": "dc67dcb2bdaa6acaaae0bef5d07b8048562d6829ddd64cd98636a8f4534b3250"
     }
   ],
   "delivery": {
@@ -79,6 +83,21 @@
     "source_rpm_sha256": "737f9ae079f77bb36e80ce64d79812682f6609d04f96add7facccbe25842b876",
     "aarch64_rpm_sha256": "ed5e753db70b9ba6f8141dcc57f8c8b0855b7bb76aa737a2995422254608c3f0",
     "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
+  },
+  "dimension_source_candidate": {
+    "rpm_release": "0.5.20261025git6d03c3f",
+    "source_rpm_sha256": "2b30f563b2eadea8623c4764e498f8f22dbfbbbf7507077277c1d769dc2695c9",
+    "copr_build": null,
+    "source_preparation_passed": true,
+    "gpu_enabled_host_build_passed": true,
+    "runtime_profile_and_dimension_fault_fixtures": true,
+    "va_dimension_query_fixture": true,
+    "main10_and_rate_regressions_passed": true,
+    "installed_with_dnf": false,
+    "default_vainfo_retested": false,
+    "codec_workload_tested": false,
+    "limits_source": "VIDIOC_ENUM_FRAMESIZES for each admitted coded format and direction",
+    "limitation": "Stepwise/continuous bounds are not a rectangular workload, throughput or physical acceptance claim; discrete-only enumeration is not advertised"
   },
   "default_provider_source_candidate": {
     "rpm_release": "0.4.20261025git6d03c3f",

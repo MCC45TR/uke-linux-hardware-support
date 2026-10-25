@@ -10,6 +10,7 @@ namespace {
 unsigned codec;
 bool hevc = true, hevc10 = true, vp9 = true, p010 = true, high = true, disabled, substitute, denied, interrupt,
      encoding;
+bool no_sizes, malformed_sizes, discrete_sizes;
 unsigned closes;
 }
 extern "C" int __wrap_open(const char *, int, ...) {
@@ -66,6 +67,18 @@ extern "C" int __wrap_ioctl(int fd, unsigned long request, ...) {
         }
         return 0;
     }
+    if (request == VIDIOC_ENUM_FRAMESIZES) {
+        auto &size = *static_cast<v4l2_frmsizeenum *>(arg);
+        assert(size.index == 0 && size.pixel_format == codec);
+        if (no_sizes) { errno = EINVAL; return -1; }
+        size.type = discrete_sizes ? V4L2_FRMSIZE_TYPE_DISCRETE : V4L2_FRMSIZE_TYPE_STEPWISE;
+        size.stepwise.min_width = size.stepwise.min_height =
+            encoding && codec == V4L2_PIX_FMT_H264 ? 128 : 96;
+        size.stepwise.max_width = malformed_sizes ? 64 : 4096;
+        size.stepwise.max_height = 4096;
+        size.stepwise.step_width = size.stepwise.step_height = 1;
+        return 0;
+    }
     assert(false);
     return -1;
 }
@@ -88,7 +101,11 @@ int main() {
     encoding = true;
     const auto encoded = probe_profiles("mock", true);
     assert(encoded.size() == 5);
-    assert(std::find(encoded.begin(), encoded.end(), VAProfileHEVCMain10) != encoded.end());
+    assert(encoded.count(VAProfileHEVCMain10));
+    assert(encoded.at(VAProfileH264High).min_width == 128);
+    assert(encoded.at(VAProfileHEVCMain10).contains(96,96));
+    assert(encoded.at(VAProfileHEVCMain10).contains(4096,2160));
+    assert(!encoded.at(VAProfileHEVCMain10).contains(4097,2160));
     p010 = false;
     assert(probe_profiles("mock", true).size() == 4);
     p010 = true; hevc10 = false;
@@ -100,4 +117,12 @@ int main() {
     try { probe_profiles("mock", false); assert(false); }
     catch (const Error &e) { assert(e.status == VA_STATUS_ERROR_OPERATION_FAILED); }
     assert(closes == 11);
+    denied = false; hevc = vp9 = true;
+    no_sizes = true;
+    assert(probe_profiles("mock", true).empty());
+    no_sizes = false; malformed_sizes = true;
+    assert(probe_profiles("mock", false).empty());
+    malformed_sizes = false; discrete_sizes = true;
+    assert(probe_profiles("mock", false).empty());
+    assert(closes == 14);
 }
