@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 18%{?dist}
+Release: 20%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -16,8 +16,8 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-18
-Obsoletes: kde-plasma-uke-meta < 1.0.0-18
+Provides: kde-plasma-uke-meta = 1.0.0-20
+Obsoletes: kde-plasma-uke-meta < 1.0.0-20
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
@@ -32,7 +32,7 @@ Requires: bash
 Requires: bluedevil
 Requires: breeze-gtk-gtk3
 Requires: breeze-gtk-gtk4
-Requires: chromium
+Recommends: chromium
 Requires: color-filesystem
 Requires: colord-kde
 Requires: coreutils
@@ -155,6 +155,9 @@ fi
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-20
+- Combine the deferred light settings with the removable Chromium recommendation.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-18
 - Add torch brightness and RGB color/brightness dialogs through Control 1.11.0.
 - Apply one validated request after confirmation rather than during slider movement.
