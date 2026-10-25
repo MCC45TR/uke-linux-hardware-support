@@ -14,6 +14,7 @@ separate from codec workload acceptance.
 | Prior 7.3.0-6 native first open | Drivers bind; decoder/encoder register; MVS0C power-on times out | Configuration clocks, controller power and PAS/HFI |
 | Shared kernel 7.3.0-9 / VIDEOCC-only activation | Gate readback passed; display SID 0x1c00 / CB10 fault starts before Iris load; 60 Hz recovery reported by the coordinator | Approved provider-only trace and shared-resource correction before codec trials |
 | Coordinated 7.3.0-10 / VIDEOCC-only trace | Idle inhibited; no new display fault in the 16:51:43-16:52:58 UTC capture; provider loaded at 16:52:19, Iris absent | Separate power-transition isolation; no Iris session established |
+| Coordinated 7.3.0-10 / Iris load | Nodes register and background clients access the device; USB/DP disconnected four seconds before loading | Stable USB/DP topology, explicit firmware/API proof and approved codec workload |
 | VA revision 0.3 / COPR 11205969 | Prepared-source GPU-enabled host build, native AArch64 build fixtures, signature and payload checks passed; not installed | Approved delivery; physical rate/output correctness |
 | Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
 | Explicit VA initialization | Prior release-5 probe failed: no Iris stateful H264 decoder; not repeated after the native power failure | Successful native initialization, then VA retest |

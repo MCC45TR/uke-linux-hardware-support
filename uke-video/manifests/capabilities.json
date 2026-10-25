@@ -32,6 +32,20 @@
     "codec_workload_run": false,
     "device_experiments_on_hold": true
   },
+  "coordinator_iris_load_trial": {
+    "kernel_release": "7.3.0-10",
+    "evidence": "Saved Juo coordinator receipts, 2026-10-25 17:05:48-17:06:07 UTC",
+    "usb_disconnect_utc": "2026-10-25T17:05:48Z",
+    "iris_load_utc": "2026-10-25T17:05:52Z",
+    "decoder_node": "video1",
+    "encoder_node": "video2",
+    "background_node_access_observed": true,
+    "explicit_native_api_test_run": false,
+    "firmware_session_proven": false,
+    "codec_workload_run": false,
+    "active_display_acceptance": false,
+    "device_experiments_on_hold": true
+  },
   "firmware": {
     "package": "uke-video-firmware-local-3.0.304.0-1.noarch",
     "path": "qcom/uke/vpu30_2v.mbn",

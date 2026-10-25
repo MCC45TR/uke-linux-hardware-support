@@ -11,6 +11,9 @@ experiments require the Juo coordinator's exact-command/window approval.
 A later coordinator-owned release-10 provider-only trace, with display idle
 inhibited and Iris absent, does not repeat the fault. The earlier load timing
 does not establish VIDEOCC as its cause; power-transition isolation is pending.
+A later coordinator-owned Iris load registers both nodes, but USB/DP had
+disconnected four seconds earlier. Background node access is visible in the
+trace; explicit native firmware/API and codec tests remain pending.
 
 The experimental package pins Radxa libva-v4l2 at
 `6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41`. It intersects the implemented
