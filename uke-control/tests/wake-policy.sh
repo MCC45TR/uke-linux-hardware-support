@@ -42,8 +42,10 @@ static void wake_write(const wake::Source& source,bool enabled){
 template<class Call> void refuses(Call call){bool refused=false;try{call();}catch(const std::runtime_error&){refused=true;}assert(refused);}
 int main(int argc,char** argv){
  assert(argc==2);state=argv[1];fs::create_directories(state);
- current={{"power-key","","/power",true},{"volume-up","","/volume",true},{"bluetooth-uart","","/uart",false},{"double-tap","unsupported",{},false}};
- wake_apply();assert(current[2].enabled);assert(writes.back()=="bluetooth-uart on");
+ current={{"power-key","","/power",true},{"volume-up","","/volume",true},{"bluetooth-uart","","/uart",false},{"double-tap","unsupported",{},false},{"usb-host","","/host",false}};
+ wake_apply();assert(current[2].enabled&&current[4].enabled);assert(writes.back()=="usb-host on");
+ atomic_file(state/"wake-usb-host","disabled\n");wake_apply();assert(!current[4].enabled);
+ fs::remove(state/"wake-usb-host");wake_apply();assert(current[4].enabled);
  writes.clear();foreign=true;refuses([]{wake_set("power-key",false);});assert(writes.empty());foreign=false;
  refuses([]{wake_set("unknown",true);});refuses([]{wake_set("double-tap",true);});
  wake_set("power-key",false);assert(!current[0].enabled);assert(read((state/"wake-power-key").string(),32)=="disabled\n");

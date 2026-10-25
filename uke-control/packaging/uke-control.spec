@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.13.0
+Version: 1.13.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.1-1
+- Include the verified xHCI platform host in the Uke wake policy.
+- Preserve saved choices, provider containment and recovery-key safeguards.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.0-1
 - Apply supported USB remote-input wake permissions and expose selective lid/touch wake.
 

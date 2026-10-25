@@ -34,7 +34,8 @@ std::vector<Source> sources(const fs::path& sys) {
         {"charge-connect", "independent_firmware_wake_filter_unqualified", {}},
         {"charge-disconnect", "independent_firmware_wake_filter_unqualified", {}},
         {"double-tap", "touch_gesture_wake_not_implemented", {}},
-        {"lid-open", "selective_lid_wake_not_implemented", {}}
+        {"lid-open", "selective_lid_wake_not_implemented", {}},
+        {"usb-host", "wake_permission_unavailable", {}}
     };
     const auto devices = sysfs::resolved(sys, sys/"devices");
     if (!devices) return result;
@@ -70,6 +71,22 @@ std::vector<Source> sources(const fs::path& sys) {
     admit(result[8], sys/"bus/platform/devices/hall-lid/power/wakeup");
     const auto controller = sysfs::resolved(*devices,
         sys/"bus/platform/devices/a600000.ssusb");
+    unsigned hosts = 0;
+    const auto host_driver = sysfs::resolved(sys, sys/"bus/platform/drivers/xhci-hcd");
+    if (controller && host_driver) for (const auto& entry : sysfs::entries(sys, sys/"bus/platform/devices")) {
+        const auto leaf = entry.filename().string();
+        if (!leaf.starts_with("xhci-hcd.") || !leaf.ends_with(".auto") || leaf.size() <= 14 ||
+            leaf.substr(9, leaf.size()-14).find_first_not_of("0123456789") != leaf.npos)
+            continue;
+        const auto target = sysfs::resolved(*controller, entry);
+        if (!target || sysfs::resolved(sys, entry/"driver") != host_driver) continue;
+        ++hosts;
+        admit(result[9], *target/"power/wakeup");
+    }
+    if (hosts > 1) {
+        result[9].path.clear(); result[9].enabled = false;
+        result[9].reason = "ambiguous_usb_host_provider";
+    }
     if (controller) for (const auto& entry : sysfs::entries(sys, sys/"bus/usb/devices")) {
         const auto leaf = entry.filename().string();
         if (leaf.empty() || leaf.find_first_not_of("0123456789.usb-") != leaf.npos)

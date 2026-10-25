@@ -1,5 +1,11 @@
 # Uke Control
 
+25 October 2026: version 1.13.1 also admits the xHCI host wake permission under
+the verified Uke controller and checks its bound driver. Release 1.13.0 enabled
+USB-device and hub permissions but missed this platform host. A physical mouse
+wakes s2idle after the host permission is enabled; this does not qualify keyboard,
+Bluetooth or touch wake. The kernel battery-resume regression remains separate.
+
 25 October 2026: version 1.13.0 exposes the kernel's selective `lid-open` and
 `double-tap` wake permissions when present. Before sleep, it enables supported
 USB remote-wakeup devices under the verified Uke controller and Bluetooth UART
@@ -449,12 +455,15 @@ Settings persist in root-private state and are restored before each sleep,
 after input providers are available. The native helper admits only Uke/SM7675, unique canonical sysfs
 providers and the expected key capability. It verifies writes, restores
 previous permissions on failure and refuses to disable every recovery key.
-USB attach/removal share one device wake permission. Independent firmware
-charge-event filters and touch-gesture wake remain unimplemented.
+USB attach/removal share one controller wake permission. Its bound xHCI host,
+USB hubs and supported remote-wakeup devices also receive their permissions.
+Independent firmware charge-event filters remain unavailable. The touch-gesture
+permission does not prove that firmware entry or physical wake succeeds.
 
 On the 21 October tablet trial, an enabled Bluetooth UART wake permission
 caused an immediate s2idle return through IRQ135. Temporarily disabling that
-permission allowed the 25-second RTC trial to complete. Its default policy is
-therefore disabled until Bluetooth accessory wake is qualified; this does not
-power Bluetooth off. An explicit saved setting overrides that default.
+permission allowed the 25-second RTC trial to complete. That earlier diagnostic
+setting is not a general Bluetooth wake acceptance result. Version 1.13 enables
+supported USB, lid, touch and Bluetooth wake sources for the requested accessory
+trials unless an explicit saved setting disables them.
 Permission readback is not a physical wake or low-power acceptance result.

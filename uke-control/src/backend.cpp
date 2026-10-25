@@ -158,7 +158,7 @@ void wake_apply() {
             need(value == "enabled\n" || value == "disabled\n", "Invalid saved wake permission");
             need(!source.path.empty(), "Saved wake source is no longer available: " + source.name);
             source.enabled = value == "enabled\n";
-        } else if (source.name == "bluetooth-uart" || source.name == "lid-open" ||
+        } else if (source.name == "bluetooth-uart" || source.name == "lid-open" || source.name == "usb-host" ||
                    source.name == "double-tap" || source.name.starts_with("usb-device-")) {
             source.enabled = true;
         }
