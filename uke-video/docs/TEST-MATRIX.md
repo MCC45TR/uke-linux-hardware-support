@@ -21,13 +21,14 @@ source checks are separate from codec workload acceptance.
 | Explicit VA initialization on 7.3.0-10 | Revision 0.2 initializes successfully as the desktop user; 7 decode and 4 encode profile/entrypoint pairs; no new non-audit kernel messages | Actual native/VA codec output and browser integration |
 | Default VA discovery on 7.3.0-10 | Reproduces `vaInitialize -1`: default libva searches for absent MSM alias | Default-query retest after coordinated Iris activation |
 | VA revision 0.4 / COPR 11206106 on 7.3.0-12 | Single signed DNF upgrade, RPM/ELF and relative MSM alias verified; modules remain unloaded; no VA query | Separate activation/query window, Chrome report and rendering regression |
-| VA revision 0.5 dimension source candidate | Fresh package-source GPU-enabled host build and runtime/VA dimension fixtures pass; not installed | Native AArch64 package checks, controlled delivery and real boundary-mode output |
+| VA revision 0.5 / COPR 11206385 | Fresh GPU-enabled host build, all native AArch64 fixtures and signed payload checks pass; not installed | Controlled delivery, VA regression and real boundary-mode output |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |
 | VP9 P0/P2 decode | Not run | 8/10-bit references, superframes, alt-ref/show-existing |
 | H264 / HEVC Main encode | Not run | Independent decode, RC/GOP/IDR, quality, color |
 | HEVC Main10 encode | Native P010 and VA source candidates pass host checks; no native bitstream | Matched delivery, P010 MMAP/GPU/import, independent precision and metadata |
+| Main10 patch on kernel-13 source | Patch applies; Main10/caps contracts and Clang-23 AArch64 driver cross-build pass | Whole matched kernel build/delivery and actual encode; no object is installed |
 | Advanced encode controls and mode limits | Not run | B/ROI/LTR/layers/intra-refresh, source/runtime intersection |
 | 4K60, 4096, minimum-size and high-FPS modes | Not run | Correctness followed by sustained tablet measurements |
 

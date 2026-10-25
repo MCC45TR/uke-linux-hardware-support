@@ -335,6 +335,21 @@
     "booted": false,
     "codec_tested": false,
     "publishable_as_local_tuple": false,
+    "kernel13_source_check": {
+      "base_commit": "7d886f2d888de4a22fa00ce35057373b0337879c",
+      "base_release": "7.3.0-13",
+      "patch_sha256": "d9bdd0222521ac769cd54cf7be928457aa167ad4284563a449b0e517a3db42ea",
+      "patch_applies": true,
+      "iris_source_matches_prior_main10_candidate": true,
+      "main10_and_codec_cap_contracts_passed": true,
+      "aarch64_cross_compile_passed": true,
+      "compiler": "Clang 23.1.4",
+      "driver_object_sha256": "5f5a3549664da8f8999e957adb82309d1ee02a987ef7667e549e7e2e29a0e920",
+      "whole_kernel_image_built": false,
+      "package_built": false,
+      "installed": false,
+      "codec_tested": false
+    },
     "conflicting_public_tuple": {
       "kernel_release": "7.3.0-10",
       "source_commit": "3d145da265d44063fa8818d4c8f3f7e4d7bb1e5e",

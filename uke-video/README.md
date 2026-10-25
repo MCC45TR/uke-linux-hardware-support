@@ -12,7 +12,7 @@ release-9 display fault remains unexplained; the controlled release-10
 provider-only trial does not repeat it. Active-display coexistence and codec
 output remain separate acceptance gates. Iris uses video1/video2 in this
 window; video0 belongs to NT36532 touch. Further device experiments require
-the Juo coordinator's exact-command/window approval.
+a separate controlled hardware window.
 
 The experimental package pins Radxa libva-v4l2 at
 `6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41`. It intersects the implemented
@@ -49,7 +49,8 @@ bounds and the full native/application test matrix remain open.
 Revision 0.5 is a separate source candidate. It queries V4L2 frame-size bounds
 per codec/direction and uses them in VA attributes, surface queries and encode
 validation. A fresh GPU-enabled host build and profile/dimension, VA-query,
-Main10/P010 and rate fixtures pass. It is not installed. These axis bounds do
+Main10/P010 and rate fixtures pass. Native AArch64 COPR 11206385, signature,
+payload and unchanged runtime dependencies also pass. It is not installed. These axis bounds do
 not promise every width/height pair or sustained rate; kernel macroblock
 admission and measured output remain required. Discrete-only enumeration is
 not advertised. The installed revision 0.4 remains the default-query baseline.
@@ -77,3 +78,9 @@ source RPM.
 Remaining work: qualify native firmware/HFI under workload, validate
 H264/HEVC/VP9 sessions and end-to-end Main10 encode, and execute the
 codec, lifecycle, performance and application matrix from the research report.
+
+On 26 October, the unchanged native Main10 patch also applies to saved
+kernel-13 Iris source. Main10/capability contracts and a Clang-23 AArch64
+driver cross-build pass. This does not build or install a complete kernel;
+Main10 encode remains unavailable until a matched kernel delivery and real
+P010/bitstream validation pass.
