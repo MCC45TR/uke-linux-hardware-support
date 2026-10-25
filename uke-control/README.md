@@ -1,5 +1,10 @@
 # Uke Control
 
+25 October 2026: version 1.14.0 adds an experimental disconnected DSC request
+and cached driver-state query. Missing kernel support is reported explicitly.
+The request does not establish physical activation or override HDMI limits.
+Native package and tablet compression acceptance remain pending.
+
 25 October 2026: version 1.13.2 searches only the verified USB controller's
 children for its xHCI host. The 1.13.1 platform-bus scan exceeds the tablet's
 bounded inventory limit and refuses wake-policy application. A fixture with

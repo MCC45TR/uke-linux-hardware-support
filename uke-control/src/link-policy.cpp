@@ -139,6 +139,28 @@ std::vector<fs::path> lane_controls(const fs::path& root) {
     }
     return out;
 }
+std::vector<fs::path> compression_controls(const fs::path& root) {
+    std::vector<fs::path> out;
+    for(const auto& p:sysfs::entries(root,root/"sys/bus/platform/drivers/msm-dp-display")) {
+        if(sysfs::driver(root,p)!="\"msm-dp-display\"")continue;
+        const auto control=sysfs::resolved(root,p/"uke_dp_dsc");
+        if(control&&fs::is_regular_file(*control))out.push_back(*control);
+    }
+    return out;
+}
+std::string compression_status(const fs::path& root) {
+    const auto nodes=compression_controls(root);
+    const std::string prefix="{\"schema\":\"org.uke.control.display.compression.v1\",";
+    if(nodes.size()!=1)return prefix+"\"control_available\":false,\"reason\":"+
+        sysfs::quote(nodes.empty()?"kernel_control_unavailable":"ambiguous_kernel_control")+"}\n";
+    const auto policy=sysfs::attribute(root,nodes.front());
+    if(policy!="\"0\""&&policy!="\"1\"")
+        return prefix+"\"control_available\":false,\"reason\":\"invalid_kernel_policy\"}\n";
+    return prefix+"\"control_available\":true,\"requested\":"+(policy=="\"1\""?"true":"false")+
+        ",\"requires_disconnected\":true,\"persisted\":false,\"cached_driver_state\":"+
+        sysfs::object(root,nodes.front().parent_path(),{"uke_dp_stream_state"})+
+        ",\"physical_validation\":\"NOT_ESTABLISHED\"}\n";
+}
 fs::path usb_device(const fs::path& root,const std::string& name) {
     need(named(name)&&name.find(':')==name.npos,"INVALID_USB_DEVICE");
     const auto p=sysfs::resolved(root,root/"sys/bus/usb/devices"/name);
@@ -204,6 +226,12 @@ Result lane_limit(const std::string& lanes) {
     const auto nodes=lane_controls("/");need(nodes.size()==1,"DP_LANE_LIMIT_UNAVAILABLE_OR_AMBIGUOUS");
     write_attribute(nodes.front(),lanes);
     return {0,receipt("dp_lane_ceiling",lanes)};
+}
+Result compression(const std::string& policy) {
+    need(policy=="on"||policy=="off","DP_COMPRESSION_MUST_BE_ON_OR_OFF");
+    const auto nodes=compression_controls("/");need(nodes.size()==1,"DP_COMPRESSION_UNAVAILABLE_OR_AMBIGUOUS");
+    write_attribute(nodes.front(),policy=="on"?"1":"0");
+    return {0,receipt("dp_dsc_request",policy)};
 }
 Result usb_power(const std::string& name,const std::string& policy) {
     need(policy=="performance"||policy=="auto","USB_POWER_MUST_BE_PERFORMANCE_OR_AUTO");

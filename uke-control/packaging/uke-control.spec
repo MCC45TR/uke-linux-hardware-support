@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.13.2
+Version: 1.14.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-1
+- Add an explicit disconnected DSC request and cached compression-status query.
+- Preserve provider, root, board and driver readback checks; activation remains unqualified.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.2-1
 - Limit xHCI discovery to the verified USB controller's own children.
 - Preserve the bounded inventory limit with a large-platform-bus fixture.

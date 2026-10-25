@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.13.2 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.14.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -42,6 +42,8 @@ static void help() {
       "  display profiles            Display/USB lane profiles and actual Type-C control availability\n"
       "  display profile NAME        Request usb3-display or display4; unsupported controls fail (root)\n"
       "  display lane-limit 1|2|4    DP training ceiling, disconnected only (root)\n"
+      "  display compression         Requested DSC policy and cached driver state\n"
+      "  display compression on|off  Experimental DSC request, disconnected only (root)\n"
       "  usb power DEVICE POLICY     Runtime PM: performance or auto, per USB device (root)\n"
       "  ethernet status IFACE       RTL8153 link, EEE, offload, pause, ring and channel capabilities\n"
       "  ethernet profile IFACE NAME auto, 1000-full, 100-full or 10-full; interface down (root)\n"
@@ -122,6 +124,12 @@ int main(int argc,char** argv) {
         }
         if(command=="display"&&argc==4&&std::string_view(argv[2])=="lane-limit") {
             const auto result=uke::display_lane_limit(argv[3]);std::cout<<result.output;return result.status;
+        }
+        if(command=="display"&&argc==3&&std::string_view(argv[2])=="compression") {
+            std::cout<<uke::links::compression_status("/");return 0;
+        }
+        if(command=="display"&&argc==4&&std::string_view(argv[2])=="compression") {
+            const auto result=uke::display_compression(argv[3]);std::cout<<result.output;return result.status;
         }
         if(command=="ethernet"&&argc==4&&std::string_view(argv[2])=="status") {
             std::cout<<uke::links::ethernet_status(argv[3]);return 0;

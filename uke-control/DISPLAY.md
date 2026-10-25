@@ -1,5 +1,26 @@
 # Display controls and raw front-color data
 
+## Experimental DisplayPort compression, 25 October 2026
+
+`uke-control display compression` reads the requested DSC policy and cached
+driver state. A missing or ambiguous kernel provider is reported as unavailable;
+the query performs no AUX transfer or firmware request. With the matching
+kernel, `sudo uke-control display compression on|off` changes the root-owned
+request only while the display is disconnected. A matched readback describes
+the requested policy, not successful link activation. It is not persisted.
+
+The candidate pipeline is RGB 8/10 bpc at 8 compressed bits per pixel, with
+checked receiver DSC/FEC capabilities and one or two bounded slices. It is off
+by default. Cached `dsc_active` means the last enable sequence observed FEC
+decode enable and received the DSC-enable acknowledgment; it is not an optical
+or sustained-error acceptance result. `display bits` remains the separate
+source-stream report. A new monitor still requires a recoverable physical test.
+
+Compression does not raise the HDMI converter's TMDS limit. The measured
+320 MHz monitor admits 1440p/60 Hz RGB 10-bit, but not 75 Hz RGB 10-bit. Chroma
+conversion, MST, actual four-lane negotiation and 4K monitor acceptance remain
+separate. The current 1440p monitor cannot qualify 4K output.
+
 ## USB-C DisplayPort profiles, 24 October 2026
 
 `sudo uke-control display lane-limit 1|2|4` sets the matching kernel's

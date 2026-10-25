@@ -324,6 +324,9 @@ Result display_profile_set(const std::string& profile) {
 Result display_lane_limit(const std::string& lanes) {
     root();board();Lock lock;return links::lane_limit(lanes);
 }
+Result display_compression(const std::string& policy) {
+    root();board();Lock lock;return links::compression(policy);
+}
 Result usb_power_set(const std::string& device,const std::string& policy) {
     root();board();Lock lock;return links::usb_power(device,policy);
 }
