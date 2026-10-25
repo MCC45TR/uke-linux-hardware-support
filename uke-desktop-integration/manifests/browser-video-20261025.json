@@ -104,6 +104,28 @@
     "decode_profile_count": 0,
     "encode_profile_count": 0
   },
+  "post_boot_metadata_observation": {
+    "utc": "2026-10-25T19:22:15Z",
+    "kernel": "7.3.0-12",
+    "kernel_source": "5d3360aad8f7892622212e82e4657f17ce96e37b",
+    "scope": "Metadata only; no device node opened or VA/browser test run",
+    "receipt_sha256": "6734f006f687af3436bf731a3fbe8672d2ff06fa9670a5f6d196c5c4bf1042cb",
+    "backend": "uke-vaapi-v4l2-1.0.0-0.2.20261025git6d03c3f.fc46.aarch64",
+    "backend_sha256": "23bb02a933d2c67c0fce4a24badf762c7608a913d28d9269f0c64e7a7ba06aa6",
+    "rpm_verify_clean": true,
+    "default_msm_alias_present": false,
+    "iris_loaded": false,
+    "videocc_loaded": false,
+    "controlled_load_blacklist_retained": true,
+    "only_video_node": "NT36532 THP; not an Iris codec node",
+    "render_node": "renderD128",
+    "render_node_platform": "3d00000.qcom,kgsl-3d0",
+    "render_node_stable_alias": "platform-3d00000.qcom_kgsl-3d0-render",
+    "render_user_read_write": true,
+    "browser_process_present": false,
+    "chrome_render_override_retested": false,
+    "device_window_returned": true
+  },
   "read_only_tablet_observation": {
     "utc": "2026-10-25T17:33:49Z",
     "kernel": "7.3.0-10",
