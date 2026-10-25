@@ -1,34 +1,20 @@
 # Uke Control
 
-25 October 2026: packaging revision 1.12.0-5 names `uke-rgb` as owner of its
-Polkit action so the non-root mechanism can query authorization for a client.
-Revision 4's transport is healthy, but Polkit refuses that cross-user query
-without the ownership annotation. Active-local-only defaults and the
-no-interaction flag are unchanged. Host configuration checks pass; signed
-target authorization and physical color validation remain separate gates.
-See [Polkit action ownership](https://polkit.pages.freedesktop.org/polkit/polkit.8.html).
+25 October 2026, POCO Pad X1, Linux 7.3.0-5: signed Control/core/tests
+1.12.0-5 from [COPR 11205434](https://copr.fedorainfracloud.org/coprs/build/11205434)
+are installed through DNF. RGB policy and animation run in the kernel; a
+dedicated broker accepts active local-session requests without sudo. SELinux
+Enforcing, the confined domain, zero effective capabilities and NoNewPrivileges
+are verified. Remote/root-origin writes and direct desktop device access are
+refused. The system bus and desktop processes are retained.
 
-25 October 2026: packaging revision 1.12.0-4 associates the exact RGB bus name
-with the confined broker's SELinux context. Revision 3 reaches the kernel but
-cannot acquire its bus name without this mapping. The update reloads bus
-configuration without restarting the bus or desktop. Compiled-policy and XML
-checks pass; corrected tablet startup remains to be verified. The
-[D-Bus manual](https://dbus.freedesktop.org/doc/dbus-daemon.1.html) documents the
-name's target context and the bus-context fallback when no association exists.
-
-25 October 2026: packaging revision 1.12.0-2 admits the RGB domain transition
-with systemd `NoNewPrivileges=yes`. The tablet's SELinux Enforcing run exposed
-the missing transition in revision 1. The compiled-policy regression check
-rejects that earlier package and accepts the correction; runtime acceptance
-of the corrected signed package remains a separate gate.
-
-25 October 2026: version 1.12.0 sends RGB requests to the kernel-owned policy.
-A dedicated SELinux-confined broker accepts active local-session requests
-without sudo. The widget exposes one bounded ten-second color test; battery
-animation and its timing run in the kernel. HEX colors include intermediate
-colors such as yellow. Host checks are separate from matched kernel/RPM and
-physical acceptance. See [light controls and security](LIGHTS.md).
-The installed 1.11.1 display-bit diagnostics are retained.
+The operator confirms a visible ten-second color sweep. It returns to off,
+zero brightness and zero remaining time with no kernel I/O error. The widget
+retains one RGB test button; CLI HEX colors and percentages retain the reviewed
+low-duty ceiling. The existing display-bit diagnostics are preserved.
+Battery-threshold behavior, camera integration, suspend/removal and measured
+electrical/thermal endurance remain separate gates. See
+[light controls, security and validation limits](LIGHTS.md).
 
 25 October 2026: version 1.11.0 adds torch brightness and independent RGB
 color/brightness percentages. The fixed torch deadline is removed; supervised

@@ -5,6 +5,14 @@ Xiaomi Pad 7 / POCO Pad X1. RGB policy now belongs to the kernel; Control is a
 request broker and client. Host source checks do not establish physical light
 output, electrical measurements or acceptance of a new kernel/RPM on the tablet.
 
+On POCO Pad X1, signed Control/core/tests 1.12.0-5 from
+[COPR 11205434](https://copr.fedorainfracloud.org/coprs/build/11205434) and Linux
+7.3.0-5 pass the bounded visible color-sweep trial. The operator confirms the
+transition; readback returns to off/zero with no kernel I/O error. Enforcing,
+the actual confined process, NNP and caller/device permission checks pass.
+This result does not establish calibrated colors, electrical/thermal endurance,
+battery warnings, camera behavior, suspend or supplier-removal acceptance.
+
 ```sh
 uke-control flashlight status
 sudo uke-control flashlight set 50
@@ -78,7 +86,7 @@ PMXR2230 rear channels 1 and 4 and 20 mA total ceiling are unchanged. No strobe,
 regulator voltage or arbitrary sysfs path is exposed. Removing the deadline
 does not establish continuous-use thermal acceptance.
 
-Remaining physical validation includes visible color/order/timing, measured
-electrical/thermal behavior, device/domain permissions under SELinux Enforcing,
-service/driver removal and suspend/resume. Installing an RPM does not activate
-its DT graph; the matched kernel must be booted separately.
+Remaining physical validation includes calibrated colors and waveform timing,
+measured electrical/thermal behavior, actual battery thresholds, camera
+integration, service/driver removal and suspend/resume. Installing an RPM does
+not activate its DT graph; the matched kernel must be booted separately.
