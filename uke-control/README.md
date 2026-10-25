@@ -1,5 +1,11 @@
 # Uke Control
 
+25 October 2026: packaging revision 1.12.0-2 admits the RGB domain transition
+with systemd `NoNewPrivileges=yes`. The tablet's SELinux Enforcing run exposed
+the missing transition in revision 1. The compiled-policy regression check
+rejects that earlier package and accepts the correction; runtime acceptance
+of the corrected signed package remains a separate gate.
+
 25 October 2026: version 1.12.0 sends RGB requests to the kernel-owned policy.
 A dedicated SELinux-confined broker accepts active local-session requests
 without sudo. The widget exposes one bounded ten-second color test; battery
