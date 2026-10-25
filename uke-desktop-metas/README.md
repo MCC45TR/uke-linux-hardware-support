@@ -1,6 +1,9 @@
 # Uke desktop selections
 
-25 October 2026: source release `1.0.0-18` requires Control 1.11.0. The widget
+Chromium is recommended by default and can be removed while retaining the KDE
+meta package. This preserves the packaging correction in release 19.
+
+25 October 2026: source release `1.0.0-20` requires Control 1.11.0. The widget
 adds a 0–100 torch brightness dialog and RGB components/brightness with a color
 preview. Apply sends one validated backend request. Percentages stay within
 the retained limits; hardware torch steps are 0/50/100. No package or tablet
