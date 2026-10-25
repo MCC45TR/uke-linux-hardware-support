@@ -1,7 +1,7 @@
 # Uke video acceptance matrix
 
 Date: 25 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
-Linux 7.3.0-5, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
+Linux 7.3.0-6, Mesa 26.2.5-11, libva 2.24.1. Package and source checks are
 separate from codec workload acceptance.
 
 | Check | Observed result | Remaining gate |
@@ -9,9 +9,10 @@ separate from codec workload acceptance.
 | Host backend/RPM and capability-query faults | Passed | Native codec workloads |
 | Native AArch64 COPR 11204584 | Passed, signed | Codec correctness and application use |
 | DNF installation, RPM verification, ELF/hash | Passed on tablet | Native Iris platform |
-| Native kernel 7.3.0-6 / COPR 11205247 | Build/signatures, DNF installation, RPM verification and current-slot preflight passed | Recoverable boot and native codec sessions |
+| Native kernel 7.3.0-6 / COPR 11205247 | Build/signatures, DNF, RPM verification, boot-B readback and recoverable boot passed | Native codec sessions |
+| Native Iris / VIDEOCC first open | Drivers bind; decoder/encoder register; MVS0C power-on times out | Configuration clocks, controller power and PAS/HFI |
 | Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
-| Explicit VA initialization | Failed: no Iris stateful H264 decoder | Platform, firmware, HFI and codec nodes |
+| Explicit VA initialization | Prior release-5 probe failed: no Iris stateful H264 decoder; not repeated after the native power failure | Successful native initialization, then VA retest |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |
@@ -39,7 +40,7 @@ separate from the clear video codec result.
 | FFmpeg native V4L2 and VA | Signed RPM Fusion 9.0.2-1 installed; H264/HEVC/VP9 decoder wrappers and VA encoders present | Exact backend/node, hardware surfaces and frame comparison |
 | GStreamer native V4L2 and modern VA | Good/Base/Bad 1.28.8; VA plugin installed with zero features | Runtime registration, pipeline, frames and no silent fallback |
 | mpv / VLC | Not qualified | Exact distribution package, VA and presentation/copy logs |
-| Firefox / Chromium | Not qualified | Exact package/build, sandboxed device access and decode logs |
+| Google Chrome / Firefox / Chromium | Chrome stable 156.0.8078.47 installed; hardware decode not qualified | Exact backend and decoder, sandboxed device access and decode logs |
 | OBS / Wayland recording | Not qualified | H264 SDR first, independent output decode, color and A/V sync |
 
 Each workload receipt must retain input SHA-256/corpus identity, command,

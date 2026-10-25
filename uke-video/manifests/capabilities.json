@@ -8,11 +8,16 @@
     "soc_id": 643,
     "soc_revision": "1.0",
     "sku_version": null,
-    "kernel_release": "7.3.0-5",
-    "kernel_commit": "c4feee0d717770f909a08038af51058ed806d747",
-    "iris_bound": false,
+    "kernel_release": "7.3.0-6",
+    "kernel_commit": "f7d4ced2ba8153cc12b2a0cb0c3e8eaf0473bb32",
+    "iris_bound": true,
     "video0": "NT36532 touch",
-    "firmware_at_expected_path": true
+    "firmware_at_expected_path": true,
+    "videocc_bound": true,
+    "iris_decoder_node": "video3",
+    "iris_encoder_node": "video4",
+    "native_open_success": false,
+    "native_open_error": "MVS0C power-on timeout before PAS/HFI"
   },
   "firmware": {
     "package": "uke-video-firmware-local-3.0.304.0-1.noarch",
@@ -34,7 +39,7 @@
     "rpm_verify_clean": true,
     "current_slot_preflight_passed": true,
     "installed": true,
-    "booted": false
+    "booted": true
   },
   "backend": {
     "upstream_commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",
@@ -47,7 +52,9 @@
     "vainfo_exit": 3,
     "observed_error": "no Iris stateful H264 decoder found",
     "automatic_alias": false,
-    "fastcv": false
+    "fastcv": false,
+    "observed_error_kernel_release": "7.3.0-5",
+    "retested_after_native6_failure": false
   },
   "profiles": [
     {

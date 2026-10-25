@@ -2,8 +2,9 @@
 
 Date: 25 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-The physical Fedora 46 tablet runs Linux 7.3.0-5. Its active `qcom-iris`
-module has no Cliffs/SM7675 match. The OEM `qcom,cliffs-vidc` node is unbound;
+The physical Fedora 46 tablet runs Linux 7.3.0-6. Its native `qcom-iris`
+driver binds and registers a decoder and encoder, but the first node opens
+fail at MVS0C controller power-on before firmware initialization.
 `/dev/video0` belongs to NT36532 touch. No native codec session is accepted.
 
 The experimental package pins Radxa libva-v4l2 at
@@ -29,10 +30,11 @@ tool or Python runtime is included in the video RPM.
 The native Linux 7.3 platform candidate is integrated into the normal source
 preparation and built as kernel 7.3.0-6 in COPR 11205247. The signed matched
 RPMs are installed with DNF; RPM verification and the native current-slot
-preflight pass. The candidate has not booted. The exact private runtime
+preflight and recoverable boot pass. The controller power failure remains
+under investigation. The exact private runtime
 firmware is installed through a local DNF package and stays outside the COPR
 source RPM.
 
-Remaining work: perform a recoverable candidate boot, validate
-native H264/HEVC/VP9 sessions, implement real Main10 encode, and execute the
+Remaining work: complete native power and firmware startup, validate
+H264/HEVC/VP9 sessions, implement real Main10 encode, and execute the
 codec, lifecycle, performance and application matrix from the research report.
