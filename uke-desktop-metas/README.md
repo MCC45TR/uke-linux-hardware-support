@@ -1,5 +1,10 @@
 # Uke desktop selections
 
+25 October 2026: release `1.0.0-19` recommends Chromium rather than requiring
+it. Default DNF weak-dependency handling installs it with KDE, while removing
+the browser no longer requires removal of the KDE meta package. Browser data
+and original Fedora packages are not modified by this metadata change.
+
 25 October 2026: release `1.0.0-17` requires Control 1.10.2 with corrected
 original LED-class provider discovery and the bounded, suspend-aware supervisor.
 

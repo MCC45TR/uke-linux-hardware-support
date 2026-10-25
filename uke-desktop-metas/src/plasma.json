@@ -7,7 +7,7 @@
   "architecture": "aarch64",
   "profile": "plasma-original-fedora",
   "package": "uke-kde-plasma-meta",
-  "package_policy": "Original unmodified Fedora desktop applications and their distribution dependencies",
+  "package_policy": "Original unmodified Fedora desktop applications; Chromium is a removable default recommendation",
   "login_manager_policy": "Select original Fedora Plasma Login Manager; activation uses the standard systemd display-manager alias",
   "automatic_session_or_display_configuration": false,
   "boot_tested": false,

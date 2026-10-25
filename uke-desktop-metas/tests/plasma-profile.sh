@@ -5,6 +5,8 @@ profile=src/plasma.json
 spec=packaging/uke-desktop-metas.spec
 [[ $(grep -c '^Recommends: uke-plasma-controls >= 1.0.0$' "$spec") == 1 ]]
 ! grep -q '^Requires:.*uke-plasma-controls' "$spec"
+[[ $(grep -c '^Recommends: chromium$' "$spec") == 1 ]]
+! grep -q '^Requires: chromium' "$spec"
 jq -e '.KPlugin.Id == "org.senemos.uke.controls" and ."X-Plasma-NotificationArea" == true' src/plasma-applet/metadata.json >/dev/null
 ! grep -rE 'nabu-|/sys/|/dev/|systemctl|kscreen-doctor|busctl|kwriteconfig' src/plasma-applet/contents
 jq -e '
@@ -22,7 +24,7 @@ jq -e '
 diff -u <(jq -r '.packages[]' "$profile" | LC_ALL=C sort) \
   <(awk '/^# BEGIN ORIGINAL FEDORA PLASMA PACKAGES$/ {selection=1; next}
          /^# END ORIGINAL FEDORA PLASMA PACKAGES$/ {selection=0}
-         selection && /^Requires:/ {print $2}' "$spec" | LC_ALL=C sort)
+         selection && /^(Requires|Recommends):/ {print $2}' "$spec" | LC_ALL=C sort)
 # The console meta conflicts with Python; Plasma must not pull it indirectly.
 if awk '/^%package -n uke-kde-plasma-meta$/ {selection=1; next}
        /^%description -n uke-kde-plasma-meta$/ {selection=0}
