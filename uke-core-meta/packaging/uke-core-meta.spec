@@ -1,14 +1,14 @@
 %global debug_package %{nil}
 Name: uke-core-meta
 Version: 1.0.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-meta
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz
-Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
+Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-kvm >= 7.3.0-1)
 Requires: uke-core >= 1.0.21 uke-hw >= 1.1.1 uke-power >= 1.0.15 uke-sensors
 Requires: uke-control uke-kernel-update uke-installation-profile
 Requires: uke-touchscreen
@@ -37,6 +37,10 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.5-2
+- Admit the explicit Linux 7.3 KVM family without requiring an ordinary kernel.
+- Keep the default ordinary profile and original Fedora application selection.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.5-1
 - Recommend the removable Uke Plymouth theme on normal DNF upgrades.
 

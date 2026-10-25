@@ -12,5 +12,10 @@
   "runtime_policy": "project-native-code-with-original-Fedora-desktop-dependency-exception",
   "native_runtime_capabilities": [
     "senemos-native-runtime(libstdc++)"
-  ]
+  ],
+  "accepted_kernel_families": [
+    "senemos-uke-linux-kernel-mainline",
+    "senemos-uke-linux-kernel-mainline-kvm"
+  ],
+  "kvm_minimum_kernel_evr": "7.3.0-1"
 }

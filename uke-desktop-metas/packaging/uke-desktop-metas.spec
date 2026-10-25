@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 19%{?dist}
+Release: 19.kvm1%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -16,11 +16,11 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-19
-Obsoletes: kde-plasma-uke-meta < 1.0.0-19
+Provides: kde-plasma-uke-meta = 1.0.0-19.kvm1
+Obsoletes: kde-plasma-uke-meta < 1.0.0-19.kvm1
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
-Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
+Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-kvm >= 7.3.0-1)
 Requires(posttrans): firewalld
 Requires(postun): firewalld
 Recommends: uke-plasma-controls >= 1.0.0
@@ -155,7 +155,11 @@ fi
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
-* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-19
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-19.kvm1
+- Admit the explicit Linux 7.3 KVM family without requiring an ordinary kernel.
+- Keep the default ordinary profile and original Fedora application selection.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-19.kvm1
 - Recommend Chromium by default without requiring it to retain the KDE meta package.
 
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-17
