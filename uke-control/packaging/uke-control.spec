@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.11.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -119,6 +119,9 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.1-2
+- Deliver the display command with its exact matching core source family.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.1-1
 - Report active output component depth from the kernel stream snapshot.
 - Keep inactive, unavailable and malformed snapshots distinct from capabilities.
