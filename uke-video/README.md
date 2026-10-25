@@ -34,7 +34,9 @@ remain open. AV1 has no admitted Uke source/runtime evidence.
 Source revision 0.3 replaces the fixed 240-fps and 245-Mbit/s encode checks
 with runtime bitrate-control bounds and returned Q16 frame-rate validation.
 Host checks cover 480-fps requests, fractional rates and driver refusal or
-substitution. They do not establish tablet throughput. The fixed VA dimension
+substitution. Native AArch64 COPR 11205969 and its build fixtures pass; the
+signed package is inspected but not installed. These checks do not establish
+tablet throughput. The fixed VA dimension
 bounds and the full native/application test matrix remain open.
 
 Build requires the original distribution Meson 1.12.1-2.fc46, which uses

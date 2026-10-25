@@ -42,6 +42,12 @@
     "runtime_bitrate_and_q16_fixtures": true,
     "copr_build": 11205969,
     "source_rpm_sha256": "2ca41f9326819e43add76c3e2208efb8de8806d37bf68000f5201a8c14e78eca",
+    "copr_succeeded": true,
+    "native_aarch64_build_fixtures_passed": true,
+    "aarch64_rpm_sha256": "46f7a0f94b5dbaffa9c788e260078a02bd62f4845e27cf6ed1259d90f20ac2f9",
+    "elf_sha256": "92e4ba69271963d3074e21731a662a9daf71006ce229637d68c42965737d7a31",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "rpm_signature_verified": true,
     "installed_with_dnf": false,
     "tablet_tested": false,
     "dimension_limits_still_static": true
