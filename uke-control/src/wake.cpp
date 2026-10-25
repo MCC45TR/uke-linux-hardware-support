@@ -33,7 +33,8 @@ std::vector<Source> sources(const fs::path& sys) {
         {"bluetooth-uart", "wake_permission_unavailable", {}},
         {"charge-connect", "independent_firmware_wake_filter_unqualified", {}},
         {"charge-disconnect", "independent_firmware_wake_filter_unqualified", {}},
-        {"double-tap", "touch_gesture_wake_not_implemented", {}}
+        {"double-tap", "touch_gesture_wake_not_implemented", {}},
+        {"lid-open", "selective_lid_wake_not_implemented", {}}
     };
     const auto devices = sysfs::resolved(sys, sys/"devices");
     if (!devices) return result;
@@ -62,6 +63,24 @@ std::vector<Source> sources(const fs::path& sys) {
     }
     admit(result[3], sys/"bus/platform/devices/a600000.ssusb/power/wakeup");
     admit(result[4], sys/"bus/platform/devices/888000.qcom,qup_uart/power/wakeup");
+    const auto touch = sys/"bus/spi/devices/spi0.0";
+    if (sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"0\"" ||
+        sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"1\"")
+        admit(result[7], touch/"power/wakeup");
+    admit(result[8], sys/"bus/platform/devices/hall-lid/power/wakeup");
+    const auto controller = sysfs::resolved(*devices,
+        sys/"bus/platform/devices/a600000.ssusb");
+    if (controller) for (const auto& entry : sysfs::entries(sys, sys/"bus/usb/devices")) {
+        const auto leaf = entry.filename().string();
+        if (leaf.empty() || leaf.find_first_not_of("0123456789.usb-") != leaf.npos)
+            continue;
+        const auto target = sysfs::resolved(*controller, entry);
+        if (!target || !fs::is_regular_file(*target/"idVendor"))
+            continue;
+        Source source{"usb-device-"+leaf, "remote_wakeup_not_advertised", {}};
+        admit(source, *target/"power/wakeup");
+        result.push_back(std::move(source));
+    }
     return result;
 }
 bool recovery_key(const std::vector<Source>& sources) {

@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.12.0
-Release: 5%{?dist}
+Version: 1.13.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -151,6 +151,9 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.0-1
+- Apply supported USB remote-input wake permissions and expose selective lid/touch wake.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-5
 - Let the unprivileged RGB mechanism query its own Polkit action for clients.
 - Preserve active-local-only authorization and the no-interaction request path.

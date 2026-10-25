@@ -1,5 +1,12 @@
 # Uke Control
 
+25 October 2026: version 1.13.0 exposes the kernel's selective `lid-open` and
+`double-tap` wake permissions when present. Before sleep, it enables supported
+USB remote-wakeup devices under the verified Uke controller and Bluetooth UART
+unless an explicit saved choice disables them. Empty USB wake attributes remain
+unsupported. Source fixtures cover discovery, containment, saved choices and
+rollback; physical accessory and touch wake validation remains required.
+
 25 October 2026: packaging revision 1.12.0-5 names `uke-rgb` as owner of its
 Polkit action so the non-root mechanism can query authorization for a client.
 Revision 4's transport is healthy, but Polkit refuses that cross-user query
