@@ -116,7 +116,9 @@
     "gpu_seccomp_filters": 0,
     "render_node": "renderD128",
     "render_node_stable_alias": "platform-3d00000.qcom_kgsl-3d0-render",
-    "render_selection": "Automatic Wayland compositor device; no installed launcher override"
+    "render_selection": "Automatic Wayland compositor device; no installed launcher override",
+    "linker_check_utc": "2026-10-25T17:44:22Z",
+    "backend_dependencies_resolved": true
   },
   "preserved": {
     "mesa_angleisbroken": true,
