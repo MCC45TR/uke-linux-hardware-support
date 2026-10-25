@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: Apache-2.0
+#pragma once
+#include <string_view>
+
+namespace ure {
+// Legacy recovery entry points carry neither a pinned target nor a reviewed,
+// durable transaction. UI preferences, Android properties, fstab flags and a
+// claimed advanced mode must never authorize those entry points. Future live
+// writes belong in the reviewed URE backend, not in an allow switch here.
+enum class LegacyWrite {
+    Wipe, Format, Repair, Resize, Restore, Flash, InstallPackage,
+    PartitionMetadata, SlotSwitch, BootPatch, FileMutation, Script,
+    WritableMount, EncryptionAccess, ReadOnlyDecryption
+};
+struct RecoveryWriteDecision {
+    bool allowed;
+    const char* code;
+    const char* message;
+};
+constexpr bool live_storage_backend_accepted() noexcept { return false; }
+constexpr RecoveryWriteDecision legacy_write_decision(LegacyWrite operation) noexcept {
+    // Only the scoped metadata/FBE callers use this operation. They additionally
+    // verify the imported profile and actual read-only mount identities.
+    if (operation == LegacyWrite::ReadOnlyDecryption)
+        return {true, "ure-readonly-decryption", "Existing Android keys and read-only mounts only."};
+    return {false, "ure-legacy-write-unavailable",
+        "Device writes are unavailable: verified device and firmware checks, a backup and a reviewed URE storage plan are required."};
+}
+constexpr const char* legacy_write_name(LegacyWrite operation) noexcept {
+    switch (operation) {
+        case LegacyWrite::Wipe: return "wipe";
+        case LegacyWrite::Format: return "format";
+        case LegacyWrite::Repair: return "repair";
+        case LegacyWrite::Resize: return "resize";
+        case LegacyWrite::Restore: return "restore";
+        case LegacyWrite::Flash: return "flash";
+        case LegacyWrite::InstallPackage: return "install-package";
+        case LegacyWrite::PartitionMetadata: return "partition-metadata";
+        case LegacyWrite::SlotSwitch: return "slot-switch";
+        case LegacyWrite::BootPatch: return "boot-patch";
+        case LegacyWrite::FileMutation: return "file-mutation";
+        case LegacyWrite::Script: return "script";
+        case LegacyWrite::WritableMount: return "writable-mount";
+        case LegacyWrite::EncryptionAccess: return "encryption-access";
+        case LegacyWrite::ReadOnlyDecryption: return "readonly-decryption";
+    }
+    return "unknown";
+}
+// MS_RDONLY alone permits ext4 journal replay. Preserve the no-replay option
+// even when a filesystem mount retries without user-supplied fstab options.
+constexpr const char* legacy_read_only_recovery_option(std::string_view filesystem) noexcept {
+    return filesystem == "ext3" || filesystem == "ext4" ? "noload" : filesystem == "f2fs" ? "norecovery" : "";
+}
+constexpr bool legacy_read_only_filesystem_supported(std::string_view filesystem) noexcept {
+    return filesystem == "ext2" || filesystem == "ext3" || filesystem == "ext4" ||
+        filesystem == "f2fs" || filesystem == "vfat" || filesystem == "ntfs" ||
+        filesystem == "exfat" || filesystem == "erofs" || filesystem == "squashfs";
+}
+// Fastbootd keeps transport/readback and explicit reboot routes. Everything
+// else, including newly added and OEM commands, is denied before dispatch.
+constexpr bool legacy_fastboot_command_permitted(std::string_view command) noexcept {
+    return command == "getvar" || command == "download" || command == "fetch" ||
+        command == "reboot" || command == "reboot-bootloader" ||
+        command == "reboot-fastboot" || command == "reboot-recovery" || command == "shutdown";
+}
+// ORS is a managed script interpreter, not the explicitly selected root
+// terminal. Preserve inspection/UI/reboot controls and deny unknown commands
+// before a handler can copy files, execute a writer or discard a refusal.
+constexpr bool legacy_ors_command_permitted(std::string_view command, bool empty_value) noexcept {
+    return command == "mount" || command == "unmount" || command == "umount" ||
+        command == "set" || command == "setval" || command == "print" || command == "listmounts" ||
+        command == "reloadtheme" || command == "reload_theme" || command == "reboot" ||
+        (command == "set_active" && empty_value);
+}
+} // namespace ure

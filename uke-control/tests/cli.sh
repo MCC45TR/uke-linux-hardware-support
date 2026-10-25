@@ -8,8 +8,8 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.0.0' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.0.0"' >/dev/null
+grep -Fx 'uke-control 2.1.0' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.1.0"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
@@ -22,7 +22,7 @@ jq -e '.applied==false and .effective==null and .requested=="charge80"' "$stage/
 "$app" charge modes > "$stage/modes"
 grep -q 'Charging modes' "$stage/modes"
 "$app" charge modes --json | jq -e '.qualification_checked==false and (.modes|length)==5' >/dev/null
-for args in 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resize system --json' 'sensors -- --json' 'channel status -- --json' 'test -- --help'; do
+for args in 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resize system --json' 'sensors -- --json' 'channel status -- --json' 'test -- --help' 'singleboot status -- --json' 'multiboot -- --help'; do
     read -r -a words <<< "$args"
     set +e
     "$app" "${words[@]}" > "$stage/out" 2> "$stage/error"

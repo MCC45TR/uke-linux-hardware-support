@@ -25,6 +25,10 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(const int result=uke::charge::policy_command(argc,argv,as_json);result>=0)return result;
         std::string command=argv[1];
+        if(command=="singleboot"||command=="multiboot") {
+            execv("/usr/libexec/uke-control/layout-manager",argv);
+            throw std::runtime_error("The native boot layout manager is unavailable");
+        }
         if(command=="flashlight" || command=="led")return uke::lights::command(command=="led",argc-2,argv+2,as_json);
         if(command=="resize") {
             const int count=argc-(as_json?1:0);
@@ -170,12 +174,12 @@ int main(int argc,char** argv) {
         }
         if(args.help || args.words.size()==1){std::cout<<uke::cli::help(args.words.size()>1?args.words[1]:"");return 0;}
         const auto& command=args.words[1];
-        if(command=="channel" || command=="update" || command=="sensors" || command=="test") {
+        if(command=="channel" || command=="update" || command=="sensors" || command=="test" || command=="singleboot" || command=="multiboot") {
             for(size_t i=2;i<args.words.size();++i)
                 if(args.words[i]=="--json" || args.words[i]=="--help" || args.words[i]=="-h" || args.words[i]=="--version")
                     throw uke::cli::UsageError("unexpected operand after '--': "+args.words[i]);
         }
-        if(args.json && (command=="channel" || command=="update" || command=="test" || command=="resize"))args.words.push_back("--json");
+        if(args.json && (command=="channel" || command=="update" || command=="test" || command=="resize" || command=="singleboot" || command=="multiboot"))args.words.push_back("--json");
         std::vector<char*> words;for(auto& word:args.words)words.push_back(word.data());words.push_back(nullptr);
         return run(int(words.size()-1),words.data(),args.json);
     } catch(const uke::cli::UsageError& error){std::cerr<<"uke-control: "<<error.what()<<'\n';return 64;}

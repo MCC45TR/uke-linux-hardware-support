@@ -9,7 +9,7 @@ LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check check-rgb-policy check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
-all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
+all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
 build:
 	mkdir -p build
 build/uke-control-rgb: src/rgb-service.cpp src/rgb.hpp shared/uke-rgb.h build/libuke-control.so.0
@@ -51,7 +51,7 @@ check-rgb-policy: build/selinux/uke_control_rgb.pp
 	bash tests/rgb-policy.sh
 build/test-cli: tests/cli.cpp src/cli.cpp src/cli.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cli.cpp src/cli.cpp $(shell pkg-config --libs libsystemd) -o $@
-check: all check-rgb-policy build/test-front-color build/test-execute build/test-cli
+check: all check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli
 	bash tests/cli.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/rgb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-rgb
 	LD_LIBRARY_PATH=build build/test-rgb
@@ -124,9 +124,26 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.0.0/#' -czf "$$top/SOURCES/uke-control-2.0.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.1.0/#' -czf "$$top/SOURCES/uke-control-2.1.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
 clean:
 	rm -rf build
+
+layout_recovery := $(addprefix shared/recovery/,core.cpp storage.cpp block.cpp gpt.cpp multiboot.cpp layout.cpp)
+layout_sources := src/layout-policy.cpp src/layout-runtime.cpp src/layout-execute.cpp src/layout-shutdown.cpp
+layout_flags := -ffunction-sections -fdata-sections $(shell pkg-config --cflags jsoncpp blkid openssl)
+layout_libs := -Wl,--gc-sections $(shell pkg-config --libs jsoncpp blkid openssl libsystemd)
+build/layout-manager: src/layout-ui.cpp src/layout.hpp $(layout_sources) $(layout_recovery) src/cli.cpp | build
+	$(CXX) $(CXXFLAGS) $(layout_flags) $(LDFLAGS) -Isrc -o $@ src/layout-ui.cpp $(layout_sources) $(layout_recovery) src/cli.cpp $(layout_libs)
+	! nm -C $@ | grep -E 'ure::(gpt_execute|gpt_rollback|multiboot_image_execute|storage_write_gate)\('
+build/test-layout: tests/layout.cpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout.cpp $(layout_sources) $(layout_recovery) $(layout_libs)
+check-layout: build/layout-manager build/test-layout
+	build/test-layout
+	jq -r '.files | to_entries[] | "\(.value)  shared/recovery/\(.key)"' shared/recovery/source.json | sha256sum -c --status
+build/test-layout-vm: tests/layout-vm.cpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-vm.cpp src/layout-policy.cpp src/layout-runtime.cpp $(layout_recovery) $(layout_libs)
+build/test-layout-payload: tests/layout-payload.cpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-payload.cpp $(layout_sources) $(layout_recovery) $(layout_libs)

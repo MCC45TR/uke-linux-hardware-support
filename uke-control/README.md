@@ -1,6 +1,6 @@
 # Uke Control
 
-25 October 2026: source version **2.0.0** defaults to human-readable terminal
+25 October 2026: source version **2.1.0** defaults to human-readable terminal
 output. Scripts and the KDE widget request `--json` explicitly. Canonical command
 groups, contextual help, compatibility aliases and output/exit contracts are
 documented in [the CLI guide](CLI.md). Native COPR/DNF delivery and tablet
@@ -449,3 +449,9 @@ permission allowed the 25-second RTC trial to complete. Its default policy is
 therefore disabled until Bluetooth accessory wake is qualified; this does not
 power Bluetooth off. An explicit saved setting overrides that default.
 Permission readback is not a physical wake or low-power acceptance result.
+
+The explicit [boot layout wizard](BOOT-LAYOUT.md) adds `singleboot` and
+`multiboot`, constrained to proven original userdata and its owned children.
+Live filesystem operations and a one-shot RAM shutdown route share the same
+reviewed plan. The source implementation does not establish physical conversion
+or fastboot acceptance.

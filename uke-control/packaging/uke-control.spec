@@ -1,8 +1,8 @@
 Name: uke-control
-Version: 2.0.0
+Version: 2.1.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
-License: MIT
+License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
 Source0: %{name}-%{version}.tar.gz
 ExclusiveArch: aarch64 x86_64
@@ -12,6 +12,7 @@ BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon jq
 BuildRequires: selinux-policy-devel
+BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
 Requires: ethtool >= 7.1
@@ -21,6 +22,7 @@ Requires: f2fs-tools >= 1.16.0
 Requires: policycoreutils
 Requires: polkit selinux-policy-targeted
 Requires: kmod
+Requires: dialog e2fsprogs device-mapper dosfstools
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
 Conflicts: uke-plasma-controls < 1.0.0-23
@@ -29,8 +31,10 @@ Conflicts: uke-plasma-controls < 1.0.0-23
 %description
 C++ backend and terminal client for Uke device settings. A systemd service
 records the partition layout and prefers an existing linux_swap partition;
-otherwise it creates a swap file using half RAM by default. Existing partitions
-are never formatted. Charge and USB controls follow real driver capabilities.
+otherwise it creates a swap file using half RAM by default. Unattended policy
+never formats partitions. The explicit terminal boot-layout wizard is limited
+to proven original userdata, with two approvals for data loss. Charge and USB
+controls follow real driver capabilities.
 
 %package tests
 Summary: Development-only Uke display, touch and sensor diagnostics
@@ -66,6 +70,8 @@ install -Dm644 packaging/org.senemos.Uke.Rgb.service %{buildroot}%{_datadir}/dbu
 install -Dm644 packaging/org.senemos.uke.rgb.policy %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.rgb.policy
 install -Dm755 build/uke-control-packages %{buildroot}%{_libexecdir}/uke-control/packages
 install -Dm755 build/resize-system %{buildroot}%{_libexecdir}/uke-control/resize-system
+install -Dm755 build/layout-manager %{buildroot}%{_libexecdir}/uke-control/layout-manager
+install -Dm644 packaging/91-uke-control-layout.rules %{buildroot}%{_udevrulesdir}/91-uke-control-layout.rules
 install -Dm755 packaging/vrr-min-load %{buildroot}%{_libexecdir}/uke-control/vrr-min-load
 install -Dm644 packaging/60-uke-control-vrr.conf %{buildroot}%{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf
 install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.so.0
@@ -128,8 +134,8 @@ fi
 %systemd_user_postun uke-control-moisture-notify.service
 
 %files
-%license LICENSE
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md
+%license LICENSE shared/recovery/LICENSE-APACHE-2.0
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
@@ -147,6 +153,8 @@ fi
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
 %{_libexecdir}/uke-control/resize-system
+%{_libexecdir}/uke-control/layout-manager
+%{_udevrulesdir}/91-uke-control-layout.rules
 %{_libexecdir}/uke-control/vrr-min-load
 %{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf
 %{_libdir}/libuke-control.so.0
@@ -170,6 +178,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.1.0-1
+- Add an explicit terminal singleboot/multiboot wizard scoped to original userdata.
+- Preserve OEM GPT records and require original proof, exact ownership and plan-bound approvals.
+- Use native live filesystem operations or one-shot RAM shutdown maintenance.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.0.0-1
 - Default to readable terminal output and require explicit --json for structured responses.
 - Standardize command groups, contextual help and channel/CDC/USB-role names with legacy aliases.

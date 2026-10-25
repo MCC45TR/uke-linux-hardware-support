@@ -78,3 +78,9 @@ JSON minimum-frequency response; it adds no general parser or Python dependency.
 
 The option conventions follow the [GNU command-line guidance](https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html).
 The renderer uses the existing [libsystemd JSON API](https://www.freedesktop.org/software/systemd/man/262/sd_json_parse.html).
+
+`sudo uke-control singleboot` and `sudo uke-control multiboot` open the explicit
+storage wizard. Both support a private metadata `--dry-run` and a read-only
+`status` query (`--json` optional). See [boot layout conversion](BOOT-LAYOUT.md)
+for the original-userdata boundary, ownership evidence and two-approval data-loss
+policy. Neither command installs an operating system.
