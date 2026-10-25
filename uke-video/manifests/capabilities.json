@@ -8,8 +8,8 @@
     "soc_id": 643,
     "soc_revision": "1.0",
     "sku_version": null,
-    "kernel_release": "7.3.0-9",
-    "kernel_commit": "e5cce51e10da5123a1d83e02c3f3e15518ee7628",
+    "kernel_release": "7.3.0-10",
+    "kernel_commit": "3d145da265d44063fa8818d4c8f3f7e4d7bb1e5e",
     "iris_bound": true,
     "video0": "NT36532 touch",
     "firmware_at_expected_path": true,
@@ -18,8 +18,9 @@
     "iris_encoder_node": "video2",
     "video_modules_loaded": true,
     "controlled_load_blacklist": true,
-    "display_fault_after_provider_activation": true,
-    "device_experiments_on_hold": true
+    "display_fault_after_provider_activation": false,
+    "device_experiments_on_hold": true,
+    "display_coexistence_validated": false
   },
   "coordinator_provider_only_trial": {
     "kernel_release": "7.3.0-10",
@@ -76,15 +77,22 @@
     "rpm_signature_verified": true,
     "rpm_verify_clean": true,
     "sha256": "23bb02a933d2c67c0fce4a24badf762c7608a913d28d9269f0c64e7a7ba06aa6",
-    "vainfo_exit": 3,
-    "observed_error": "no Iris stateful H264 decoder found",
+    "vainfo_exit": 0,
+    "observed_error": "Default libva selection cannot find msm_drv_video.so; explicit V4L2 initialization succeeds",
     "automatic_alias": false,
     "fastcv": false,
-    "observed_error_kernel_release": "7.3.0-5",
-    "retested_after_native6_failure": false,
+    "observed_error_kernel_release": "7.3.0-10",
+    "retested_after_native6_failure": true,
     "previous_package": "uke-vaapi-v4l2-1.0.0-0.1.20261025git6d03c3f.fc46.aarch64",
     "codec_tested": false,
-    "vainfo_result_scope": "historical revision 0.1 on kernel 7.3.0-5"
+    "vainfo_result_scope": "Explicit-driver initialization/profile query only; no codec output tested",
+    "previous_vainfo_trial": {
+      "kernel_release": "7.3.0-5",
+      "error": "no Iris stateful H264 decoder found",
+      "scope": "historical revision 0.1 on kernel 7.3.0-5"
+    },
+    "default_vainfo_exit": 3,
+    "explicit_vainfo_exit": 0
   },
   "profiles": [
     {
@@ -94,9 +102,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -108,9 +116,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -122,9 +130,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -136,9 +144,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -150,9 +158,9 @@
       "bit_depth": 10,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -164,9 +172,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -178,9 +186,9 @@
       "bit_depth": 10,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -192,9 +200,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -206,9 +214,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -220,9 +228,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -234,9 +242,9 @@
       "bit_depth": 8,
       "chroma": "4:2:0",
       "source_evidence": "Uke Cliffs XML and pinned same-SM7675 source",
-      "kernel_accessible": false,
+      "kernel_accessible": true,
       "kernel_raw_formats": null,
-      "vaapi_advertised": false,
+      "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
       "tested_modes": []
@@ -273,15 +281,17 @@
     "FFmpeg, GStreamer, mpv, VLC, browsers, OBS and A/V sync"
   ],
   "last_native_trial": {
-    "kernel_release": "7.3.0-9",
+    "kernel_release": "7.3.0-10",
     "iris_bound": true,
     "videocc_bound": true,
     "decoder_node": "video1",
     "encoder_node": "video2",
-    "native_open_success": null,
+    "native_open_success": true,
     "firmware_session_proven": false,
     "codec_workload_run": false,
-    "error": "Display SID 0x1c00 / CB10 translation fault after VIDEOCC-only activation, before Iris load"
+    "error": "Default MSM alias absent; explicit VA query succeeds",
+    "explicit_va_initialization": true,
+    "default_va_initialization": false
   },
   "kernel_next_candidate": {
     "release": "7.3.0-9",
@@ -310,5 +320,37 @@
       "copr_build": 11205684,
       "scope": "ELD fix; does not contain native Main10 patch 0016"
     }
+  },
+  "prior_video_observation": {
+    "model": "POCO Pad X1",
+    "soc_id": 643,
+    "soc_revision": "1.0",
+    "sku_version": null,
+    "kernel_release": "7.3.0-9",
+    "kernel_commit": "e5cce51e10da5123a1d83e02c3f3e15518ee7628",
+    "iris_bound": true,
+    "video0": "NT36532 touch",
+    "firmware_at_expected_path": true,
+    "videocc_bound": true,
+    "iris_decoder_node": "video1",
+    "iris_encoder_node": "video2",
+    "video_modules_loaded": true,
+    "controlled_load_blacklist": true,
+    "display_fault_after_provider_activation": true,
+    "device_experiments_on_hold": true
+  },
+  "standalone_va_query": {
+    "date": "2026-10-25",
+    "default_utc": "17:52:49Z",
+    "explicit_utc": "17:53:36Z",
+    "default_exit": 3,
+    "explicit_exit": 0,
+    "decode_profile_count": 7,
+    "encode_profile_count": 4,
+    "new_non_audit_kernel_messages": 0,
+    "stream_started": false,
+    "frame_production_tested": false,
+    "default_log_sha256": "3ed313e33583084e0ce5d0d025df5623fab20929f7a7b18ce96420d569c1edf4",
+    "explicit_log_sha256": "f6fbfd7fd9a9f8adaa396d390ddc4bfb9a14409fc077b9c67c8ca038cbebef76"
   }
 }

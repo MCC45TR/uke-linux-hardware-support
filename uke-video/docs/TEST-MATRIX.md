@@ -17,7 +17,8 @@ separate from codec workload acceptance.
 | Coordinated 7.3.0-10 / Iris load | Nodes register and background clients access the device; USB/DP disconnected four seconds before loading | Stable USB/DP topology, explicit firmware/API proof and approved codec workload |
 | VA revision 0.3 / COPR 11205969 | Prepared-source GPU-enabled host build, native AArch64 build fixtures, signature and payload checks passed; not installed | Approved delivery; physical rate/output correctness |
 | Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
-| Explicit VA initialization | Prior release-5 probe failed: no Iris stateful H264 decoder; not repeated after the native power failure | Successful native initialization, then VA retest |
+| Explicit VA initialization on 7.3.0-10 | Revision 0.2 initializes successfully as the desktop user; 7 decode and 4 encode profile/entrypoint pairs; no new non-audit kernel messages | Actual native/VA codec output and browser integration |
+| Default VA discovery on 7.3.0-10 | Reproduces `vaInitialize -1`: default libva searches for absent MSM alias | Signed revision 0.4 candidate, controlled install and default-query retest |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |

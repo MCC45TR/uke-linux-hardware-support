@@ -70,5 +70,24 @@
     "source_rpm_sha256": "737f9ae079f77bb36e80ce64d79812682f6609d04f96add7facccbe25842b876",
     "aarch64_rpm_sha256": "ed5e753db70b9ba6f8141dcc57f8c8b0855b7bb76aa737a2995422254608c3f0",
     "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
+  },
+  "default_provider_source_candidate": {
+    "rpm_release": "0.4.20261025git6d03c3f",
+    "repository": "mcc45tr/uke-linux-test:custom:video-default-provider-20261025",
+    "automatic_alias": true,
+    "implementation_change": "Retain upstream relative MSM-to-V4L2 symlink; encoder/decoder code unchanged from revision 0.3",
+    "copr_build": 11206106,
+    "installed_with_dnf": false,
+    "default_vainfo_retested": false,
+    "codec_workload_tested": false,
+    "source_rpm_sha256": "c0de78d3869cee19f6e05be4e2d9c06eb120df463346668251849b7df2bcf9ff",
+    "source_preparation_passed": true,
+    "copr_succeeded": true,
+    "native_aarch64_build_fixtures_passed": true,
+    "aarch64_rpm_sha256": "3744dafe5c0a0718683953ffd93eb373d11e394ff831304f2f552c6c65068880",
+    "elf_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "rpm_signature_verified": true,
+    "payload_alias_verified": true
   }
 }

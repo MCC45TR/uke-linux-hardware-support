@@ -3,7 +3,7 @@
 
 Name:           uke-vaapi-v4l2
 Version:        1.0.0
-Release:        0.3.20261025git6d03c3f%{?dist}
+Release:        0.4.20261025git6d03c3f%{?dist}
 Summary:        Experimental stateful Iris VA-API backend
 License:        MIT
 URL:            https://github.com/radxa-pkg/libva-v4l2
@@ -25,11 +25,12 @@ BuildRequires:  pkgconfig(glesv2) >= 3.2
 BuildRequires:  pkgconfig(gbm)
 
 %description
-Opt-in VA-API backend for the Qualcomm Iris stateful V4L2 API. Profiles and
+Experimental VA-API backend for the Qualcomm Iris stateful V4L2 API. Profiles and
 entrypoints are intersected with kernel format and profile-menu queries.
 Requires a separately qualified Iris platform and firmware. Installation
 does not establish working Uke codecs. FastCV VPP is disabled. The MSM alias
-is omitted until native V4L2 and application acceptance are complete.
+selects the same backend for default libva discovery on MSM DRM devices;
+native codec and application acceptance remain separate requirements.
 
 %prep
 echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
@@ -52,7 +53,6 @@ bash %{SOURCE4} "$PWD"
 
 %install
 %meson_install
-rm %{buildroot}%{_libdir}/dri/msm_drv_video.so
 rm -r %{buildroot}%{_datadir}/doc/libva-v4l2
 rm -r %{buildroot}%{_datadir}/licenses/libva-v4l2
 install -m 0644 %{SOURCE2} UKE-README.md
@@ -61,8 +61,13 @@ install -m 0644 %{SOURCE2} UKE-README.md
 %license LICENSE
 %doc UKE-README.md
 %{_libdir}/dri/v4l2_drv_video.so
+%{_libdir}/dri/msm_drv_video.so
 
 %changelog
+* Sun Oct 25 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.4.20261025git6d03c3f
+- Retain the upstream MSM alias for default libva backend discovery.
+- Keep native codec output, browser integration and sandbox acceptance separate.
+
 * Sun Oct 25 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.3.20261025git6d03c3f
 - Validate requested bitrate against the current Iris control range and step.
 - Verify returned Q16 frame rates and let Iris enforce codec and workload limits.

@@ -127,15 +127,39 @@
     "no_sandbox_disabling": true
   },
   "acceptance": {
-    "standalone_vainfo": false,
+    "standalone_vainfo": true,
     "gpu_sandbox_repaired": false,
     "hardware_decode_sessions": false,
     "hardware_encode_sessions": false,
     "hdr_sdr_display_moves": false,
     "webgpu_video_buffer_interop": false,
-    "post_boot_render_mapping": false
+    "post_boot_render_mapping": false,
+    "default_vainfo": false
   },
   "runtime_changes": [],
   "donor_code_executed": false,
-  "kernel_build_lock_changed": false
+  "kernel_build_lock_changed": false,
+  "standalone_va_trials": {
+    "kernel": "7.3.0-10",
+    "backend_revision": "0.2",
+    "default": {
+      "utc": "2026-10-25T17:52:49Z",
+      "exit": 3,
+      "error": "Missing msm_drv_video.so; vaInitialize -1 unknown libva error",
+      "log_sha256": "3ed313e33583084e0ce5d0d025df5623fab20929f7a7b18ce96420d569c1edf4"
+    },
+    "explicit_v4l2": {
+      "utc": "2026-10-25T17:53:36Z",
+      "exit": 0,
+      "api_version": "1.24",
+      "init_entrypoint": "__vaDriverInit_1_0",
+      "decode_profile_count": 7,
+      "encode_profile_count": 4,
+      "log_sha256": "f6fbfd7fd9a9f8adaa396d390ddc4bfb9a14409fc077b9c67c8ca038cbebef76"
+    },
+    "new_non_audit_kernel_messages": 0,
+    "stream_started": false,
+    "frames_produced": false,
+    "persistent_config_changed": false
+  }
 }
