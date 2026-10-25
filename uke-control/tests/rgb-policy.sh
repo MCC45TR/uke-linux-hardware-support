@@ -11,4 +11,10 @@ grep -Eq '^\(allow init_t uke_rgb_t \(process2 \([^)]*nnp_transition([ )])' "$ci
     echo 'Compiled RGB policy lacks the systemd NoNewPrivileges transition' >&2
     exit 1
 }
+for permission in read open; do
+    grep -Eq "^\\(allow uke_rgb_t security_t \\(file \\([^)]*${permission}([ )])" "$cil" || {
+        echo 'Compiled RGB policy cannot read the enforcing state' >&2
+        exit 1
+    }
+done
 printf '%s\n' 'Compiled RGB policy admits the hardened systemd domain transition: PASS (host policy only)'
