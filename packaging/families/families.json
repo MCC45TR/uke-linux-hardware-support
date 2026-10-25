@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.11.1",
-      "release": 2,
+      "version": "1.12.0",
+      "release": 1,
       "requires": [
-        "uke-control = 1.11.1-2%{?dist}"
+        "uke-control = 1.12.0-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -165,7 +165,7 @@
     },
     {
       "name": "uke-metas",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "release": 1,
       "requires": [
         "uke-core-meta >= 1.0.5"
@@ -223,7 +223,7 @@
     "material-decoration": "material-decoration"
   },
   "native_versions": {
-    "uke-control": "1.11.1",
+    "uke-control": "1.12.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.2",
     "uke-battery-observer": "1.1.0",
@@ -250,7 +250,7 @@
     "uke-battery-observer": "10.fc46",
     "accountsservice": "8.fc46",
     "material-decoration": "6.fc46",
-    "uke-desktop-metas": "20.fc46",
+    "uke-desktop-metas": "21.fc46",
     "uke-core-meta": "4.fc46",
     "uke-proximity-capture": "5.fc46"
   }

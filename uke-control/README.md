@@ -1,5 +1,13 @@
 # Uke Control
 
+25 October 2026: version 1.12.0 sends RGB requests to the kernel-owned policy.
+A dedicated SELinux-confined broker accepts active local-session requests
+without sudo. The widget exposes one bounded ten-second color test; battery
+animation and its timing run in the kernel. HEX colors include intermediate
+colors such as yellow. Host checks are separate from matched kernel/RPM and
+physical acceptance. See [light controls and security](LIGHTS.md).
+The installed 1.11.1 display-bit diagnostics are retained.
+
 25 October 2026: version 1.11.0 adds torch brightness and independent RGB
 color/brightness percentages. The fixed torch deadline is removed; supervised
 stop/failure cleanup and stop-before-sleep remain. This requires the reviewed

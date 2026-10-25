@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.11.1 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.12.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -26,7 +26,7 @@ static void help() {
       "  desktop brightness on|off   Set original KScreen automatic brightness policy\n"
       "  hardware status             Cached chipset/audio/media/input paths; no device access\n"
       "  flashlight status|on|off|set P  Torch brightness 0..100; manual off (root)\n"
-      "  led status|off|set R G B [P] RGB color 0..255, brightness 0..100 (root)\n"
+      "  led status|auto|test|set HEX [P]  Kernel RGB control; no sudo\n"
       "  wake status                 Driver wake permissions and unsupported event controls\n"
       "  wake set SOURCE on|off      Save and apply one wake permission (root)\n"
       "  wake apply                  Restore saved permissions before suspend (root)\n"
