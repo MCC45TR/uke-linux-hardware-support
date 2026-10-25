@@ -5,7 +5,7 @@ set -Eeuo pipefail
     echo 'Usage: prepare-touch-runtime.sh pinned-source-rpm new-output-directory owner-commit' >&2; exit 2
 }
 root=$(cd -- "$(dirname -- "$0")/.." && pwd)
-bash "$root/tests/touch-capture-readiness.sh"
+[[ ${UKE_SKIP_TESTS:-0} == 1 ]] || bash "$root/tests/touch-capture-readiness.sh"
 [[ ! -e $2 && ! -L $2 ]]
 source_rpm=$(realpath "$1") output=$(realpath -m "$2")
 [[ -f $source_rpm && ! -e $output ]]
