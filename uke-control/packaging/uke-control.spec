@@ -182,6 +182,7 @@ fi
 - Add an explicit terminal singleboot/multiboot wizard scoped to original userdata.
 - Preserve OEM GPT records and require original proof, exact ownership and plan-bound approvals.
 - Use native live filesystem operations or one-shot RAM shutdown maintenance.
+- Retain supported USB, Bluetooth, selective lid and touch wake defaults with saved overrides.
 
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.0.0-1
 - Default to readable terminal output and require explicit --json for structured responses.

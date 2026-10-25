@@ -430,25 +430,32 @@ crash dumps and power-supply attributes are not read by this command.
 
 ## Wake permissions
 
-The source candidate `1.2.0` adds `uke-control wake status`,
+25 October 2026: source version `2.1.0` retains `uke-control wake status`,
 `sudo uke-control wake set SOURCE on|off` and `sudo uke-control wake apply`.
 Named sources are `power-key`, `volume-up`, `volume-down`, `usb`,
-`bluetooth-uart`, `charge-connect`, `charge-disconnect` and `double-tap`.
+`bluetooth-uart`, `charge-connect`, `charge-disconnect`, `double-tap` and
+`lid-open`. Supported USB devices below the verified Uke controller are listed
+as `usb-device-PORT`. Empty wake attributes remain unavailable.
 Unavailable controls return their actual reason and cannot be written.
 
 Settings persist in root-private state and are restored before each sleep,
 after input providers are available. The native helper admits only Uke/SM7675, unique canonical sysfs
 providers and the expected key capability. It verifies writes, restores
 previous permissions on failure and refuses to disable every recovery key.
-USB attach/removal share one device wake permission. Independent firmware
-charge-event filters and touch-gesture wake remain unimplemented.
+USB attach/removal share the controller permission; supported downstream remote
+wake permissions are applied individually. Independent firmware charge-event
+filters remain unavailable. Double-tap requires the kernel's gesture admission
+attribute; selective lid wake requires its actual wake control.
 
-On the 21 October tablet trial, an enabled Bluetooth UART wake permission
-caused an immediate s2idle return through IRQ135. Temporarily disabling that
-permission allowed the 25-second RTC trial to complete. Its default policy is
-therefore disabled until Bluetooth accessory wake is qualified; this does not
-power Bluetooth off. An explicit saved setting overrides that default.
-Permission readback is not a physical wake or low-power acceptance result.
+Without an explicit saved override, supported USB devices, Bluetooth UART,
+lid-open and double-tap are enabled before sleep. Saved disabled choices take
+precedence. This carries the requested policy from commit `3f35b388` into the
+2.1 source without changing its human-readable CLI or explicit JSON contract.
+
+A 21 October Uke trial observed immediate suspend return with Bluetooth UART
+wake enabled. The new default does not establish that this earlier behavior is
+resolved. Physical accessory, lid, gesture and RTC suspend validation remains
+required; permission readback is not physical wake or low-power acceptance.
 
 The explicit [boot layout wizard](BOOT-LAYOUT.md) adds `singleboot` and
 `multiboot`, constrained to proven original userdata and its owned children.

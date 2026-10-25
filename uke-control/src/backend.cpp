@@ -159,9 +159,9 @@ void wake_apply() {
             need(value == "enabled\n" || value == "disabled\n", "Invalid saved wake permission");
             need(!source.path.empty(), "Saved wake source is no longer available: " + source.name);
             source.enabled = value == "enabled\n";
-        } else if (source.name == "bluetooth-uart") {
-            // shortcut: keep unqualified UART wake off until accessory wake and RTC trials qualify it.
-            source.enabled = false;
+        } else if (source.name == "bluetooth-uart" || source.name == "lid-open" ||
+                   source.name == "double-tap" || source.name.starts_with("usb-device-")) {
+            source.enabled = true;
         }
     }
     need(wake::recovery_key(requested), "Saved policy disables every recovery key");

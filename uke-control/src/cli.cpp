@@ -47,7 +47,7 @@ constexpr Group groups[]={
     {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off"},
     {"hardware","Cached chipset, audio, media and input paths", "hardware status"},
     {"firmware","Cached remote processors and SCMI discovery", "firmware status"},
-    {"wake","Driver wake permissions", "wake status\nwake set SOURCE on|off\nwake apply"},
+    {"wake","Driver wake permissions", "wake status\nwake set SOURCE on|off\nwake apply\n\nStatus lists available source names, including supported usb-device-PORT, lid-open and double-tap.\nSaved choices override supported USB, Bluetooth, lid and gesture wake defaults.\nPermission readback is not physical wake validation."},
     {"flashlight","Torch on/off and requested brightness", "flashlight status\nflashlight on|off\nflashlight set 1..100\n\nThe retained 20 mA limit provides two lit steps: 1–99 requests use 50%; 100 uses 100%.\nCLI zero also means off. On restores the in-service request, default 100.\nAn active local user may request changes without sudo."},
     {"led","Kernel notification LED requests", "led status\nled auto\nled test\nled set '#RRGGBB' [0..100]\n\nTest requests one ten-second color transition. Auto restores kernel policy.\nAn active local user may request changes without sudo."},
     {"sensors","Exported sensor channels and live readings", "sensors [list] [-n SECONDS] [--count=N] [--once]\n\nDefault: one snapshot. -n5 also repeats every five seconds. Ctrl-C stops.\n--json emits one JSON object per sample; polling time is not acquisition time."},
