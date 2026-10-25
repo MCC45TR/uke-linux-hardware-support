@@ -1,6 +1,6 @@
 Name:           uke-displayport-audio
 Version:        0.1.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        DisplayPort playback policy for POCO Pad X1
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -43,6 +43,10 @@ test -r %{buildroot}%{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 %{_datadir}/wireplumber/wireplumber.conf.d/75-uke-thp-not-camera.conf
 
 %changelog
+* Sun Oct 25 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Keep the Uke memory-to-memory video codec out of camera discovery.
+- Preserve direct codec access, USB camera discovery and the digital audio route.
+
 * Sat Oct 24 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Expose the native DP backend ELD to frontend discovery and monitor labels.
 
