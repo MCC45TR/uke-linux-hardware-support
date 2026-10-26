@@ -209,11 +209,11 @@
     "gpu_page": "tests/browser-gpu.html",
     "gpu_page_sha256": "5b8434ed586f28c674e76c93f6cf730c7912e473330e0de82b0de59afe4e2b14",
     "host_controller": "tests/capture-browser.mjs",
-    "host_controller_sha256": "c1e3ddf6e5528f24bd5c939a1b06ed891adfdcbadd0cd4f7f151d253bb876497",
+    "host_controller_sha256": "01e4a786fc9754d604451ba3e9aca9a75ae0a7206f29792558c7fd970b1c87f5",
     "video_page": "tests/browser-video.html",
-    "video_page_sha256": "561e358029187b49685709bb66e89e5a4fedbe52d221624fbd18429245ef8d59",
+    "video_page_sha256": "50781674d5e5ef931ac6aec0f67c07762d1b0d0ac56e715b0ba723e75d80dca3",
     "video_script": "tests/browser-video.js",
-    "video_script_sha256": "4f69f52d1df68b1c59c51cb864ebb0bfb8bea807d5fdfb8800688d068f67a0f2",
+    "video_script_sha256": "8e5aa761875606466ade984d6fb272b258800e4d0304ee8ad065574f9fcee2ae",
     "host_api_fixtures_passed": true,
     "host_packet_fixtures_passed": true,
     "host_pixel_validator_fixtures_passed": true,
@@ -253,7 +253,26 @@
     "host_extracted_software_frames_per_fixture": 30,
     "actual_browser_encoder_tested": false,
     "actual_gpu_baseline_tested": true,
-    "actual_video_workload_tested": false
+    "actual_video_workload_tested": false,
+    "reviewed_decode_sizes": [
+      [
+        320,
+        240
+      ],
+      [
+        1920,
+        1080
+      ]
+    ],
+    "hd_software_packet_corpora": 7,
+    "hd_native_format_reference_sets": 14,
+    "hd_reference_index_sha256": "ba4aa3fcd02f71f3a2d6db0b8561f60d7224dad5251e7b9af22bce233cb527cd",
+    "hd_reference_timing": "Demux time base retained and matched to packet PTS; software pixels unchanged",
+    "hd_encoded_corpus_limit_bytes": 33554432,
+    "hd_vp9_requested_level": 51,
+    "hd_vp9_level_conformance_accepted": false,
+    "actual_hd_browser_workload_tested": false,
+    "updated_video_payload_deployed": false
   },
   "runtime_changes": [
     {

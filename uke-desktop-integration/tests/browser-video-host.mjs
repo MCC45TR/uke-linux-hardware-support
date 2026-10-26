@@ -18,7 +18,7 @@ for(const [args,message] of [
   assert(child.stderr.includes(message),child.stderr);
 }
 
-let drop=false,badCopy=false,padded=false,encoderCreated=0,decoderCreated=0,closedInputs=0,closedOutputs=0;
+let drop=false,badCopy=false,badVisible=false,padded=false,encoderCreated=0,decoderCreated=0,closedInputs=0,closedOutputs=0;
 class InputFrame {
   constructor(data,init) {
     this.timestamp=init.timestamp;
@@ -48,13 +48,15 @@ class Encoder {
 class Decoder {
   static async isConfigSupported(config) {return {supported:true,config};}
   constructor(callbacks) {this.callbacks=callbacks;this.state='unconfigured';decoderCreated++;}
-  configure() {this.state='configured';}
+  configure(config) {this.config=config;this.state='configured';}
   decode(chunk) {
     if(drop) return;
+    const width=this.config.codedWidth,height=this.config.codedHeight;
     let closed=false;
     this.callbacks.output({timestamp:chunk.timestamp,duration:33333,format:'NV12',
-      codedWidth:320,codedHeight:240,visibleRect:{x:0,y:0,width:320,height:240},
-      colorSpace:{toJSON:()=>({primaries:'bt709'})},allocationSize:()=>padded?336*360+32:320*240*3/2,
+      codedWidth:width,codedHeight:Math.ceil(height/16)*16,
+      visibleRect:{x:0,y:0,width:badVisible?width-2:width,height},
+      colorSpace:{toJSON:()=>({primaries:'bt709'})},allocationSize:()=>padded?336*360+32:width*height*3/2,
       copyTo:async data=>{
         assert(!closed);if(badCopy) throw new Error('opaque frame readback unavailable');
         if(padded) {
@@ -64,7 +66,7 @@ class Decoder {
           for(let row=0;row<120;row++) data.fill(17,uv+row*336,uv+row*336+320);
           return [{offset:8,stride:336},{offset:uv,stride:336}];
         }
-        data.fill(17);return [{offset:0,stride:320},{offset:320*240,stride:320}];
+        data.fill(17);return [{offset:0,stride:width},{offset:width*height,stride:width}];
       },
       close:()=>{assert(!closed);closed=true;closedOutputs++;}});
   }
@@ -90,6 +92,15 @@ assert.equal(decoded.pixelReferenceAccepted,false);
 assert.equal(decoded.frames.length,30);
 assert.equal(closedOutputs,30);
 assert(decoded.frames.every(frame=>frame.sha256.length===64));
+const hd=await probe.decode({...input,width:1920,height:1080});
+assert.equal(hd.functionalPassed,true);assert.equal(hd.hardwareAccepted,false);
+assert.equal(hd.config.codedWidth,1920);assert.equal(hd.config.codedHeight,1080);
+assert(hd.frames.every(frame=>frame.codedHeight===1088 && frame.visibleRect.height===1080 &&
+  frame.packedByteLength===1920*1080*3/2 && frame.sha256.length===64));
+badVisible=true;
+const wrongSize=await probe.decode({...input,width:1920,height:1080});
+assert.equal(wrongSize.functionalPassed,false);assert.match(wrongSize.error,/visible size/);
+badVisible=false;
 padded=true;
 const paddedFrames=await probe.decode(input);
 assert.equal(paddedFrames.functionalPassed,true);

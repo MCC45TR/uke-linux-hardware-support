@@ -108,8 +108,11 @@ uses little-endian I420P10 with nonzero low two bits; it does not relabel an
 Chrome 156's default 321x241 VA encode performance floor. Keep that policy
 enabled; a 320x240 encode test can legitimately select software.
 
-Decode accepts the reviewed thirty-frame 320x240 corpus: H264, HEVC Main/Main10
-and VP9 Profile 0/2. It retains native frame format, layout, crop, color, PTS
+Decode accepts reviewed thirty-frame 320x240 and 1920x1080 corpora: H264,
+HEVC Main/Main10 and VP9 Profile 0/2. Encoded data is bounded to 8 MiB and
+32 MiB respectively; non-reviewed dimensions remain rejected. Copied visible
+dimensions must match the requested corpus, while coded padding remains valid.
+It retains native frame format, layout, crop, color, PTS
 and SHA-256 rather than converting everything to 8-bit RGBA. Its hashes pack
 visible planes without stride padding. Imported-frame
 comparison is opt-in with input.interop=true. It compares a decoded frame's
@@ -148,11 +151,24 @@ The packer validates packet lengths, timestamps, contiguous hex data and
 AVC/HEVC configuration records. It preserves B-frame PTS and derives codec
 strings rather than labelling all content H264 baseline. Decode job files
 contain coded stream bytes and must remain private test artifacts.
+The HD VP9 job requests level 5.1 decoder capacity; that request does not
+qualify the source stream's VP9 level. The observed source level and a false
+level-conformance acceptance flag remain in the job. Host packet JSON is
+bounded to 256 MiB; browser jobs are bounded to 64 MiB before parsing.
 
 For pixel acceptance, create a same-input software reference in the browser's
 declared native format. Use FFmpeg framehash with SHA-256 and retain source
 SHA-256, visible dimensions, pixel format, file name and the reference file's
-own SHA-256 in its reference JSON. Then run:
+own SHA-256 in its reference JSON.
+
+Use `-fps_mode passthrough -enc_time_base demux` when generating framehash
+references. WebM's millisecond PTS must remain consistent with the coded
+packets; rescaling the reference to a 1/30 time base can create false timestamp
+mismatches even when pixels are identical. Frame metadata must be tagged and
+the encoded header/container checked; output color options alone did not
+preserve primaries and transfer in the first host-generated H264 input.
+
+Then run:
 
     node tests/validate-browser-decode.mjs capture.json reference.json
 

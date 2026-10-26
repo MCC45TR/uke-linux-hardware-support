@@ -22,7 +22,8 @@ export function makeJob(probe,sourceSHA256) {
   assert(/^[a-f0-9]{64}$/.test(sourceSHA256),'Supply the original stream SHA-256');
   assert.equal(probe.streams?.length,1,'Select exactly one video stream');
   const stream=probe.streams[0];
-  assert.equal(stream.width,320); assert.equal(stream.height,240);
+  const hd=stream.width===1920 && stream.height===1080;
+  assert(hd || (stream.width===320 && stream.height===240),'Use a reviewed decode size');
   assert.equal(Number(stream.nb_read_frames),30,'Expected thirty software-reference frames');
   assert.equal(probe.packets?.length,30,'Expected thirty coded packets');
   let codec,description;
@@ -52,28 +53,32 @@ export function makeJob(probe,sourceSHA256) {
     const profile=Number(String(stream.profile).replace(/^Profile\s*/,'')),depth=
       /10/.test(stream.pix_fmt)?10:8;
     assert((profile===0 && depth===8)||(profile===2 && depth===10),'Unsupported VP9 profile/depth');
-    codec='vp09.0'+profile+'.31.'+(depth===8?'08':'10');
+    codec='vp09.0'+profile+'.'+(hd?'51':'31')+'.'+(depth===8?'08':'10');
   }
   let total=0;
   const chunks=probe.packets.map(packet=>{
     assert.equal(packet.stream_index,stream.index,'Packet belongs to another stream');
     const data=unhex(packet.data);
     assert(data.length>0 && data.length===Number(packet.size),'Truncated packet data');
-    total+=data.length; assert(total<=8*1024*1024,'Smoke corpus too large');
+    total+=data.length; assert(total<=(hd?32:8)*1024*1024,'Smoke corpus too large');
     const timestamp=Math.round(Number(packet.pts_time)*1000000);
     assert(Number.isSafeInteger(timestamp),'Missing or invalid packet PTS');
     return {type:packet.flags?.includes('K')?'key':'delta',timestamp,dataBase64:data.toString('base64')};
   });
   assert.equal(chunks[0].type,'key','Corpus must begin with a key packet');
   assert.equal(new Set(chunks.map(chunk=>chunk.timestamp)).size,30,'Repeated packet PTS');
-  const input={codec,width:320,height:240,expectedFrames:30,sourceSHA256,chunks,
-    sourceProfile:stream.profile??null,sourcePixelFormat:stream.pix_fmt??null,
+  const input={codec,width:stream.width,height:stream.height,expectedFrames:30,sourceSHA256,chunks,
+    sourceProfile:stream.profile??null,sourceLevel:stream.level??null,sourcePixelFormat:stream.pix_fmt??null,
     sourceColor:{primaries:stream.color_primaries??null,transfer:stream.color_transfer??null,
       matrix:stream.color_space??null,range:stream.color_range??null}};
+  if(stream.codec_name==='vp9') {
+    input.requestedVp9Level=hd?51:31;
+    input.vp9LevelConformanceAccepted=false;
+  }
   if(description) input.descriptionBase64=description.toString('base64');
   return {operation:'decode',input};
 }
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href) {
-  assert((await stat(process.argv[2])).size<=16*1024*1024,'Packet JSON too large');
+  assert((await stat(process.argv[2])).size<=256*1024*1024,'Packet JSON too large');
   console.log(JSON.stringify(makeJob(JSON.parse(await readFile(process.argv[2],'utf8')),process.argv[3]),null,2));
 }

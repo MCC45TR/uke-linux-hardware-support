@@ -12,7 +12,7 @@ assert([gpuURL,videoURL].includes(probeURL),'Use only a reviewed test page');
 let job=null;
 if(probeURL===videoURL) {
   assert(process.argv[4],'Provide a host JSON workload file');
-  assert((await stat(process.argv[4])).size<=12*1024*1024,'Workload file too large');
+  assert((await stat(process.argv[4])).size<=64*1024*1024,'Workload file too large');
   job=JSON.parse(await readFile(process.argv[4],'utf8'));
   assert(['encode','decode','webRtc'].includes(job.operation),'Invalid video workload');
 } else assert(!process.argv[4],'GPU baseline accepts no video workload');

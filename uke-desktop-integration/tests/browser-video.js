@@ -2,7 +2,7 @@
 'use strict';
 (() => {
   // Chrome 156 raises the VA encode minimum to 321x241 for performance.
-  const width=640, height=360, count=30,decodeWidth=320,decodeHeight=240;
+  const width=640, height=360, count=30;
   const encoders=new Set(['avc1.42E01E','avc1.4D001E','avc1.64001E','hvc1.1.6.L93.B0','hvc1.2.4.L93.B0']);
   let busy=false;
   const check=(condition,message)=>{if(!condition) throw new Error(message);};
@@ -62,7 +62,7 @@
     return packed;
   }
   async function videoInterop(frame) {
-    const width=decodeWidth,height=decodeHeight;
+    const width=frame.visibleRect.width,height=frame.visibleRect.height;
     check(navigator.gpu,'WebGPU is unavailable');
     const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
     check(adapter && !adapter.info.isFallbackAdapter,'No non-fallback WebGPU adapter');
@@ -179,20 +179,21 @@
     return run('webcodecs-decode',async result=>{
       check(input && /^(avc1\.(?:42|4[dD]|64)[0-9a-fA-F]{4}|(?:hvc1|hev1)\.[12]\.[A-Za-z0-9.]+|vp09\.(?:00\.\d{2}\.08|02\.\d{2}\.10)(?:\.\d{2})*)$/.test(input.codec),
         'Codec is outside the admitted decode smoke set');
-      check(input.width===decodeWidth && input.height===decodeHeight && input.expectedFrames===count,
-        'Use the reviewed 320x240, 30-frame corpus');
+      const hd=input.width===1920 && input.height===1080;
+      check((hd || (input.width===320 && input.height===240)) && input.expectedFrames===count,
+        'Use a reviewed 320x240 or 1920x1080, 30-frame corpus');
       check(Array.isArray(input.chunks) && input.chunks.length>0 && input.chunks.length<=60,
         'Invalid chunk count');
       let total=0;
       const chunks=input.chunks.map(chunk=>{
         check(['key','delta'].includes(chunk.type) && Number.isSafeInteger(chunk.timestamp) &&
-          typeof chunk.dataBase64==='string' && chunk.dataBase64.length<=1500000,'Invalid encoded chunk');
+          typeof chunk.dataBase64==='string' && chunk.dataBase64.length<=(hd?6*1024*1024:1500000),'Invalid encoded chunk');
         const data=bytes(chunk.dataBase64); total+=data.length;
-        check(data.length>0 && total<=8*1024*1024,'Encoded corpus exceeds the smoke limit');
+        check(data.length>0 && total<=(hd?32:8)*1024*1024,'Encoded corpus exceeds the smoke limit');
         return new EncodedVideoChunk({type:chunk.type,timestamp:chunk.timestamp,data});
       });
       check(input.chunks[0].type==='key','The first chunk must be a key frame');
-      const config={codec:input.codec,codedWidth:decodeWidth,codedHeight:decodeHeight,
+      const config={codec:input.codec,codedWidth:input.width,codedHeight:input.height,
         hardwareAcceleration:'prefer-hardware'};
       if(input.descriptionBase64) {
         check(typeof input.descriptionBase64==='string' && input.descriptionBase64.length<=1500000,
@@ -218,6 +219,8 @@
                 visibleRect:{x:frame.visibleRect.x,y:frame.visibleRect.y,
                   width:frame.visibleRect.width,height:frame.visibleRect.height},
                 colorSpace:frame.colorSpace.toJSON()};
+              check(frame.visibleRect.width===input.width && frame.visibleRect.height===input.height,
+                'Decoder visible size changed');
               if(input.interop===true && index===0) {
                 try {interop=await videoInterop(frame);}
                 catch(error) {interop={functionalPassed:false,hardwareAccepted:false,error:String(error)};}

@@ -29,6 +29,7 @@ document.querySelector('#encode').onclick=()=>show(()=>ukeVideoProbe.encode(docu
 document.querySelector('#decode').onclick=()=>show(async()=>{
   const file=document.querySelector('#corpus').files[0];
   if(!file) throw new Error('Select the reviewed corpus JSON first');
+  if(file.size>64*1024*1024) throw new Error('Workload file too large');
   const job=JSON.parse(await file.text());
   if(job.operation!=='decode') throw new Error('Select a decode job from the host corpus packer');
   job.input.interop=document.querySelector('#interop').checked;
