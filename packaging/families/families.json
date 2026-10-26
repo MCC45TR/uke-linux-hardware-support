@@ -169,7 +169,7 @@
         "uke-video/tests",
         "uke-video/manifests/upstream-pins.json"
       ],
-      "release": 10
+      "release": 11
     },
     {
       "name": "uke-metas",
@@ -246,18 +246,18 @@
     "libssc": "18.fc46",
     "uke-ssc-fileservice": "23.fc46",
     "uke-front-color": "13.fc46",
-    "at-spi2-core": "10.fc46",
-    "gstreamer1": "10.fc46",
-    "libaccounts-glib": "38.fc46",
-    "libwacom": "11.fc46",
-    "libstdcxx-uke-runtime": "12.fc46",
-    "mesa": "13.fc46",
+    "at-spi2-core": "11.fc46",
+    "gstreamer1": "11.fc46",
+    "libaccounts-glib": "39.fc46",
+    "libwacom": "12.fc46",
+    "libstdcxx-uke-runtime": "13.fc46",
+    "mesa": "14.fc46",
     "uke-battery-observer": "10.fc46",
-    "accountsservice": "9.fc46",
+    "accountsservice": "10.fc46",
     "material-decoration": "6.fc46",
     "uke-desktop-metas": "12.fc46",
     "uke-core-meta": "4.fc46",
     "uke-proximity-capture": "5.fc46",
-    "uke-vaapi-v4l2": "1.fc46"
+    "uke-vaapi-v4l2": "2.fc46"
   }
 }
