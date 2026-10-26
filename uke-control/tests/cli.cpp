@@ -24,7 +24,7 @@ int main() {
     assert(args({"app","charge","mode","slow","-h"}).help);
     assert(args({"app","resize","system","--version"}).version);
     bool refused=false;try{args({"app","--json","--json"});}catch(const UsageError&){refused=true;}assert(refused);
-    for(const auto* group:{"status","channel","update","swap","inventory","charge","usb","cdc","ethernet","display","desktop","hardware","firmware","wake","flashlight","led","sensors","diagnostics","report","resize","test"})assert(help(group).find("Usage: uke-control ") == 0);
+    for(const auto* group:{"status","channel","update","swap","inventory","charge","usb","cdc","ethernet","display","desktop","hardware","firmware","battery","nfc","wake","flashlight","led","sensors","diagnostics","report","resize","test"})assert(help(group).find("Usage: uke-control ") == 0);
     refused=false;try{help("unknown");}catch(const UsageError&){refused=true;}assert(refused);
     const std::string data=R"({"schema":"org.uke.control.fixture.v1","flashlight":{"available":true,"on":false,"requested_percent":17,"brightness_percent":0,"max_microamp":20000},"physical_acceptance":null,"values":[true,false,null,1.25],"reason":"control_backend_unqualified","detail":"{\"applied\":false}","warning":"\u001b[31munsafe\rtext"})";
     const auto text=output(data,false);

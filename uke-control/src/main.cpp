@@ -30,6 +30,15 @@ static int run(int argc,char** argv,bool as_json) {
             throw std::runtime_error("The native boot layout manager is unavailable");
         }
         if(command=="flashlight" || command=="led")return uke::lights::command(command=="led",argc-2,argv+2,as_json);
+        if(command=="battery") {
+            if(argc!=3||(std::string_view(argv[2])!="status"&&std::string_view(argv[2])!="health"&&std::string_view(argv[2])!="cells"&&std::string_view(argv[2])!="protocol"))throw uke::cli::UsageError("expected battery status|health|cells|protocol");
+            const auto result=uke::battery_query(argv[2]);uke::cli::print(result.output,as_json);return result.status;
+        }
+        if(command=="nfc") {
+            if(argc!=3||(std::string_view(argv[2])!="status"&&std::string_view(argv[2])!="on"&&std::string_view(argv[2])!="off"))throw uke::cli::UsageError("expected nfc status|on|off");
+            if(std::string_view(argv[2])!="status")uke::nfc_set(std::string_view(argv[2])=="on");
+            uke::cli::print(uke::nfc_status(),as_json);return 0;
+        }
         if(command=="resize") {
             const int count=argc-(as_json?1:0);
             if((count!=3&&count!=4) || std::string_view(argv[2])!="system" || (count==4&&std::string_view(argv[3])!="--check"))throw uke::cli::UsageError("expected resize system [--check]");
@@ -40,6 +49,7 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(command=="diagnostics")return uke::diagnostic::command(argc-2,argv+2,as_json);
         if(command=="wake") {
+            if(argc==4&&std::string_view(argv[2])=="status"){uke::cli::print(uke::wake::snapshot("/sys",argv[3]),as_json);return 0;}
             if(argc==3&&std::string_view(argv[2])=="check") return uke::wake::applicable()?0:1;
             if(argc==3&&std::string_view(argv[2])=="status") {uke::cli::print(uke::wake_status(),as_json);return 0;}
             if(argc==3&&std::string_view(argv[2])=="apply") {uke::wake_apply();return 0;}

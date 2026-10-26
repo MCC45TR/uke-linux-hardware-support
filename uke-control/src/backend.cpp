@@ -3,6 +3,8 @@
 #include "cli.hpp"
 #include "rpm-api.hpp"
 #include "charge-client.hpp"
+#include "battery.hpp"
+#include "nfc.hpp"
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 #include "wake.hpp"
@@ -34,6 +36,7 @@
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
 #include <sys/swap.h>
+#include <sys/sysmacros.h>
 #include <sys/wait.h>
 #include <unistd.h>
 namespace fs=std::filesystem;
@@ -159,7 +162,7 @@ void wake_apply() {
             need(value == "enabled\n" || value == "disabled\n", "Invalid saved wake permission");
             need(!source.path.empty(), "Saved wake source is no longer available: " + source.name);
             source.enabled = value == "enabled\n";
-        } else if (source.name == "bluetooth-uart" || source.name == "lid-open" ||
+        } else if (source.name == "bluetooth-uart" || source.name == "lid-open" || source.name == "usb-host" ||
                    source.name == "double-tap" || source.name.starts_with("usb-device-")) {
             source.enabled = true;
         }
@@ -308,6 +311,32 @@ std::string charge_status() {
     std::string out="{\"schema\":\"org.uke.control.charge.v1\",\"available\":"+std::string(paths.empty()?"false":"true")+",\"thresholds\":[";
     for(const auto& path:paths){if(out.back()!= '[')out+=',';out+="{\"path\":"+sysfs::quote(path.string())+",\"value\":"+sysfs::quote(read(path.string(),64))+"}";}
     return out+"]}\n";
+}
+Result battery_query(const std::string& operation) {
+    if(operation!="status"&&operation!="health"&&operation!="cells"&&operation!="protocol")throw std::runtime_error("Unknown battery report");
+    if(operation!="protocol") {
+        struct stat observer{};
+        if(lstat("/usr/bin/uke-battery",&observer)<0){need(errno==ENOENT,"Cannot inspect the battery observer");return {69,"{\"available\":false,\"reason\":\"install_uke_battery_observer_for_battery_reports\"}\n"};}
+        need(S_ISREG(observer.st_mode)&&observer.st_uid==0&&!(observer.st_mode&0022),"The battery observer executable is not trusted");
+    }
+    auto result=operation=="protocol"?charge_control_query("protocols"):execute({"/usr/bin/uke-battery"},10,65536);
+    if(result.status==0)result.output=battery::view(operation,result.output);
+    else if(operation=="protocol"){try{result.output=battery::view(operation,result.output);}catch(const std::exception&){}}
+    return result;
+}
+std::string nfc_status(){return nfc::snapshot();}
+void nfc_set(bool enabled) {
+    root();board();Lock lock;const auto before=nfc::radios();const auto event=nfc::request(before,enabled);
+    Fd fd{open("/dev/rfkill",O_WRONLY|O_CLOEXEC|O_NOFOLLOW)};struct stat st{};
+    need(fd.n>=0&&!fstat(fd.n,&st)&&S_ISCHR(st.st_mode),"The native rfkill device is unavailable");
+    const auto number=std::to_string(major(st.st_rdev))+":"+std::to_string(minor(st.st_rdev));
+    need(fs::canonical("/sys/dev/char/"+number)==fs::canonical("/sys/class/misc/rfkill"),"Unexpected rfkill character device");
+    const auto fresh=nfc::radios();
+    need(fresh.size()==1&&fresh[0].path==before[0].path&&nfc::request(fresh,enabled).idx==event.idx,"The NFC controller changed before the request");
+    ssize_t written;do{written=write(fd.n,&event,sizeof(event));}while(written<0&&errno==EINTR);
+    need(written==static_cast<ssize_t>(sizeof(event)),"NFC rfkill request failed; no automatic retry");
+    const auto after=nfc::radios();
+    need(after.size()==1&&after[0].path==before[0].path&&after[0].index==before[0].index&&after[0].soft&&*after[0].soft==!enabled,"NFC radio permission was not confirmed; inspect nfc status");
 }
 void charge_set(unsigned percent) {
     Lock lock;auto paths=thresholds();need(paths.size()==1,"A unique standard charge threshold is required; no raw firmware writes are supported");
@@ -498,7 +527,7 @@ std::string report() {
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 2.1.1\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 2.2.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {

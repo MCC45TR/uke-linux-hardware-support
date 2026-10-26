@@ -35,6 +35,8 @@ namespace {
 struct Group {const char* name;const char* summary;const char* usage;};
 constexpr Group groups[]={
     {"status","Device overview", "status"},
+    {"battery","Battery readings, pack health, cells and charging protocol", "battery status\nbattery health\nbattery cells\nbattery protocol\n\nReuses uke-battery and uke-charge-control. Reports unavailable values explicitly.\nPack health, vendor SOH and calculated retention are separate observations.\nIndividual cell health requires individual cell measurements; it is not inferred.\nA reported USB class is not a negotiated PD revision or a verified QC/MI session."},
+    {"nfc","Linux NFC controller and radio permission", "nfc status\nnfc on|off\n\nOn/off changes only a unique NFC controller's rfkill permission and requires root.\nIt does not start tag polling or provide card emulation.\nA passive tap-to-share feature does not establish a controllable Linux reader."},
     {"channel","COPR channel selection and synchronization", "channel status\nchannel set stable|test|unstable [--dry-run] [--yes]\nchannel sync [--dry-run] [--yes]"},
     {"update","Synchronize the channel and update distribution packages", "update [--check] [--yes]"},
     {"swap","Swap status and saved policy", "swap status\nswap set half|full|MiB\nswap apply"},
@@ -47,7 +49,7 @@ constexpr Group groups[]={
     {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off"},
     {"hardware","Cached chipset, audio, media and input paths", "hardware status"},
     {"firmware","Cached remote processors and SCMI discovery", "firmware status"},
-    {"wake","Driver wake permissions", "wake status\nwake set SOURCE on|off\nwake apply\n\nStatus lists available source names, including supported usb-device-PORT, lid-open and double-tap.\nSaved choices override supported USB, Bluetooth, lid and gesture wake defaults.\nPermission readback is not physical wake validation."},
+    {"wake","Driver wake permissions", "wake status [SOURCE]\nwake set SOURCE on|off\nwake apply\n\nStatus lists available source names, including supported usb-device-PORT, lid-open and double-tap.\nSaved choices override supported USB, Bluetooth, lid and gesture wake defaults.\nPermission readback is not physical wake validation."},
     {"flashlight","Torch on/off and requested brightness", "flashlight status\nflashlight on|off\nflashlight set 1..100\n\nThe retained 20 mA limit provides two lit steps: 1–99 requests use 50%; 100 uses 100%.\nCLI zero also means off. On restores the in-service request, default 100.\nAn active local user may request changes without sudo."},
     {"led","Kernel notification LED requests", "led status\nled auto\nled test\nled set '#RRGGBB' [0..100]\n\nTest requests one ten-second color transition. Auto restores kernel policy.\nAn active local user may request changes without sudo."},
     {"sensors","Exported sensor channels and live readings", "sensors [list] [-n SECONDS] [--count=N] [--once]\n\nDefault: one snapshot. -n5 also repeats every five seconds. Ctrl-C stops.\n--json emits one JSON object per sample; polling time is not acquisition time."},

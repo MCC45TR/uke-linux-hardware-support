@@ -12,5 +12,6 @@ struct Source {
 bool applicable(const std::filesystem::path& sys = "/sys");
 std::vector<Source> sources(const std::filesystem::path& sys = "/sys");
 std::string snapshot(const std::filesystem::path& sys = "/sys");
+std::string snapshot(const std::filesystem::path& sys,const std::string& source);
 bool recovery_key(const std::vector<Source>& sources);
 }

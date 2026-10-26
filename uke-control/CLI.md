@@ -84,3 +84,38 @@ storage wizard. Both support a private metadata `--dry-run` and a read-only
 `status` query (`--json` optional). See [boot layout conversion](BOOT-LAYOUT.md)
 for the original-userdata boundary, ownership evidence and two-approval data-loss
 policy. Neither command installs an operating system.
+
+26 October 2026: Control 2.2 adds these reports and guarded controls.
+
+| Command | Meaning |
+| --- | --- |
+| `uke-control battery status` | A bounded read-only snapshot from the existing battery observer. |
+| `uke-control battery health` | Reported pack health, vendor SOH, cycles and qualified retention with provenance. |
+| `uke-control battery cells` | Reported topology and individual-cell health availability. |
+| `uke-control battery protocol` | Cached USB supply class and actually reported negotiated protocol/revision. |
+| `uke-control wake status double-tap` | Wake permission and the NT36532 gesture-armed state. |
+| `sudo uke-control wake set double-tap on` | Save supported wake permission; use `off` to disable it. |
+| `uke-control nfc status` | Linux NFC controllers, rfkill state and configured FM19511 tag interfaces. |
+| `sudo uke-control nfc on` / `off` | Unblock/block one uniquely identified NFC radio. No polling or tag-memory writing. |
+
+Readable default output and explicit `--json` are retained. Missing individual-cell
+telemetry produces an unavailable result; pack health and equal-share estimates
+are not individual measurements. A reported USB class does not identify a PD
+revision, QC version or verified MI session. The protocol report uses the existing
+cache-only charge query. Other battery views reuse the read-only observer and may
+read its standard power-supply attributes. An incoherent snapshot is not promoted
+to usable health data.
+
+The Uke OEM DT at `94c84aeb9e517dbde546fc732033c184094c8e57`,
+`qcom/uke-sm8635.dtsi`, defines an `fm,fm19511` NFC tag. The manufacturer's
+[POCO Pad X1 FAQ](https://www.mi.com/my/support/faq/details/KA-628084/) separately
+excludes card reader/writer and card emulation while advertising tap-to-share.
+NFC status reports exported Linux interfaces; DT configuration and declarations
+do not establish physical operation. Radio changes require exact Uke/SM7675,
+one associated NFC rfkill switch, no hardware block when enabling, and permission
+readback. Unrelated radios are excluded.
+
+Double-tap requires the bound `nt36532-uke-thp` driver, its explicit
+`gesture_wake_armed` interface and a valid wake permission. Saved permission and
+currently armed state are separate. The client adds no panel power policy,
+gesture packets or firmware commands. Actual suspend/wake requires tablet testing.

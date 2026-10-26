@@ -468,3 +468,13 @@ archives, stops metadata writes on I/O errors and reverses only completed kernel
 partition changes. F2FS preservation shrink is disabled following a VM integrity
 failure. F2FS growth preserves its native multicall alias; final capacity is
 checked independently, with mounted XFS geometry queried from the kernel.
+
+26 October 2026: source version 2.2.0 adds `battery status|health|cells|protocol`,
+`nfc status|on|off` and `wake status SOURCE` (including double-tap). Battery views
+reuse the existing native observer and charge helper. Individual cell health and
+exact negotiated charging revisions stay unavailable when their backend does not
+report them. NFC distinguishes the OEM FM19511 tag from active Linux readers and
+changes only a unique NFC rfkill permission. Double-tap reports permission and
+armed state from the verified NT36532 driver. The xHCI fixes from `b025866` and
+`f4ceae7` are retained. See [commands and limitations](CLI.md). Source and host
+fixtures do not establish physical NFC, individual cell health or gesture wake.

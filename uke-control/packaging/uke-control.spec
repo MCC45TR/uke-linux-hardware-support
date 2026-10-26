@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.1.1
+Version: 2.2.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -26,6 +26,7 @@ Requires: polkit selinux-policy-targeted
 Requires: kmod
 Requires: dialog e2fsprogs device-mapper dosfstools
 Requires: libdnf5 >= 5.4.6.0
+Recommends: uke-battery-observer
 Provides: uke-control(channel-api) = 1
 Conflicts: uke-plasma-controls < 1.0.0-23
 %{?systemd_requires}
@@ -180,6 +181,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.2.0-1
+- Add battery health, cell-telemetry availability and reported charging-protocol views.
+- Add NFC controller/tag inventory and guarded per-controller rfkill permission.
+- Show selected double-tap wake state and retain the xHCI host wake fixes.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.1.1-1
 - Pin interactive consent across worker handoff and retain before/after GPT snapshots.
 - Stop GPT writes on I/O failure and undo only completed kernel partition operations.

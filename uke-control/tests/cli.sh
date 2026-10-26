@@ -8,8 +8,8 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.1.1' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.1.1"' >/dev/null
+grep -Fx 'uke-control 2.2.0' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.2.0"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
@@ -63,5 +63,18 @@ for mode in human json; do
     if test "$mode" = json; then jq -e '.applied==false and .effective==null' "$stage/refused" >/dev/null
     else grep -Fx 'Applied: no' "$stage/refused"; grep -Fx 'Effective: not reported' "$stage/refused"; fi
 done
+for query in status health cells; do
+    "$app" battery "$query" --json | jq -e '.individual_cell_health==null and .view!=null' >/dev/null
+    "$app" battery "$query" > "$stage/battery"
+    grep -Fx 'Individual cell health: not reported' "$stage/battery"
+    ! grep -q '^{' "$stage/battery"
+done
+set +e
+"$app" battery protocol --json > "$stage/battery"
+result=$?
+set -e
+test "$result" = 69
+"$app" nfc status --json | jq -e '.available==false and .powered==null and .polling_started==false' >/dev/null
+"$app" nfc status | grep -Fx 'Available: no'
 unset LD_PRELOAD
 printf '%s\n' 'Actual CLI with host-only backend fixture: coherent status, USB role aliases, explicit JSON and preserved EX_UNAVAILABLE result PASS'
