@@ -159,6 +159,22 @@ not reset its driver/drain state through `avcodec_flush_buffers()`. A new
 process that decodes successfully does not qualify seek within an existing
 decoder context. Keep this requirement open when testing the candidate.
 
+The host-only `tests/build-ffmpeg-video-probe.sh` reproduces the limited
+diagnostic CLI build inside the pinned AArch64 SDK, with prepared sources at
+`/source` and an incomplete or empty build directory at `/build`. It verifies
+all requested V4L2 configuration macros before compiling and checks the final
+codec inventory. It is not a tablet installer or a distribution FFmpeg build.
+
+Both startup-only and full streaming diagnostic programs build under AArch64
+QEMU user-mode on x86_64. Actual-C startup, source-change and buffer-lifetime
+fixtures pass there. Three software rawvideo NV12 frames from each CLI match
+the independent host hash; this checks the CLI data path, not Iris decoding.
+The programs link internal FFmpeg libraries statically and require only libc,
+libm and the AArch64 loader, with highest required symbol GLIBC_2.44. They
+contain no software H264/HEVC/VP9 decoder. Exact hashes and limits are in the
+candidate manifest. No binary is installed or executed on the tablet; fresh
+ABI and device-identity checks remain required before the scoped comparison.
+
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10
 encode remains gated out. No new non-audit kernel message appears after either

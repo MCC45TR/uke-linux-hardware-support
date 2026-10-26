@@ -1,9 +1,11 @@
 # Uke video acceptance matrix
 
-Updated: 26 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
+Updated: 27 October 2026 local date. Recorded physical environment: POCO Pad X1, Fedora 46 Rawhide,
 Linux7.3.0-15 for bounded native/VA workloads, installed VA revision0.4,
 Mesa26.2.5 and libva2.24.1. Earlier kernel10/12/14 observations remain dated
-history. Source, package, bounded mode and profile-wide acceptance are separate.
+history. Current target identity has not been refreshed after the coordinated
+touch handoff. Source, package, emulation, bounded mode and profile-wide
+acceptance are separate.
 
 | Check | Observed result | Remaining gate |
 |---|---|---|
@@ -32,11 +34,14 @@ history. Source, package, bounded mode and profile-wide acceptance are separate.
 | VA kernel15 VP9 P0/P2 decode | Each320x240 session passes30/30 exact NV12/P010 reference frames, untraced | Superframes, alt-ref/show-existing, limits and lifecycle |
 | Native H264 Main encode |30 independently decoded640x360 frames,53.02dB average PSNR and correct30fps SPS timing; requested color fields absent | Color, RC/GOP/IDR, duration and VA regression |
 | HEVC Main encode | Not run | Independent decode, timing, RC/GOP/IDR, quality and color |
-| VA revision0.6 / COPR11209327 | Native build, all5 source fixtures, trusted signatures, no-Python/scriptlet payload audit pass; not installed | Healthy/damaged hardware sessions, dimensions and rendering/browser regression |
+| Historical standalone VA revision0.6 / COPR11209327 | Native fixtures and signed payload audit passed; standalone build/source later retired | Do not use the retired delivery route; existing-family child below replaces it |
+| VA code0.6 / existing additional family11211213 | Child uke-vaapi-v4l2-1.0.0-2, native fixtures and signed payload audit pass; not installed | Healthy/damaged hardware sessions, dimensions and rendering/browser regression |
 | HEVC Main10 encode | Native P010 and VA source candidates pass host checks; no native bitstream | Matched delivery, P010 MMAP/GPU/import, independent precision and metadata |
 | Main10 patch on kernel-13 source | Patch applies; Main10/caps contracts and Clang-23 AArch64 driver cross-build pass | Whole matched kernel build/delivery and actual encode; no object is installed |
 | Advanced encode controls and mode limits | Not run | B/ROI/LTR/layers/intra-refresh, source/runtime intersection |
 | 4K60, 4096, minimum-size and high-FPS modes | Not run | Correctness followed by sustained tablet measurements |
+| HD and nominal4K60 software preparation | Seven1080p30 and seven3840x2160/60 input profiles, two native-format references each; packet/reference timing checked | Actual mode boundaries, presentation, sustained FPS and tablet acceptance |
+| FFmpeg streaming diagnostic CLI | Startup-only/full candidates compile under emulated AArch64; actual-C fixtures and three software rawvideo frames per CLI pass | Target ABI, untraced native High frames, actual DRC/held-buffer and lifecycle tests; no seek callback yet |
 
 Every accepted codec/profile still requires 100 open/stream/drain/close cycles,
 30 minutes at each claimed target mode, seek, EOS/drain, resolution and bit-depth

@@ -59,6 +59,13 @@
     "replayed_actual_c_host_fixtures_passed": true,
     "native_decoder_flush_callback_present": false,
     "same_context_seek_resume_qualified": false,
+    "current_upstream_flush_review": {
+      "commit": "d31915e9dce4d33676fadc6c3e08965b4acc132b",
+      "file": "libavcodec/v4l2_m2m_dec.c",
+      "sha256": "a035dacdc945f296007216acc549446fe8350e14799a2e19012d498149519f37",
+      "equal_to_original_9_0_2_decoder": true,
+      "flush_callback_present": false
+    },
     "minimal_host_x86_64_libraries_compiled": true,
     "compiled_v4l2_decoder_wrappers": 9,
     "compiled_v4l2_encoder_wrappers": 5,
@@ -73,6 +80,35 @@
     "host_mappings_and_refcounts_real": true,
     "native_aarch64_package_built": false,
     "installed_on_tablet": false,
-    "tablet_tested": false
+    "tablet_tested": false,
+    "diagnostic_cli_builds": {
+      "execution_environment": "Rootless AArch64 SDK under QEMU user-mode on x86_64; no network or GPU/video devices",
+      "sdk_image_sha256": "51818eb14416590fd727514ee08273833fddfa4dd3be96d4982e90be281acae9",
+      "helper": "tests/build-ffmpeg-video-probe.sh",
+      "helper_sha256": "d259684a375c0f34a30443ff5915eb525013adc6793a6a1a3c15f0359e4e947e",
+      "control_scope": "Startup-error candidate only; not stock FFmpeg",
+      "control_ffmpeg_sha256": "e652261081b48140c09d567cb3a5f3fe31c95d4cbd5b54ee0949c33f860f5baf",
+      "control_ffprobe_sha256": "932abc5067798519e18671a97611d03ee2795f72c68c156ce7f5f4d1bb15e4d3",
+      "candidate_ffmpeg_sha256": "9e972650dbfb023f666a97488eaba4114ac2983b993b1939fd211ee5de99835c",
+      "candidate_ffprobe_sha256": "f69ef4c2b9d5021198f6d983a750892353f8e0ae0f999402e30a3d6c8f9aa75d",
+      "both_cli_builds_passed": true,
+      "elf_architecture": "ELF64 LSB AArch64",
+      "direct_shared_libraries": ["libm.so.6", "libc.so.6"],
+      "required_glibc_symbol_max": "GLIBC_2.44",
+      "compressed_v4l2_decoder_count": 3,
+      "v4l2_encoder_count": 2,
+      "software_h264_hevc_vp9_decoders_enabled": false,
+      "actual_c_fixtures_passed_under_emulation": true,
+      "modelled_driver_calls": true,
+      "raw_nv12_frames_verified_per_build": 3,
+      "raw_frame_sha256": "d165e7ee9ec02596e287c6a6f6e8d3f6bac3096514708db9f92402eebdd42a45",
+      "raw_check_scope": "Software rawvideo CLI path only; not VPU decode",
+      "native_copr_build": false,
+      "full_distribution_features_built": false,
+      "replacement_rpm_built": false,
+      "delivered_to_tablet": false,
+      "target_abi_checked": false,
+      "device_codec_tested": false
+    }
   }
 }
