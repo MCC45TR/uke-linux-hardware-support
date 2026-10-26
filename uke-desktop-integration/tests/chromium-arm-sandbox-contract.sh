@@ -34,7 +34,8 @@ STUB(AddImgPvrGpuPermissions) STUB(AddArmGpuPermissions) STUB(AddAmdGpuPermissio
 STUB(AddIntelGpuPermissions) STUB(AddStandardGpuPermissions) STUB(AddNvidiaGpuPermissions)
 STUB(AddVirtIOGpuPermissions) STUB(AddChromecastArmGpuPermissions)
 static void AddV4L2GpuPermissions(Permissions*, const sandbox::policy::SandboxSeccompBPF::Options&) {}
-[[maybe_unused]] static void AddIrisGpuPermissions(Permissions*, const sandbox::policy::SandboxSeccompBPF::Options&) {}
+static unsigned iris_policy_calls;
+static void AddIrisGpuPermissions(Permissions*, const sandbox::policy::SandboxSeccompBPF::Options&) { ++iris_policy_calls; }
 static constexpr int dlopen_flag=1;
 static const char* kLibMaliPath="libmali-test", *kLibTegraPath="libtegra-test";
 static const char* kAllowedChromecastPaths[]={"/cast/"};
@@ -63,12 +64,12 @@ int main() {
   sandbox::policy::SandboxSeccompBPF::Options options;
   arm=true;
   auto p=FilePermissionsForGpu(options);
-  assert(has(p,"mock-existing-drm-policy"));
+  assert(has(p,"mock-existing-drm-policy") && iris_policy_calls==1);
   assert(has(p,"/usr/share/glvnd/egl_vendor.d/50_mesa.json"));
   assert(has(p,"/etc/glvnd/egl_vendor.d"));
   assert(!has(p,"/dev/video0") && !has(p,"/"));
   arm=false; p=FilePermissionsForGpu(options);
-  assert(!has(p,"mock-existing-drm-policy"));
+  assert(!has(p,"mock-existing-drm-policy") && iris_policy_calls==1);
   chromeos=true; p=FilePermissionsForGpu(options);
   assert(!has(p,"/usr/share/glvnd/egl_vendor.d/50_mesa.json"));
   chromeos=false; arm=true; LoadArmGpuLibraries();

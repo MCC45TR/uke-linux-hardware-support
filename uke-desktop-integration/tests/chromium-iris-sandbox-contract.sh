@@ -71,6 +71,10 @@ int main() {
   AddIrisGpuPermissions(&p,options);assert(p.size()==1&&p[0].path=="/dev/video19");
   options.accelerated_video_decode_enabled=false;options.accelerated_video_encode_enabled=true;
   p.clear();AddIrisGpuPermissions(&p,options);assert(p.size()==1&&p[0].path=="/dev/video23");
+  options.accelerated_video_decode_enabled=true;
+  p.clear();AddIrisGpuPermissions(&p,options);
+  assert(p.size()==2&&p[0].path=="/dev/video19"&&p[1].path=="/dev/video23");
+  options.accelerated_video_decode_enabled=false;
   base::drivers.erase("/sys/class/video4linux/video23/device/driver");
   p.clear();AddIrisGpuPermissions(&p,options);assert(p.empty());
   base::names.erase("/sys/class/video4linux/video19/name");
