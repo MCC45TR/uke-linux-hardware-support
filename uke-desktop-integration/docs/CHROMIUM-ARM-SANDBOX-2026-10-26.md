@@ -60,3 +60,11 @@ Source RPM156.0.8078.47-1.1.uke2.fc46 has SHA-256
 Expanded AArch64 packaging selects use_vaapi=true without V4L2 codec flags.
 The retained Fedora spec delta records the exact release, flags and patch
 application. This is an SRPM, not a completed Chromium build or tablet result.
+
+COPR11208913 accepts the single AArch64 submission in the separate
+chromium-sandbox-20261026 test directory. Native compilation and binary
+RPM inspection remain pending. Fedora's original chromium.conf includes
+feature forces and an X11-only global blocklist/workaround bypass; invoke
+the candidate binary directly with reviewed arguments for the controlled
+trial. Do not run its distribution wrapper as the baseline or promote its
+configuration before separate device qualification.

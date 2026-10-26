@@ -449,7 +449,29 @@
       "root_environment_contamination": true
     },
     "persistent_flags_changed": false,
-    "codec_frames_submitted_by_chrome": 0
+    "codec_frames_submitted_by_chrome": 0,
+    "gpu_report_sha256": [
+      {
+        "mode": "normal",
+        "phase": "before",
+        "sha256": "200078def0a2a4e5046076659edf74aba46c2d0c970ef1b2b146ea3bb6ae4aab"
+      },
+      {
+        "mode": "normal",
+        "phase": "after",
+        "sha256": "e3a0c554b46bfd90186590f99c45352e864882dae308055121648d80e4659843"
+      },
+      {
+        "mode": "early",
+        "phase": "before",
+        "sha256": "1527eb5c7bf139a44516654b008a519a9038bf0fe019f4f6e3715c8d5ce2e300"
+      },
+      {
+        "mode": "early",
+        "phase": "after",
+        "sha256": "0919b688f1e11043b7ec616549fcdd35323cc841a74c3e790f1f382069e19aed"
+      }
+    ]
   },
   "linux_arm_sandbox_source_candidate": {
     "date": "2026-10-26",
@@ -487,6 +509,9 @@
     "clean_archive_gpu_source_matches_pinned_revision": true,
     "source_rpm_built": true,
     "source_rpm_nevra": "chromium-156.0.8078.47-1.1.uke2.fc46.src",
-    "source_rpm_sha256": "65d0869d18c6829f8eb819142a49b608a1f53e4acd922a6838b636fd2d2aac6d"
+    "source_rpm_sha256": "65d0869d18c6829f8eb819142a49b608a1f53e4acd922a6838b636fd2d2aac6d",
+    "copr_build": 11208913,
+    "copr_repository": "mcc45tr/uke-linux-test:custom:chromium-sandbox-20261026",
+    "copr_submission_accepted": true
   }
 }
