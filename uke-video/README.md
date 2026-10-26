@@ -176,6 +176,37 @@ quiescence after failed stops need device evidence. A fresh-process decode or
 a command-line seek cannot substitute for the public-API reuse test. The
 device acceptance gate remains open.
 
+The separate C++ helper `tests/ffmpeg-seek-session.cpp` now drives that public
+API: drain the complete input, retain the first frame, seek the demuxer, flush
+the same AVCodecContext, then decode and drain again. It checks unchanged input,
+held-frame contents and matching pixels, timing, visible crop, depth and color
+metadata across both passes. It uses reviewed container headers without an
+extra decoder probe. Admission is limited to the named H264/HEVC/VP9 V4L2
+wrappers and an explicit software `rawvideo` control, 1–60 frames and a 64 MiB
+regular input. Output must be a new directory. Example, under an external
+bounded supervisor after target identity and ABI validation:
+
+```sh
+timeout 30s ./uke-ffmpeg-seek-session h264_v4l2m2m reviewed-input.mkv 30 new-seek-record
+```
+
+The output contains `first.tsv`, `second.tsv` and `result.json`. TSV rows retain
+PTS/duration in the recorded time base, dimensions, native pixel format/depth,
+packed visible-byte count/hash and color fields. Both passes must separately
+match independent references and actual backend records before hardware
+acceptance. Cleanup runs before the success record is written. Pixel copying
+is explicit CPU work, with no FPS or zero-copy claim.
+
+On 27 October, the Bash contract builds this helper in the same AArch64 SDK.
+Three independently hashed NV12 patterns pass twice with a retained clone.
+Five controls reject missing flush, missing seek, wrong count, existing output
+and compressed software fallback. This exercises the public API with software
+rawvideo; it does not exercise the V4L2 flush callback. Hardware, compressed
+reference and lifecycle flags remain false. Shared dependencies also include
+libstdc++/libgcc, requiring GLIBCXX_3.4.32 and GLIBC_2.44. Target provider package
+and file metadata are recorded, but target symbol resolution and execution
+are unverified. No helper or replacement RPM is installed on Uke.
+
 The host-only `tests/build-ffmpeg-video-probe.sh` reproduces the limited
 diagnostic CLI build inside the pinned AArch64 SDK, with prepared sources at
 `/source` and an incomplete or empty build directory at `/build`. It verifies

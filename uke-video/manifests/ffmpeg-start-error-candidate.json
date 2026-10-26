@@ -160,6 +160,51 @@
     "same_context_public_api_seek_tested_on_device": false,
     "hardware_seek_frames_verified": false,
     "held_generation_capacity_qualified": false,
-    "stop_failure_dma_quiescence_qualified": false
+    "stop_failure_dma_quiescence_qualified": false,
+    "public_api_helper": {
+      "source": "tests/ffmpeg-seek-session.cpp",
+      "source_sha256": "5e8f0a2b2c8880764451f08cd5f75d2a32335979912d906fb7c919444df88b27",
+      "fixture": "tests/ffmpeg-seek-session-contract.sh",
+      "fixture_sha256": "9ec63f2f0522f0d90bd56e89cdd4485e32cf5aad29a1a36d7d31b7aa5c2c4dac",
+      "aarch64_elf_sha256": "e8d5eb9de583b5ccb84fbb75b81dfcec83ae048b2f1a4dda7fb8c426b6c76487",
+      "linked_static_archives": {
+        "libavformat": "1411ac6f362cee6874d80f9f95fa2ae284febfa6633aead3a045b81bf3493592",
+        "libavcodec": "0ae3eee5a4b64186278408e27cfa4c69d8937e68bca73a4fdabb44d4def3c12d",
+        "libavutil": "1a75344e48c9060eab28a6b9be61aadafa0b4bcbb396306e9ccc09940633b173"
+      },
+      "environment": "Pinned AArch64 SDK under QEMU user-mode on x86_64; no video/GPU device",
+      "same_avcodec_context_public_api_software_control_passed": true,
+      "raw_nv12_frames_per_pass": 3,
+      "passes": 2,
+      "input_sha256": "a63ea9aa9474b0f6b550cc4bd9f59c863379f77d8b7f9cb9013e257b1d946daa",
+      "independent_host_raw_frame_hashes_matched": true,
+      "held_clone_unchanged_across_seek_flush_and_second_pass": true,
+      "negative_controls_passed": 5,
+      "negative_controls": [
+        "missing codec flush",
+        "missing demux seek",
+        "wrong expected count",
+        "existing output directory",
+        "compressed software decoder refusal"
+      ],
+      "shared_libraries": [
+        "libstdc++.so.6",
+        "libm.so.6",
+        "libgcc_s.so.1",
+        "libc.so.6"
+      ],
+      "required_glibc_symbol_max": "GLIBC_2.44",
+      "required_glibcxx_symbol_max": "GLIBCXX_3.4.32",
+      "required_cxxabi_symbol_max": "CXXABI_1.3.9",
+      "target_provider_package_and_file_metadata_read": true,
+      "target_symbol_versions_verified": false,
+      "v4l2_flush_hook_exercised_by_raw_control": false,
+      "delivered_to_tablet": false,
+      "tested_on_tablet": false,
+      "hardware_accepted": false,
+      "compressed_independent_reference_accepted": false,
+      "lifecycle_accepted": false,
+      "copy_path": "CPU-packed visible native-format planes; no FPS or zero-copy qualification"
+    }
   }
 }
