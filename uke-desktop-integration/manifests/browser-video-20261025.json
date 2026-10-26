@@ -450,5 +450,22 @@
     },
     "persistent_flags_changed": false,
     "codec_frames_submitted_by_chrome": 0
+  },
+  "linux_arm_sandbox_source_candidate": {
+    "date": "2026-10-26",
+    "patch": "patches/0001-chromium156-linux-arm-mesa-sandbox.patch",
+    "patch_sha256": "3bb55550e7ffba3154e965d4e92ec9f26774e92697424c918f2b5f6c7802250b",
+    "fixture": "tests/chromium-arm-sandbox-contract.sh",
+    "fixture_sha256": "b5714ade90f5fc6b754e162e6ad46e4c9f40c18ef1555e9fc2ef574a6f492fb3",
+    "host_extracted_functions_passed": true,
+    "patch_dry_run_passed": true,
+    "full_chromium_build_passed": false,
+    "package_built": false,
+    "installed": false,
+    "device_tested": false,
+    "accepted": false,
+    "fedora_packaging_commit": "e402dd33400be892fc94d8c1f2fab15c9dc81c9b",
+    "fedora_spec_sha256": "ccd7db122c39672b6a9fdaee12fc41d2a61a24569533c811b176ab8a2d54bc07",
+    "source_clean_sha512": "9b0391c151c170659ca1c8da5a04813470abad9dc41821680c808eb54239328df005dddc7036d35c9177a9b2bd9f523ffaee8caf1f2b89074ed4b7208f313778"
   }
 }

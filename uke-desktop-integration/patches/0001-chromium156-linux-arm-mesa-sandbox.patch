@@ -1,0 +1,56 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] content: admit Mesa DRM and EGL discovery in the Linux ARM GPU broker
+
+Chromium156's ordinary Linux fallback omits DRM render nodes and GLVND
+vendor metadata. An early sandbox therefore traps Wayland DRM/EGL opens.
+Use the existing DRM node policy, allow only Mesa vendor discovery and
+preload Mesa's EGL dispatch without requiring the removed libglapi split.
+No EGL display/context is created and no sandbox or blocklist is disabled.
+
+Source: Chromium1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775 (BSD-style).
+Validation: host extracted-function fixture only; full build and device
+Seccomp2 plus hardware rendering/video are still required.
+
+--- a/content/common/gpu_pre_sandbox_hook_linux.cc
++++ b/content/common/gpu_pre_sandbox_hook_linux.cc
+@@ -250,6 +250,17 @@
+   }
+ }
+ 
++void AddArmMesaGpuPermissions(std::vector<BrokerFilePermission>* permissions) {
++  AddDrmGpuPermissions(permissions);
++  // GLVND discovers Mesa after the early sandbox has started.
++  static const char* const kReadOnlyList[] = {
++      "/etc/glvnd/egl_vendor.d",
++      "/usr/share/glvnd/egl_vendor.d",
++      "/usr/share/glvnd/egl_vendor.d/50_mesa.json"};
++  for (const char* path : kReadOnlyList)
++    permissions->push_back(BrokerFilePermission::ReadOnly(path));
++}
++
+ void AddAmdGpuPermissions(std::vector<BrokerFilePermission>* permissions) {
+   static const char* const kReadOnlyList[] = {
+       "/etc/ld.so.cache",
+@@ -516,8 +527,11 @@
+ 
+     // Preload mesa related libraries for devices which use mesa
+     // (ie. not mali or tegra):
+-    if (!is_mali && !is_tegra &&
+-        (nullptr != dlopen("libglapi.so.0", dlopen_flag))) {
++    if (!is_mali && !is_tegra) {
++      // Modern Mesa no longer requires a separate libglapi.
++      dlopen("libglapi.so.0", dlopen_flag);
++      dlopen("libEGL.so.1", dlopen_flag);
++      dlopen("libEGL_mesa.so.0", dlopen_flag);
+       auto driver_paths = std::to_array<const char*>({
+           "/usr/lib64/libgallium_dri.so",
+ #if defined(DRI_DRIVER_DIR)
+@@ -669,6 +683,8 @@
+   }
+ 
+   AddStandardGpuPermissions(&permissions);
++  if (IsArchitectureArm())
++    AddArmMesaGpuPermissions(&permissions);
+   return permissions;
+ }
+ 
