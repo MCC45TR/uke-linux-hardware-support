@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-10-25",
-  "scope": "Supplied Chrome report, guarded VA queries and source/package repair; no codec or rendering acceptance",
+  "scope": "Supplied report, default VA repair, controlled GL/sandbox comparison and scoped native codec output; browser video acceptance remains open",
   "browser": {
     "version": "156.0.8078.47",
     "revision": "1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775",
@@ -92,6 +92,21 @@
         "sha256": "a3487445016152a8a52784fc89c4dd7e625ea40bed71fb1a0edd9ddeb1c5216e",
         "local_path": "referances/chromium-gpu-20261025/media_gpu_gpu_video_decode_accelerator_factory.cc",
         "upstream_path": "media/gpu/gpu_video_decode_accelerator_factory.cc"
+      },
+      {
+        "local_path": "referances/chromium-gpu-20261025/sandbox_linux_syscall_broker_broker_process.cc",
+        "upstream_path": "sandbox/linux/syscall_broker/broker_process.cc",
+        "sha256": "7a33cd5ee5b47cdbf19523e54a910b56065b7db936e6b4e15b61ae3fa32dd170"
+      },
+      {
+        "local_path": "referances/chromium-gpu-20261025/ui_ozone_platform_wayland_gpu_wayland_buffer_manager_gpu.cc",
+        "upstream_path": "ui/ozone/platform/wayland/gpu/wayland_buffer_manager_gpu.cc",
+        "sha256": "074ee7bed98d4f4b01840e6957a569cfbd48e3e18b3ffb3bbc1822e3a3fd0f1b"
+      },
+      {
+        "local_path": "referances/chromium-gpu-20261025/ui_ozone_platform_wayland_common_drm_render_node_handle.cc",
+        "upstream_path": "ui/ozone/platform/wayland/common/drm_render_node_handle.cc",
+        "sha256": "ea961447b8746d07a6cd88fd04158d4262c98cc59e3925cb103e2aac2f4f38f5"
       }
     ]
   },
@@ -403,5 +418,37 @@
     "hardware_codec_accepted": false,
     "early_sandbox_trial_started": false,
     "scope_returned": "Coordinator requested target back for the user-prioritized DSC/FEC work; no additional test started"
+  },
+  "kernel15_sandbox_comparison": {
+    "date": "2026-10-26",
+    "kernel_release": "7.3.0-15",
+    "normal": {
+      "seccomp": 0,
+      "filters": 0,
+      "gl_pixels_and_restore_passed": true,
+      "decode_profile_rows": 8,
+      "encode_profile_rows": 0,
+      "webgpu_rounds": 0,
+      "capture_sha256": "87eba611012b007f0f04461c6e93e4fc1ed5c1531773ef81f909a1b95ebe55ed",
+      "process_sha256": "9da1fa46b82d0c2b9a28b9072c1176bdfce995b35c5049af7af02b9354f3466b"
+    },
+    "early_fatal": {
+      "seccomp": 2,
+      "filters": 1,
+      "gl_pixels_and_restore_passed": false,
+      "renderer": "Disabled",
+      "webgpu_rounds": 0,
+      "capture_sha256": "c3e7f87cb2879c51cd0db3355b4a846467bddfe05504b6a351b1125b3d8b2fb9",
+      "process_sha256": "2ff90d4166c99ba77206ff53067c18a17532a49389072fbaefb244de4cb7fd92"
+    },
+    "accepted": false,
+    "diagnostic": {
+      "filetrace_sha256": "0c5bbe9b3580924ce676dc63769bcb25eca255e5761f61be93476b678c12e48d",
+      "observed": "DRM render node and GLVND EGL vendor directory opens fail through the post-BPF file broker",
+      "ptrace_acceptance": false,
+      "root_environment_contamination": true
+    },
+    "persistent_flags_changed": false,
+    "codec_frames_submitted_by_chrome": 0
   }
 }

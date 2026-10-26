@@ -159,7 +159,25 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "path": "FFmpeg h264_v4l2m2m / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "new_non_audit_kernel_messages": 0,
+          "firmware_fatal_error": null,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "1e7b79f72406b1b320788bbe64402be40e5e0eba5636af7034e6e47f5ce93284",
+          "scope": "One bounded native session; no VA/browser/lifecycle/sustained/physical-display acceptance"
+        }
+      ]
     },
     {
       "codec": "h264",
@@ -185,9 +203,27 @@
       "kernel_accessible": true,
       "kernel_raw_formats": null,
       "vaapi_advertised": true,
-      "runtime_pass": null,
+      "runtime_pass": false,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "path": "FFmpeg h264_v4l2m2m / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "expected_frames": 30,
+          "produced_frames": 1,
+          "all_reference_frames_equal": false,
+          "new_non_audit_kernel_messages": 5,
+          "firmware_fatal_error": "HFI_ERROR_FATAL 0x04000003",
+          "ffmpeg_exit": 0,
+          "mode_passed": false,
+          "receipt_sha256": "1c96e3b906b6ef62ec2672e41926a3e357eb23af267b267b488a3547798fc9d3",
+          "scope": "One bounded native session; no VA/browser/lifecycle/sustained/physical-display acceptance"
+        }
+      ]
     },
     {
       "codec": "hevc",
@@ -419,5 +455,17 @@
     "frame_production_tested": false,
     "default_log_sha256": "3ed313e33583084e0ce5d0d025df5623fab20929f7a7b18ce96420d569c1edf4",
     "explicit_log_sha256": "f6fbfd7fd9a9f8adaa396d390ddc4bfb9a14409fc077b9c67c8ca038cbebef76"
+  },
+  "native_kernel15_trials": {
+    "date": "2026-10-26",
+    "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+    "decoder": "Iris Decoder",
+    "firmware_session_proven": true,
+    "constrained_baseline_mode_passed": true,
+    "high_b2_mode_passed": false,
+    "further_codec_trials_stopped": true,
+    "reason": "One corrupt High frame and five session fatal errors despite FFmpeg exit0",
+    "modules_unloaded": false,
+    "rebooted": false
   }
 }

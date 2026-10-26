@@ -1,6 +1,6 @@
 # Uke video acceptance matrix
 
-Date: 25 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
+Updated: 26 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
 Linux 7.3.0-10 for VA queries and 7.3.0-12 for package-only delivery. Mesa
 26.2.5-11 and libva 2.24.1 were captured in the query environment. Package and
 source checks are separate from codec workload acceptance.
@@ -24,7 +24,8 @@ source checks are separate from codec workload acceptance.
 | Default VA revision 0.4 on 7.3.0-14 | One UID1000 query without overrides opens MSM alias, exits 0 and lists 7 decode/4 encode pairs; DP10/30 remains active; saved kernel excerpt is audit-only | Real native/VA frames and GPU sandbox; separate normal Chrome GL is recorded below |
 | Chrome156 normal GL on kernel14 | Canvas/WebGL shader pixels and context restoration pass on FD732; initialized Chrome decode list has eight mapped rows; sandbox false, WebGPU no adapter | Early/fatal sandbox comparison, real codec frames, native buffers and physical presentation |
 | VA revision 0.5 / COPR 11206385 | Fresh GPU-enabled host build, all native AArch64 fixtures and signed payload checks pass; not installed | Controlled delivery, VA regression and real boundary-mode output |
-| H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
+| Native kernel15 H264 constrained-baseline320x240 |30/30 NV12 frames match independent software hashes; no new non-audit kernel message | VA/browser, broader modes, lifecycle and sustained acceptance |
+| Native kernel15 H264 High/B2 at320x240 | Failed: one corrupt frame and five HFI fatal errors despite FFmpeg exit0; further codecs stopped | Diagnose queues/HFI/stream before retry; Main untested |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
 | HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |
 | VP9 P0/P2 decode | Not run | 8/10-bit references, superframes, alt-ref/show-existing |
@@ -66,5 +67,5 @@ Constrained Baseline/High, HEVC Main/Main10 and VP9 Profile 0/2 streams.
 The Profile 2 stream preserves actual 10-bit sample values through independent
 software decoding, with all 30 P010 frame hashes matching its input. Main10
 HEVC references retain non-8-bit values; a separate input has explicit BT.709
-SDR metadata. These are test inputs; no Iris codec processed them. Broader
+SDR metadata. The native constrained-baseline and High trials above consume their respective inputs; other corpus profiles remain untested on Iris. Broader
 references, resolution-change and stress vectors remain due.

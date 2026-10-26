@@ -6,7 +6,13 @@ Default VA initialization now passes on Fedora and Linux 7.3.0-14 with signed
 revision 0.4. One coordinator-owned query as UID1000, without driver/path/device
 overrides, loads the MSM alias and returns seven decode/four encode profile
 entrypoint pairs at 04:23:02 UTC. The earlier default query failed because that
-alias was absent. No codec workload is accepted.
+alias was absent. Profile-wide acceptance remains open.
+
+On26October, kernel7.3.0-15 produces30/30 exact NV12 reference frames for
+one native H264 constrained-baseline320x240 session. A separate High/B2
+session produces one corrupt frame and five firmware fatal errors despite
+FFmpeg exit0. Further native tests stop pending diagnosis. VA/Chrome video,
+other modes, lifecycle and sustained acceptance are not established.
 
 Iris and VIDEOCC are loaded in this controlled window. Iris uses video1/video2;
 video0 belongs to NT36532 touch. DP remains active at 10 bpc / 30 bpp after the
