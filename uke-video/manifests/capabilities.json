@@ -424,6 +424,22 @@
       "source_commit": "3d145da265d44063fa8818d4c8f3f7e4d7bb1e5e",
       "copr_build": 11205684,
       "scope": "ELD fix; does not contain native Main10 patch 0016"
+    },
+    "kernel15_source_check": {
+      "base_commit": "770b877757873ff87c02dc23e0a3486755ef569a",
+      "base_release": "7.3.0-15",
+      "source": "Actual prepared source from the accepted kernel15 build",
+      "patch_sha256": "d9bdd0222521ac769cd54cf7be928457aa167ad4284563a449b0e517a3db42ea",
+      "patch_dry_run_and_application_passed": true,
+      "main10_and_codec_caps_host_contracts_passed": true,
+      "all_patched_iris_c_h_match_checked_kernel13": true,
+      "new_aarch64_compile": false,
+      "new_whole_kernel_build": false,
+      "new_package": false,
+      "installed": false,
+      "hardware_encode_tested": false,
+      "receipt_sha256": "574886f98c9d66497dfb4aed48164a1a18c961764792cddd3edc90457f87c356",
+      "next_kernel_tuple_reserved": false
     }
   },
   "prior_video_observation": {
