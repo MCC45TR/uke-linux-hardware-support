@@ -23,6 +23,10 @@
     {
       "path": "patches/0004-runtime-frame-dimensions.patch",
       "sha256": "dc67dcb2bdaa6acaaae0bef5d07b8048562d6829ddd64cd98636a8f4534b3250"
+    },
+    {
+      "path": "patches/0005-preserve-decode-error-status.patch",
+      "sha256": "e62be3e7485e0d1297df2a1c9432eace1ae460026690205af1d6f32a4424d4db"
     }
   ],
   "delivery": {
@@ -133,5 +137,15 @@
     "default_vainfo_exit": 0,
     "default_vainfo_kernel": "7.3.0-14",
     "default_vainfo_receipt_sha256": "fa4bdab79812dd543d8be16dabca5e3138529a7225103cdc6fb66fecd362302e"
+  },
+  "decode_error_source_candidate": {
+    "revision": "0.6",
+    "date": "2026-10-26",
+    "scope": "Retain VA decode failure after neutral fill; preserve storage and allocation errors",
+    "old_source_regression_reproduced": true,
+    "actual_recovery_and_sync_contract_passed": true,
+    "binary_built": false,
+    "installed": false,
+    "device_tested": false
   }
 }
