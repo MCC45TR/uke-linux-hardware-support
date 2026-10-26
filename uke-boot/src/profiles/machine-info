@@ -2,7 +2,7 @@ PRETTY_HOSTNAME="Xiaomi Pad 7"
 ICON_NAME=computer-tablet
 CHASSIS=tablet
 DEPLOYMENT=development
-HARDWARE_VENDOR=Xiaomi
+HARDWARE_VENDOR="Xiaomi Communications Co., Ltd."
 HARDWARE_MODEL="Xiaomi Pad 7"
-# Owner-selected presentation version; not a measured board revision.
-HARDWARE_VERSION=1.1
+# Requested presentation label; OEM hwversion is reported separately.
+HARDWARE_VERSION="Rev:1.1"

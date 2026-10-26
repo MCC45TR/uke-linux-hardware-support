@@ -1,44 +1,17 @@
-# Uke Linux hardware support
+# Uke graphics and native diagnostics checkpoint
 
-One repository owns twelve Uke/SM7675 package components. Each component is an
-ordinary directory with its own sources, rules, license and acceptance gates.
-Their original project histories are preserved as Git merge ancestry;
-[SOURCE-IMPORTS.json](SOURCE-IMPORTS.json) records all twelve exact import pins.
-The workspace checks out this repository at `uke-linux-hardware-support/`.
+**26 October 2026 — source publication.**
 
-| Source | Purpose |
-|---|---|
-| [uke-core-meta](uke-core-meta) | Reviewed console package selection |
-| [uke-desktop-metas](uke-desktop-metas) | Desktop policy metadata; graphical admission remains blocked |
-| [uke-desktop-packaging](uke-desktop-packaging) | Reviewed non-KDE native libraries, theme and requested decoration plugin |
-| [uke-orangefox-packaging](uke-orangefox-packaging) | DNF-managed, versioned recovery image data |
-| [uke-boot](uke-boot) | Future independent Uke boot integration |
-| [uke-platform-runtime](uke-platform-runtime) | Future native platform runtime |
-| [uke-sensors](uke-sensors) | Sensor source and hardware admission |
-| [uke-camera](uke-camera) | Camera source and hardware admission |
-| [xiaomi-uke-firmware](xiaomi-uke-firmware) | File-level firmware provenance and redistribution gates |
-| [uke-desktop-integration](uke-desktop-integration) | Measured Uke desktop integration |
-| [plasma-uke-kcm](plasma-uke-kcm) | Future native Uke capability panel |
-| [uke-hardware-provenance](uke-hardware-provenance) | Public hardware evidence records |
+This development branch preserves the graphics/video backend and browser validation work, native identity helper, standalone Vulkan/GLES/OpenCL probes and exact research manifests. These sources remain separate from the default package families.
 
-Never clone, fork or rebuild KDE desktop applications as Uke variants. Original
-distribution KDE applications remain the only eligible application sources;
-their current Python payloads prevent complete graphical admission. A scaffold
-does not establish a published RPM or device support.
+Publication checks pass for the native identity fixture, research manifests and host compilation of Vulkan and GLES probes. The publication host and checked x86_64 SDK lack OpenCL development headers, so the OpenCL probe was not recompiled here. Its opt-in target requires those headers and the OpenCL loader.
 
-The kernel, Fedora builder, OrangeFox device tree and Project Aloha keep their
-independent repositories. See the [package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
-for build readiness. No physical support is inferred from this consolidation.
+The identity helper remains inactive; serial output is opt-in and its public machine-info path excludes serials. The `Rev:1.1` presentation label is distinct from an observed OEM board revision.
 
-Run `make validate` to check all component contracts and `make test-native` for
-the existing C++ configuration migration fixtures. The root COPR rule dispatches
-only the ten already admitted support source families. The stable-source
-workflow checks Material Decoration and the eligible recovery release daily;
-the independent kernel repository retains its own reviewed stable automation.
-Original repository workflows remain under each component as historical source
-records; active workflows are in this repository's root `.github/workflows/`.
+Earlier device observations include GL pixel checks and default VA capability initialization. Actual codec frames, the corrected Vulkan artifact, browser sandbox, WebGPU and physical display coexistence remain unqualified. The tested VA 0.4 baseline and uninstalled 0.5 candidate retain separate delivery records.
 
-COPR's GitHub hook follows changes in each configured source subdirectory.
-The common-rule workflow also requests builds when shared source rules or
-parent-directory inputs change, and offers a manual reviewed-package selector.
-The private package hub requires access to the documentation repository.
+No COPR request, package installation, browser/device workload or firmware operation was performed by this publication.
+
+[Current platform status](https://github.com/MCC45TR/uke-linux#hardware-support) · [Default package source](https://github.com/MCC45TR/uke-linux-hardware-support/tree/main) · [Graphics/video source notes](uke-desktop-integration/README.md)
+
+Original distribution/upstream licenses and human contributor attribution are retained.
