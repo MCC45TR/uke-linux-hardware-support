@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.8.3
+version := 1.8.4
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
@@ -26,6 +26,8 @@ test-native: validate
 	build/tests/wifi-factory
 	c++ -std=c++20 -Wall -Wextra -Werror -O2 tests/touch-launcher.cpp -o build/tests/touch-launcher
 	build/tests/touch-launcher
+	c++ -std=c++20 -Wall -Wextra -Werror -O2 tests/touch-health.cpp -o build/tests/touch-health
+	build/tests/touch-health
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 src/esp32-cdc.cpp -o build/tests/uke-esp32-cdc
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/esp32-tty.cpp -o build/tests/esp32-tty -lutil
 	build/tests/esp32-tty

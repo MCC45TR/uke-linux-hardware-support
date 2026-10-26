@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.3
+Version: 1.8.4
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -36,6 +36,7 @@ Obsoletes: uke-bluetooth < %{version}-%{release}
 Provides: uke-boot-integration(touch-runtime-v1) = 1
 Provides: uke-boot-integration(kernel-touch-dispatch-v1) = 1
 Provides: uke-boot-integration(kernel-touch-input-v1) = 1
+Provides: uke-boot-integration(kernel-touch-input-v2) = 1
 Provides: uke-touchscreen = %{version}-%{release}
 Obsoletes: uke-touchscreen < %{version}-%{release}
 
@@ -134,6 +135,8 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
 bash tests/userdata-update.sh
+%{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-health.cpp -o touch-health-contract
+./touch-health-contract
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o usb-port-contract
 ./usb-port-contract
 bash tests/usb-inventory.sh
@@ -346,6 +349,8 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.4-1
+- Validate native kernel touch input during boot acceptance without requiring the legacy service.
 * Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.3-1
 - Skip the legacy touch service on the native input binding and retain kernel rollback dispatch.
 - Resolve the qualified CSOT firmware alias from shared model firmware.

@@ -1,5 +1,17 @@
 # Touch runtime migration
 
+26 October 2026. The native input binding `novatek,nt36532-uke-touch` skips
+the legacy service. Shared CSOT firmware is resolved from `uke-firmware`;
+the native path does not read `/var/lib/uke-touch`. Legacy kernel dispatch
+and its private data remain available for rollback.
+
+Boot integration 1.8.4 checks the native SPI binding, one direct multitouch
+input device and firmware readiness instead of requiring the skipped service.
+The input name is descriptive and is not a driver identity token. A registered
+device does not establish working contacts: the 7.3.0-17 tablet trial registered
+input but did not report physical touch. Contact, multitouch and VRR acceptance
+remain open, and the verified legacy rollback must be retained.
+
 23 October 2026. The 1.7.0 source candidate merges the existing public touch
 runtime into boot integration. It does not bundle firmware, configuration or
 private reference packets. Those remain in `uke-local-touch-data`.

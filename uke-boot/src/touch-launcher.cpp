@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Select the matching running-kernel client; retain the reviewed legacy rollback route.
 #include "boot-common.hpp"
+#include "touch-health.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <string_view>
@@ -9,24 +10,15 @@
 #include <unistd.h>
 
 namespace fs=std::filesystem;
-static bool touch_compatible(const std::string &value,const std::string &expected) {
-    bool found=false;
-    for(std::size_t start=0;start<value.size();) {
-        const auto end=value.find('\0',start);
-        if(end==std::string::npos)return false;
-        found|=value.compare(start,end-start,expected)==0;start=end+1;
-    }
-    return found;
-}
 static fs::path touch_client(const fs::path &root,const std::string &release) {
     if(!uke_device(read_text(root/"sys/firmware/devicetree/base/compatible")))
         throw std::runtime_error("Touch launch requires exact Uke / SM7675 identity");
     unsigned legacy=0,kernel=0,native=0;
     for(const auto &entry:fs::directory_iterator(root/"sys/bus/spi/devices")) {
         const auto value=read_text(entry.path()/"of_node/compatible");
-        legacy+=touch_compatible(value,"novatek,NVT-ts-spi");
-        kernel+=touch_compatible(value,"novatek,nt36532-uke-thp");
-        native+=touch_compatible(value,"novatek,nt36532-uke-touch");
+        legacy+=uke_touch::compatible(value,"novatek,NVT-ts-spi");
+        kernel+=uke_touch::compatible(value,"novatek,nt36532-uke-thp");
+        native+=uke_touch::compatible(value,"novatek,nt36532-uke-touch");
     }
     if(legacy+kernel+native!=1)throw std::runtime_error("A unique reviewed Uke touch transport is required");
     if(native)return {};

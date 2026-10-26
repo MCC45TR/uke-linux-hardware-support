@@ -2,6 +2,7 @@
 #pragma once
 #include "installation-policy.hpp"
 #include "slot-control.hpp"
+#include "touch-health.hpp"
 struct UserdataUpdate {
     uke_install::Update policy;
     std::string good_image,candidate_image,staged_boot_id;
@@ -257,11 +258,11 @@ static bool vrr_policy() {
     return config.at("vrr_min_hz")=="30";
 }
 static void health() {
-    for(const auto unit:{"display-manager.service","uke-touchscreen.service","uke-adaptive-display.target","iio-sensor-proxy.service","NetworkManager.service"}) {
+    for(const auto &unit:uke_touch::health_units("/")) {
         sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Health check requires the system bus");
         std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);sd_bus_message *response=nullptr;
         need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound the unit health check");
-        need(sd_bus_call_method(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1","org.freedesktop.systemd1.Manager","GetUnit",nullptr,&response,"s",unit)>=0,"Required health unit unavailable");
+        need(sd_bus_call_method(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1","org.freedesktop.systemd1.Manager","GetUnit",nullptr,&response,"s",unit.c_str())>=0,"Required health unit unavailable");
         std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(response,sd_bus_message_unref);const char *path=nullptr;
         need(sd_bus_message_read(reply.get(),"o",&path)>0,"Missing health unit path");char *state=nullptr;
         const auto status=sd_bus_get_property_string(bus.get(),"org.freedesktop.systemd1",path,"org.freedesktop.systemd1.Unit","ActiveState",nullptr,&state);
