@@ -2,6 +2,17 @@
 
 Date: 26 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
+COPR publication now belongs to the existing `uke-additional` source family.
+The child RPM keeps the name `uke-vaapi-v4l2`; the standalone source-package
+record and its six historical builds are retired after source/rollback
+preservation. Family source3e83bf0 produces additional1.0.0-10 and backend
+1.0.0-1 from the reviewed revision0.6 code. All36 planned RPM names start with
+`uke-`, and native build11210929 is running in the existing test directory.
+No new source family or Chromium rebuild is introduced. Native payload checks
+and tablet delivery remain open. Future FFmpeg integration also belongs to
+the existing family; the source-only client candidate below is not published
+as an independent COPR package.
+
 Default VA initialization passes on Fedora and Linux 7.3.0-14/15 with signed
 revision 0.4. One coordinator-owned query as UID1000, without driver/path/device
 overrides, loads the MSM alias and returns seven decode/four encode profile
