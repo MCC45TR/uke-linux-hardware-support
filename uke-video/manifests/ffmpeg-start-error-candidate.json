@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-26",
-  "scope": "Distinct host-only startup-error candidate and unpackaged streaming prototype; neither is device-qualified",
+  "date": "2026-10-27",
+  "scope": "Separate startup-error candidate and reviewable streaming patch series; neither is device-qualified or packaged",
   "upstream": {
     "url": "https://git.ffmpeg.org/ffmpeg.git",
     "tag": "n9.0.2",
@@ -16,7 +16,9 @@
     "signer": "E9A491A3DE247814E7E067EAE06F8ECDD651FF2E",
     "source_rpm_signature_verified": true,
     "upstream_archive_signature_verified": true,
-    "six_v4l2_files_equal_after_three_distribution_patches": true
+    "six_v4l2_files_equal_after_three_distribution_patches": true,
+    "working_control_source_includes_startup_error_candidate": true,
+    "working_control_decoder_sha256": "3bcf06c1e781d5fce800627719dab257bbd64e6f339079d2f57cf7674fda4a12"
   },
   "candidate": {
     "patch": "patches/ffmpeg-9.0.2-preserve-start-errors.patch",
@@ -38,8 +40,25 @@
     "upstream_series_url": "https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/25012",
     "upstream_series_head": "df8b967717dc0119412e6a5280281ca70d8d5ce5",
     "upstream_series_author": "Nick Rogers",
+    "upstream_review_rechecked_utc_date": "2026-10-26",
+    "upstream_review_state": "open",
+    "upstream_review_merged": false,
     "upstream_port_patch_sha256": "6d98d164689b3daef69b8dbe54680dbc978a9275a8b8c57dd53770821166f511",
     "private_protocol_delta_sha256": "cd5bce2c0b527928db9b723743892af665399bd0c7cdd4033d7f1efbb6b185a5",
+    "reviewable_upstream_port_patch": "patches/ffmpeg-9.0.2-upstream-buffer-drc.patch",
+    "reviewable_upstream_port_patch_sha256": "cafe9a0ed834a453900221ed9d2ca25f9e42918a168304d8bf71295d9fe6a05b",
+    "reviewable_protocol_patch": "patches/ffmpeg-9.0.2-initial-source-sequence.patch",
+    "reviewable_protocol_patch_sha256": "435d4656f9b233091c3aa550b6f6f742f17390bab520a72bf27319cd39f8d72a",
+    "patch_order": [
+      "patches/ffmpeg-9.0.2-preserve-start-errors.patch",
+      "patches/ffmpeg-9.0.2-upstream-buffer-drc.patch",
+      "patches/ffmpeg-9.0.2-initial-source-sequence.patch"
+    ],
+    "clean_distribution_archive_replay_passed": true,
+    "replayed_v4l2_sources_equal_private_prototype": true,
+    "replayed_actual_c_host_fixtures_passed": true,
+    "native_decoder_flush_callback_present": false,
+    "same_context_seek_resume_qualified": false,
     "minimal_host_x86_64_libraries_compiled": true,
     "compiled_v4l2_decoder_wrappers": 9,
     "compiled_v4l2_encoder_wrappers": 5,

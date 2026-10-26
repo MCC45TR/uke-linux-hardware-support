@@ -1,0 +1,591 @@
+Subject: [PATCH] avcodec/v4l2_m2m: port upstream buffer lifetime and DRC series
+
+Port of Nick Rogers' open FFmpeg PR25012 at df8b967717dc0119412e6a5280281ca70d8d5ce5.
+Source: https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/25012
+Earlier commits: c204c01a1672dafc3771fefd09c2185215ca5f76 and
+ e71ecb82c91678a8b04ba41a87fcb183b8be7890.
+Base: FFmpeg n9.0.2 with ffmpeg-9.0.2-preserve-start-errors.patch applied.
+License: LGPL-2.1-or-later, matching the modified upstream files.
+
+The series is not merged upstream. Host tests and third-party measurements
+do not establish Uke device acceptance. Keep driver capabilities and held-frame
+lifetimes independently qualified.
+
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -238,40 +238,61 @@
+ {
+     V4L2Buffer* avbuf = opaque;
+     V4L2m2mContext *s = buf_to_m2mctx(avbuf);
++    const V4L2m2mContext *context_ref;
++    V4L2Buffer *buffers_ref;
+ 
+-    if (atomic_fetch_sub(&avbuf->context_refcount, 1) == 1) {
++    if (atomic_fetch_sub(&avbuf->context_refcount, 1) != 1)
++        return;
++
++    /* take the references out before the buffer is queued again, from when
++     * it can be dequeued and referenced anew */
++    context_ref = avbuf->context_ref;
++    buffers_ref = avbuf->buffers_ref;
++    avbuf->context_ref = NULL;
++    avbuf->buffers_ref = NULL;
++
++    ff_mutex_lock(&s->buffer_lock);
++    if (avbuf->orphaned) {
++        /* the context's buffers were released while the user held this one */
++        for (int i = 0; i < avbuf->num_planes; i++)
++            munmap(avbuf->plane_info[i].mm_addr, avbuf->plane_info[i].length);
++    } else {
+         atomic_fetch_sub_explicit(&s->refcount, 1, memory_order_acq_rel);
+ 
+         if (s->reinit) {
+-            if (!atomic_load(&s->refcount))
++            avbuf->status = V4L2BUF_AVAILABLE;
++            if (s->refsync_wait && !atomic_load(&s->refcount)) {
++                s->refsync_wait = 0;
+                 sem_post(&s->refsync);
+-        } else {
+-            if (s->draining && V4L2_TYPE_IS_OUTPUT(avbuf->context->type)) {
+-                /* no need to queue more buffers to the driver */
+-                avbuf->status = V4L2BUF_AVAILABLE;
+             }
+-            else if (avbuf->context->streamon)
+-                ff_v4l2_buffer_enqueue(avbuf);
++        } else if (s->draining && V4L2_TYPE_IS_OUTPUT(avbuf->context->type)) {
++            /* no need to queue more buffers to the driver */
++            avbuf->status = V4L2BUF_AVAILABLE;
++        } else if (!avbuf->context->streamon || ff_v4l2_buffer_enqueue(avbuf) < 0) {
++            avbuf->status = V4L2BUF_AVAILABLE;
+         }
+-
+-        av_refstruct_unref(&avbuf->context_ref);
++        ff_cond_broadcast(&s->buffer_cond);
+     }
++    ff_mutex_unlock(&s->buffer_lock);
++
++    av_refstruct_unref(&buffers_ref);
++    av_refstruct_unref(&context_ref);
+ }
+ 
+ static int v4l2_buf_increase_ref(V4L2Buffer *in)
+ {
+     V4L2m2mContext *s = buf_to_m2mctx(in);
+ 
+-    if (in->context_ref)
+-        atomic_fetch_add(&in->context_refcount, 1);
+-    else {
++    /* the references are taken once per buffer, not per plane */
++    if (!atomic_fetch_add(&in->context_refcount, 1)) {
+         in->context_ref = av_refstruct_ref(s->self_ref);
+-
+-        in->context_refcount = 1;
++        in->buffers_ref = av_refstruct_ref(in->context->buffers);
++        ff_mutex_lock(&s->buffer_lock);
++        atomic_fetch_add_explicit(&s->refcount, 1, memory_order_relaxed);
++        ff_mutex_unlock(&s->buffer_lock);
+     }
+ 
+     in->status = V4L2BUF_RET_USER;
+-    atomic_fetch_add_explicit(&s->refcount, 1, memory_order_relaxed);
+ 
+     return 0;
+ }
+@@ -584,15 +605,21 @@
+ 
+ int ff_v4l2_buffer_enqueue(V4L2Buffer* avbuf)
+ {
++    enum V4L2Buffer_status status = avbuf->status;
+     int ret;
+ 
+     avbuf->buf.flags = avbuf->flags;
+ 
+-    ret = ioctl(buf_to_m2mctx(avbuf)->fd, VIDIOC_QBUF, &avbuf->buf);
+-    if (ret < 0)
+-        return AVERROR(errno);
+-
++    /* set before queueing: once queued the buffer can be dequeued, on
++     * another thread than the one returning it */
+     avbuf->status = V4L2BUF_IN_DRIVER;
+ 
++    ret = ioctl(buf_to_m2mctx(avbuf)->fd, VIDIOC_QBUF, &avbuf->buf);
++    if (ret < 0) {
++        ret = AVERROR(errno);
++        avbuf->status = status;
++        return ret;
++    }
++
+     return 0;
+ }
+--- a/libavcodec/v4l2_buffers.h
++++ b/libavcodec/v4l2_buffers.h
+@@ -50,6 +50,16 @@
+     const struct V4L2m2mContext *context_ref;
+     atomic_uint context_refcount;
+ 
++    /* The array this buffer belongs to, held with context_ref so that it
++     * outlives the release of the context's buffers.
++     * This pointer is a RefStruct reference. */
++    struct V4L2Buffer *buffers_ref;
++
++    /* Set when the context's buffers were released while the user held
++     * this one: on its release it is unmapped instead of queued again.
++     * Protected by V4L2m2mContext.buffer_lock. */
++    int orphaned;
++
+     /* keep track of the mmap address and mmap length */
+     struct V4L2Plane_info {
+         int bytesperline;
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -28,6 +28,7 @@
+ #include <fcntl.h>
+ #include <poll.h>
+ #include "libavutil/mem.h"
++#include "libavutil/refstruct.h"
+ #include "libavcodec/avcodec.h"
+ #include "decode.h"
+ #include "v4l2_buffers.h"
+@@ -170,6 +171,55 @@
+ }
+ 
+ /**
++ * reinitialize capture for a new format
++ * returns 1 if reinit was successful, negative if it failed
++ */
++static int v4l2_change_capture_format(V4L2m2mContext *s, struct v4l2_format *cap_fmt)
++{
++    int ret = 0;
++
++    s->capture.format_change = 0;
++    s->capture.height = v4l2_get_height(cap_fmt);
++    s->capture.width = v4l2_get_width(cap_fmt);
++    s->capture.sample_aspect_ratio = v4l2_get_sar(&s->capture);
++
++    ff_mutex_lock(&s->buffer_lock);
++    s->reinit = 1;
++    ff_mutex_unlock(&s->buffer_lock);
++
++    if (s->avctx)
++        ret = ff_set_dimensions(s->avctx, s->capture.width, s->capture.height);
++    if (ret < 0)
++        av_log(logger(&s->capture), AV_LOG_WARNING, "update avcodec height and width\n");
++
++    ret = ff_v4l2_m2m_codec_reinit(s);
++    if (ret) {
++        av_log(logger(&s->capture), AV_LOG_ERROR, "v4l2_m2m_codec_reinit\n");
++        return AVERROR(EINVAL);
++    }
++
++    /* reinit executed */
++    return 1;
++}
++
++/**
++ * complete a source change that waited for the frames decoded before it
++ * returns 1 if reinit was successful, negative if it failed
++ */
++static int v4l2_finish_format_change(V4L2Context *ctx)
++{
++    V4L2m2mContext *s = ctx_to_m2mctx(ctx);
++    struct v4l2_format cap_fmt = s->capture.format;
++
++    if (ioctl(s->fd, VIDIOC_G_FMT, &cap_fmt)) {
++        av_log(logger(ctx), AV_LOG_ERROR, "%s VIDIOC_G_FMT\n", s->capture.name);
++        return AVERROR(errno);
++    }
++
++    return v4l2_change_capture_format(s, &cap_fmt);
++}
++
++/**
+  * handle resolution change event and end of stream event
+  * returns 1 if reinit was successful, negative if it failed
+  * returns 0 if reinit was not executed
+@@ -201,30 +251,20 @@
+         return 0;
+     }
+ 
+-    if (v4l2_resolution_changed(&s->capture, &cap_fmt)) {
+-        s->capture.height = v4l2_get_height(&cap_fmt);
+-        s->capture.width = v4l2_get_width(&cap_fmt);
+-        s->capture.sample_aspect_ratio = v4l2_get_sar(&s->capture);
+-    } else {
++    if (!v4l2_resolution_changed(&s->capture, &cap_fmt)) {
+         v4l2_start_decode(ctx);
+         return 0;
+     }
+ 
+-    s->reinit = 1;
+-
+-    if (s->avctx)
+-        ret = ff_set_dimensions(s->avctx, s->capture.width, s->capture.height);
+-    if (ret < 0)
+-        av_log(logger(ctx), AV_LOG_WARNING, "update avcodec height and width\n");
+-
+-    ret = ff_v4l2_m2m_codec_reinit(s);
+-    if (ret) {
+-        av_log(logger(ctx), AV_LOG_ERROR, "v4l2_m2m_codec_reinit\n");
+-        return AVERROR(EINVAL);
++    /* The decoder still returns the frames it decoded before the change, and
++     * ends them with a buffer flagged LAST (dev-decoder, "Dynamic Resolution
++     * Change"): reinitializing capture now would discard them. */
++    if (s->capture.streamon && s->capture.dequeued) {
++        s->capture.format_change = 1;
++        return 0;
+     }
+ 
+-    /* reinit executed */
+-    return 1;
++    return v4l2_change_capture_format(s, &cap_fmt);
+ }
+ 
+ static int v4l2_stop_decode(V4L2Context *ctx)
+@@ -267,6 +307,40 @@
+     return 0;
+ }
+ 
++/**
++ * Wait until a capture buffer is queued in the driver, or none can be.
++ * While the user holds the others the decoder may still have frames to
++ * return, and does so once one of them is released.
++ * returns 1 if a buffer is queued, 0 if none is or will be
++ */
++static int v4l2_wait_capture_buffer(V4L2Context *ctx)
++{
++    V4L2m2mContext *s = ctx_to_m2mctx(ctx);
++    int i, queued = 0;
++
++    /* capture buffer initialization happens during decode hence
++     * detection happens at runtime
++     */
++    if (!ctx->buffers)
++        return 0;
++
++    ff_mutex_lock(&s->buffer_lock);
++    for (;;) {
++        for (i = 0; i < ctx->num_buffers; i++) {
++            if (ctx->buffers[i].status == V4L2BUF_IN_DRIVER) {
++                queued = 1;
++                break;
++            }
++        }
++        if (queued || !atomic_load(&s->refcount))
++            break;
++        ff_cond_wait(&s->buffer_cond, &s->buffer_lock);
++    }
++    ff_mutex_unlock(&s->buffer_lock);
++
++    return queued;
++}
++
+ static V4L2Buffer* v4l2_dequeue_v4l2buf(V4L2Context *ctx, int timeout)
+ {
+     struct v4l2_plane planes[VIDEO_MAX_PLANES];
+@@ -290,23 +364,23 @@
+                                                 "packets/frames.\n");
+     }
+ 
+-    /* if we are draining and there are no more capture buffers queued in the driver we are done */
+-    if (!V4L2_TYPE_IS_OUTPUT(ctx->type) && ctx_to_m2mctx(ctx)->draining) {
+-        for (i = 0; i < ctx->num_buffers; i++) {
+-            /* capture buffer initialization happens during decode hence
+-             * detection happens at runtime
+-             */
+-            if (!ctx->buffers)
+-                break;
++    /* a pending source change is completed once the frames decoded before
++     * it have been returned, and not before: while the user holds every
++     * capture buffer, they are returned when one of them is released */
++    if (!V4L2_TYPE_IS_OUTPUT(ctx->type) && ctx->format_change == 2) {
++        if (v4l2_finish_format_change(ctx) < 0)
++            ctx->done = 1;
++        return NULL;
++    }
+ 
+-            if (ctx->buffers[i].status == V4L2BUF_IN_DRIVER)
+-                goto start;
+-        }
++    /* if we are draining and no capture buffer is queued in the driver, nor
++     * will be once the user releases one, we are done */
++    if (!V4L2_TYPE_IS_OUTPUT(ctx->type) && ctx_to_m2mctx(ctx)->draining &&
++        !v4l2_wait_capture_buffer(ctx)) {
+         ctx->done = 1;
+         return NULL;
+     }
+ 
+-start:
+     if (V4L2_TYPE_IS_OUTPUT(ctx->type))
+         pfd.events =  POLLOUT | POLLWRNORM;
+     else {
+@@ -387,6 +461,11 @@
+ 
+         ret = ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_DQBUF, &buf);
+         if (ret) {
++            if (errno == EPIPE && ctx->format_change) {
++                if (v4l2_finish_format_change(ctx) < 0)
++                    ctx->done = 1;
++                return NULL;
++            }
+             if (errno != EAGAIN) {
+                 ctx->done = 1;
+                 if (errno != EPIPE)
+@@ -396,6 +475,23 @@
+             return NULL;
+         }
+ 
++        if (!V4L2_TYPE_IS_OUTPUT(ctx->type))
++            ctx->dequeued = 1;
++
++#ifdef V4L2_BUF_FLAG_LAST
++        if (ctx->format_change && (buf.flags & V4L2_BUF_FLAG_LAST)) {
++            int bytesused = V4L2_TYPE_IS_MULTIPLANAR(buf.type) ?
++                            buf.m.planes[0].bytesused : buf.bytesused;
++            if (!bytesused) {
++                ctx->buffers[buf.index].status = V4L2BUF_AVAILABLE;
++                if (v4l2_finish_format_change(ctx) < 0)
++                    ctx->done = 1;
++                return NULL;
++            }
++            /* return its frame first */
++            ctx->format_change = 2;
++        } else
++#endif
+         if (ctx_to_m2mctx(ctx)->draining && !V4L2_TYPE_IS_OUTPUT(ctx->type)) {
+             int bytesused = V4L2_TYPE_IS_MULTIPLANAR(buf.type) ?
+                             buf.m.planes[0].bytesused : buf.bytesused;
+@@ -443,6 +539,7 @@
+ 
+ static int v4l2_release_buffers(V4L2Context* ctx)
+ {
++    V4L2m2mContext *s = ctx_to_m2mctx(ctx);
+     struct v4l2_requestbuffers req = {
+         .memory = V4L2_MEMORY_MMAP,
+         .type = ctx->type,
+@@ -450,9 +547,18 @@
+     };
+     int i, j;
+ 
++    ff_mutex_lock(&s->buffer_lock);
+     for (i = 0; i < ctx->num_buffers; i++) {
+         V4L2Buffer *buffer = &ctx->buffers[i];
+ 
++        /* a buffer the user still holds stays mapped until it is released,
++         * which only a driver supporting orphaned buffers allows */
++        if (buffer->status == V4L2BUF_RET_USER) {
++            buffer->orphaned = 1;
++            atomic_fetch_sub_explicit(&s->refcount, 1, memory_order_relaxed);
++            continue;
++        }
++
+         for (j = 0; j < buffer->num_planes; j++) {
+             struct V4L2Plane_info *p = &buffer->plane_info[j];
+             if (p->mm_addr && p->length)
+@@ -460,8 +566,9 @@
+                     av_log(logger(ctx), AV_LOG_ERROR, "%s unmap plane (%s))\n", ctx->name, av_err2str(AVERROR(errno)));
+         }
+     }
++    ff_mutex_unlock(&s->buffer_lock);
+ 
+-    return ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_REQBUFS, &req);
++    return ioctl(s->fd, VIDIOC_REQBUFS, &req);
+ }
+ 
+ static inline int v4l2_try_raw_format(V4L2Context* ctx, enum AVPixelFormat pixfmt)
+@@ -562,14 +669,19 @@
+ 
+ int ff_v4l2_context_set_status(V4L2Context* ctx, uint32_t cmd)
+ {
++    V4L2m2mContext *s = ctx_to_m2mctx(ctx);
+     int type = ctx->type;
+     int ret;
+ 
+-    ret = ioctl(ctx_to_m2mctx(ctx)->fd, cmd, &type);
++    ret = ioctl(s->fd, cmd, &type);
+     if (ret < 0)
+         return AVERROR(errno);
+ 
++    /* read when the user releases a buffer, to queue it again */
++    ff_mutex_lock(&s->buffer_lock);
+     ctx->streamon = (cmd == VIDIOC_STREAMON);
++    ff_mutex_unlock(&s->buffer_lock);
++    ctx->dequeued = 0;
+ 
+     return 0;
+ }
+@@ -707,7 +819,7 @@
+     if (ret)
+         av_log(logger(ctx), AV_LOG_WARNING, "V4L2 failed to unmap the %s buffers\n", ctx->name);
+ 
+-    av_freep(&ctx->buffers);
++    av_refstruct_unref(&ctx->buffers);
+ }
+ 
+ int ff_v4l2_context_init(V4L2Context* ctx)
+@@ -736,7 +848,10 @@
+     }
+ 
+     ctx->num_buffers = req.count;
+-    ctx->buffers = av_mallocz(ctx->num_buffers * sizeof(V4L2Buffer));
++#ifdef V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS
++    ctx->orphaned_bufs = !!(req.capabilities & V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS);
++#endif
++    ctx->buffers = av_refstruct_allocz(ctx->num_buffers * sizeof(V4L2Buffer));
+     if (!ctx->buffers) {
+         av_log(logger(ctx), AV_LOG_ERROR, "%s malloc enomem\n", ctx->name);
+         return AVERROR(ENOMEM);
+@@ -764,7 +879,7 @@
+ error:
+     v4l2_release_buffers(ctx);
+ 
+-    av_freep(&ctx->buffers);
++    av_refstruct_unref(&ctx->buffers);
+ 
+     return ret;
+ }
+--- a/libavcodec/v4l2_context.h
++++ b/libavcodec/v4l2_context.h
+@@ -83,6 +83,13 @@
+     int num_buffers;
+ 
+     /**
++     * Whether the driver lets the buffers be released while some are still
++     * mapped (V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS), so that release need
++     * not wait for the user to return them.
++     */
++    int orphaned_bufs;
++
++    /**
+      * Whether the stream has been started (VIDIOC_STREAMON has been sent).
+      */
+     int streamon;
+@@ -93,6 +100,19 @@
+      */
+     int done;
+ 
++    /**
++     * Whether a buffer has been dequeued since the stream was last started
++     * or stopped.
++     */
++    int dequeued;
++
++    /**
++     * A source change to a new capture format, put off until the frames
++     * decoded before it have been dequeued: 1 until the buffer flagged LAST
++     * that ends them, 2 once that buffer has been returned with a frame.
++     */
++    int format_change;
++
+ } V4L2Context;
+ 
+ /**
+--- a/libavcodec/v4l2_m2m.c
++++ b/libavcodec/v4l2_m2m.c
+@@ -217,13 +217,23 @@
+     if (ret)
+         av_log(log_ctx, AV_LOG_ERROR, "capture VIDIOC_STREAMOFF\n");
+ 
+-    /* 2. unmap the capture buffers (v4l2 and ffmpeg):
+-     *    we must wait for all references to be released before being allowed
+-     *    to queue new buffers.
++    /* 2. unmap the capture buffers (v4l2 and ffmpeg): the ones the user
++     *    still holds stay mapped until released if the driver supports
++     *    orphaned buffers, otherwise we must wait for all of them to be
++     *    released before being allowed to queue new buffers.
+      */
+-    av_log(log_ctx, AV_LOG_DEBUG, "waiting for user to release AVBufferRefs\n");
+-    if (atomic_load(&s->refcount))
+-        while(sem_wait(&s->refsync) == -1 && errno == EINTR);
++    if (!s->capture.orphaned_bufs) {
++        int wait;
++
++        ff_mutex_lock(&s->buffer_lock);
++        wait = s->refsync_wait = !!atomic_load(&s->refcount);
++        ff_mutex_unlock(&s->buffer_lock);
++
++        if (wait) {
++            av_log(log_ctx, AV_LOG_DEBUG, "waiting for user to release AVBufferRefs\n");
++            while (sem_wait(&s->refsync) == -1 && errno == EINTR);
++        }
++    }
+ 
+     ff_v4l2_context_release(&s->capture);
+ 
+@@ -241,9 +251,11 @@
+         return ret;
+     }
+ 
+-    /* 5. complete reinit */
+-    s->draining = 0;
++    /* 5. complete reinit; a drain in progress goes on once capture is
++     *    restarted (dev-decoder, "Drain") */
++    ff_mutex_lock(&s->buffer_lock);
+     s->reinit = 0;
++    ff_mutex_unlock(&s->buffer_lock);
+ 
+     return 0;
+ }
+@@ -254,6 +266,8 @@
+ 
+     ff_v4l2_context_release(&s->capture);
+     sem_destroy(&s->refsync);
++    ff_mutex_destroy(&s->buffer_lock);
++    ff_cond_destroy(&s->buffer_cond);
+ 
+     if (s->fd >= 0)
+         close(s->fd);
+@@ -341,6 +355,8 @@
+     priv->context->output.num_buffers  = priv->num_output_buffers;
+     priv->context->self_ref = priv->context;
+     priv->context->fd = -1;
++    ff_mutex_init(&priv->context->buffer_lock, NULL);
++    ff_cond_init(&priv->context->buffer_cond, NULL);
+ 
+     priv->context->frame = av_frame_alloc();
+     if (!priv->context->frame) {
+--- a/libavcodec/v4l2_m2m.h
++++ b/libavcodec/v4l2_m2m.h
+@@ -30,6 +30,7 @@
+ #include <linux/videodev2.h>
+ 
+ #include "libavcodec/avcodec.h"
++#include "libavutil/thread.h"
+ #include "v4l2_context.h"
+ 
+ #define container_of(ptr, type, member) ({ \
+@@ -51,9 +52,18 @@
+     /* dynamic stream reconfig */
+     AVCodecContext *avctx;
+     sem_t refsync;
++    /* capture buffers held by the user, and whether reinit is waiting for
++     * them to be returned; both protected by buffer_lock */
+     atomic_uint refcount;
++    int refsync_wait;
+     int reinit;
+ 
++    /* serializes returning a buffer the user releases with releasing
++     * the context's buffers, and guards the state that decides how it is
++     * returned (reinit, streamon); buffer_cond is signalled on each return */
++    AVMutex buffer_lock;
++    AVCond buffer_cond;
++
+     /* null frame/packet received */
+     int draining;
+     AVPacket buf_pkt;
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -172,6 +172,14 @@
+     }
+ 
+ dequeue:
++    /* a source change during the drain stops capture: restart it, and the
++     * drain goes on (dev-decoder, "Drain") */
++    if (s->draining && output->streamon && !capture->streamon) {
++        ret = v4l2_try_start(avctx);
++        if (ret)
++            return ret;
++    }
++
+     return ff_v4l2_context_dequeue_frame(capture, frame, -1);
+ fail:
+     av_packet_unref(&s->buf_pkt);

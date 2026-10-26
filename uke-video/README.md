@@ -123,7 +123,7 @@ Source identities and validation limits are in
 Run its host fixture with
 `bash tests/ffmpeg-start-error-contract.sh <prepared-FFmpeg-source>`.
 
-A separate private streaming prototype combines the open upstream DRC/buffer
+A separate streaming candidate combines the open upstream DRC/buffer
 series with initial-metadata sequencing and error handling. Minimal x86_64
 libraries compile with nine V4L2 decoder and five encoder wrappers; these
 wrapper counts describe build coverage, not Uke codec support. Actual-C host
@@ -135,6 +135,29 @@ otherwise disable libc assertions. No replacement FFmpeg RPM is built or
 installed. Native untraced frames, driver orphan-buffer support, full lifecycle
 and sustained acceptance remain open. The prototype's separate scope and
 input hashes are recorded in the same candidate manifest.
+
+The streaming patches are retained for review under `patches/`. Start with
+the exact distribution-prepared 9.0.2 source, before the startup candidate:
+
+```sh
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-preserve-start-errors.patch
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-upstream-buffer-drc.patch
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-initial-source-sequence.patch
+```
+
+The middle patch ports Nick Rogers' retained PR25012 series. The final patch
+adds initial-metadata sequencing and error handling; neither is device-qualified.
+A fresh archive replay reproduces every V4L2 source file of the tested host
+prototype. Forward-only application rejects an already-patched input instead
+of silently reversing it. The existing working control tree already includes
+the startup-error fix, so it must not be labelled stock FFmpeg. None of these
+FFmpeg patches is applied to the VA backend or published as a standalone RPM.
+
+Same-context seek is still a separate implementation gate: the retained
+V4L2 decoder descriptor has no flush callback, and the streaming patches do
+not reset its driver/drain state through `avcodec_flush_buffers()`. A new
+process that decodes successfully does not qualify seek within an existing
+decoder context. Keep this requirement open when testing the candidate.
 
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10
