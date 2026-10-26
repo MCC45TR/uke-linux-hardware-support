@@ -1,5 +1,11 @@
 # Uke Control
 
+26 October 2026: version 1.15.0 reports driver stream capacity and cached sink
+MST support in `display profiles`. The dual-display request requires both,
+plus a unique standard Type-C C/E control. Missing firmware controls remain
+unavailable. Host fixtures pass; native delivery and physical four-lane/MST
+output remain unvalidated. See [DISPLAY.md](DISPLAY.md).
+
 25 October 2026: version 1.14.0 adds an experimental disconnected DSC request
 and cached driver-state query. Missing kernel support is reported explicitly.
 The request does not establish physical activation or override HDMI limits.

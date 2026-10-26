@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.14.0
+Version: 1.15.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT

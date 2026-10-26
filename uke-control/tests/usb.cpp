@@ -25,7 +25,9 @@ int main() {
     refuses("[C] [D]","display4","INVALID_PIN_ASSIGNMENTS");
     refuses("[C] C","display4","INVALID_PIN_ASSIGNMENTS");
     refuses("[C] /tmp/file","display4","INVALID_PIN_ASSIGNMENTS");
-    refuses("[C] D","dual-display","MST_DRIVER_SUPPORT_UNAVAILABLE");
+    assert(uke::usb::profile_pin("[C] D","dual-display")=='C');
+    assert(uke::usb::profile_pin("C D [E]","dual-display")=='E');
+    refuses("[D] F","dual-display","PROFILE_PIN_ASSIGNMENT_UNSUPPORTED");
     refuses("[C] D","4k60","INVALID_DISPLAY_PROFILE");
     uke::usb::RequestState state;
     assert(uke::usb::request_refusal(state,"source")=="INVALID_DATA_ROLE");
@@ -48,7 +50,7 @@ int main() {
         const auto empty=uke::usb::snapshot(root);
         const auto profiles=uke::usb::display_profiles(root);
         assert(profiles.find("\"selection_interface\":\"unavailable\"")!=profiles.npos);
-        assert(profiles.find("MST_DRIVER_SUPPORT_UNAVAILABLE")!=profiles.npos);
+        assert(profiles.find("MST_STATE_UNAVAILABLE")!=profiles.npos);
         assert(profiles.find("\"observed_link\":null")!=profiles.npos);
         assert(empty.find("\"live\":false")!=std::string::npos);
         assert(empty.find("\"usb_devices\":[]")!=std::string::npos);
@@ -123,6 +125,27 @@ int main() {
         }
         put(dp/"uke_dp_stream_state","version=1 active=1 lanes=4 rate_khz=540000 bpp=30\n");
         assert(uke::usb::display_profiles(root).find("\"observed_link\":{\"lanes\":4")!=std::string::npos);
+        put(dp/"uke_dp_lane_limit","4\n");
+        put(dp/"uke_dp_stream_state","version=1 mst_driver=0\n");
+        assert(uke::usb::display_profiles(root).find("MST_DRIVER_SUPPORT_UNAVAILABLE")!=std::string::npos);
+        put(dp/"uke_dp_stream_state","version=1 mst_driver=1 mst_max_streams=2 sink_mst_capable=0 mst_active=0\n");
+        assert(uke::usb::display_profiles(root).find("SINK_MST_UNAVAILABLE")!=std::string::npos);
+        put(dp/"uke_dp_stream_state","version=1 mst_driver=1 mst_max_streams=2 sink_mst_capable=1 mst_active=0\n");
+        assert(uke::usb::display_profiles(root).find("\"requires_mst\":true,\"available\":true,\"reason\":null")!=std::string::npos);
+        fs::remove(partner/"displayport/pin_assignment");
+        assert(uke::usb::display_profiles(root).find("DP_ALTMODE_CONTROL_UNAVAILABLE")!=std::string::npos);
+        put(partner/"displayport/pin_assignment","[D] F\n");
+        assert(uke::usb::display_profiles(root).find("PROFILE_PIN_ASSIGNMENT_UNSUPPORTED")!=std::string::npos);
+        put(partner/"displayport/pin_assignment","C [D] E\n");
+        for(const auto& raw:{"version=2 mst_driver=1 mst_max_streams=2 sink_mst_capable=1 mst_active=0",
+            "version=1 mst_driver=2 mst_max_streams=2 sink_mst_capable=1 mst_active=0",
+            "version=1 mst_driver=1 mst_max_streams=9 sink_mst_capable=1 mst_active=0",
+            "version=1 mst_driver=1 mst_max_streams=2 sink_mst_capable=0 mst_active=1",
+            "version=1 mst_driver=1 mst_max_streams=2 sink_mst_capable=1 mst_active=0 mst_driver=0",
+            "version=1 mst_driver=1"}) {
+            put(dp/"uke_dp_stream_state",raw);
+            assert(uke::usb::display_profiles(root).find("MST_STATE_UNAVAILABLE")!=std::string::npos);
+        }
         const auto foreign=provider("sys/bus/auxiliary","foreign","unrelated-driver");
         assert(mkfifo((foreign/"uke_transport_state").c_str(),0600)==0);
         put(root/"sys/class/udc/test/function","a\"b\\c\n");

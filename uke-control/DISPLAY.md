@@ -66,7 +66,7 @@ they do not establish a visible image or working USB devices.
 | --- | --- | --- |
 | `usb3-display` | 2, pins D/F | Reserve lanes for USB3 alongside DP. |
 | `display4` | 4, pins C/E | Prioritize DP bandwidth, including direct monitor cables. USB2 uses separate pins; dock USB/Ethernet fallback needs physical testing. |
-| `dual-display` | 4 plus MST | Unavailable until the Uke driver implements MST stream/connector management. |
+| `dual-display` | 4 plus MST | Available only with two kernel streams, a cached MST-capable sink and a unique standard C/E selection interface. |
 
 Request an available standard profile with
 `sudo uke-control display profile display4` or
@@ -78,12 +78,20 @@ physical validation. Attached storage, active USB networking, a bound gadget,
 ambiguous ports or a changed attachment refuse the transition. Changing lanes
 can interrupt video and SuperSpeed devices; retain another management path.
 
-On POCO Pad X1 running 7.2.12-31 with Juo JH925, the firmware reports no UCSI
+On POCO Pad X1 running 7.3.0-15 with Juo JH925, the firmware reports no UCSI
 alternate-mode details or override feature, and no standard DP alternate-mode
 control appears. Requests therefore return `DP_ALTMODE_CONTROL_UNAVAILABLE`.
 The existing firmware-negotiated display/USB path is retained. This failure
 does not establish that automatic four-lane negotiation with a direct DP cable
 is impossible. No forced PHY/mux setting or raw firmware command is used.
+
+26 October 2026: the 7.3.0-16 source candidate adds MST stream management.
+`display profiles` reports `mst.state_available`, `driver_available`,
+`sink_capable`, `active` and `max_streams` separately. Missing or malformed
+driver state cannot advertise availability. The observed JH925 route has
+MST_CAP=0 and two lanes; a profile cannot change that report. Candidate MST
+accepts RGB8 SDR only. HDR and compressed MST, two visible external streams,
+four-lane negotiation and USB/Ethernet fallback require separate qualification.
 
 Resolution, refresh rate, HDR, color depth and Adaptive Sync remain under the
 distribution's original KDE controls and actual DRM/monitor capabilities.

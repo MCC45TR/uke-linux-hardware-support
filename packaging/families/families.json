@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.14.0",
+      "version": "1.15.0",
       "release": 1,
       "requires": [
-        "uke-control = 1.14.0-1%{?dist}"
+        "uke-control = 1.15.0-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"

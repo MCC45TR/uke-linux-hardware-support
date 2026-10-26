@@ -5,6 +5,7 @@
 #include "rpm-api.hpp"
 #include "sysfs.hpp"
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <charconv>
 #include <chrono>
@@ -39,9 +40,7 @@ std::string request_refusal(const RequestState& s,const std::string& role) {
     return {};
 }
 char profile_pin(const std::string& assignments,const std::string& profile) {
-    // shortcut: Uke DP has no MST implementation; enable this profile after that driver path exists.
-    if(profile=="dual-display")throw std::runtime_error("MST_DRIVER_SUPPORT_UNAVAILABLE");
-    if(profile!="usb3-display"&&profile!="display4")throw std::runtime_error("INVALID_DISPLAY_PROFILE");
+    if(profile!="usb3-display"&&profile!="display4"&&profile!="dual-display")throw std::runtime_error("INVALID_DISPLAY_PROFILE");
     std::string supported;char selected=0;
     std::istringstream tokens(assignments);std::string token;
     while(tokens>>token) {
@@ -52,7 +51,7 @@ char profile_pin(const std::string& assignments,const std::string& profile) {
         supported+=token;if(current)selected=token[0];
     }
     if(!selected)throw std::runtime_error("ACTIVE_PIN_ASSIGNMENT_UNAVAILABLE");
-    const auto desired=profile=="display4"?std::string("CE"):std::string("DF");
+    const auto desired=profile=="usb3-display"?std::string("DF"):std::string("CE");
     if(desired.find(selected)!=desired.npos)return selected;
     for(char pin:desired)if(supported.find(pin)!=supported.npos)return pin;
     throw std::runtime_error("PROFILE_PIN_ASSIGNMENT_UNSUPPORTED");
@@ -192,6 +191,41 @@ std::string dp_link(const fs::path& root) {
     }
     return result;
 }
+struct MstState {
+    bool known=false,driver=false,sink=false,active=false;
+    unsigned streams=0;
+    std::string refusal() const {
+        if(!known)return "MST_STATE_UNAVAILABLE";
+        if(!driver)return "MST_DRIVER_SUPPORT_UNAVAILABLE";
+        if(streams<2)return "MST_STREAMS_UNAVAILABLE";
+        if(!sink)return "SINK_MST_UNAVAILABLE";
+        return {};
+    }
+};
+MstState mst_state(const fs::path& root) {
+    const auto controls=links::lane_controls(root);
+    if(controls.size()!=1)return {};
+    const auto file=sysfs::resolved(root,controls.front().parent_path()/"uke_dp_stream_state");
+    if(!file||!fs::is_regular_file(*file))return {};
+    constexpr std::array keys{"version","mst_driver","mst_max_streams","sink_mst_capable","mst_active"};
+    std::array<unsigned,5> values{};unsigned seen=0;
+    std::istringstream input(value(*file));std::string field;
+    while(input>>field) {
+        const auto equals=field.find('=');if(equals==field.npos)continue;
+        const auto key=field.substr(0,equals);
+        for(size_t i=0;i<keys.size();++i)if(key==keys[i]) {
+            if(seen&(1U<<i))return {};
+            seen|=1U<<i;
+            const std::string_view number(field.data()+equals+1,field.size()-equals-1);
+            const auto parsed=std::from_chars(number.data(),number.data()+number.size(),values[i]);
+            if(number.empty()||parsed.ec!=std::errc{}||parsed.ptr!=number.data()+number.size())return {};
+        }
+    }
+    if((seen&3)!=3||values[0]!=1||values[1]>1)return {};
+    if(!values[1])return {true,false,false,false,0};
+    if(seen!=31||!values[2]||values[2]>4||values[3]>1||values[4]>1||values[4]>values[3])return {};
+    return {true,true,values[3]!=0,values[4]!=0,values[2]};
+}
 struct GadgetLock {
     Fd fd{-1};
     GadgetLock() {
@@ -224,12 +258,24 @@ std::string escaped(const std::string& text) {
 std::string display_profiles(const fs::path& requested_root) {
     const auto root=fs::canonical(requested_root);
     const auto nodes=dp_controls(root);
+    const auto mst=mst_state(root);
+    auto mst_reason=mst.refusal();
+    if(mst_reason.empty()) {
+        if(nodes.size()!=1)mst_reason=nodes.empty()?"DP_ALTMODE_CONTROL_UNAVAILABLE":"DP_ALTMODE_CONTROL_AMBIGUOUS";
+        else try{(void)profile_pin(value(nodes.front()),"dual-display");}
+             catch(const std::exception& e){mst_reason=e.what();}
+    }
     std::string out="{\"schema\":\"org.uke.control.display.profiles.v1\",\"live\":";
     out+=root=="/"?"true":"false";
     out+=",\"selection_interface\":"+sysfs::quote(nodes.size()==1?"standard_typec_pin_assignment":
         nodes.empty()?"unavailable":"ambiguous");
     out+=",\"pin_assignments\":"+(nodes.size()==1?sysfs::attribute(root,nodes.front()):"null");
     out+=",\"observed_link\":"+dp_link(root);
+    out+=",\"mst\":{\"state_available\":"+std::string(mst.known?"true":"false")+
+        ",\"driver_available\":"+(mst.known?(mst.driver?"true":"false"):"null")+
+        ",\"sink_capable\":"+(mst.known&&mst.driver?(mst.sink?"true":"false"):"null")+
+        ",\"active\":"+(mst.known&&mst.driver?(mst.active?"true":"false"):"null")+
+        ",\"max_streams\":"+(mst.known&&mst.driver?std::to_string(mst.streams):"null")+"}";
     const auto limits=links::lane_controls(root);
     out+=",\"training_ceiling\":{\"available\":"+std::string(limits.size()==1?"true":"false")+
         ",\"values\":[1,2,4],\"current\":"+(limits.size()==1?sysfs::attribute(root,limits.front()):"null")+
@@ -239,7 +285,8 @@ std::string display_profiles(const fs::path& requested_root) {
     out+="{\"id\":\"display4\",\"requested_dp_lanes\":4,\"usb3_lanes_reserved\":false,";
     out+="\"usb2_fallback_verified\":false,\"ethernet_fallback_verified\":false},";
     out+="{\"id\":\"dual-display\",\"requested_dp_lanes\":4,\"requires_mst\":true,";
-    out+="\"available\":false,\"reason\":\"MST_DRIVER_SUPPORT_UNAVAILABLE\"}]}\n";
+    out+="\"available\":"+std::string(mst_reason.empty()?"true":"false")+",\"reason\":"+
+        (mst_reason.empty()?"null":sysfs::quote(mst_reason))+"}]}\n";
     return out;
 }
 Result request_display_profile(const std::string& profile) {
@@ -253,6 +300,9 @@ Result request_display_profile(const std::string& profile) {
         need(first.state.profile,"FULL_TYPEC_PROFILE_REQUIRED");
         need(first.state.port&&first.state.role_switch,"PORT_ASSOCIATION_AMBIGUOUS");
         need(first.state.partner,"NO_ATTACHED_PARTNER");
+        if(profile=="dual-display") {
+            const auto reason=mst_state("/").refusal();need(reason.empty(),reason);
+        }
         const auto nodes=dp_controls("/");
         need(nodes.size()==1,nodes.empty()?"DP_ALTMODE_CONTROL_UNAVAILABLE":"DP_ALTMODE_CONTROL_AMBIGUOUS");
         need(sysfs::beneath(first.partner,nodes.front()),"DP_PARTNER_ASSOCIATION_INVALID");
@@ -271,6 +321,9 @@ Result request_display_profile(const std::string& profile) {
             need(same_partner(first,current),"ATTACHMENT_CHANGED");
             need(!current.state.storage&&!current.state.network&&!current.state.gadget,"USB_RESOURCE_IN_USE");
             need(value(nodes.front())==before,"PIN_ASSIGNMENT_CHANGED");
+            if(profile=="dual-display") {
+                const auto reason=mst_state("/").refusal();need(reason.empty(),reason);
+            }
             Fd fd{open(nodes.front().c_str(),O_WRONLY|O_CLOEXEC|O_NOFOLLOW)};
             struct statfs filesystem{};
             need(fd.n>=0&&fstatfs(fd.n,&filesystem)==0&&filesystem.f_type==SYSFS_MAGIC,"TYPEC_SYSFS_NOT_WRITABLE");
