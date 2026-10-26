@@ -30,11 +30,14 @@ ten-second RGB color test and caller-refusal checks. Torch extension source,
 real battery/camera LED policy and electrical/thermal/endurance work remain open.
 No active Linux NFC reader or qualified charging-protection result is claimed.
 
-Default VA initialization works with the tested installed backend. Native Iris
-on kernel 15 produces 30/30 exact-reference H.264 constrained-baseline frames
-at 320x240 with locally provisioned VPU firmware. H.264 High fails with firmware
-errors; other codecs, encoding, browser video, sandbox/GL coexistence and
-cold-boot activation remain unqualified. VA revision 0.5 is built but uninstalled.
+On kernel 15 with signed VA 0.4, seven decode modes each produce 30 exact-reference 320x240
+frames: H.264 Baseline/Main/High, HEVC Main/Main10 and VP9 Profile0/2, including
+independent ten-bit references. The native FFmpeg High/B-frame path still fails.
+Basic native H.264 Main encoding produces 30 independently decoded frames with
+correct SPS timing; missing color metadata, rate control, larger modes and
+endurance remain open. Browser video, zero-copy presentation, sandbox/GL
+coexistence and cold-boot activation remain unqualified. Signed VA revision 0.6
+preserves damaged-picture errors in source fixtures; it is not installed.
 
 VRR remains disabled after input/display regressions. Internal audio, cameras,
 sleep, charging protection, gesture wake, DDC/CI, HDR and experimental external
@@ -46,6 +49,10 @@ The [source checkpoint](https://github.com/MCC45TR/uke-linux-hardware-support/tr
 preserves native identity and graphics/video diagnostics. Identity fixtures and
 Vulkan/GLES host builds pass; OpenCL probe compilation lacks host headers.
 Local touch references and calibration remain private and device-specific.
+The [video/browser checkpoint](https://github.com/MCC45TR/uke-linux-hardware-support/tree/publish/video-source-20261026)
+retains the later bounded codec results and uninstalled browser/backend candidates.
+The [Control packaging correction](https://github.com/MCC45TR/uke-linux-hardware-support/tree/fix/offline-core15-post-20261026)
+passes native AArch64 COPR 11209527 as `1.15.0-2`; no tablet update is performed here.
 
 ## Components
 
