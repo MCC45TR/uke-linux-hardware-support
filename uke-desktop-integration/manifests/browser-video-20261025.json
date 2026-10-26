@@ -272,7 +272,11 @@
     "hd_vp9_requested_level": 51,
     "hd_vp9_level_conformance_accepted": false,
     "actual_hd_browser_workload_tested": false,
-    "updated_video_payload_deployed": false
+    "updated_video_payload_deployed": false,
+    "hd_selected_positive_inputs_sha256": "ed5f81d1b477400ba2fcce8af41644db486f8bee6d9a6187abb3bb897c0fc11b",
+    "hd_vp9_positive_source_sha256": "7f5175d07c33ec8b2a3d5353fb811355365f2e6cd82076bd986d01aef5145b06",
+    "hd_vp9_positive_encoder_reported_level": 40,
+    "hd_vp9_lossless_input_role": "Additional high-bitrate stress input; not the sole positive profile input"
   },
   "runtime_changes": [
     {

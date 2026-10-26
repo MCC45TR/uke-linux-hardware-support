@@ -49,7 +49,7 @@
     },
     "mesa_queue_candidate": {
       "date": "2026-10-26",
-      "source_commit": "2ab638f",
+      "source_commit": "2ab638f7478fa1638ac1499120f54a4029c8bb8a",
       "source_rpm": "uke-additional-1.0.0-11.fc46.src.rpm",
       "source_rpm_sha256": "eeae3d9e62a5a97212acd66bfc4a76b07ad7c0a2062ae6a0ea46df52fc074725",
       "copr_build": 11211213,
