@@ -215,7 +215,13 @@
     ],
     "interop": "Opt-in decoded-frame external texture versus RGBA reference; native DMA-BUF/modifier/fence and zero-copy acceptance remain separate",
     "node_target_runtime_required": false,
-    "python_target_runtime_required": false
+    "python_target_runtime_required": false,
+    "encode_extractor": "tests/unpack-webcodecs-encode.mjs",
+    "encode_extractor_sha256": "cdaca195640e70ae9f6d3fe88a86ae90f9de4655abc004866364fbccc6b250e6",
+    "host_encode_extraction_fixtures_passed": true,
+    "real_host_software_encode_packet_fixtures": 2,
+    "host_extracted_software_frames_per_fixture": 30,
+    "actual_browser_encoder_tested": false
   },
   "runtime_changes": [
     {
@@ -260,5 +266,42 @@
     "stream_started": false,
     "frames_produced": false,
     "persistent_config_changed": false
+  },
+  "saved_kernel14_display_observation": {
+    "local_date": "2026-10-26",
+    "kernel_release": "7.3.0-14",
+    "provenance": "Coordinator-saved tablet kernel-active-stream and original KScreen receipts; no new target command from this investigation",
+    "root_receipt_sha256": "113e61ba25491b3eac60448c5c238d124371e46012fa2e7ed36af1d39d14a95d",
+    "desktop_receipt_sha256": "f0139c999ee5758776e73b4c02fcda5bda57d3fbba23ece68bafc0532dfd550a",
+    "outputs": [
+      {
+        "connector": "DP-1",
+        "kernel_active": true,
+        "bits_per_component": 10,
+        "bits_per_pixel": 30,
+        "dsc_bits_per_pixel_x16": 0,
+        "kwin_enabled": true,
+        "kwin_hdr": false,
+        "kscreen_max_bpc": 10
+      },
+      {
+        "connector": "DSI-1",
+        "kernel_active": true,
+        "bits_per_component": 10,
+        "bits_per_pixel": 30,
+        "dsc_bits_per_pixel_x16": 128,
+        "kwin_enabled": true,
+        "kwin_hdr": null,
+        "kscreen_max_bpc": 0
+      }
+    ],
+    "dp": {
+      "lanes": 2,
+      "rate_khz": 540000,
+      "hdr_requested": false,
+      "dsc_requested": false,
+      "dsc_active": false
+    },
+    "limitation": "Active kernel pipeline state, not measured sink precision/HDR. DSI KScreen HDR is absent and maxBpc=0 must not replace observed 10 bpc. No HDR/SDR window/video move or new Chrome report."
   }
 }

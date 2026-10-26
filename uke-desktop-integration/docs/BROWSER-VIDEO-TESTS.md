@@ -39,7 +39,7 @@ the active renderer uses them.
 | Sandboxed:false / multiple threads | Exact startup/broker source, isolated normal/early-fatal GL plan and process capture | Actual denied paths/thread timing, Seccomp filters, true sandbox report and correct pixels |
 | Empty decode/encode lists | Runtime profile intersection and dimension candidate 0.5; native AArch64 build fixtures pass | New report and per-profile successful sessions/frames |
 | Encoder policy | Exact Linux AcceleratedVideoEncoder name is pinned; WebCodecs and WebRTC probes prepared | Backend output first, then scoped feature trial with actual implementation/Iris trace |
-| 10 bpc/PQ versus 8 bpc/gamma | Capture fields retained; no physical-output claim | Correlate DRM/output-bits, DSI/DP format and KWin color state; move the test window/video between HDR/SDR outputs |
+| 10 bpc/PQ versus 8 bpc/gamma | Saved kernel-14 output-bits and KScreen states correlated below | Complete sink/format/color validation and window/video moves between qualified HDR/SDR outputs |
 | DMA-BUF, modifiers and fences | Real decoded-frame WebGPU test; source copy/fence path identified | Native buffer identity/layout, import/export lifetime and synchronization trace under actual workload |
 | One-copy | Kept as compositor tile metadata | Measure video copies separately; backend persistent-surface copy is explicit in source |
 | renderD128 override | Wayland selection source and two boot identities checked through stable Adreno by-path | Repeat actual Chrome override and rendering/video checks after the current boot |
@@ -52,6 +52,16 @@ other decode branch shares CAPTURE storage directly. Trace which branch the
 actual client uses; source alone does not count its runtime copies. Removing
 the persistent-export copy requires validated ownership/lifetime changes,
 which a browser zero-copy switch cannot establish.
+
+Saved coordinator receipts from kernel 7.3.0-14 on 26 October report both
+DP-1 and DSI-1 active at 10 bits/component and 30 bits/pixel. DP DSC is off;
+DSI DSC uses 128/16 compressed bits/pixel, which does not turn its component
+depth into 8 bits. DP runs two HBR2 lanes and reports hdr_requested=0.
+KScreen reports DP enabled, maxBpc=10 and hdr=false. DSI is enabled but omits
+HDR state and reports maxBpc=0; those fields must not replace its kernel-active
+10-bpc state. This correlates the saved kernel and compositor output state.
+It does not establish HDMI-sink precision, active HDR, per-surface tone mapping
+or window/video moves. No new Chrome report or target access is claimed here.
 
 ## Prepared workloads
 
@@ -93,6 +103,7 @@ Run from this component:
     node tests/browser-video-host.mjs
     node tests/pack-webcodecs-host.mjs
     node tests/validate-browser-decode-host.mjs
+    node tests/unpack-webcodecs-host.mjs
 
 These are API/packet fixtures; they do not run a real codec. To prepare actual
 packet jobs, use the existing software-generated corpus and FFprobe on the host:
@@ -123,6 +134,24 @@ host software results, while browser/WebGPU/WebRTC device results remain open.
 
 Encode job: {"operation":"encode","codec":"avc1.42E01E"}.
 WebRTC job: {"operation":"webRtc","codec":"video/H264"}.
+Extract a completed WebCodecs encode capture on the host:
+
+    node tests/unpack-webcodecs-encode.mjs capture.json NEW_OUTPUT > encoded-receipt.json
+
+The extractor refuses existing output files, malformed or length-prefixed data,
+missing outputs and repeated PTS. It retains coded order when PTS reorder, and
+binds the result to its SHA-256. Decode that exact file with the independent
+software decoder and inspect all thirty frames, visible dimensions, actual
+codec/profile/bit depth and color. For example, for an H264 result:
+
+    ffprobe -v error -f h264 -count_frames -show_streams -of json NEW_OUTPUT
+    ffmpeg -v error -nostdin -hwaccel none -f h264 -i NEW_OUTPUT \
+      -an -f framehash -hash sha256 -n encoded-output.framehash
+
+Use hevc as the demuxer for HEVC. Neither extracting valid-looking NAL units
+nor an independent decode proves native hardware use, fidelity or genuine
+10-bit precision. Retain the original capture and measured encoder evidence.
+
 The host CDP observer captures the diagnostic page and SystemInfo before/after,
 only enables Media observation for its own test target and closes only targets
 it created. Exact browser/revision guards remain mandatory.
