@@ -2,17 +2,25 @@
 
 Date: 26 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-Default VA initialization now passes on Fedora and Linux 7.3.0-14 with signed
+Default VA initialization passes on Fedora and Linux 7.3.0-14/15 with signed
 revision 0.4. One coordinator-owned query as UID1000, without driver/path/device
 overrides, loads the MSM alias and returns seven decode/four encode profile
 entrypoint pairs at 04:23:02 UTC. The earlier default query failed because that
 alias was absent. Profile-wide acceptance remains open.
 
-On26October, kernel7.3.0-15 produces30/30 exact NV12 reference frames for
-one native H264 constrained-baseline320x240 session. A separate High/B2
-session produces one corrupt frame and five firmware fatal errors despite
-FFmpeg exit0. Further native tests stop pending diagnosis. VA/Chrome video,
-other modes, lifecycle and sustained acceptance are not established.
+On26October, kernel7.3.0-15 and installed VA0.4 produce30/30 exact independent
+reference frames for all seven decode profiles at320x240. HEVC Main10 and
+VP9 Profile2 preserve full P010 precision. These are bounded, untraced Iris
+hardware sessions with explicit CPU download. Browser playback, direct display,
+mode limits, lifecycle and sustained acceptance remain open.
+
+The native FFmpeg H264 constrained-baseline path also passes. Native High/B2
+fails without tracing but produces correct frames with strace, so its startup/
+source-change sequencing remains under investigation. Native H264 Main encode
+produces30 independently decodable640x360 frames with correct30fps SPS timing,
+but lacks requested color fields. A raw ffprobe rate field initially misled
+the cadence interpretation; direct SPS arithmetic corrects it. Encoding is not
+qualified by output alone; no browser encode feature is enabled from this result.
 
 Iris and VIDEOCC are loaded in this controlled window. Iris uses video1/video2;
 video0 belongs to NT36532 touch. DP remains active at 10 bpc / 30 bpp after the
@@ -66,7 +74,14 @@ Main10/P010 and rate fixtures pass. Native AArch64 COPR 11206385, signature,
 payload and unchanged runtime dependencies also pass. It is not installed. These axis bounds do
 not promise every width/height pair or sustained rate; kernel macroblock
 admission and measured output remain required. Discrete-only enumeration is
-not advertised. The installed revision 0.4 remains the default-query baseline.
+not advertised. Installed0.4 remains the default-query and bounded VA decode baseline.
+
+Revision0.6 retains the runtime dimension changes and preserves decode-error
+status after damaged-buffer sanitization. The old-source regression fails and
+the actual-function correction passes. Native AArch64 COPR11209327, all five
+fixtures, trusted RPM signatures and payload audits pass. No Python or scriptlet
+is included. Revision0.6 is not installed; healthy/damaged device sessions and
+render/browser regressions remain required.
 
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10

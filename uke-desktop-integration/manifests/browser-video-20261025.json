@@ -496,8 +496,8 @@
     "fixture_sha256": "40180cc32b76915ae418bfb4e49abc84a0dcb5b4cb45b8cd8149acb3a41ed701",
     "host_extracted_functions_passed": true,
     "patch_dry_run_passed": true,
-    "full_chromium_build_passed": false,
-    "package_built": false,
+    "full_chromium_build_passed": true,
+    "package_built": true,
     "installed": false,
     "device_tested": false,
     "accepted": false,
@@ -529,7 +529,7 @@
     "copr_repository": "mcc45tr/uke-linux-test:custom:chromium-sandbox-20261026",
     "copr_submission_accepted": true,
     "iris_sysfs_enumerator_semantics_reviewed": true,
-    "last_build_state": "running",
+    "last_build_state": "succeeded",
     "copr_native_prep_passed": true,
     "native_gn_generation_passed": true,
     "native_compile_started": true,
@@ -552,11 +552,26 @@
       "tablet_acceptance": false
     },
     "last_native_log_observation": {
-      "utc": "2026-10-26T10:52:20Z",
-      "actions_completed": 10023,
-      "actions_total": 56313,
-      "complete_build": false,
-      "gpu_hook_object_compile_observed": false
+      "utc": "2026-10-26T12:25:45Z",
+      "complete_build": true,
+      "gpu_hook_object_compile_observed": true,
+      "gpu_hook_object_action": 35801,
+      "main_target_actions_total": 56313,
+      "log_sha256": "2310b0263e7cc6e53596f149c1d6bb74c72c187914e0231dd59e82fd8ff3f527"
+    },
+    "copr_ended_utc": "2026-10-26T12:25:45Z",
+    "binary_audit": {
+      "rpm_signature_verified": true,
+      "header_and_payload_verified": true,
+      "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+      "browser_rpm_sha256": "b4c4a12c8e2b4d6a83fa826a4d3049d8a7b27cb4f33e51e347e58aef27169418",
+      "common_rpm_sha256": "84245afd025d201d9ed3bb4494488496369566d171939e5dcbd582b22b7564c1",
+      "browser_elf_sha256": "ae92d8d005cd68ea5bd550ce8f666573a0f3b81b9a5f70fdd870fd3b7d0c29da",
+      "python_payload": false,
+      "direct_python_dependency": false,
+      "original_fedora_selinux_scriptlet": true,
+      "target_abi_and_transitive_dependencies_accepted": false,
+      "wrapper_configuration_accepted": false
     }
   }
 }

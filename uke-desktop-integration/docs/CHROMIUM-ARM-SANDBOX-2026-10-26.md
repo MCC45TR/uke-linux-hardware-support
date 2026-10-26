@@ -1,8 +1,9 @@
 # Chromium156 Linux ARM GPU sandbox candidate
 
 Date: 26 October 2026. Target: POCO Pad X1, Fedora Rawhide, kernel7.3.0-15,
-Mesa26.2.5 and Chrome156.0.8078.47. This source candidate has no full build,
-package or device acceptance yet. The original Google Chrome stays installed.
+Mesa26.2.5 and Chrome156.0.8078.47. Native compilation, RPM generation and
+trusted signature/payload checks pass. Device acceptance remains open;
+the original Google Chrome stays installed.
 
 Normal Chrome produces correct FD732 GL pixels with GPU Seccomp0. Its early,
 fatal sandbox comparison has Seccomp2/one filter but hardware GL initialization
@@ -39,8 +40,8 @@ as project-owned Python payloads. Audit the built RPMs and runtime dependencies
 before delivery; a source-file list alone does not prove the resulting payload.
 Fedora acquisition/cleaning scripts are research inputs and are not executed.
 
-Remaining validation: full native AArch64 build; signature and payload audit;
-controlled signed DNF delivery; exact GPU before/after reports; GPU Seccomp2
+Remaining validation: target ABI/transitive dependency and DNF-plan audit;
+controlled signed delivery; exact GPU before/after reports; GPU Seccomp2
 with FD732 clear/shader/context-restoration pixels; native and VA codec sessions;
 WebCodecs/WebRTC output and actual VPU evidence. Video node, DMA-BUF and fence
 permissions require their own traced evidence. No global blocklist bypass,
@@ -59,11 +60,23 @@ Source RPM156.0.8078.47-1.1.uke2.fc46 has SHA-256
 65d0869d18c6829f8eb819142a49b608a1f53e4acd922a6838b636fd2d2aac6d.
 Expanded AArch64 packaging selects use_vaapi=true without V4L2 codec flags.
 The retained Fedora spec delta records the exact release, flags and patch
-application. This is an SRPM, not a completed Chromium build or tablet result.
+application. The SRPM receipt is distinct from the later native result below.
 
-COPR11208913 accepts the single AArch64 submission in the separate
-chromium-sandbox-20261026 test directory. Native compilation and binary
-RPM inspection remain pending. Fedora's original chromium.conf includes
+COPR11208913 succeeds at12:25:45UTC in the separate
+chromium-sandbox-20261026 test directory. Full AArch64 compilation, link and
+RPM generation complete. Both browser/common packages pass isolated signature,
+header and payload checks against DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E.
+No Python payload or direct dependency is included. The original SELinux
+semanage/restorecon scriptlet is retained; target dependency origins and the
+GLIBC2.45/libavcodec63 ABI still require a fresh target audit. RPM SHA-256:
+
+- chromium: b4c4a12c8e2b4d6a83fa826a4d3049d8a7b27cb4f33e51e347e58aef27169418
+- chromium-common: 84245afd025d201d9ed3bb4494488496369566d171939e5dcbd582b22b7564c1
+- Browser ELF: ae92d8d005cd68ea5bd550ce8f666573a0f3b81b9a5f70fdd870fd3b7d0c29da
+
+Initial cached RPM URLs return404 after build completion; fresh-query downloads
+provide the independently verified packages. No duplicate build is submitted.
+The packages are not installed. Fedora's original chromium.conf includes
 feature forces and an X11-only global blocklist/workaround bypass; invoke
 the candidate binary directly with reviewed arguments for the controlled
 trial. Do not run its distribution wrapper as the baseline or promote its

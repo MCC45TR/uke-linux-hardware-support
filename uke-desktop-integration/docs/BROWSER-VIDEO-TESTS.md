@@ -11,13 +11,16 @@ context restoration with GPU Seccomp0. The early/fatal comparison enables
 Seccomp2/one filter but loses hardware GL. A native H264 constrained-baseline
 320x240 session produces30/30 exact NV12 reference frames; a separate High/B2
 session fails with firmware fatal errors and one all-zero error buffer.
-Further codec tests stop. Chrome submits no video frame; encode, WebGPU and
-physical display acceptance remain open.
+Later untraced VA0.4 sessions on the same kernel pass all seven320x240 decode
+profiles with30/30 exact NV12/P010 reference frames. Native High/B2 remains
+tracing-sensitive and fails without strace. Chrome submits no accepted video
+frame; encode, WebGPU and physical display acceptance remain open.
 
 The [Linux ARM sandbox candidate](CHROMIUM-ARM-SANDBOX-2026-10-26.md)
 contains DRM/EGL and direction-gated Iris node policies with two passing host
-function fixtures. Exact156 source/SRPM checks pass; native COPR11208913 is
-building. No candidate binary is installed or qualified. Preserve the original
+function fixtures. Exact156 source/SRPM checks, full native COPR11208913 and
+both RPM signature/payload checks pass. No candidate binary is installed or
+qualified on the tablet. Preserve the original
 Google Chrome and invoke the candidate binary directly for the later controlled
 trial; Fedora's wrapper configuration contains unqualified feature forces.
 

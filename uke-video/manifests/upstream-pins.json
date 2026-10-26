@@ -144,8 +144,19 @@
     "scope": "Retain VA decode failure after neutral fill; preserve storage and allocation errors",
     "old_source_regression_reproduced": true,
     "actual_recovery_and_sync_contract_passed": true,
-    "binary_built": false,
+    "binary_built": true,
     "installed": false,
-    "device_tested": false
+    "device_tested": false,
+    "source_commit": "976c9e3",
+    "copr_build": 11209327,
+    "native_aarch64_build_fixtures_passed": true,
+    "fixture_count": 5,
+    "rpm_signature_verified": true,
+    "payload_alias_verified": true,
+    "no_python_payload": true,
+    "no_scriptlets": true,
+    "aarch64_rpm_sha256": "0d7620546789cfc245968fec7460155b83701c63d5597162fd76597ad1fc94ad",
+    "elf_sha256": "36bc6e1ae6d64e1c848a24444fd276fc43ed2a901910373dfacb62d52f558c39",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
   }
 }

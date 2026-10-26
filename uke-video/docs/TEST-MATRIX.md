@@ -1,9 +1,9 @@
 # Uke video acceptance matrix
 
 Updated: 26 October 2026. Physical environment: POCO Pad X1, Fedora 46 Rawhide,
-Linux 7.3.0-10 for VA queries and 7.3.0-12 for package-only delivery. Mesa
-26.2.5-11 and libva 2.24.1 were captured in the query environment. Package and
-source checks are separate from codec workload acceptance.
+Linux7.3.0-15 for bounded native/VA workloads, installed VA revision0.4,
+Mesa26.2.5 and libva2.24.1. Earlier kernel10/12/14 observations remain dated
+history. Source, package, bounded mode and profile-wide acceptance are separate.
 
 | Check | Observed result | Remaining gate |
 |---|---|---|
@@ -25,11 +25,14 @@ source checks are separate from codec workload acceptance.
 | Chrome156 normal GL on kernel14 | Canvas/WebGL shader pixels and context restoration pass on FD732; initialized Chrome decode list has eight mapped rows; sandbox false, WebGPU no adapter | Early/fatal sandbox comparison, real codec frames, native buffers and physical presentation |
 | VA revision 0.5 / COPR 11206385 | Fresh GPU-enabled host build, all native AArch64 fixtures and signed payload checks pass; not installed | Controlled delivery, VA regression and real boundary-mode output |
 | Native kernel15 H264 constrained-baseline320x240 |30/30 NV12 frames match independent software hashes; no new non-audit kernel message | VA/browser, broader modes, lifecycle and sustained acceptance |
-| Native kernel15 H264 High/B2 at320x240 | Failed: one corrupt frame and five HFI fatal errors despite FFmpeg exit0; further codecs stopped | Diagnose queues/HFI/stream before retry; Main untested |
-| HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |
-| HEVC Main10 decode | Not run | P010 precision and independent SDR/HDR metadata |
-| VP9 P0/P2 decode | Not run | 8/10-bit references, superframes, alt-ref/show-existing |
-| H264 / HEVC Main encode | Not run | Independent decode, RC/GOP/IDR, quality, color |
+| Native kernel15 H264 High/B2 at320x240 | Original failure retained; traced control passes30 frames, removing only strace fails with0 validated frames and no new HFI fatal | Diagnose client/source-change timing; tracing success is not a fix |
+| VA kernel15 H264 CB/Main/High decode | Each320x240 session passes30/30 exact independent NV12 frame/timestamp comparisons, untraced | Broader references, boundary modes, lifecycle and browser |
+| VA kernel15 HEVC Main decode |320x240 passes30/30 exact NV12 reference frames, untraced | Tiles/WPP/RPS/long-term references and broader modes |
+| VA kernel15 HEVC Main10 decode |320x240 passes30/30 full-precision independent P010 frames, untraced | Broader modes, lifecycle and physical SDR/HDR |
+| VA kernel15 VP9 P0/P2 decode | Each320x240 session passes30/30 exact NV12/P010 reference frames, untraced | Superframes, alt-ref/show-existing, limits and lifecycle |
+| Native H264 Main encode |30 independently decoded640x360 frames,53.02dB average PSNR and correct30fps SPS timing; requested color fields absent | Color, RC/GOP/IDR, duration and VA regression |
+| HEVC Main encode | Not run | Independent decode, timing, RC/GOP/IDR, quality and color |
+| VA revision0.6 / COPR11209327 | Native build, all5 source fixtures, trusted signatures, no-Python/scriptlet payload audit pass; not installed | Healthy/damaged hardware sessions, dimensions and rendering/browser regression |
 | HEVC Main10 encode | Native P010 and VA source candidates pass host checks; no native bitstream | Matched delivery, P010 MMAP/GPU/import, independent precision and metadata |
 | Main10 patch on kernel-13 source | Patch applies; Main10/caps contracts and Clang-23 AArch64 driver cross-build pass | Whole matched kernel build/delivery and actual encode; no object is installed |
 | Advanced encode controls and mode limits | Not run | B/ROI/LTR/layers/intra-refresh, source/runtime intersection |
@@ -67,5 +70,6 @@ Constrained Baseline/High, HEVC Main/Main10 and VP9 Profile 0/2 streams.
 The Profile 2 stream preserves actual 10-bit sample values through independent
 software decoding, with all 30 P010 frame hashes matching its input. Main10
 HEVC references retain non-8-bit values; a separate input has explicit BT.709
-SDR metadata. The native constrained-baseline and High trials above consume their respective inputs; other corpus profiles remain untested on Iris. Broader
-references, resolution-change and stress vectors remain due.
+SDR metadata. All seven core corpus profiles now have bounded VA/Iris frame
+comparisons; native constrained-baseline and High results remain specific to
+their client path. Broader references, resolution-change and stress vectors remain due.

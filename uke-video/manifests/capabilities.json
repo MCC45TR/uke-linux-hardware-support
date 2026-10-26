@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "date": "2026-10-25",
+  "date": "2026-10-26",
   "device": "uke",
   "soc": "SM7675",
   "latest_metadata_observation": {
@@ -101,8 +101,8 @@
     "fastcv": false,
     "retested_after_native6_failure": true,
     "previous_package": "uke-vaapi-v4l2-1.0.0-0.2.20261025git6d03c3f.fc46.aarch64",
-    "codec_tested": false,
-    "vainfo_result_scope": "Historical explicit revision0.2/kernel10 query and current default revision0.4/kernel14 initialization/profile query only; no frames",
+    "codec_tested": true,
+    "vainfo_result_scope": "Default revision0.4 kernel14 and kernel15 initialization succeeds; seven bounded kernel15 VA decode modes have actual reference-matching frames; browser, broad profile and lifecycle acceptance remain open",
     "current_package_vainfo_exit": 0,
     "package_verified_utc": "2026-10-25T19:36:49Z",
     "package_verification_sha256": "03795f4ac371f87e58cec17f77f6e05b0fc1f1f59175c5e1dc6979267493cfe8",
@@ -144,7 +144,17 @@
       "module_activation": "Explicit coordinator-owned load in a controlled window; cold-boot activation and permanent browser integration are not qualified",
       "cold_boot_module_activation_accepted": false
     },
-    "previous_default_error_kernel_release": "7.3.0-10"
+    "previous_default_error_kernel_release": "7.3.0-10",
+    "default_vainfo_kernel15_trial": {
+      "utc": "2026-10-26T11:50:40Z",
+      "kernel_release": "7.3.0-15",
+      "backend_revision": "0.4",
+      "exit": 0,
+      "four_driver_path_device_overrides_unset": true,
+      "decode_profile_count": 7,
+      "encode_profile_count": 4,
+      "receipt_sha256": "9f3977148353ebeb9498678d0fd397e9b9ba36bf92f66662d575c10eef0b9a16"
+    }
   },
   "profiles": [
     {
@@ -176,6 +186,28 @@
           "mode_passed": true,
           "receipt_sha256": "1e7b79f72406b1b320788bbe64402be40e5e0eba5636af7034e6e47f5ce93284",
           "scope": "One bounded native session; no VA/browser/lifecycle/sustained/physical-display acceptance"
+        },
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "bit_depth": 8,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "6a8ce34c04f92a9c8bf03e4b5ac39d8ce39530e6419235da93c560b7756b1b7e",
+          "reference_framehash_sha256": "a81e254815182221da73ac6aa4fe0087849cca075936b260837e6c12ccef9526",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
         }
       ]
     },
@@ -191,7 +223,30 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "bit_depth": 8,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "c9885639e2d7e2a947fc25c851b46f34092a82bca16047c7e3da67ee03705dc7",
+          "reference_framehash_sha256": "b0d715da863aae6e698270f0f487b310217adf7512314eb23a71903bf2e42cb3",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
+        }
+      ]
     },
     {
       "codec": "h264",
@@ -224,6 +279,45 @@
           "scope": "One bounded native session; no VA/browser/lifecycle/sustained/physical-display acceptance",
           "valid_reference_frames": 0,
           "output_buffer_all_zero": true
+        },
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "bit_depth": 8,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "04b8724f633a99ba1a5b12a5d3fb9acfdbc4ba11999f3d42e6c43411a19169d1",
+          "reference_framehash_sha256": "a8d14252be90454780d0f0f771020a522eaa0312aa02fe2e7a7d6b68e578c8f1",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
+        },
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "path": "FFmpeg h264_v4l2m2m / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "expected_frames": 30,
+          "produced_frames": 0,
+          "valid_reference_frames": 0,
+          "mode_passed": false,
+          "instrumented": false,
+          "ffmpeg_exit": 183,
+          "firmware_fatal_error": null,
+          "receipt_sha256": "4201579edb1149853b65a03a78a982993866e90ad5f89ad8dafe6a974ad68abc",
+          "scope": "Removing only strace from the matching High/B2 trial reproduces capture error; instrumented success is diagnostic only"
         }
       ]
     },
@@ -239,7 +333,30 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "bit_depth": 8,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "2f8907d5ff8f05123f9d0439a89ab7d14333f0f2c6f8bf537a6006394dff87aa",
+          "reference_framehash_sha256": "5dbaa14a8763041ccd9b65eff09b9ef2b2b59d15a3afc38cdba792f1c791e3a0",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
+        }
+      ]
     },
     {
       "codec": "hevc",
@@ -253,7 +370,30 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "P010",
+          "bit_depth": 10,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "b3fad2dcab09e3f0c867424cb7f4e1b504adc8606abe829aa2d6c81545a54685",
+          "reference_framehash_sha256": "b31586243e6e48f2b35fae55d552dcc189c97751f61e9f26d00e557222e5b04e",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
+        }
+      ]
     },
     {
       "codec": "vp9",
@@ -267,7 +407,30 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "NV12",
+          "bit_depth": 8,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "d4a8fbf8bb120450027003dc29c181e073098be58ff1aa2b6061c93bba27d2a5",
+          "reference_framehash_sha256": "1dcb8ca4d3c90296b82037c51f2fa98982dca2880e41d9f7043ff112c19f776d",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
+        }
+      ]
     },
     {
       "codec": "vp9",
@@ -281,7 +444,30 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "kernel_source": "770b877757873ff87c02dc23e0a3486755ef569a",
+          "backend_revision": "0.4",
+          "path": "FFmpeg VA / Iris Decoder",
+          "width": 320,
+          "height": 240,
+          "output_format": "P010",
+          "bit_depth": 10,
+          "expected_frames": 30,
+          "produced_frames": 30,
+          "all_reference_frames_equal": true,
+          "exact_timestamps_and_size": true,
+          "instrumented": false,
+          "new_non_audit_kernel_errors": 0,
+          "ffmpeg_exit": 0,
+          "mode_passed": true,
+          "receipt_sha256": "583356c60e3fd955ea3d9d18bdb00fc47f98afc5e95e771265acffdf2f7e338a",
+          "reference_framehash_sha256": "59c30c15e18b56fa8ab28d95abdf04143135a20d1ca884fdf18be7c5940940a7",
+          "scope": "One bounded untraced VA hardware session with explicit CPU download; browser, DMA-BUF display, lifecycle, limits, sustained and optical acceptance remain open"
+        }
+      ]
     },
     {
       "codec": "h264",
@@ -309,7 +495,34 @@
       "vaapi_advertised": true,
       "runtime_pass": null,
       "accepted": false,
-      "tested_modes": []
+      "tested_modes": [
+        {
+          "date": "2026-10-26",
+          "kernel_release": "7.3.0-15",
+          "path": "FFmpeg h264_v4l2m2m / Iris Encoder",
+          "width": 640,
+          "height": 360,
+          "input_format": "NV12",
+          "expected_frames": 30,
+          "independently_decoded_frames": 30,
+          "output_bytes": 77282,
+          "ffmpeg_exit": 0,
+          "requested_fps": 30,
+          "sps_num_units_in_tick": 2097152,
+          "sps_time_scale": 125829120,
+          "sps_fixed_frame_rate": true,
+          "sps_picture_rate": 30,
+          "sps_profile_idc": 77,
+          "sps_level_idc": 50,
+          "requested_bt709_color_fields_present": false,
+          "psnr_average_db": 53.022434,
+          "new_non_audit_kernel_errors": 0,
+          "mode_passed": false,
+          "receipt_sha256": "732cd6f134ea75e6fd7658e304093a07db2d1d910503301f49944be877f960cf",
+          "bitstream_sha256": "aeb0438b88ae329e7a3eb11ffae368be20b73e1c6d53ef2101b3599df31291e4",
+          "scope": "Basic bitstream and independent picture/SPS timing verified; raw ffprobe rate alone is not cadence. Color, RC, duration, lifecycle, sustained and browser qualification remain open"
+        }
+      ]
     },
     {
       "codec": "h264",
@@ -485,5 +698,6 @@
     "reason": "One corrupt High frame and five session fatal errors despite FFmpeg exit0",
     "modules_unloaded": false,
     "rebooted": false
-  }
+  },
+  "bounded_va_decode_modes_passed": 7
 }
