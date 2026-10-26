@@ -7,8 +7,12 @@ the original Google Chrome stays installed.
 
 The first native candidate fails the kernel16 early/fatal GL regression:
 Seccomp2 is active, but the hardware GPU crashes and the replacement disables
-GL. Follow-up source/SRPM changes pass host checks; native COPR11210239 is
-running. Neither build has accepted sandboxed hardware rendering/video.
+GL. Follow-up source/SRPM changes pass host checks. The user subsequently
+stopped separate Chromium builds: COPR11210239 is canceled, both11208913 and
+11210239 are deleted, and the Chromium package record is removed. Neither
+candidate has accepted sandboxed hardware rendering/video. Retained patches
+are research records, not an active browser delivery route. Continue integration
+against the original distribution/browser packages and existing Uke families.
 
 Normal Chrome produces correct FD732 GL pixels with GPU Seccomp0. Its early,
 fatal sandbox comparison has Seccomp2/one filter but hardware GL initialization
@@ -118,5 +122,8 @@ configuration fixtures. The corrected uke3 source RPM contains all four;
 digest QA catches an earlier conditional Source omission before submission.
 SRPM SHA-256:
 fb1a2e8f1fd28dd4e252742697ffbb91b5616ca6083c48ba46099636d865e38c.
-COPR11210239 is running. Full build, signed payload/dependency audit and
-untraced device/normal-launcher rendering and codec gates remain open.
+COPR11210239 is canceled and deleted at the user's request. The incomplete
+full build and its native checks are not passes. No replacement standalone
+Chromium build is authorized. Original-browser sandboxed rendering and codec
+acceptance remain open; package names created by the project must start with
+`uke-` and remain children of their existing source family.

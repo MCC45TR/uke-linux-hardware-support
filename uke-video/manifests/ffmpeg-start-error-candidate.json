@@ -22,7 +22,7 @@
     "patch": "patches/ffmpeg-9.0.2-preserve-start-errors.patch",
     "patch_sha256": "a31d356d92b32c340fe7937c1e7c70fa94cd654ae055e85d2364100e768ef4b5",
     "fixture": "tests/ffmpeg-start-error-contract.sh",
-    "fixture_sha256": "fa4b6fd5091dab3cf748eca6a5f9e1d4d046e0fc04007fe331b5f3fcfaf83dac",
+    "fixture_sha256": "ace07785ea2bd3a5d29cd8f83c5f98bfaed3a030d7738787f461f943d22a66a6",
     "decoder_after_sha256": "3bcf06c1e781d5fce800627719dab257bbd64e6f339079d2f57cf7674fda4a12",
     "old_source_fixture_failed": true,
     "patched_source_fixture_passed": true,

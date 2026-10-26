@@ -24,7 +24,7 @@ struct V4L2Context {
 };
 struct V4L2m2mContext {
     V4L2Context capture, output;
-    int fd = 42, draining = 0;
+    int fd = 42, draining = 0, initial_source_change = 0;
     AVPacket buf_pkt;
 };
 struct V4L2m2mPriv { V4L2m2mContext *context; };
@@ -52,6 +52,7 @@ static int ff_v4l2_context_init(V4L2Context *ctx) {
     if (!init_error) ctx->buffers = ctx;
     return init_error;
 }
+[[maybe_unused]] static int ff_v4l2_context_wait_source_change(V4L2Context *, int) { return 0; }
 static int ff_decode_get_packet(AVCodecContext *, AVPacket *packet) {
     if (!packet_error) packet->size = 12;
     return packet_error;
@@ -128,7 +129,8 @@ int main() {
     reset(); enqueue_error = AVERROR(EIO); AVFrame input_failure;
     expect(receive(input_failure) == AVERROR(EIO) && state.buf_pkt.size == 0,
            "fatal enqueue failure must still propagate and release its packet");
-    reset(); packet_error = AVERROR(EAGAIN); AVFrame available;
+    reset(); state.output.streamon = state.capture.streamon = 1;
+    packet_error = AVERROR(EAGAIN); AVFrame available;
     expect(receive(available) == 0 && available.produced && last_timeout == 0,
            "missing new input must retain the existing nonblocking capture path");
     if (failures) return 1;

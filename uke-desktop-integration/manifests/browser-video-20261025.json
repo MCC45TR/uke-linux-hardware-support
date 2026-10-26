@@ -617,7 +617,16 @@
       "source_archive_matches_verified_prior_srpm": true,
       "native_check_fixture_count": 4,
       "copr_build": 11210239,
-      "last_build_state": "running",
+      "last_build_state": "canceled",
+      "copr_build_deleted": true,
+      "copr_package_deleted": true,
+      "standalone_build_authorized": false,
+      "cancellation_reason": "User requested removal of standalone Chromium builds and retention of uke-prefixed packages within existing source families",
+      "removed_build_ids": [
+        11208913,
+        11210239
+      ],
+      "removal_verified_utc": "2026-10-26T17:29:25Z",
       "full_native_build_passed": false,
       "binary_audited": false,
       "installed": false,
