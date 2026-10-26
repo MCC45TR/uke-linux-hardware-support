@@ -113,6 +113,19 @@ Source identities and validation limits are in
 Run its host fixture with
 `bash tests/ffmpeg-start-error-contract.sh <prepared-FFmpeg-source>`.
 
+A separate private streaming prototype combines the open upstream DRC/buffer
+series with initial-metadata sequencing and error handling. Minimal x86_64
+libraries compile with nine V4L2 decoder and five encoder wrappers; these
+wrapper counts describe build coverage, not Uke codec support. Actual-C host
+fixtures cover full output queues, partial input, LAST/EPIPE transitions,
+cloned plane references, concurrent final releases and replacement pools.
+They use modeled V4L2 ioctls and real host anonymous mappings/refcounts.
+Fixture assertions are explicitly re-enabled after upstream headers, which
+otherwise disable libc assertions. No replacement FFmpeg RPM is built or
+installed. Native untraced frames, driver orphan-buffer support, full lifecycle
+and sustained acceptance remain open. The prototype's separate scope and
+input hashes are recorded in the same candidate manifest.
+
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10
 encode remains gated out. No new non-audit kernel message appears after either

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-26",
-  "scope": "Host-checked FFmpeg error propagation; not a streaming-protocol fix",
+  "scope": "Distinct host-only startup-error candidate and unpackaged streaming prototype; neither is device-qualified",
   "upstream": {
     "url": "https://git.ffmpeg.org/ffmpeg.git",
     "tag": "n9.0.2",
@@ -33,5 +33,27 @@
     "installed_on_tablet": false,
     "tablet_tested": false,
     "source_change_drc_ordering_fixed": false
+  },
+  "streaming_protocol_prototype": {
+    "upstream_series_url": "https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/25012",
+    "upstream_series_head": "df8b967717dc0119412e6a5280281ca70d8d5ce5",
+    "upstream_series_author": "Nick Rogers",
+    "upstream_port_patch_sha256": "6d98d164689b3daef69b8dbe54680dbc978a9275a8b8c57dd53770821166f511",
+    "private_protocol_delta_sha256": "cd5bce2c0b527928db9b723743892af665399bd0c7cdd4033d7f1efbb6b185a5",
+    "minimal_host_x86_64_libraries_compiled": true,
+    "compiled_v4l2_decoder_wrappers": 9,
+    "compiled_v4l2_encoder_wrappers": 5,
+    "full_distribution_feature_set_built": false,
+    "source_change_fixture": "tests/ffmpeg-source-change-contract.sh",
+    "source_change_fixture_sha256": "11936c9e191411e0d18d501618e925e01c9a26c18df44dab96adf938df512d52",
+    "buffer_lifetime_fixture": "tests/ffmpeg-buffer-lifetime-contract.sh",
+    "buffer_lifetime_fixture_sha256": "2a664a300c186ce5f3a3db566a2be7d6d55d5ea78dfad0f6adef0fa40a2e28f9",
+    "actual_c_host_fixtures_passed": true,
+    "libc_assertions_enabled_after_upstream_headers": true,
+    "driver_ioctls_modeled": true,
+    "host_mappings_and_refcounts_real": true,
+    "native_aarch64_package_built": false,
+    "installed_on_tablet": false,
+    "tablet_tested": false
   }
 }
