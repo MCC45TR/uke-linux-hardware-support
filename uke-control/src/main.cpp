@@ -128,6 +128,12 @@ static int run(int argc,char** argv,bool as_json) {
             if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);uke::cli::print(uke::swap_status(),as_json);return 0;}
         }
         if(command=="charge") {
+            if(argc==4&&std::string_view(argv[2])=="review") {
+                auto result=uke::charge_review(argv[3]);uke::cli::print(result.output,as_json);return result.status;
+            }
+            if(argc==3&&std::string_view(argv[2])=="restore-current") {
+                auto result=uke::charge_control_mode("profile-restore");uke::cli::print(result.output,as_json);return result.status;
+            }
             if(argc==3&&std::string_view(argv[2])=="notifications") {uke::charge::moisture_notifications();return 0;}
             if(argc==3&&std::string_view(argv[2])=="moisture-enable") {
                 auto result=uke::charge_enable_moisture();uke::cli::print(result.output,as_json);return result.status;

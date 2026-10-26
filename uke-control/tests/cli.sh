@@ -8,8 +8,8 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.2.0' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.2.0"' >/dev/null
+grep -Fx 'uke-control 2.3.0' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.0"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
@@ -62,6 +62,16 @@ for mode in human json; do
     test "$result" = 69
     if test "$mode" = json; then jq -e '.applied==false and .effective==null' "$stage/refused" >/dev/null
     else grep -Fx 'Applied: no' "$stage/refused"; grep -Fx 'Effective: not reported' "$stage/refused"; fi
+done
+for args in 'charge review /synthetic/review.json' 'charge restore-current'; do
+    read -r -a words <<< "$args"
+    set +e
+    "$app" "${words[@]}" > "$stage/refused" 2> "$stage/error"
+    result=$?
+    set -e
+    test "$result" = 69
+    test -s "$stage/refused" && test ! -s "$stage/error"
+    ! grep -q '^{' "$stage/refused"
 done
 for query in status health cells; do
     "$app" battery "$query" --json | jq -e '.individual_cell_health==null and .view!=null' >/dev/null

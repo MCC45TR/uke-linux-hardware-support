@@ -66,6 +66,11 @@ struct Lock {
     explicit Lock(bool wait=false){root();directory(state);fd.n=open((state/"lock").c_str(),O_CREAT|O_RDWR|O_CLOEXEC|O_NOFOLLOW,0600);need(fd.n>=0,"Cannot open manager lock");need(flock(fd.n,LOCK_EX|(wait?0:LOCK_NB))==0,"Another uke-control operation is running");}
 };
 Result charge_control_mode(const std::string& mode) {root();board();Lock lock;charge_helper();return charge::control_mode(mode);}
+Result charge_review(const std::string& review) {
+    root();board();Lock lock;charge_helper();
+    need(!review.empty()&&review.front()=='/'&&review.size()<=4096,"Review file must use an absolute path");
+    return execute({"/usr/libexec/uke-charge-control","identity-review",review},10,65536);
+}
 std::string read(const std::string& path,size_t limit) {
     std::ifstream file(path);if(!file)return "unavailable\n";
     std::string value;std::array<char,4096> buffer{};
@@ -527,7 +532,7 @@ std::string report() {
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 2.2.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 2.3.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {

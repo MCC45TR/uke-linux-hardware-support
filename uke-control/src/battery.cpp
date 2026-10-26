@@ -32,6 +32,7 @@ std::string view(const std::string& operation,const std::string& document) {
         const bool known=fresh&&sd_json_variant_is_unsigned(type)&&sd_json_variant_unsigned(type)>0&&sd_json_variant_unsigned(type)<names.size();
         out+=",\"source\":\"uke-charge-control protocols\",\"fresh\":"+std::string(fresh?"true":"false")+",\"reported_usb_type\":"+(known?sysfs::quote(names[sd_json_variant_unsigned(type)]):"null");
         for(const auto* key:{"negotiated_protocol","negotiated_pd_revision","reason"})out+=','+sysfs::quote(key)+':'+(!fresh&&std::string_view(key)!="reason"?"null":json(field(raw,key)));
+        out+=",\"pd_contract\":"+json(field(raw,"pd_contract"));
         return out+",\"reported_usb_type_is_negotiated_version\":false}\n";
     }
     if(operation!="status"&&operation!="health"&&operation!="cells")throw std::runtime_error("Unknown battery report");
@@ -40,7 +41,7 @@ std::string view(const std::string& operation,const std::string& document) {
     if(!sd_json_variant_is_unsigned(version)||sd_json_variant_unsigned(version)!=1||!sd_json_variant_is_string(kind)||std::string_view(sd_json_variant_string(kind))!="uke_battery_snapshot"||!sd_json_variant_is_string(field(raw,"status")))throw std::runtime_error("Unexpected battery observer schema");
     for(const auto* key:{"status","provider_verified","snapshot_coherent","receipt_boottime_ns","sample_end_boottime_ns"})out+=','+sysfs::quote(key)+':'+json(field(raw,key));
     const bool coherent=yes(field(raw,"provider_verified"))&&yes(field(raw,"snapshot_coherent"));
-    auto fields=coherent?field(raw,"fields"):nullptr;auto electrical=coherent?field(raw,"electrical"):nullptr;
+    auto fields=coherent?field(raw,"fields"):nullptr;auto electrical=coherent?field(raw,"engineering"):nullptr;
     if(operation=="status") {
         out+=",\"readings\":{";bool first=true;
         for(const auto* key:{"battery.status","battery.present","battery.capacity","battery.voltage_now","battery.current_now","battery.temp","usb.online","usb.usb_type"}){if(!first)out+=',';first=false;out+=sysfs::quote(key)+':'+json(field(fields,key));}

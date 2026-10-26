@@ -18,4 +18,6 @@ uint64_t integer(V *v);
 Number quantity(V *v, bool allow_zero);
 void keys(V *v, std::initializer_list<const char *> allowed);
 Json read_json(const std::string &path, uid_t trusted_uid, std::string *bytes = nullptr);
+void write_private_json(const std::string &directory, const std::string &name,
+                        const std::string &bytes, uid_t trusted_uid = 0);
 }

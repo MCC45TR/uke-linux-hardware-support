@@ -28,6 +28,7 @@ Result charge_enable_preconfigured_cap();
 Result charge_enable_moisture();
 Result charge_apply_preconfigured_cap();
 Result charge_control_mode(const std::string& mode);
+Result charge_review(const std::string& review);
 std::string usb_status();
 std::string firmware_status();
 std::string hardware_status();

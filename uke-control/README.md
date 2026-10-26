@@ -469,6 +469,11 @@ partition changes. F2FS preservation shrink is disabled following a VM integrity
 failure. F2FS growth preserves its native multicall alias; final capacity is
 checked independently, with mounted XFS geometry queried from the kernel.
 
+26 October 2026: source version 2.3.0 adds explicit expiring charge identity review,
+reviewed positive-current restore and coherent UCSI PDO/RDO cache reporting.
+The battery topology view reads the observer's engineering object. Host/source
+checks are separate from physical charging qualification; profiles remain closed.
+
 26 October 2026: source version 2.2.0 adds `battery status|health|cells|protocol`,
 `nfc status|on|off` and `wake status SOURCE` (including double-tap). Battery views
 reuse the existing native observer and charge helper. Individual cell health and

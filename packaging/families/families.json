@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "release": 1,
       "requires": [
-        "uke-control = 2.2.0-1%{?dist}"
+        "uke-control = 2.3.0-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -46,7 +46,7 @@
     },
     {
       "name": "uke-power",
-      "version": "1.3.3",
+      "version": "1.4.0",
       "requires": [
         "uke-upower",
         "power-profiles-daemon",
@@ -76,7 +76,7 @@
         ":(exclude)uke-desktop-integration/src/bluetooth-address.cpp",
         ":(exclude)uke-desktop-integration/packaging/uke-bluetooth-address.service"
       ],
-      "release": 3
+      "release": 1
     },
     {
       "name": "uke-sensors",
@@ -223,10 +223,10 @@
     "material-decoration": "material-decoration"
   },
   "native_versions": {
-    "uke-control": "2.2.0",
+    "uke-control": "2.3.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.2",
-    "uke-battery-observer": "1.1.0",
+    "uke-battery-observer": "1.2.0",
     "uke-front-color": "1.0.2",
     "uke-installation-profile": "1.8.2"
   },

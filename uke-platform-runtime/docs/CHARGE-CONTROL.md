@@ -378,3 +378,75 @@ Moisture, faults, freshness and input-suspend readback remain in the compared
 report; an error-to-healthy transition is logged even when the healthy fields
 match an earlier report. Firmware polling and the two-second guard cadence are
 unchanged. Desktop cached-status queries still return a full report each time.
+
+## Explicit identity commissioning (26 October 2026)
+
+Runtime 1.2.0 provides `uke-charge-control identity-review /absolute/review.json`;
+Control 2.3.0 exposes `uke-control charge review /absolute/review.json` with human
+output by default and explicit `--json`. Both require root. Supply a root-owned,
+non-symlink, non-group/world-writable regular input (maximum32KiB) with these
+fields; placeholder values are not usable evidence:
+
+```json
+{
+  "schema_version": 1,
+  "kind": "control_artifact_review",
+  "reviewed_control": true,
+  "boot_id": "CURRENT_BOOT_ID",
+  "driver_instance_boottime_ns": 0,
+  "firmware_generation": 0,
+  "source_event_generation": 0,
+  "expires_boottime_ns": 0,
+  "evidence_id": "REVIEWED_EVIDENCE_SHA256",
+  "control_profile_sha256": "EXACT_PROFILE_BYTES_SHA256",
+  "identities": {
+    "kernel_release": "CURRENT_KERNEL_RELEASE",
+    "firmware_sha256": "REVIEWED_FIRMWARE_SHA256",
+    "pack_identity_sha256": "REVIEWED_PACK_IDENTITY_SHA256",
+    "dt_sha256": "REVIEWED_DT_SHA256",
+    "module_manifest_sha256": "REVIEWED_MODULE_MANIFEST_SHA256"
+  }
+}
+```
+
+The operation applies the existing full profile resolver to its proposed identity;
+unknown/duplicate keys, wrong types, missing proofs, limits or mismatched artifacts
+still reject. It brackets preparation with current driver context, atomically
+replaces `/run/uke-battery/control-identity.json` with mode0600, then repeats
+admission. The supplied fixed expiry must be in the future and no more than15
+minutes away. Reusing the input cannot extend its expiry. No lease, firmware
+GET/SET, service activation or automatic qualification is performed. Root review
+asserts inspected evidence; it is not remote firmware authentication. A source,
+firmware, boot, profile, suspend or expiry change still requires another valid
+review. Unattended long-lived identity renewal is not qualified by this command.
+
+The PD report additionally consumes the exact UCSI driver's `uke_pd_contract`
+attribute when present. The driver returns one locked cache snapshot, invalidated
+by status replacement, disconnect, suspend-time offset or teardown. Userspace
+bounds the record and object index, decodes fixed PDO voltage and operating/
+maximum current, rejects inconsistent envelopes, and leaves other PDO types raw.
+`pd_contract` includes receipt times and separate contract power. It is not an
+input meter, a PS_RDY trace, exact PD revision, or QC/MI authentication. No extra
+UCSI command, property probe, TCPM or voltage writer is added.
+
+## Remaining electrical acceptance
+
+Source implementation cannot supply the missing physical facts. The shipped
+control/model/protection profiles remain unqualified. Do not fill their limits
+from marketing specifications or synthetic test values. Before enabling control,
+record the exact firmware/kernel/DT/modules, fitted pack and gauge mapping,
+calibrated unit/sign/scale evidence, pack CV/termination/recharge/JEITA bounds,
+autonomous protections, USB moisture/thermal inhibit and restore behavior.
+FG1/FG2 identifiers alone do not justify querying unknown XM IDs or labelling
+physical cell1/cell2. No new blind XM probe is issued by these changes.
+
+For each manufacturer-supported QC2.0, QC3.0, QC3+, PD2.0, PD3.0 and MI FC2.0
+case, record adapter and cable identity plus independent electrical/protocol
+measurements. Test normal/high system load, negotiated fallback, current/thermal
+derating, threshold stop/restart, positive-current restore, detach/reattach,
+source replacement, dock, missing/late telemetry, daemon failure, suspend/resume,
+PDR, reboot and charger-only boot. Record hardware evidence and result separately
+for every case; do not convert a missing case into a pass. Use a controlled rig
+for fault injection. Never wet, short or deliberately overheat the tablet.
+Factory reset, bypass, all-night control, individual-cell health, peak45W and
+exact QC/MI negotiation remain unqualified until their separate evidence exists.

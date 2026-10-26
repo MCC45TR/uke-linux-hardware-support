@@ -75,6 +75,30 @@ firmware defaults were restored. The qualified profile's positive restore
 current is not presented as a factory reset. Other standard `charge limit`
 values remain separate; file presence never establishes qualification.
 
+26 October 2026 source update (Control 2.3.0, runtime 1.2.0):
+`charge restore-current` exposes the existing qualified positive FCC restore.
+It requires admission before stopping the automatic worker, then checks the
+current thermal/source ceiling and firmware readback. Failure is terminal;
+there is no guessed factory sentinel, blind rollback or SET replay.
+
+`charge review /absolute/review.json` consumes a root-owned artifact review
+bound to the current boot, driver instance, firmware/source generations, exact
+profile bytes and reviewed artifact hashes. Its fixed expiry cannot exceed
+15 minutes. The helper validates the complete control profile, installs the
+identity atomically with mode0600, and repeats admission after installation.
+It does not authenticate remote firmware, extend the supplied expiry,
+activate a service, issue firmware RPC or make an unqualified profile usable.
+Suspend, source replacement, PDR, expiry and mismatches still invalidate control.
+See runtime docs/CHARGE-CONTROL.md for the review input.
+
+On the matched 7.3 driver, `charge protocols` and `battery protocol` also expose
+the cache-only UCSI pd_contract: raw PDO/RDO, receipt times and bounded fixed-PDO
+voltage/current/power decoding. These values describe the firmware's cached
+contract, not measured input power, exact negotiated PD revision, QC/MI
+authentication or electrical acceptance. Missing/invalid records remain null.
+The individual-cell view now reads the observer's actual engineering topology
+object; it continues to report missing individual-cell measurements explicitly.
+
 The synthetic host fixture checks SOC boundaries/hysteresis, source-power and
 thermal ceilings, slow/automatic composition, invalid/stale inputs, identity
 changes and unapplied previews. Client fixtures also check rejected admission,

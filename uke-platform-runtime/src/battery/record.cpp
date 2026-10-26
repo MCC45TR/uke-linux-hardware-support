@@ -3,6 +3,7 @@
 #include <systemd/sd-json.h>
 #include <cerrno>
 #include <cstring>
+#include <cstdio>
 #include <fcntl.h>
 #include <memory>
 #include <set>
@@ -97,5 +98,39 @@ Json read_json(const std::string &path, uid_t trusted_uid, std::string *bytes) {
     Json result(value, &sd_json_variant_unref); unique(value);
     if (bytes) *bytes = data;
     return result;
+}
+void write_private_json(const std::string &directory, const std::string &name,
+                        const std::string &bytes, uid_t trusted_uid) {
+    if (name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789-.") != name.npos ||
+        name == "." || name == ".." || bytes.size() < 2 || bytes.size() > 32768 ||
+        bytes.find('\0') != bytes.npos) reject("identity_output_invalid");
+    const int dir = open(directory.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    struct stat st{};
+    if (dir < 0) reject("identity_directory_unavailable");
+    if (fstat(dir, &st) || st.st_uid != trusted_uid || (st.st_mode & 0022)) {
+        close(dir); reject("identity_directory_untrusted");
+    }
+    const std::string temporary = "." + name + "-" + std::to_string(getpid());
+    int fd = openat(dir, temporary.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+    if (fd < 0) { close(dir); reject("identity_create_failed"); }
+    try {
+        size_t done = 0;
+        while (done < bytes.size()) {
+            const auto n = write(fd, bytes.data() + done, bytes.size() - done);
+            if (n < 0 && errno == EINTR) continue;
+            if (n <= 0) reject("identity_write_failed");
+            done += size_t(n);
+        }
+        if (fsync(fd)) reject("identity_sync_failed");
+        const int closed = close(fd); fd = -1;
+        if (closed) reject("identity_close_failed");
+        // Rename replaces the directory entry itself, never a symlink target.
+        if (renameat(dir, temporary.c_str(), dir, name.c_str()) || fsync(dir))
+            reject("identity_commit_failed");
+        close(dir);
+    } catch (...) {
+        if (fd >= 0) close(fd);
+        unlinkat(dir, temporary.c_str(), 0); close(dir); throw;
+    }
 }
 }

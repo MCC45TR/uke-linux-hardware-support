@@ -92,6 +92,8 @@ policy. Neither command installs an operating system.
 | `uke-control battery status` | A bounded read-only snapshot from the existing battery observer. |
 | `uke-control battery health` | Reported pack health, vendor SOH, cycles and qualified retention with provenance. |
 | `uke-control battery cells` | Reported topology and individual-cell health availability. |
+| `uke-control charge review /path/to/review.json` | Install root-reviewed, expiring identity evidence for the current boot/source; no service activation or charging SET. |
+| `uke-control charge restore-current` | Stop the automatic policy after admission, then restore and read back the profile's reviewed positive FCC value. This is not a factory reset. |
 | `uke-control battery protocol` | Cached USB supply class and actually reported negotiated protocol/revision. |
 | `uke-control wake status double-tap` | Wake permission and the NT36532 gesture-armed state. |
 | `sudo uke-control wake set double-tap on` | Save supported wake permission; use `off` to disable it. |
