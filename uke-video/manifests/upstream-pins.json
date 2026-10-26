@@ -75,7 +75,17 @@
       "tablet_resolved_dependency_transaction_verified": false,
       "installed_on_tablet": false,
       "tablet_tested": false,
-      "original_browser_sandboxed_gl_accepted": false
+      "original_browser_sandboxed_gl_accepted": false,
+      "rollback": {
+        "mesa_version_release": "26.2.5-11.fc46",
+        "source_family_rpm": "uke-additional-1.0.0-8.fc46.src.rpm",
+        "copr_build": 11202191,
+        "retained_mesa_rpms": 13,
+        "all_signatures_and_digests_verified": true,
+        "all_expected_headers_verified": true,
+        "current_installed_bytes_compared": false,
+        "physical_restore_tested": false
+      }
     }
   },
   "upstream": {
