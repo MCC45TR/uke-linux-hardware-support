@@ -6,7 +6,14 @@
     "binary_package": "uke-vaapi-v4l2",
     "standalone_copr_source_allowed": false,
     "standalone_source_record_deleted": true,
-    "retired_build_ids": [11204584, 11205659, 11205969, 11206106, 11206385, 11209327],
+    "retired_build_ids": [
+      11204584,
+      11205659,
+      11205969,
+      11206106,
+      11206385,
+      11209327
+    ],
     "source_and_working_rollback_retained": true,
     "family_candidate": {
       "date": "2026-10-26",
@@ -39,6 +46,36 @@
       "tablet_resolved_dependency_transaction_verified": false,
       "installed_on_tablet": false,
       "tablet_tested": false
+    },
+    "mesa_queue_candidate": {
+      "date": "2026-10-26",
+      "source_commit": "2ab638f",
+      "source_rpm": "uke-additional-1.0.0-11.fc46.src.rpm",
+      "source_rpm_sha256": "eeae3d9e62a5a97212acd66bfc4a76b07ad7c0a2062ae6a0ea46df52fc074725",
+      "copr_build": 11211213,
+      "last_build_state": "succeeded",
+      "mesa_nevra": "uke-mesa-dri-drivers-26.2.5-14.fc46.aarch64",
+      "backend_nevra": "uke-vaapi-v4l2-1.0.0-2.fc46.aarch64",
+      "backend_code_revision": "0.6",
+      "produced_rpm_count": 34,
+      "all_produced_rpm_names_have_uke_prefix": true,
+      "all_produced_rpms_have_expected_source_family": true,
+      "binary_signatures_and_digests_verified": true,
+      "binary_python_payload_direct_requirement_scriptlet_or_symlink_found": false,
+      "backend_rpm_sha256": "65aad8e66e34cfec6ef3184e9d4487d912aa5a54b3e3cbbfb2139553f46f14a2",
+      "backend_elf_sha256": "245b23abd85a7f0cfaeb772cc4bc122e714d484f3788300ddc7dd555a5d95731",
+      "backend_requirements_match_retained_working_0_4": true,
+      "backend_native_fixtures_passed": 5,
+      "queue_cases_per_native_run": 4,
+      "queue_jobs_per_native_run": 512,
+      "queue_native_build_and_check_runs_passed": 2,
+      "queue_filter_scope": "Scheduler and priority target restrictions only; not the full Chromium GPU policy",
+      "all_upstream_test_suites_passed": false,
+      "tolerated_upstream_test_failure": "libaccounts-glib session D-Bus unavailable in native build environment",
+      "tablet_resolved_dependency_transaction_verified": false,
+      "installed_on_tablet": false,
+      "tablet_tested": false,
+      "original_browser_sandboxed_gl_accepted": false
     }
   },
   "upstream": {

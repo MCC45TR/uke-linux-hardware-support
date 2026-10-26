@@ -19,6 +19,16 @@ open. Future FFmpeg integration also belongs to
 the existing family; the source-only client candidate below is not published
 as an independent COPR package.
 
+The Mesa self-target scheduling correction advances the same family to
+1.0.0-11, Mesa to 26.2.5-14 and the unchanged backend code to 1.0.0-2.
+COPR 11211213 succeeds on 26 October. All 34 binary signatures, source-family
+headers and payload audits pass; the backend's relative alias, lack of
+scriptlets and working0.4 dependency set remain intact. The real Mesa queue
+fixture passes all four cases in both native build/check phases, retaining
+512 jobs per run and the modeled self-only scheduling restrictions. The
+inherited libaccounts D-Bus failure remains. No candidate is installed on Uke;
+this does not establish original Chrome sandboxed GL or codec acceptance.
+
 Default VA initialization passes on Fedora and Linux 7.3.0-14/15 with signed
 revision 0.4. One coordinator-owned query as UID1000, without driver/path/device
 overrides, loads the MSM alias and returns seven decode/four encode profile
