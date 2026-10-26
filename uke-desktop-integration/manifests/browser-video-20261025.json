@@ -194,7 +194,7 @@
     "source_corpus_transfer": "Eight SHA-guarded regular files from kernel 7.3.0-13; no device-node, codec or browser API access",
     "host_reference_sdk_image": "5b8d09371cb043901718453edf84ee20d467e816328e6db5b6a9d0664d5e5ebe",
     "host_reference_ffmpeg": "9.0.2-1.fc46.x86_64",
-    "actual_browser_workload_tested": false,
+    "actual_browser_workload_tested": true,
     "encode_size": [
       640,
       360
@@ -221,7 +221,9 @@
     "host_encode_extraction_fixtures_passed": true,
     "real_host_software_encode_packet_fixtures": 2,
     "host_extracted_software_frames_per_fixture": 30,
-    "actual_browser_encoder_tested": false
+    "actual_browser_encoder_tested": false,
+    "actual_gpu_baseline_tested": true,
+    "actual_video_workload_tested": false
   },
   "runtime_changes": [
     {
@@ -334,5 +336,72 @@
     "limitation": "Default initialization/profile query only; saved post-query kernel excerpt is audit-only. No codec, GPU sandbox, new Chrome report or pixel regression acceptance.",
     "module_activation": "Explicit coordinator-owned load in a controlled window; cold-boot activation and permanent browser integration are not qualified",
     "cold_boot_module_activation_accepted": false
+  },
+  "normal_gl_kernel14_trial": {
+    "utc": "2026-10-26T06:27:04.471Z",
+    "kernel_release": "7.3.0-14",
+    "backend_revision": "0.4",
+    "browser": "Chrome156.0.8078.47",
+    "mode": "Normal isolated Wayland/ANGLE OpenGL baseline; no early switch or codec workload",
+    "browser_build_revision": "1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775",
+    "modules_loaded_at_runtime": [
+      "qcom_iris",
+      "videocc_sm8550"
+    ],
+    "persistent_module_policy_changed": false,
+    "renderer": "ANGLE (angleisbroken, FD732, OpenGL ES 3.2 Mesa 26.2.5)",
+    "angleisbroken_preserved": true,
+    "canvas_pixels_passed": true,
+    "webgl_shader_pixels_passed": true,
+    "webgl_context_restore_passed": true,
+    "gpu_report_sandboxed": false,
+    "multiple_threads_warning": true,
+    "gpu_proc_seccomp_observed": false,
+    "missing_proc_snapshot_reason": "Explicit PID snapshot was attempted after the ninety-second browser lifetime; no current Seccomp value is inferred",
+    "initial_systeminfo_decode_rows": 0,
+    "initialized_systeminfo_decode_profiles": [
+      "h264 baseline",
+      "h264 main",
+      "h264 high",
+      "vp9 profile0",
+      "vp9 profile2",
+      "hevc main",
+      "hevc main 10",
+      "hevc main still-picture"
+    ],
+    "initialized_systeminfo_encode_rows": 0,
+    "early_empty_list_is_final_result": false,
+    "observed_chrome_backend_library_map": null,
+    "webgpu_status_label": "enabled",
+    "webgpu_adapter_obtained": false,
+    "webgpu_error": "Error: No WebGPU adapter",
+    "webgpu_compute_rounds": 0,
+    "automatic_render_node_override": "/dev/dri/renderD128",
+    "render_override_supplied_by_trial": false,
+    "render_by_path": "platform-3d00000.qcom_kgsl-3d0-render",
+    "before_report_sha256": "27260eb1ec3f12237b9dae415913b00b1251d86287464d32c2b400d2479830a5",
+    "after_report_sha256": "de1bfd821dc4d0603a4ea22499b476e91e0e2984eb7f7a1600f3bce0e5e126a2",
+    "capture_sha256": "d7d62d299976c9c360b232dd0ef7c52ab5a0ce72b4503f0737af6c4f4d3dba5f",
+    "startup_cleanup_receipt_sha256": "3ea61f4b40602313292df833a567f8776b8ab9a19dc7481ab5b31d674e6efd9c",
+    "handback_receipt_sha256": "160700b26b1a7b4aff444f70c9b3edb1391f9fceb327a63c8510d93009945277",
+    "gpu_process_crash_count": 0,
+    "browser_lifetime_seconds": 90,
+    "browser_supervisor_exit": 124,
+    "ssh_forward_supervisor_exit": 124,
+    "owned_chrome_processes_at_handback": 0,
+    "owned_forward_listener_at_handback": false,
+    "new_non_audit_kernel_messages_in_saved_interval": 0,
+    "chrome_reported_display_bpc": 8,
+    "chrome_reported_display_bpp": 24,
+    "kernel_dp_active_bpc": 10,
+    "kernel_dp_active_bpp": 30,
+    "kernel_dsi_active": false,
+    "black_monitor_preexisting": true,
+    "optical_presentation_accepted": false,
+    "stream_started": false,
+    "frames_produced": false,
+    "hardware_codec_accepted": false,
+    "early_sandbox_trial_started": false,
+    "scope_returned": "Coordinator requested target back for the user-prioritized DSC/FEC work; no additional test started"
   }
 }

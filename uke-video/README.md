@@ -11,8 +11,11 @@ alias was absent. No codec workload is accepted.
 Iris and VIDEOCC are loaded in this controlled window. Iris uses video1/video2;
 video0 belongs to NT36532 touch. DP remains active at 10 bpc / 30 bpp after the
 query, and the saved kernel interval contains only audit-related messages.
-No Chrome report or GL pixel regression is captured. A prior release-9 display
-fault remains unresolved; shared-display codec workloads and lifecycle tests
+A separate normal Chrome156 trial on kernel14 passes FD732 Canvas/WebGL pixels
+and context restoration; its initialized decode list has eight mapped rows.
+GPU sandbox remains false and WebGPU obtains no adapter. The physical monitor
+was already black; pixel readback does not qualify visible presentation. A prior release-9
+display fault remains unresolved; shared-display codec workloads and lifecycle tests
 are separate gates. Cold-boot module activation is not qualified by this
 explicit-load trial. Further experiments require a controlled hardware window.
 

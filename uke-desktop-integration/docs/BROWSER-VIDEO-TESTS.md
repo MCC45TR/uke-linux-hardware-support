@@ -6,6 +6,14 @@ The supplied GPU report has SHA-256
 539485ce3097f487d8226ebf1066774b0bdd7fe889c579f5954e68f29e369869.
 Source, host fixtures, packages and tablet workloads are separate results.
 
+On 26 October, the normal isolated Chrome GL trial on kernel7.3.0-14 passes
+Canvas/WebGL shader pixels and context restoration on FD732/Mesa26.2.5.
+The initialized decode list contains eight mapped profiles; the first early
+SystemInfo sample was empty. No video stream runs. GPU sandbox remains false
+with the multiple-thread warning, and WebGPU returns no adapter despite its
+enabled feature label. The early/fatal comparison and video page remain unrun.
+Physical presentation is unqualified because the monitor was already black.
+
 ## Coverage of the supplied feature table
 
 | Feature | Reported state | Action and acceptance evidence |
@@ -36,13 +44,13 @@ the active renderer uses them.
 | Evidence | Completed preparation | Remaining tablet gate |
 |---|---|---|
 | vaInitialize failure | Default revision-0.4 query passes on kernel14 as UID1000 without overrides; real MSM alias/ABI/backend loaded, 7 decode/4 encode pairs | Preserve this standalone result; Chrome sandbox and actual native/VA output remain due |
-| Sandboxed:false / multiple threads | Exact startup/broker source, isolated normal/early-fatal GL plan and process capture | Actual denied paths/thread timing, Seccomp filters, true sandbox report and correct pixels |
-| Empty decode/encode lists | Runtime profile intersection and dimension candidate 0.5; native AArch64 build fixtures pass | New report and per-profile successful sessions/frames |
+| Sandboxed:false / multiple threads | Normal kernel14 trial reproduces warning/false report while GL pixels/restoration pass | Early/fatal comparison, actual denied paths/thread timing, Seccomp filters and sandboxed hardware GL |
+| Empty decode/encode lists | Initialized Chrome decode list now has eight rows; encode stays empty; dimension0.5 is built but uninstalled | Actual sessions/frames and native encoder qualification; do not use an initial asynchronous empty sample as final |
 | Encoder policy | Exact Linux AcceleratedVideoEncoder name is pinned; WebCodecs and WebRTC probes prepared | Backend output first, then scoped feature trial with actual implementation/Iris trace |
 | 10 bpc/PQ versus 8 bpc/gamma | Saved kernel-14 output-bits and KScreen states correlated below | Complete sink/format/color validation and window/video moves between qualified HDR/SDR outputs |
 | DMA-BUF, modifiers and fences | Real decoded-frame WebGPU test; source copy/fence path identified | Native buffer identity/layout, import/export lifetime and synchronization trace under actual workload |
 | One-copy | Kept as compositor tile metadata | Measure video copies separately; backend persistent-surface copy is explicit in source |
-| renderD128 override | Wayland selection source and two boot identities checked through stable Adreno by-path | Repeat actual Chrome override and rendering/video checks after the current boot |
+| renderD128 override | Current kernel14 boot repeats Adreno by-path identity; Chrome adds override itself and FD732 GL pixels pass | Actual video buffer regression and cold-boot video activation remain due |
 
 For surfaces exported before decode, the backend's persistent_export branch
 copies Iris CAPTURE storage into persistent exported storage. Its GPU path
