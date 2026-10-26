@@ -57,6 +57,11 @@ uke-power)
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
     printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-4$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-additional)
+    make -C uke-video srpm outdir="$stage/video" >"$stage/local.log"
+    backends=("$stage/video/SRPMS/"*.src.rpm)
+    [[ ${#backends[@]} == 1 && -s ${backends[0]} ]]
+    printf '%s\t%s\n' uke-vaapi-v4l2 "${backends[0]}" >"$stage/inputs";;
 uke-metas)
     for component in uke-core-meta uke-desktop-metas; do
         make -C "$component" srpm outdir="$stage/$component" >"$stage/local.log"

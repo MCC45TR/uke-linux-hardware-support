@@ -149,7 +149,8 @@
       ],
       "suggests": [
         "uke-mesa-dri-drivers",
-        "uke-mesa-vulkan-drivers"
+        "uke-mesa-vulkan-drivers",
+        "uke-vaapi-v4l2"
       ],
       "watch_paths": [
         "uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch",
@@ -160,9 +161,15 @@
         "uke-desktop-packaging/tests/turnip-display-fd.sh",
         "uke-desktop-packaging/tests/adreno732-ubwc-hint.sh",
         "uke-desktop-packaging/src/native-runtime/runtime-smoke.cpp",
-        "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt"
+        "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt",
+        "uke-video/Makefile",
+        "uke-video/README.md",
+        "uke-video/packaging",
+        "uke-video/patches",
+        "uke-video/tests",
+        "uke-video/manifests/upstream-pins.json"
       ],
-      "release": 9
+      "release": 10
     },
     {
       "name": "uke-metas",
@@ -239,17 +246,18 @@
     "libssc": "18.fc46",
     "uke-ssc-fileservice": "23.fc46",
     "uke-front-color": "13.fc46",
-    "at-spi2-core": "9.fc46",
-    "gstreamer1": "9.fc46",
-    "libaccounts-glib": "37.fc46",
-    "libwacom": "10.fc46",
-    "libstdcxx-uke-runtime": "11.fc46",
-    "mesa": "12.fc46",
+    "at-spi2-core": "10.fc46",
+    "gstreamer1": "10.fc46",
+    "libaccounts-glib": "38.fc46",
+    "libwacom": "11.fc46",
+    "libstdcxx-uke-runtime": "12.fc46",
+    "mesa": "13.fc46",
     "uke-battery-observer": "10.fc46",
-    "accountsservice": "8.fc46",
+    "accountsservice": "9.fc46",
     "material-decoration": "6.fc46",
     "uke-desktop-metas": "12.fc46",
     "uke-core-meta": "4.fc46",
-    "uke-proximity-capture": "5.fc46"
+    "uke-proximity-capture": "5.fc46",
+    "uke-vaapi-v4l2": "1.fc46"
   }
 }

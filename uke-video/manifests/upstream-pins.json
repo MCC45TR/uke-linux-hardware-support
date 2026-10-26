@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "upstream": {
+    "url": "https://github.com/radxa-pkg/libva-v4l2",
+    "commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",
+    "archive_sha256": "e8756bf642eb3fc458209b8dd2380571dcb52ec4b2201e9d09db208b7e995d52",
+    "license": "MIT; included upstream kernel patches GPL-2.0-only"
+  },
+  "patches": [
+    {
+      "path": "patches/0001-runtime-capability-intersection.patch",
+      "sha256": "3dfb63540c873aec98ebd4f84b42f67111446d1a504234f70be363ebe3e4f6f2"
+    },
+    {
+      "path": "patches/0002-main10-p010-encode.patch",
+      "sha256": "9384af785623eac2aba460f421edd16c6aca6112e34623d1fc38d0c9687a98fe"
+    },
+    {
+      "path": "patches/0003-runtime-encode-rate-limits.patch",
+      "sha256": "718a10615ac320b171d07e54c2e08413f827676b5b1d67a71494ba2e35b2a0d0"
+    },
+    {
+      "path": "patches/0004-runtime-frame-dimensions.patch",
+      "sha256": "dc67dcb2bdaa6acaaae0bef5d07b8048562d6829ddd64cd98636a8f4534b3250"
+    },
+    {
+      "path": "patches/0005-preserve-decode-error-status.patch",
+      "sha256": "e62be3e7485e0d1297df2a1c9432eace1ae460026690205af1d6f32a4424d4db"
+    }
+  ],
+  "delivery": {
+    "copr_build": 11206106,
+    "repository": "mcc45tr/uke-linux-test:custom:video-default-provider-20261025",
+    "source_rpm_sha256": "c0de78d3869cee19f6e05be4e2d9c06eb120df463346668251849b7df2bcf9ff",
+    "aarch64_rpm_sha256": "3744dafe5c0a0718683953ffd93eb373d11e394ff831304f2f552c6c65068880",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "installed_with_dnf": true,
+    "verified_utc": "2026-10-25T19:36:49Z"
+  },
+  "previous_delivery": {
+    "copr_build": 11205659,
+    "repository": "mcc45tr/uke-linux-test:custom:video-20261025",
+    "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de",
+    "aarch64_rpm_sha256": "6a757559b76fd48f144f5bdc2aa29ed0f428079c5d7628571ea765d5a281dd17",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
+  },
+  "host_build_python": {
+    "package": "meson-1.12.1-2.fc46",
+    "purpose": "unmodified upstream Meson build",
+    "tablet_payload": false
+  },
+  "runtime_python_dependency": false,
+  "fastcv": false,
+  "automatic_alias": true,
+  "encode_rate_source_candidate": {
+    "rpm_release": "0.3.20261025git6d03c3f",
+    "host_build_passed": true,
+    "runtime_bitrate_and_q16_fixtures": true,
+    "copr_build": 11205969,
+    "source_rpm_sha256": "2ca41f9326819e43add76c3e2208efb8de8806d37bf68000f5201a8c14e78eca",
+    "copr_succeeded": true,
+    "native_aarch64_build_fixtures_passed": true,
+    "aarch64_rpm_sha256": "46f7a0f94b5dbaffa9c788e260078a02bd62f4845e27cf6ed1259d90f20ac2f9",
+    "elf_sha256": "92e4ba69271963d3074e21731a662a9daf71006ce229637d68c42965737d7a31",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "rpm_signature_verified": true,
+    "installed_with_dnf": false,
+    "tablet_tested": false,
+    "dimension_limits_still_static": true
+  },
+  "main10_source_candidate": {
+    "rpm_release": "0.2.20261025git6d03c3f",
+    "host_build_passed": true,
+    "runtime_profile_fault_fixtures": true,
+    "format_profile_precision_fixture": true,
+    "tablet_tested": false,
+    "copr_build": 11205659,
+    "source_rpm_sha256": "95e70c12c1cf7eb63dca73e1a636427ac8c6a1651bcbfda1c249a526712a49de",
+    "copr_succeeded": true,
+    "installed_with_dnf": true,
+    "rpm_signature_verified": true
+  },
+  "initial_delivery": {
+    "copr_build": 11204584,
+    "repository": "mcc45tr/uke-linux-test:custom:video-20261025",
+    "source_rpm_sha256": "737f9ae079f77bb36e80ce64d79812682f6609d04f96add7facccbe25842b876",
+    "aarch64_rpm_sha256": "ed5e753db70b9ba6f8141dcc57f8c8b0855b7bb76aa737a2995422254608c3f0",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
+  },
+  "dimension_source_candidate": {
+    "rpm_release": "0.5.20261025git6d03c3f",
+    "source_rpm_sha256": "2b30f563b2eadea8623c4764e498f8f22dbfbbbf7507077277c1d769dc2695c9",
+    "copr_build": 11206385,
+    "repository": "mcc45tr/uke-linux-test:custom:video-dimensions-20261025",
+    "source_commit": "1e806468d04ab668ef5d1239a7acdad8bcc8b86b",
+    "copr_succeeded": true,
+    "native_aarch64_build_fixtures_passed": true,
+    "rpm_signature_verified": true,
+    "payload_alias_verified": true,
+    "runtime_dependencies_match_installed_revision_0_4": true,
+    "aarch64_rpm_sha256": "feac1d4675a0850193c1d19be1657daa4661bc63151cdb02955e92d15252707a",
+    "elf_sha256": "b05c71d9b2a77314cd49b180771af175de608a94f559af7d9e6cc5a07375f19d",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "source_preparation_passed": true,
+    "gpu_enabled_host_build_passed": true,
+    "runtime_profile_and_dimension_fault_fixtures": true,
+    "va_dimension_query_fixture": true,
+    "main10_and_rate_regressions_passed": true,
+    "installed_with_dnf": false,
+    "default_vainfo_retested": false,
+    "codec_workload_tested": false,
+    "limits_source": "VIDIOC_ENUM_FRAMESIZES for each admitted coded format and direction",
+    "limitation": "Stepwise/continuous bounds are not a rectangular workload, throughput or physical acceptance claim; discrete-only enumeration is not advertised"
+  },
+  "default_provider_source_candidate": {
+    "rpm_release": "0.4.20261025git6d03c3f",
+    "repository": "mcc45tr/uke-linux-test:custom:video-default-provider-20261025",
+    "automatic_alias": true,
+    "implementation_change": "Retain upstream relative MSM-to-V4L2 symlink; encoder/decoder code unchanged from revision 0.3",
+    "copr_build": 11206106,
+    "installed_with_dnf": true,
+    "rpm_verify_clean": true,
+    "installed_alias_verified": true,
+    "installed_utc": "2026-10-25T19:36:49Z",
+    "default_vainfo_retested": true,
+    "codec_workload_tested": false,
+    "source_rpm_sha256": "c0de78d3869cee19f6e05be4e2d9c06eb120df463346668251849b7df2bcf9ff",
+    "source_preparation_passed": true,
+    "copr_succeeded": true,
+    "native_aarch64_build_fixtures_passed": true,
+    "aarch64_rpm_sha256": "3744dafe5c0a0718683953ffd93eb373d11e394ff831304f2f552c6c65068880",
+    "elf_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "rpm_signature_verified": true,
+    "payload_alias_verified": true,
+    "default_vainfo_exit": 0,
+    "default_vainfo_kernel": "7.3.0-14",
+    "default_vainfo_receipt_sha256": "fa4bdab79812dd543d8be16dabca5e3138529a7225103cdc6fb66fecd362302e"
+  },
+  "decode_error_source_candidate": {
+    "revision": "0.6",
+    "date": "2026-10-26",
+    "scope": "Retain VA decode failure after neutral fill; preserve storage and allocation errors",
+    "old_source_regression_reproduced": true,
+    "actual_recovery_and_sync_contract_passed": true,
+    "binary_built": false,
+    "installed": false,
+    "device_tested": false
+  }
+}

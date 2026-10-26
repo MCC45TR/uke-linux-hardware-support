@@ -1,5 +1,13 @@
 # COPR source families
 
+26 October 2026: additional `1.0.0-10` integrates the experimental Iris VA-API
+backend as the separately installable `uke-vaapi-v4l2` child. Its intermediate
+component source RPM is not an independently registered COPR package. Existing
+additional children receive fresh revisions for the new cohort. Backend source
+and fixtures match revision0.6; native-family packaging and device validation
+remain separate gates. All new project package names start with `uke-`; no
+separate Chromium build or additional source family is introduced.
+
 24 October 2026: core `1.8.1` provides bounded native KScreen session controls.
 Metas `1.1.0-2` contains the separate `uke-plasma-controls` RPM, recommended only
 by `uke-kde-plasma-meta`. Removing the widget retains the KDE meta package.
