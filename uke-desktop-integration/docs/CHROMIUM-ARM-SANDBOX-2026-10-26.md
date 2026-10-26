@@ -5,6 +5,11 @@ Mesa26.2.5 and Chrome156.0.8078.47. Native compilation, RPM generation and
 trusted signature/payload checks pass. Device acceptance remains open;
 the original Google Chrome stays installed.
 
+The first native candidate fails the kernel16 early/fatal GL regression:
+Seccomp2 is active, but the hardware GPU crashes and the replacement disables
+GL. Follow-up source/SRPM changes pass host checks; native COPR11210239 is
+running. Neither build has accepted sandboxed hardware rendering/video.
+
 Normal Chrome produces correct FD732 GL pixels with GPU Seccomp0. Its early,
 fatal sandbox comparison has Seccomp2/one filter but hardware GL initialization
 fails. Diagnostic file tracing observes renderD128 and GLVND EGL vendor-directory
@@ -81,3 +86,37 @@ feature forces and an X11-only global blocklist/workaround bypass; invoke
 the candidate binary directly with reviewed arguments for the controlled
 trial. Do not run its distribution wrapper as the baseline or promote its
 configuration before separate device qualification.
+
+## Kernel16 failure and follow-up
+
+On Linux7.3.0-16/sourcec5e9641, original Google156 passes FD732 GL pixels and
+context restoration with a false sandbox report. The modified uke2 binary is
+run from a verified user-owned extraction with the installed Google helper
+available through a nonempty CHROME_DEVEL_SANDBOX. This does not disable the
+sandbox or install Chromium. Its first GPU exits139; the replacement has
+Seccomp2/one filter, NoNewPrivs1 and CapEff0 but disabled GL. The test fails.
+
+Two concrete gaps remain. Mesa's modular `/usr/lib64/gbm/dri_gbm.so` open is
+denied after BPF. Independently, Mesa's EGL-cache worker creation requests
+SCHED_BATCH for a sibling thread; the existing target restriction terminates
+the GPU. Actual Mesa26.2.5 u_queue.c ignores failure of this optional hint.
+Current Chromium3a1201c8 has the identical GPU policy to pinned156.
+Ptrace/errno-injection trials are diagnostic failures, not acceptance.
+
+Patch0004 admits only that GBM file read and returns EPERM for SCHED_BATCH on
+ARM64 Linux, excluding ChromeOS. It grants no scheduler operation. The actual
+function fixture fails before the change and passes afterward, including
+unchanged other-policy/platform cases. Existing Mesa/Iris fixtures still pass.
+Patch0005 keeps privacy/Qt and stock graphics feature defaults with ARM64
+early/fatal sandboxing; no encoder, zero-copy or global bypass force remains.
+Its actual-configuration checks pass for ARM64/x86 and Wayland/X11.
+
+The original Fedora SELinux policy already labels the packaged binary/helper
+correctly on the tablet. Patch0006 retains restorecon over the browser tree,
+removes obsolete local semanage rules/dependency and runs four native source/
+configuration fixtures. The corrected uke3 source RPM contains all four;
+digest QA catches an earlier conditional Source omission before submission.
+SRPM SHA-256:
+fb1a2e8f1fd28dd4e252742697ffbb91b5616ca6083c48ba46099636d865e38c.
+COPR11210239 is running. Full build, signed payload/dependency audit and
+untraced device/normal-launcher rendering and codec gates remain open.

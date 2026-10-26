@@ -154,6 +154,21 @@
       "decode_profile_count": 7,
       "encode_profile_count": 4,
       "receipt_sha256": "9f3977148353ebeb9498678d0fd397e9b9ba36bf92f66662d575c10eef0b9a16"
+    },
+    "default_vainfo_kernel16_trial": {
+      "date": "2026-10-26",
+      "kernel_release": "7.3.0-16",
+      "backend_revision": "0.4",
+      "initial_immediate_post_modprobe_exit": 3,
+      "stable_initialized_device_query_exit": 0,
+      "four_driver_path_device_overrides_unset": true,
+      "decode_profile_count": 7,
+      "encode_profile_count": 4,
+      "readiness_guard": "udevadm wait --initialized=yes with user read/write and driver/name checks",
+      "cause_inference": "Device initialization/access race; initial open errno not captured",
+      "fresh_cold_boot_wait_sequence_qualified": false,
+      "receipt_sha256": "9b07eaf3335cc6618961f6e1011f31742e5501283862bf6c15be13b3c18736d0",
+      "scope": "Standalone initialization/profile query only; no kernel16 codec frames or permanent startup acceptance"
     }
   },
   "profiles": [

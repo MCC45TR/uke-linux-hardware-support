@@ -157,6 +157,10 @@
     "no_scriptlets": true,
     "aarch64_rpm_sha256": "0d7620546789cfc245968fec7460155b83701c63d5597162fd76597ad1fc94ad",
     "elf_sha256": "36bc6e1ae6d64e1c848a24444fd276fc43ed2a901910373dfacb62d52f558c39",
-    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"
+    "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
+    "device_signature_verified": true,
+    "device_plan_kernel": "7.3.0-16",
+    "device_plan_upgrades": 1,
+    "device_plan_new_dependencies": 0
   }
 }

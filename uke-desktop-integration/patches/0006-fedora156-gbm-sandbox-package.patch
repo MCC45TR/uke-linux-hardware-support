@@ -1,0 +1,104 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Fedora: check the follow-up sandbox and retain stock SELinux labels
+
+Build the exact GBM/worker policy correction and run the four source/config
+contracts natively. The tablet's signed original Fedora policy already assigns
+bin_t and chrome_sandbox_exec_t to the packaged paths. Keep restorecon over
+the entire browser directory; remove redundant, incorrect unversioned local
+semanage rules and their additional Python dependency chain.
+
+Applies after 0003-fedora156-arm-vaapi-test-package.patch, based on Fedora
+e402dd33400be892fc94d8c1f2fab15c9dc81c9b. Full native RPM and installed SELinux,
+sandbox and GL/video verification remain separate gates.
+
+--- a/chromium.spec
++++ b/chromium.spec
+@@ -283,7 +283,7 @@
+ 
+ Name:	chromium
+ Version: 156.0.8078.47
+-Release: 1.1.uke2%{?dist}
++Release: 1.1.uke3%{?dist}
+ Summary: A WebKit (Blink) powered web browser that Google doesn't want you to use
+ Url: http://www.chromium.org/Home
+ License: BSD-3-Clause AND LGPL-2.1-or-later AND Apache-2.0 AND IJG AND MIT AND GPL-2.0-or-later AND ISC AND OpenSSL AND (MPL-1.1 OR GPL-2.0-only OR LGPL-2.0-only)
+@@ -558,6 +558,7 @@
+ # Linux ARM Mesa sandbox candidate; no persistent runtime feature bypass.
+ Patch600: 0001-chromium156-linux-arm-mesa-sandbox.patch
+ Patch601: 0002-chromium156-linux-arm-iris-sandbox.patch
++Patch602: 0004-chromium156-mesa-gbm-worker-sandbox.patch
+ 
+ # Upstream patches
+ 
+@@ -604,8 +605,14 @@
+ Source17: https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-%{esbuild_version}.tgz
+ %endif
+ 
++Source600: chromium-arm-sandbox-contract.sh
++Source601: chromium-iris-sandbox-contract.sh
++Source602: chromium-gbm-scheduling-contract.sh
++Source603: chromium-default-flags-contract.sh
++
+ BuildRequires: golang
+ BuildRequires: clang
++BuildRequires: gcc-c++
+ BuildRequires: clang-tools-extra
+ BuildRequires: llvm
+ BuildRequires: lld
+@@ -1059,7 +1066,6 @@
+ 
+ %if %{undefined flatpak}
+ # For selinux scriptlet
+-Requires(post): /usr/sbin/semanage
+ Requires(post): /usr/sbin/restorecon
+ %endif
+ 
+@@ -1291,6 +1297,7 @@
+ 
+ %patch -P600 -p1 -b .linux-arm-mesa-sandbox
+ %patch -P601 -p1 -b .linux-arm-iris-sandbox
++%patch -P602 -p1 -b .mesa-gbm-worker-sandbox
+ 
+ # Upstream patches
+ 
+@@ -1745,6 +1752,12 @@
+ %build_target %{chromebuilddir} chrome_management_service
+ %endif
+ 
++%check
++CXX=g++ bash %{SOURCE600} content/common/gpu_pre_sandbox_hook_linux.cc
++CXX=g++ bash %{SOURCE601} content/common/gpu_pre_sandbox_hook_linux.cc
++CXX=g++ bash %{SOURCE602} content/common/gpu_pre_sandbox_hook_linux.cc sandbox/policy/linux/bpf_gpu_policy_linux.cc
++bash %{SOURCE603} %{SOURCE2}
++
+ %install
+ rm -rf %{buildroot}
+ 
+@@ -1861,13 +1874,9 @@
+ 
+ %if %{undefined flatpak}
+ %post
+-# Set SELinux labels - semanage itself will adjust the lib directory naming
+-# But only do it when selinux is enabled, otherwise, it gets noisy.
++# Fedora policy already labels this directory and its privileged helper.
+ if selinuxenabled; then
+-	semanage fcontext -a -t bin_t /usr/lib/chromium-browser &>/dev/null || :
+-	semanage fcontext -a -t bin_t /usr/lib/chromium-browser/chromium-browser.sh &>/dev/null || :
+-	semanage fcontext -a -t chrome_sandbox_exec_t /usr/lib/chrome-sandbox &>/dev/null || :
+-	restorecon -R -v %{chromium_path}/chromium-browser &>/dev/null || :
++	restorecon -R -v %{chromium_path} &>/dev/null || :
+ fi
+ %endif
+ 
+@@ -1996,6 +2005,11 @@
+ %endif
+ 
+ %changelog
++* Mon Oct 26 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 156.0.8078.47-1.1.uke3
++- Admit the exact Mesa GBM module read and refuse optional ARM64 batch hints.
++- Keep graphics feature defaults and enable early, fatal ARM64 GPU sandboxing.
++- Verify source/config contracts and retain Fedora SELinux labels without local rules.
++
+ * Wed Oct 21 2026 Than Ngo <than@redhat.com> - 156.0.8078.47-1
+ - Update to 156.0.8078.47, include 353 security fixes
+   * CVE-2026-112992: Memory corruption in Canvas

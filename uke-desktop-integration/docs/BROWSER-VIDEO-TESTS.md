@@ -24,6 +24,13 @@ qualified on the tablet. Preserve the original
 Google Chrome and invoke the candidate binary directly for the later controlled
 trial; Fedora's wrapper configuration contains unqualified feature forces.
 
+The later kernel16 uke2 early/fatal trial fails: its first hardware GPU crashes
+on an optional Mesa sibling-worker scheduling request, and the replacement
+has Seccomp2 but disabled GL. A separate GBM module read is denied. The uke3
+follow-up admits the exact module read, refuses the optional batch hint with
+EPERM and keeps stock graphics features. Host source/config checks pass;
+native COPR11210239 and subsequent device acceptance remain pending.
+
 ## Coverage of the supplied feature table
 
 | Feature | Reported state | Action and acceptance evidence |

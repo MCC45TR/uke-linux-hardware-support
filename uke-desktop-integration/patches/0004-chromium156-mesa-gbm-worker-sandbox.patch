@@ -1,0 +1,54 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] gpu: admit the Mesa GBM module and refuse optional batch hints
+
+Kernel16 tablet traces identify a denied modular Mesa GBM backend open and
+an independent fatal sched_setscheduler call when Mesa creates a sibling
+background worker. Admit only the observed backend file read. On ARM64 Linux,
+return EPERM for the optional SCHED_BATCH hint instead of terminating the GPU
+process. This grants no scheduling operation; all other scheduler requests
+retain their original policy. Mesa ignores failure of this priority hint.
+
+Source: Chromium1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775 (BSD-style),
+with the preceding ARM Mesa/Iris patches. Mesa26.2.5 src/util/u_queue.c (MIT)
+and the actual tablet stack establish the optional sibling-worker request.
+Validation: old extracted-function checks fail; updated ARM64/Linux, other
+platform and existing Mesa/Iris checks pass. Native build and untraced tablet
+sandbox/rendering/video qualification remain required.
+
+--- a/content/common/gpu_pre_sandbox_hook_linux.cc
++++ b/content/common/gpu_pre_sandbox_hook_linux.cc
+@@ -281,7 +281,8 @@
+   static const char* const kReadOnlyList[] = {
+       "/etc/glvnd/egl_vendor.d",
+       "/usr/share/glvnd/egl_vendor.d",
+-      "/usr/share/glvnd/egl_vendor.d/50_mesa.json"};
++      "/usr/share/glvnd/egl_vendor.d/50_mesa.json",
++      "/usr/lib64/gbm/dri_gbm.so"};
+   for (const char* path : kReadOnlyList)
+     permissions->push_back(BrokerFilePermission::ReadOnly(path));
+ }
+--- a/sandbox/policy/linux/bpf_gpu_policy_linux.cc
++++ b/sandbox/policy/linux/bpf_gpu_policy_linux.cc
+@@ -6,6 +6,7 @@
+ 
+ #include <errno.h>
+ #include <fcntl.h>
++#include <sched.h>
+ #include <sys/socket.h>
+ #include <sys/types.h>
+ #include <unistd.h>
+@@ -106,6 +107,14 @@
+       return Allow();
+     case __NR_sched_setaffinity:
+       return RestrictSchedTarget(GetPolicyPid(), sysno);
++#if defined(ARCH_CPU_ARM64) && BUILDFLAG(IS_LINUX) && !BUILDFLAG(IS_CHROMEOS)
++    case __NR_sched_setscheduler: {
++      // Mesa treats a refused background-worker scheduling hint as optional.
++      const Arg<int> policy(1);
++      return If(policy == SCHED_BATCH, Error(EPERM))
++          .Else(BPFBasePolicy::EvaluateSyscall(sysno));
++    }
++#endif
+     case __NR_prlimit64:
+       return RestrictPrlimit64(GetPolicyPid());
+     case __NR_memfd_create:
