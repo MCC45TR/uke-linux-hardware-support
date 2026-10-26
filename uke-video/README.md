@@ -7,9 +7,15 @@ The child RPM keeps the name `uke-vaapi-v4l2`; the standalone source-package
 record and its six historical builds are retired after source/rollback
 preservation. Family source3e83bf0 produces additional1.0.0-10 and backend
 1.0.0-1 from the reviewed revision0.6 code. All36 planned RPM names start with
-`uke-`, and native build11210929 is running in the existing test directory.
-No new source family or Chromium rebuild is introduced. Native payload checks
-and tablet delivery remain open. Future FFmpeg integration also belongs to
+`uke-`. Native AArch64 build11210929 succeeds in the existing test directory
+and produces34 RPMs; the two empty parent declarations produce no binary.
+All34 signatures, header/payload digests, source-family identities and payload
+audits pass. No Python payload, direct Python requirement or Python scriptlet
+is found. The five backend fixtures pass. The libaccounts-glib suite reports
+a D-Bus session failure that the inherited recipe tolerates; this is not an
+all-tests-passed result. No new source family or Chromium rebuild is introduced.
+Tablet delivery and its resolved dependency/render/backend regressions remain
+open. Future FFmpeg integration also belongs to
 the existing family; the source-only client candidate below is not published
 as an independent COPR package.
 
