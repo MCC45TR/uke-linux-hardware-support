@@ -8,7 +8,7 @@ Publication checks pass for the native identity fixture, research manifests and 
 
 The identity helper remains inactive; serial output is opt-in and its public machine-info path excludes serials. The `Rev:1.1` presentation label is distinct from an observed OEM board revision.
 
-Earlier device observations include GL pixel checks and default VA capability initialization. Actual codec frames, the corrected Vulkan artifact, browser sandbox, WebGPU and physical display coexistence remain unqualified. The tested VA 0.4 baseline and uninstalled 0.5 candidate retain separate delivery records.
+Recorded device observations include GL pixels and default VA initialization. On 26 October, Linux 7.3.0-15 produces 30 exact-reference native H.264 constrained-baseline frames at 320x240 with locally provisioned VPU firmware; the High trial fails with a corrupt frame and firmware errors. Other codecs, encoding, the corrected Vulkan artifact and sandbox/GL coexistence remain unqualified. Earlier Chromium 154 X11/Vulkan WebGPU tests pass, while current normal Chrome 156 returns no adapter. The installed VA 0.4 baseline and uninstalled 0.5 candidate retain separate delivery records.
 
 No COPR request, package installation, browser/device workload or firmware operation was performed by this publication.
 
