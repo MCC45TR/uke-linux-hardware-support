@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.14.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -92,7 +92,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_sbindir}/semodule -i %{_datadir}/selinux/packages/uke_control_rgb.pp || exit 1
 %{_sbindir}/restorecon %{_libexecdir}/uke-control/rgb-led || exit 1
 %systemd_post uke-control.service uke-control-wake.service uke-control-cdc.service
-if /usr/bin/systemctl -q is-active dbus.service; then
+if [ -S /run/dbus/system_bus_socket ] && /usr/bin/systemctl -q is-active dbus.service; then
     /usr/bin/busctl --system call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig >/dev/null || exit 1
 fi
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-2
+- Reload D-Bus policy only when a live system bus socket is present.
+- Preserve reload failures on running systems and support offline image installation.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-1
 - Add an explicit disconnected DSC request and cached compression-status query.
 - Preserve provider, root, board and driver readback checks; activation remains unqualified.
