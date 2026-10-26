@@ -38,6 +38,14 @@ int main() {
         refuses([&]{touch_client(root,"7.2.12-18");});
         fs::remove_all(root/"sys/bus/spi/devices/spi1.0");
         put(leaf,"novatek,nt36532-uke-thp");refuses([&]{touch_client(root,"7.2.12-18");});
+        put(leaf,token("novatek,nt36532-uke-touch"));
+        fs::remove_all(root/"usr");
+        assert(touch_client(root,"7.3.0-17").empty());
+        put(root/"sys/bus/spi/devices/spi1.0/of_node/compatible",token("novatek,nt36532-uke-thp"));
+        refuses([&]{touch_client(root,"7.3.0-17");});
+        fs::remove_all(root/"sys/bus/spi/devices/spi1.0");
+        put(leaf,"novatek,nt36532-uke-touch");
+        refuses([&]{touch_client(root,"7.3.0-17");});
         fs::remove_all(root);
     } catch(...) {fs::remove_all(root);throw;}
     std::cout<<"Running-kernel touch selection, legacy rollback, missing-client/owner/symlink, ambiguity and path refusal: PASS\n";
