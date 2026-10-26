@@ -529,6 +529,27 @@
     "copr_repository": "mcc45tr/uke-linux-test:custom:chromium-sandbox-20261026",
     "copr_submission_accepted": true,
     "iris_sysfs_enumerator_semantics_reviewed": true,
-    "last_build_state": "starting"
+    "last_build_state": "running",
+    "copr_native_prep_passed": true,
+    "native_gn_generation_passed": true,
+    "native_compile_started": true,
+    "native_build_toolchain": {
+      "clang": "23",
+      "rustc": "1.99.1",
+      "target": "arm64",
+      "jobs": 32
+    },
+    "host_egl_preload_observation": {
+      "architecture": "x86_64",
+      "mesa": "26.2.5-1.fc46",
+      "libglvnd": "1.7.0-10.fc45",
+      "libglapi_present": false,
+      "libEGL_loaded": true,
+      "libEGL_mesa_loaded": true,
+      "threads_before": 1,
+      "threads_after": 1,
+      "egl_display_or_context_created": false,
+      "tablet_acceptance": false
+    }
   }
 }
