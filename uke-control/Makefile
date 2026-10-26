@@ -8,7 +8,7 @@ CPPFLAGS += -Isrc -Ibuild $(shell pkg-config --cflags libdrm libsystemd wayland-
 LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
-.PHONY: all check check-rgb-policy check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
+.PHONY: all check check-postinstall check-rgb-policy check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/uke-control-rgb build/selinux/uke_control_rgb.pp
 build:
 	mkdir -p build
@@ -47,7 +47,10 @@ build/test-execute: tests/execute.cpp src/backend.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -Lbuild -l:libuke-control.so.0 -o $@
 check-rgb-policy: build/selinux/uke_control_rgb.pp
 	bash tests/rgb-policy.sh
+check-postinstall:
+	bash tests/postinstall.sh
 check: all check-rgb-policy build/test-front-color build/test-execute
+	bash tests/postinstall.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/rgb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-rgb
 	LD_LIBRARY_PATH=build build/test-rgb
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/rgb-bus.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux) -o build/test-rgb-bus
