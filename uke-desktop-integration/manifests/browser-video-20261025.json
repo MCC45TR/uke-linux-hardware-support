@@ -550,6 +550,13 @@
       "threads_after": 1,
       "egl_display_or_context_created": false,
       "tablet_acceptance": false
+    },
+    "last_native_log_observation": {
+      "utc": "2026-10-26T10:52:20Z",
+      "actions_completed": 10023,
+      "actions_total": 56313,
+      "complete_build": false,
+      "gpu_hook_object_compile_observed": false
     }
   }
 }
