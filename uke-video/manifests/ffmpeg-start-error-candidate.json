@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-26",
+  "scope": "Host-checked FFmpeg error propagation; not a streaming-protocol fix",
+  "upstream": {
+    "url": "https://git.ffmpeg.org/ffmpeg.git",
+    "tag": "n9.0.2",
+    "commit": "946fcce07b6dcd0331c8cc609192aeff5e1924f8",
+    "license": "LGPL-2.1-or-later for libavcodec/v4l2_m2m_dec.c",
+    "archive_sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+    "release_signer": "FCF986EA15E6E293A5644F10B4322F04D67658D8",
+    "decoder_before_sha256": "a035dacdc945f296007216acc549446fe8350e14799a2e19012d498149519f37"
+  },
+  "distribution": {
+    "source_nvr": "ffmpeg-9.0.2-1.fc46",
+    "source_rpm_sha256": "f8520b4a97dd7dbdcc114e44e490e9f25c3eeca06198a1641cde6aefef08ae1f",
+    "signer": "E9A491A3DE247814E7E067EAE06F8ECDD651FF2E",
+    "source_rpm_signature_verified": true,
+    "upstream_archive_signature_verified": true,
+    "six_v4l2_files_equal_after_three_distribution_patches": true
+  },
+  "candidate": {
+    "patch": "patches/ffmpeg-9.0.2-preserve-start-errors.patch",
+    "patch_sha256": "a31d356d92b32c340fe7937c1e7c70fa94cd654ae055e85d2364100e768ef4b5",
+    "fixture": "tests/ffmpeg-start-error-contract.sh",
+    "fixture_sha256": "fa4b6fd5091dab3cf748eca6a5f9e1d4d046e0fc04007fe331b5f3fcfaf83dac",
+    "decoder_after_sha256": "3bcf06c1e781d5fce800627719dab257bbd64e6f339079d2f57cf7674fda4a12",
+    "old_source_fixture_failed": true,
+    "patched_source_fixture_passed": true,
+    "exact_base_patch_replay_passed": true,
+    "host_x86_64_c_translation_unit_compiled": true,
+    "full_ffmpeg_build_passed": false,
+    "native_aarch64_package_built": false,
+    "installed_on_tablet": false,
+    "tablet_tested": false,
+    "source_change_drc_ordering_fixed": false
+  }
+}

@@ -1,0 +1,45 @@
+Subject: [PATCH] avcodec/v4l2_m2m: propagate decoder startup failures
+
+Preserve the G_FMT errno and capture-initialization error, and return failed
+startup to receive_frame callers instead of reporting success without a frame.
+Keep an unqueued packet when startup reports EAGAIN.
+
+This does not change source-event, DRC or drain ordering. Device correctness
+and untraced hardware decode remain separate validation requirements.
+
+Base: FFmpeg n9.0.2, 946fcce07b6dcd0331c8cc609192aeff5e1924f8.
+License: LGPL-2.1-or-later, matching the modified upstream file.
+
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -58,6 +58,7 @@
+     capture->format.type = capture->type;
+     ret = ioctl(s->fd, VIDIOC_G_FMT, &capture->format);
+     if (ret) {
++        ret = AVERROR(errno);
+         av_log(avctx, AV_LOG_WARNING, "VIDIOC_G_FMT ioctl\n");
+         return ret;
+     }
+@@ -88,7 +89,7 @@
+         ret = ff_v4l2_context_init(capture);
+         if (ret) {
+             av_log(avctx, AV_LOG_ERROR, "can't request capture buffers\n");
+-            return AVERROR(ENOMEM);
++            return ret;
+         }
+     }
+ 
+@@ -163,10 +164,9 @@
+ 
+     if (!s->draining) {
+         ret = v4l2_try_start(avctx);
+-        if (ret) {
+-            /* can't recover */
+-            if (ret != AVERROR(ENOMEM))
+-                ret = 0;
++        if (ret < 0) {
++            if (ret == AVERROR(EAGAIN))
++                return ret;
+             goto fail;
+         }
+     }

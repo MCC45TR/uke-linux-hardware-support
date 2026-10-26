@@ -83,6 +83,19 @@ fixtures, trusted RPM signatures and payload audits pass. No Python or scriptlet
 is included. Revision0.6 is not installed; healthy/damaged device sessions and
 render/browser regressions remain required.
 
+A separate FFmpeg9.0.2 source candidate preserves startup errors instead of
+reporting success without a frame. It retains an unqueued packet on EAGAIN.
+The signed RPM Fusion source package and upstream archive verify; all six
+V4L2 files match the official tag after the distribution's three patches.
+Actual-function tests fail on the original source and pass after the change;
+the complete modified C translation unit compiles on x86_64. This patch is
+not part of the libva package. No replacement FFmpeg package is built or
+installed, and initial source-change/DRC ordering is still unresolved.
+Source identities and validation limits are in
+[the candidate manifest](manifests/ffmpeg-start-error-candidate.json).
+Run its host fixture with
+`bash tests/ffmpeg-start-error-contract.sh <prepared-FFmpeg-source>`.
+
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10
 encode remains gated out. No new non-audit kernel message appears after either
