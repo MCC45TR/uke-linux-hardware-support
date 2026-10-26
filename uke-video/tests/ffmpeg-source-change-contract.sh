@@ -129,6 +129,22 @@ int ff_v4l2_m2m_codec_reinit(V4L2m2mContext *s)
     s->capture.format = next_format;
     return 0;
 }
+/* Lifecycle reset has its own fixture; streaming must not silently reopen. */
+int ff_v4l2_m2m_create_context(V4L2m2mPriv *priv, V4L2m2mContext **s)
+{
+    (void)priv; (void)s;
+    expect(0, "unexpected decoder allocation during streaming"); return AVERROR(EIO);
+}
+int ff_v4l2_m2m_codec_init(V4L2m2mPriv *priv)
+{
+    (void)priv;
+    expect(0, "unexpected decoder initialization during streaming"); return AVERROR(EIO);
+}
+int ff_v4l2_m2m_codec_end(V4L2m2mPriv *priv)
+{
+    (void)priv;
+    expect(0, "unexpected decoder close during streaming"); return AVERROR(EIO);
+}
 int ff_set_dimensions(AVCodecContext *avctx, int width, int height)
 {
     avctx->width = width; avctx->height = height; return 0;

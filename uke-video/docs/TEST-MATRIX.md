@@ -41,7 +41,8 @@ acceptance are separate.
 | Advanced encode controls and mode limits | Not run | B/ROI/LTR/layers/intra-refresh, source/runtime intersection |
 | 4K60, 4096, minimum-size and high-FPS modes | Not run | Correctness followed by sustained tablet measurements |
 | HD and nominal4K60 software preparation | Seven1080p30 and seven3840x2160/60 input profiles, two native-format references each; packet/reference timing checked | Actual mode boundaries, presentation, sustained FPS and tablet acceptance |
-| FFmpeg streaming diagnostic CLI | Startup-only/full candidates compile under emulated AArch64; actual-C fixtures and three software rawvideo frames per CLI pass | Target ABI, untraced native High frames, actual DRC/held-buffer and lifecycle tests; no seek callback yet |
+| FFmpeg streaming diagnostic CLI | Startup-only/full candidates compile under emulated AArch64; actual-C fixtures and three software rawvideo frames per CLI pass | Target ABI, untraced native High frames, actual DRC/held-buffer and lifecycle tests; base candidate has no seek callback |
+| Optional FFmpeg seek-reset candidate | Flush callback, retired-generation protection and error handling pass 18 modeled host cases and AArch64 emulation; separate CLI artifacts | Actual public-API context reuse, frame references, retained-instance limits, latency and DMA quiescence; no tablet run |
 
 Every accepted codec/profile still requires 100 open/stream/drain/close cycles,
 30 minutes at each claimed target mode, seek, EOS/drain, resolution and bit-depth

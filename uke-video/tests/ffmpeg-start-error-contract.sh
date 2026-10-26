@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 source_root=$(realpath "${1:?Pass the prepared FFmpeg source root}")
 work=$(mktemp -d)
-trap 'rm -rf -- "$work"' EXIT
+trap 'for file in "$work/check.cpp" "$work/check"; do if test -f "$file"; then rm -- "$file"; fi; done; rmdir "$work"' EXIT
 cat > "$work/check.cpp" <<'CPP'
 #include <cerrno>
 #include <cstdio>
@@ -13,8 +13,9 @@ cat > "$work/check.cpp" <<'CPP'
 enum { AV_LOG_DEBUG, AV_LOG_WARNING, AV_LOG_ERROR, AV_CODEC_ID_RAWVIDEO };
 struct AVPacket { int size = 0; };
 struct AVFrame { bool produced = false; };
+struct V4L2m2mPriv;
 struct AVCodecContext {
-    void *priv_data;
+    V4L2m2mPriv *priv_data;
     int pix_fmt = 0, coded_height = 240, coded_width = 320;
 };
 struct V4L2Context {
@@ -27,11 +28,14 @@ struct V4L2m2mContext {
     int fd = 42, draining = 0, initial_source_change = 0;
     AVPacket buf_pkt;
 };
-struct V4L2m2mPriv { V4L2m2mContext *context; };
+struct V4L2m2mPriv { V4L2m2mContext *context; int reset_error = 0; };
 static V4L2m2mContext state;
 static int output_error, format_errno, init_error, capture_error, enqueue_error;
 static int packet_error, dequeue_calls, last_timeout, format_calls;
 static int failures;
+// Reset is covered separately; ordinary startup must not reopen the decoder.
+[[maybe_unused]] static int v4l2_decode_init(AVCodecContext *) { ++failures; return AVERROR(EIO); }
+[[maybe_unused]] static int ff_v4l2_m2m_codec_end(V4L2m2mPriv *) { ++failures; return AVERROR(EIO); }
 template<class... Args> static void av_log(Args...) {}
 static int ff_v4l2_format_v4l2_to_avfmt(unsigned, int) { return 17; }
 static int test_ioctl(int, unsigned long request, void *) {

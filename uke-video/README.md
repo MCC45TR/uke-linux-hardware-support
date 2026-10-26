@@ -153,11 +153,28 @@ of silently reversing it. The existing working control tree already includes
 the startup-error fix, so it must not be labelled stock FFmpeg. None of these
 FFmpeg patches is applied to the VA backend or published as a standalone RPM.
 
-Same-context seek is still a separate implementation gate: the retained
-V4L2 decoder descriptor has no flush callback, and the streaming patches do
-not reset its driver/drain state through `avcodec_flush_buffers()`. A new
-process that decodes successfully does not qualify seek within an existing
-decoder context. Keep this requirement open when testing the candidate.
+The three-patch streaming candidate above has no flush callback and does not
+reset driver/drain state through `avcodec_flush_buffers()`. A separate optional
+fourth patch, `ffmpeg-9.0.2-seek-reset.patch`, now adds that callback. It retires
+the underlying V4L2 context and opens a fresh one lazily while the caller keeps
+the same AVCodecContext. Held frames retain their old mappings and driver fd.
+Closing generations cannot requeue buffers; pending packets and borrowed
+logging metadata are detached. The first STREAMOFF error reaches the next
+receive call, and a failed reopen releases its partial context.
+
+The reset fixture fails on the old source, then passes 18 host scenarios with
+actual FFmpeg close/refcount code and modeled driver discovery/ioctls. Removing
+the requeue guard causes an assertion failure; removing the log-metadata
+detachment causes a protected-page fault in the host control. Both protections
+remain in the candidate. Startup, stream/backpressure and lifetime regressions
+pass on x86_64 and under AArch64 emulation. The new diagnostic programs are
+separate from the preserved three-patch controls; no replacement RPM is built.
+
+This does not qualify real same-context seek. Retained generations consume
+driver instances until their frames are released; capacity, latency and DMA
+quiescence after failed stops need device evidence. A fresh-process decode or
+a command-line seek cannot substitute for the public-API reuse test. The
+device acceptance gate remains open.
 
 The host-only `tests/build-ffmpeg-video-probe.sh` reproduces the limited
 diagnostic CLI build inside the pinned AArch64 SDK, with prepared sources at

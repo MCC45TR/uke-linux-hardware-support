@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "scope": "Separate startup-error candidate and reviewable streaming patch series; neither is device-qualified or packaged",
+  "scope": "Separate startup-only, streaming and optional seek-reset candidates; source and host-emulation evidence only, no device qualification or RPM",
   "upstream": {
     "url": "https://git.ffmpeg.org/ffmpeg.git",
     "tag": "n9.0.2",
@@ -24,7 +24,7 @@
     "patch": "patches/ffmpeg-9.0.2-preserve-start-errors.patch",
     "patch_sha256": "a31d356d92b32c340fe7937c1e7c70fa94cd654ae055e85d2364100e768ef4b5",
     "fixture": "tests/ffmpeg-start-error-contract.sh",
-    "fixture_sha256": "ace07785ea2bd3a5d29cd8f83c5f98bfaed3a030d7738787f461f943d22a66a6",
+    "fixture_sha256": "bf35eae1cf3993f6696ab87ddca818580259da4948a0ec808889719e67b95f1b",
     "decoder_after_sha256": "3bcf06c1e781d5fce800627719dab257bbd64e6f339079d2f57cf7674fda4a12",
     "old_source_fixture_failed": true,
     "patched_source_fixture_passed": true,
@@ -71,7 +71,7 @@
     "compiled_v4l2_encoder_wrappers": 5,
     "full_distribution_feature_set_built": false,
     "source_change_fixture": "tests/ffmpeg-source-change-contract.sh",
-    "source_change_fixture_sha256": "11936c9e191411e0d18d501618e925e01c9a26c18df44dab96adf938df512d52",
+    "source_change_fixture_sha256": "02f3d03327c8ba911d3f29aee0c115ec3f6f24e804d5c4b6d77449b4ec133a83",
     "buffer_lifetime_fixture": "tests/ffmpeg-buffer-lifetime-contract.sh",
     "buffer_lifetime_fixture_sha256": "2a664a300c186ce5f3a3db566a2be7d6d55d5ea78dfad0f6adef0fa40a2e28f9",
     "actual_c_host_fixtures_passed": true,
@@ -93,7 +93,10 @@
       "candidate_ffprobe_sha256": "f69ef4c2b9d5021198f6d983a750892353f8e0ae0f999402e30a3d6c8f9aa75d",
       "both_cli_builds_passed": true,
       "elf_architecture": "ELF64 LSB AArch64",
-      "direct_shared_libraries": ["libm.so.6", "libc.so.6"],
+      "direct_shared_libraries": [
+        "libm.so.6",
+        "libc.so.6"
+      ],
       "required_glibc_symbol_max": "GLIBC_2.44",
       "compressed_v4l2_decoder_count": 3,
       "v4l2_encoder_count": 2,
@@ -108,7 +111,55 @@
       "replacement_rpm_built": false,
       "delivered_to_tablet": false,
       "target_abi_checked": false,
-      "device_codec_tested": false
+      "device_codec_tested": false,
+      "qualifying_fixture_source_commit": "09ee899",
+      "qualifying_fixture_sha256": {
+        "startup": "ace07785ea2bd3a5d29cd8f83c5f98bfaed3a030d7738787f461f943d22a66a6",
+        "source_change": "11936c9e191411e0d18d501618e925e01c9a26c18df44dab96adf938df512d52",
+        "buffer_lifetime": "2a664a300c186ce5f3a3db566a2be7d6d55d5ea78dfad0f6adef0fa40a2e28f9"
+      }
     }
+  },
+  "seek_reset_candidate": {
+    "base": "Three-patch streaming candidate above; preserved comparison binaries remain unchanged",
+    "patch": "patches/ffmpeg-9.0.2-seek-reset.patch",
+    "patch_sha256": "fce044fbca393731367b25ff553e89dbf66ebb10c12f531788956c28b67e8f27",
+    "fixture": "tests/ffmpeg-seek-reset-contract.sh",
+    "fixture_sha256": "d7b798da364016a02c2f0c871f15e1d469e6db3e28880cc53afa58e43729f27f",
+    "decoder_after_sha256": "d8cb8536f228eeb2c4b79acbf6242c22ffa1260d99b7585e5d197c8debc36157",
+    "old_missing_callback_reproduced": true,
+    "zero_fuzz_replay_and_source_comparison_passed": true,
+    "registration_has_flush_callback": true,
+    "caller_avcodec_context_reused": true,
+    "underlying_v4l2_context_reopened_lazily": true,
+    "held_frames_keep_retired_fd_and_mappings": true,
+    "retired_buffers_do_not_requeue": true,
+    "first_stop_errno_preserved": true,
+    "stop_error_reported_by_next_receive": true,
+    "failed_reopen_context_released": true,
+    "host_model_cases": 18,
+    "actual_c_x86_64_fixtures_passed": true,
+    "actual_c_aarch64_emulated_fixtures_passed": true,
+    "requeue_guard_removed_control_exit": 134,
+    "borrowed_log_detach_removed_control_exit": 139,
+    "negative_control_scope": "Intentional host-only assertion/guard-page failures; no device fault",
+    "driver_discovery_and_ioctls_modeled": true,
+    "host_mappings_refcounts_and_threads_real": true,
+    "aarch64_ffmpeg_sha256": "15f5f765d077876d17ccae4b6c65733b374376583a15b73b58f55b4ef32e3e54",
+    "aarch64_ffprobe_sha256": "0c69d6cd601ada932aa4a44f9504035fb94d3dbfe7f5ba0491ec6af1fc0955ad",
+    "aarch64_compile_flags_equal_to_prior_diagnostic": true,
+    "required_glibc_symbol_max": "GLIBC_2.44",
+    "shared_libraries": [
+      "libm.so.6",
+      "libc.so.6"
+    ],
+    "raw_software_nv12_frames_verified": 3,
+    "full_distribution_features_built": false,
+    "native_copr_package_built": false,
+    "delivered_to_tablet": false,
+    "same_context_public_api_seek_tested_on_device": false,
+    "hardware_seek_frames_verified": false,
+    "held_generation_capacity_qualified": false,
+    "stop_failure_dma_quiescence_qualified": false
   }
 }
