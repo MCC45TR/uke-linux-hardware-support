@@ -204,7 +204,7 @@
     "default_vainfo": true
   },
   "test_preparation": {
-    "local_date": "2026-10-26",
+    "local_date": "2026-10-27",
     "coverage_document": "docs/BROWSER-VIDEO-TESTS.md",
     "gpu_page": "tests/browser-gpu.html",
     "gpu_page_sha256": "5b8434ed586f28c674e76c93f6cf730c7912e473330e0de82b0de59afe4e2b14",
@@ -213,7 +213,7 @@
     "video_page": "tests/browser-video.html",
     "video_page_sha256": "50781674d5e5ef931ac6aec0f67c07762d1b0d0ac56e715b0ba723e75d80dca3",
     "video_script": "tests/browser-video.js",
-    "video_script_sha256": "8e5aa761875606466ade984d6fb272b258800e4d0304ee8ad065574f9fcee2ae",
+    "video_script_sha256": "bb2c5bcf94a9199fa97f02100b3180edb0e06c00459674bb288cbdcdc169cd2d",
     "host_api_fixtures_passed": true,
     "host_packet_fixtures_passed": true,
     "host_pixel_validator_fixtures_passed": true,
@@ -262,8 +262,26 @@
       [
         1920,
         1080
+      ],
+      [
+        3840,
+        2160
       ]
     ],
+    "reviewed_decode_frame_counts": {"320x240": 30, "1920x1080": 30, "3840x2160": 60},
+    "uhd_software_packet_corpora": 7,
+    "uhd_software_frames_per_profile": 60,
+    "uhd_native_format_reference_sets": 14,
+    "uhd_reference_index_sha256": "d8a0662a711f94cce3d6b865d82ad18ad6e04408386a0597689cff5323664538",
+    "uhd_input_index_sha256": "542edbccb49f0b6ca9aff95e47c4b098fbcc25c65c2b52c6693e7e5a19924c3d",
+    "uhd_reference_timing": "Nominal 60/1; demux time base retained and all packet PTS matched",
+    "uhd_encoded_corpus_limit_bytes": 33554432,
+    "uhd_vp9_requested_level": 51,
+    "uhd_level_conformance_accepted": false,
+    "actual_uhd_browser_workload_tested": false,
+    "sustained_uhd_fps_accepted": false,
+    "maximum_copied_frame_bytes": 67108864,
+    "host_surface_release_before_cpu_hash_fixture_passed": true,
     "hd_software_packet_corpora": 7,
     "hd_native_format_reference_sets": 14,
     "hd_reference_index_sha256": "ba4aa3fcd02f71f3a2d6db0b8561f60d7224dad5251e7b9af22bce233cb527cd",

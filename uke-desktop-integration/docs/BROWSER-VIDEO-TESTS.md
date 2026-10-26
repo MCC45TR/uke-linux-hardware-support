@@ -108,14 +108,18 @@ uses little-endian I420P10 with nonzero low two bits; it does not relabel an
 Chrome 156's default 321x241 VA encode performance floor. Keep that policy
 enabled; a 320x240 encode test can legitimately select software.
 
-Decode accepts reviewed thirty-frame 320x240 and 1920x1080 corpora: H264,
-HEVC Main/Main10 and VP9 Profile 0/2. Encoded data is bounded to 8 MiB and
-32 MiB respectively; non-reviewed dimensions remain rejected. Copied visible
+Decode accepts reviewed thirty-frame 320x240 and 1920x1080 corpora, plus a
+sixty-frame 3840x2160 corpus with nominal 60-fps source metadata: H264,
+HEVC Main/Main10 and VP9 Profile 0/2. Encoded data is bounded to 8 MiB for
+320x240 and 32 MiB for HD/UHD; non-reviewed dimensions remain rejected. Copied visible
 dimensions must match the requested corpus, while coded padding remains valid.
 It retains native frame format, layout, crop, color, PTS
 and SHA-256 rather than converting everything to 8-bit RGBA. Its hashes pack
-visible planes without stride padding. Imported-frame
-comparison is opt-in with input.interop=true. It compares a decoded frame's
+visible planes without stride padding. Each copied frame allocation is
+limited to 64 MiB. Decoder surfaces close
+after pixel copying and packing, before CPU hashing. These bounds do not
+establish peak memory use or throughput under concurrent decoder callbacks.
+Imported-frame comparison is opt-in with input.interop=true. It compares a decoded frame's
 WebGPU external-texture RGB output with CPU RGBA conversion at tolerance two.
 This is a functional conversion check, not 10-bit/HDR precision or zero-copy
 acceptance. WebGPU failure remains a separate failed result.
@@ -127,7 +131,7 @@ frames encoded/decoded, implementation names and available efficiency/timing
 statistics. Those fields and prefer-hardware remain insufficient VPU proof.
 
 The recorder stores elapsed and callback latency, including CPU upload/copy
-overheads. Thirty frames and synthetic PTS do not establish sustained FPS.
+overheads. Thirty or sixty frames and synthetic PTS do not establish sustained FPS.
 Keep kernel, CPU/GPU/VPU, thermal and presentation measurements alongside it.
 
 ## Host preparation and checks
@@ -151,7 +155,7 @@ The packer validates packet lengths, timestamps, contiguous hex data and
 AVC/HEVC configuration records. It preserves B-frame PTS and derives codec
 strings rather than labelling all content H264 baseline. Decode job files
 contain coded stream bytes and must remain private test artifacts.
-The HD VP9 job requests level 5.1 decoder capacity; that request does not
+The HD/UHD VP9 job requests level 5.1 decoder capacity; that request does not
 qualify the source stream's VP9 level. The observed source level and a false
 level-conformance acceptance flag remain in the job. Host packet JSON is
 bounded to 256 MiB; browser jobs are bounded to 64 MiB before parsing.
@@ -164,7 +168,9 @@ own SHA-256 in its reference JSON.
 Use `-fps_mode passthrough -enc_time_base demux` when generating framehash
 references. WebM's millisecond PTS must remain consistent with the coded
 packets; rescaling the reference to a 1/30 time base can create false timestamp
-mismatches even when pixels are identical. Frame metadata must be tagged and
+mismatches even when pixels are identical. The same rule applies to 60-fps
+WebM inputs; retain their demux timing rather than quantizing to 1/60.
+Frame metadata must be tagged and
 the encoded header/container checked; output color options alone did not
 preserve primaries and transfer in the first host-generated H264 input.
 
@@ -172,12 +178,15 @@ Then run:
 
     node tests/validate-browser-decode.mjs capture.json reference.json
 
-The validator checks all thirty visible-plane hashes, PTS, format, dimensions
+The validator checks all thirty or sixty visible-plane hashes, PTS, format, dimensions
 and byte counts. Changed input, repeated PTS and mismatched pixels fail.
 Successful reference comparison still reports hardwareAccepted=false until
 actual Iris/Chrome evidence qualifies that path. Seven real software corpora
 and fourteen native-format reference sets are prepared privately; these are
-host software results, while browser/WebGPU/WebRTC device results remain open.
+host software results. An additional seven nominal 4K60 software inputs have
+fourteen sixty-frame reference sets and timestamp-checked packet jobs. The
+4K VP9 encoder reports level 5.1; independent level conformance remains open.
+Browser/WebGPU/WebRTC device results remain open.
 
 Encode job: {"operation":"encode","codec":"avc1.42E01E"}.
 WebRTC job: {"operation":"webRtc","codec":"video/H264"}.

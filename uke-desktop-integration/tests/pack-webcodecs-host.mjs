@@ -20,6 +20,14 @@ const hdStream={...stream,width:1920,height:1080,profile:'High',
 const hd=makeJob({streams:[hdStream],packets},sha);
 assert.equal(hd.input.width,1920);assert.equal(hd.input.height,1080);
 assert.equal(hd.input.codec,'avc1.640028');
+const uhdStream={...hdStream,width:3840,height:2160,nb_read_frames:'60',r_frame_rate:'60/1',
+  extradata:dump(Buffer.from('01640034ffe10000','hex'))};
+const uhdPackets=Array.from({length:60},(_,n)=>({...packets[n%30],pts_time:String(n/60),flags:n===0?'K__':'___'}));
+const uhd=makeJob({streams:[uhdStream],packets:uhdPackets},sha);
+assert.equal(uhd.input.expectedFrames,60);assert.equal(uhd.input.chunks.length,60);
+assert.equal(uhd.input.codec,'avc1.640034');
+assert.throws(()=>makeJob({streams:[{...uhdStream,r_frame_rate:'30/1'}],packets:uhdPackets},sha),/60/);
+assert.throws(()=>makeJob({streams:[uhdStream],packets:uhdPackets.slice(1)},sha),/coded packet count/);
 assert.throws(()=>makeJob({streams:[{...hdStream,height:1088}],packets},sha),/reviewed/);
 const hvcc=Buffer.alloc(23); hvcc[0]=1;hvcc[1]=2;hvcc[2]=0x20;hvcc[6]=0xb0;hvcc[12]=93;
 assert.equal(makeJob({streams:[{...stream,codec_name:'hevc',pix_fmt:'yuv420p10le',extradata:dump(hvcc)}],packets},sha).input.codec,
@@ -33,7 +41,7 @@ assert.equal(hdVp9.input.codec,'vp09.02.51.10');
 assert.equal(hdVp9.input.requestedVp9Level,51);
 assert.equal(hdVp9.input.sourceLevel,-99);
 assert.equal(hdVp9.input.vp9LevelConformanceAccepted,false);
-assert.throws(()=>makeJob({streams:[stream],packets:packets.slice(1)},sha),/thirty coded/);
+assert.throws(()=>makeJob({streams:[stream],packets:packets.slice(1)},sha),/coded packet count/);
 assert.throws(()=>makeJob({streams:[{...stream,codec_name:'vp9',profile:'Profile 2',pix_fmt:'yuv420p12le'}],packets},sha),/Unsupported VP9/);
 assert.throws(()=>makeJob({streams:[stream],packets:[{...packets[0],size:'5'},...packets.slice(1)]},sha),/Truncated/);
 assert.throws(()=>makeJob({streams:[stream],packets:[{...packets[0],data:'00000004: 0000 0109  ASCII'},...packets.slice(1)]},sha),/Non-contiguous/);

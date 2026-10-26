@@ -180,16 +180,17 @@
       check(input && /^(avc1\.(?:42|4[dD]|64)[0-9a-fA-F]{4}|(?:hvc1|hev1)\.[12]\.[A-Za-z0-9.]+|vp09\.(?:00\.\d{2}\.08|02\.\d{2}\.10)(?:\.\d{2})*)$/.test(input.codec),
         'Codec is outside the admitted decode smoke set');
       const hd=input.width===1920 && input.height===1080;
-      check((hd || (input.width===320 && input.height===240)) && input.expectedFrames===count,
-        'Use a reviewed 320x240 or 1920x1080, 30-frame corpus');
-      check(Array.isArray(input.chunks) && input.chunks.length>0 && input.chunks.length<=60,
+      const uhd=input.width===3840 && input.height===2160,large=hd || uhd,expectedFrames=uhd?60:30;
+      check((large || (input.width===320 && input.height===240)) && input.expectedFrames===expectedFrames,
+        'Use a reviewed SD/HD 30-frame or UHD 60-frame corpus');
+      check(Array.isArray(input.chunks) && input.chunks.length>0 && input.chunks.length<=2*expectedFrames,
         'Invalid chunk count');
       let total=0;
       const chunks=input.chunks.map(chunk=>{
         check(['key','delta'].includes(chunk.type) && Number.isSafeInteger(chunk.timestamp) &&
-          typeof chunk.dataBase64==='string' && chunk.dataBase64.length<=(hd?6*1024*1024:1500000),'Invalid encoded chunk');
+          typeof chunk.dataBase64==='string' && chunk.dataBase64.length<=(large?6*1024*1024:1500000),'Invalid encoded chunk');
         const data=bytes(chunk.dataBase64); total+=data.length;
-        check(data.length>0 && total<=(hd?32:8)*1024*1024,'Encoded corpus exceeds the smoke limit');
+        check(data.length>0 && total<=(large?32:8)*1024*1024,'Encoded corpus exceeds the smoke limit');
         return new EncodedVideoChunk({type:chunk.type,timestamp:chunk.timestamp,data});
       });
       check(input.chunks[0].type==='key','The first chunk must be a key frame');
@@ -212,6 +213,7 @@
           const index=pending.length;
           const outputLatencyMs=performance.now()-submitted.get(frame.timestamp);
           pending.push((async()=>{
+            let packed;
             try {
               frames[index]={timestamp:frame.timestamp,duration:frame.duration,format:frame.format,
                 outputLatencyMs,
@@ -226,14 +228,18 @@
                 catch(error) {interop={functionalPassed:false,hardwareAccepted:false,error:String(error)};}
                 result.interop=interop;
               }
-              const data=new Uint8Array(frame.allocationSize());
+              const size=frame.allocationSize();
+              check(Number.isSafeInteger(size) && size>0 && size<=64*1024*1024,
+                'Decoded frame allocation exceeds the smoke limit');
+              const data=new Uint8Array(size);
               const layout=await bounded(frame.copyTo(data));
-              const packed=visibleBytes(frame.format,frame.visibleRect.width,frame.visibleRect.height,layout,data);
-              const digest=await crypto.subtle.digest('SHA-256',packed);
+              packed=visibleBytes(frame.format,frame.visibleRect.width,frame.visibleRect.height,layout,data);
               Object.assign(frames[index],{layout,byteLength:data.length,
-                packedByteLength:packed.length,hashScope:'Packed visible planes in the declared frame format',
-                sha256:Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('')});
+                packedByteLength:packed.length,hashScope:'Packed visible planes in the declared frame format'});
             } finally {frame.close();}
+            // Release the decoder surface before CPU hashing the copied pixels.
+            const digest=await crypto.subtle.digest('SHA-256',packed);
+            frames[index].sha256=Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
           })().catch(error=>errors.push(String(error))));
         },error:error=>errors.push(String(error))
       });
@@ -245,8 +251,8 @@
         await bounded(decoder.flush());
         await bounded(Promise.all(pending));
         check(!errors.length,errors.join('; '));
-        check(frames.length===count && frames.every(Boolean) &&
-          new Set(frames.map(frame=>frame.timestamp)).size===count &&
+        check(frames.length===expectedFrames && frames.every(Boolean) &&
+          new Set(frames.map(frame=>frame.timestamp)).size===expectedFrames &&
           frames.every(frame=>chunks.some(chunk=>chunk.timestamp===frame.timestamp)),
           'Decoder did not produce every frame exactly once');
         return {config:serialConfig(support.config),frames,functionalPassed:true,interop,

@@ -24,8 +24,10 @@ export function compare(video,reference,text) {
     assert(/^[a-f0-9]{64}$/i.test(fields[5]),'Invalid reference digest');
     expected.set(timestamp,{size:Number(fields[4]),sha256:fields[5].toLowerCase()});
   }
-  assert.equal(expected.size,30,'Expected thirty reference frames');
-  assert.equal(video.frames?.length,30,'Expected thirty browser frames');
+  const frameCount=reference.frameCount??30;
+  assert([30,60].includes(frameCount),'Unreviewed reference frame count');
+  assert.equal(expected.size,frameCount,'Unexpected reference frames');
+  assert.equal(video.frames?.length,frameCount,'Unexpected browser frames');
   const seen=new Set();
   for(const frame of video.frames) {
     assert.equal(frame.format,reference.format,'Different pixel representation');
@@ -37,7 +39,7 @@ export function compare(video,reference,text) {
     assert.equal(frame.packedByteLength,wanted.size,'Different visible plane size');
     assert.equal(frame.sha256,wanted.sha256,'Visible pixels differ at PTS '+frame.timestamp);
   }
-  return {pixelReferencePassed:true,framesChecked:30,format:reference.format,
+  return {pixelReferencePassed:true,framesChecked:frameCount,format:reference.format,
     sourceSHA256:reference.sourceSHA256,hardwareAccepted:false,
     note:'Independent same-input visible-plane comparison only; actual Iris/backend evidence remains required'};
 }

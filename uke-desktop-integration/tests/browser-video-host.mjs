@@ -19,6 +19,8 @@ for(const [args,message] of [
 }
 
 let drop=false,badCopy=false,badVisible=false,padded=false,encoderCreated=0,decoderCreated=0,closedInputs=0,closedOutputs=0;
+let allocationOverride;
+const hashFrames=[];
 class InputFrame {
   constructor(data,init) {
     this.timestamp=init.timestamp;
@@ -56,9 +58,11 @@ class Decoder {
     this.callbacks.output({timestamp:chunk.timestamp,duration:33333,format:'NV12',
       codedWidth:width,codedHeight:Math.ceil(height/16)*16,
       visibleRect:{x:0,y:0,width:badVisible?width-2:width,height},
-      colorSpace:{toJSON:()=>({primaries:'bt709'})},allocationSize:()=>padded?336*360+32:width*height*3/2,
+      colorSpace:{toJSON:()=>({primaries:'bt709'})},
+      allocationSize:()=>allocationOverride??(padded?336*360+32:width*height*3/2),
       copyTo:async data=>{
         assert(!closed);if(badCopy) throw new Error('opaque frame readback unavailable');
+        hashFrames.push(()=>closed);
         if(padded) {
           data.fill(0xa5);
           const uv=8+336*240+16;
@@ -76,7 +80,10 @@ class Decoder {
 const context=vm.createContext({console,setTimeout,clearTimeout,setInterval,clearInterval,performance,isSecureContext:true,
   VideoFrame:InputFrame,VideoEncoder:Encoder,VideoDecoder:Decoder,
   EncodedVideoChunk:class {constructor(init){Object.assign(this,init);}},
-  crypto:webcrypto,btoa,atob,Uint8Array,structuredClone});
+  crypto:{subtle:{digest:async(...args)=>{
+    assert.equal(hashFrames.shift()?.(),true,'Decoder surface must close before hashing');
+    return webcrypto.subtle.digest(...args);
+  }}},btoa,atob,Uint8Array,structuredClone});
 vm.runInContext(await readFile(new URL('./browser-video.js',import.meta.url),'utf8'),context);
 const probe=context.ukeVideoProbe;
 const encoded=await probe.encode('avc1.42E01E');
@@ -97,6 +104,20 @@ assert.equal(hd.functionalPassed,true);assert.equal(hd.hardwareAccepted,false);
 assert.equal(hd.config.codedWidth,1920);assert.equal(hd.config.codedHeight,1080);
 assert(hd.frames.every(frame=>frame.codedHeight===1088 && frame.visibleRect.height===1080 &&
   frame.packedByteLength===1920*1080*3/2 && frame.sha256.length===64));
+const uhd=await probe.decode({...input,width:3840,height:2160,expectedFrames:60,
+  chunks:Array.from({length:60},(_,n)=>({...encoded.chunks[n%30],timestamp:Math.round(n*1000000/60)}))});
+assert.equal(uhd.functionalPassed,true);assert.equal(uhd.hardwareAccepted,false);
+assert.equal(uhd.frames.length,60);
+assert(uhd.frames.every(frame=>frame.visibleRect.width===3840 && frame.visibleRect.height===2160 &&
+  frame.packedByteLength===12441600 && frame.sha256.length===64));
+for(const size of [0,-1,1.5,NaN,64*1024*1024+1]) {
+  allocationOverride=size;
+  const before=closedOutputs;
+  const oversized=await probe.decode(input);
+  assert.equal(oversized.functionalPassed,false);assert.match(oversized.error,/allocation/);
+  assert.equal(closedOutputs-before,30);
+}
+allocationOverride=undefined;
 badVisible=true;
 const wrongSize=await probe.decode({...input,width:1920,height:1080});
 assert.equal(wrongSize.functionalPassed,false);assert.match(wrongSize.error,/visible size/);
@@ -125,6 +146,7 @@ badCopy=false;
 const beforeEncoder=encoderCreated,beforeDecoder=decoderCreated;
 assert.match((await probe.encode('av01.0.01M.08')).error,/outside the admitted/);
 assert.match((await probe.decode({...input,width:8192})).error,/reviewed/);
+assert.match((await probe.decode({...input,width:3840,height:2160})).error,/reviewed/);
 assert.match((await probe.decode({...input,codec:'avc1.6e001e'})).error,/outside the admitted/);
 assert.match((await probe.decode({...input,codec:'vp09.02.31.12'})).error,/outside the admitted/);
 assert.match((await probe.decode({...input,chunks:[{type:'key',timestamp:0,dataBase64:'!'}]})).error,/Invalid/);
@@ -179,4 +201,5 @@ assert.equal(closedPeers,4);
 context.RTCPeerConnection=class {constructor(){throw new Error('mock RTC failure');}};
 assert.match((await probe.webRtc()).error,/mock RTC failure/);
 assert.equal(stoppedTracks,3);
+assert.equal(hashFrames.length,0);
 console.log('Browser video recorder validation/cleanup: passed (host mocks only)');
