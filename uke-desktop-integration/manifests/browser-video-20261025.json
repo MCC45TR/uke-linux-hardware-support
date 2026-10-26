@@ -107,6 +107,21 @@
         "local_path": "referances/chromium-gpu-20261025/ui_ozone_platform_wayland_common_drm_render_node_handle.cc",
         "upstream_path": "ui/ozone/platform/wayland/common/drm_render_node_handle.cc",
         "sha256": "ea961447b8746d07a6cd88fd04158d4262c98cc59e3925cb103e2aac2f4f38f5"
+      },
+      {
+        "local_path": "referances/chromium-gpu-20261025/base_files_file_enumerator.h",
+        "upstream_path": "base/files/file_enumerator.h",
+        "sha256": "19ab1de1387f34f0ff1b3969ef0a43f5f22d3bbc9dbfb363188fcbef2174a1e9"
+      },
+      {
+        "local_path": "referances/chromium-gpu-20261025/base_files_file_enumerator_posix.cc",
+        "upstream_path": "base/files/file_enumerator_posix.cc",
+        "sha256": "bdfaafde8ca67ceab788ae43f87104c2454046446748857c2169f5d831240615"
+      },
+      {
+        "local_path": "referances/chromium-gpu-20261025/base_files_file_util.h",
+        "upstream_path": "base/files/file_util.h",
+        "sha256": "1b5736e2823e614a589f9bb30a6333cf36beba7cafd643bad08c5dcccf98d719"
       }
     ]
   },
@@ -512,6 +527,8 @@
     "source_rpm_sha256": "65d0869d18c6829f8eb819142a49b608a1f53e4acd922a6838b636fd2d2aac6d",
     "copr_build": 11208913,
     "copr_repository": "mcc45tr/uke-linux-test:custom:chromium-sandbox-20261026",
-    "copr_submission_accepted": true
+    "copr_submission_accepted": true,
+    "iris_sysfs_enumerator_semantics_reviewed": true,
+    "last_build_state": "starting"
   }
 }

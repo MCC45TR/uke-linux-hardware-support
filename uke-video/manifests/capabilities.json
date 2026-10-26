@@ -221,7 +221,9 @@
           "ffmpeg_exit": 0,
           "mode_passed": false,
           "receipt_sha256": "1c96e3b906b6ef62ec2672e41926a3e357eb23af267b267b488a3547798fc9d3",
-          "scope": "One bounded native session; no VA/browser/lifecycle/sustained/physical-display acceptance"
+          "scope": "One bounded native session; no VA/browser/lifecycle/sustained/physical-display acceptance",
+          "valid_reference_frames": 0,
+          "output_buffer_all_zero": true
         }
       ]
     },
