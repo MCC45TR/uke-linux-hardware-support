@@ -19,8 +19,9 @@ source checks are separate from codec workload acceptance.
 | VA revision 0.3 / COPR 11205969 | Host/native build fixtures, signature and payload checks passed; not installed separately; its code is included in installed 0.4 | Physical rate/output correctness |
 | Private runtime firmware | Local DNF package installed, hash/RPM verification clean | PAS/HFI initialization; no public redistribution |
 | Explicit VA initialization on 7.3.0-10 | Revision 0.2 initializes successfully as the desktop user; 7 decode and 4 encode profile/entrypoint pairs; no new non-audit kernel messages | Actual native/VA codec output and browser integration |
-| Default VA discovery on 7.3.0-10 | Reproduces `vaInitialize -1`: default libva searches for absent MSM alias | Default-query retest after coordinated Iris activation |
-| VA revision 0.4 / COPR 11206106 on 7.3.0-12 | Single signed DNF upgrade, RPM/ELF and relative MSM alias verified; modules remain unloaded; no VA query | Separate activation/query window, Chrome report and rendering regression |
+| Default VA discovery on 7.3.0-10 | Historical `vaInitialize -1`: default libva searches for absent MSM alias | Preserve before receipt; superseded by the revision-0.4/kernel-14 query below |
+| VA revision 0.4 / COPR 11206106 on 7.3.0-12 | Historical package-only DNF upgrade, RPM/ELF and relative MSM alias verified; modules unloaded and no VA query in that window | Later activation/query is recorded below; Chrome and rendering regression remain due |
+| Default VA revision 0.4 on 7.3.0-14 | One UID1000 query without overrides opens MSM alias, exits 0 and lists 7 decode/4 encode pairs; DP10/30 remains active; saved kernel excerpt is audit-only | Real native/VA frames, GPU sandbox, new Chrome report and GL pixel regression |
 | VA revision 0.5 / COPR 11206385 | Fresh GPU-enabled host build, all native AArch64 fixtures and signed payload checks pass; not installed | Controlled delivery, VA regression and real boundary-mode output |
 | H264 constrained baseline, Main/High decode | Not run | NV12 reference frames; CAVLC/CABAC, B/reference/slices/crop |
 | HEVC Main decode | Not run | NV12 reference frames; tiles/WPP/RPS/long-term references |

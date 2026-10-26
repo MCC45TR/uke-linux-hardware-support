@@ -171,7 +171,7 @@
     "hdr_sdr_display_moves": false,
     "webgpu_video_buffer_interop": false,
     "post_boot_render_mapping": false,
-    "default_vainfo": false
+    "default_vainfo": true
   },
   "test_preparation": {
     "local_date": "2026-10-26",
@@ -302,6 +302,37 @@
       "dsc_requested": false,
       "dsc_active": false
     },
-    "limitation": "Active kernel pipeline state, not measured sink precision/HDR. DSI KScreen HDR is absent and maxBpc=0 must not replace observed 10 bpc. No HDR/SDR window/video move or new Chrome report."
+    "limitation": "Active kernel pipeline state, not measured sink precision/HDR. DSI KScreen HDR is absent and maxBpc=0 must not replace observed 10 bpc. No HDR/SDR window/video move or new Chrome report.",
+    "epoch": "Earlier kernel14 boot before recovery-timer reboot; later active-output state is recorded in default_va_kernel14_observation"
+  },
+  "default_va_kernel14_observation": {
+    "utc": "2026-10-26T04:23:02Z",
+    "kernel_release": "7.3.0-14",
+    "backend_revision": "0.4",
+    "actor": "Coordinator-owned normal-UID1000 query",
+    "exit": 0,
+    "api_version": "1.24",
+    "init_entrypoint": "__vaDriverInit_1_0",
+    "driver": "Iris V4L2 stateful VA-API backend",
+    "driver_path": "/usr/lib64/dri/msm_drv_video.so",
+    "alias_target": "v4l2_drv_video.so",
+    "backend_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
+    "decode_profile_count": 7,
+    "encode_profile_count": 4,
+    "query_attempts": 1,
+    "four_driver_path_device_overrides_unset": true,
+    "log_sha256": "fa4bdab79812dd543d8be16dabca5e3138529a7225103cdc6fb66fecd362302e",
+    "procedure_sha256": "ecd9af2feb9f96d3a37fe5af81a4e54ea49ff9dbfab2f78cf3c5c8e4780a8189",
+    "post_query_receipt_sha256": "ddbead612238b0f14330df99a4b6dd8b845ce7e60cf496d6d88e15d79dbbf971",
+    "recovery_timer_inactive_at_completion": true,
+    "dp_active_bpc": 10,
+    "dp_active_bpp": 30,
+    "dsi_active": false,
+    "stream_started": false,
+    "frames_produced": false,
+    "browser_started": false,
+    "limitation": "Default initialization/profile query only; saved post-query kernel excerpt is audit-only. No codec, GPU sandbox, new Chrome report or pixel regression acceptance.",
+    "module_activation": "Explicit coordinator-owned load in a controlled window; cold-boot activation and permanent browser integration are not qualified",
+    "cold_boot_module_activation_accepted": false
   }
 }

@@ -119,7 +119,7 @@
     "rpm_verify_clean": true,
     "installed_alias_verified": true,
     "installed_utc": "2026-10-25T19:36:49Z",
-    "default_vainfo_retested": false,
+    "default_vainfo_retested": true,
     "codec_workload_tested": false,
     "source_rpm_sha256": "c0de78d3869cee19f6e05be4e2d9c06eb120df463346668251849b7df2bcf9ff",
     "source_preparation_passed": true,
@@ -129,6 +129,9 @@
     "elf_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
     "signer_fingerprint": "DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E",
     "rpm_signature_verified": true,
-    "payload_alias_verified": true
+    "payload_alias_verified": true,
+    "default_vainfo_exit": 0,
+    "default_vainfo_kernel": "7.3.0-14",
+    "default_vainfo_receipt_sha256": "fa4bdab79812dd543d8be16dabca5e3138529a7225103cdc6fb66fecd362302e"
   }
 }

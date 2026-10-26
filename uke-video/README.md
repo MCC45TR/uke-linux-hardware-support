@@ -1,35 +1,39 @@
 # Uke stateful video integration
 
-Date: 25 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
+Date: 26 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-The latest approved tablet query uses Fedora and Linux 7.3.0-10. Explicit
-V4L2 selection initializes libva successfully; default selection fails because
-the MSM driver alias was absent. A package-only kernel-12 window installs
-signed revision 0.4 through DNF at 19:36:49 UTC and verifies the relative alias,
-RPM and ELF. Video modules remain unloaded and the default query is not
-repeated. No codec workload is accepted. A prior
-release-9 display fault remains unexplained; the controlled release-10
-provider-only trial does not repeat it. Active-display coexistence and codec
-output remain separate acceptance gates. Iris uses video1/video2 in this
-window; video0 belongs to NT36532 touch. Further device experiments require
-a separate controlled hardware window.
+Default VA initialization now passes on Fedora and Linux 7.3.0-14 with signed
+revision 0.4. One coordinator-owned query as UID1000, without driver/path/device
+overrides, loads the MSM alias and returns seven decode/four encode profile
+entrypoint pairs at 04:23:02 UTC. The earlier default query failed because that
+alias was absent. No codec workload is accepted.
+
+Iris and VIDEOCC are loaded in this controlled window. Iris uses video1/video2;
+video0 belongs to NT36532 touch. DP remains active at 10 bpc / 30 bpp after the
+query, and the saved kernel interval contains only audit-related messages.
+No Chrome report or GL pixel regression is captured. A prior release-9 display
+fault remains unresolved; shared-display codec workloads and lifecycle tests
+are separate gates. Cold-boot module activation is not qualified by this
+explicit-load trial. Further experiments require a controlled hardware window.
 
 The experimental package pins Radxa libva-v4l2 at
 `6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41`. It intersects the implemented
 profiles with V4L2 coded formats, raw formats and profile menus. This is API
 availability, not decoded-frame or encoded-bitstream acceptance.
 
-Select the backend explicitly during bring-up:
+The tested default-discovery command is:
 
 ```sh
-LIBVA_DRIVER_NAME=v4l2 vainfo --display drm --device /dev/dri/renderD128
+env -u LIBVA_DRIVER_NAME -u LIBVA_DRIVERS_PATH \
+  -u IRIS_VAAPI_DEVICE -u IRIS_VAAPI_ENCODER_DEVICE \
+  vainfo --display drm --device /dev/dri/renderD128
 ```
 
 Revision 0.4, COPR 11206106, replaces installed revision 0.2 in a one-package
 signed DNF transaction. It retains the upstream MSM alias so default discovery
-can be tested without an environment override. It uses a separate test
-repository. Default VA initialization and normal-channel promotion still
-require the coordinated native query, codec and application acceptance.
+works without an environment override in the controlled kernel-14 query.
+It uses a separate test repository. Codec, sandbox, rendering and application
+acceptance remain required before normal-channel promotion.
 FastCV/CDSP VPP is disabled. Revision 0.1 does not advertise Main10 encode.
 The installed revision retains revision 0.2's P010 input and matching
 HEVC Main10 parameters;

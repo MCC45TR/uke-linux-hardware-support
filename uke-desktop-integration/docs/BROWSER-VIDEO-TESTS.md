@@ -35,7 +35,7 @@ the active renderer uses them.
 
 | Evidence | Completed preparation | Remaining tablet gate |
 |---|---|---|
-| vaInitialize failure | Signed VA 0.4 installed; relative MSM alias/package verified; explicit revision-0.2 ABI query passed | Separate Iris activation and one default query, then native output |
+| vaInitialize failure | Default revision-0.4 query passes on kernel14 as UID1000 without overrides; real MSM alias/ABI/backend loaded, 7 decode/4 encode pairs | Preserve this standalone result; Chrome sandbox and actual native/VA output remain due |
 | Sandboxed:false / multiple threads | Exact startup/broker source, isolated normal/early-fatal GL plan and process capture | Actual denied paths/thread timing, Seccomp filters, true sandbox report and correct pixels |
 | Empty decode/encode lists | Runtime profile intersection and dimension candidate 0.5; native AArch64 build fixtures pass | New report and per-profile successful sessions/frames |
 | Encoder policy | Exact Linux AcceleratedVideoEncoder name is pinned; WebCodecs and WebRTC probes prepared | Backend output first, then scoped feature trial with actual implementation/Iris trace |
@@ -62,6 +62,12 @@ HDR state and reports maxBpc=0; those fields must not replace its kernel-active
 10-bpc state. This correlates the saved kernel and compositor output state.
 It does not establish HDMI-sink precision, active HDR, per-surface tone mapping
 or window/video moves. No new Chrome report or target access is claimed here.
+
+A later coordinator-owned default VA query at 04:23:02 UTC, after a kernel-14
+reboot, records DP active at 10 bpc / 30 bpp and DSI inactive. These are different
+boot epochs; do not turn the earlier two-output snapshot into the current
+state or attribute the DSI difference to the VA query without a matching
+before/after display transition trace.
 
 ## Prepared workloads
 
