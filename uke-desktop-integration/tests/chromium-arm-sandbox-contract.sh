@@ -34,6 +34,7 @@ STUB(AddImgPvrGpuPermissions) STUB(AddArmGpuPermissions) STUB(AddAmdGpuPermissio
 STUB(AddIntelGpuPermissions) STUB(AddStandardGpuPermissions) STUB(AddNvidiaGpuPermissions)
 STUB(AddVirtIOGpuPermissions) STUB(AddChromecastArmGpuPermissions)
 static void AddV4L2GpuPermissions(Permissions*, const sandbox::policy::SandboxSeccompBPF::Options&) {}
+[[maybe_unused]] static void AddIrisGpuPermissions(Permissions*, const sandbox::policy::SandboxSeccompBPF::Options&) {}
 static constexpr int dlopen_flag=1;
 static const char* kLibMaliPath="libmali-test", *kLibTegraPath="libtegra-test";
 static const char* kAllowedChromecastPaths[]={"/cast/"};

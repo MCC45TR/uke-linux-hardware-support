@@ -1,0 +1,47 @@
+--- a/chromium.spec
++++ b/chromium.spec
+@@ -99,11 +99,11 @@
+ %global use_vaapi 0
+ %endif
+ 
+-# enable v4l2 and disable vaapi for aarch64 platform
++# Experimental Linux ARM VA backend; retain ordinary Fedora packaging.
+ %ifarch aarch64
+ %if 0%{?fedora} >= 36
+-%global use_vaapi 0
+-%global use_v4l2_codec 1
++%global use_vaapi 1
++%global use_v4l2_codec 0
+ %endif
+ %endif
+ 
+@@ -283,7 +283,7 @@
+ 
+ Name:	chromium
+ Version: 156.0.8078.47
+-Release: 1%{?dist}
++Release: 1.1.uke2%{?dist}
+ Summary: A WebKit (Blink) powered web browser that Google doesn't want you to use
+ Url: http://www.chromium.org/Home
+ License: BSD-3-Clause AND LGPL-2.1-or-later AND Apache-2.0 AND IJG AND MIT AND GPL-2.0-or-later AND ISC AND OpenSSL AND (MPL-1.1 OR GPL-2.0-only OR LGPL-2.0-only)
+@@ -555,6 +555,10 @@
+ # Patches from ungoogle chromium, https://github.com/ungoogled-software/ungoogled-chromium
+ Patch521: disable-ai.patch
+ 
++# Linux ARM Mesa sandbox candidate; no persistent runtime feature bypass.
++Patch600: 0001-chromium156-linux-arm-mesa-sandbox.patch
++Patch601: 0002-chromium156-linux-arm-iris-sandbox.patch
++
+ # Upstream patches
+ 
+ # Use chromium-latest.py to generate clean tarball from released build tarballs, found here:
+@@ -1285,6 +1289,9 @@
+ 
+ %patch -P521 -p1 -b .disable-ai
+ 
++%patch -P600 -p1 -b .linux-arm-mesa-sandbox
++%patch -P601 -p1 -b .linux-arm-iris-sandbox
++
+ # Upstream patches
+ 
+ # Change shebang in all relevant files in this directory and all subdirectories

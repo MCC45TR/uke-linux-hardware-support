@@ -45,3 +45,18 @@ with FD732 clear/shader/context-restoration pixels; native and VA codec sessions
 WebCodecs/WebRTC output and actual VPU evidence. Video node, DMA-BUF and fence
 permissions require their own traced evidence. No global blocklist bypass,
 sandbox disable, forced DrDC or change to Mesa angleisbroken is introduced.
+
+The second patch resolves Iris nodes from kernel-owned sysfs driver and exact
+decoder/encoder names, only for the enabled acceleration direction. It reads
+metadata before BPF and does not open camera/touch nodes. Renumbered video19/23,
+wrong driver, unrelated name, overlong/missing identity and disabled-direction
+fixtures pass. This covers the backend constructor reopening a stored device
+path; actual sandboxed sessions remain untested.
+
+The verified clean archive contains the identical pinned GPU-hook source.
+Both patches apply together and both extracted-function fixtures pass.
+Source RPM156.0.8078.47-1.1.uke2.fc46 has SHA-256
+65d0869d18c6829f8eb819142a49b608a1f53e4acd922a6838b636fd2d2aac6d.
+Expanded AArch64 packaging selects use_vaapi=true without V4L2 codec flags.
+The retained Fedora spec delta records the exact release, flags and patch
+application. This is an SRPM, not a completed Chromium build or tablet result.

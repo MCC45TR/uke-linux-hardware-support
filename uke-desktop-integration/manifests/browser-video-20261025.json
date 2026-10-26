@@ -456,7 +456,7 @@
     "patch": "patches/0001-chromium156-linux-arm-mesa-sandbox.patch",
     "patch_sha256": "3bb55550e7ffba3154e965d4e92ec9f26774e92697424c918f2b5f6c7802250b",
     "fixture": "tests/chromium-arm-sandbox-contract.sh",
-    "fixture_sha256": "b5714ade90f5fc6b754e162e6ad46e4c9f40c18ef1555e9fc2ef574a6f492fb3",
+    "fixture_sha256": "fb21a45214169d65998f10e472cd1fa0d002cdd72d4e80296fbacaa62a652d7b",
     "host_extracted_functions_passed": true,
     "patch_dry_run_passed": true,
     "full_chromium_build_passed": false,
@@ -466,6 +466,27 @@
     "accepted": false,
     "fedora_packaging_commit": "e402dd33400be892fc94d8c1f2fab15c9dc81c9b",
     "fedora_spec_sha256": "ccd7db122c39672b6a9fdaee12fc41d2a61a24569533c811b176ab8a2d54bc07",
-    "source_clean_sha512": "9b0391c151c170659ca1c8da5a04813470abad9dc41821680c808eb54239328df005dddc7036d35c9177a9b2bd9f523ffaee8caf1f2b89074ed4b7208f313778"
+    "source_clean_sha512": "9b0391c151c170659ca1c8da5a04813470abad9dc41821680c808eb54239328df005dddc7036d35c9177a9b2bd9f523ffaee8caf1f2b89074ed4b7208f313778",
+    "iris_patch": {
+      "path": "patches/0002-chromium156-linux-arm-iris-sandbox.patch",
+      "sha256": "09828141aadee5bc265514dc9539b3dde60a228dfe38240c979e0027c68d3fdd",
+      "identity_source": "kernel770b877 iris_probe.c and pinned backend decoder/encoder.cpp",
+      "scope": "Resolve current kernel qcom-iris driver and exact decoder/encoder name; direction-gated, no arbitrary video-node admission",
+      "host_renumbering_and_fail_closed_passed": true,
+      "device_tested": false
+    },
+    "iris_fixture": {
+      "path": "tests/chromium-iris-sandbox-contract.sh",
+      "sha256": "cd53d99d53db0a0a60d19c9b7c0d334f035cdb064fbc56f2ad75a8401c273aac"
+    },
+    "fedora_spec_delta": {
+      "path": "patches/0003-fedora156-arm-vaapi-test-package.patch",
+      "sha256": "b41256d06dce750cadfc89a7fc5e74763b34a8da57099d1a6434fa903899a297"
+    },
+    "clean_archive_sha512_verified": true,
+    "clean_archive_gpu_source_matches_pinned_revision": true,
+    "source_rpm_built": true,
+    "source_rpm_nevra": "chromium-156.0.8078.47-1.1.uke2.fc46.src",
+    "source_rpm_sha256": "65d0869d18c6829f8eb819142a49b608a1f53e4acd922a6838b636fd2d2aac6d"
   }
 }
