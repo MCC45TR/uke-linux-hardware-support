@@ -8,10 +8,10 @@ URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-me
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz
-Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-23 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-23)
-Requires: uke-core >= 1.0.21 uke-hw >= 1.1.1 uke-power >= 1.0.15 uke-sensors
+Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)
+Requires: uke-core >= 1.15.1-3 uke-hw >= 1.8.4-2 uke-power >= 1.3.3-4 uke-sensors >= 1.0.9-5
 Requires: uke-control uke-kernel-update uke-installation-profile
-Requires: uke-sound >= 1.0.1
+Requires: uke-sound >= 1.0.5
 Requires: uke-touchscreen
 Requires: uke-boot-integration(factory-bluetooth-v1) >= 1
 Requires: uke-boot-integration(factory-wlan-v1) >= 1

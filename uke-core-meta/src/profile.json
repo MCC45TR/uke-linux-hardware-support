@@ -4,7 +4,7 @@
   "soc": "SM7675",
   "profile": "device-runtime-selection",
   "kernel_family": "senemos-uke-linux-kernel-mainline",
-  "minimum_kernel_evr": "7.3.0-23",
+  "minimum_kernel_evr": "7.3.0-33",
   "boot_tested": false,
   "hardware_tested": false,
   "firmware_delivery": "COPR-generic-files-and-separate-per-device-calibration",

@@ -9,13 +9,15 @@ jq -e 'all(.[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|(startswith("https://
 jq -e '(.packages|length==9) and all(.packages[]; .name!="uke-power-profile-backend" and (.sha256|test("^[a-f0-9]{64}$")) and (.signed_mirror_sha256|test("^[a-f0-9]{64}$")) and (.source_payload_sha256|test("^[a-f0-9]{64}$")) and (.family|test("^uke-(additional|power|sensors)$"))) and any(.withdrawn_packages[]; .name=="uke-power-profile-backend" and .automatic_build==false and .target_admitted==false)' uke-desktop-packaging/manifests/native-runtime.json >/dev/null
 jq -e 'any(.[]; .name=="material-decoration" and .family=="uke-extras")' packaging/families/source-inputs.json >/dev/null
 jq -e 'any(.[]; .name=="uke-mesa-libclc22-spirv" and .family=="uke-additional" and (.url|startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/")))' packaging/families/source-inputs.json >/dev/null
-jq -e '.rename["material-decoration"]=="material-decoration" and (.exceptions|length)==4' packaging/families/families.json >/dev/null
+jq -e '.rename["material-decoration"]=="uke-material-decoration" and (.exceptions|length)==4' packaging/families/families.json >/dev/null
+jq -e '.families[]|select(.name=="uke-hw")|.requires|index("bluez")!=null and index("libinput")!=null and index("uke-libwacom")!=null' packaging/families/families.json >/dev/null
+jq -e 'all(.[]|select(.name=="pipewire" or .name=="uke-speaker-orientation" or .name=="uke-speaker-firmware"); .family=="uke-sound") and ([.[]|select(.name=="pipewire" or .name=="uke-speaker-orientation" or .name=="uke-speaker-firmware")]|length==3)' packaging/families/source-inputs.json >/dev/null
 for script in packaging/families/host/*.sh; do bash -n "$script"; done
 for name in uke-core uke-hw uke-power uke-sensors uke-extras uke-additional uke-metas uke-camera uke-sound; do
     spec="packaging/families/build/$name/SPECS/$name.spec"
     [[ -f $spec ]] || continue
     rpmspec --target aarch64 -q --qf '%{NAME}\n' "$spec" >"$spec.names"
-    if grep -Ev '^(uke-[A-Za-z0-9+_.-]+|material-decoration)$' "$spec.names"; then exit 1; fi
+    if grep -Ev '^uke-[A-Za-z0-9+_.-]+$' "$spec.names"; then exit 1; fi
     [[ $(rpmspec --target aarch64 -q --srpm --qf '%{NAME}' "$spec") == "$name" ]]
     ! grep -q '/__UKE_' "$spec"
     ! grep -qE '^(Requires|Recommends):.*(python|pypy)' "$spec"

@@ -8,16 +8,18 @@ generic firmware RPM also omitted the FS19xx preset requested by the speaker
 driver. An ordinary update could therefore leave the required playback path
 incomplete, especially with weak dependencies disabled.
 
-`uke-core-meta` 1.0.6 requires `uke-sound` 1.0.1. That selection requires the
-7.3.0-23 or later kernel, UCM policy 0.1.0-6 or later, orientation helper
-0.1.0-4 or later, and `uke-speaker-firmware` 3.0.304.0-1 or later. The firmware
+`uke-core-meta` 1.0.6-5 requires `uke-sound` 1.0.5. That selection requires the
+7.3.0-33 or later kernel, UCM policy 0.1.0-8 or later, orientation helper
+0.1.0-5 or later, and `uke-speaker-firmware` 3.0.304.0-2 or later. These are
+children of the sound source family, including the retained PipeWire recipe.
+The firmware
 package supplies the exact stock preset and OEM notice. Its admission is
 file-specific; other firmware reviews are unchanged.
 
 Update through the normal repository transaction:
 
 ```sh
-sudo dnf update
+sudo dnf update --refresh
 ```
 
 Reboot normally to use the matched kernel/modules and probe the newly supplied

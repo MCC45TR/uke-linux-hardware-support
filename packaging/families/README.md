@@ -1,5 +1,15 @@
 # COPR source families
 
+27 October 2026: the [hardware update cohort](../../docs/DNF-UPDATE-20261027.md)
+joins Core `1.15.1-3`, hardware `1.8.4-2`, power `1.3.3-4`, sensors `1.0.9-5`,
+extras `1.0.4-2`, additional `1.0.0-13`, metas `1.4.0-2`, camera `1.0.0-3`
+and sound `1.0.5-1`. Non-kernel children now all use the `uke-` prefix.
+Sound owns the retained PipeWire source recipe, speaker orientation and generic
+preset; extras owns the renamed material decoration. Hardware requires the
+existing BlueZ/libinput/libwacom infrastructure. Core selection requires the
+matched release-33 kernel and sound family, including when weak dependencies
+are disabled. Focus input hardware acceptance remains open.
+
 27 October 2026: core `1.15.1-2` carries the read-only lid/screensaver and
 active-depth/DSC diagnostic correction. Its exact Control requirement matches
 both rebuilt children. A standalone `1.15.1-1` test cannot replace Control below
