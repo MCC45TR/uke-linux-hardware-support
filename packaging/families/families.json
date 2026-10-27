@@ -195,7 +195,7 @@
     },
     {
       "name": "uke-sound",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "requires": [
         "pipewire",
         "pipewire-alsa",
@@ -205,7 +205,7 @@
         "uke-displayport-audio >= 0.1.0-6",
         "uke-speaker-orientation >= 0.1.0-4",
         "uke-speaker-firmware >= 3.0.304.0-1",
-        "(uke-speaker-controls >= 0.1.0-1 if plasma-workspace)"
+        "(uke-speaker-controls >= 0.1.0-2 if plasma-workspace)"
       ],
       "suggests": [
         "plasma-pa"
@@ -256,6 +256,6 @@
     "uke-desktop-metas": "19.fc46",
     "uke-core-meta": "4.fc46",
     "uke-proximity-capture": "5.fc46",
-    "uke-speaker-controls": "1.fc46"
+    "uke-speaker-controls": "2.fc46"
   }
 }

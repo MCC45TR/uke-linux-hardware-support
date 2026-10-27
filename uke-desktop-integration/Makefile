@@ -7,7 +7,7 @@ outdir ?= $(CURDIR)/build/srpm
 speaker-controls-srpm:
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-speaker-controls-0.1.0/,' -cf - LICENSE SPEAKER-CONTROLS.md src/uke-speaker-controls.desktop | gzip -n > "$$top/SOURCES/uke-speaker-controls-0.1.0.tar.gz"
+	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-speaker-controls-0.1.0/,' -cf - LICENSE SPEAKER-CONTROLS.md src/uke-speaker-controls.desktop src/kmix | gzip -n > "$$top/SOURCES/uke-speaker-controls-0.1.0.tar.gz"
 	cp packaging/uke-speaker-controls.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --define "_topdir $$top" "$$top/SPECS/uke-speaker-controls.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

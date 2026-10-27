@@ -10,6 +10,11 @@ the original Fedora KMix with the ALSA backend. The standard KDE audio panel
 continues to control application volume and stereo balance through PipeWire.
 Use KMix's Configure Channels action if a hardware slider is hidden.
 
+The package supplies a card-specific original KMix view profile containing
+only the four amplifier levels. Existing user profiles take precedence and
+are preserved. Hardware route switches and rotation enums remain available
+through KMix's channel configuration, while automatic rotation owns routing.
+
 These are four amplifier levels, not four independent surround channels.
 The qualified source route remains a stereo feed distributed to four speakers.
 Hardware names describe the USB-C-right landscape reference. The active
