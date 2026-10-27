@@ -5,84 +5,54 @@ Platform packages and device integration for Xiaomi Pad 7 and POCO Pad X1
 folders, with their own sources and packaging rules. New native utilities are
 maintained alongside these imported components.
 
-## Status — 19 October 2026
+## Status — 26 October 2026
 
-On 18 October, POCO Pad X1 runs Fedora Rawhide AArch64 and original KDE.
-Signed COPR kernel 7.2.10-27 installs through DNF and reaches KDE after a normal
-reboot. The powered Juo dock enumerates USB hubs, its HID receiver and RTL8153
-Ethernet function. Evdev records mouse motion and the user confirms operation.
-Ethernet networking and HDMI output remain unqualified.
+The POCO Pad X1 development installation uses Fedora Rawhide AArch64, original
+KDE and signed Linux `7.3.0-15`. Normal boot, matching modules, boot-image
+readback and the existing boot-health checks pass. Exported images and other
+device variants have separate acceptance gates.
 
-After the kernel-28 compressed firmware-loader change, the RTL8153 driver
-reports firmware `rtl8153b-2 v2 04/27/23` through ethtool. Carrier is zero;
-no Ethernet cable or traffic result is claimed.
+Recorded working functions include normal touch, Wi-Fi, Bluetooth mouse and
+Space Q45 stereo playback, four-pose rotation, dual ambient-light response,
+proximity and cover switch events. HDMI works on Linux 7.3, confirmed on
+26 October. Earlier Juo tests establish native/Chromium monitor sound, dynamic
+ELD monitor labels and Gigabit Ethernet connectivity. Later RX drops,
+reconnection, cover transitions and sustained throughput remain open.
 
-Kernel 29 from signed COPR 11168479 installs through DNF and returns to SSH and
-original KDE after a normal reboot. The user confirms display/touch; VRR Always
-persists without restoration, with about 30 Hz measured idle DPU at the 144 Hz
-upper mode. Application 11 and runtime/helper 6 are installed from signed COPR
-11168593/11168630. Explicit threshold GETs report disabled 70/80. The restricted
-enable operation refuses the old-kernel write interface without fallback.
-Charge workers remain inactive. Adaptive-display 9 retains original libddcutil
-initialization, excluding internal GENI buses. External DDC brightness is untested.
-Half-RAM swap, balanced profile and CDC disabled state persist.
+The signed KDE Connect policy enables local-network discovery; POCO F5 was
+discovered on 24 October. Pairing and transfers remain untested. Original KDE
+applications and normal user/admin policy remain authoritative. Chromium is
+a removable recommendation rather than a hard dependency of the KDE selection.
 
-The separate minimal native offline UI is installed. It draws a large battery,
-percentage, firmware time-to-full, signed battery power and temperature; missing
-time remains unavailable. Normal-boot refusal passes without interrupting KDE
-or touch. Its matched initramfs targets Linux 7.2.11, currently in full COPR.
-Physical charger boot, key/unplug behavior and efficiency remain untested. See
-[the interface contract](uke-platform-runtime/docs/OFFLINE-CHARGING.md).
-No KDE application is forked or rebuilt.
+Installed Control 1.14 remains separate from the expanded 2.3 CLI and new
+charging/NFC source. Signed Control 1.12.0-5 and Linux 7.3.0-5 pass one visible
+ten-second RGB color test and caller-refusal checks. Torch extension source,
+real battery/camera LED policy and electrical/thermal/endurance work remain open.
+No active Linux NFC reader or qualified charging-protection result is claimed.
 
-The battery's 100% display and Charging state do not establish termination or an
-electrical fault. Manual PD disconnection is verified as Discharging at 28 degrees
-Celsius. The installed profile refuses charge-control requests; battery bypass
-and autonomous protection are not qualified. The new host boundary fixtures
-validate software refusal, not physical charge cutoff. HDMI testing remains
-behind the unresolved battery power-path gate. PMIC warnings, optional front-
-color startup, white-flash behavior and complete stability remain open.
+On kernel 15 with signed VA 0.4, seven decode modes each produce 30 exact-reference 320x240
+frames: H.264 Baseline/Main/High, HEVC Main/Main10 and VP9 Profile0/2, including
+independent ten-bit references. The native FFmpeg High/B-frame path still fails.
+Basic native H.264 Main encoding produces 30 independently decoded frames with
+correct SPS timing; missing color metadata, rate control, larger modes and
+endurance remain open. Browser video, zero-copy presentation, sandbox/GL
+coexistence and cold-boot activation remain unqualified. Signed VA revision 0.6
+preserves damaged-picture errors in source fixtures; it is not installed.
 
-19 October 2026, Linux 7.2.11-6: touchscreen release 10 stalls in contact
-assignment and reaches a 6 GiB memory peak. Signed COPR release 11 is installed
-through DNF; a 30-second physical scrolling trial reports uninterrupted input
-with about 9 MiB RSS. Separate short firmware watchdog recoveries remain open.
-Ten-finger input later causes transient display/touch corruption with Always
-VRR. Changing only VRR to Never at the same 60 Hz base removes the reported
-symptom; VRR remains disabled for this control. Release 12 adds OEM charger-noise
-policy restoration, bounded configuration input and tracking-ID wrap. Host
-ASan/LSan checks, 18800 private-packet replay operations and 100 power-monitor
-lifetimes report no memory/descriptor failure; these are host results. Signed
-device delivery and full lifecycle qualification are recorded in
-[the firmware audit](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/testing/UKE-TOUCH-FIRMWARE-AUDIT-2026-10-19.md).
-[The diagnosis and limits](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/lessons/2026-10-19-UKE-TOUCH-ASSIGNMENT.md)
-supersede unrestricted long-duration touch acceptance. The ten-contact fault
-reopens earlier VRR acceptance. Earlier Linux `7.2.10-8` tests restore the original
-KDE sensor interfaces. Previous
-.4056 normal-boot user tests confirm four-pose rotation and dual-light
-automatic brightness. Bluetooth 5.2 mouse movement, clicks and
-wheel input pass physical tests. Native CPU/GPU profiles operate through PPD;
-touchscreen readiness follows actual input publication. Signed COPR packages
-are installed through DNF. Factory firmware and calibration remain separate,
-device-local inputs. The downloadable Alpha 1 image is not accepted by these
-results.
+VRR remains disabled after input/display regressions. Internal audio, cameras,
+sleep, charging protection, gesture wake, DDC/CI, HDR and experimental external
+DSC/FEC retain their separate limits. The [hardware table](https://github.com/MCC45TR/uke-linux#hardware-support)
+is the current function-level summary. Source, host, package and tablet results
+are not interchangeable.
 
-Physical proximity far/near/far and Hall lid/fold transitions pass. The original
-KDE sensor backend reads all 27 configured PMIC channels with standard units.
-The internal charger-temperature channel reads 31.29–31.41 °C with USB power;
-without USB power its near-zero input produces the OEM-clamped 0 °C. Its absolute
-accuracy is unqualified. The compass returns changing headings; absolute
-heading accuracy, full thermal policy and lifecycle endurance remain incomplete. Full shutdown
-can hang in the original KDE clipboard worker. See the
-[hardware table](https://github.com/MCC45TR/uke-linux#hardware-support) for the
-exact tested functions and limits. Package success alone does not establish
-hardware support.
-
-Original Fedora Plasma Login Manager starts the session. Declarative udev
-policy keeps rear-cover state and ordinary mice from overriding KWin's tablet
-attachment heuristic. No pogo keyboard is available; native pogo input,
-authentication and illumination remain unimplemented and untested. No keyboard
-light control is fabricated without hardware.
+The [source checkpoint](https://github.com/MCC45TR/uke-linux-hardware-support/tree/publish/source-snapshot-20261026)
+preserves native identity and graphics/video diagnostics. Identity fixtures and
+Vulkan/GLES host builds pass; OpenCL probe compilation lacks host headers.
+Local touch references and calibration remain private and device-specific.
+The [video/browser checkpoint](https://github.com/MCC45TR/uke-linux-hardware-support/tree/publish/video-source-20261026)
+retains the later bounded codec results and uninstalled browser/backend candidates.
+The [Control packaging correction](https://github.com/MCC45TR/uke-linux-hardware-support/tree/fix/offline-core15-post-20261026)
+passes native AArch64 COPR 11209527 as `1.15.0-2`; no tablet update is performed here.
 
 ## Components
 
@@ -106,6 +76,9 @@ KDE applications come from the distribution. They are not cloned, forked or
 rebuilt as Uke applications. Unmodified original Fedora desktop packages may retain their distribution
 Python dependencies under the documented exception. Project tools, recovery
 and initramfs do not ship project Python or a Python runtime.
+
+The package notes below retain the earlier 18–19 October baseline; the current
+tested cohorts and open limits are summarized above.
 
 Signed COPR application 8, battery runtime 3, Bluetooth integration 6 and boot
 integration 20 are installed through DNF. Application self-checks and the
