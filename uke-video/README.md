@@ -2,16 +2,25 @@
 
 Date: 27 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-Current kernel 7.3.0-18 has the video modules present but unloaded behind the
-first-boot safety blacklist. The 27 October default-driver DRM VA query loads
-the correct MSM alias and init symbol, then fails because no Iris decoder node
-exists. No missing direct library dependency is observed. No module is loaded
-or package changed by this query. Earlier successful initialized-device results
-below remain bounded historical evidence, not current startup acceptance.
-The three prior touch-recorder services are terminal, not an active wait.
-Current DRM metadata enables DSI and reports DP disconnected; the fresh camera
-image identifies neither display. Physical visibility and a recoverable
-provider/display test window remain required before further activation.
+On 27 October, controlled VideoCC/Iris loading on kernel 7.3.0-18 creates
+decoder video0 and encoder video1. Identity is checked against the platform
+device and bound module; node numbers are not permanent identifiers. The desktop
+user has read/write access, and the default-driver DRM VA query succeeds without
+driver/device overrides, exposing seven decode/four encode entrypoint pairs.
+The earlier missing-node failure occurred with both modules unloaded.
+
+Two bounded VA hardware sessions produce 30 H264 Constrained Baseline NV12
+and 30 HEVC Main10 P010 frames at 320x240. Every frame hash, timestamp, duration,
+size and SAR matches the independent software reference. Iris references return
+to zero with no new codec kernel error. This uses explicit CPU download.
+The monitor's desktop image remains visible before and after activation with
+DP active. Original Chrome156 passes FD732 Canvas/WebGL pixels and context
+restore; GPU sandbox remains false, WebGPU obtains no adapter, and encode rows
+remain empty. These are separate unresolved functions.
+
+Activation is runtime-only. The first-boot guard is unchanged; automatic loading
+after reboot is not qualified. No package, kernel or COPR build changes here.
+Full codec/encode, sustained, physical HDR and buffer-interop acceptance remain open.
 
 The completed COPR delivery is additional 1.0.0-12 / build11212019, with 35
 signed uke-prefixed binary RPMs in the existing family and test directory.
