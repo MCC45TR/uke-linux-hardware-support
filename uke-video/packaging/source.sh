@@ -11,11 +11,11 @@ mkdir -p referances "$output"/{SOURCES,SPECS,SRPMS,BUILD,BUILDROOT,RPMS}
 if [[ ! -s $archive ]]; then
     curl --disable --fail --location --silent --show-error --proto '=https' --proto-redir '=https' \
         --connect-timeout 15 --max-time 180 \
-        "https://api.github.com/repos/radxa-pkg/libva-v4l2/tarball/$commit" -o "$archive.part"
-    printf '%s  %s\n' "$digest" "$archive.part" | sha256sum --check --status
+        "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/libva-v4l2-$commit.tar.gz" -o "$archive.part"
+    printf '%s  %s\n' "$digest" "$archive.part" | sha256sum --check
     mv "$archive.part" "$archive"
 fi
-printf '%s  %s\n' "$digest" "$archive" | sha256sum --check --status
+printf '%s  %s\n' "$digest" "$archive" | sha256sum --check
 while IFS=$'\t' read -r patchfile hash; do
     printf '%s  %s\n' "$hash" "$patchfile" | sha256sum --check --status
     cp "$patchfile" "$output/SOURCES/"

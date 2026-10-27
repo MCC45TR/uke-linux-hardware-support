@@ -45,6 +45,7 @@
     "url": "https://github.com/radxa-pkg/libva-v4l2",
     "commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",
     "archive_sha256": "e8756bf642eb3fc458209b8dd2380571dcb52ec4b2201e9d09db208b7e995d52",
+    "archive_url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/libva-v4l2-6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41.tar.gz",
     "license": "MIT; included upstream kernel patches GPL-2.0-only"
   },
   "patches": [
