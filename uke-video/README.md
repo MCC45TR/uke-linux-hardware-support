@@ -2,25 +2,33 @@
 
 Date: 27 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-On 27 October, controlled VideoCC/Iris loading on kernel 7.3.0-18 creates
-decoder video0 and encoder video1. Identity is checked against the platform
-device and bound module; node numbers are not permanent identifiers. The desktop
-user has read/write access, and the default-driver DRM VA query succeeds without
-driver/device overrides, exposing seven decode/four encode entrypoint pairs.
-The earlier missing-node failure occurred with both modules unloaded.
+Normal Iris/VideoCC autoload is restored by backing up and removing an unowned
+temporary blacklist. One controlled kernel18 reboot creates initialized,
+module-bound decoder video0 and encoder video1 without manual video loading.
+The desktop user can access both, and default DRM VA succeeds with seven VLD
+and four EncSlice pairs. No kernel/initramfs/boot-image change is made for this
+fix. A physical power-off/on cycle remains untested. Default VA and nodes also
+pass after the independent kernel19 display/touch update.
 
-Two bounded VA hardware sessions produce 30 H264 Constrained Baseline NV12
-and 30 HEVC Main10 P010 frames at 320x240. Every frame hash, timestamp, duration,
-size and SAR matches the independent software reference. Iris references return
-to zero with no new codec kernel error. This uses explicit CPU download.
-The monitor's desktop image remains visible before and after activation with
-DP active. Original Chrome156 passes FD732 Canvas/WebGL pixels and context
-restore; GPU sandbox remains false, WebGPU obtains no adapter, and encode rows
-remain empty. These are separate unresolved functions.
+On kernel19/VA0.4, all seven profiles at320x240 produce30 exact independent
+reference frames through VA with explicit CPU download. A scoped native FFmpeg
+candidate also passes all seven profiles after adding linear P010 mapping and
+contiguous UV layout. HEVC Main10 and VP9 Profile2 preserve full P010 precision.
+The source fixture fails three checks before this patch and passes on the host
+and under AArch64 emulation. Original FFmpeg and installed packages are unchanged.
+See the candidate manifest for exact source, binary and test identities.
 
-Activation is runtime-only. The first-boot guard is unchanged; automatic loading
-after reboot is not qualified. No package, kernel or COPR build changes here.
-Full codec/encode, sustained, physical HDR and buffer-interop acceptance remain open.
+Native1080p H264 CB/Main/High and HEVC Main/Main10 each pass30 reference frames.
+Native VP9P0 stops after11 correct frames at the first two-frame superframe;
+the same stream passesall30 via VA. Packet framing, remaining modes, performance,
+lifecycle and sustained acceptance remain open. Frame hashes are not a direct
+display or zero-copy test. Output metadata is observed without forcing labels.
+
+Original Chrome156 has complete GPU reports before/after the P010 trial in the
+same profile, with equal FD732 GL pixels and context restoration. GPU sandbox
+remains false, WebGPU has no adapter and browser encode remains unqualified.
+Camera records for the autoload reboot are black before and after; physical
+monitor/HDR acceptance is separate. These results do not qualify all video modes.
 
 The completed COPR delivery is additional 1.0.0-12 / build11212019, with 35
 signed uke-prefixed binary RPMs in the existing family and test directory.
@@ -300,8 +308,9 @@ the independent host hash; this checks the CLI data path, not Iris decoding.
 The programs link internal FFmpeg libraries statically and require only libc,
 libm and the AArch64 loader, with highest required symbol GLIBC_2.44. They
 contain no software H264/HEVC/VP9 decoder. Exact hashes and limits are in the
-candidate manifest. No binary is installed or executed on the tablet; fresh
-ABI and device-identity checks remain required before the scoped comparison.
+candidate manifest. Those initial build records precede tablet execution; the
+scoped native/P010 results above are later hash-verified diagnostic trials,
+with no distribution client replacement.
 
 On kernel 7.3.0-10, explicit `vainfo` exposes H264 Constrained Baseline/Main/High and HEVC
 Main decode/encode, plus HEVC Main10 and VP9 Profile 0/2 decode. Native Main10

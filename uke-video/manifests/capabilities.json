@@ -825,5 +825,43 @@
     "render_regression_tested": false,
     "device_experiments_on_hold": true,
     "remaining_gate": "Recover a verified current display/provider test window; do not infer panel visibility from DSI metadata or remove the first-boot safety guard blindly"
+  },
+  "ordered_autoload_validation": {
+    "date": "2026-10-27",
+    "kernel": "7.3.0-18",
+    "configuration": "Unowned temporary Iris/VideoCC blacklist moved into protected backup; normal platform modaliases retained",
+    "one_controlled_reboot_tested": true,
+    "physical_power_cycle_tested": false,
+    "manual_video_load_after_reboot": false,
+    "initialized_module_bound_nodes": [
+      "video0 decoder",
+      "video1 encoder"
+    ],
+    "desktop_user_rw": true,
+    "default_vainfo_exit": 0,
+    "decode_pairs": 7,
+    "encode_pairs": 4,
+    "original_chrome_same_profile_gl_equal": true,
+    "kernel_package_initramfs_or_boot_image_changed": false,
+    "prior_ram_touch_restored": true,
+    "private_calibration_unchanged": true,
+    "physical_monitor_accepted": false,
+    "subsequent_external_kernel_transition": {
+      "kernel": "7.3.0-19",
+      "source": "e3229b4e2295b38515977b43116b82534d62f662",
+      "iris_video_source_unchanged_from_kernel18": true,
+      "stable_update_state": true,
+      "module_bound_nodes_and_default_va_reverified": true,
+      "video_workflow_changed_kernel": false
+    }
+  },
+  "native_p010_diagnostic_validation": {
+    "manifest": "ffmpeg-start-error-candidate.json",
+    "kernel": "7.3.0-19",
+    "profiles_320x240_passed": 7,
+    "frames_per_profile": 30,
+    "full_nv12_or_p010_reference_match": true,
+    "distribution_client_replaced": false,
+    "full_video_scope_accepted": false
   }
 }

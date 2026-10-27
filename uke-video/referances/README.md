@@ -21,3 +21,15 @@ FFmpeg flush review, 27 October 2026 local date:
   flush callback. This is a source observation, not a tested seek result.
 - Source URL: https://github.com/FFmpeg/FFmpeg/blob/d31915e9dce4d33676fadc6c3e08965b4acc132b/libavcodec/v4l2_m2m_dec.c
 - License: LGPL-2.1-or-later. No acquired source is modified or executed.
+
+FFmpeg P010 review, 27 October 2026:
+
+- Official mirror commit: `fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8`.
+- Unchanged files under `ffmpeg-p010-20261027/`: `v4l2_fmt.c` (SHA256
+  a4b4f486aae6cbd0905c38f0d413241aeca7e30632c71d04a9a432bab8e61039) and
+  `v4l2_buffers.c` (SHA256
+  f4d8b458a608dcbe94ed7ca38c114ec6f3373d295e4b4fd68c0410397ff9f9ec).
+- The reviewed mapping and contiguous-chroma fixup still omit linear P010.
+- Source: https://github.com/FFmpeg/FFmpeg/tree/fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8/libavcodec
+- License: LGPL-2.1-or-later. The candidate changes project-owned patches only.
+- Linux format contract: https://docs.kernel.org/userspace-api/media/v4l/pixfmt-yuv-planar.html

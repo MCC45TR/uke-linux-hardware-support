@@ -1,0 +1,33 @@
+Subject: [PATCH] avcodec/v4l2: map linear P010 and expose its contiguous chroma
+
+An Iris Main10 decoder can return linear P010 after source change. Translate
+that FourCC to P010LE instead of AV_PIX_FMT_NONE and use the returned byte
+stride and coded height for the contiguous chroma plane, as for NV12/NV21.
+Keep separately allocated planes unchanged. This does not add tiled T010 or
+qualify Main10 encoding, HDR, zero-copy or device mode limits.
+
+Base: FFmpeg n9.0.2, 946fcce07b6dcd0331c8cc609192aeff5e1924f8.
+License: LGPL-2.1-or-later, matching the modified upstream files.
+
+--- a/libavcodec/v4l2_fmt.c
++++ b/libavcodec/v4l2_fmt.c
+@@ -55,6 +55,9 @@
+     { AV_FMT(YUV410P),     AV_CODEC(RAWVIDEO),    V4L2_FMT(YUV410) },
+     { AV_FMT(YUV410P),     AV_CODEC(RAWVIDEO),    V4L2_FMT(YVU410) },
+     { AV_FMT(NV12),        AV_CODEC(RAWVIDEO),    V4L2_FMT(NV12) },
++#ifdef V4L2_PIX_FMT_P010
++    { AV_FMT(P010LE),      AV_CODEC(RAWVIDEO),    V4L2_FMT(P010) },
++#endif
+     { AV_FMT(NONE),        AV_CODEC(MJPEG),       V4L2_FMT(MJPEG) },
+     { AV_FMT(NONE),        AV_CODEC(MJPEG),       V4L2_FMT(JPEG) },
+ #ifdef V4L2_PIX_FMT_SRGGB8
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -340,6 +340,7 @@
+     switch (avbuf->context->av_pix_fmt) {
+     case AV_PIX_FMT_NV12:
+     case AV_PIX_FMT_NV21:
++    case AV_PIX_FMT_P010LE:
+         if (avbuf->num_planes > 1)
+             break;
+         frame->linesize[1] = avbuf->plane_info[0].bytesperline;

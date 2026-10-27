@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "scope": "Separate startup-only, streaming, optional seek-reset and encoder-color candidates; source and host-emulation evidence only, no device qualification or RPM",
+  "scope": "Separate FFmpeg client candidates with source/host-emulation checks and bounded tablet decode validation; no distribution RPM",
   "upstream": {
     "url": "https://git.ffmpeg.org/ffmpeg.git",
     "tag": "n9.0.2",
@@ -340,5 +340,75 @@
     "main10_or_hdr_hardware_qualified": false,
     "browser_encode_qualified": false,
     "hardware_render_regression_tested": false
+  },
+  "native_p010_candidate": {
+    "date": "2026-10-27",
+    "patch": "patches/ffmpeg-9.0.2-native-p010.patch",
+    "patch_sha256": "ed4534d460c1d9f2da87f4ac5de81f9b9443f684e23208f5b7a9510a6717e3a6",
+    "fixture": "tests/ffmpeg-p010-contract.sh",
+    "fixture_sha256": "bc23ebab795f81ae1c635a5c3724a9f76f8f694370b4cb6c9099bc1837632548",
+    "scope": "Linear P010LE FourCC mapping and contiguous UV byte-stride/coded-height fixup; separately allocated planes preserved",
+    "upstream_review": {
+      "commit": "fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8",
+      "files": [
+        "libavcodec/v4l2_fmt.c",
+        "libavcodec/v4l2_buffers.c"
+      ],
+      "mapping_sha256": "a4b4f486aae6cbd0905c38f0d413241aeca7e30632c71d04a9a432bab8e61039",
+      "buffers_sha256": "f4d8b458a608dcbe94ed7ca38c114ec6f3373d295e4b4fd68c0410397ff9f9ec",
+      "finding": "Both omissions remain in reviewed upstream; no donor board constants copied",
+      "uapi": "https://docs.kernel.org/userspace-api/media/v4l/pixfmt-yuv-planar.html"
+    },
+    "old_actual_function_fixture_exit": 1,
+    "old_failed_checks": 3,
+    "host_and_aarch64_emulated_fixtures_passed": true,
+    "buffer_reference_creation_modeled": true,
+    "aarch64_cli_sha256": "675e53181b6cee30613b7cc56d0d3f27e7824a6460cec1f7af2a2f0244b3adfe",
+    "aarch64_ffprobe_sha256": "48b92efb132fe0cd9f4b47b1f3058617d0fc97e3e7db910aa934e0fd0f74189a",
+    "required_glibc_symbol_max": "GLIBC_2.44",
+    "compressed_software_decode_fallback_enabled": false,
+    "diagnostic_filter_inventory": [
+      "null",
+      "format",
+      "scale",
+      "setparams",
+      "showinfo"
+    ],
+    "wrapped_avframe_null_output_enabled": true,
+    "software_control": {
+      "metadata_cli_sha256": "27234cc17f3441574cdf01c92593c4c7d3346f5d8eb42f3892300cea866bd5cf",
+      "one_raw_nv12_frame_unchanged": true,
+      "explicit_raw_input_labels_observed": true,
+      "wrapped_frame_null_output_passed": true,
+      "scope": "Software path under AArch64 emulation only; setparams is never used to force decoded output metadata"
+    },
+    "tablet": {
+      "kernel": "7.3.0-19",
+      "kernel_source": "e3229b4e2295b38515977b43116b82534d62f662",
+      "delivery": "Hash-verified separate temporary diagnostic; original FFmpeg and packages unchanged",
+      "profiles_320x240_passed": [
+        "H264 ConstrainedBaseline",
+        "H264 Main",
+        "H264 High B2",
+        "HEVC Main",
+        "HEVC Main10",
+        "VP9 Profile0",
+        "VP9 Profile2"
+      ],
+      "frames_per_profile": 30,
+      "pixels_timing_size_dimensions_sar_equal": true,
+      "main10_and_vp9_profile2_full_p010_reference": true,
+      "new_codec_kernel_errors": 0,
+      "iris_refs_after": 0,
+      "original_chrome_same_profile_gl_regression_passed": true,
+      "gpu_reports_before_after_complete": true,
+      "webgpu_adapter_available": false,
+      "gpu_sandbox_qualified": false,
+      "hd_progress": "Native H264 CB/Main/High and HEVC Main/Main10 pass30 reference frames at1920x1080; native VP9P0 stops after11 exact frames at first superframe while VA passesall30; separate packet-framing investigation remains open",
+      "full_mode_lifecycle_sustained_or_browser_accepted": false
+    },
+    "package_built": false,
+    "installed_as_distribution_client": false,
+    "main10_encode_hdr_or_zero_copy_qualified": false
   }
 }
