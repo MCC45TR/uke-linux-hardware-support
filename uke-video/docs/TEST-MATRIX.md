@@ -1,10 +1,10 @@
 # Uke video acceptance matrix
 
 Updated: 27 October 2026 local date. Recorded physical environment: POCO Pad X1, Fedora 46 Rawhide,
-Linux7.3.0-15 for bounded native/VA workloads, installed VA revision0.4,
-Mesa26.2.5 and libva2.24.1. Earlier kernel10/12/14 observations remain dated
-history. Current target identity has not been refreshed after the coordinated
-touch handoff. Source, package, emulation, bounded mode and profile-wide
+Linux 7.3.0-19 for current bounded native/VA workloads, installed VA revision
+0.4, Mesa 26.2.5 and libva 2.24.1. Earlier kernel observations remain dated
+history. A scoped RAM Iris candidate is restored to the original module after
+each trial. Source, package, emulation, bounded mode and profile-wide
 acceptance are separate.
 
 | Check | Observed result | Remaining gate |
@@ -39,7 +39,9 @@ acceptance are separate.
 | HEVC Main10 encode | Native P010 and VA source candidates pass host checks; no native bitstream | Matched delivery, P010 MMAP/GPU/import, independent precision and metadata |
 | Main10 patch on kernel-13 source | Patch applies; Main10/caps contracts and Clang-23 AArch64 driver cross-build pass | Whole matched kernel build/delivery and actual encode; no object is installed |
 | Advanced encode controls and mode limits | Not run | B/ROI/LTR/layers/intra-refresh, source/runtime intersection |
-| 4K60, 4096, minimum-size and high-FPS modes | Not run | Correctness followed by sustained tablet measurements |
+| Current VA profile samples on kernel 19 | All seven profiles pass 30 exact low/1080p frames and 60 exact nominal 4K60 frames | Remaining limits, native duration provenance, lifecycle, browser and sustained acceptance |
+| Scoped VP9 NOSHOW kernel / native FFmpeg drain candidates | Seven native and seven VA 1080p profiles each pass 30 exact frames; six complete GPU reports retain equal FD732 GL/context pixels; stock Iris restored | Full kernel/signature/package delivery and remaining modes/lifecycle; the initial drain candidate's device failure is retained |
+| 4096, minimum-size and high-FPS modes | Short independent software vectors prepared; no tablet result yet | Correctness followed by sustained tablet measurements |
 | HD and nominal4K60 software preparation | Seven1080p30 and seven3840x2160/60 input profiles, two native-format references each; packet/reference timing checked | Actual mode boundaries, presentation, sustained FPS and tablet acceptance |
 | FFmpeg streaming diagnostic CLI | Startup-only/full candidates compile under emulated AArch64; actual-C fixtures and three software rawvideo frames per CLI pass | Target ABI, untraced native High frames, actual DRC/held-buffer and lifecycle tests; base candidate has no seek callback |
 | Optional FFmpeg seek-reset candidate | Flush callback, retired-generation protection and error handling pass 18 modeled host cases and AArch64 emulation; separate CLI artifacts | Actual public-API context reuse, frame references, retained-instance limits, latency and DMA quiescence; no tablet run |

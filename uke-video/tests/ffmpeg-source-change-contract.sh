@@ -310,6 +310,20 @@ int main(void)
                "empty input reaches EOF without starting capture or fabricating a frame");
         cleanup();
 
+        reset(multiplanar); source_events = 1; (void)v4l2_try_start(&codec);
+        state.draining = 1; forced_poll = 1; packet_reads = 0;
+        AVFrame drain_gap = { 0 };
+        expect(v4l2_receive_frame(&codec, &drain_gap) == 0 && produced == 1 && !packet_reads,
+               "blocking drain survives a readiness-only wake without requesting input");
+        cleanup();
+
+        reset(multiplanar); source_events = 1; (void)v4l2_try_start(&codec);
+        state.draining = 1; capture_ready = 0; extra_revents = POLLERR;
+        AVFrame drain_error = { 0 };
+        expect(ff_v4l2_context_dequeue_frame(&state.capture, &drain_error, -1) == AVERROR(EIO),
+               "active drain POLLERR is terminal instead of a repeated readiness gap");
+        cleanup();
+
         for (int changed_size = 0; changed_size <= 1; changed_size++) {
             reset(multiplanar); source_events = 1;
             (void)v4l2_try_start(&codec);

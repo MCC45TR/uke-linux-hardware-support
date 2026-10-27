@@ -31,7 +31,9 @@ struct V4L2m2mContext {
 struct V4L2m2mPriv { V4L2m2mContext *context; int reset_error = 0; };
 static V4L2m2mContext state;
 static int output_error, format_errno, init_error, capture_error, enqueue_error;
-static int packet_error, dequeue_calls, last_timeout, format_calls;
+static int packet_error, dequeue_calls, last_timeout, format_calls, packet_reads;
+static int dequeue_retries, dequeue_error;
+static int packet_budget, packet_after_budget, enqueue_retries;
 static int failures;
 // Reset is covered separately; ordinary startup must not reopen the decoder.
 [[maybe_unused]] static int v4l2_decode_init(AVCodecContext *) { ++failures; return AVERROR(EIO); }
@@ -58,16 +60,23 @@ static int ff_v4l2_context_init(V4L2Context *ctx) {
 }
 [[maybe_unused]] static int ff_v4l2_context_wait_source_change(V4L2Context *, int) { return 0; }
 static int ff_decode_get_packet(AVCodecContext *, AVPacket *packet) {
+    ++packet_reads;
+    if (!packet_budget) return packet_after_budget;
+    if (packet_budget > 0) --packet_budget;
     if (!packet_error) packet->size = 12;
     return packet_error;
 }
-static int ff_v4l2_context_enqueue_packet(V4L2Context *, AVPacket *) {
+static int ff_v4l2_context_enqueue_packet(V4L2Context *, AVPacket *packet) {
+    if (enqueue_retries) { --enqueue_retries; return AVERROR(EAGAIN); }
+    if (!enqueue_error && !packet->size) state.draining = 1;
     return enqueue_error;
 }
 static void av_packet_unref(AVPacket *packet) { packet->size = 0; }
 static int ff_v4l2_context_dequeue_frame(V4L2Context *, AVFrame *frame, int timeout) {
     ++dequeue_calls;
     last_timeout = timeout;
+    if (dequeue_retries) { --dequeue_retries; return AVERROR(EAGAIN); }
+    if (dequeue_error) return dequeue_error;
     frame->produced = true;
     return 0;
 }
@@ -86,6 +95,8 @@ static void reset() {
     state.output.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     output_error = format_errno = init_error = capture_error = enqueue_error = 0;
     packet_error = dequeue_calls = format_calls = last_timeout = 0;
+    packet_reads = dequeue_retries = dequeue_error = 0;
+    packet_budget = -1; packet_after_budget = AVERROR(EAGAIN); enqueue_retries = 0;
 }
 static int receive(AVFrame &frame) {
     V4L2m2mPriv priv{&state};
@@ -137,6 +148,41 @@ int main() {
     packet_error = AVERROR(EAGAIN); AVFrame available;
     expect(receive(available) == 0 && available.produced && last_timeout == 0,
            "missing new input must retain the existing nonblocking capture path");
+
+    reset(); state.output.streamon = state.capture.streamon = state.draining = 1;
+    dequeue_retries = 2; AVFrame draining;
+    expect(receive(draining) == 0 && draining.produced && dequeue_calls == 3 && !packet_reads,
+           "flush waits across capture readiness gaps without requesting new input");
+    reset(); state.output.streamon = state.capture.streamon = state.draining = 1;
+    dequeue_error = AVERROR_EOF; AVFrame ended;
+    expect(receive(ended) == AVERROR_EOF && !ended.produced && !packet_reads,
+           "completed flush returns EOF without consuming another packet");
+    reset(); state.output.streamon = state.capture.streamon = state.draining = 1;
+    dequeue_error = AVERROR(EIO); AVFrame failed_drain;
+    expect(receive(failed_drain) == AVERROR(EIO) && !failed_drain.produced && dequeue_calls == 1,
+           "terminal drain error propagates without retrying");
+    reset(); state.output.streamon = state.capture.streamon = 1;
+    packet_budget = 1; dequeue_error = AVERROR(EAGAIN); AVFrame normal_gap;
+    expect(receive(normal_gap) == AVERROR(EAGAIN) && dequeue_calls == 2 && !normal_gap.produced,
+           "actual input exhaustion still returns nonblocking EAGAIN to its caller");
+    expect(packet_reads == 2 && last_timeout == 0,
+           "readiness retry must check buffered input before requesting more external input");
+
+    reset(); state.output.streamon = state.capture.streamon = 1;
+    packet_budget = 2; packet_after_budget = AVERROR_EOF;
+    dequeue_retries = 2; AVFrame buffered_flush;
+    expect(receive(buffered_flush) == 0 && buffered_flush.produced && state.draining,
+           "flush must consume buffered packets and send STOP across capture readiness gaps");
+    expect(packet_reads == 3 && dequeue_calls == 3 && state.buf_pkt.size == 0,
+           "each buffered packet is consumed exactly once before drain");
+
+    reset(); state.output.streamon = state.capture.streamon = 1;
+    packet_budget = 1; packet_after_budget = AVERROR_EOF;
+    enqueue_retries = dequeue_retries = 1; AVFrame pending_flush;
+    expect(receive(pending_flush) == 0 && pending_flush.produced && state.buf_pkt.size == 0,
+           "input backpressure must retry the retained packet before requesting another packet");
+    expect(packet_reads == 1 && dequeue_calls == 2,
+           "retained packet must survive the intermediate readiness gap without a duplicate read");
     if (failures) return 1;
     std::puts("PASS: actual FFmpeg startup errors, packet lifetime and receive controls (host only)");
 }

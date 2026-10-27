@@ -18,14 +18,27 @@ The source fixture fails three checks before this patch and passes on the host
 and under AArch64 emulation. Original FFmpeg and installed packages are unchanged.
 See the candidate manifest for exact source, binary and test identities.
 
-Native1080p H264 CB/Main/High and HEVC Main/Main10 each pass30 reference frames.
-Native VP9P0 stops after11 correct frames at the first two-frame superframe;
-the same stream passesall30 via VA. Wiring the existing upstream splitter
-passes a31-packet software payload control but still stops at11 native frames.
-The kernel also maps NOSHOW to ERROR; that path needs separate investigation.
-Packet framing, remaining modes, performance,
-lifecycle and sustained acceptance remain open. Frame hashes are not a direct
-display or zero-copy test. Output metadata is observed without forcing labels.
+On 27 October, a dedicated HFI trace confirms that stock Iris returns a valid
+VP9 NOSHOW completion as ERROR. A scoped RAM kernel candidate recycles only
+empty, non-corrupt linear VP9 display-order buffers. An initial trial passes
+both 1080p VP9 profiles but exposes a separate native FFmpeg flush assertion.
+A failure-only diagnostic locates EAGAIN after the final packet is queued,
+before filter EOF and kernel STOP. A draining-only fix is insufficient.
+
+The eighth FFmpeg patch retries that intermediate input/capture state while
+preserving EAGAIN when the input filter genuinely needs more input. With this
+untraced diagnostic and the RAM Iris candidate, all seven native profiles and
+all seven VA profiles produce 30 exact 1080p reference frames. Six complete
+original-Chrome GPU reports retain equal FD732 GL/context pixels before,
+during and after the trial. Stock Iris is restored, default VA passes again,
+and original packages and boot state remain unchanged. This is bounded sample
+validation, not signed kernel delivery or full codec acceptance.
+
+Installed VA also passes all seven nominal 4K60 inputs with 60 exact frames;
+five native H264/HEVC UHD samples pass. Native UHD VP9 duration provenance,
+remaining modes, limits, performance, lifecycle and sustained acceptance remain
+open. Frame hashes are not a direct display or zero-copy test. Output metadata
+is observed without forcing labels.
 
 Original Chrome156 has complete GPU reports before/after the P010 trial in the
 same profile, with equal FD732 GL pixels and context restoration. GPU sandbox
@@ -158,6 +171,9 @@ Source identities and validation limits are in
 [the candidate manifest](manifests/ffmpeg-start-error-candidate.json).
 Run its host fixture with
 `bash tests/ffmpeg-start-error-contract.sh <prepared-FFmpeg-source>`.
+The current fixture also checks the later drain candidate; use the complete
+eight-patch source described below. Earlier manifest hashes identify the
+historical fixtures and do not claim that startup-only source passes new tests.
 
 A separate streaming candidate combines the open upstream DRC/buffer
 series with initial-metadata sequencing and error handling. Minimal x86_64
@@ -344,3 +360,28 @@ kernel-13 Iris source. Main10/capability contracts and a Clang-23 AArch64
 driver cross-build pass. This does not build or install a complete kernel;
 Main10 encode remains unavailable until a matched kernel delivery and real
 P010/bitstream validation pass.
+
+The current limited FFmpeg diagnostic uses the three distribution-prepared
+streaming patches above, then these five patches in order:
+
+```sh
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-seek-reset.patch
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-encoder-color.patch
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-native-p010.patch
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-vp9-frame-packets.patch
+patch --batch --forward --fuzz=0 -d "$ffmpeg_source" -p1 < patches/ffmpeg-9.0.2-drain-receive.patch
+bash tests/ffmpeg-start-error-contract.sh "$ffmpeg_source"
+bash tests/ffmpeg-source-change-contract.sh "$ffmpeg_source" "$ffmpeg_build"
+```
+
+The final patch's first draining-only version passes modeled checks but still
+aborts on stock Iris. Failure-only logging then records external drain started,
+internal drain not started, no pending packet, both queues streaming and no
+CAPTURE error. The final input/capture retry fixes the untraced reproduction;
+six assertions reject its previous version. The shared context fixture also
+checks readiness gaps and terminal drain POLLERR for both queue APIs. AArch64
+emulation passes these fixtures and relinks the diagnostic. These modeled and
+build results remain separate from the bounded device results above. The
+encoder-color and seek callbacks in the same binary do not acquire hardware
+acceptance from a fresh decode session. Full distribution FFmpeg packaging
+and signed kernel delivery remain open.

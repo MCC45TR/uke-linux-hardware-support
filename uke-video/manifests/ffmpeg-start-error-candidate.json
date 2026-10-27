@@ -454,5 +454,73 @@
     },
     "native_copr_or_distribution_package_built": false,
     "installed_client_replaced": false
+  },
+  "drain_receive_candidate": {
+    "date": "2026-10-27",
+    "patch": "patches/ffmpeg-9.0.2-drain-receive.patch",
+    "patch_sha256": "8919a738f75871c3aeacdcb4f8708da0b46a017fbf517eb4aaa495da794ed640",
+    "scope": "Retry queued/filter input and capture until a frame or genuine input exhaustion, and finish STOP drain without transient EAGAIN",
+    "base": "Seven-patch diagnostic series through native P010 and VP9 splitter",
+    "receive_fixture": "tests/ffmpeg-start-error-contract.sh",
+    "receive_fixture_sha256": "e138e3b2c739f33a31e38a38570fd311becabcc9079ffd5c8016fbc4e2aa8b65",
+    "source_change_fixture": "tests/ffmpeg-source-change-contract.sh",
+    "source_change_fixture_sha256": "240eaf5eea4f038323433df936579e35b64586250bf9d9ab386708034c5246d8",
+    "earlier_draining_only_candidate": {
+      "diagnostic_sha256": "f091992e4a0a5d70c61ce215cb1f468d3bf1bb1448f4e9f8356a69b05b8c0da1",
+      "modeled_checks_passed": true,
+      "stock_kernel_h264_high_actual_child_status": 134,
+      "device_fixed": false
+    },
+    "failure_only_diagnostic": {
+      "diagnostic_sha256": "ab9bf31c7317722a7e94399f5f3628490389cac60631db5ef193c49d8539717e",
+      "external_drain_started": 1,
+      "internal_drain_started": 0,
+      "pending_packet_bytes": 0,
+      "output_streaming": true,
+      "capture_streaming": true,
+      "capture_done": false,
+      "capture_error": 0,
+      "actual_child_status": 134,
+      "performance_or_acceptance": false
+    },
+    "old_eight_patch_fixture_failed_checks": 6,
+    "host_receive_fixture_passed": true,
+    "aarch64_emulated_receive_and_actual_c_source_change_fixtures_passed": true,
+    "forward_zero_fuzz_replay_on_seven_patch_source_passed": true,
+    "aarch64_diagnostic_sha256": "bf0635b3e2e0d161ccb3c4bf20fae34b7ff29cca04940d64f32bdc368c7458d6",
+    "aarch64_ffprobe_sha256": "d40068e58c4f65de04b7d7613f949a5ef23b5a757af643db5fc0828e12d351a0",
+    "software_compressed_decoder_fallback": false,
+    "stock_kernel_uninstrumented_high_1080_frames": 30,
+    "stock_kernel_uninstrumented_high_1080_exact_reference": true,
+    "combined_ram_trial": {
+      "kernel": "7.3.0-19",
+      "kernel_source": "e3229b4e2295b38515977b43116b82534d62f662",
+      "iris_candidate_source": "ed645e7",
+      "iris_module_sha256": "e8d684e8131588805aa8d9064719e2bd088458e49600b4ed923b50b63bae2764",
+      "profiles_per_api": 7,
+      "apis": [
+        "native V4L2 display order",
+        "VA decode order with CPU download"
+      ],
+      "width": 1920,
+      "height": 1080,
+      "frames_per_profile": 30,
+      "pixels_timing_size_dimensions_sar_equal": true,
+      "actual_child_status_all_zero": true,
+      "iris_refs_after_each": 0,
+      "new_codec_kernel_errors": 0,
+      "stock_module_restored": true,
+      "stock_module_file_and_boot_state_unchanged": true,
+      "taint_unchanged": true,
+      "default_vainfo_restored": true,
+      "complete_gpu_reports": 6,
+      "fd732_gl_pixels_context_restoration_equal_before_candidate_restored": true,
+      "webgpu_adapter_available": false,
+      "sandbox_qualified": false
+    },
+    "distribution_rpm_built": false,
+    "installed_client_replaced": false,
+    "kernel_candidate_persistently_installed": false,
+    "remaining": "Remaining modes/limits, duration provenance, full kernel/signed delivery and lifecycle/load/browser acceptance"
   }
 }
