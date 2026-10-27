@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "scope": "Separate startup-only, streaming and optional seek-reset candidates; source and host-emulation evidence only, no device qualification or RPM",
+  "scope": "Separate startup-only, streaming, optional seek-reset and encoder-color candidates; source and host-emulation evidence only, no device qualification or RPM",
   "upstream": {
     "url": "https://git.ffmpeg.org/ffmpeg.git",
     "tag": "n9.0.2",
@@ -258,5 +258,87 @@
         "browser_default_unique_pts_policy_preserved": true
       }
     }
+  },
+  "encoder_color_candidate": {
+    "base": "Separate copy of the four-patch source above; frozen controls unchanged",
+    "patch": "patches/ffmpeg-9.0.2-encoder-color.patch",
+    "patch_sha256": "e5ad21d84a6a08d8a5dfad101d1a012d06b4f3aa0127b07d67c4474a63854ec5",
+    "fixture": "tests/ffmpeg-encoder-color-contract.sh",
+    "fixture_sha256": "43183acc41d5294b8993da496fc90314980380826c8d7a75dc6e4dc30e9cfa76",
+    "context_before_sha256": "f8d05075e307a8c8fbae46fafa4464dbaefe7ef913572c57a39abe1eb7a520ed",
+    "context_after_sha256": "c5dc0a38ddcf96eb91d439519eb8d29b9321fa6be5447ae8c6e7c0025968d50a",
+    "source_license": "LGPL-2.1-or-later; upstream Alexis Ballier/Jorge Ramirez Ortiz attribution retained",
+    "review": {
+      "date": "2026-10-27",
+      "ffmpeg_master_commit": "ab0eeb03cc63c3399ebcbca68b972586066e3ca9",
+      "ffmpeg_context_sha256": "385243a2ab4a3b077d440aac25a53d70a7af52195d266f8aade93bf2d7e089f4",
+      "ffmpeg_reviewed_files": [
+        "libavcodec/v4l2_context.c",
+        "libavcodec/v4l2_m2m.c",
+        "libavcodec/v4l2_m2m_enc.c"
+      ],
+      "linux_master_commit": "d135ab453a7400a34930bdda1ef4bdc8acfac80e",
+      "linux_iris_venc_sha256": "07d0fe19656f74b27c313807afcc291018f70486d71a234370a37ff1a5475848",
+      "linux_source_finding": "Prepared kernel18 copies the four input color fields and includes HFI_PROP_SIGNAL_COLOR_INFO in encoder configuration; no missing kernel property established",
+      "uke_oem_commit": "5712080a4b0c0b1a879e6d145c601c649ddaddfd",
+      "uke_oem_limit": "No selected video sources in bounded techpack/video and drivers/media/platform/msm/vidc lookup",
+      "same_soc_oneplus_commit": "1138e00fee63582a0cc6a53af3286621786827b7",
+      "same_soc_file": "vendor/qcom/opensource/video-driver/driver/vidc/src/msm_venc.c",
+      "same_soc_build_paths": [
+        "vendor/qcom/opensource/video-driver/msm_video/Kbuild",
+        "vendor/qcom/opensource/video-driver/video/Kbuild"
+      ],
+      "same_soc_attribution": "GPL-2.0-only; Linux Foundation 2020-2021 and Qualcomm 2023; inspected only, no code or board values copied",
+      "uapi_url": "https://docs.kernel.org/userspace-api/media/v4l/pixfmt-v4l2-mplane.html"
+    },
+    "scope": "Raw encoder OUTPUT S_FMT only; complete representable explicit tuple and/or range; single-plane and multiplanar",
+    "explicit_driver_color_coercion_rejected": true,
+    "incomplete_or_unrepresentable_explicit_color_rejected": true,
+    "hlg_mapped": false,
+    "advertised_encoder_color_ranges_changed": false,
+    "decoder_capture_and_unspecified_defaults_preserved_in_model": true,
+    "old_source_fixture_exit": 1,
+    "old_source_failed_checks": 21,
+    "modeled_cases_per_architecture": 28,
+    "actual_c_host_fixture_passed": true,
+    "actual_c_aarch64_emulated_fixture_passed": true,
+    "driver_ioctls_and_codec_classification_modeled": true,
+    "startup_source_change_lifetime_and_seek_host_regressions_passed": true,
+    "zero_fuzz_replay_and_exact_source_comparison_passed": true,
+    "frozen_four_patch_source_unchanged": true,
+    "aarch64_diagnostic": {
+      "environment": "Rootless AArch64 SDK under QEMU user-mode on x86_64; no network or GPU/video devices",
+      "sdk_image_sha256": "51818eb14416590fd727514ee08273833fddfa4dd3be96d4982e90be281acae9",
+      "modified_translation_unit_compiled": true,
+      "diagnostic_cli_relinked": true,
+      "ffmpeg_sha256": "f8f4211baa58ce6e8663f76f2fe160a6a452c9d02da7418327da233b60c78891",
+      "direct_shared_libraries": [
+        "libm.so.6",
+        "libc.so.6"
+      ],
+      "required_glibc_symbol_max": "GLIBC_2.44",
+      "compressed_v4l2_decoders": 3,
+      "v4l2_encoders": 2,
+      "compressed_software_decode_fallback_enabled": false
+    },
+    "input_color_reproduction": {
+      "environment": "Original FFmpeg9.0.2 software-only x86_64 SDK; 640x360 NV12, one frame at30fps",
+      "sdk_image_sha256": "5b8d09371cb043901718453edf84ee20d467e816328e6db5b6a9d0664d5e5ebe",
+      "input_sha256": "73165f20d2d3bb2a0b954244617e43e903f82136103d1aa26bf88b307f5c5e02",
+      "output_options_path_frame_sha256": "5b2ec8897b0aded23d1db3bede7fedf2bb6bdd488565df25ad976aff82d10c04",
+      "frame_label_filter": "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=limited",
+      "frame_label_retained_all_four_color_values": true,
+      "frame_label_raw_pixels_unchanged": true,
+      "previous_native_psnr_scope": "Whole conversion/encode chain versus generated input; not isolated encoder-input quality",
+      "output_color_negotiation_with_cli_options_left_primaries_and_transfer_unknown": true
+    },
+    "full_distribution_features_built": false,
+    "native_copr_package_built": false,
+    "delivered_to_tablet": false,
+    "native_or_va_bitstream_vui_tested": false,
+    "full_range_hardware_qualified": false,
+    "main10_or_hdr_hardware_qualified": false,
+    "browser_encode_qualified": false,
+    "hardware_render_regression_tested": false
   }
 }

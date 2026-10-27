@@ -241,6 +241,33 @@ diagnostic CLI build inside the pinned AArch64 SDK, with prepared sources at
 all requested V4L2 configuration macros before compiling and checks the final
 codec inventory. It is not a tablet installer or a distribution FFmpeg build.
 
+A separate optional fifth patch, `ffmpeg-9.0.2-encoder-color.patch`, writes
+explicit encoder color metadata to the raw V4L2 OUTPUT format before S_FMT.
+The original setter does not copy the requested codec color values. The candidate
+maps complete representable primaries/transfer/matrix tuples and range, then rejects driver
+coercion. Incomplete or unrepresentable explicit tuples, including HLG, fail
+instead of acquiring invented defaults. Decoder, CAPTURE and unspecified-color
+paths are preserved. Existing advertised encoder color-range limits stay intact;
+modeling a full-range or BT.2020/PQ request does not qualify hardware support.
+
+Apply it to a separate copy of the four-patch source above, then run
+`bash tests/ffmpeg-encoder-color-contract.sh <prepared-source> <configured-build-headers> <new-output-directory>`.
+The actual setter passes 28 modeled cases on x86_64 and AArch64 emulation;
+the old setter fails 21 checks. The full changed C file compiles and the
+limited AArch64 diagnostic relinks. Startup, DRC, buffer-lifetime and seek
+host regressions pass. This is source/build evidence, with no new RPM, COPR
+submission, tablet execution, bitstream or render acceptance.
+
+For the next reviewed raw BT.709 limited-range trial, label the input frames
+with `setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709:range=limited`
+before encoder initialization, and independently hash the submitted pixels.
+FFmpeg initializes encoder color from its first frame. Output color negotiation
+with CLI options left primaries/transfer unknown in a software reproduction
+and changed the pixels. Frame labeling retained all four values without changing
+the raw hash. The earlier native H264 PSNR therefore describes the whole
+conversion/encode chain. Actual S_FMT readback, SPS/VUI, input-relative quality,
+HEVC/Main10, rate control and device/render regressions remain required.
+
 Both startup-only and full streaming diagnostic programs build under AArch64
 QEMU user-mode on x86_64. Actual-C startup, source-change and buffer-lifetime
 fixtures pass there. Three software rawvideo NV12 frames from each CLI match
