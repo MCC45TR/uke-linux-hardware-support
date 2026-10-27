@@ -101,6 +101,17 @@ matching native kernel and is not a generic replacement for older kernels.
 
 ## Metadata diagnostics
 
+27 October 2026: the bounded sample helper also accepts `flicker`. The exact
+Uke HAL uses the standard event 1025 and on-change request 514; the separately
+embedded `sns_flicker.proto` event 769 is not substituted for that active path.
+Samples retain all returned raw channels, firmware status and unverified units.
+A closed cover, unknown illuminant or high firmware status does not establish
+frequency accuracy. The command removes its request by closing the socket.
+On Linux 7.3.0-19 with OEM 3.0.304 firmware, discovery reports an available
+`sip1328 flicker stream` endpoint with `physical=false`, and the bounded helper
+receives seven standard raw channels. This establishes transport only; the
+operator reported a closed cover during that observation.
+
 `make test-native` builds the tools and runs host wire-format and malformed-input
 checks. Build for AArch64 before any authorized tablet trial; a host test is not
 a device result.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Bounded physical samples; no factory tests, calibration writes or persistent client.
+// Bounded SSC samples; no factory tests, calibration writes or persistent client.
 #define UKE_SSC_TEST
 #include "ssc-discovery.cpp"
 #include <limits>
@@ -37,11 +37,13 @@ int main(int argc, char **argv) {
     (void)&attributes;
     int fd = -1;
     try {
-        require(argc == 2, "Usage: uke-sensor-sample accel|gyro|mag|ambient_light|ambient_light_back|ambient_light_back_strm|cct_front");
+        require(argc == 2, "Usage: uke-sensor-sample accel|gyro|mag|ambient_light|ambient_light_back|ambient_light_back_strm|cct_front|flicker");
         std::string_view type = argv[1];
         const bool xyz = type == "accel" || type == "gyro" || type == "mag";
         const bool cct = type == "cct_front";
-        require(xyz || cct || type == "ambient_light" || type == "ambient_light_back" || type == "ambient_light_back_strm", "Unsupported sample type");
+        const bool flicker = type == "flicker";
+        require(xyz || cct || flicker || type == "ambient_light" || type == "ambient_light_back" || type == "ambient_light_back_strm", "Unsupported sample type");
+        if (flicker) std::cerr << "Flicker: keep the optical path open for a controlled-light test; raw units are unverified\n";
         if (cct) std::cerr << "CCT phase=metadata\n";
         fd = socket(AF_QIPCRTR, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
         require(fd >= 0, "QRTR socket unavailable");
@@ -60,11 +62,11 @@ int main(int argc, char **argv) {
         std::cout << std::setprecision(std::numeric_limits<float>::max_digits10);
         for (const auto &sample : samples(event, found[0], xyz ? 3 : 0)) {
             std::cout << type << " timestamp_ticks=" << sample.timestamp << " status=" << sample.status;
-            if (cct) std::cout << " units=unverified";
+            if (cct || flicker) std::cout << " units=unverified";
             std::cout << " data=";
             for (float number : sample.values) std::cout << number << ' ';
             std::cout << '\n';
-            if (cct) break;
+            if (cct || flicker) break;
         }
         return 0;
     } catch (const std::exception &e) {
