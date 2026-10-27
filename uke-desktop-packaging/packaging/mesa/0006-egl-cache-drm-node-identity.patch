@@ -1,0 +1,97 @@
+Subject: [PATCH] egl: match known DRM descriptors before repeating device discovery
+
+Remember character-node identity when enumerating an EGL device. Match a live
+fd against its device, inode and change timestamp before requesting new sysfs
+metadata. Keep the existing drmGetDevice2 fallback for unknown or changed nodes.
+This does not open additional devices or expand a process sandbox's policy.
+
+Mesa 26.2.5 src/egl/main/egldevice.c retains Collabora's original MIT license.
+
+--- a/src/egl/main/egldevice.c
++++ b/src/egl/main/egldevice.c
+@@ -27,6 +27,7 @@
+ 
+ #ifdef HAVE_LIBDRM
+ #include <xf86drm.h>
++#include <sys/stat.h>
+ #endif
+ #include "util/compiler.h"
+ #include "util/macros.h"
+@@ -52,6 +53,7 @@
+ 
+ #ifdef HAVE_LIBDRM
+    drmDevicePtr device;
++   struct stat node_stat[DRM_NODE_MAX];
+ #endif
+ 
+    /* Cache for EGL_EXT_device_query_name and EXT_device_persistent_id. */
+@@ -115,6 +117,29 @@
+ 
+ #ifdef HAVE_LIBDRM
+ extern const _EGLDriver _eglDriver;
++
++static bool
++_eglSameDrmNode(const struct stat *cached, const struct stat *live)
++{
++   return S_ISCHR(cached->st_mode) && S_ISCHR(live->st_mode) &&
++          cached->st_nlink && live->st_nlink &&
++          cached->st_dev == live->st_dev && cached->st_ino == live->st_ino &&
++          cached->st_rdev == live->st_rdev &&
++          cached->st_ctim.tv_sec == live->st_ctim.tv_sec &&
++          cached->st_ctim.tv_nsec == live->st_ctim.tv_nsec;
++}
++
++static void
++_eglCacheDrmNodes(_EGLDevice *dev, const drmDevice *device)
++{
++   memset(dev->node_stat, 0, sizeof(dev->node_stat));
++   for (int i = 0; i < DRM_NODE_MAX; i++) {
++      if ((device->available_nodes & (1 << i)) &&
++          stat(device->nodes[i], &dev->node_stat[i]) != 0)
++         memset(&dev->node_stat[i], 0, sizeof(dev->node_stat[i]));
++   }
++}
++
+ /*
+  * Negative value on error, zero if newly added, one if already in list.
+  */
+@@ -144,8 +169,10 @@
+       dev = dev->Next;
+ 
+       assert(_eglDeviceSupports(dev, _EGL_DEVICE_DRM));
+-      if (drmDevicesEqual(device, dev->device) != 0)
++      if (drmDevicesEqual(device, dev->device) != 0) {
++         _eglCacheDrmNodes(dev, device);
+          return 1;
++      }
+    }
+ 
+    dev->Next = calloc(1, sizeof(_EGLDevice));
+@@ -172,6 +199,7 @@
+       dev->EXT_device_persistent_id = EGL_TRUE;
+    }
+    dev->device = device;
++   _eglCacheDrmNodes(dev, device);
+ 
+    return 0;
+ }
+@@ -199,6 +227,19 @@
+       goto out;
+ 
+ #ifdef HAVE_LIBDRM
++   struct stat live;
++   if (fstat(fd, &live) == 0 && S_ISCHR(live.st_mode)) {
++      /* Known nodes need no new sysfs discovery after sandbox startup. */
++      for (_EGLDevice *cached = dev->Next; cached; cached = cached->Next) {
++         for (int i = 0; i < DRM_NODE_MAX; i++) {
++            if (_eglSameDrmNode(&cached->node_stat[i], &live)) {
++               dev = cached;
++               goto out;
++            }
++         }
++      }
++   }
++
+    drmDevicePtr device;
+ 
+    if (drmGetDevice2(fd, 0, &device) != 0) {
