@@ -60,6 +60,11 @@ async function target(url) {
   created.push(value.targetId);
   return (await call('Target.attachToTarget',{targetId:value.targetId,flatten:true})).sessionId;
 }
+function isCompleteGpuReport(text) {
+  return ['Video Acceleration Information','Version Information','Driver Information',
+          'Chrome version','GL_RENDERER'].every(label=>text.includes(label)) &&
+         /Chrome\/\d+\.\d+\.\d+\.\d+/.test(text) && !text.includes('... loading ...');
+}
 async function gpuReport() {
   const session=await target('chrome://gpu');
   await call('Accessibility.enable',{},session);
@@ -67,7 +72,7 @@ async function gpuReport() {
   for(let attempt=0;attempt<40;++attempt) {
     const tree=await call('Accessibility.getFullAXTree',{},session);
     text=tree.nodes.filter(n=>n.role?.value==='StaticText').map(n=>n.name?.value??'').join('\n');
-    if(text.includes('Video Acceleration Information') && text.includes('Version Information'))
+    if(isCompleteGpuReport(text))
       return {text,complete:true};
     await delay(250);
   }
@@ -80,10 +85,10 @@ try {
   result.browser=await call('Browser.getVersion');
   assert.equal(result.browser.revision.replace(/^@/,''),
                '1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775','Unexpected source revision');
-  result.before=await call('SystemInfo.getInfo');
   const beforeReport=await gpuReport();
   result.gpuReportText=beforeReport.text;
   result.gpuReportComplete=beforeReport.complete;
+  result.before=await call('SystemInfo.getInfo');
   const probeSession=await target(probeURL);
   if(job) {
     let ready=false;
@@ -117,13 +122,19 @@ try {
   const probe=result.probe.result;
   result.glPixelsAndRestorePassed=Boolean(probe?.canvas?.passed && probe?.webgl?.passed &&
                                          probe?.webglContextRestore?.passed);
-  if(!result.glPixelsAndRestorePassed) process.exitCode=1;
+  result.graphicsBenchmarkPassed=Boolean(probe?.benchmarks?.passed);
+  if(!result.glPixelsAndRestorePassed || !result.graphicsBenchmarkPassed) process.exitCode=1;
   }
   // Preserve each result: an unavailable WebGPU path is not a GL pass or failure.
-  result.after=await call('SystemInfo.getInfo');
   const afterReport=await gpuReport();
   result.gpuReportTextAfter=afterReport.text;
   result.gpuReportCompleteAfter=afterReport.complete;
+  result.after=await call('SystemInfo.getInfo');
+  const crashesBefore=result.before.gpu?.auxAttributes?.processCrashCount;
+  const crashesAfter=result.after.gpu?.auxAttributes?.processCrashCount;
+  result.gpuProcessCrashedDuringProbe=Number.isInteger(crashesBefore) &&
+    Number.isInteger(crashesAfter) && crashesAfter>crashesBefore;
+  if(result.gpuProcessCrashedDuringProbe) process.exitCode=1;
   if(!result.gpuReportComplete || !result.gpuReportCompleteAfter) process.exitCode=1;
   result.processes=await call('SystemInfo.getProcessInfo');
 } catch(error) {

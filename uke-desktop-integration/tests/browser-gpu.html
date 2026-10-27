@@ -17,7 +17,14 @@ function hardwareRenderer(gl) {
   if (/llvmpipe|swiftshader|softpipe|lavapipe/i.test(renderer)) throw new Error('Software renderer: ' + renderer);
   return renderer;
 }
-function drawShader(gl) {
+function sampleTimes(values) {
+  if(values.length!==24 || values.some(value=>!Number.isFinite(value)||value<0))
+    throw new Error('Invalid timing samples');
+  const sorted=[...values].sort((a,b)=>a-b);
+  return {samplesMs:values,medianMs:(sorted[11]+sorted[12])/2,p95Ms:sorted[22],
+    minMs:sorted[0],maxMs:sorted[23]};
+}
+function drawShader(gl, benchmark=false) {
   const shaders = [
     [gl.VERTEX_SHADER, `#version 300 es
       void main() {
@@ -42,7 +49,23 @@ function drawShader(gl) {
   gl.clearColor(0,0,0,1);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.useProgram(program);
-  gl.drawArrays(gl.TRIANGLES,0,3);
+  const times=[];
+  if(benchmark) {
+    const pixels=new Uint8Array(512*512*4);
+    for(let sample=-4;sample<24;++sample) {
+      const start=performance.now();
+      for(let draw=0;draw<64;++draw) gl.drawArrays(gl.TRIANGLES,0,3);
+      gl.readPixels(0,0,512,512,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+      const elapsed=performance.now()-start;
+      for(let i=0;i<pixels.length;i+=4)
+        if(Math.abs(pixels[i]-32)>1 || Math.abs(pixels[i+1]-96)>1 ||
+           Math.abs(pixels[i+2]-159)>1 || Math.abs(pixels[i+3]-255)>1)
+          throw new Error('Timed WebGL pixel mismatch');
+      if(gl.getError()!==gl.NO_ERROR || gl.isContextLost())
+        throw new Error('Timed WebGL context failure');
+      if(sample>=0) times.push(elapsed);
+    }
+  } else gl.drawArrays(gl.TRIANGLES,0,3);
   const pixel = new Uint8Array(4);
   gl.readPixels(16,16,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
   const passed = [32,96,159,255].every((value,i) => Math.abs(value-pixel[i])<=1) &&
@@ -50,7 +73,29 @@ function drawShader(gl) {
   gl.useProgram(null);
   gl.deleteProgram(program);
   shaders.forEach(shader => gl.deleteShader(shader));
-  return {pixel: Array.from(pixel), passed};
+  return {pixel: Array.from(pixel), passed,
+    ...(benchmark?{timing:sampleTimes(times)}:{})};
+}
+function benchmarkCanvas(context) {
+  context.canvas.width=context.canvas.height=512;
+  const times=[];
+  for(let sample=-4;sample<24;++sample) {
+    const phase=sample+4, start=performance.now();
+    for(let tile=0;tile<64;++tile) {
+      context.fillStyle=`rgb(${tile*17%256},34,${(phase+tile)%256})`;
+      context.fillRect((tile%8)*64,Math.floor(tile/8)*64,64,64);
+    }
+    const pixels=context.getImageData(0,0,512,512).data;
+    const elapsed=performance.now()-start;
+    for(let y=0;y<512;++y) for(let x=0;x<512;++x) {
+      const tile=Math.floor(y/64)*8+Math.floor(x/64), i=(y*512+x)*4;
+      if(Math.abs(pixels[i]-tile*17%256)>1 || Math.abs(pixels[i+1]-34)>1 ||
+         Math.abs(pixels[i+2]-(phase+tile)%256)>1 || Math.abs(pixels[i+3]-255)>1)
+        throw new Error('Timed Canvas pixel mismatch');
+    }
+    if(sample>=0) times.push(elapsed);
+  }
+  return {contextAttributes:context.getContextAttributes(),...sampleTimes(times)};
 }
 function restoreContext(canvas, gl) {
   return new Promise((resolve,reject) => {
@@ -108,7 +153,7 @@ async function drawWebGPU(device) {
 }
 (async () => {
   const result = {secureContext: isSecureContext};
-  const context = document.querySelector('#canvas2d').getContext('2d');
+  const context = document.querySelector('#canvas2d').getContext('2d',{willReadFrequently:false});
   context.fillStyle = '#112233';
   context.fillRect(0, 0, 32, 32);
   const pixel2d = Array.from(context.getImageData(0, 0, 1, 1).data);
@@ -128,6 +173,21 @@ async function drawWebGPU(device) {
   } catch(error) {
     result.webgl ??= {passed:false,error:String(error)};
     result.webglContextRestore ??= {passed:false,error:String(error)};
+  }
+  try {
+    if(!result.canvas.passed || !result.webglContextRestore.passed)
+      throw new Error('Correctness prerequisites failed');
+    const canvasTiming=benchmarkCanvas(context);
+    canvas.width=canvas.height=512;
+    gl.viewport(0,0,512,512);
+    const timed=drawShader(gl,true);
+    if(!timed.passed) throw new Error('Timed shader failed');
+    result.benchmarks={passed:true,width:512,height:512,warmupSamples:4,
+      measuredSamples:24,webglDrawsPerSample:64,canvasTilesPerSample:64,
+      scope:'CPU wall time for drawing plus synchronous full readback; pixel validation excluded; not presentation FPS or GPU-only time',
+      canvas2d:canvasTiming,webgl:timed.timing};
+  } catch(error) {
+    result.benchmarks={passed:false,error:String(error)};
   }
   let roundsCompleted=0;
   try {
@@ -187,7 +247,7 @@ async function drawWebGPU(device) {
   } catch (error) {
     result.webgpu = {passed: false,roundsCompleted,error: String(error)};
   }
-  result.passed = result.canvas.passed && result.webgl.passed && result.webglContextRestore.passed && result.webgpu.passed;
+  result.passed = result.canvas.passed && result.webgl.passed && result.webglContextRestore.passed && result.benchmarks.passed && result.webgpu.passed;
   window.gpuProbeResult = result;
   document.querySelector('#result').textContent = JSON.stringify(result, null, 2);
 })().catch(error => {

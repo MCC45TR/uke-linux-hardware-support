@@ -528,7 +528,7 @@
     "kernel": "7.3.0-19",
     "kernel_base": "e3229b4e2295b38515977b43116b82534d62f662",
     "prototype_kernel_source": "bcf68f4",
-    "prototype_kernel_record": "ae2e9de",
+    "prototype_kernel_record": "1a8e240",
     "native_cli_sha256": "bf0635b3e2e0d161ccb3c4bf20fae34b7ff29cca04940d64f32bdc368c7458d6",
     "scoped_va_child": "uke-vaapi-v4l2-1.0.0-3",
     "scoped_va_source_family": "uke-additional1.0.0-12/COPR11212019",
@@ -610,12 +610,19 @@
     "comparison_negative_pixel_pts_dimension_and_duration_controls_passed": true,
     "new_codec_kernel_errors_in_successful_trial": 0,
     "iris_refs_after_each": 0,
-    "final_trial_complete_gpu_reports": 6,
+    "final_trial_complete_gpu_reports": 5,
     "fd732_gl_pixels_context_restoration_equal_before_active_restored": true,
     "stock_module_default_va_boot_state_and_taint_restored": true,
     "persistent_module_or_package_installation": false,
     "sustained_nominal_rates_accepted": false,
     "full_lifecycle_or_browser_or_physical_acceptance": false,
-    "remaining": "Full matched kernel/client delivery and lifecycle/load,interop,sandbox,encode/browser and physical output acceptance"
+    "remaining": "Full matched kernel/client delivery and lifecycle/load,interop,sandbox,encode/browser and physical output acceptance",
+    "separate_strict_gpu_report_recheck": {
+      "complete_reports": 6,
+      "codec_jobs_repeated": false,
+      "stock_restored": true,
+      "gl_context_pixels_equal": true,
+      "observer_rejects_loading_and_gpu_crash": true
+    }
   }
 }

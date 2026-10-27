@@ -7,6 +7,15 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
 const controller=fileURLToPath(new URL('./capture-browser.mjs',import.meta.url));
+const reportCheck=(await readFile(controller,'utf8')).match(/^function isCompleteGpuReport\(text\) \{[\s\S]*?^\}/m);
+assert(reportCheck,'Missing full-report validator');
+const completeReport=vm.runInNewContext('('+reportCheck[0]+')');
+const skeleton='Version Information\nDriver Information\nVideo Acceleration Information';
+assert.equal(completeReport(skeleton),false,'Headers alone are not a completed GPU report');
+const populated=skeleton+'\nChrome version\nChrome/156.0.8078.47\nGL_RENDERER\nFD732';
+assert.equal(completeReport(populated),true);
+assert.equal(completeReport(populated+'\n... loading ...'),false,'Loading placeholders invalidate a report');
+assert.equal(completeReport(populated.replace('GL_RENDERER','missing')),false);
 for(const [args,message] of [
   [['0'],'Invalid forwarded port'],
   [['1','https://example.invalid'],'Use only a reviewed test page'],

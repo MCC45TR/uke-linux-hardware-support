@@ -51,8 +51,10 @@ limits stay unchanged. Both native UHD VP9 profiles also match 60 reference
 pixels/PTS and required geometry/size fields. Their AVFrame duration is valid
 unknown zero, while the raw writer infers 17 rather than the reference's 16
 ticks; that difference is recorded separately. No reference is rewritten.
-Six complete reports again retain equal FD732 GL/context pixels before,
-during and after restoration. Short nominal 480/240/200/120fps inputs do not
+Five complete GPU reports accompany the boundary trial; a separate protected
+recheck obtains six complete reports with equal FD732 GL/context pixels before,
+during and after restoration. The earlier loading skeleton is retained and
+explicitly corrected in UKE-VID-L081. Short nominal 480/240/200/120fps inputs do not
 establish sustained rates. Signed kernel/client delivery and full lifecycle,
 browser and physical acceptance remain open.
 
