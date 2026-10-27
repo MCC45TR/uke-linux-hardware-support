@@ -6,11 +6,15 @@ source_dir=${1:?Usage: egl-device-node-cache.sh Mesa-source-directory [--patched
 [[ $# == 1 || ( $# == 2 && $2 == --patched ) ]]
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
-mkdir -p "$tmp/candidate/src/egl/main" "$tmp/control/src/egl/main"
-cp "$source_dir/src/egl/main/egldevice.c" "$tmp/candidate/src/egl/main/egldevice.c"
+for variant in candidate control; do
+    mkdir -p "$tmp/$variant/src/egl/main" "$tmp/$variant/src/egl/drivers/dri2"
+done
+for file in main/egldevice.c main/egldevice.h drivers/dri2/egl_dri2.c drivers/dri2/platform_drm.c; do
+    cp "$source_dir/src/egl/$file" "$tmp/candidate/src/egl/$file"
+done
 patchfile=$project/packaging/mesa/0006-egl-cache-drm-node-identity.patch
 if [[ $# == 1 ]]; then patch --batch --forward --fuzz=0 -d "$tmp/candidate" -p1 < "$patchfile"; fi
-cp "$tmp/candidate/src/egl/main/egldevice.c" "$tmp/control/src/egl/main/egldevice.c"
+cp -a "$tmp/candidate/src/." "$tmp/control/src/"
 patch --batch --reverse --fuzz=0 -d "$tmp/control" -p1 < "$patchfile"
 cat > "$tmp/prefix.cpp" <<'CPP'
 #include <cassert>
@@ -55,6 +59,24 @@ printf 'static bool\n' >> "$tmp/prefix.cpp"
 sed -n '/^_eglSameDrmNode(/,/^}/p' "$candidate" >> "$tmp/prefix.cpp"
 printf 'static void\n' >> "$tmp/prefix.cpp"
 sed -n '/^_eglCacheDrmNodes(/,/^}/p' "$candidate" >> "$tmp/prefix.cpp"
+printf 'static _EGLDevice*\n' >> "$tmp/prefix.cpp"
+sed -n '/^_eglFindCachedDeviceLocked(/,/^}/p' "$candidate" >> "$tmp/prefix.cpp"
+printf '_EGLDevice*\n' >> "$tmp/prefix.cpp"
+sed -n '/^_eglFindCachedDevice(/,/^}/p' "$candidate" >> "$tmp/prefix.cpp"
+cat > "$tmp/setup-prefix.cpp" <<'CPP'
+using EGLBoolean = bool;
+constexpr bool EGL_TRUE = true, EGL_FALSE = false;
+struct gbm_dri_device { bool software; };
+struct dri2_egl_display { int fd_render_gpu; };
+struct _EGLDisplay { struct dri2_egl_display impl; _EGLDevice* Device; };
+static struct dri2_egl_display* dri2_egl_display(_EGLDisplay* d) { return &d->impl; }
+static int capability_calls, compatible_calls, closes, render_result = -1, close_fd;
+static bool capability_result;
+static bool loader_is_device_render_capable(int) { ++capability_calls; return capability_result; }
+static int dri_query_compatible_render_only_device_fd(int) { ++compatible_calls; return render_result; }
+static int fake_close(int fd) { assert(fd == close_fd); ++closes; return 0; }
+#define close fake_close
+CPP
 cat > "$tmp/main.cpp" <<'CPP'
 int main() {
     const int primary = open("/dev/null", O_RDWR | O_CLOEXEC);
@@ -74,6 +96,32 @@ int main() {
         return 41;
     assert(_eglFindDevice(render, false) == &hardware && metadata_calls == 0);
     assert(_eglFindDevice(alias, false) == &hardware && metadata_calls == 0);
+    struct gbm_dri_device gbm{false};
+    assert(get_fd_render_gpu_drm(&gbm, primary) == primary && capability_calls == 0 && compatible_calls == 0);
+    _EGLDisplay display{{primary}, nullptr};
+    assert(dri2_setup_device(&display, false) && display.Device == &hardware);
+    assert(capability_calls == 0 && compatible_calls == 0 && metadata_calls == 0);
+    assert(dri2_setup_device(&display, true) && display.Device == &software);
+    assert(capability_calls == 0 && compatible_calls == 0 && metadata_calls == 0);
+    display.impl.fd_render_gpu = fileno(regular);
+    metadata_result = 0; metadata.identity = 1;
+    assert(get_fd_render_gpu_drm(&gbm, fileno(regular)) == -1 && capability_calls == 1 && compatible_calls == 1 && metadata_calls == 0);
+    capability_calls = compatible_calls = 0;
+    assert(!dri2_setup_device(&display, false));
+    assert(capability_calls == 1 && compatible_calls == 1 && metadata_calls == 0);
+    capability_calls = compatible_calls = 0;
+    render_result = close_fd = alias;
+    assert(get_fd_render_gpu_drm(&gbm, fileno(regular)) == alias && capability_calls == 1 && compatible_calls == 1 && closes == 0);
+    capability_calls = compatible_calls = 0;
+    assert(dri2_setup_device(&display, false) && display.Device == &hardware);
+    assert(capability_calls == 1 && compatible_calls == 1 && closes == 1 && metadata_calls == 0);
+    capability_calls = compatible_calls = closes = 0;
+    capability_result = true;
+    assert(get_fd_render_gpu_drm(&gbm, fileno(regular)) == fileno(regular) && capability_calls == 1 && compatible_calls == 0);
+    capability_calls = compatible_calls = 0;
+    assert(dri2_setup_device(&display, false) && display.Device == &hardware);
+    assert(capability_calls == 1 && compatible_calls == 0 && closes == 0 && metadata_calls == 1 && frees == 1);
+    metadata_result = -1; metadata_calls = frees = 0;
     for (int field = 0; field < 6; ++field) {
         auto& cached = hardware.node_stat[DRM_NODE_PRIMARY]; cached = saved;
         switch (field) {
@@ -115,6 +163,12 @@ for variant in candidate control; do
     cat "$tmp/prefix.cpp" > "$tmp/$variant.cpp"
     printf '_EGLDevice*\n' >> "$tmp/$variant.cpp"
     sed -n '/^_eglFindDevice(/,/^}/p' "$tmp/$variant/src/egl/main/egldevice.c" >> "$tmp/$variant.cpp"
+    cat "$tmp/setup-prefix.cpp" >> "$tmp/$variant.cpp"
+    printf 'EGLBoolean\n' >> "$tmp/$variant.cpp"
+    sed -n '/^dri2_setup_device(/,/^}/p' "$tmp/$variant/src/egl/drivers/dri2/egl_dri2.c" >> "$tmp/$variant.cpp"
+    printf 'static int\n' >> "$tmp/$variant.cpp"
+    sed -n '/^get_fd_render_gpu_drm(/,/^}/p' "$tmp/$variant/src/egl/drivers/dri2/platform_drm.c" >> "$tmp/$variant.cpp"
+    printf '#undef close\n' >> "$tmp/$variant.cpp"
     cat "$tmp/main.cpp" >> "$tmp/$variant.cpp"
     "${CXX:-c++}" -std=c++17 -DHAVE_LIBDRM -Wall -Wextra -Werror "$tmp/$variant.cpp" -o "$tmp/$variant-check"
 done
