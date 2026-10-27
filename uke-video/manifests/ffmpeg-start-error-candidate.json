@@ -220,6 +220,39 @@
           "ld-linux-aarch64.so.1": "77a13e551a98b244e0a0954955efa69748082346f57861bfcc6e5935e0db217f"
         },
         "loader_execution_verified": false
+      },
+      "reference_validator": {
+        "source": "tests/validate-seek-decode.mjs",
+        "source_sha256": "9fc86b0c52c9e166d7e0c2178fd0a39ebbe621d68e75eb09ccff80e54969c76a",
+        "fixture": "tests/validate-seek-decode-host.mjs",
+        "fixture_sha256": "5fd62b0f8dfa416a2535fbff22bd6d5c61f8fe6d92cd3ac76c4c623c779fc66b",
+        "shared_pixel_comparator": "../uke-desktop-integration/tests/validate-browser-decode.mjs",
+        "shared_pixel_comparator_sha256": "1bb9619cd3987d8f886185e7418d479d68ab82a11e0c0c5906abb53431dfb7d5",
+        "host_only": true,
+        "reviewed_frame_counts": [
+          30,
+          60
+        ],
+        "both_passes_independently_compared": true,
+        "input_identity_and_reference_digest_bound": true,
+        "exact_rational_pts_and_duration_checked": true,
+        "reference_dimensions_bound_to_framehash": true,
+        "native_format_depth_and_visible_bytes_checked": true,
+        "color_reference_optional_and_reported": true,
+        "host_positive_format_count": 4,
+        "host_synthetic_controls_passed": true,
+        "browser_comparator_regression_passed": true,
+        "real_public_api_control": "AArch64 QEMU rawvideo; x86_64 FFmpeg software reference, no V4L2 device",
+        "real_software_frames_per_pass": 30,
+        "real_software_passes": 2,
+        "real_software_input_sha256": "c3cdc8daa1e8501fc25212f22bb7078819176e4ccf54bb60ee5e4c9a723f5ce9",
+        "real_software_reference_sha256": "4865feb11dc880f78c019e9913b1f6fdded522b4c834c4eb1dace2ceabd3aa01",
+        "real_software_pixel_reference_passed": true,
+        "real_software_color_reference_checked": false,
+        "real_cli_negative_controls": 3,
+        "compressed_hardware_reference_passed": false,
+        "hardware_accepted": false,
+        "lifecycle_accepted": false
       }
     }
   }

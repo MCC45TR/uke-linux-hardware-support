@@ -197,6 +197,31 @@ match independent references and actual backend records before hardware
 acceptance. Cleanup runs before the success record is written. Pixel copying
 is explicit CPU work, with no FPS or zero-copy claim.
 
+Run the separate reference check on the host, using the exact input and the
+existing independent FFmpeg framehash/JSON pair:
+
+```sh
+node tests/validate-seek-decode.mjs reviewed-input.mkv new-seek-record input.NV12.reference.json
+```
+
+Both passes must match the encoded-input hash, reference dimensions, native
+format/depth, packed visible bytes and all frame hashes. PTS and duration are
+compared as exact rational values before the existing shared pixel comparator;
+rounding to microseconds cannot hide a timing difference. Reviewed counts are
+30 or 60 frames, with NV12/P010/I420/I420P10 representations. Optional reference
+color contains the four independent FFmpeg enum values for primaries, transfer,
+matrix and range. If absent, `colorReferenceChecked` stays false; native color
+metadata must still agree across passes. Hardware and lifecycle acceptance
+always remain false. This Node tool stays on the host.
+
+The host fixtures reject wrong second-pass pixels, identically wrong passes,
+changed input/reference data, layout/depth/timing/color errors and unreviewed
+counts. A separate real control runs the frozen helper under AArch64 emulation:
+30 raw NV12 frames per pass match independent x86_64 software FFmpeg references.
+CLI controls reject damaged records and a traversing reference path. This is a
+software reference check; the V4L2 flush hook, compressed hardware frames,
+independent color metadata and device lifecycle remain unqualified.
+
 On 27 October, the Bash contract builds this helper in the same AArch64 SDK.
 Three independently hashed NV12 patterns pass twice with a retained clone.
 Five controls reject missing flush, missing seek, wrong count, existing output
