@@ -1,6 +1,6 @@
 Name:           uke-speaker-orientation
 Version:        0.1.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Display-aware internal speaker routing for Uke Wayland sessions
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -39,6 +39,10 @@ bash tests/speaker-orientation.sh
 %config(noreplace) %{_sysconfdir}/xdg/autostart/uke-speaker-orientation.desktop
 
 %changelog
+* Tue Oct 27 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-3
+- Resolve a unique local Wayland session when user-manager autostarts omit the session ID.
+- Refuse ambiguous sessions and retain active-session checks before audio writes.
+
 * Tue Oct 27 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
 - Document the distinct release-23 kernel candidate and USB-C-right operator reference.
 

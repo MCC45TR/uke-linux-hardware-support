@@ -165,14 +165,40 @@ static void removed(void *data, wl_registry *, uint32_t id) {
 }
 static const wl_registry_listener registry_listener = {global, removed};
 
-static bool active_session(const char *session) {
+static bool local_wayland_session(const char *session) {
+    if (!session || !*session) return false;
     uid_t uid;
     char *type = nullptr;
-    bool active = sd_session_get_uid(session, &uid) >= 0 && uid == getuid() &&
-        sd_session_is_active(session) == 1 && sd_session_is_remote(session) == 0 &&
+    bool local = sd_session_get_uid(session, &uid) >= 0 && uid == getuid() &&
+        sd_session_is_remote(session) == 0 &&
         sd_session_get_type(session, &type) >= 0 && !std::strcmp(type, "wayland");
     std::free(type);
-    return active;
+    return local;
+}
+
+static bool active_session(const char *session) {
+    return local_wayland_session(session) && sd_session_is_active(session) == 1;
+}
+
+static char *resolve_session() {
+    char *session = nullptr;
+    if (sd_pid_get_session(0, &session) >= 0) return session;
+    if (const char *inherited = std::getenv("XDG_SESSION_ID")) return strdup(inherited);
+    // User-manager autostarts may have neither a login cgroup nor an inherited ID.
+    char **sessions = nullptr;
+    if (sd_uid_get_sessions(getuid(), 0, &sessions) < 0) return nullptr;
+    unsigned matches = 0;
+    if (sessions) {
+        for (unsigned i = 0; sessions[i]; ++i) {
+            if (local_wayland_session(sessions[i])) {
+                if (++matches == 1) session = strdup(sessions[i]);
+            }
+            std::free(sessions[i]);
+        }
+    }
+    std::free(sessions);
+    if (matches != 1) { std::free(session); session = nullptr; }
+    return session;
 }
 
 static int read_reference(const char *path, unsigned &zero) {
@@ -196,9 +222,7 @@ int main() {
         std::fputs("uke-speaker-orientation: invalid or unreadable display reference\n", stderr);
         return 1;
     }
-    char *session = nullptr;
-    const char *inherited = std::getenv("XDG_SESSION_ID");
-    if (sd_pid_get_session(0, &session) < 0 && inherited) session = strdup(inherited);
+    char *session = resolve_session();
     if (!session) {
         std::fputs("uke-speaker-orientation: no identifiable local session\n", stderr);
         return 1;

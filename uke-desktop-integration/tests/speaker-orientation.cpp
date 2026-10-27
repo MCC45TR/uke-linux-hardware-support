@@ -10,6 +10,10 @@ static bool wrong_type, wrong_labels, ignore_write, fail_read;
 static int fake_active = 1, fake_remote;
 static uid_t fake_uid;
 static const char *fake_type = "wayland";
+static const char *pid_session;
+static std::array<const char *, 4> sessions;
+static unsigned session_count;
+static int session_error, enumeration_calls;
 static int index_of(const char *name) {
     for (unsigned i = 0; i < controls.size(); ++i) if (!std::strcmp(name, controls[i])) return i;
     assert(false); return -1;
@@ -38,10 +42,27 @@ extern "C" int snd_ctl_elem_write(snd_ctl_t *, snd_ctl_elem_value_t *value) {
         snd_ctl_elem_value_get_enumerated(value, 0);
     return 0;
 }
-extern "C" int sd_session_get_uid(const char *, uid_t *uid) { *uid = fake_uid; return 0; }
+extern "C" int sd_session_get_uid(const char *session, uid_t *uid) {
+    *uid = !std::strcmp(session, "foreign") ? getuid() + 1 : fake_uid; return 0;
+}
 extern "C" int sd_session_is_active(const char *) { return fake_active; }
-extern "C" int sd_session_is_remote(const char *) { return fake_remote; }
-extern "C" int sd_session_get_type(const char *, char **type) { *type = strdup(fake_type); return 0; }
+extern "C" int sd_session_is_remote(const char *session) {
+    return !std::strcmp(session, "remote") ? 1 : fake_remote;
+}
+extern "C" int sd_session_get_type(const char *session, char **type) {
+    *type = strdup(!std::strcmp(session, "x11") ? "x11" : fake_type); return 0;
+}
+extern "C" int sd_pid_get_session(pid_t, char **session) {
+    if (!pid_session) return -ENODATA;
+    *session = strdup(pid_session); return 0;
+}
+extern "C" int sd_uid_get_sessions(uid_t, int, char ***list) {
+    ++enumeration_calls;
+    if (session_error) return session_error;
+    *list = static_cast<char **>(calloc(session_count + 1, sizeof(char *)));
+    for (unsigned i = 0; i < session_count; ++i) (*list)[i] = strdup(sessions[i]);
+    return session_count;
+}
 static void reset() {
     actual.fill(0); writes = 0; fail_write = -1; missing_control = -1;
     wrong_type = wrong_labels = ignore_write = fail_read = false;
@@ -87,6 +108,24 @@ int main() {
     fake_remote = 1; assert(!active_session("fixture")); fake_remote = 0;
     fake_uid = getuid() + 1; assert(!active_session("fixture")); fake_uid = getuid();
     fake_type = "x11"; assert(!active_session("fixture")); fake_type = "wayland";
+    assert(!active_session("") && !active_session(nullptr));
+    unsetenv("XDG_SESSION_ID");
+    pid_session = "pid-fixture";
+    char *selected = resolve_session(); assert(selected && !std::strcmp(selected, pid_session)); free(selected);
+    assert(enumeration_calls == 0); pid_session = nullptr;
+    setenv("XDG_SESSION_ID", "env-fixture", 1);
+    selected = resolve_session(); assert(selected && !std::strcmp(selected, "env-fixture")); free(selected);
+    assert(enumeration_calls == 0); unsetenv("XDG_SESSION_ID");
+    session_count = 1; sessions[0] = "single-fixture";
+    selected = resolve_session(); assert(selected && !std::strcmp(selected, sessions[0])); free(selected);
+    fake_active = 0;
+    selected = resolve_session(); assert(selected && !active_session(selected)); free(selected);
+    fake_active = 1; session_count = 0; assert(!resolve_session());
+    session_count = 2; sessions[0] = "fixture-a"; sessions[1] = "fixture-b";
+    assert(!resolve_session());
+    session_count = 4; sessions = {"remote", "x11", "foreign", "single-fixture"};
+    selected = resolve_session(); assert(selected && !std::strcmp(selected, "single-fixture")); free(selected);
+    session_error = -EIO; assert(!resolve_session()); session_error = 0;
 
     App app;
     app.outputs.push_back(Output{&app, 1, nullptr, {}});

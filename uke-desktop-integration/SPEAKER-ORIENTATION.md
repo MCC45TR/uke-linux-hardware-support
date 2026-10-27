@@ -32,7 +32,10 @@ Rotation lock and manual display changes follow the compositor's actual state;
 accelerometer movement alone does not change audio routing.
 
 The helper checks logind session identity, user, local Wayland type and active
-state. It validates all four control names, types and angle labels before any
+state. User-manager autostarts may lack both a login cgroup and XDG_SESSION_ID;
+the fallback accepts exactly one local Wayland session belonging to the user.
+Multiple possible sessions refuse routing instead of following another desktop.
+It validates all four control names, types and angle labels before any
 write, skips unchanged values and checks each write by reading it back. ALSA
 and logind events trigger reconciliation; missing/failing controls use a bounded
 retry interval. A missing control on older kernels cannot enable speakers.
