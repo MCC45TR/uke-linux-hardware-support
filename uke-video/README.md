@@ -1,6 +1,22 @@
 # Uke stateful video integration
 
-Date: 26 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
+Date: 27 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
+
+Current kernel 7.3.0-18 has the video modules present but unloaded behind the
+first-boot safety blacklist. The 27 October default-driver DRM VA query loads
+the correct MSM alias and init symbol, then fails because no Iris decoder node
+exists. No missing direct library dependency is observed. No module is loaded
+or package changed by this query. Earlier successful initialized-device results
+below remain bounded historical evidence, not current startup acceptance.
+The three prior touch-recorder services are terminal, not an active wait.
+Current DRM metadata enables DSI and reports DP disconnected; the fresh camera
+image identifies neither display. Physical visibility and a recoverable
+provider/display test window remain required before further activation.
+
+The completed COPR delivery is additional 1.0.0-12 / build11212019, with 35
+signed uke-prefixed binary RPMs in the existing family and test directory.
+Separate Chromium, VA and SPIR-V source definitions are retired. Earlier
+family10/11 records below describe retained history; no new build is needed.
 
 COPR publication now belongs to the existing `uke-additional` source family.
 The child RPM keeps the name `uke-vaapi-v4l2`; the standalone source-package
