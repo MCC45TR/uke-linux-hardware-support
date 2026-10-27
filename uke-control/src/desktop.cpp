@@ -131,6 +131,8 @@ public:
             const char *s = nullptr; if (sd_bus_message_read(reply.get(), "s", &s) > 0 && s && std::strlen(s) <= 512) result = quote(s);
         } else if (reply && !std::strcmp(signature, "t")) {
             uint64_t n = 0; if (sd_bus_message_read(reply.get(), "t", &n) > 0 && n) result = std::to_string(n);
+        } else if (reply && !std::strcmp(signature, "b")) {
+            int active = 0; if (sd_bus_message_read(reply.get(), "b", &active) > 0) result = active ? "true" : "false";
         }
         if (unique != owner(bus, service)) result = "null";
         objects_.push_back("{\"service\":" + quote(service) + ",\"method\":" + quote(method) +
@@ -162,6 +164,9 @@ std::string snapshot(sd_bus *system, sd_bus *session) {
     reader.method(system, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "CanSuspend", "s", "permission/capability; not a suspend test");
     reader.method(system, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "CanHibernate", "s", "permission/capability; not a hibernation test");
     reader.method(session, "org.kde.Solid.PowerManagement", "/org/kde/Solid/PowerManagement", "org.kde.Solid.PowerManagement", "batteryRemainingTime", "t", "ms");
+    reader.properties(system, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager",
+        {{"LidClosed","b","reported switch state"},{"Docked","b","reported dock state"},{"PreparingForSleep","b","reported transition"}});
+    reader.method(session, "org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver", "GetActive", "b", "screensaver state; not display power or authentication status");
     return reader.json();
 }
 std::string status() {

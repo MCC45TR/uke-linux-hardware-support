@@ -86,6 +86,9 @@ std::vector<Job> jobs(const std::string& topic) {
     add("sensors","Front color snapshot (no acquisition)",{"/usr/bin/uke-control","display","sensor"});
     add("sleep","Wake permissions",{"/usr/bin/uke-control","wake","status"});
     add("sleep","Sleep inhibitors",{"/usr/bin/systemd-inhibit","--list","--no-pager"});
+    add("sleep","Logind lid state (no activation)",{"/usr/bin/busctl","--system","--auto-start=no","get-property","org.freedesktop.login1","/org/freedesktop/login1","org.freedesktop.login1.Manager","LidClosed"});
+    add("sleep","UPower lid state (no activation)",{"/usr/bin/busctl","--system","--auto-start=no","get-property","org.freedesktop.UPower","/org/freedesktop/UPower","org.freedesktop.UPower","LidIsClosed"});
+    add("sleep","Screensaver state (current session, no activation)",{"/usr/bin/busctl","--user","--auto-start=no","call","org.freedesktop.ScreenSaver","/ScreenSaver","org.freedesktop.ScreenSaver","GetActive"});
     add("sleep","Sleep configuration",{"/usr/bin/systemd-analyze","cat-config","systemd/sleep.conf"});
     add("sleep","Logind configuration",{"/usr/bin/systemd-analyze","cat-config","systemd/logind.conf"});
     add("sleep","Wakeup counters",{"/usr/bin/cat","/sys/kernel/debug/wakeup_sources"});
@@ -101,6 +104,8 @@ std::vector<Job> jobs(const std::string& topic) {
     add("usb","USB inventory",{"/usr/bin/lsusb"});
     add("usb","USB topology and drivers",{"/usr/bin/lsusb","-t"});
     add("display","Display and GPU driver modules",{"/usr/bin/modinfo","msm","drm","gpu_sched"});
+    add("display","Actual active stream depth",{"/usr/bin/uke-control","display","bits"});
+    add("display","Cached DSC policy and activation",{"/usr/bin/uke-control","display","compression"});
     add("display","Loaded MSM module build ID",{"/usr/bin/od","-An","-v","-tx1","/sys/module/msm/notes/.note.gnu.build-id"});
     add("display","Loaded O82 panel module build ID",{"/usr/bin/od","-An","-v","-tx1","/sys/module/panel_xiaomi_o82/notes/.note.gnu.build-id"});
     add("display","Loaded THP module build ID",{"/usr/bin/od","-An","-v","-tx1","/sys/module/nt36532_uke_thp/notes/.note.gnu.build-id"});

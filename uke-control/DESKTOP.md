@@ -1,5 +1,13 @@
 # Desktop interface and engineering contract
 
+27 October 2026: `desktop status` and `test desktop` also query logind's
+`LidClosed`, `Docked` and `PreparingForSleep` independently of UPower's lid
+properties. Conflicting reported states remain separate. The current session's
+standard `ScreenSaver.GetActive` result is a nullable boolean: false is a valid
+reply, while an absent service, bus or failed query remains unknown. It does not
+establish authentication lock state or physical panel power. Existing owner
+verification, no-activation and collection deadlines remain in force.
+
 24 October 2026: `desktop plasma` returns nullable automatic rotation and
 brightness policies for the original KScreen unique internal DSI output. The bounded native
 reader strips terminal color sequences, isolates exactly one internal output
