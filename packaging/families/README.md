@@ -1,5 +1,11 @@
 # COPR source families
 
+27 October 2026: core `1.15.1-2` carries the read-only lid/screensaver and
+active-depth/DSC diagnostic correction. Its exact Control requirement matches
+both rebuilt children. A standalone `1.15.1-1` test cannot replace Control below
+the installed Core pin; use the complete matching family without relaxing that
+dependency or removing Core. No hardware or kernel family is rebuilt here.
+
 24 October 2026: core `1.9.1` adds disconnected DP training ceilings,
 per-device USB runtime power and RTL8153 link capability/profile controls.
 It preserves core `1.8.1`'s bounded native KScreen session controls.

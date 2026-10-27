@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 1.15.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
+- Deliver the diagnostic correction with its matching Core family dependency.
+- Advance the rebuilt children beyond the earlier standalone test identity.
+
 * Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
 - Record independent lid consumers and the current session's screensaver state.
 - Include active display depth and cached DSC state in diagnostic reports.
