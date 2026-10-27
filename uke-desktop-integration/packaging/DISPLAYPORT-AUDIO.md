@@ -1,5 +1,30 @@
 # DisplayPort audio package
 
+## Separate four-channel speakers and stereo DisplayPort, 27 October 2026
+
+Release 0.1.0-7 exposes four channels on the existing MultiMedia2 internal
+speaker PCM. ALSA preserves all four input samples, with 48 kHz/S16_LE format
+conversion. MultiMedia1 and DisplayPort remain a separate two-channel output;
+their ELD, jack and routing controls are retained. No output combines tablet
+speakers with an HDMI monitor. Acoustic slot independence and spatial order
+require separate tablet observations.
+
+## Combined speaker card, 27 October 2026
+
+Release 0.1.0-6 adds `POCO-Pad-X1` for Linux 7.3.0-21 while retaining the
+existing HDMI-only card. Stereo input is converted to 48 kHz S16_LE and routed
+to the measured TDM slots as left/right/left/right. The four amplifier
+switches follow speaker-device selection; hardware gain is not raised.
+DisplayPort retains PCM 0, its mixer and jack. No capture device is advertised.
+
+The separately provisioned OEM amplifier preset and qualified hardware are
+required. No tuning/calibration payload, daemon, startup hook or KDE fork is
+added. Host checks parse the shipped ALSA data and exercise the route plugin
+against regular files. New-card discovery, audible channels, HDMI coexistence
+and suspend require physical validation on the final package pair.
+
+The following dated history applies to the original HDMI-only profile.
+
 On 24 October 2026, Fedora 46 Rawhide AArch64 on POCO Pad X1 with kernel
 7.2.12-28 has no connected DisplayPort playback PCM. Kernel candidate
 7.2.12-30 adds the single digital frontend and DP104 backend. Its ALSA card

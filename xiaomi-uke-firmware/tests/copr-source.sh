@@ -15,6 +15,13 @@ reject() {
 reject no
 printf 'Synthetic notice corruption\n' > "$work/notices/vendor-NOTICE.xml.gz"
 reject yes
+printf 'Not an admitted speaker preset\n' > "$work/bad-preset"
+if make -s speaker-srpm "SPEAKER_PRESET=$work/bad-preset" \
+    "SPEAKER_NOTICE=$work/notices/vendor-NOTICE.xml.gz" \
+    "outdir=$work/speaker-output" > "$work/speaker.log" 2>&1; then
+    echo 'Unverified speaker preset accepted' >&2; exit 1
+fi
+[[ ! -e $work/speaker-output/speaker-rpmbuild ]]
 [[ $(rpmspec -q --qf '%{NAME}' packaging/uke-firmware.spec) == uke-firmware ]]
 provides=$(rpmspec --define 'dist .fc46' -q --provides packaging/uke-firmware.spec)
 obsoletes=$(rpmspec --define 'dist .fc46' -q --obsoletes packaging/uke-firmware.spec)
