@@ -30,7 +30,10 @@ case $family in
 uke-sound)
     make -C uke-desktop-integration speaker-controls-srpm outdir="$stage/speaker-controls" >"$stage/local.log"
     controls=("$stage/speaker-controls/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
-    printf '%s\t%s\n' uke-speaker-controls "${controls[0]}" >"$stage/inputs";;
+    printf '%s\t%s\n' uke-speaker-controls "${controls[0]}" >"$stage/inputs"
+    make -C uke-desktop-integration displayport-audio-srpm outdir="$stage/audio-policy" >>"$stage/local.log"
+    policies=("$stage/audio-policy/"*.src.rpm); [[ ${#policies[@]} == 1 && -f ${policies[0]} ]]
+    printf '%s\t%s\n' uke-displayport-audio "${policies[0]}" >>"$stage/inputs";;
 uke-hw)
     make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
     boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]

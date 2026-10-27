@@ -7,7 +7,8 @@ Their range remains bounded by the kernel's amplifier gain limit.
 
 Open **Speaker Hardware Controls** from the KDE application menu. It starts
 the original Fedora KMix with the ALSA backend. The standard KDE audio panel
-continues to control application volume and stereo balance through PipeWire.
+controls application volume and the four-channel internal speaker node through
+PipeWire. The DisplayPort/HDMI node retains its separate two-channel PCM.
 Use KMix's Configure Channels action if a hardware slider is hidden.
 
 The package supplies a card-specific original KMix view profile containing
@@ -15,8 +16,9 @@ only the four amplifier levels. Existing user profiles take precedence and
 are preserved. Hardware route switches and rotation enums remain available
 through KMix's channel configuration, while automatic rotation owns routing.
 
-These are four amplifier levels, not four independent surround channels.
-The qualified source route remains a stereo feed distributed to four speakers.
+KMix exposes four amplifier levels. The four-channel application PCM now
+preserves all four samples instead of duplicating stereo in ALSA. Physical
+independence and spatial order still require separate acoustic validation.
 Hardware names describe the USB-C-right landscape reference. The active
 Wayland display transform selects the left/right assignment through the
 existing orientation helper. Physical movement with a locked display does not

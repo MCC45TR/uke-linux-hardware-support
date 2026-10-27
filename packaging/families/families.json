@@ -195,17 +195,17 @@
     },
     {
       "name": "uke-sound",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "requires": [
         "pipewire",
         "pipewire-alsa",
         "wireplumber",
         "alsa-utils",
         "senemos-uke-linux-kernel-mainline >= 7.3.0-31",
-        "uke-displayport-audio >= 0.1.0-6",
+        "uke-displayport-audio >= 0.1.0-7",
         "uke-speaker-orientation >= 0.1.0-4",
         "uke-speaker-firmware >= 3.0.304.0-1",
-        "(uke-speaker-controls >= 0.1.0-2 if plasma-workspace)"
+        "(uke-speaker-controls >= 0.1.0-3 if plasma-workspace)"
       ],
       "suggests": [
         "plasma-pa"
@@ -231,7 +231,8 @@
     "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
     "uke-installation-profile": "1.8.2",
-    "uke-speaker-controls": "0.1.0"
+    "uke-speaker-controls": "0.1.0",
+    "uke-displayport-audio": "0.1.0"
   },
   "release_overrides": {
     "iio-sensor-proxy": "23.fc46",
@@ -256,6 +257,7 @@
     "uke-desktop-metas": "19.fc46",
     "uke-core-meta": "4.fc46",
     "uke-proximity-capture": "5.fc46",
-    "uke-speaker-controls": "2.fc46"
+    "uke-speaker-controls": "3.fc46",
+    "uke-displayport-audio": "7.fc46"
   }
 }
