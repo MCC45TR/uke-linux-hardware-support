@@ -1,0 +1,61 @@
+Subject: [PATCH] avutil/vulkan: use actual image usage for host transfers
+
+A frames context may advertise HOST_TRANSFER for its own allocations, while
+DRM-imported images are created with only the requested sampled/storage and
+transfer usages. Testing only the context usage can send these images to
+vkCopyImageToMemoryEXT without the required image usage. On Turnip this
+reproduces a host cache-maintenance fault after successful DMA-BUF import.
+
+Retain the intersection of actual image creation usages in private frame
+state and require HOST_TRANSFER there as well. Owned images keep their valid
+host-transfer path. Imported read/write images use the existing staging path
+when they were not created for host transfers. No public structure, driver
+identity, device capability, blocklist or synchronization contract is changed.
+
+Base: FFmpeg n9.0.2 /946fcce07b6dcd0331c8cc609192aeff5e1924f8.
+The inspected upstream fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8 still uses
+context usage for this selection; its additional host-transfer checks are
+reviewed separately, not copied as unrelated changes.
+License: LGPL-2.1-or-later, matching the modified upstream file.
+
+--- a/libavutil/hwcontext_vulkan.c
++++ b/libavutil/hwcontext_vulkan.c
+@@ -201,6 +201,7 @@
+ 
+ typedef struct AVVkFrameInternal {
+     pthread_mutex_t update_mutex;
++    VkImageUsageFlags image_usage;
+ 
+     /* Binary semaphore for SYNC_FD export at DRM map time. Created once lazily,
+      * re-signaled each time via a submit in vulkan_map_to_drm. */
+@@ -2700,6 +2701,8 @@
+         return AVERROR(ENOMEM);
+     }
+ 
++    f->internal->image_usage = usage;
++
+     // TODO: check width and height for alignment in case of multiplanar (must be mod-2 if subsampled)
+ 
+     /* Create the images */
+@@ -3382,6 +3385,11 @@
+             .flags  = create_info.flags,
+         };
+ 
++        if (!i)
++            f->internal->image_usage = create_info.usage;
++        else
++            f->internal->image_usage &= create_info.usage;
++
+         /* Check if importing is possible for this combination of parameters */
+         ret = vk->GetPhysicalDeviceImageFormatProperties2(hwctx->phys_dev,
+                                                           &fmt_props, &props_ret);
+@@ -4709,7 +4717,9 @@
+     if (swf->width > hwfc->width || swf->height > hwfc->height)
+         return AVERROR(EINVAL);
+ 
++    /* A derived pool's usage does not describe an imported image's usage. */
+     if (hwctx->usage & VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT &&
++        hwf_vk->internal->image_usage & VK_IMAGE_USAGE_HOST_TRANSFER_BIT_EXT &&
+         !(p->dprops.driverID == VK_DRIVER_ID_NVIDIA_PROPRIETARY))
+         return vulkan_transfer_host(hwfc, hwf, swf, upload);
+ 

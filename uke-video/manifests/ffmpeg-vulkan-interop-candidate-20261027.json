@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-27",
+  "scope": "Scoped VA hardware decode to DRM PRIME/Vulkan import and exact CPU download; not complete browser or zero-copy acceptance",
+  "upstream": {
+    "url": "https://github.com/FFmpeg/FFmpeg",
+    "commit": "946fcce07b6dcd0331c8cc609192aeff5e1924f8",
+    "tag": "n9.0.2",
+    "reviewed_master": "fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8",
+    "file": "libavutil/hwcontext_vulkan.c",
+    "license": "LGPL-2.1-or-later"
+  },
+  "patch": {
+    "path": "patches/ffmpeg-9.0.2-vulkan-image-usage.patch",
+    "sha256": "c5051c88263d22a8fbc0c9d850f5831b4b1596a60c9a33116bfa37513f088e8c",
+    "change": "Gate host image copy on actual owned/imported image usage in private frame state; preserve staging/fences and owned fast path"
+  },
+  "build": {
+    "sdk": "a08b156f02e0ad4a9278bbf2e99858bd62f309829c7d7b3ac34241c1f6812931",
+    "compiler_execution": "AArch64 GCC16.2.1 under host QEMU user emulation",
+    "amf_headers_commit": "57ee0cfb0e1a08d9041f77435653794c1b012be0",
+    "amf_headers_version": "1.5.3",
+    "host_only_headers": true,
+    "control_sha256": "24503bcf871137270cdd44aa8010d907e544dd51f8579c92a6b54b03c7899325",
+    "candidate_sha256": "9616580b1484ab98757f7bc5cee0496226cd75266c0e74033abfecfc84b2cab7",
+    "soname": "libavutil.so.61",
+    "original_versioned_exports_preserved": 636,
+    "target_bind_now_passed": true,
+    "maximum_glibc": "2.44",
+    "enabled_hw_providers": [
+      "DRM",
+      "VAAPI",
+      "Vulkan",
+      "AMF"
+    ],
+    "full_distribution_configuration": false,
+    "initial_missing_AMF_exports_rejected_before_video": true
+  },
+  "hardware": {
+    "device": "POCO Pad X1",
+    "kernel": "7.3.0-19",
+    "mesa": "26.2.5-11",
+    "va_backend": "Scoped signed existing-family VA0.6, SHAeac2beb23b0dafbdcafc57d5ec8a5bdb72aafa54ef64ddceb389c8a7a59eb4e6",
+    "control_actual_exit": 139,
+    "control_reference_frames": 0,
+    "candidate_jobs_passed": 14,
+    "candidate_frames_exact": 630,
+    "profiles": [
+      "H264 Constrained Baseline",
+      "H264 Main/B2",
+      "H264 High/B2",
+      "HEVC Main",
+      "HEVC Main10",
+      "VP9 Profile0",
+      "VP9 Profile2"
+    ],
+    "modes": [
+      {
+        "width": 1920,
+        "height": 1080,
+        "frames": 30
+      },
+      {
+        "width": 3840,
+        "height": 2160,
+        "frames": 60
+      }
+    ],
+    "hardware_va_frames_required": true,
+    "selected_vulkan": "Turnip Adreno732",
+    "complete_reference_rows_equal": true,
+    "syscall_trace_in_main_comparison": false,
+    "separate_sync_file_export_trace_passed": true,
+    "new_codec_kernel_errors": 0,
+    "iris_refs_after_each": 0,
+    "gl_report_count": 4,
+    "gl_pixels_context_equal": true,
+    "gpu_crashes_in_gl_regression": false,
+    "persistent_export_all_profiles_qualified": false,
+    "persistent_export_remaining": "Separate shared-surface cache policy and decode-order NOSHOW qualification; see central L084 and following records",
+    "zero_copy_claimed": false,
+    "sustained_or_physical_acceptance": false
+  },
+  "fault_diagnostic": {
+    "source": "tests/ffmpeg-fault-trace.cpp",
+    "source_sha256": "51c02fcfad0bcca5e82db7acf74e8e3ae845a0ec9c6111fe87a361fc63d48057",
+    "binary_sha256": "ed58f41bfc36f5375311b223cc330afeaa410b5112611e28871016991da2682b",
+    "scope": "Own process only, bounded addresses/maps, no core or global preload",
+    "host_emulated_raise_sigsegv_check_passed": true,
+    "hardware_fault_resolved": true
+  },
+  "delivery": {
+    "active_rpm_recipe_changed": false,
+    "system_libraries_replaced": false,
+    "chromium_rebuilt": false,
+    "signed_distribution_build_complete": false
+  },
+  "central_record": "uke-linux-docs/docs/lessons/2026-10-26-UKE-VIDEO-PREPARATION.md#uke-vid-l083-validate-the-image-usage-fix-with-abi-matched-hardware-controls"
+}
