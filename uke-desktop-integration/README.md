@@ -9,7 +9,11 @@ separately.
 ## Package scope
 
 - `uke-desktop-integration`
-- `uke-displayport-audio`: digital-only ALSA UCM and protected THP discovery policy.
+- `uke-displayport-audio`: combined internal-speaker/DisplayPort ALSA UCM and protected THP discovery policy.
+- `uke-speaker-orientation`: native C++ routing policy for KDE and GNOME Wayland
+  sessions using the kernel's speaker rotation controls. See
+  [speaker orientation](SPEAKER-ORIENTATION.md) for the exact scope and physical
+  acceptance still required.
 
 On 24 October 2026, POCO Pad X1 with kernel 7.2.12-31 and signed policy 0.1.0-3
 plays native stereo PCM and Chromium video sound through Juo JH925 to a
