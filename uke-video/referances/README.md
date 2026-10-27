@@ -33,3 +33,14 @@ FFmpeg P010 review, 27 October 2026:
 - Source: https://github.com/FFmpeg/FFmpeg/tree/fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8/libavcodec
 - License: LGPL-2.1-or-later. The candidate changes project-owned patches only.
 - Linux format contract: https://docs.kernel.org/userspace-api/media/v4l/pixfmt-yuv-planar.html
+
+FFmpeg VP9 review, 27 October 2026:
+
+- Official mirror commit: `fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8`.
+- Unchanged `configure`, native V4L2 wrapper and software VP9 decoder are
+  retained under `ffmpeg-vp9-20261027/`. The native wrapper still has no
+  splitter, while the software decoder selects the existing upstream splitter.
+- Source: https://github.com/FFmpeg/FFmpeg/tree/fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8/libavcodec
+- License: LGPL-2.1-or-later. No new parser or donor board constants are added.
+- The diagnostic framing candidate passes compressed-payload checks but does
+  not repair the observed native hidden-frame failure on the tablet.

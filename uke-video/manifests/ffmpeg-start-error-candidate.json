@@ -334,12 +334,13 @@
     },
     "full_distribution_features_built": false,
     "native_copr_package_built": false,
-    "delivered_to_tablet": false,
+    "delivered_to_tablet": true,
     "native_or_va_bitstream_vui_tested": false,
     "full_range_hardware_qualified": false,
     "main10_or_hdr_hardware_qualified": false,
     "browser_encode_qualified": false,
-    "hardware_render_regression_tested": false
+    "hardware_render_regression_tested": false,
+    "tablet_delivery_scope": "Five-patch f8f421 diagnostic delivered for bounded decoder tests only; no encoder color/VUI session"
   },
   "native_p010_candidate": {
     "date": "2026-10-27",
@@ -410,5 +411,48 @@
     "package_built": false,
     "installed_as_distribution_client": false,
     "main10_encode_hdr_or_zero_copy_qualified": false
+  },
+  "vp9_packet_framing_candidate": {
+    "date": "2026-10-27",
+    "patch": "patches/ffmpeg-9.0.2-vp9-frame-packets.patch",
+    "patch_sha256": "aeadf5a6685ae1ada915ae44986f0a1cfafe24290b8b2f1d144abb917eb839cf",
+    "scope": "Reuse existing upstream superframe splitter and configure dependency for native V4L2 VP9",
+    "upstream_commit": "fa4daf630eb52235b1b3d0e9b1cc08392b87e9a8",
+    "upstream_native_wrapper_has_splitter": false,
+    "upstream_software_decoder_has_splitter": true,
+    "diagnostic_recipe_sha256": "14c8a3ddcb4cd9fbb30e53e71accce9e01ffb8e7ed295c5983589284262f1a08",
+    "aarch64_diagnostic_sha256": "3e62b8fe1503fe08b62bb5869c1b04ebc82a335099ae5cf8d6890bec826cda43",
+    "aarch64_ffprobe_sha256": "a251497887fc09bb2f47781c36af1b89654640d7e6609933469248175476e4f6",
+    "software_emulated_bitstream_control": {
+      "source_sha256": "1db0bd91158513e0e905d0abc4c9bae45176962973e45c5348439a36e6b3c103",
+      "input_packets": 30,
+      "output_packets": 31,
+      "every_compressed_payload_hash_and_size_equal": true,
+      "no_gpu_or_video_device_mounted": true,
+      "no_decoded_frame_or_pts_acceptance": true
+    },
+    "tablet_trial": {
+      "kernel": "7.3.0-19",
+      "kernel_source": "e3229b4e2295b38515977b43116b82534d62f662",
+      "fresh_same_kernel_boot": true,
+      "scoped_cli_hash_verified": true,
+      "untraced": true,
+      "profile": "VP9 Profile0",
+      "width": 1920,
+      "height": 1080,
+      "expected_frames": 30,
+      "produced_frames": 11,
+      "produced_frames_match_reference": true,
+      "driver_decode_error_flag_reported": true,
+      "actual_child_failure_observed": true,
+      "new_codec_kernel_log_errors": 0,
+      "iris_refs_after": 0,
+      "original_chrome_gl_before_after_passed": true,
+      "complete_gpu_reports": 4,
+      "native_framing_problem_fixed": false,
+      "next_gate": "Investigate kernel HFI NOSHOW-to-ERROR handling versus actual corrupt/overflow and VA decode-order semantics; do not suppress genuine errors"
+    },
+    "native_copr_or_distribution_package_built": false,
+    "installed_client_replaced": false
   }
 }

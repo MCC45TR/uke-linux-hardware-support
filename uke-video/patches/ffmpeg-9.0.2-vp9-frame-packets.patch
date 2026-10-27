@@ -1,0 +1,28 @@
+Subject: [PATCH] avcodec/v4l2_m2m: split VP9 superframes before stateful decode
+
+V4L2_PIX_FMT_VP9 requires one compressed frame per OUTPUT buffer. Reuse the
+upstream VP9 superframe splitter already selected by the software decoder;
+keep hidden-frame timestamps and packet references under its existing rules.
+Select the filter during configure so minimal hardware-only builds retain it.
+
+Base: FFmpeg n9.0.2, 946fcce07b6dcd0331c8cc609192aeff5e1924f8.
+License: LGPL-2.1-or-later, matching the modified upstream files.
+
+--- a/configure
++++ b/configure
+@@ -3727,6 +3727,7 @@
+ vp9_qsv_encoder_deps="libmfx MFX_CODEC_VP9"
+ vp9_qsv_encoder_select="qsvenc"
+ vp9_v4l2m2m_decoder_deps="v4l2_m2m vp9_v4l2_m2m"
++vp9_v4l2m2m_decoder_select="vp9_superframe_split_bsf"
+ amf_capture_filter_deps="amf"
+ vvc_qsv_decoder_select="vvc_mp4toannexb_bsf qsvdec"
+ 
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -321,4 +321,4 @@
+ M2MDEC(h263,  "H.263", AV_CODEC_ID_H263,       NULL);
+ M2MDEC(vc1 ,  "VC1",   AV_CODEC_ID_VC1,        NULL);
+ M2MDEC(vp8,   "VP8",   AV_CODEC_ID_VP8,        NULL);
+-M2MDEC(vp9,   "VP9",   AV_CODEC_ID_VP9,        NULL);
++M2MDEC(vp9,   "VP9",   AV_CODEC_ID_VP9,        "vp9_superframe_split");

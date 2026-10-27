@@ -20,7 +20,10 @@ See the candidate manifest for exact source, binary and test identities.
 
 Native1080p H264 CB/Main/High and HEVC Main/Main10 each pass30 reference frames.
 Native VP9P0 stops after11 correct frames at the first two-frame superframe;
-the same stream passesall30 via VA. Packet framing, remaining modes, performance,
+the same stream passesall30 via VA. Wiring the existing upstream splitter
+passes a31-packet software payload control but still stops at11 native frames.
+The kernel also maps NOSHOW to ERROR; that path needs separate investigation.
+Packet framing, remaining modes, performance,
 lifecycle and sustained acceptance remain open. Frame hashes are not a direct
 display or zero-copy test. Output metadata is observed without forcing labels.
 
