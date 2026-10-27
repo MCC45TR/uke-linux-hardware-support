@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.15.0
+Version: 1.15.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -151,6 +151,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
+- Record independent lid consumers and the current session's screensaver state.
+- Include active display depth and cached DSC state in diagnostic reports.
+- Correct the CLI version banner; retain read-only, no-activation queries.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-1
 - Add an explicit disconnected DSC request and cached compression-status query.
 - Preserve provider, root, board and driver readback checks; activation remains unqualified.

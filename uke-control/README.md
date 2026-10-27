@@ -1,5 +1,11 @@
 # Uke Control
 
+27 October 2026: version 1.15.1 records logind and UPower lid states separately
+and queries the current session's screensaver state without activation. Sleep
+reports include both lid consumers; display reports include actual stream depth
+and cached DSC state. These observations do not establish physical cover or
+monitor behavior. The CLI version banner is corrected to match the package.
+
 26 October 2026: version 1.15.0 reports driver stream capacity and cached sink
 MST support in `display profiles`. The dual-display request requires both,
 plus a unique standard Type-C C/E control. Missing firmware controls remain
