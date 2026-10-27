@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-27",
+  "status": "bounded-source-build-and-RAM-device-samples-passed-signed-delivery-pending",
+  "upstream": {
+    "url": "https://github.com/radxa-pkg/libva-v4l2",
+    "commit": "6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41",
+    "archive_sha256": "e8756bf642eb3fc458209b8dd2380571dcb52ec4b2201e9d09db208b7e995d52",
+    "preceding_patches": "0001 through0005",
+    "license": "MIT"
+  },
+  "patch": {
+    "path": "patches/0006-shared-surface-write-combined.patch",
+    "sha256": "29116d2a380c268a765c1fab2b7dc82ed493264106c212ceb43f2a57172db659",
+    "change": "Allocate shareable VA surfaces as WC; retain private coherent encoder probe/staging and all checked allocation/export/cleanup errors"
+  },
+  "build": {
+    "sdk_sha256": "10115fdd92aa44e1de6404042ad9265e003b2d7d21227423b4a86ed1548920e4",
+    "compiler": "AArch64 GCC16.2.1 under host QEMU user emulation",
+    "recipe": "Direct compilation of the unchanged upstream source list with GPU copy enabled and FastCV disabled",
+    "control_elf_sha256": "9a957a1ce1f11206db29eca36dc3a3424b205e322f13df7264f5818abc94bb24",
+    "candidate_elf_sha256": "8e4ad958cdef06b2c30081862506ca16f23f7813d652f264cc5faac42c4a53a7",
+    "target_bind_now_and_va_initialization_passed": true,
+    "host_actual_allocator_error_checks_passed": true,
+    "host_main10_p010_regression_passed": true
+  },
+  "hardware": {
+    "device": "POCO Pad X1",
+    "kernel": "7.3.0-19",
+    "mesa": "26.2.5-11",
+    "control_persistent_pixel_comparison_failed": true,
+    "initial_process_only_WC_fallback_controls_passed": 4,
+    "final_rejection_shim_used": false,
+    "final_source_storage_fixture_used": true,
+    "kernel_ram_candidate_sha256": "c23ac4f521a6229dd2c311f6f5e57065cab65f5dc09acab8ffaa429449b0560c",
+    "kernel_source_record": "ef80c17; manifest clarification85531fb",
+    "scoped_avutil_sha256": "9616580b1484ab98757f7bc5cee0496226cd75266c0e74033abfecfc84b2cab7",
+    "profiles": 7,
+    "modes": [
+      {
+        "width": 1920,
+        "height": 1080,
+        "frames": 30
+      },
+      {
+        "width": 3840,
+        "height": 2160,
+        "frames": 60
+      }
+    ],
+    "jobs": 14,
+    "reference_frames_exact": 630,
+    "all_complete_reference_rows_equal": true,
+    "p010_precision_preserved": true,
+    "selected_GL_renderer": "FD732 private GBM context",
+    "selected_Vulkan_device": "Turnip Adreno732",
+    "observed_modifier": 0,
+    "stable_surface_identity_checked": true,
+    "syscall_tracing_in_final_comparison": false,
+    "new_codec_kernel_errors": 0,
+    "iris_refs_after_each": 0,
+    "complete_gpu_reports": 6,
+    "gl_pixels_context_equal": true,
+    "stock_restored": true,
+    "default_va_restored": true,
+    "boot_state_and_taint_unchanged": true
+  },
+  "limits": {
+    "global_GPU_coherency_defect_proven": false,
+    "private_encoder_staging_qualified": false,
+    "full_lifecycle_sustained_browser_or_physical_acceptance": false,
+    "zero_copy_claimed": false,
+    "additional_modifiers_qualified": false
+  },
+  "delivery": {
+    "existing_family": "uke-additional",
+    "active_recipe_changed": false,
+    "signed_RPM_built": false,
+    "system_backend_replaced": false,
+    "persistent_kernel_candidate_installed": false
+  },
+  "central_record": "uke-linux-docs/docs/lessons/2026-10-26-UKE-VIDEO-PREPARATION.md#uke-vid-l085-qualify-persistent-vaeglvulkan-samples-in-both-decode-orders"
+}
