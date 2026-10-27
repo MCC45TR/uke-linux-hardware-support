@@ -40,6 +40,22 @@ remaining modes, limits, performance, lifecycle and sustained acceptance remain
 open. Frame hashes are not a direct display or zero-copy test. Output metadata
 is observed without forcing labels.
 
+Later bounded trials cover all seven profiles through native and scoped VA
+at 96x96, 720p30, 4096x2160p30 and nominal high-rate 720p/1080p inputs: 70
+unique 30-frame samples match complete independent framehash rows. The scoped
+backend is the existing signed family12 child, with no system installation.
+An initial HEVC maximum-width rejection is retained. A second narrow RAM
+candidate allows its 32-line coded-height alignment, producing exact visible
+4096x2160 Main/Main10 frames from 4096x2176 storage; other codec and encoder
+limits stay unchanged. Both native UHD VP9 profiles also match 60 reference
+pixels/PTS and required geometry/size fields. Their AVFrame duration is valid
+unknown zero, while the raw writer infers 17 rather than the reference's 16
+ticks; that difference is recorded separately. No reference is rewritten.
+Six complete reports again retain equal FD732 GL/context pixels before,
+during and after restoration. Short nominal 480/240/200/120fps inputs do not
+establish sustained rates. Signed kernel/client delivery and full lifecycle,
+browser and physical acceptance remain open.
+
 Original Chrome156 has complete GPU reports before/after the P010 trial in the
 same profile, with equal FD732 GL pixels and context restoration. GPU sandbox
 remains false, WebGPU has no adapter and browser encode remains unqualified.
