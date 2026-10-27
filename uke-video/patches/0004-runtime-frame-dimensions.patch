@@ -1,0 +1,269 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Use codec-specific V4L2 dimensions for VA queries and encode
+
+Retain frame-size bounds with each runtime profile. Use the same bounds in
+VA attributes, surface queries and context/visible encode validation instead
+of fixed 128/3840/2160/8192 limits. Keep decoder geometry hints distinct from
+the actual stream and reject a substituted encoder crop. Pixel/macroblock
+rate, queue admission and physical mode acceptance remain kernel/test gates.
+
+---
+diff --git a/src/backend.cpp b/src/backend.cpp
+index 67b4707..eea94b6 100644
+--- a/src/backend.cpp
++++ b/src/backend.cpp
+@@ -87,18 +87,19 @@ template <class F> VAStatus guard(VADriverContextP ctx, F f) noexcept {
+         return guard(ctx, [&](Driver &d) -> VAStatus { __VA_ARGS__ });                             \
+     }
+ static bool decode_supported(const Driver &d, VAProfile p) {
+-    return std::find(d.decoder_profiles.begin(), d.decoder_profiles.end(), p) !=
+-           d.decoder_profiles.end();
++    return d.decoder_profiles.count(p);
+ }
+ static bool supported(const Driver &d, VAProfile p) {
+-    return decode_supported(d, p) ||
+-           std::find(d.encoder_profiles.begin(), d.encoder_profiles.end(), p) !=
+-           d.encoder_profiles.end();
++    return decode_supported(d, p) || d.encoder_profiles.count(p);
+ }
+ static bool encode_supported(const Driver &d, VAProfile p, VAEntrypoint e) {
+-    return e == VAEntrypointEncSlice &&
+-           std::find(d.encoder_profiles.begin(), d.encoder_profiles.end(), p) !=
+-           d.encoder_profiles.end();
++    return e == VAEntrypointEncSlice && d.encoder_profiles.count(p);
++}
++static const FrameSize &profile_limits(const Driver &d, VAProfile p, VAEntrypoint e) {
++    const auto &profiles = e == VAEntrypointEncSlice ? d.encoder_profiles : d.decoder_profiles;
++    auto it = profiles.find(p);
++    check(it != profiles.end(), "unsupported profile", VA_STATUS_ERROR_UNSUPPORTED_PROFILE);
++    return it->second;
+ }
+ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+     switch (type) {
+@@ -142,10 +143,6 @@ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+         return 1;
+     case VAConfigAttribPredictionDirection:
+         return VA_PREDICTION_DIRECTION_PREVIOUS;
+-    case VAConfigAttribMaxPictureWidth:
+-        return 3840;
+-    case VAConfigAttribMaxPictureHeight:
+-        return 2160;
+     default:
+         return VA_ATTRIB_NOT_SUPPORTED;
+     }
+@@ -255,9 +252,9 @@ static std::shared_ptr<Memory> allocate_undecoded_surface(VADriverContextP ctx,
+ API(query_profiles, (VADriverContextP ctx, VAProfile *out, int *count), (void)d;
+     check(out && count, "null profiles", VA_STATUS_ERROR_INVALID_PARAMETER);
+     *count = 0;
+-    for (auto p : d.decoder_profiles) out[(*count)++] = p;
+-    for (auto p : d.encoder_profiles)
+-        if (!decode_supported(d, p)) out[(*count)++] = p;
++    for (const auto &p : d.decoder_profiles) out[(*count)++] = p.first;
++    for (const auto &p : d.encoder_profiles)
++        if (!decode_supported(d, p.first)) out[(*count)++] = p.first;
+     if (vpp_supported(VAProfileNone, VAEntrypointVideoProc)) out[(*count)++] = VAProfileNone;
+     return VA_STATUS_SUCCESS;)
+ API(query_entrypoints, (VADriverContextP ctx, VAProfile profile, VAEntrypoint *out, int *count),
+@@ -288,6 +285,13 @@ API(
+                                  : VA_ATTRIB_NOT_SUPPORTED;
+             continue;
+         }
++        if (attrs[i].type == VAConfigAttribMaxPictureWidth ||
++            attrs[i].type == VAConfigAttribMaxPictureHeight) {
++            const auto &limits = profile_limits(d, profile, entry);
++            attrs[i].value = attrs[i].type == VAConfigAttribMaxPictureWidth
++                                 ? limits.max_width : limits.max_height;
++            continue;
++        }
+         if (entry == VAEntrypointEncSlice) {
+             attrs[i].value = encode_attribute(attrs[i].type, profile);
+             continue;
+@@ -299,10 +303,6 @@ API(
+         case VAConfigAttribDecSliceMode:
+             attrs[i].value = VA_DEC_SLICE_MODE_NORMAL;
+             break;
+-        case VAConfigAttribMaxPictureWidth:
+-        case VAConfigAttribMaxPictureHeight:
+-            attrs[i].value = 8192;
+-            break;
+         default:
+             attrs[i].value = VA_ATTRIB_NOT_SUPPORTED;
+         }
+@@ -369,9 +369,12 @@ API(
+     if (config.entrypoint == VAEntrypointVideoProc) {
+         values[1] = 16;
+         values[2] = 2;
+-    } if (config.entrypoint == VAEntrypointEncSlice) {
+-        values[3] = 3840;
+-        values[4] = 2160;
++    } else {
++        const auto &limits = profile_limits(d, profile, config.entrypoint);
++        values[1] = limits.min_width;
++        values[2] = limits.min_height;
++        values[3] = limits.max_width;
++        values[4] = limits.max_height;
+     } for (unsigned i = 0; i < 6; ++i) {
+         a[i].type = types[i];
+         a[i].flags = VA_SURFACE_ATTRIB_GETTABLE;
+@@ -558,14 +561,24 @@ API(create_context,
+     (void)flags;
+     auto config = lookup(d.configs, id, VA_STATUS_ERROR_INVALID_CONFIG);
+     bool processing = config.entrypoint == VAEntrypointVideoProc;
+-    check(((processing && w >= 0 && h >= 0) || (w >= 128 && h >= 128)) && w <= 8192 && h <= 8192 &&
++    check(((processing && w >= 0 && h >= 0) || (w > 0 && h > 0)) && w <= 8192 && h <= 8192 &&
+               result,
+           "invalid context dimensions", VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
+     auto c = std::make_shared<Context>(); c->profile = config.profile;
+     c->entrypoint = config.entrypoint; c->encode_settings.rate_control = config.rate_control;
+-    c->encode_settings.hevc = is_hevc(c->profile); if (c->entrypoint == VAEntrypointEncSlice)
+-        check(w <= 3840 && h <= 2160 && !(w & 1) && !(h & 1), "unsupported encoder dimensions",
+-              VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
++    c->encode_settings.hevc = is_hevc(c->profile);
++    if (!processing) {
++        const auto &limits = profile_limits(d, c->profile, c->entrypoint);
++        // Decode dimensions are hints; coded geometry is established by the stream.
++        if (c->entrypoint == VAEntrypointVLD)
++            check(unsigned(w) <= limits.max_width && unsigned(h) <= limits.max_height,
++                  "unsupported decoder dimensions", VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
++        else
++            check(unsigned(w) >= limits.min_width && unsigned(h) >= limits.min_height &&
++                      unsigned(w) <= ((limits.max_width + 15) & ~15u) &&
++                      unsigned(h) <= ((limits.max_height + 15) & ~15u) && !(w & 1) && !(h & 1),
++                  "unsupported encoder dimensions", VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
++    }
+     for (int i = 0; i < count; ++i) surface(d, targets[i]); c->width = w; c->height = h;
+     c->internal_profile = c->profile; c->decode_surfaces = std::max(0, count);
+     if (processing) c->vpp = std::make_unique<Vpp>(); *result = d.next_id++;
+@@ -776,7 +789,8 @@ API(
+                 c->encode_settings.hevc ? std::min(c->width, target->width) : c->width,
+                 c->encode_settings.hevc ? std::min(c->height, target->height) : c->height,
+                 c->profile, c->encode_settings, c->encode_picture,
+-                static_cast<drm_state *>(ctx->drm_state)->fd);
++                static_cast<drm_state *>(ctx->drm_state)->fd,
++                profile_limits(d, c->profile, c->entrypoint));
+         }
+         auto task = c->encoder->encode(c->encode_settings, c->encode_picture, target, coded);
+         task->encoder = c->encoder;
+diff --git a/src/encoder.cpp b/src/encoder.cpp
+index 798caae..6726142 100644
+--- a/src/encoder.cpp
++++ b/src/encoder.cpp
+@@ -593,7 +593,8 @@ struct Encoder::Impl {
+ };
+ 
+ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAProfile profile,
+-                 const EncodeSettings &s, const EncodePicture &p, int render_fd) {
++                 const EncodeSettings &s, const EncodePicture &p, int render_fd,
++                 const FrameSize &limits) {
+     // VA contexts may use macroblock-aligned dimensions (FFmpeg does this).
+     // The sequence crop determines the visible dimensions sent to Iris.
+     if (!s.hevc) {
+@@ -609,14 +610,13 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+             coded_width -= seq.frame_crop_right_offset * 2;
+             coded_height -= seq.frame_crop_bottom_offset * 2;
+         }
+-        check(coded_width <= width && coded_height <= height && coded_width >= 128 &&
+-                  coded_height >= 128,
++        check(coded_width <= width && coded_height <= height &&
++                  coded_width >= limits.min_width && coded_height >= limits.min_height,
+               "encode crop exceeds context", VA_STATUS_ERROR_INVALID_PARAMETER);
+         width = coded_width;
+         height = coded_height;
+     }
+-    check(width >= 128 && height >= 128 && width <= 3840 && height <= 2160 && !(width & 1) &&
+-              !(height & 1),
++    check(limits.contains(width, height) && !(width & 1) && !(height & 1),
+           "unsupported visible encoder dimensions", VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
+     validate(s, p, profile, width, height);
+     auto impl = std::make_unique<Impl>(
+@@ -665,6 +665,8 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+     crop.r.width = width;
+     crop.r.height = height;
+     checked(e.fd, VIDIOC_S_SELECTION, &crop, "encoder S_SELECTION");
++    check(crop.r.width == width && crop.r.height == height && !crop.r.left && !crop.r.top,
++          "Iris substituted the requested visible crop", VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
+     if (s.hevc) {
+         e.control(V4L2_CID_MPEG_VIDEO_HEVC_PROFILE,
+                   profile == VAProfileHEVCMain10 ? V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10
+diff --git a/src/internal.hpp b/src/internal.hpp
+index e12af2e..96116ee 100644
+--- a/src/internal.hpp
++++ b/src/internal.hpp
+@@ -71,6 +71,13 @@ class SurfaceCopier {
+     void copy(const std::shared_ptr<Memory> &destination, const std::shared_ptr<Memory> &source,
+               unsigned width, unsigned height);
+ };
++struct FrameSize {
++    unsigned min_width, min_height, max_width, max_height;
++    bool contains(unsigned width, unsigned height) const {
++        return width >= min_width && height >= min_height &&
++               width <= max_width && height <= max_height;
++    }
++};
+ class Encoder;
+ struct EncodeTask {
+     std::weak_ptr<Encoder> encoder;
+@@ -221,7 +228,8 @@ class Encoder {
+ 
+   public:
+     Encoder(const std::string &device, unsigned width, unsigned height, VAProfile profile,
+-            const EncodeSettings &settings, const EncodePicture &picture, int render_fd);
++            const EncodeSettings &settings, const EncodePicture &picture, int render_fd,
++            const FrameSize &limits);
+     ~Encoder();
+     std::shared_ptr<EncodeTask> encode(const EncodeSettings &settings, const EncodePicture &picture,
+                                        const std::shared_ptr<Surface> &input,
+@@ -278,7 +286,7 @@ struct Driver {
+     std::recursive_mutex mutex;
+     std::string device;
+     std::string encoder_device;
+-    std::vector<VAProfile> decoder_profiles, encoder_profiles;
++    std::map<VAProfile, FrameSize> decoder_profiles, encoder_profiles;
+     uint32_t next_id = 1;
+     std::map<uint32_t, Config> configs;
+     std::map<uint32_t, std::shared_ptr<Context>> contexts;
+@@ -286,7 +294,7 @@ struct Driver {
+     std::map<uint32_t, std::shared_ptr<Buffer>> buffers;
+     std::map<uint32_t, VAImage> images;
+ };
+-std::vector<VAProfile> probe_profiles(const std::string &path, bool encoder);
++std::map<VAProfile, FrameSize> probe_profiles(const std::string &path, bool encoder);
+ template <class T> auto lookup(std::map<uint32_t, T> &table, uint32_t id, VAStatus status) {
+     auto it = table.find(id);
+     if (it == table.end())
+diff --git a/src/runtime-caps.cpp b/src/runtime-caps.cpp
+index 0948660..b114b14 100644
+--- a/src/runtime-caps.cpp
++++ b/src/runtime-caps.cpp
+@@ -45,8 +45,8 @@ constexpr Profile profiles[] = {
+ };
+ }
+ 
+-std::vector<VAProfile> probe_profiles(const std::string &path, bool encoder) {
+-    std::vector<VAProfile> result;
++std::map<VAProfile, FrameSize> probe_profiles(const std::string &path, bool encoder) {
++    std::map<VAProfile, FrameSize> result;
+     if (path.empty()) return result;
+     int fd = open(path.c_str(), O_RDWR | O_NONBLOCK | O_CLOEXEC);
+     check(fd >= 0, "open Iris capability probe");
+@@ -78,7 +78,19 @@ std::vector<VAProfile> probe_profiles(const std::string &path, bool encoder) {
+             menu.index = profile.menu;
+             if (query(fd, VIDIOC_QUERYMENU, &menu) < 0 ||
+                 !format_available(fd, raw, profile.raw)) continue;
+-            result.push_back(profile.va);
++            v4l2_frmsizeenum size{};
++            size.pixel_format = profile.codec;
++            if (query(fd, VIDIOC_ENUM_FRAMESIZES, &size) < 0 ||
++                (size.type != V4L2_FRMSIZE_TYPE_STEPWISE &&
++                 size.type != V4L2_FRMSIZE_TYPE_CONTINUOUS) ||
++                !size.stepwise.step_width || !size.stepwise.step_height) continue;
++            FrameSize limits{size.stepwise.min_width, size.stepwise.min_height,
++                             std::min(8192u, size.stepwise.max_width),
++                             std::min(8192u, size.stepwise.max_height)};
++            if (!limits.min_width || !limits.min_height ||
++                limits.max_width < limits.min_width || limits.max_height < limits.min_height)
++                continue;
++            result.emplace(profile.va, limits);
+         }
+     } catch (...) {
+         close(fd);

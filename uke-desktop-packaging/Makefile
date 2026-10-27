@@ -13,6 +13,7 @@ validate:
 	test "$$(sha256sum src/native-runtime/fedora-exported-symbols.txt | cut -d ' ' -f1)" = "$$(jq -er .baseline.symbol_sha256 manifests/native-runtime.json)"
 	test "$$(wc -l < src/native-runtime/fedora-exported-symbols.txt)" = "$$(jq -er .baseline.symbol_count manifests/native-runtime.json)"
 	bash -n src/native-runtime/prepare-source.sh
+	bash -n tests/adreno732-ubwc-hint.sh
 srpm: validate
 	case '$(PACKAGE)' in material-decoration|plymouth-uke|at-spi2-core|gstreamer1|libaccounts-glib|libwacom|libstdcxx-uke-runtime|mesa|upower|iio-sensor-proxy|accountsservice) ;; *) echo 'Unsupported or withdrawn package' >&2; exit 1;; esac
 	top="$$(realpath -m "$(outdir)/rpmbuild")"

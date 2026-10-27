@@ -61,3 +61,28 @@ Mesa CPU-capability producer and LLVM dependency. It preserves every enabled
 and disabled LLVM attribute, then checks Mesa's detected NEON state and both
 single-threaded guard branches. Missing LLVM-map and missing-guard mutations
 fail independently. The target runs before the full build and again in `%check`.
+
+## Adreno 732 UBWC hint candidate — 24 October 2026
+
+On Uke with Linux `7.2.12-33` and Mesa `26.2.5-11.fc46`, the pinned native
+Vulkan CTS reported three image-atomic/barrier comparison failures. Independent
+default processes reproduced them. Disabling only `enable_tp_ubwc_flag_hint`
+passed all three, retaining storage-image UBWC. Selected compute and basic
+legacy/synchronization2 groups then passed 113 cases, with 21 unsupported and
+zero failed cases. These are temporary parameter comparisons, not results
+from an installed rebuilt driver or full API conformance.
+
+Candidate `0004` clears this property in the shared device-info copy only for
+chip `0x43030b00`, including fuse variants. Turnip and Gallium use this shared
+result. X1-45, other GPU properties, original records and explicit debug
+override precedence remain unchanged. No global no-UBWC or flush-all setting
+is installed. Upstream Mesa's MIT attribution is retained.
+
+`bash tests/adreno732-ubwc-hint.sh SOURCE_DIRECTORY` compiles the exact patched
+function against host fakes. Exact/wildcard/fused IDs, neighboring IDs, unknown
+devices, unchanged fields and debug precedence are checked; unpatched source
+fails the fixture. The prepared build tree uses `--patched`; the source recipe
+runs the fixture before the full build and again in `%check`. Full Mesa build,
+signed coherent package delivery and tests of that artifact without temporary
+environment overrides remain required. Detailed source/runtime evidence is in
+workspace lesson UKE-GPU-L027.

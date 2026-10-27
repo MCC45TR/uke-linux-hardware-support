@@ -80,6 +80,7 @@ fi
 if [[ $name == mesa ]]; then
     cp "$project/packaging/mesa/"*.patch "$project/packaging/mesa/mesa-host-features.cpp" "$project/packaging/mesa/mesa-host-features.meson" "$top/SOURCES/"
     cp "$project/tests/turnip-display-fd.sh" "$top/SOURCES/"
+    cp "$project/tests/adreno732-ubwc-hint.sh" "$top/SOURCES/"
     tar -xOf "$top/SOURCES/mesa-$version.tar.xz" "mesa-$version/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp" > "$top/mesa-host-source.cpp"
     awk '/^lp_build_fill_mattrs\(/{copy=1} copy {print} copy && /^}/ {exit}' "$top/mesa-host-source.cpp" > "$top/mesa-host-function.cpp"
     host_patch=1
@@ -90,7 +91,7 @@ if [[ $name == mesa ]]; then
         BEGIN { print "%global debug_package %{nil}" }
         /^Release:/ { print "Release: " release "%{?dist}"; next }
         /^License:/ { print; print "ExclusiveArch: aarch64"; next }
-        /^Source0:/ { print; print "Patch9997: 0003-turnip-reject-render-only-display-fd.patch"; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; if(host_patch)print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9994: mesa-host-features.meson\nSource9996: turnip-display-fd.sh\nSource9999: mesa-host-features.cpp"; next }
+        /^Source0:/ { print; print "Patch9996: 0004-freedreno-adreno732-ubwc-hint.patch"; print "Patch9997: 0003-turnip-reject-render-only-display-fd.patch"; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; if(host_patch)print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9993: adreno732-ubwc-hint.sh\nSource9994: mesa-host-features.meson\nSource9996: turnip-display-fd.sh\nSource9999: mesa-host-features.cpp"; next }
         /^%autosetup([[:space:]]|$)/ {
             print
             print "mkdir -p uke-native-contract"
@@ -101,6 +102,7 @@ if [[ $name == mesa ]]; then
             next
         }
         /^%meson_build([[:space:]]|$)/ {
+            print "bash %{SOURCE9993} \"$PWD\" --patched"
             print "meson compile -C %{_vpath_builddir} -j %{_smp_build_ncpus} uke-mesa-host-features"
             print "%{_vpath_builddir}/uke-mesa-host-features"
             print; next
@@ -116,12 +118,14 @@ if [[ $name == mesa ]]; then
             print "if find %{buildroot} -type f \\( -name \"*.py\" -o -name \"*.pyc\" -o -name \"*.pyo\" -o -name \"python[0-9]*\" \\) -print | grep .; then exit 1; fi"
             print "while IFS= read -r -d \"\" file; do if head -c 256 \"$file\" | LC_ALL=C grep -aE \"^#!.*(python|pypy)\"; then exit 1; fi; done < <(find %{buildroot} -type f -print0)"
             print "%check"
+            print "bash %{SOURCE9993} \"$PWD\" --patched"
             print "bash %{SOURCE9996} \"$PWD\" --patched"
             print "%{_vpath_builddir}/uke-mesa-host-features"
             print ""
         }
         /^%changelog/ {
-            print; print "* Tue Oct 13 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print; print "* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print "- Disable the TP UBWC flag hint for exact Adreno 732 chip and fuse variants."
             print "- Identify exact Adreno 732 chips without changing their existing profile."
             print "- Honor available AArch64 CPU features in Gallivm JIT code generation."
             exit
