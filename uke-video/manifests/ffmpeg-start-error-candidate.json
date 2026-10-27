@@ -197,14 +197,30 @@
       "required_glibcxx_symbol_max": "GLIBCXX_3.4.32",
       "required_cxxabi_symbol_max": "CXXABI_1.3.9",
       "target_provider_package_and_file_metadata_read": true,
-      "target_symbol_versions_verified": false,
+      "target_symbol_versions_verified": true,
       "v4l2_flush_hook_exercised_by_raw_control": false,
       "delivered_to_tablet": false,
       "tested_on_tablet": false,
       "hardware_accepted": false,
       "compressed_independent_reference_accepted": false,
       "lifecycle_accepted": false,
-      "copy_path": "CPU-packed visible native-format planes; no FPS or zero-copy qualification"
+      "copy_path": "CPU-packed visible native-format planes; no FPS or zero-copy qualification",
+      "target_static_elf_coverage": {
+        "scope": "Static ELF dependency and dynamic-symbol coverage against read-only target library copies; not loader or device execution",
+        "helper_required_symbols": 173,
+        "dependent_objects": 5,
+        "strong_and_versioned_imports_present": true,
+        "needed_sonames_present": true,
+        "missing_symbol_control_rejected": true,
+        "provider_sha256": {
+          "libc.so.6": "e324ed77a4fb771943a116b682deccf13cad281436207e25a62190e7b674184d",
+          "libgcc_s.so.1": "a08dd2460d8d4d5dd234e4f813e2462dc58297c63544488226874da4de2d536d",
+          "libm.so.6": "723f8230803cd92c7025fe7a2789e39b6c602c6125d2c5550d59fe95cda5e12c",
+          "libstdc++.so.6": "c3b4c8e567b3f809795593588b3eafa2f60e44ae93361149b3b0c38aa71c0c70",
+          "ld-linux-aarch64.so.1": "77a13e551a98b244e0a0954955efa69748082346f57861bfcc6e5935e0db217f"
+        },
+        "loader_execution_verified": false
+      }
     }
   }
 }

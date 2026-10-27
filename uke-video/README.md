@@ -204,8 +204,11 @@ and compressed software fallback. This exercises the public API with software
 rawvideo; it does not exercise the V4L2 flush callback. Hardware, compressed
 reference and lifecycle flags remain false. Shared dependencies also include
 libstdc++/libgcc, requiring GLIBCXX_3.4.32 and GLIBC_2.44. Target provider package
-and file metadata are recorded, but target symbol resolution and execution
-are unverified. No helper or replacement RPM is installed on Uke.
+and file metadata are recorded. Read-only copies of the five target library/
+loader files provide every needed SONAME and all173 required helper symbols,
+plus the libraries' own required symbols. This checks static ELF coverage;
+target loader execution and codec behavior remain unverified. No helper or
+replacement RPM is installed on Uke.
 
 The host-only `tests/build-ffmpeg-video-probe.sh` reproduces the limited
 diagnostic CLI build inside the pinned AArch64 SDK, with prepared sources at
