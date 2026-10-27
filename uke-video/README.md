@@ -58,6 +58,17 @@ explicitly corrected in UKE-VID-L081. Short nominal 480/240/200/120fps inputs do
 establish sustained rates. Signed kernel/client delivery and full lifecycle,
 browser and physical acceptance remain open.
 
+Scoped interop work fixes two additional client contracts: imported Vulkan
+images use their actual usage flags for host-copy selection, and DRM exports
+retain the requested frames context and synchronize consumer readers before
+write access. A shared-surface WC candidate and both-order NOSHOW RAM module
+pass 14 persistent VA/EGL/Vulkan HD/UHD samples:630 exact frames. Six complete
+reports retain equal GL/context pixels and stock Iris is restored. A separate
+owned-image diagnostic passes32 NV12/P010 native/DRM roundtrips and records32
+RW sync-file exports plus32 write-fence imports. These are sampled device
+results; no system library, package or persistent kernel is replaced. Source,
+build and hardware identities are in the scoped cache and Vulkan manifests.
+
 Original Chrome156 has complete GPU reports before/after the P010 trial in the
 same profile, with equal FD732 GL pixels and context restoration. GPU sandbox
 remains false, WebGPU has no adapter and browser encode remains unqualified.

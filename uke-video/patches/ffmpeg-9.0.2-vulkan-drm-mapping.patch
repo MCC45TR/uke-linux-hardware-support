@@ -1,0 +1,38 @@
+Subject: [PATCH] avutil/vulkan: preserve derived DRM context and consumer fences
+
+The DRM exporter must retain a caller-provided derived frames context. Replacing
+it with the Vulkan source context leaks the caller reference and prevents the
+public map API from recognizing an unmap, causing an unnecessary re-import and
+an observed roundtrip stall. Keep the existing fallback for internal callers
+which provide no destination context.
+
+Importing after a DRM consumer may write the frame again. Export implicit
+readers as well as writers when WRITE mapping is requested; READ-only mapping
+continues to wait only for writers. Linux dma-buf defines WRITE/RW export as
+waiting for all usage. Retain semaphore, ownership and cleanup behavior.
+
+Base: FFmpeg n9.0.2/946fcce with the separate actual-image-usage patch.
+Reviewed master fa4daf630e retains the context overwrite and READ-only flag.
+License: LGPL-2.1-or-later, matching the modified upstream file.
+
+--- a/libavutil/hwcontext_vulkan.c
++++ b/libavutil/hwcontext_vulkan.c
+@@ -3574,7 +3574,7 @@
+             };
+             VkImportSemaphoreFdInfoKHR import_info;
+             struct dma_buf_export_sync_file implicit_fd_info = {
+-                .flags = DMA_BUF_SYNC_READ,
++                .flags = flags & AV_HWFRAME_MAP_WRITE ? DMA_BUF_SYNC_RW : DMA_BUF_SYNC_READ,
+                 .fd = -1,
+             };
+ 
+@@ -4349,7 +4349,8 @@
+     dst->width   = src->width;
+     dst->height  = src->height;
+     dst->data[0] = (uint8_t *)drm_desc;
+-    dst->hw_frames_ctx = av_buffer_ref(src->hw_frames_ctx);
++    if (!dst->hw_frames_ctx)
++        dst->hw_frames_ctx = av_buffer_ref(src->hw_frames_ctx);
+ 
+     if (sync_fd >= 0)
+         close(sync_fd);

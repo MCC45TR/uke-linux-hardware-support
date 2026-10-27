@@ -77,7 +77,7 @@
     "gl_pixels_context_equal": true,
     "gpu_crashes_in_gl_regression": false,
     "persistent_export_all_profiles_qualified": false,
-    "persistent_export_remaining": "Separate shared-surface cache policy and decode-order NOSHOW qualification; see central L084 and following records",
+    "persistent_export_remaining": "Bounded persistent7-profile/630-frame WC/backend plus NOSHOW RAM samples pass in L085; full signed delivery/lifecycle/browser/physical acceptance remains open",
     "zero_copy_claimed": false,
     "sustained_or_physical_acceptance": false
   },
@@ -95,5 +95,42 @@
     "chromium_rebuilt": false,
     "signed_distribution_build_complete": false
   },
-  "central_record": "uke-linux-docs/docs/lessons/2026-10-26-UKE-VIDEO-PREPARATION.md#uke-vid-l083-validate-the-image-usage-fix-with-abi-matched-hardware-controls"
+  "central_record": "uke-linux-docs/docs/lessons/2026-10-26-UKE-VIDEO-PREPARATION.md#uke-vid-l083-validate-the-image-usage-fix-with-abi-matched-hardware-controls",
+  "persistent_sample_trial": {
+    "kernel_module_sha256": "c23ac4f521a6229dd2c311f6f5e57065cab65f5dc09acab8ffaa429449b0560c",
+    "backend_sha256": "8e4ad958cdef06b2c30081862506ca16f23f7813d652f264cc5faac42c4a53a7",
+    "client_avutil_sha256": "9616580b1484ab98757f7bc5cee0496226cd75266c0e74033abfecfc84b2cab7",
+    "jobs": 14,
+    "frames_exact": 630,
+    "complete_gpu_reports": 6,
+    "stock_restored": true
+  },
+  "drm_mapping": {
+    "patch": "patches/ffmpeg-9.0.2-vulkan-drm-mapping.patch",
+    "patch_sha256": "8ee1553db2da7e81422a5ccdeefbe46eb378e67e6fa15460ef82fcf5a07664fb",
+    "owned_probe": "tests/ffmpeg-vulkan-roundtrip.cpp",
+    "probe_source_sha256": "3a34e7d606176597af2ac3bbaf8ab434c4407283cb79562252446d0c6a61b2de",
+    "probe_binary_sha256": "63eb55f3ab339a076f2bd695a96b69906fcbf78c3ac4705a580f3df3db3f30d2",
+    "context_control_avutil_sha256": "9616580b1484ab98757f7bc5cee0496226cd75266c0e74033abfecfc84b2cab7",
+    "context_control_failed_with_explicit_context_assert": true,
+    "context_candidate_avutil_sha256": "74ccb1dc198282e9b3a5fddbc3d46a28be2d19f75bc47ba43bd3a7d209a82c5b",
+    "final_avutil_sha256": "3e09624abb9fe3d0218b1261b7f8c83fb366e834fef80fe5c14d7da5e00ebeec",
+    "versioned_exports_retained": 636,
+    "formats": [
+      "NV12",
+      "P010"
+    ],
+    "owned_native_host_transfer_roundtrips": 16,
+    "owned_DRM_export_map_roundtrips": 16,
+    "all_visible_bytes_exact": true,
+    "observed_modifier": 0,
+    "observed_host_transfer_usage": true,
+    "sync_file_exports": 32,
+    "exports_wait_for_readers_and_writers": true,
+    "sync_file_write_fence_imports": 32,
+    "all_recorded_fence_ioctls_succeeded": true,
+    "pending_external_reader_stress_accepted": false,
+    "final_GL_reports": 4,
+    "final_GL_pixels_context_equal": true
+  }
 }
