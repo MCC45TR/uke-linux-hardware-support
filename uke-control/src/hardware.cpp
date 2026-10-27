@@ -42,6 +42,18 @@ bool compatible(const std::string& list,std::string_view item) {
     }
     return false;
 }
+std::string string_list(const fs::path& root,const fs::path& path) {
+    const auto value=raw(root,path);
+    if(!value||value->empty()||value->back()!='\0')return "null";
+    std::string out="[";
+    for(std::size_t at=0;at<value->size();) {
+        const auto end=value->find('\0',at);
+        if(end==at)return "null";
+        if(at)out+=',';
+        out+=quote(value->substr(at,end-at));at=end+1;
+    }
+    return out+']';
+}
 std::string capability(const std::optional<std::string>& bitmap,unsigned bit) {
     if(!bitmap)return "null";
     std::istringstream input(*bitmap);std::vector<unsigned long> words;std::string text;
@@ -85,6 +97,7 @@ std::string snapshot(const fs::path& requested_root) {
         bool first=true;
         for(const auto& node:entries(root,root/class_path)) {
             check();if(!directory(root,node))continue;
+            if(std::string_view(name)=="nfc_tags"&&node.filename()!="fm-ntag")continue;
             if(!first)out+=',';
             first=false;auto item=object(root,node,fields);
             if(std::string_view(name)=="input"&&node.filename().string().starts_with("input")) {
@@ -109,6 +122,8 @@ std::string snapshot(const fs::path& requested_root) {
     group("leds","sys/class/leds",{"max_brightness"});
     group("drm","sys/class/drm",{"dev"});
     group("accelerators","sys/class/accel",{"dev"});
+    group("nfc_tags","sys/class/misc",{"dev"});
+    group("infrared","sys/class/lirc",{"dev"});
     group("cpu_policies","sys/devices/system/cpu/cpufreq",{"affected_cpus","scaling_driver","scaling_governor","scaling_min_freq","scaling_max_freq","cpuinfo_max_freq"});
     group("devfreq","sys/class/devfreq",{"governor","available_frequencies","min_freq","max_freq"});
     out+=",\"cpu_caches\":[";bool first_cpu=true;
@@ -129,8 +144,13 @@ std::string snapshot(const fs::path& requested_root) {
         out+="]}";
     }
     out+=']';
-    out+=",\"configured_nodes\":[";bool first=true;
+    bool first=true;
     const auto base=root/"sys/firmware/devicetree/base";
+    out+=",\"identity\":{\"board\":"+attribute(root,base/"model");
+    out+=",\"processor\":"+attribute(root,base/"cpus/model");
+    out+=",\"ram_type\":"+attribute(root,base/"memory/model");
+    out+=",\"pen_model\":"+attribute(root,base/"firmware/uke-accessories/pen-model");
+    out+=",\"keyboard_model\":"+attribute(root,base/"firmware/uke-accessories/keyboard-model")+"},\"configured_nodes\":[";
     if(const auto target=resolved(root,base)) {
         // Exact compatible strings only; no inferred sensor or amplifier identity.
         const std::pair<const char*,const char*> selected[]{
@@ -141,6 +161,10 @@ std::string snapshot(const fs::path& requested_root) {
             {"qcom,q6prm","audio_prm"},{"qcom,spf_core","audio_oem_service"},
             {"qcom,audio_prm","audio_oem_service"},{"qcom,spf-core-platform","audio_oem_machine"},
             {"qcom,pineapple-asoc-snd","audio_oem_machine"},{"foursemi,fs16xx","speaker_amplifier"},
+            {"foursemi,fs19xx","speaker_amplifier"},
+            {"xiaomi,uke-ssc-sensors","ssc_firmware"},{"xiaomi,uke-ssc-sensor","ssc_sensor"},
+            {"xiaomi,uke-accessory-profile","accessory_profile"},
+            {"fm,fm19511","nfc_tag"},{"ir-spi-led","infrared_transmitter"},
             {"qcom,wcd9390-codec","audio_codec"},{"qcom,wcd9395-codec","audio_codec"},
             {"qcom,wcd939x-codec","audio_oem_codec"},{"xiaomi,uke-wcd939x-typec","usb_switch"},
             {"qcom,adreno-43030b00","gpu"},{"qcom,adreno-gmu-732","gpu_controller"},
@@ -160,7 +184,19 @@ std::string snapshot(const fs::path& requested_root) {
                 first=false;
                 out+="{\"path\":"+quote(it->path().lexically_relative(*target).string())+",\"stage\":"+quote(stage);
                 out+=",\"matched_compatible\":"+quote(match)+",\"reported_status\":"+attribute(root,it->path()/"status");
-                out+=",\"effective_available\":"+effective_status(root,it->path(),*target)+'}';
+                out+=",\"effective_available\":"+effective_status(root,it->path(),*target);
+                out+=",\"model\":"+attribute(root,it->path()/"model");
+                out+=",\"label\":"+attribute(root,it->path()/"label");
+                if(std::string_view(stage)=="ssc_sensor") {
+                    out+=",\"transport\":\"qualcomm-ssc\",\"identity_confirmed\":false";
+                    out+=",\"ssc_datatype\":"+attribute(root,it->path()/"qcom,ssc-datatype");
+                    out+=",\"model_candidates\":"+string_list(root,it->path()/"xiaomi,model-candidates");
+                }
+                if(std::string_view(stage)=="accessory_profile") {
+                    out+=",\"connected\":null,\"pen_model\":"+attribute(root,it->path()/"pen-model");
+                    out+=",\"keyboard_model\":"+attribute(root,it->path()/"keyboard-model");
+                }
+                out+='}';
                 break;
             }
             if(out.size()>1024*1024)throw std::runtime_error("Hardware snapshot exceeds 1 MiB");
