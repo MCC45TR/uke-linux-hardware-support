@@ -6,7 +6,8 @@ cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
 [[ $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
 [[ $target == aarch64 || $target == x86_64 ]]
-[[ $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
+# Sound is selection metadata only; other families compile native payloads.
+[[ $family == uke-sound || $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
     printf '%s\n' 'Generate a family source on its native architecture; --target alone does not retarget RPM build/host triplets.' >&2
     exit 1
 }

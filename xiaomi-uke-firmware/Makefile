@@ -1,7 +1,26 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
+.DEFAULT_GOAL := validate
 .PHONY: validate srpm
+.PHONY: speaker-srpm
+speaker-srpm:
+	input='$(SPEAKER_PRESET)'; notice='$(SPEAKER_NOTICE)'
+	[[ -f $$input && ! -L $$input && -f $$notice && ! -L $$notice ]]
+	data=packaging/speaker-firmware
+	[[ $$(sha256sum "$$input" | cut -d' ' -f1) == $$(jq -er .sha256 "$$data/provenance.json") ]]
+	[[ $$(sha256sum "$$notice" | cut -d' ' -f1) == $$(jq -er .notice_gzip_sha256 "$$data/provenance.json") ]]
+	[[ $$(sha256sum "$$data/LICENSE.Apache-2.0" | cut -d' ' -f1) == $$(jq -er .license_text_sha256 "$$data/provenance.json") ]]
+	top="$$(realpath -m '$(outdir)/speaker-rpmbuild')"
+	stage="$$top/stage/uke-speaker-firmware-3.0.304.0"
+	[[ ! -e $$top ]]
+	mkdir -p "$$stage" "$$top"/{SOURCES,SPECS,SRPMS}
+	install -m644 "$$input" "$$stage/fs19xx.fsm"
+	install -m644 "$$notice" "$$stage/odm-NOTICE.xml.gz"
+	install -m644 "$$data/README.md" "$$data/provenance.json" "$$data/LICENSE.Apache-2.0" "$$stage/"
+	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-speaker-firmware-3.0.304.0.tar.xz" -C "$$top/stage" uke-speaker-firmware-3.0.304.0
+	install -m644 "$$data/uke-speaker-firmware.spec" "$$top/SPECS/"
+	rpmbuild -bs --define "_topdir $$top" --define '_buildhost uke-copr-source' "$$top/SPECS/uke-speaker-firmware.spec"
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | length > 0)' manifests/component.json >/dev/null
 	jq -e '.schema_version==1 and .device=="uke" and (.admitted_files|length)==0 and .firmware_blob_package_ready==false' manifests/firmware-lock.json >/dev/null

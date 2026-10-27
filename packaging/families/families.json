@@ -195,17 +195,21 @@
     },
     {
       "name": "uke-sound",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "requires": [
         "pipewire",
         "pipewire-alsa",
         "wireplumber",
-        "alsa-utils"
+        "alsa-utils",
+        "senemos-uke-linux-kernel-mainline >= 7.3.0-23",
+        "uke-displayport-audio >= 0.1.0-6",
+        "uke-speaker-orientation >= 0.1.0-4",
+        "uke-speaker-firmware >= 3.0.304.0-1"
       ],
       "suggests": [
         "plasma-pa"
       ],
-      "status": "original Fedora audio userspace; internal playback/capture not qualified",
+      "status": "matched speaker kernel, stock preset and desktop playback policy; physical acceptance remains separate",
       "watch_paths": []
     }
   ],
