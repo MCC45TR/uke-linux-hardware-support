@@ -27,5 +27,8 @@ const changed=structuredClone(video);changed.frames[13].sha256='d'.repeat(64);
 assert.throws(()=>compare(changed,reference,text),/Visible pixels differ/);
 const duplicate=structuredClone(video);duplicate.frames[1].timestamp=0;
 assert.throws(()=>compare(duplicate,reference,text),/Repeated browser PTS/);
+const repeatedText=text.replace(/^0, 1, 1, 1,/m,'0, 1, 0, 1,');
+const repeatedReference={...reference,framehashSHA256:createHash('sha256').update(repeatedText).digest('hex')};
+assert.throws(()=>compare(duplicate,repeatedReference,repeatedText),/repeated reference PTS/);
 assert.throws(()=>compare(video,reference,text+'#modified\n'),/framehash file changed/);
 console.log('Browser/reference pixel validation: passed (host fixtures only)');

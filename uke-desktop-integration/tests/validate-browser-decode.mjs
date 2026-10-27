@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {basename,dirname,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-export function compare(video,reference,text) {
+export function compare(video,reference,text,{ordered=false}={}) {
   assert(video?.functionalPassed,'Browser workload did not complete successfully');
   assert(/^[a-f0-9]{64}$/.test(reference.sourceSHA256),'Invalid reference source identity');
   assert.equal(video.sourceSHA256,reference.sourceSHA256,'Different encoded input');
@@ -14,28 +14,31 @@ export function compare(video,reference,text) {
   const tb=text.match(/^#tb 0:\s*(\d+)\/(\d+)/m);
   assert(tb && Number(tb[2])>0,'Missing reference time base');
   assert(/^#hash:\s*SHA256$/mi.test(text),'Reference must use SHA-256');
-  const expected=new Map();
+  const expected=new Map(),orderedExpected=[];
   for(const line of text.split('\n').filter(line=>line.trim() && !line.startsWith('#'))) {
     const fields=line.split(',').map(value=>value.trim());
     assert.equal(fields.length,6,'Unexpected reference frame row');
     assert.equal(fields[0],'0','Unexpected reference stream');
     const timestamp=Math.round(Number(fields[2])*Number(tb[1])/Number(tb[2])*1000000);
-    assert(Number.isSafeInteger(timestamp) && !expected.has(timestamp),'Invalid/repeated reference PTS');
+    assert(Number.isSafeInteger(timestamp) && (ordered || !expected.has(timestamp)),
+      'Invalid/repeated reference PTS');
     assert(/^[a-f0-9]{64}$/i.test(fields[5]),'Invalid reference digest');
-    expected.set(timestamp,{size:Number(fields[4]),sha256:fields[5].toLowerCase()});
+    const frame={timestamp,size:Number(fields[4]),sha256:fields[5].toLowerCase()};
+    expected.set(timestamp,frame);orderedExpected.push(frame);
   }
   const frameCount=reference.frameCount??30;
   assert([30,60].includes(frameCount),'Unreviewed reference frame count');
-  assert.equal(expected.size,frameCount,'Unexpected reference frames');
+  assert.equal(ordered?orderedExpected.length:expected.size,frameCount,'Unexpected reference frames');
   assert.equal(video.frames?.length,frameCount,'Unexpected browser frames');
   const seen=new Set();
-  for(const frame of video.frames) {
+  for(const [index,frame] of video.frames.entries()) {
     assert.equal(frame.format,reference.format,'Different pixel representation');
     assert.equal(frame.visibleRect.width,reference.width,'Different visible width');
     assert.equal(frame.visibleRect.height,reference.height,'Different visible height');
-    assert(!seen.has(frame.timestamp),'Repeated browser PTS');seen.add(frame.timestamp);
-    const wanted=expected.get(frame.timestamp);
+    assert(ordered || !seen.has(frame.timestamp),'Repeated browser PTS');seen.add(frame.timestamp);
+    const wanted=ordered?orderedExpected[index]:expected.get(frame.timestamp);
     assert(wanted,'Browser PTS is absent from reference');
+    if(ordered) assert.equal(frame.timestamp,wanted.timestamp,'Ordered frame PTS differs');
     assert.equal(frame.packedByteLength,wanted.size,'Different visible plane size');
     assert.equal(frame.sha256,wanted.sha256,'Visible pixels differ at PTS '+frame.timestamp);
   }

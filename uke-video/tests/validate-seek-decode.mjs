@@ -84,7 +84,8 @@ export function compareSeek(input,result,first,second,reference,framehash) {
       assert.equal(frame.duration*pass.tb[0]*rt[1],integer(ref[3])*rt[0]*pass.tb[1],
         'Exact native/reference duration differs');
     }
-    compare({functionalPassed:true,sourceSHA256:result.sourceSHA256,frames:pass.frames},reference,framehash);
+    compare({functionalPassed:true,sourceSHA256:result.sourceSHA256,frames:pass.frames},reference,framehash,
+      {ordered:true});
   }
   assert.deepEqual(passes[0].frames,passes[1].frames,'Seek changed native frame metadata');
   return {pixelReferencePassed:true,passesChecked:2,framesPerPass:passes[0].frames.length,

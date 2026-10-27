@@ -36,6 +36,12 @@ for(const [native,format,depth] of [['nv12','NV12',8],['p010le','P010',10],
 }
 assert.equal(check(undefined,undefined,{...f.reference,color:undefined}).colorReferenceChecked,false);
 assert.equal(check(undefined,undefined,undefined,undefined,{...f.result,hardwareAccepted:true}).hardwareAccepted,false);
+const repeatedText=f.text.replace(/^0, 1, 1, 1,/m,'0, 1, 0, 1,');
+const repeatedTSV=change(f.tsv,1,1,0);
+const repeatedRef={...f.reference,framehashSHA256:sha(repeatedText)};
+assert.equal(check(repeatedTSV,repeatedTSV,repeatedRef,repeatedText).pixelReferencePassed,true);
+assert.throws(()=>check(repeatedTSV,change(repeatedTSV,1,8,'e'.repeat(64)),repeatedRef,repeatedText),
+  /Visible pixels differ/);
 assert.throws(()=>check(undefined,change(f.tsv,7,8,'d'.repeat(64))),/Visible pixels differ/);
 const wrong=change(f.tsv,7,8,'d'.repeat(64));
 assert.throws(()=>check(wrong,wrong),/Visible pixels differ/);

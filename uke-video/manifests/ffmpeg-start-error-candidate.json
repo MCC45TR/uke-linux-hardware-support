@@ -223,11 +223,11 @@
       },
       "reference_validator": {
         "source": "tests/validate-seek-decode.mjs",
-        "source_sha256": "9fc86b0c52c9e166d7e0c2178fd0a39ebbe621d68e75eb09ccff80e54969c76a",
+        "source_sha256": "471072db83ab43c37cd5663e7097713f1656bd2d616fa76ad64859b55ab4262a",
         "fixture": "tests/validate-seek-decode-host.mjs",
-        "fixture_sha256": "5fd62b0f8dfa416a2535fbff22bd6d5c61f8fe6d92cd3ac76c4c623c779fc66b",
+        "fixture_sha256": "94bca7a40d6a09d3e7c654c3db4517a1c30ef69b489dbcaf5e61103c0856697b",
         "shared_pixel_comparator": "../uke-desktop-integration/tests/validate-browser-decode.mjs",
-        "shared_pixel_comparator_sha256": "1bb9619cd3987d8f886185e7418d479d68ab82a11e0c0c5906abb53431dfb7d5",
+        "shared_pixel_comparator_sha256": "b27883817d73941d9dd8ed93b70db076a699e2da22f2b0043e3f51d5f76d386b",
         "host_only": true,
         "reviewed_frame_counts": [
           30,
@@ -252,7 +252,10 @@
         "real_cli_negative_controls": 3,
         "compressed_hardware_reference_passed": false,
         "hardware_accepted": false,
-        "lifecycle_accepted": false
+        "lifecycle_accepted": false,
+        "native_duplicate_pts_matched_by_frame_ordinal": true,
+        "duplicate_pts_control_scope": "Synthetic host fixture only; corrupted repeated-PTS frame rejected",
+        "browser_default_unique_pts_policy_preserved": true
       }
     }
   }
