@@ -1,6 +1,6 @@
 Name:           uke-speaker-orientation
 Version:        0.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Display-aware internal speaker routing for Uke Wayland sessions
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -39,6 +39,9 @@ bash tests/speaker-orientation.sh
 %config(noreplace) %{_sysconfdir}/xdg/autostart/uke-speaker-orientation.desktop
 
 %changelog
+* Tue Oct 27 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
+- Document the distinct release-23 kernel candidate and USB-C-right operator reference.
+
 * Tue Oct 27 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1
 - Follow committed internal-output transforms and active local session changes.
 - Validate the complete kernel control ABI before updating speaker rotation.

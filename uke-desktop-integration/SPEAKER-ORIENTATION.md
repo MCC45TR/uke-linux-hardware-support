@@ -9,7 +9,7 @@ left channel heard on the left. That operator report does not identify an exact
 kernel build and is not a physical test of this candidate. The expected
 quarter-turn sequence from that reference is USB-C right, bottom, left, top.
 
-Kernel 7.3.0-22 adds `Speaker Rotation` enums, prefixed TopLeft, TopRight,
+Kernel 7.3.0-23 adds `Speaker Rotation` enums, prefixed TopLeft, TopRight,
 BottomLeft and BottomRight. Values are 0, 90, 180 and 270 degrees in the OEM
 speaker-position reference. The driver changes only I2SCTRL channel bits 4:3,
 caches requests while idle and restores the selection before unmute. Failed
