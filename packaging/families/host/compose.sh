@@ -6,7 +6,7 @@ cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
 [[ $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
 [[ $target == aarch64 || $target == x86_64 ]]
-# Sound is selection metadata only; other families compile native payloads.
+# Sound contains metadata and desktop data; other families compile native payloads.
 [[ $family == uke-sound || $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
     printf '%s\n' 'Generate a family source on its native architecture; --target alone does not retarget RPM build/host triplets.' >&2
     exit 1
@@ -27,6 +27,10 @@ cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
+uke-sound)
+    make -C uke-desktop-integration speaker-controls-srpm outdir="$stage/speaker-controls" >"$stage/local.log"
+    controls=("$stage/speaker-controls/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
+    printf '%s\t%s\n' uke-speaker-controls "${controls[0]}" >"$stage/inputs";;
 uke-hw)
     make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
     boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]

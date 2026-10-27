@@ -3,6 +3,14 @@ SHELL := /bin/bash
 .ONESHELL:
 .PHONY: validate srpm test-native test-plugin
 outdir ?= $(CURDIR)/build/srpm
+.PHONY: speaker-controls-srpm
+speaker-controls-srpm:
+	top="$$(realpath -m '$(outdir)/rpmbuild')"
+	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
+	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-speaker-controls-0.1.0/,' -cf - LICENSE SPEAKER-CONTROLS.md src/uke-speaker-controls.desktop | gzip -n > "$$top/SOURCES/uke-speaker-controls-0.1.0.tar.gz"
+	cp packaging/uke-speaker-controls.spec "$$top/SPECS/"
+	rpmbuild -bs --nodeps --define "_topdir $$top" "$$top/SPECS/uke-speaker-controls.spec"
+	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | index("uke-adaptive-display") != null)' manifests/component.json >/dev/null
 	bash tests/adaptive-display.sh
