@@ -1,0 +1,95 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] avcodec/v4l2: bound semiplanar encoder upload by visible rows
+
+Read only visible NV12/NV21/P010 samples and honor the negotiated destination
+pitch and coded chroma offset. Extend edge samples into coded padding, validate
+both planes before writing, and reject short or inconsistent mappings.
+Other raw layouts and compressed-packet uploads retain their existing path.
+Original FFmpeg buffer-helper attribution and LGPL-2.1-or-later are retained.
+
+---
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -382,6 +382,63 @@
+     return 0;
+ }
+ 
++static int v4l2_buffer_copy_semiplanar(const AVFrame *frame, V4L2Buffer *out)
++{
++    struct v4l2_format *fmt = &out->context->format;
++    unsigned int height = V4L2_TYPE_IS_MULTIPLANAR(fmt->type) ?
++                          fmt->fmt.pix_mp.height : fmt->fmt.pix.height;
++    unsigned int width = V4L2_TYPE_IS_MULTIPLANAR(fmt->type) ?
++                         fmt->fmt.pix_mp.width : fmt->fmt.pix.width;
++    unsigned int pitch = out->plane_info[0].bytesperline;
++    unsigned int sample = frame->format == AV_PIX_FMT_P010LE ? 2 : 1;
++    uint64_t luma = (uint64_t)pitch * height;
++    uint64_t size = luma + (uint64_t)pitch * AV_CEIL_RSHIFT(height, 1);
++    uint8_t *base = out->plane_info[0].mm_addr;
++    int plane;
++
++    if (out->num_planes != 1 || !base || frame->width <= 0 || frame->height <= 0 ||
++        frame->width > width || frame->height > height || frame->width > INT_MAX / 4 ||
++        size > out->plane_info[0].length || size > UINT_MAX)
++        return AVERROR(EINVAL);
++
++    for (plane = 0; plane < 2; plane++) {
++        unsigned int bytes = plane ? AV_CEIL_RSHIFT(frame->width, 1) * 2 * sample :
++                                     frame->width * sample;
++        int64_t stride = frame->linesize[plane];
++        if (!frame->data[plane] || pitch < bytes ||
++            (stride < 0 ? -stride : stride) < bytes)
++            return AVERROR(EINVAL);
++    }
++
++    /* Coded padding is not readable source storage; extend only visible rows. */
++    for (plane = 0; plane < 2; plane++) {
++        unsigned int rows = plane ? AV_CEIL_RSHIFT(frame->height, 1) : frame->height;
++        unsigned int coded_rows = plane ? AV_CEIL_RSHIFT(height, 1) : height;
++        unsigned int unit = sample * (plane ? 2 : 1);
++        unsigned int bytes = plane ? AV_CEIL_RSHIFT(frame->width, 1) * unit :
++                                     frame->width * unit;
++        uint8_t *dst = base + (plane ? luma : 0);
++        unsigned int row, x;
++
++        for (row = 0; row < rows; row++) {
++            uint8_t *line = dst + (size_t)row * pitch;
++            memcpy(line, frame->data[plane] + (ptrdiff_t)row * frame->linesize[plane], bytes);
++            for (x = bytes; x < pitch; x++)
++                line[x] = line[bytes - unit + (x - bytes) % unit];
++        }
++        for (; row < coded_rows; row++)
++            memcpy(dst + (size_t)row * pitch, dst + (size_t)(rows - 1) * pitch, pitch);
++    }
++    if (V4L2_TYPE_IS_MULTIPLANAR(out->buf.type)) {
++        out->planes[0].bytesused = size;
++        out->planes[0].length = out->plane_info[0].length;
++    } else {
++        out->buf.bytesused = size;
++        out->buf.length = out->plane_info[0].length;
++    }
++    return 0;
++}
++
+ static int v4l2_buffer_swframe_to_buf(const AVFrame *frame, V4L2Buffer *out)
+ {
+     int i, ret;
+@@ -393,6 +450,18 @@
+     int is_planar_format = 0;
+ 
+     switch (pixel_format) {
++    case V4L2_PIX_FMT_NV12:
++        if (frame->format != AV_PIX_FMT_NV12)
++            return AVERROR(EINVAL);
++        return v4l2_buffer_copy_semiplanar(frame, out);
++    case V4L2_PIX_FMT_NV21:
++        if (frame->format != AV_PIX_FMT_NV21)
++            return AVERROR(EINVAL);
++        return v4l2_buffer_copy_semiplanar(frame, out);
++    case V4L2_PIX_FMT_P010:
++        if (frame->format != AV_PIX_FMT_P010LE)
++            return AVERROR(EINVAL);
++        return v4l2_buffer_copy_semiplanar(frame, out);
+     case V4L2_PIX_FMT_YUV420M:
+     case V4L2_PIX_FMT_YVU420M:
+ #ifdef V4L2_PIX_FMT_YUV422M

@@ -414,3 +414,25 @@ build results remain separate from the bounded device results above. The
 encoder-color and seek callbacks in the same binary do not acquire hardware
 acceptance from a fresh decode session. Full distribution FFmpeg packaging
 and signed kernel delivery remain open.
+
+
+### Semiplanar encoder upload candidate (27 October 2026)
+
+A separate ninth diagnostic patch, `ffmpeg-9.0.2-encoder-row-copy.patch`, fixes
+NV12/NV21/P010 uploads that read negotiated coded rows from a smaller visible
+AVFrame. It copies visible bytes using independent source/destination strides,
+extends edge samples into coded padding and validates both planes before writing.
+Other layouts and compressed-packet uploads retain their original path. Apply it
+after the eight-patch diagnostic sequence above; FFmpeg's original LGPL attribution
+is retained.
+
+Run `bash tests/ffmpeg-encoder-row-copy-contract.sh <prepared-source> <configured-build-headers> <new-output-directory>`.
+The original function exits41 on a guarded source page; the candidate passes host
+and AArch64 checks for NV12/NV21/P010, odd/visible/coded sizes, negative stride,
+single/multi-planar API and invalid bounds. The pinned AArch64 diagnostic builds.
+On stock Uke kernel7.3.0-27, the old CLI exits139. The candidate produces30 H264
+Main and30 HEVC Main frames; independent forced-software decoding returns30 each,
+640x360 and explicit BT709 limited VUI. Input-relative average PSNR is53.022434
+and58.988289 dB for the frozen direct NV12 gray pattern. Chroma is constant128;
+this does not establish colored-chroma, explicit rate-control, Main10 or sustained
+performance. No system FFmpeg replacement or distribution RPM is delivered.

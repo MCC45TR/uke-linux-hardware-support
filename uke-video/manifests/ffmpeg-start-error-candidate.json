@@ -624,5 +624,57 @@
       "gl_context_pixels_equal": true,
       "observer_rejects_loading_and_gpu_crash": true
     }
+  },
+  "encoder_upload_candidate": {
+    "date": "2026-10-27",
+    "patch": "patches/ffmpeg-9.0.2-encoder-row-copy.patch",
+    "patch_sha256": "f89920dd4aff9b0535628f53b4a35a00f0cc522d5dd35799c65fc75757ebfbb6",
+    "fixture": "tests/ffmpeg-encoder-row-copy-contract.sh",
+    "fixture_sha256": "55376180176cf048eee867c727102ce7a9b566707685f2005a7a204355aeeae5",
+    "base": "Eight-patch native drain-retry diagnostic",
+    "scope": "Visible NV12/NV21/P010 reads, negotiated coded pitch/offset, initialized edge padding, reject inconsistent bounds; other layouts and packet upload unchanged",
+    "source_after_sha256": "16126c0df056cc96c5534e67bea80298a7e32d40cbc0e0e1d82212e4e7957583",
+    "upstream_review": {
+      "commit": "86444dd36834875f274f57705762c5448379d644",
+      "buffers_sha256": "f4d8b458a608dcbe94ed7ca38c114ec6f3373d295e4b4fd68c0410397ff9f9ec",
+      "same_coded_height_source_read_present": true
+    },
+    "original_guarded_fixture_exit": 41,
+    "host_fixture_passed": true,
+    "aarch64_emulated_fixture_passed": true,
+    "zero_fuzz_forward_replay_passed": true,
+    "aarch64_sdk_sha256": "a08b156f02e0ad4a9278bbf2e99858bd62f309829c7d7b3ac34241c1f6812931",
+    "aarch64_diagnostic_sha256": "e5cf9a1b45ecd0b7d1c643e00d82384e1a98970909919803b2059a1c10408f9f",
+    "device": {
+      "kernel": "7.3.0-27",
+      "stock_iris": true,
+      "original_diagnostic_actual_exit": 139,
+      "candidate_h264_main_frames": 30,
+      "candidate_hevc_main_frames": 30,
+      "independent_cpu_decoded_frames": [
+        30,
+        30
+      ],
+      "visible_dimensions": [
+        640,
+        360
+      ],
+      "VUI": "BT709 primaries/transfer/matrix and limited range",
+      "PSNR_average_db": [
+        53.022434,
+        58.988289
+      ],
+      "input": "Frozen direct NV12, constant chroma128; no RGB conversion in measured chain",
+      "complete_logged_input_checksums": [
+        30,
+        29
+      ],
+      "kernel_new_nonaudit_events": 0,
+      "iris_references_after": 0,
+      "limits": "Short default-RC gray-source trials only; colored samples, explicit RC modes, other profiles, Main10, native decode/GL regression and sustained tests remain open"
+    },
+    "system_ffmpeg_replaced": false,
+    "distribution_package_built": false,
+    "complete_original_txt_accepted": false
   }
 }
