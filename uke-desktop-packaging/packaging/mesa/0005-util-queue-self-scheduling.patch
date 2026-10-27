@@ -1,0 +1,48 @@
+Subject: [PATCH] util/queue: apply Linux priority hints from the worker itself
+
+Process sandboxes can allow a worker to change its own scheduling policy while
+rejecting a sibling target. Move the optional SCHED_BATCH hint into the worker
+and use the current-thread form of setpriority. Preserve both priority hints
+without expanding sandbox permissions. Non-minimum-priority queues are unchanged.
+
+Mesa 26.2.5 src/util/u_queue.c retains its original AMD MIT attribution.
+--- a/src/util/u_queue.c
++++ b/src/util/u_queue.c
+@@ -254,8 +254,14 @@
+ 
+ #if defined(__linux__)
+    if (queue->flags & UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY) {
+-      /* The nice() function can only set a maximum of 19. */
+-      setpriority(PRIO_PROCESS, syscall(SYS_gettid), 19);
++      /* Zero selects this worker without requiring a process-wide permission. */
++      setpriority(PRIO_PROCESS, 0, 19);
++#if defined(SCHED_BATCH)
++      struct sched_param sched_param = {0};
++
++      /* Use this worker's TID so process sandboxes can permit the hint. */
++      pthread_setschedparam(pthread_self(), SCHED_BATCH, &sched_param);
++#endif
+    }
+ #endif
+ 
+@@ -333,20 +339,6 @@
+       return false;
+    }
+ 
+-   if (queue->flags & UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY) {
+-#if defined(__linux__) && defined(SCHED_BATCH)
+-      struct sched_param sched_param = {0};
+-
+-      /* The nice() function can only set a maximum of 19.
+-       * SCHED_BATCH gives the scheduler a hint that this is a latency
+-       * insensitive thread.
+-       *
+-       * Note that Linux only allows decreasing the priority. The original
+-       * priority can't be restored.
+-       */
+-      pthread_setschedparam(queue->threads[index], SCHED_BATCH, &sched_param);
+-#endif
+-   }
+    return true;
+ }
+ 

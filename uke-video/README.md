@@ -8,7 +8,24 @@ No standalone Chromium build is part of this delivery path.
 
 Date: 26 October 2026. Target: POCO Pad X1 / Xiaomi Pad 7, SM7675.
 
-Default VA initialization now passes on Fedora and Linux 7.3.0-14 with signed
+COPR publication now belongs to the existing `uke-additional` source family.
+The child RPM keeps the name `uke-vaapi-v4l2`; the standalone source-package
+record and its six historical builds are retired after source/rollback
+preservation. Family source3e83bf0 produces additional1.0.0-10 and backend
+1.0.0-1 from the reviewed revision0.6 code. All36 planned RPM names start with
+`uke-`. Native AArch64 build11210929 succeeds in the existing test directory
+and produces34 RPMs; the two empty parent declarations produce no binary.
+All34 signatures, header/payload digests, source-family identities and payload
+audits pass. No Python payload, direct Python requirement or Python scriptlet
+is found. The five backend fixtures pass. The libaccounts-glib suite reports
+a D-Bus session failure that the inherited recipe tolerates; this is not an
+all-tests-passed result. No new source family or Chromium rebuild is introduced.
+Tablet delivery and its resolved dependency/render/backend regressions remain
+open. Future FFmpeg integration also belongs to
+the existing family; the source-only client candidate below is not published
+as an independent COPR package.
+
+Default VA initialization passes on Fedora and Linux 7.3.0-14/15 with signed
 revision 0.4. One coordinator-owned query as UID1000, without driver/path/device
 overrides, loads the MSM alias and returns seven decode/four encode profile
 entrypoint pairs at 04:23:02 UTC. The earlier default query failed because that

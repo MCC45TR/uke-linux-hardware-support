@@ -86,3 +86,42 @@ runs the fixture before the full build and again in `%check`. Full Mesa build,
 signed coherent package delivery and tests of that artifact without temporary
 environment overrides remain required. Detailed source/runtime evidence is in
 workspace lesson UKE-GPU-L027.
+
+## EGL descriptor lookup candidate
+
+27 October 2026: `0006` caches the exact character-node filesystem identity
+when enumerating DRM devices. A matching live descriptor avoids a repeated
+sysfs lookup after sandbox startup. Device, inode, link and change-time checks
+reject stale/replaced nodes; unknown nodes retain `drmGetDevice2` and its
+existing ownership/error behavior. `_EGLDevice` remains private; no public EGL
+ABI or sandbox permission changes. Collabora's original MIT attribution stays
+with `src/egl/main/egldevice.c`.
+
+The Mesa 26.2.5 and
+[reviewed upstream implementation](https://gitlab.freedesktop.org/mesa/mesa/-/blob/2c95c9030c315ded1bdae9bc80bd2337416f434d/src/egl/main/egldevice.c)
+repeat device discovery. The actual-function fixture covers cached primary/
+render descriptors, aliases, identity changes, removed nodes, failed refresh,
+unknown/regular descriptors, software selection and metadata fallback/freeing.
+It passes on x86_64 and AArch64 emulation; the original lookup fails the same
+cached-node case. Run `bash tests/egl-device-node-cache.sh "$MESA_SOURCE"`.
+
+On physical Uke/kernel19, the final process-scoped EGL variant passes original
+Chrome156 FD732 GL with GPU Seccomp2, all sampled GPU threads filtered, equal
+pixels/context restoration and81 successful real MSM submissions. Four live
+renderer processes retain BPF and three-level PID namespace mappings. The
+existing angleisbroken workaround is retained. This is an isolated-library
+Wayland result, not default Chrome or full Mesa-package acceptance.
+
+The same cached-node check is used before both DRI2 device setup and the
+GBM-derived render-fd capability lookup; unknown/display-only descriptors keep
+the original compatible-render-device route. Both actual callers are covered
+by the fixture. The C++ client-discovery diagnostic lives at
+uke-desktop-integration/tests/chromium-egl-warmup.cpp in the parent source tree.
+It uses upstream's existing GPU-zygote markers, preserves one thread and fd
+count, and does not change a syscall or sandbox permission.
+
+This candidate is not wired into the source recipe or installed. An EGL-only
+control/candidate comparison against original signed Gallium/GBM is complete.
+Full signed default-path integration, browser video and hotplug/lifecycle
+remain separate acceptance gates. Central records:
+UKE-CHR-L047/UKE-VID-L087 in `uke-linux-docs`.
