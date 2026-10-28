@@ -1,11 +1,11 @@
 # COPR source families
 
-28 October 2026: additional `1.0.0-14` adds the Uke session TP UBWC hint
-assignment to `uke-mesa-filesystem 26.2.5-17`. It keeps desktop and independently
-supplied sandbox Mesa clients on the same property value, preserving existing
-feature options. Every rebuilt additional-family child advances its RPM
-revision. Assignment/source checks, signed delivery, session propagation and
-the reported Pad 7 application artifacts require distinct evidence.
+28 October 2026: additional `1.0.0-15` selects the bounded shared-VA-surface WC
+correction and the session TP UBWC hint assignment. Private encoder allocation
+and checked cleanup remain unchanged. Every rebuilt child advances its RPM
+revision. Release14 was canceled before publication because flag agreement
+alone did not qualify the reported artifacts. Source checks, signed delivery,
+session propagation and browser/device acceptance remain separate gates.
 
 27 October 2026: the [hardware update cohort](../../docs/DNF-UPDATE-20261027.md)
 joins Core `1.15.1-3`, hardware `1.8.5-1`, power `1.3.3-4`, sensors `1.0.9-5`,

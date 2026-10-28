@@ -1,12 +1,19 @@
 {
   "schema_version": 1,
-  "date": "2026-10-25",
+  "date": "2026-10-28",
   "publication": {
     "source_family": "uke-additional",
     "binary_package": "uke-vaapi-v4l2",
     "standalone_copr_source_allowed": false,
     "standalone_source_record_deleted": true,
-    "retired_build_ids": [11204584, 11205659, 11205969, 11206106, 11206385, 11209327],
+    "retired_build_ids": [
+      11204584,
+      11205659,
+      11205969,
+      11206106,
+      11206385,
+      11209327
+    ],
     "source_and_working_rollback_retained": true,
     "family_candidate": {
       "date": "2026-10-26",
@@ -68,6 +75,10 @@
     {
       "path": "patches/0005-preserve-decode-error-status.patch",
       "sha256": "e62be3e7485e0d1297df2a1c9432eace1ae460026690205af1d6f32a4424d4db"
+    },
+    {
+      "path": "patches/0006-shared-surface-write-combined.patch",
+      "sha256": "29116d2a380c268a765c1fab2b7dc82ed493264106c212ceb43f2a57172db659"
     }
   ],
   "delivery": {

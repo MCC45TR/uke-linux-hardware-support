@@ -1,5 +1,11 @@
 # Uke stateful video integration
 
+28 October 2026: revision0.7 selects write-combined storage for shared VA
+surfaces, preserving private encoder allocation and checked cleanup. The
+actual allocator/error fixture is included in the additional-family recipe.
+Earlier bounded NV12/P010 reference comparisons inform this selection;
+signed package delivery and current-kernel/browser acceptance remain separate.
+
 COPR publication belongs to the existing `uke-additional` source family.
 The backend remains the separately installable `uke-vaapi-v4l2` child RPM.
 Its local source RPM is an intermediate family input; do not register a
