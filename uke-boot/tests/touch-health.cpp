@@ -31,11 +31,22 @@ int main() {
         units=uke_touch::health_units(root);
         assert(units.size()==4 && std::find(units.begin(),units.end(),"uke-touchscreen.service")==units.end());
         put(input/"name","POCO Pad X1 Touchscreen\n");
-        assert(uke_touch::native_ready(root));
-        put(input/"name","");refuses([&]{uke_touch::native_ready(root);});
+        assert(uke_touch::native_healthy(root));
+        put(input/"name","");refuses([&]{uke_touch::native_healthy(root);});
         put(input/"name","POCO Pad X1 Touchscreen\n");
         put(node/"input_stats","packets=0 errors=1 active=0x0 ready=0\n");
         refuses([&]{uke_touch::health_units(root);});
+        const auto panel=root/"sys/class/drm/card2-DSI-1";
+        put(panel/"status","connected\n");put(panel/"enabled","disabled\n");
+        assert(uke_touch::health_units(root).size()==4);
+        put(panel/"enabled","enabled\n");refuses([&]{uke_touch::health_units(root);});
+        put(panel/"enabled","invalid\n");refuses([&]{uke_touch::health_units(root);});
+        put(panel/"enabled","disabled\n");put(panel/"status","disconnected\n");
+        refuses([&]{uke_touch::health_units(root);});put(panel/"status","connected\n");
+        const auto duplicate=root/"sys/class/drm/card3-DSI-1";
+        put(duplicate/"status","connected\n");put(duplicate/"enabled","disabled\n");
+        refuses([&]{uke_touch::health_units(root);});fs::remove_all(duplicate);
+        put(node/"input_stats","invalid\n");refuses([&]{uke_touch::health_units(root);});
         put(node/"input_stats","packets=2 errors=0 active=0x0 ready=1\n");
         for(const auto &bits:{"0\n","10000000000000000\n","not-hex\n","-1\n"}) {
             put(input/"capabilities/abs",bits);refuses([&]{uke_touch::health_units(root);});
@@ -51,5 +62,5 @@ int main() {
         refuses([&]{uke_touch::health_units(root);});
         fs::remove_all(root);
     } catch(...) {fs::remove_all(root);throw;}
-    std::cout<<"Native boot health checks binding, MT capabilities and firmware; legacy kernels retain service checks: PASS\n";
+    std::cout<<"Native boot health checks binding, MT capabilities, awake readiness and verified panel-off standby; legacy service checks remain: PASS\n";
 }

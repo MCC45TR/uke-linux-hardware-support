@@ -31,8 +31,9 @@ ln -s ../../Qualcomm/sm7675/POCO-Pad-X1.conf %{buildroot}%{_datadir}/alsa/ucm2/c
 install -Dm0644 src/wireplumber/75-uke-thp-not-camera.conf %{buildroot}%{_datadir}/wireplumber/wireplumber.conf.d/75-uke-thp-not-camera.conf
 
 %check
-test "$(find %{buildroot} -type f | wc -l)" -eq 8
-test "$(find %{buildroot} -type l | wc -l)" -eq 2
+test "$(find %{buildroot}%{_datadir}/alsa/ucm2/Qualcomm/sm7675 -type f | wc -l)" -eq 7
+test "$(find %{buildroot}%{_datadir}/alsa/ucm2/conf.d/sm7675 -type l | wc -l)" -eq 2
+cmp src/wireplumber/75-uke-thp-not-camera.conf %{buildroot}%{_datadir}/wireplumber/wireplumber.conf.d/75-uke-thp-not-camera.conf
 test -r %{buildroot}%{_datadir}/alsa/ucm2/conf.d/sm7675/POCO-Pad-X1-HDMI.conf
 bash tests/audio-policy.sh
 

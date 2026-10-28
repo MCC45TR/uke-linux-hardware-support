@@ -23,16 +23,16 @@
       "name": "uke-hw",
       "version": "1.8.4",
       "requires": [
-        "uke-boot-integration = 1.8.4-2%{?dist}",
-        "uke-installation-profile = 1.8.4-2%{?dist}",
-        "uke-kernel-update = 1.8.4-2%{?dist}",
+        "uke-boot-integration = 1.8.4-3%{?dist}",
+        "uke-installation-profile = 1.8.4-3%{?dist}",
+        "uke-kernel-update = 1.8.4-3%{?dist}",
         "fastfetch",
         "bluez",
         "libinput",
         "uke-libwacom"
       ],
       "suggests": [],
-      "release": 2,
+      "release": 3,
       "watch_paths": [
         "uke-boot/src",
         "uke-boot/packaging/uke-installation-profile.spec",
@@ -178,9 +178,9 @@
     {
       "name": "uke-metas",
       "version": "1.4.0",
-      "release": 2,
+      "release": 3,
       "requires": [
-        "uke-core-meta >= 1.0.6-5"
+        "uke-core-meta >= 1.0.6-6"
       ],
       "suggests": [
         "uke-core-meta",
@@ -262,12 +262,12 @@
   },
   "release_overrides": {
     "iio-sensor-proxy": "24.fc46",
-    "uke-boot-integration": "2.fc46",
+    "uke-boot-integration": "3.fc46",
     "uke-plymonth": "5.fc46",
     "uke-orangefox-recovery": "6.fc46",
     "upower": "15.fc46",
     "uke-adaptive-display": "7.fc46",
-    "uke-firmware": "12.fc46",
+    "uke-firmware": "13.fc46",
     "libssc": "19.fc46",
     "uke-ssc-fileservice": "24.fc46",
     "uke-front-color": "14.fc46",
@@ -280,8 +280,8 @@
     "uke-battery-observer": "11.fc46",
     "accountsservice": "12.fc46",
     "material-decoration": "7.fc46",
-    "uke-desktop-metas": "22.fc46",
-    "uke-core-meta": "5.fc46",
+    "uke-desktop-metas": "23.fc46",
+    "uke-core-meta": "6.fc46",
     "uke-proximity-capture": "6.fc46",
     "uke-speaker-controls": "4.fc46",
     "uke-displayport-audio": "8.fc46",

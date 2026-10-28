@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz
 Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)
-Requires: uke-core >= 1.15.1-3 uke-hw >= 1.8.4-2 uke-power >= 1.3.3-4 uke-sensors >= 1.0.9-5
+Requires: uke-core >= 1.15.1-3 uke-hw >= 1.8.4-3 uke-power >= 1.3.3-4 uke-sensors >= 1.0.9-5
 Requires: uke-control uke-kernel-update uke-installation-profile
 Requires: uke-sound >= 1.0.5
 Requires: uke-touchscreen

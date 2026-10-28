@@ -16,7 +16,7 @@ static inline bool compatible(const std::string &value,const std::string &expect
     }
     return found;
 }
-static inline bool native_ready(const fs::path &root) {
+static inline bool native_healthy(const fs::path &root) {
     fs::path node; unsigned native=0,total=0;
     for(const auto &entry:fs::directory_iterator(root/"sys/bus/spi/devices")) {
         const auto value=read_text(entry.path()/"of_node/compatible");
@@ -44,14 +44,28 @@ static inline bool native_ready(const fs::path &root) {
             throw std::runtime_error("Native touchscreen multitouch capabilities are missing");
         ++inputs;
     }
-    if(inputs!=1 || !read_text(node/"input_stats").ends_with(" ready=1\n"))
+    if(inputs!=1)
+        throw std::runtime_error("Native touchscreen input is ambiguous");
+    const auto stats=read_text(node/"input_stats");
+    if(stats.ends_with(" ready=1\n"))return true;
+    unsigned panels=0;bool disabled=false;
+    // Disabling the internal panel intentionally quiesces native touch firmware.
+    if(stats.ends_with(" ready=0\n") && fs::is_directory(root/"sys/class/drm")) {
+        for(const auto &entry:fs::directory_iterator(root/"sys/class/drm")) {
+            if(!entry.path().filename().string().ends_with("-DSI-1"))continue;
+            ++panels;
+            disabled=read_text(entry.path()/"status")=="connected\n" &&
+                     read_text(entry.path()/"enabled")=="disabled\n";
+        }
+    }
+    if(panels!=1 || !disabled)
         throw std::runtime_error("Native touchscreen input or firmware is not ready");
     return true;
 }
 static inline std::vector<std::string> health_units(const fs::path &root) {
     std::vector<std::string> units{"display-manager.service","uke-touchscreen.service",
         "uke-adaptive-display.target","iio-sensor-proxy.service","NetworkManager.service"};
-    if(native_ready(root))std::erase(units,"uke-touchscreen.service");
+    if(native_healthy(root))std::erase(units,"uke-touchscreen.service");
     return units;
 }
 }
