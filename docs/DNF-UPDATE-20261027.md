@@ -1,10 +1,11 @@
 # Uke hardware update, 27 October 2026
 
-28 October correction: hardware `1.8.4-3` admits native touch standby only
-when exactly one connected DSI-1 connector is explicitly disabled. Enabled,
-missing, malformed and ambiguous panel states still require normal readiness.
-Metas `1.4.0-3` selects that hardware revision. This supports external-only boot
-health without claiming that a sleeping touchscreen has been physically tested.
+28 October correction: hardware `1.8.5-1` admits a connected enabled DSI,
+DisplayPort or HDMI output during boot health. Native touch standby is valid
+only when exactly one connected DSI-1 connector is explicitly disabled.
+Enabled, missing, malformed and ambiguous panel states still require normal
+touch readiness. Metas `1.4.0-4` selects this revision. Dormant input and
+physical display accuracy are not inferred from these health checks.
 
 Target: existing Uke installations on Fedora Rawhide AArch64 with
 `uke-core-meta` and the selected Uke COPR repository enabled.
