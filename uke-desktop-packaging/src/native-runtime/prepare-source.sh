@@ -81,6 +81,7 @@ if [[ $name == mesa ]]; then
     cp "$project/packaging/mesa/"*.patch "$project/packaging/mesa/mesa-host-features.cpp" "$project/packaging/mesa/mesa-queue-self-sandbox.cpp" "$project/packaging/mesa/mesa-host-features.meson" "$top/SOURCES/"
     cp "$project/tests/turnip-display-fd.sh" "$top/SOURCES/"
     cp "$project/tests/adreno732-ubwc-hint.sh" "$top/SOURCES/"
+    cp "$project/packaging/mesa/30-uke-adreno732-interop.conf" "$project/tests/adreno732-session-env.sh" "$top/SOURCES/"
     tar -xOf "$top/SOURCES/mesa-$version.tar.xz" "mesa-$version/src/gallium/auxiliary/gallivm/lp_bld_misc.cpp" > "$top/mesa-host-source.cpp"
     awk '/^lp_build_fill_mattrs\(/{copy=1} copy {print} copy && /^}/ {exit}' "$top/mesa-host-source.cpp" > "$top/mesa-host-function.cpp"
     host_patch=1
@@ -91,7 +92,7 @@ if [[ $name == mesa ]]; then
         BEGIN { print "%global debug_package %{nil}" }
         /^Release:/ { print "Release: " release "%{?dist}"; next }
         /^License:/ { print; print "ExclusiveArch: aarch64"; next }
-        /^Source0:/ { print; print "Patch9995: 0005-util-queue-self-scheduling.patch"; print "Patch9996: 0004-freedreno-adreno732-ubwc-hint.patch"; print "Patch9997: 0003-turnip-reject-render-only-display-fd.patch"; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; if(host_patch)print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9992: mesa-queue-self-sandbox.cpp\nSource9993: adreno732-ubwc-hint.sh\nSource9994: mesa-host-features.meson\nSource9996: turnip-display-fd.sh\nSource9999: mesa-host-features.cpp"; next }
+        /^Source0:/ { print; print "Patch9995: 0005-util-queue-self-scheduling.patch"; print "Patch9996: 0004-freedreno-adreno732-ubwc-hint.patch"; print "Patch9997: 0003-turnip-reject-render-only-display-fd.patch"; print "Patch9998: 0002-freedreno-adreno732-identity.patch"; if(host_patch)print "Patch9999: 0001-gallivm-use-aarch64-host-features.patch"; print "Source9990: adreno732-session-env.sh\nSource9991: 30-uke-adreno732-interop.conf\nSource9992: mesa-queue-self-sandbox.cpp\nSource9993: adreno732-ubwc-hint.sh\nSource9994: mesa-host-features.meson\nSource9996: turnip-display-fd.sh\nSource9999: mesa-host-features.cpp"; next }
         /^%autosetup([[:space:]]|$)/ {
             print
             print "mkdir -p uke-native-contract"
@@ -116,18 +117,24 @@ if [[ $name == mesa ]]; then
         /^BuildRequires:.*python3-pyyaml/ { print "BuildRequires: python3-pyyaml = 6.0.3-6.fc45"; next }
         /^BuildRequires:.*llvm-devel/ { print "BuildRequires: llvm-devel = 23.1.3-1.fc46"; next }
         /^%files filesystem/ {
+            print "install -Dm644 %{SOURCE9991} %{buildroot}%{_prefix}/lib/environment.d/30-uke-adreno732-interop.conf"
             print "# No build tool or Python payload may reach a binary subpackage."
             print "if find %{buildroot} -type f \\( -name \"*.py\" -o -name \"*.pyc\" -o -name \"*.pyo\" -o -name \"python[0-9]*\" \\) -print | grep .; then exit 1; fi"
             print "while IFS= read -r -d \"\" file; do if head -c 256 \"$file\" | LC_ALL=C grep -aE \"^#!.*(python|pypy)\"; then exit 1; fi; done < <(find %{buildroot} -type f -print0)"
             print "%check"
+            print "bash %{SOURCE9990} %{SOURCE9991}"
             print "bash %{SOURCE9993} \"$PWD\" --patched"
             print "bash %{SOURCE9996} \"$PWD\" --patched"
             print "%{_vpath_builddir}/uke-mesa-host-features"
             print "%{_vpath_builddir}/uke-mesa-queue-self-sandbox"
             print ""
+            print
+            print "%{_prefix}/lib/environment.d/30-uke-adreno732-interop.conf"
+            next
         }
         /^%changelog/ {
-            print; print "* Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print; print "* Wed Oct 28 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - %{version}-" release
+            print "- Keep Uke session and sandbox Mesa clients on the shared TP UBWC hint value."
             print "- Apply worker priority hints using sandbox-compatible self targets."
             print "- Disable the TP UBWC flag hint for exact Adreno 732 chip and fuse variants."
             print "- Identify exact Adreno 732 chips without changing their existing profile."

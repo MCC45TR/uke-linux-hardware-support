@@ -87,6 +87,22 @@ signed coherent package delivery and tests of that artifact without temporary
 environment overrides remain required. Detailed source/runtime evidence is in
 workspace lesson UKE-GPU-L027.
 
+28 October 2026: the Uke Mesa filesystem child supplies
+`30-uke-adreno732-interop.conf` through the standard systemd user environment
+generator. It appends the same disabled TP UBWC hint used by the host driver
+to the session's feature list, including independently supplied Flatpak Mesa.
+Existing feature options are preserved; administrator environment precedence
+remains available. The upstream property documents a system-wide agreement
+requirement for this hardware family. A host-only driver default cannot impose
+that agreement on a sandbox's separate driver.
+
+Assignment fixtures and the real host environment generator pass. On POCO Pad
+X1, the separately loaded Flatpak GL driver reports FD735 while host Mesa
+reports FD732. Both flag values produce the same bounded GLES validation
+results, including six pre-existing failed scenes. This does not reproduce or
+close the reported Pad 7 application/desktop corruption. The session-coherence
+delivery and the reporter's exact application acceptance remain separate.
+
 ## EGL descriptor lookup candidate
 
 27 October 2026: `0006` caches the exact character-node filesystem identity

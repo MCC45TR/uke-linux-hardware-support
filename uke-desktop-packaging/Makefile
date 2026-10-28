@@ -14,6 +14,7 @@ validate:
 	test "$$(wc -l < src/native-runtime/fedora-exported-symbols.txt)" = "$$(jq -er .baseline.symbol_count manifests/native-runtime.json)"
 	bash -n src/native-runtime/prepare-source.sh
 	bash -n tests/adreno732-ubwc-hint.sh
+	bash tests/adreno732-session-env.sh
 srpm: validate
 	case '$(PACKAGE)' in material-decoration|plymouth-uke|at-spi2-core|gstreamer1|libaccounts-glib|libwacom|libstdcxx-uke-runtime|mesa|upower|iio-sensor-proxy|accountsservice) ;; *) echo 'Unsupported or withdrawn package' >&2; exit 1;; esac
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
