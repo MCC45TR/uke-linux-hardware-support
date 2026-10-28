@@ -1,6 +1,6 @@
 # COPR source families
 
-28 October 2026: additional `1.0.0-15` selects the bounded shared-VA-surface WC
+28 October 2026: additional `1.0.0-16` selects the bounded shared-VA-surface WC
 correction and the session TP UBWC hint assignment. Private encoder allocation
 and checked cleanup remain unchanged. Every rebuilt child advances its RPM
 revision. Release14 was canceled before publication because flag agreement
