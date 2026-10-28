@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.15.1
-Release: 2%{?dist}
+Version: 1.16.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Wed Oct 28 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.16.0-1
+- Expose matching-kernel attached DSC policy and automatic negotiation status.
+- Preserve older kernel guards and separate requested policy from physical output.
+
 * Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
 - Deliver the diagnostic correction with its matching Core family dependency.
 - Advance the rebuilt children beyond the earlier standalone test identity.

@@ -1,5 +1,29 @@
 # Display controls and raw front-color data
 
+## Attached DisplayPort compression policy, 28 October 2026
+
+Version 1.16.0 accepts `sudo uke-control display compression auto|on|off`.
+With a matching kernel advertising `dsc_control=2`, the transition requests a
+full DRM modeset on the attached connector; USB removal is not required. MST
+policy changes remain refused. Older kernels retain their disconnected-only
+guard and reject automatic policy.
+
+The kernel's automatic policy preserves uncompressed output when the admitted
+precision fits the DP and HDMI budgets. Otherwise it tries the advertised DSC
+path. `on` explicitly exercises DSC, while receiver/training failure still
+permits uncompressed recovery. A failed DSC attempt is latched until a fresh
+attachment or explicit request, preventing an automatic retry loop. Receiver
+decoder/FEC readback, lane status and selected valid FEC counters are checked.
+An invalid or unselected counter is not evidence of zero errors.
+
+Status reports the requested policy and whether the kernel requires physical
+disconnection. A matched policy readback is not a completed modeset or visible
+image. A full transition may briefly blank the monitor; successful compressed
+pixels and uncompressed recovery require separate physical qualification.
+The policy is not persisted by Uke Control; the matching kernel chooses its
+initial policy. No display mode, color-depth, Type-C lane or PD capability is
+invented by this setting.
+
 ## Experimental DisplayPort compression, 25 October 2026
 
 `uke-control display compression` reads the requested DSC policy and cached

@@ -154,10 +154,13 @@ std::string compression_status(const fs::path& root) {
     if(nodes.size()!=1)return prefix+"\"control_available\":false,\"reason\":"+
         sysfs::quote(nodes.empty()?"kernel_control_unavailable":"ambiguous_kernel_control")+"}\n";
     const auto policy=sysfs::attribute(root,nodes.front());
-    if(policy!="\"0\""&&policy!="\"1\"")
+    const auto snapshot=sysfs::attribute(root,nodes.front().parent_path()/"uke_dp_stream_state");
+    const bool live=snapshot.find(" dsc_control=2 ")!=snapshot.npos;
+    if(policy!="\"0\""&&policy!="\"1\""&&!(live&&policy=="\"auto\""))
         return prefix+"\"control_available\":false,\"reason\":\"invalid_kernel_policy\"}\n";
-    return prefix+"\"control_available\":true,\"requested\":"+(policy=="\"1\""?"true":"false")+
-        ",\"requires_disconnected\":true,\"persisted\":false,\"cached_driver_state\":"+
+    return prefix+"\"control_available\":true,\"requested\":"+(policy=="\"0\""?"false":"true")+
+        ",\"policy\":"+(policy=="\"auto\""?policy:policy=="\"1\""?"\"on\"":"\"off\"")+
+        ",\"requires_disconnected\":"+(live?"false":"true")+",\"persisted\":false,\"cached_driver_state\":"+
         sysfs::object(root,nodes.front().parent_path(),{"uke_dp_stream_state"})+
         ",\"physical_validation\":\"NOT_ESTABLISHED\"}\n";
 }
@@ -228,9 +231,9 @@ Result lane_limit(const std::string& lanes) {
     return {0,receipt("dp_lane_ceiling",lanes)};
 }
 Result compression(const std::string& policy) {
-    need(policy=="on"||policy=="off","DP_COMPRESSION_MUST_BE_ON_OR_OFF");
+    need(policy=="on"||policy=="off"||policy=="auto","DP_COMPRESSION_MUST_BE_ON_OFF_OR_AUTO");
     const auto nodes=compression_controls("/");need(nodes.size()==1,"DP_COMPRESSION_UNAVAILABLE_OR_AMBIGUOUS");
-    write_attribute(nodes.front(),policy=="on"?"1":"0");
+    write_attribute(nodes.front(),policy=="auto"?policy:policy=="on"?"1":"0");
     return {0,receipt("dp_dsc_request",policy)};
 }
 Result usb_power(const std::string& name,const std::string& policy) {

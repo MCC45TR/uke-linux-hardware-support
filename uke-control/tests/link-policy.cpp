@@ -70,6 +70,14 @@ int main() {
         assert(uke::links::compression_status(root).find("\"requested\":true")!=std::string::npos);
         put(dp/"uke_dp_dsc","2\n");
         assert(uke::links::compression_status(root).find("invalid_kernel_policy")!=std::string::npos);
+        put(dp/"uke_dp_dsc","auto\n");
+        assert(uke::links::compression_status(root).find("invalid_kernel_policy")!=std::string::npos);
+        put(dp/"uke_dp_stream_state","version=1 active=1 dsc_control=2 dsc_force=0\n");
+        compression=uke::links::compression_status(root);
+        assert(compression.find("\"policy\":\"auto\"")!=compression.npos);
+        assert(compression.find("\"requires_disconnected\":false")!=compression.npos);
+        put(dp/"uke_dp_dsc","0\n");
+        assert(uke::links::compression_status(root).find("\"requested\":false")!=std::string::npos);
         const auto dp2=root/"sys/bus/platform/devices/dp2";put(dp2/"uke_dp_dsc","0\n");
         fs::create_directory_symlink(dpdriver,dp2/"driver");fs::create_directory_symlink(dp2,dpdriver/"dp2");
         assert(uke::links::compression_status(root).find("ambiguous_kernel_control")!=std::string::npos);

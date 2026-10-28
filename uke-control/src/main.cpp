@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.15.1 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.16.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -43,7 +43,7 @@ static void help() {
       "  display profile NAME        Request usb3-display or display4; unsupported controls fail (root)\n"
       "  display lane-limit 1|2|4    DP training ceiling, disconnected only (root)\n"
       "  display compression         Requested DSC policy and cached driver state\n"
-      "  display compression on|off  Experimental DSC request, disconnected only (root)\n"
+      "  display compression auto|on|off  DSC policy; attached transitions need matching kernel (root)\n"
       "  usb power DEVICE POLICY     Runtime PM: performance or auto, per USB device (root)\n"
       "  ethernet status IFACE       RTL8153 link, EEE, offload, pause, ring and channel capabilities\n"
       "  ethernet profile IFACE NAME auto, 1000-full, 100-full or 10-full; interface down (root)\n"

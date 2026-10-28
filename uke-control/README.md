@@ -1,5 +1,11 @@
 # Uke Control
 
+28 October 2026: version 1.16.0 adds automatic DSC policy and matching-kernel
+attached transitions. Status retains the older kernel's disconnection guard
+and distinguishes the requested policy from active/visible compression.
+Source tests cover both control versions. Physical transition, receiver,
+camera and recovery acceptance remain separate; see [DISPLAY.md](DISPLAY.md).
+
 27 October 2026: version 1.15.1 records logind and UPower lid states separately
 and queries the current session's screensaver state without activation. Sleep
 reports include both lid consumers; display reports include actual stream depth
