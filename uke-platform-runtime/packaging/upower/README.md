@@ -1,5 +1,16 @@
 # Fedora UPower overlay — 18 October 2026
 
+28 October 2026: source candidate patch0004 retries failed capacity discovery
+and preserves the charge/energy basis across unavailable readings. The actual
+daemon fixture fails on the previous source and passes delayed, missing and
+restored capacity on the corrected source. Synthetic 35.4 Wh/0.4 W assertions are
+host evidence, not Uke capacity or electrical measurements. The native source
+recipe reproduces the tested files and produces `upower-1.91.5-6.fc46.src.rpm`;
+the coordinated family candidate is `uke-power 1.3.3-5`, with new child releases.
+No native AArch64 RPM, tablet installation, KDE GUI result or charger SET is
+claimed. Meson 1.12.1-2 and its Fedora Python run only in the isolated host
+builder; no project Python or new target dependency is introduced.
+
 21 October 2026: the active producer uses the original signed Rawhide source
 lock and family `uke-power 1.1.0-4`, with `uke-upower 1.91.5-8`. The standalone
 reference spec retains a numeric Release; the family remains the COPR

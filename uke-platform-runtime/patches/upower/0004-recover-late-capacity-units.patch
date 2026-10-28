@@ -1,0 +1,75 @@
+From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Recover battery capacity discovery after unavailable reads
+
+Base: UPower v1.91.5, 233615a1505166ef4a28c959836fe8c7781f5697,
+with the existing downstream threshold, health and wireless corrections.
+Source license: GPL-2.0-or-later; upstream attribution is retained.
+
+A cached failed sysfs probe can hide charge_full indefinitely. Retry the
+energy/charge attribute probes uncached, retain the selected units across
+unavailable readings, and allow initial unit discovery while no full/design
+energy basis exists. Discard the old estimator window on that initial change.
+Keep the existing warning/refusal when an established battery changes units.
+No design voltage, absolute charge value, health result or charger control is
+invented. The native daemon fixture covers delayed, lost and restored charge
+capacity with exact synthetic energy/rate assertions on a private bus.
+
+--- a/src/linux/up-device-supply-battery.c
++++ b/src/linux/up-device-supply-battery.c
+@@ -76,6 +76,7 @@
+ 	gboolean		 shown_invalid_voltage_warning;
+ 	gboolean		 ignore_system_percentage;
+ 	gboolean		 support_charge_limit;
++	UpBatteryUnits		 units;
+ };
+ 
+ G_DEFINE_TYPE (UpDeviceSupplyBattery, up_device_supply_battery, UP_TYPE_DEVICE_BATTERY)
+@@ -432,20 +433,21 @@
+ 	info.voltage_design = up_device_supply_battery_get_design_voltage (self, native);
+ 	info.charge_cycles = g_udev_device_get_sysfs_attr_as_int_uncached (native, "cycle_count");
+ 
+-	if (g_udev_device_has_sysfs_attr (native, "energy_full")) {
++	if (g_udev_device_has_sysfs_attr_uncached (native, "energy_full")) {
+ 		info.units = UP_BATTERY_UNIT_ENERGY;
+ 		info.energy.full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "energy_full") / 1000000.0;
+ 		info.energy.design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "energy_full_design") / 1000000.0;
+-	} else if (g_udev_device_has_sysfs_attr (native, "charge_full")) {
++	} else if (g_udev_device_has_sysfs_attr_uncached (native, "charge_full")) {
+ 		info.units = UP_BATTERY_UNIT_CHARGE;
+ 		info.energy.full = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full") / 1000000.0;
+ 		info.energy.design = g_udev_device_get_sysfs_attr_as_double_uncached (native, "charge_full_design") / 1000000.0;
+ 	} else {
+ 		g_info ("energy_full and charge_full are not found, set energy_full to 0.0");
+-		info.units = UP_BATTERY_UNIT_ENERGY;
++		info.units = self->units;
+ 		info.energy.full = 0.0;
+ 		info.energy.design = 0.0;
+ 	}
++	self->units = info.units;
+ 
+ 	technology = get_sysfs_attr_uncached (native, "technology");
+ 	info.technology = up_convert_device_technology (technology);
+@@ -591,6 +593,7 @@
+ static void
+ up_device_supply_battery_init (UpDeviceSupplyBattery *self)
+ {
++	self->units = UP_BATTERY_UNIT_ENERGY;
+ }
+ 
+ static void
+--- a/src/up-device-battery.c
++++ b/src/up-device-battery.c
+@@ -563,6 +563,13 @@
+ 			priv->units = info->units;
+ 		}
+ 
++		/* Unavailable initial readings did not establish an energy basis. */
++		if (priv->units != info->units && priv->energy_full_reported < 0.01 &&
++		    priv->energy_design < 0.01) {
++			priv->units = info->units;
++			priv->hw_data_len = 0;
++		}
++
+ 		/* See comment in up_device_battery_report */
+ 		if (priv->units != info->units && !priv->units_changed_warning) {
+ 			g_warning ("Battery unit type changed, assuming the old unit is still valid. This is likely a firmware or driver issue, please report!");

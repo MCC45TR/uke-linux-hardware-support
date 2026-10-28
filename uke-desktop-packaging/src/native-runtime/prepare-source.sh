@@ -67,7 +67,7 @@ if [[ $name == upower || $name == iio-sensor-proxy ]]; then
     if [[ $name == iio-sensor-proxy ]]; then owner="$project/../uke-sensors"; fi
     cp "$owner/patches/$name/"*.patch "$top/SOURCES/"
     if [[ $name == upower ]]; then
-        cp "$owner/tests/"upower-{threshold-contract,health-contract,fixture}.sh "$top/SOURCES/"
+        cp "$owner/tests/"upower-{threshold-contract,health-contract,fixture,late-capacity}.sh "$top/SOURCES/"
         cp "$owner/tests/fixtures/upower/ac-net-discharge.umockdev" "$top/SOURCES/"
     else
         cp "$owner/packaging/selinux/uke-ssc.cil" "$owner/src/dual-light.h" "$owner/tests/dual-light.cpp" "$top/SOURCES/"

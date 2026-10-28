@@ -9,6 +9,7 @@ function check() {
         print "cp %{SOURCE9998} charging-fixture/tests/upower-fixture.sh"
         print "cp %{SOURCE9999} charging-fixture/tests/fixtures/upower/ac-net-discharge.umockdev"
         print "LD_LIBRARY_PATH=%{_vpath_builddir}/libupower-glib timeout -k 5s 90s bash charging-fixture/tests/upower-fixture.sh %{_vpath_builddir}/src/upowerd"
+        print "LD_LIBRARY_PATH=%{_vpath_builddir}/libupower-glib timeout -k 5s 150s bash %{SOURCE9994} %{_vpath_builddir}/src/upowerd"
     } else {
         print "g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror native-contract/dual-light.cpp -o dual-light-test"
         print "./dual-light-test"
@@ -18,12 +19,13 @@ function check() {
     print "if find %{buildroot} -type f \\( -name '*.py' -o -name '*.pyc' -o -name '*.pyo' -o -name 'python*' \\) -print -quit | grep -q .; then exit 1; fi"
     print "while IFS= read -r -d '' file; do if head -c 256 \"$file\" | LC_ALL=C grep -aE '^#!.*(python|pypy)'; then exit 1; fi; done < <(find %{buildroot} -type f -print0)"
 }
-/^(Source|Patch)999[6-9]:/ || /^%check([[:space:]]|$)/ { print "Unsupported upstream overlay layout" >"/dev/stderr"; bad=1; exit 1 }
+/^(Source|Patch)999[4-9]:/ || /^Patch10000:/ || /^%check([[:space:]]|$)/ { print "Unsupported upstream overlay layout" >"/dev/stderr"; bad=1; exit 1 }
 /^Release:/ { print "Release: " release "%{?dist}"; next }
 /^Source0:/ {
     sources++; print
     if (name=="upower") {
         print "Patch9997: 0001-required-threshold-write-errors.patch\nPatch9998: 0002-preserve-reported-health-capacity.patch\nPatch9999: 0003-recognize-standard-wireless-supplies.patch"
+        print "Patch10000: 0004-recover-late-capacity-units.patch\nSource9994: upower-late-capacity.sh"
         print "Source9996: upower-threshold-contract.sh\nSource9997: upower-health-contract.sh\nSource9998: upower-fixture.sh\nSource9999: ac-net-discharge.umockdev"
         print "BuildRequires: glib2-devel >= 2.76\nBuildRequires: gcc python3 umockdev dbus-daemon systemd-rpm-macros"
     } else {
