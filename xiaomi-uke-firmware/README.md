@@ -1,5 +1,10 @@
 # xiaomi-uke-firmware
 
+30 October 2026: unstable builds this component independently on Rawhide AArch64.
+The [dated notice review](manifests/firmware-notice-review-20261030.json) verifies
+seven exact OEM file mappings to Apache-2.0 text. Redistribution evidence for
+the other 210 files and hardware qualification remain incomplete.
+
 20 October 2026 COPR preparation: the canonical binary is `uke-firmware`,
 built inside the combined `uke-hw` source family. `make copr-srpm` creates
 the complete firmware source input for that family, with pinned OTA notices.

@@ -22,6 +22,8 @@ speaker-srpm:
 	install -m644 "$$data/uke-speaker-firmware.spec" "$$top/SPECS/"
 	rpmbuild -bs --define "_topdir $$top" --define '_buildhost uke-copr-source' "$$top/SPECS/uke-speaker-firmware.spec"
 validate:
+	jq -e '.schema_version==1 and .device=="uke" and .hardware_tested==false and .redistribution_review_complete==false and .firmware_blob_package_ready==false and .payload_files==217 and .installed_hashes_verified==217 and .exact_notice_matches==7 and (.notice_mapped_files|length)==.exact_notice_matches and ([.notice_mapped_files[].notice_path]|unique|length)==.exact_notice_matches and (.exact_notice_matches+.missing_original_notice_paths+.unmatched_named_notice_paths)==.payload_files and all(.notice_mapped_files[]; (.sha256|test("^[a-f0-9]{64}$$")) and .content_ids==["3b83ef96387f14655fc854ddc3c6bd57"])' manifests/firmware-notice-review-20261030.json >/dev/null
+	test "$$(sha256sum packaging/speaker-firmware/LICENSE.Apache-2.0 | cut -d' ' -f1)" = "$$(jq -er .license_evidence.license_sha256 manifests/firmware-notice-review-20261030.json)"
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false and (.expected_packages | length > 0)' manifests/component.json >/dev/null
 	jq -e '.schema_version==1 and .device=="uke" and (.admitted_files|length)==0 and .firmware_blob_package_ready==false' manifests/firmware-lock.json >/dev/null
 	bash -n src/audit-admission.sh
