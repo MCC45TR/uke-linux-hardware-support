@@ -4,3 +4,5 @@
 *.key
 *.pem
 .env*
+/referances/*
+!/referances/README.md

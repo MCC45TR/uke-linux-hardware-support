@@ -280,3 +280,10 @@ physical storage checks and userdata kernel activation remain separate. The
 earlier updater refused userdata writes. Version 1.1.0 supersedes that source
 limit with the guarded userdata path documented above. The new native fixtures
 do not establish on-tablet A/B acceptance or power-loss recovery.
+
+## Optional identity source probe
+
+29 October 2026. `make hardware-info` builds the read-only C++ identity probe;
+`make test-hardware-info` runs its synthetic file fixtures. The helper and its
+example identity service are not installed or activated by the current RPM.
+A source merge does not establish a new device test result.

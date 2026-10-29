@@ -79,3 +79,11 @@ srpm: validate
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-boot-integration.spec"
 	mkdir -p "$(outdir)"
 	install -m644 "$$top/SRPMS/"*.src.rpm "$(outdir)/"
+
+# Optional identity source probe; not installed or activated by the package.
+.PHONY: hardware-info test-hardware-info
+hardware-info:
+	mkdir -p build/tests
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -O2 src/hardware-info.cpp $(LDFLAGS) -o build/tests/uke-hardware-info
+test-hardware-info:
+	bash tests/hardware-info.sh
