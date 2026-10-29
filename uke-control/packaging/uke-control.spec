@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.10.2
-Release: 1%{?dist}
+Version: 1.15.1
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -11,6 +11,7 @@ BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon
+BuildRequires: selinux-policy-devel
 Requires: util-linux-core util-linux systemd procps-ng
 Requires: coreutils findutils rpm
 Requires: ethtool >= 7.1
@@ -18,6 +19,7 @@ Requires: systemd-udev
 Requires: dracut >= 111
 Requires: f2fs-tools >= 1.16.0
 Requires: policycoreutils
+Requires: polkit selinux-policy-targeted
 Requires: kmod
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
@@ -48,6 +50,14 @@ package selections. Numeric readings alone do not establish physical acceptance.
 
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
+install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
+install -Dm644 build/selinux/uke_control_rgb.pp %{buildroot}%{_datadir}/selinux/packages/uke_control_rgb.pp
+install -Dm644 packaging/uke-control-rgb.service %{buildroot}%{_unitdir}/uke-control-rgb.service
+install -Dm644 packaging/uke-control-rgb.sysusers %{buildroot}%{_sysusersdir}/uke-control-rgb.conf
+install -Dm644 packaging/91-uke-control-rgb.rules %{buildroot}%{_udevrulesdir}/91-uke-control-rgb.rules
+install -Dm644 packaging/org.senemos.Uke.Rgb.conf %{buildroot}%{_datadir}/dbus-1/system.d/org.senemos.Uke.Rgb.conf
+install -Dm644 packaging/org.senemos.Uke.Rgb.service %{buildroot}%{_datadir}/dbus-1/system-services/org.senemos.Uke.Rgb.service
+install -Dm644 packaging/org.senemos.uke.rgb.policy %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.rgb.policy
 install -Dm755 build/uke-control-packages %{buildroot}%{_libexecdir}/uke-control/packages
 install -Dm755 build/resize-system %{buildroot}%{_libexecdir}/uke-control/resize-system
 install -Dm755 packaging/vrr-min-load %{buildroot}%{_libexecdir}/uke-control/vrr-min-load
@@ -78,13 +88,27 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %make_build check
 
 %post
+/usr/bin/systemd-sysusers %{_sysusersdir}/uke-control-rgb.conf || exit 1
+%{_sbindir}/semodule -i %{_datadir}/selinux/packages/uke_control_rgb.pp || exit 1
+%{_sbindir}/restorecon %{_libexecdir}/uke-control/rgb-led || exit 1
 %systemd_post uke-control.service uke-control-wake.service uke-control-cdc.service
+if /usr/bin/systemctl -q is-active dbus.service; then
+    /usr/bin/busctl --system call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus ReloadConfig >/dev/null || exit 1
+fi
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
+/usr/bin/udevadm trigger --action=add --subsystem-match=misc --sysname-match=uke-rgb >/dev/null 2>&1 || :
 %systemd_user_post uke-control-moisture-notify.service
 %preun
+%systemd_preun uke-control-rgb.service
 %systemd_preun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
+%systemd_postun uke-control-rgb.service
+if [ "$1" = 0 ]; then
+    if [ -c /dev/uke-rgb ] && [ ! -L /dev/uke-rgb ]; then chown root:root /dev/uke-rgb; chmod 0600 /dev/uke-rgb; fi
+    %{_sbindir}/semodule -r uke_control_rgb >/dev/null 2>&1 || :
+    %{_sbindir}/restorecon /dev/uke-rgb >/dev/null 2>&1 || :
+fi
 %systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 %systemd_user_postun uke-control-moisture-notify.service
@@ -93,6 +117,14 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %license LICENSE
 %doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md
 %{_bindir}/uke-control
+%{_libexecdir}/uke-control/rgb-led
+%{_datadir}/selinux/packages/uke_control_rgb.pp
+%{_unitdir}/uke-control-rgb.service
+%{_sysusersdir}/uke-control-rgb.conf
+%{_udevrulesdir}/91-uke-control-rgb.rules
+%{_datadir}/dbus-1/system.d/org.senemos.Uke.Rgb.conf
+%{_datadir}/dbus-1/system-services/org.senemos.Uke.Rgb.service
+%{_datadir}/polkit-1/actions/org.senemos.uke.rgb.policy
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
 %{_libexecdir}/uke-control/resize-system
@@ -119,6 +151,63 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
+- Deliver the diagnostic correction with its matching Core family dependency.
+- Advance the rebuilt children beyond the earlier standalone test identity.
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
+- Record independent lid consumers and the current session's screensaver state.
+- Include active display depth and cached DSC state in diagnostic reports.
+- Correct the CLI version banner; retain read-only, no-activation queries.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-1
+- Add an explicit disconnected DSC request and cached compression-status query.
+- Preserve provider, root, board and driver readback checks; activation remains unqualified.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.2-1
+- Limit xHCI discovery to the verified USB controller's own children.
+- Preserve the bounded inventory limit with a large-platform-bus fixture.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.1-1
+- Include the verified xHCI platform host in the Uke wake policy.
+- Preserve saved choices, provider containment and recovery-key safeguards.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.13.0-1
+- Apply supported USB remote-input wake permissions and expose selective lid/touch wake.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-5
+- Let the unprivileged RGB mechanism query its own Polkit action for clients.
+- Preserve active-local-only authorization and the no-interaction request path.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-4
+- Associate the exact RGB bus name with the confined broker's SELinux domain.
+- Reload the running bus configuration without restarting the bus or desktop.
+- Check the name/context and compiled ownership-permission contract.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-3
+- Allow the confined broker to read SELinux enforcement state.
+- Preserve the hardened domain transition and read-only policy checks.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-2
+- Admit the confined systemd transition with NoNewPrivileges enabled.
+- Check the compiled permission required by the hardened RGB service.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.12.0-1
+- Transport HEX, automatic and bounded test requests to the kernel-owned RGB controller.
+- Confine the dedicated broker and device with SELinux, DAC and active-session Polkit admission.
+- Preserve the installed display-bit diagnostics from signed Control 1.11.1.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.1-2
+- Deliver the display command with its exact matching core source family.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.1-1
+- Report active output component depth from the kernel stream snapshot.
+- Keep inactive, unavailable and malformed snapshots distinct from capabilities.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.11.0-1
+- Add torch and RGB brightness percentages with exact current/scale admission.
+- Remove the fixed torch deadline; retain supervised cleanup and stop-before-sleep.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.10.2-1
 - Validate the parent controller DT link and exact LED label used by the original LED class.
 - Cover providers without a per-LED OF symlink while retaining all mapping and current checks.

@@ -1,5 +1,76 @@
 # Uke Control
 
+27 October 2026: version 1.15.1 records logind and UPower lid states separately
+and queries the current session's screensaver state without activation. Sleep
+reports include both lid consumers; display reports include actual stream depth
+and cached DSC state. These observations do not establish physical cover or
+monitor behavior. The CLI version banner is corrected to match the package.
+
+26 October 2026: version 1.15.0 reports driver stream capacity and cached sink
+MST support in `display profiles`. The dual-display request requires both,
+plus a unique standard Type-C C/E control. Missing firmware controls remain
+unavailable. Host fixtures pass; native delivery and physical four-lane/MST
+output remain unvalidated. See [DISPLAY.md](DISPLAY.md).
+
+25 October 2026: version 1.14.0 adds an experimental disconnected DSC request
+and cached driver-state query. Missing kernel support is reported explicitly.
+The request does not establish physical activation or override HDMI limits.
+Native package and tablet compression acceptance remain pending.
+
+25 October 2026: version 1.13.2 searches only the verified USB controller's
+children for its xHCI host. The 1.13.1 platform-bus scan exceeds the tablet's
+bounded inventory limit and refuses wake-policy application. A fixture with
+300 unrelated platform entries reproduces that refusal and checks the scoped
+correction. The inventory bound and driver/containment checks remain unchanged.
+
+25 October 2026: version 1.13.1 also admits the xHCI host wake permission under
+the verified Uke controller and checks its bound driver. Release 1.13.0 enabled
+USB-device and hub permissions but missed this platform host. A physical mouse
+wakes s2idle after the host permission is enabled; this does not qualify keyboard,
+Bluetooth or touch wake. The kernel battery-resume regression remains separate.
+
+25 October 2026: version 1.13.0 exposes the kernel's selective `lid-open` and
+`double-tap` wake permissions when present. Before sleep, it enables supported
+USB remote-wakeup devices under the verified Uke controller and Bluetooth UART
+unless an explicit saved choice disables them. Empty USB wake attributes remain
+unsupported. Source fixtures cover discovery, containment, saved choices and
+rollback; physical accessory and touch wake validation remains required.
+
+25 October 2026: packaging revision 1.12.0-5 names `uke-rgb` as owner of its
+Polkit action so the non-root mechanism can query authorization for a client.
+Revision 4's transport is healthy, but Polkit refuses that cross-user query
+without the ownership annotation. Active-local-only defaults and the
+no-interaction flag are unchanged. Host configuration checks pass; signed
+target authorization and physical color validation remain separate gates.
+See [Polkit action ownership](https://polkit.pages.freedesktop.org/polkit/polkit.8.html).
+
+25 October 2026: packaging revision 1.12.0-4 associates the exact RGB bus name
+with the confined broker's SELinux context. Revision 3 reaches the kernel but
+cannot acquire its bus name without this mapping. The update reloads bus
+configuration without restarting the bus or desktop. Compiled-policy and XML
+checks pass; corrected tablet startup remains to be verified. The
+[D-Bus manual](https://dbus.freedesktop.org/doc/dbus-daemon.1.html) documents the
+name's target context and the bus-context fallback when no association exists.
+
+25 October 2026: packaging revision 1.12.0-2 admits the RGB domain transition
+with systemd `NoNewPrivileges=yes`. The tablet's SELinux Enforcing run exposed
+the missing transition in revision 1. The compiled-policy regression check
+rejects that earlier package and accepts the correction; runtime acceptance
+of the corrected signed package remains a separate gate.
+
+25 October 2026: version 1.12.0 sends RGB requests to the kernel-owned policy.
+A dedicated SELinux-confined broker accepts active local-session requests
+without sudo. The widget exposes one bounded ten-second color test; battery
+animation and its timing run in the kernel. HEX colors include intermediate
+colors such as yellow. Host checks are separate from matched kernel/RPM and
+physical acceptance. See [light controls and security](LIGHTS.md).
+The installed 1.11.1 display-bit diagnostics are retained.
+
+25 October 2026: version 1.11.0 adds torch brightness and independent RGB
+color/brightness percentages. The fixed torch deadline is removed; supervised
+stop/failure cleanup and stop-before-sleep remain. This requires the reviewed
+kernel's real torch current steps; physical electrical/lifecycle tests remain open.
+
 25 October 2026: version 1.10.2 validates the original LED class through its
 parent controller DT link and fixed child label. Host fixtures cover the
 standard layout without a per-LED OF symlink and refuse foreign parents/labels.
@@ -407,12 +478,15 @@ Settings persist in root-private state and are restored before each sleep,
 after input providers are available. The native helper admits only Uke/SM7675, unique canonical sysfs
 providers and the expected key capability. It verifies writes, restores
 previous permissions on failure and refuses to disable every recovery key.
-USB attach/removal share one device wake permission. Independent firmware
-charge-event filters and touch-gesture wake remain unimplemented.
+USB attach/removal share one controller wake permission. Its bound xHCI host,
+USB hubs and supported remote-wakeup devices also receive their permissions.
+Independent firmware charge-event filters remain unavailable. The touch-gesture
+permission does not prove that firmware entry or physical wake succeeds.
 
 On the 21 October tablet trial, an enabled Bluetooth UART wake permission
 caused an immediate s2idle return through IRQ135. Temporarily disabling that
-permission allowed the 25-second RTC trial to complete. Its default policy is
-therefore disabled until Bluetooth accessory wake is qualified; this does not
-power Bluetooth off. An explicit saved setting overrides that default.
+permission allowed the 25-second RTC trial to complete. That earlier diagnostic
+setting is not a general Bluetooth wake acceptance result. Version 1.13 enables
+supported USB, lid, touch and Bluetooth wake sources for the requested accessory
+trials unless an explicit saved setting disables them.
 Permission readback is not a physical wake or low-power acceptance result.

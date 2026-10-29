@@ -5,6 +5,7 @@
 #include <charconv>
 #include <cstring>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
 #include <linux/magic.h>
@@ -76,6 +77,59 @@ std::string mask_hex(unsigned mask) {
     return std::string(hex.data(),converted.ptr);
 }
 }
+std::string display_bits_status(const fs::path& root) {
+    std::string out="{\"schema\":\"org.uke.control.display.bits.v1\",\"source\":\"kernel_active_stream\",\"outputs\":[";
+    bool comma=false;
+    for(const auto& entry:sysfs::entries(root,root/"sys/class/drm")) {
+        const auto name=entry.filename().string();
+        const auto dash=name.find('-',4);
+        if(!name.starts_with("card")||dash==name.npos||dash==4||
+           name.substr(4,dash-4).find_first_not_of("0123456789")!=name.npos)continue;
+        const auto connector=name.substr(dash+1);
+        if(!named(connector)||(!connector.starts_with("DSI-")&&!connector.starts_with("DP-")))continue;
+        const auto connected=value(entry/"status"),enabled=value(entry/"enabled");
+        std::string active="null",bpc="null",bpp="null",wire="null",reason="driver_snapshot_unavailable_use_sudo_or_update_kernel";
+        if(connected!="connected"||enabled!="enabled") {
+            active="false";reason="output_inactive";
+        } else {
+            const auto snapshot=sysfs::resolved(root,root/"sys/kernel/debug/dri"/name.substr(4,dash-4)/connector/"output_bits");
+            if(snapshot) {
+                std::istringstream input(value(*snapshot));
+                std::array<unsigned,5> numbers{};
+                const std::array<std::string,5> keys{"version=","active=","bpc=","bpp=","dsc_bpp_x16="};
+                bool valid=true;
+                for(size_t i=0;i<keys.size();++i) {
+                    std::string field;
+                    if(!(input>>field)||!field.starts_with(keys[i])){valid=false;break;}
+                    const auto raw=std::string_view(field).substr(keys[i].size());
+                    const auto parsed=std::from_chars(raw.data(),raw.data()+raw.size(),numbers[i]);
+                    if(raw.empty()||parsed.ec!=std::errc{}||parsed.ptr!=raw.data()+raw.size()){valid=false;break;}
+                }
+                std::string extra;
+                valid=valid&&!(input>>extra)&&numbers[0]==1&&numbers[1]<=1;
+                if(valid&&!numbers[1])valid=!numbers[2]&&!numbers[3]&&!numbers[4];
+                if(valid&&numbers[1])valid=(numbers[2]==6||numbers[2]==8||numbers[2]==10||numbers[2]==12||numbers[2]==16)&&
+                    numbers[3]==numbers[2]*3&&numbers[4]<=numbers[3]*16;
+                reason="invalid_driver_snapshot";
+                if(valid) {
+                    active=numbers[1]?"true":"false";reason=numbers[1]?"available":"output_inactive";
+                    if(numbers[1]) {
+                        bpc=std::to_string(numbers[2]);bpp=std::to_string(numbers[3]);wire=std::to_string(numbers[4]);
+                    }
+                }
+            }
+            if(value(entry/"status")!=connected||value(entry/"enabled")!=enabled) {
+                active=bpc=bpp=wire="null";reason="output_changed_during_snapshot";
+            }
+        }
+        if(comma)out+=',';
+        comma=true;
+        out+="{\"connector\":"+sysfs::quote(connector)+",\"connected\":"+(connected=="connected"?"true":"false")+
+            ",\"active\":"+active+",\"bits_per_component\":"+bpc+",\"bits_per_pixel\":"+bpp+
+            ",\"dsc_bits_per_pixel_x16\":"+wire+",\"reason\":"+sysfs::quote(reason)+'}';
+    }
+    return out+"]}\n";
+}
 std::vector<fs::path> lane_controls(const fs::path& root) {
     std::vector<fs::path> out;
     for(const auto& p:sysfs::entries(root,root/"sys/bus/platform/drivers/msm-dp-display")) {
@@ -84,6 +138,28 @@ std::vector<fs::path> lane_controls(const fs::path& root) {
         if(control&&fs::is_regular_file(*control))out.push_back(*control);
     }
     return out;
+}
+std::vector<fs::path> compression_controls(const fs::path& root) {
+    std::vector<fs::path> out;
+    for(const auto& p:sysfs::entries(root,root/"sys/bus/platform/drivers/msm-dp-display")) {
+        if(sysfs::driver(root,p)!="\"msm-dp-display\"")continue;
+        const auto control=sysfs::resolved(root,p/"uke_dp_dsc");
+        if(control&&fs::is_regular_file(*control))out.push_back(*control);
+    }
+    return out;
+}
+std::string compression_status(const fs::path& root) {
+    const auto nodes=compression_controls(root);
+    const std::string prefix="{\"schema\":\"org.uke.control.display.compression.v1\",";
+    if(nodes.size()!=1)return prefix+"\"control_available\":false,\"reason\":"+
+        sysfs::quote(nodes.empty()?"kernel_control_unavailable":"ambiguous_kernel_control")+"}\n";
+    const auto policy=sysfs::attribute(root,nodes.front());
+    if(policy!="\"0\""&&policy!="\"1\"")
+        return prefix+"\"control_available\":false,\"reason\":\"invalid_kernel_policy\"}\n";
+    return prefix+"\"control_available\":true,\"requested\":"+(policy=="\"1\""?"true":"false")+
+        ",\"requires_disconnected\":true,\"persisted\":false,\"cached_driver_state\":"+
+        sysfs::object(root,nodes.front().parent_path(),{"uke_dp_stream_state"})+
+        ",\"physical_validation\":\"NOT_ESTABLISHED\"}\n";
 }
 fs::path usb_device(const fs::path& root,const std::string& name) {
     need(named(name)&&name.find(':')==name.npos,"INVALID_USB_DEVICE");
@@ -150,6 +226,12 @@ Result lane_limit(const std::string& lanes) {
     const auto nodes=lane_controls("/");need(nodes.size()==1,"DP_LANE_LIMIT_UNAVAILABLE_OR_AMBIGUOUS");
     write_attribute(nodes.front(),lanes);
     return {0,receipt("dp_lane_ceiling",lanes)};
+}
+Result compression(const std::string& policy) {
+    need(policy=="on"||policy=="off","DP_COMPRESSION_MUST_BE_ON_OR_OFF");
+    const auto nodes=compression_controls("/");need(nodes.size()==1,"DP_COMPRESSION_UNAVAILABLE_OR_AMBIGUOUS");
+    write_attribute(nodes.front(),policy=="on"?"1":"0");
+    return {0,receipt("dp_dsc_request",policy)};
 }
 Result usb_power(const std::string& name,const std::string& policy) {
     need(policy=="performance"||policy=="auto","USB_POWER_MUST_BE_PERFORMANCE_OR_AUTO");

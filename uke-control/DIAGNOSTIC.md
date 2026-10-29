@@ -1,5 +1,12 @@
 # Diagnostic logs
 
+27 October 2026: version 1.15.1 adds independent logind/UPower lid queries and
+the invoking session's screensaver state to `sleep` reports. `display` reports
+include actual active-stream depth and cached DSC policy/activation. These are
+read-only observations; they do not wake an output, activate a D-Bus service or
+establish physical monitor acceptance. A sudo/SSH process may have no session
+bus, and that failure remains explicit rather than selecting a guessed user.
+
 24 October 2026. Version 1.6.2 adds loaded MSM, O82 panel and THP module build-ID
 notes and taint flags to `display` and `all` reports. Notes are recorded as hex
 through the existing bounded collector. Compare these loaded-image identities

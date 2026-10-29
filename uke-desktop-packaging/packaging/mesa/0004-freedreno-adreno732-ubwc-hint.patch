@@ -1,0 +1,26 @@
+From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] freedreno: disable the TP UBWC flag hint for Adreno 732
+
+On Uke with native DRM, image atomics and a multiple-image barrier test fail
+with the inherited TP UBWC flag hint enabled. Disabling only this property
+passes all three reproductions without disabling UBWC storage images.
+
+Apply the correction to the shared device-info copy used by Gallium and
+Turnip. Match the exact chip across fuse variants, preserve the X1-45 table
+entry and retain explicit debug override precedence. No neighboring chip
+properties or original device records are modified.
+
+---
+diff --git a/src/freedreno/common/freedreno_dev_info.c b/src/freedreno/common/freedreno_dev_info.c
+--- a/src/freedreno/common/freedreno_dev_info.c
++++ b/src/freedreno/common/freedreno_dev_info.c
+@@ -82,6 +82,9 @@ fd_dev_info(const struct fd_dev_id *id)
+    const struct fd_dev_info *orig = fd_dev_info_raw(id);
+    if (orig) {
+       modified = *orig;
++      /* Uke image atomics/readback fail with the TP UBWC flag hint set. */
++      if ((id->chip_id & UINT64_C(0xffffffff)) == UINT64_C(0x43030b00))
++         modified.props.enable_tp_ubwc_flag_hint = false;
+       fd_dev_info_apply_dbg_options(&modified);
+    }
+ 

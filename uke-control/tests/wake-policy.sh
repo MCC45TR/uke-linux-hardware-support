@@ -42,8 +42,10 @@ static void wake_write(const wake::Source& source,bool enabled){
 template<class Call> void refuses(Call call){bool refused=false;try{call();}catch(const std::runtime_error&){refused=true;}assert(refused);}
 int main(int argc,char** argv){
  assert(argc==2);state=argv[1];fs::create_directories(state);
- current={{"power-key","","/power",true},{"volume-up","","/volume",true},{"bluetooth-uart","","/uart",true},{"double-tap","unsupported",{},false}};
- wake_apply();assert(!current[2].enabled);assert(writes.back()=="bluetooth-uart off");
+ current={{"power-key","","/power",true},{"volume-up","","/volume",true},{"bluetooth-uart","","/uart",false},{"double-tap","unsupported",{},false},{"usb-host","","/host",false}};
+ wake_apply();assert(current[2].enabled&&current[4].enabled);assert(writes.back()=="usb-host on");
+ atomic_file(state/"wake-usb-host","disabled\n");wake_apply();assert(!current[4].enabled);
+ fs::remove(state/"wake-usb-host");wake_apply();assert(current[4].enabled);
  writes.clear();foreign=true;refuses([]{wake_set("power-key",false);});assert(writes.empty());foreign=false;
  refuses([]{wake_set("unknown",true);});refuses([]{wake_set("double-tap",true);});
  wake_set("power-key",false);assert(!current[0].enabled);assert(read((state/"wake-power-key").string(),32)=="disabled\n");
@@ -51,11 +53,12 @@ int main(int argc,char** argv){
  disk_failure=true;refuses([]{wake_set("power-key",true);});assert(!current[0].enabled);disk_failure=false;
  atomic_file(state/"wake-power-key","enabled\n");atomic_file(state/"wake-volume-up","invalid\n");
  writes.clear();refuses([]{wake_apply();});assert(writes.empty());fs::remove(state/"wake-volume-up");
- current[2].enabled=true;const auto before=current;fail_after=1;refuses([]{wake_apply();});
+ current[2].enabled=false;const auto before=current;fail_after=1;refuses([]{wake_apply();});
  for(size_t i=0;i<before.size();++i)assert(current[i].enabled==before[i].enabled);
  atomic_file(state/"wake-double-tap","enabled\n");writes.clear();refuses([]{wake_apply();});assert(writes.empty());fs::remove(state/"wake-double-tap");
  atomic_file(state/"wake-volume-up","disabled\n");wake_apply();
- assert(current[0].enabled&&!current[1].enabled&&!current[2].enabled);
+ assert(current[0].enabled&&!current[1].enabled&&current[2].enabled);
+ atomic_file(state/"wake-bluetooth-uart","disabled\n");wake_apply();assert(!current[2].enabled);
  atomic_file(state/"wake-power-key","disabled\n");writes.clear();refuses([]{wake_apply();});assert(writes.empty());
 }
 CPP

@@ -10,6 +10,21 @@ remain pending; package installation cannot establish those results.
 it. Default DNF weak-dependency handling installs it with KDE, while removing
 the browser no longer requires removal of the KDE meta package. Browser data
 and original Fedora packages are not modified by this metadata change.
+Chromium is recommended by default and can be removed while retaining the KDE
+meta package. This preserves the packaging correction in release 19.
+
+25 October 2026: source release `1.0.0-21` requires Control 1.12.0. Regular
+RGB color/brightness controls are removed. One **Test colors** button requests
+the kernel's ten-second color transition without sudo or pkexec. It remains
+unavailable without the matched kernel device and confined service. Torch
+brightness is retained. The actual applet component and cache check pass on
+the host; no new RPM or tablet result is claimed for this source revision.
+
+25 October 2026: source release `1.0.0-20` requires Control 1.11.0. The widget
+adds a 0–100 torch brightness dialog and RGB components/brightness with a color
+preview. Apply sends one validated backend request. Percentages stay within
+the retained limits; hardware torch steps are 0/50/100. No package or tablet
+result is claimed for this source revision.
 
 25 October 2026: release `1.0.0-17` requires Control 1.10.2 with corrected
 original LED-class provider discovery and the bounded, suspend-aware supervisor.

@@ -30,16 +30,17 @@ int main() {
         fs::create_directories(driver);fs::create_directory_symlink(driver,device/"driver");
         const std::string compatible=rgb?"qcom,pm8350c-pwm":"qcom,spmi-flash-led";
         put(controller/"compatible",compatible+'\0');
-        put(led/"max_brightness",rgb?"511\n":"255\n");put(led/"brightness","0\n");
+        put(led/"max_brightness",rgb?"511\n":"2\n");put(led/"brightness","0\n");
         put(led/"trigger","[none] timer\n");
         if(rgb) {
             for(unsigned i=1;i<=3;++i){auto child=node/("led@"+std::to_string(i));put(child/"reg",cell(i));put(child/"color",cell(i));}
             put(led/"multi_index","green blue red\n");
+            put(led/"multi_intensity","0 256 511\n");
         } else {put(controller/"reg",cell(0xee00));put(node/"led-sources",cell(1)+cell(4));put(node/"led-max-microamp",cell(20000));}
         assert(!fs::exists(led/"of_node") && !discover(rgb,sys).path.empty());
         fs::create_directory(controller/"other-led");assert(discover(rgb,sys).path.empty());fs::remove(controller/"other-led");
         put(led/"trigger","none [timer]\n");assert(discover(rgb,sys).path.empty());put(led/"trigger","[none]\n");
-        put(led/"max_brightness","1000\n");assert(discover(rgb,sys).path.empty());put(led/"max_brightness",rgb?"511":"255");
+        put(led/"max_brightness","255\n");assert(discover(rgb,sys).path.empty());put(led/"max_brightness",rgb?"511":"2");
         if(!rgb) {
             for(unsigned current:{0U,20001U,500000U}){put(node/"led-max-microamp",cell(current));assert(discover(false,sys).path.empty());}
             put(node/"led-max-microamp",cell(20000));put(node/"led-sources",cell(1)+cell(2));assert(discover(false,sys).path.empty());
@@ -51,10 +52,21 @@ int main() {
         fs::remove(device/"of_node");fs::create_directory_symlink(controller,device/"of_node");
     }
     assert(snapshot(sys).find("\"max_microamp\":20000")!=std::string::npos);
+    assert(snapshot(sys).find("\"max_seconds\":null")!=std::string::npos);
+    assert(snapshot(sys).find("\"color\":[255,0,128]")!=std::string::npos);
     put(base/"compatible",std::string("xiaomi,nabu\0qcom,sm7675\0",24));
     assert(discover(false,sys).path.empty() && discover(true,sys).path.empty());
     assert(intensities("green blue red",{255,0,128})=="0 256 511");
     assert(color("255")==255 && color("0")==0);
+    assert(percent("100")==100 && percent("0")==0);
+    for(const std::string value:{"101","-1","1;reboot","+1"," 1",""})refuses([&]{(void)percent(value);});
+    for(unsigned p=0;p<=100;++p) {
+        assert(level(p,2)==(p==0?0:p==100?2:1));
+        assert(level(p,8)<=8 && (p==0 || level(p,8)>0));
+    }
+    refuses([]{(void)level(101,2);});refuses([]{(void)level(1,0);});
+    assert((colors("green blue red","0 256 511")==std::array<unsigned,3>{255,0,128}));
+    for(const std::string value:{"0 1","0 1 2 3","0 -1 2","0 512 2","0 1;reboot 2"})refuses([&]{(void)colors("red green blue",value);});
     for(const std::string value:{"-1","256","1;reboot","+1"," 1","1x",""})refuses([&]{(void)color(value);});
     for(const std::string order:{"red green red","red blue","red green white"})refuses([&]{(void)intensities(order,{1,2,3});});
     refuses([]{(void)intensities("red green blue",{256,0,0});});

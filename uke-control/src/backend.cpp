@@ -158,9 +158,9 @@ void wake_apply() {
             need(value == "enabled\n" || value == "disabled\n", "Invalid saved wake permission");
             need(!source.path.empty(), "Saved wake source is no longer available: " + source.name);
             source.enabled = value == "enabled\n";
-        } else if (source.name == "bluetooth-uart") {
-            // shortcut: keep unqualified UART wake off until accessory wake and RTC trials qualify it.
-            source.enabled = false;
+        } else if (source.name == "bluetooth-uart" || source.name == "lid-open" || source.name == "usb-host" ||
+                   source.name == "double-tap" || source.name.starts_with("usb-device-")) {
+            source.enabled = true;
         }
     }
     need(wake::recovery_key(requested), "Saved policy disables every recovery key");
@@ -323,6 +323,9 @@ Result display_profile_set(const std::string& profile) {
 }
 Result display_lane_limit(const std::string& lanes) {
     root();board();Lock lock;return links::lane_limit(lanes);
+}
+Result display_compression(const std::string& policy) {
+    root();board();Lock lock;return links::compression(policy);
 }
 Result usb_power_set(const std::string& device,const std::string& policy) {
     root();board();Lock lock;return links::usb_power(device,policy);

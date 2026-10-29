@@ -1,5 +1,5 @@
 [Unit]
-Description=Bounded Uke torch control
+Description=Uke torch brightness control
 Before=sleep.target
 Conflicts=sleep.target
 
@@ -7,7 +7,6 @@ Conflicts=sleep.target
 Type=notify
 ExecStart=/usr/bin/uke-control flashlight hold
 ExecStopPost=/usr/bin/uke-control flashlight reset
-RuntimeMaxSec=60
 TimeoutStartSec=5
 TimeoutStopSec=3
 Restart=no

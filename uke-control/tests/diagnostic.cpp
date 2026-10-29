@@ -37,6 +37,17 @@ int main() {
         const auto catalog=jobs("all");assert(catalog.size()>150);
         const auto display=jobs("display");
         assert(std::count_if(display.begin(),display.end(),[](const auto& job){return job.args[0]=="/usr/bin/od";})==3);
+        for(const auto* command:{"bits","compression"})assert(std::count_if(display.begin(),display.end(),[&](const auto& job){
+            return job.args==std::vector<std::string>({"/usr/bin/uke-control","display",command});
+        })==1);
+        const auto sleep=jobs("sleep");
+        unsigned lid_states=0,saver_states=0;
+        for(const auto& job:sleep)if(job.args[0]=="/usr/bin/busctl") {
+            assert(std::find(job.args.begin(),job.args.end(),"--auto-start=no")!=job.args.end());
+            if(job.args.back()=="LidClosed" || job.args.back()=="LidIsClosed")++lid_states;
+            if(job.args.back()=="GetActive")++saver_states;
+        }
+        assert(lid_states==2 && saver_states==1);
         for(const auto& topic:topics) {
             const auto selected=jobs(topic);assert(!selected.empty());
             for(const auto& job:selected) {

@@ -71,6 +71,19 @@ int main() {
         0x15,2,2,0,0,0x1a,4,8,1,0x10,1,0x22,2,0x12,0};
     assert(cct_request.size() == 47);
     assert(client_request({1,2}, 514, {}) == cct_request);
+    // Uke's flicker HAL inherits the standard 1025 float event and on-change request.
+    Bytes flicker=light;
+    assert(samples(flicker,{1,2},0)[0].values.size()==2);
+    flicker.back()=0;
+    assert(samples(flicker,{1,2},0)[0].status==0); // Preserve unreliable/occluded observations.
+    flicker[24]=3; // The unrelated sns_flicker.proto descriptor uses event 769.
+    rejects([&]{ samples(flicker,{1,2},0); });
+    assert(datatype("flicker"));
+    const Bytes seven_channel_flicker{0x0a,18,9,1,0,0,0,0,0,0,0,0x11,2,0,0,0,0,0,0,0,
+        0x12,48,0x0d,1,4,0,0,0x11,7,0,0,0,0,0,0,0,0x1a,32,0x0a,28,
+        0,0,0xc8,0x42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x10,3};
+    assert(samples(seven_channel_flicker,{1,2},0)[0].values.size()==7);
+    assert(samples(seven_channel_flicker,{1,2},0)[0].values[0]==100);
     std::ostringstream trace;
     unsigned traced = 0;
     trace_rpc_event(nullptr, traced, 1025);

@@ -18,7 +18,8 @@ cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
 [[ $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
 [[ $target == aarch64 || $target == x86_64 ]]
-[[ $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
+# Sound contains metadata and desktop data; other families compile native payloads.
+[[ $family == uke-sound || $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
     printf '%s\n' 'Generate a family source on its native architecture; --target alone does not retarget RPM build/host triplets.' >&2
     exit 1
 }
@@ -38,6 +39,13 @@ cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
+uke-sound)
+    make -C uke-desktop-integration speaker-controls-srpm outdir="$stage/speaker-controls" >"$stage/local.log"
+    controls=("$stage/speaker-controls/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
+    printf '%s\t%s\n' uke-speaker-controls "${controls[0]}" >"$stage/inputs"
+    make -C uke-desktop-integration displayport-audio-srpm outdir="$stage/audio-policy" >>"$stage/local.log"
+    policies=("$stage/audio-policy/"*.src.rpm); [[ ${#policies[@]} == 1 && -f ${policies[0]} ]]
+    printf '%s\t%s\n' uke-displayport-audio "${policies[0]}" >>"$stage/inputs";;
 uke-hw)
     make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
     boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]
@@ -69,6 +77,11 @@ uke-power)
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
     printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-4$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-additional)
+    make -C uke-video srpm outdir="$stage/video" >"$stage/local.log"
+    backends=("$stage/video/SRPMS/"*.src.rpm)
+    [[ ${#backends[@]} == 1 && -s ${backends[0]} ]]
+    printf '%s\t%s\n' uke-vaapi-v4l2 "${backends[0]}" >"$stage/inputs";;
 uke-metas)
     for component in uke-core-meta uke-desktop-metas; do
         make -C "$component" srpm outdir="$stage/$component" >"$stage/local.log"

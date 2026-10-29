@@ -31,6 +31,7 @@ void usb_watch(unsigned seconds);
 Result usb_request_data(const std::string& role);
 Result display_profile_set(const std::string& profile);
 Result display_lane_limit(const std::string& lanes);
+Result display_compression(const std::string& policy);
 Result usb_power_set(const std::string& device,const std::string& policy);
 Result ethernet_profile_set(const std::string& interface,const std::string& profile);
 Result cdc_set(bool enabled);

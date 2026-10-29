@@ -1,8 +1,44 @@
 # COPR source families
 
+27 October 2026: the [hardware update cohort](../../docs/DNF-UPDATE-20261027.md)
+joins Core `1.15.1-3`, hardware `1.8.5-1`, power `1.3.3-4`, sensors `1.0.9-5`,
+extras `1.0.4-2`, additional `1.0.0-13`, metas `1.4.0-4`, camera `1.0.0-3`
+and sound `1.0.5-1`. Non-kernel children now all use the `uke-` prefix.
+Sound owns the retained PipeWire source recipe, speaker orientation and generic
+preset; extras owns the renamed material decoration. Hardware requires the
+existing BlueZ/libinput/libwacom infrastructure. Core selection requires the
+matched release-33 kernel and sound family, including when weak dependencies
+are disabled. Focus input hardware acceptance remains open.
+
+27 October 2026: core `1.15.1-2` carries the read-only lid/screensaver and
+active-depth/DSC diagnostic correction. Its exact Control requirement matches
+both rebuilt children. A standalone `1.15.1-1` test cannot replace Control below
+the installed Core pin; use the complete matching family without relaxing that
+dependency or removing Core. No hardware or kernel family is rebuilt here.
+
 24 October 2026: core `1.9.1` adds disconnected DP training ceilings,
 per-device USB runtime power and RTL8153 link capability/profile controls.
 It preserves core `1.8.1`'s bounded native KScreen session controls.
+
+27 October 2026: additional `1.0.0-12` incorporates the unchanged, pinned Mesa
+SPIR-V source recipe as the `uke-mesa-libclc22-spirv 0.2.0-2` child. Its original
+source RPM is retained in the permanent source archive with SHA-256
+e648ef77ffb84523a675fb4a879a18e3cad0d64c1af3d8248e8fd91f03de0643.
+Every rebuilt additional child receives a higher release. This removes the
+need for a separate libclc COPR source definition after replacement package
+and dependency validation. Source composition, native SPIR-V validation and
+tablet OpenCL/render acceptance remain separate results. Chromium stays
+withdrawn; no new family, project or custom directory is introduced.
+
+26 October 2026: additional `1.0.0-10` integrates the experimental Iris VA-API
+backend as the separately installable `uke-vaapi-v4l2` child. Its intermediate
+component source RPM is not an independently registered COPR package. Existing
+additional children receive fresh revisions for the new cohort. Backend source
+and fixtures match revision0.6; native-family packaging and device validation
+remain separate gates. All new project package names start with `uke-`; no
+separate Chromium build or additional source family is introduced.
+
+24 October 2026: core `1.8.1` provides bounded native KScreen session controls.
 Metas `1.1.0-2` contains the separate `uke-plasma-controls` RPM, recommended only
 by `uke-kde-plasma-meta`. Removing the widget retains the KDE meta package.
 The applet delegates all settings to `uke-control`, uses standard Polkit for

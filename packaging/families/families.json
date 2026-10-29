@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.10.2",
-      "release": 1,
+      "version": "1.15.1",
+      "release": 3,
       "requires": [
-        "uke-control = 1.10.2-1%{?dist}"
+        "uke-control = 1.15.1-3%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -21,12 +21,15 @@
     },
     {
       "name": "uke-hw",
-      "version": "1.8.2",
+      "version": "1.8.5",
       "requires": [
-        "uke-boot-integration = 1.8.2-1%{?dist}",
-        "uke-installation-profile = 1.8.2-1%{?dist}",
-        "uke-kernel-update = 1.8.2-1%{?dist}",
-        "fastfetch"
+        "uke-boot-integration = 1.8.5-1%{?dist}",
+        "uke-installation-profile = 1.8.5-1%{?dist}",
+        "uke-kernel-update = 1.8.5-1%{?dist}",
+        "fastfetch",
+        "bluez",
+        "libinput",
+        "uke-libwacom"
       ],
       "suggests": [],
       "release": 1,
@@ -129,9 +132,9 @@
       "version": "1.0.4",
       "requires": [],
       "suggests": [
-        "uke-plymonth = 1.0.2-4%{?dist}",
+        "uke-plymonth = 1.0.2-5%{?dist}",
         "uke-orangefox-recovery",
-        "material-decoration"
+        "uke-material-decoration"
       ],
       "watch_paths": [
         "uke-desktop-packaging/packaging/plymouth-uke",
@@ -139,7 +142,7 @@
         "uke-desktop-packaging/Makefile",
         "uke-desktop-packaging/tests/plymouth-parser.cpp"
       ],
-      "release": 1
+      "release": 2
     },
     {
       "name": "uke-additional",
@@ -149,7 +152,9 @@
       ],
       "suggests": [
         "uke-mesa-dri-drivers",
-        "uke-mesa-vulkan-drivers"
+        "uke-mesa-vulkan-drivers",
+        "uke-vaapi-v4l2",
+        "uke-mesa-libclc22-spirv"
       ],
       "watch_paths": [
         "uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch",
@@ -158,17 +163,24 @@
         "uke-desktop-packaging/packaging/accountsservice",
         "uke-desktop-packaging/tests/accountsservice-tcb.sh",
         "uke-desktop-packaging/tests/turnip-display-fd.sh",
+        "uke-desktop-packaging/tests/adreno732-ubwc-hint.sh",
         "uke-desktop-packaging/src/native-runtime/runtime-smoke.cpp",
-        "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt"
+        "uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt",
+        "uke-video/Makefile",
+        "uke-video/README.md",
+        "uke-video/packaging",
+        "uke-video/patches",
+        "uke-video/tests",
+        "uke-video/manifests/upstream-pins.json"
       ],
-      "release": 9
+      "release": 13
     },
     {
       "name": "uke-metas",
-      "version": "1.2.2",
-      "release": 2,
+      "version": "1.4.0",
+      "release": 4,
       "requires": [
-        "uke-core-meta >= 1.0.5"
+        "uke-core-meta >= 1.0.6-7"
       ],
       "suggests": [
         "uke-core-meta",
@@ -187,7 +199,10 @@
     {
       "name": "uke-camera",
       "version": "1.0.0",
-      "requires": [],
+      "release": 3,
+      "requires": [
+        "pipewire-plugin-libcamera"
+      ],
       "suggests": [
         "plasma-camera"
       ],
@@ -196,18 +211,34 @@
     },
     {
       "name": "uke-sound",
-      "version": "1.0.0",
+      "version": "1.0.5",
       "requires": [
-        "pipewire",
-        "pipewire-alsa",
+        "uke-pipewire",
+        "uke-pipewire-alsa",
         "wireplumber",
-        "alsa-utils"
+        "alsa-utils",
+        "(senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)",
+        "uke-displayport-audio >= 0.1.0-8",
+        "uke-speaker-orientation >= 0.1.0-5",
+        "uke-speaker-firmware >= 3.0.304.0-2",
+        "(uke-speaker-controls >= 0.1.0-4 if plasma-workspace)"
       ],
       "suggests": [
         "plasma-pa"
       ],
-      "status": "original Fedora audio userspace; internal playback/capture not qualified",
-      "watch_paths": []
+      "status": "matched speaker kernel, stock preset and desktop playback policy; physical acceptance remains separate",
+      "watch_paths": [
+        "uke-desktop-integration/src/ucm2",
+        "uke-desktop-integration/src/wireplumber",
+        "uke-desktop-integration/src/kmix",
+        "uke-desktop-integration/packaging/uke-displayport-audio.spec",
+        "uke-desktop-integration/packaging/uke-speaker-controls.spec",
+        "uke-desktop-integration/tests/audio-policy.sh",
+        "uke-desktop-integration/tests/audio-policy.cpp",
+        "uke-desktop-integration/patches/pipewire",
+        "xiaomi-uke-firmware/packaging/speaker-firmware"
+      ],
+      "release": 1
     }
   ],
   "exceptions": [
@@ -218,38 +249,48 @@
   ],
   "rename": {
     "libstdc++": "uke-libstdcxx",
-    "material-decoration": "material-decoration"
+    "material-decoration": "uke-material-decoration"
   },
   "native_versions": {
-    "uke-control": "1.10.2",
+    "uke-control": "1.15.1",
     "uke-adaptive-display": "1.0.16",
-    "uke-boot-integration": "1.8.2",
+    "uke-boot-integration": "1.8.5",
     "uke-battery-observer": "1.1.0",
     "uke-front-color": "1.0.2",
-    "uke-installation-profile": "1.8.2"
+    "uke-installation-profile": "1.8.5",
+    "uke-speaker-controls": "0.1.0",
+    "uke-displayport-audio": "0.1.0"
   },
   "release_overrides": {
     "iio-sensor-proxy": "24.fc46",
     "uke-boot-integration": "1.fc46",
-    "uke-plymonth": "4.fc46",
-    "uke-orangefox-recovery": "5.fc46",
+    "uke-plymonth": "5.fc46",
+    "uke-orangefox-recovery": "6.fc46",
     "upower": "15.fc46",
     "uke-adaptive-display": "7.fc46",
-    "uke-firmware": "9.fc46",
-    "libssc": "18.fc46",
+    "uke-firmware": "14.fc46",
+    "libssc": "19.fc46",
     "uke-ssc-fileservice": "24.fc46",
-    "uke-front-color": "13.fc46",
-    "at-spi2-core": "10.fc46",
-    "gstreamer1": "10.fc46",
-    "libaccounts-glib": "38.fc46",
-    "libwacom": "11.fc46",
-    "libstdcxx-uke-runtime": "12.fc46",
-    "mesa": "12.fc46",
+    "uke-front-color": "14.fc46",
+    "at-spi2-core": "13.fc46",
+    "gstreamer1": "13.fc46",
+    "libaccounts-glib": "41.fc46",
+    "libwacom": "14.fc46",
+    "libstdcxx-uke-runtime": "15.fc46",
+    "mesa": "16.fc46",
     "uke-battery-observer": "11.fc46",
-    "accountsservice": "9.fc46",
-    "material-decoration": "6.fc46",
-    "uke-desktop-metas": "19.fc46",
-    "uke-core-meta": "4.fc46",
-    "uke-proximity-capture": "5.fc46"
+    "accountsservice": "12.fc46",
+    "material-decoration": "7.fc46",
+    "uke-desktop-metas": "24.fc46",
+    "uke-core-meta": "7.fc46",
+    "uke-proximity-capture": "6.fc46",
+    "uke-speaker-controls": "4.fc46",
+    "uke-displayport-audio": "8.fc46",
+    "uke-vaapi-v4l2": "4.fc46",
+    "uke-mesa-libclc22-spirv": "3.fc46",
+    "uke-control": "3.fc46",
+    "pipewire": "2.fc46",
+    "uke-speaker-orientation": "5.fc46",
+    "uke-speaker-firmware": "2.fc46"
   }
 }

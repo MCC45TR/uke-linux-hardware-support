@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-core-meta
-Version: 1.0.5
+Version: 1.0.6
 Release: 1%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
@@ -8,9 +8,10 @@ URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-me
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz
-Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
-Requires: uke-core >= 1.0.21 uke-hw >= 1.1.1 uke-power >= 1.0.15 uke-sensors
+Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)
+Requires: uke-core >= 1.15.1-3 uke-hw >= 1.8.5-1 uke-power >= 1.3.3-4 uke-sensors >= 1.0.9-5
 Requires: uke-control uke-kernel-update uke-installation-profile
+Requires: uke-sound >= 1.0.5
 Requires: uke-touchscreen
 Requires: uke-boot-integration(factory-bluetooth-v1) >= 1
 Requires: uke-boot-integration(factory-wlan-v1) >= 1
@@ -37,6 +38,9 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.6-1
+- Pull the matched speaker kernel and desktop policy through normal DNF updates.
+
 * Thu Oct 22 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.5-1
 - Recommend the removable Uke Plymouth theme on normal DNF upgrades.
 
