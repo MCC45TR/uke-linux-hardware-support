@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 "backend":"qti_uke_charge_control_v1","safety_backend":"uke_os3_0_304_input_suspend53_v1","evidence_id":"@H@",
 "external_thermal_limits":{"charger":{"minimum_mC":1000,"maximum_mC":40000},"connector":{"minimum_mC":2000,"maximum_mC":41000},"connector2":{"minimum_mC":3000,"maximum_mC":42000}},
 "identities":{"kernel_release":"synthetic-test","firmware_sha256":"@H@","pack_identity_sha256":"@H@","dt_sha256":"@H@","module_manifest_sha256":"@H@"},
-"proofs":{"firmware_abi":"@H@","ack_envelope":"@H@","threshold_readback":"@H@","enable_feature":"@H@","autonomous_protection":"@H@","measurements":"@H@","source_lifecycle":"@H@","protocol_property_abi":"@H@","source_contract":"@H@","cable_contract":"@H@","current_abi":"@H@","current_readback":"@H@","firmware_cv":"@H@","current_restore":"@H@","usb_moisture_abi":"@H@","usb_moisture_response":"@H@","external_thermal_path":"@H@","input_suspend_abi":"@H@","input_suspend_effect":"@H@","input_suspend_restore":"@H@","periodic_charge_guard":"@H@"},
+"proofs":{"firmware_abi":"@H@","ack_envelope":"@H@","threshold_readback":"@H@","enable_feature":"@H@","autonomous_protection":"@H@","integrated_protection_inventory":"@H@","measurements":"@H@","source_lifecycle":"@H@","protocol_property_abi":"@H@","source_contract":"@H@","cable_contract":"@H@","current_abi":"@H@","current_readback":"@H@","firmware_cv":"@H@","current_restore":"@H@","usb_moisture_abi":"@H@","usb_moisture_response":"@H@","external_thermal_path":"@H@","input_suspend_abi":"@H@","input_suspend_effect":"@H@","input_suspend_restore":"@H@","periodic_charge_guard":"@H@"},
 "limits":{"temperature_min_deciC":100,"temperature_max_deciC":400,"battery_voltage_min_uv":3000000,"battery_voltage_max_uv":4400000,"battery_current_abs_max_ua":3000000,"lease_ns":30000000000,"ack_bytes":12},
 "source_type":1,"cap_resume_percent":70,"may_change_feature":true,"standard_clients":true,"current_control":true,
 "current_limits":{"minimum_ua":100000,"maximum_ua":2000000,"slow_ua":500000,"restore_ua":1000000,"source_budget_battery_ua":1500000,"increase_step_ua":100000,"increase_dwell_ns":10000000000,"measurement_max_age_ns":5000000000,
@@ -50,6 +50,10 @@ int main(int argc, char **argv) {
 "driver_instance_boottime_ns":42,"firmware_generation":2,"source_event_generation":3,"reviewed_at_boottime_ns":1000000000,"expires_boottime_ns":60000000000,
 "reviewed_control":true,"evidence_id":"@H@","control_profile_sha256":"@P@",
 "identities":{"kernel_release":"synthetic-test","firmware_sha256":"@H@","pack_identity_sha256":"@H@","dt_sha256":"@H@","module_manifest_sha256":"@H@"}})", "@H@", sha);
+    // A generic autonomous-protection digest alone must not admit controls.
+    const auto legacy = replace(profile, ",\"integrated_protection_inventory\":\"" + sha + "\"", "");
+    save(path, legacy); save(identity, replace(attestation, "@P@", hash(legacy)));
+    assert(!resolve(c, path, identity, getuid()).qualified);
     save(path, profile); save(identity, replace(attestation, "@P@", hash(profile)));
     auto result = resolve(c, path, identity, getuid());
     assert(result.qualified && result.current_control && result.maximum_ua == 2000000 && result.evidence == hash(profile));
@@ -102,11 +106,15 @@ int main(int argc, char **argv) {
     assert(chmod(argv[2], 0777) == 0);
     refused([&] { uke::battery::record::write_private_json(argv[2], "reviewed.json", reviewed, getuid()); });
     assert(chmod(argv[2], 0700) == 0);
-    for (const char *key : {"protocol_property_abi", "source_contract", "cable_contract", "usb_moisture_abi", "usb_moisture_response", "external_thermal_path", "input_suspend_abi", "input_suspend_effect", "input_suspend_restore", "periodic_charge_guard"}) {
+    for (const char *key : {"integrated_protection_inventory", "protocol_property_abi", "source_contract", "cable_contract", "usb_moisture_abi", "usb_moisture_response", "external_thermal_path", "input_suspend_abi", "input_suspend_effect", "input_suspend_restore", "periodic_charge_guard"}) {
         const auto invalid = replace(profile, std::string("\"") + key + "\":\"" + sha + "\"", std::string("\"") + key + "\":null");
         save(path, invalid); save(identity, replace(attestation, "@P@", hash(invalid)));
         assert(!resolve(c, path, identity, getuid()).qualified);
     }
+    const auto invalid_inventory = replace(profile, "\"integrated_protection_inventory\":\"" + sha + "\"",
+        "\"integrated_protection_inventory\":\"unknown\"");
+    save(path, invalid_inventory); save(identity, replace(attestation, "@P@", hash(invalid_inventory)));
+    assert(!resolve(c, path, identity, getuid()).qualified);
     save(path, profile); save(identity, replace(attestation, "@P@", hash(profile)));
     auto changed = c; ++changed.state.source; assert(!resolve(changed, path, identity, getuid()).qualified);
     changed = c; changed.state.invalidation_ns = 1000000000; assert(!resolve(changed, path, identity, getuid()).qualified);

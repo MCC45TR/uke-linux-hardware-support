@@ -27,6 +27,7 @@ validate:
 	jq -e '.kind == "control_qualification" and .qualification == "unqualified" and .enable_control == false and .current_control == false and .current_limits == null and .standard_clients == false' manifests/control-profile.json >/dev/null
 	jq -e 'all(.features[]; .qualified == false) and .tests_executed == false' manifests/battery-readiness.json >/dev/null
 	jq -e '.qualification == "unqualified" and .physical_acceptance == false and .pack_limits == null and all(.features[]; .qualified == false)' manifests/protection-readiness.json >/dev/null
+	jq -e '[.features[].id] as $$ids | .integrated_inventory_review_required == true and .part_identity_verified == false and .firmware_activation_observed_this_review == false and ($$ids | length) == ($$ids | unique | length) and (["charge_pump_bus_ovp_ocp", "charge_pump_battery_ovp_ocp", "charge_pump_watchdog", "pack_thermistor_open_short", "regulator_ocp_uv_notifications", "pm7550ba_bcl_brownout"] - $$ids | length == 0)' manifests/protection-readiness.json >/dev/null
 test-native:
 	mkdir -p "$(outdir)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/battery-demand.cpp -o "$(outdir)/test-battery-demand"
@@ -69,10 +70,10 @@ srpm:
 	# Package exactly the reviewed worktree, with a per-file byte inventory.
 	stage=$$(mktemp -d)
 	trap 'rm -r -- "$$stage"' EXIT
-	mkdir "$$stage/uke-battery-observer-1.4.0"
-	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-1.4.0/"
-	(cd "$$stage/uke-battery-observer-1.4.0"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-1.4.0.tar.xz" -C "$$stage" uke-battery-observer-1.4.0
+	mkdir "$$stage/uke-battery-observer-1.4.1"
+	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-1.4.1/"
+	(cd "$$stage/uke-battery-observer-1.4.1"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
+	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-1.4.1.tar.xz" -C "$$stage" uke-battery-observer-1.4.1
 	cp packaging/uke-battery-observer.spec "$(outdir)/rpmbuild/SPECS/"
 	cp packaging/sysusers/uke-battery.conf "$(outdir)/rpmbuild/SOURCES/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $(outdir)/rpmbuild" "$(outdir)/rpmbuild/SPECS/uke-battery-observer.spec"

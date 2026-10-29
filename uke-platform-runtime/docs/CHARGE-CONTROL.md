@@ -154,7 +154,10 @@ admission. The independent model profile never enables a control.
 
 Required threshold proofs are SHA256 references to reviewed firmware ABI, exact
 ACK envelope, threshold readback, autonomous protection, measurement units/signs
-and source lifecycle evidence. Feature toggling additionally requires its proof.
+and source lifecycle evidence. An additional `integrated_protection_inventory`
+proof must cover the applicable pump, charger, pack, connector and PMIC paths;
+see [the coverage review](CHARGE-PUMP-PROTECTION.md). Legacy records without it
+are refused and require a new review. Feature toggling additionally requires its proof.
 Limits include pack V/I/T bounds, exact ACK size, source type,15–30 second lease
 and resume percentage. A lease is software permission, **not an electrical
 watchdog**. An RPC failure is not retried, transport ambiguity remains faulted,

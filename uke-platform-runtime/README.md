@@ -1,9 +1,9 @@
 # uke-platform-runtime
 
-29 October 2026: observer/helper 1.4.0 resets current-increase dwell after faults,
-rejects reordered EFC samples and binds forecasts to their observed inputs.
-Power-path reports distinguish reported hold from unverified bypass. Charging
-qualification remains closed. See [battery longevity](docs/BATTERY-LONGEVITY.md).
+29 October 2026: observer/helper 1.4.1 requires a reviewed integrated-protection
+inventory before charge admission. Charge-pump and PMIC coverage is documented;
+charging qualification remains closed. See [the review](docs/CHARGE-PUMP-PROTECTION.md)
+and [battery longevity](docs/BATTERY-LONGEVITY.md).
 
 29 October 2026 integration candidate: observer 1.2.1 retains optional standard
 `current_avg`, `power_avg` and USB temperature readings with unqualified basis
