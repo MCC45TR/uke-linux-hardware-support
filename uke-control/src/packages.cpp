@@ -70,10 +70,9 @@ std::string infer_channel(const std::set<std::string>& enabled) {
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
 bool private_package(const std::string& name){return name=="uke-local-touch-data"||name=="uke-video-firmware-local";}
 void retain_kernels(libdnf5::Base& base) {
-    auto& c=base.get_config();auto names=c.get_installonlypkgs_option().get_value();
+    auto& c=base.get_config();const auto& names=c.get_installonlypkgs_option().get_value();
     // The real selection RPM lacks the installonly provide carried by its payloads.
-    if(std::find(names.begin(),names.end(),kernel)==names.end())names.push_back(kernel);
-    c.get_installonlypkgs_option().set(priority,names);
+    if(std::find(names.begin(),names.end(),kernel)==names.end())c.get_installonlypkgs_option().add_item(priority,kernel);
     c.get_installonly_limit_option().set(priority,0);
     c.get_protect_running_kernel_option().set(priority,true);
 }
@@ -241,13 +240,14 @@ Repositories configure(libdnf5::Base& base,const std::string& selected) {
         c.get_priority_option().set(priority,1);c.get_metadata_expire_option().set(priority,0);
         auto excludes=c.get_excludepkgs_option().get_value();for(const auto& expression:prerelease_excludes)std::erase(excludes,expression);
         // RC policy is applied below after all candidates have been examined.
-        c.get_excludepkgs_option().set(priority,excludes);
+        c.get_excludepkgs_option().set(priority,std::vector<std::string>{});
+        c.get_excludepkgs_option().add(priority,excludes);
         repo->set_callbacks(std::make_unique<Keys>(p));
         result.ids.insert(id);
         std::ostringstream stanza;
         stanza<<'['<<id<<"]\nenabled="<<enabled<<"\nbaseurl="<<url<<chroot<<"\nmetalink=\nmirrorlist=\ngpgkey="<<url<<"pubkey.gpg\ngpgcheck=1\npkg_gpgcheck=1\nsslverify=1\npriority=1\nskip_if_unavailable=0\n";
         if(selected!="unstable")excludes.insert(excludes.end(),prerelease_excludes.begin(),prerelease_excludes.end());
-        stanza<<"excludepkgs=";for(const auto& e:excludes)stanza<<e<<' ';stanza<<"\n\n";
+        stanza<<"excludepkgs=,";for(const auto& e:excludes)stanza<<e<<' ';stanza<<"\n\n";
         result.overrides+=stanza.str();
         if(missing)result.definitions+='['+id+"]\nname=Uke "+p+"\nbaseurl="+url+chroot+"\nenabled=0\ngpgcheck=1\n\n";
     }

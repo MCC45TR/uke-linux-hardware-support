@@ -6,6 +6,9 @@ independently. With `automatic=0`, package synchronization installs the matched
 kernel bundle and reports `kernel_activation_pending` without writing a boot
 slot or rebooting. Activation remains a separate guarded operation.
 
+Switching to unstable clears earlier channel RC exclusions while retaining
+unrelated custom exclusions. Stable and test retain their non-prerelease policy.
+
 29 October 2026: source routing selects Fedora 44, Fedora 45 or Rawhide from the
 installed os-release data. Channel changes stay in that release's COPR chroot;
 a distribution upgrade is a separate operation. Candidate RPM dist tags must
@@ -151,8 +154,7 @@ to change their origin. The manager explicitly retains normal kernel selection
 RPMs as installonly packages as well as the payloads carrying that capability;
 other configured installonly selectors remain in force. This also preserves an
 older singleboot profile's exact dependency without replacing its selection RPM.
-Same-NEVRA kernels are not reinstalled
-to change their origin, and a candidate with a different RPM identity cannot
+A candidate with a different RPM identity cannot
 reuse an installed `kernel-uname-r` module directory. This is a deliberate
 exception to ordinary-package replacement: the running and recovery modules
 must survive channel changes. The selected core, modules, DTBs and boot bundle

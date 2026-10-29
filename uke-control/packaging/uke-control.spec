@@ -183,6 +183,7 @@ fi
 %changelog
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-2
 - Retain normal kernel selection RPMs alongside their matching installed payloads.
+- Reset inherited channel exclusions with the native append-list semantics.
 
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-1
 - Select a separately signed Rawhide unstable repository and defer guarded kernel activation.

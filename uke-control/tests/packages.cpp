@@ -11,11 +11,34 @@ static Options options(std::initializer_list<const char*> input) {
 int main() {
     {
         libdnf5::Base base;auto& c=base.get_config();
-        c.get_installonlypkgs_option().set(std::vector<std::string>{"custom-kernel","installonlypkg(kernel)"});
+        c.get_installonlypkgs_option().set(std::vector<std::string>{"","custom-kernel","installonlypkg(kernel)"});
         c.get_installonly_limit_option().set(2);c.get_protect_running_kernel_option().set(false);
         retain_kernels(base);retain_kernels(base);
         assert((c.get_installonlypkgs_option().get_value()==std::vector<std::string>{"custom-kernel","installonlypkg(kernel)",kernel}));
         assert(c.get_installonly_limit_option().get_value()==0&&c.get_protect_running_kernel_option().get_value());
+    }
+    if(fedora_target(read_file("/etc/os-release"))=="rawhide") {
+        char pattern[]="/tmp/uke-channel-repository-XXXXXX";assert(mkdtemp(pattern));const fs::path root=pattern;
+        {
+            libdnf5::Base base;base.get_config().get_installroot_option().set((root/"root").string());
+            base.get_config().get_cachedir_option().set((root/"cache").string());base.get_config().get_plugins_option().set(false);base.setup();
+            auto repo=base.get_repo_sack()->create_repo(prefix+project("unstable"));
+            repo->get_config().get_excludepkgs_option().set(std::vector<std::string>{"custom-block",prerelease_excludes[0]});
+            const auto configured=configure(base,"unstable");
+            assert(infer_channel(enabled_managed_repos(base))=="unstable");
+            const auto& exclusions=repo->get_config().get_excludepkgs_option().get_value();
+            assert(std::find(exclusions.begin(),exclusions.end(),"custom-block")!=exclusions.end());
+            assert(std::find(exclusions.begin(),exclusions.end(),prerelease_excludes[0])==exclusions.end());
+            // Read the persisted value through the real append-option parser too.
+            libdnf5::OptionStringAppendList persisted(std::vector<std::string>{"custom-block",prerelease_excludes[0]});
+            std::istringstream text(configured.overrides);std::string line;bool selected=false,checked=false;
+            while(std::getline(text,line)) {
+                if(line.starts_with('['))selected=line=='['+prefix+project("unstable")+']';
+                if(selected&&line.starts_with("excludepkgs=")){persisted.set(priority,line.substr(12));checked=true;}
+            }
+            assert(checked&&persisted.get_value()==std::vector<std::string>{"custom-block"});
+        }
+        fs::remove_all(root);
     }
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
