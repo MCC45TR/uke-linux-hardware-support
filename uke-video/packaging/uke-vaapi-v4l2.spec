@@ -3,7 +3,7 @@
 
 Name:           uke-vaapi-v4l2
 Version:        1.0.0
-Release:        0.6.20261026git6d03c3f%{?dist}
+Release:        0.7.20261028git6d03c3f%{?dist}
 Summary:        Experimental stateful Iris VA-API backend
 License:        MIT
 URL:            https://github.com/radxa-pkg/libva-v4l2
@@ -14,11 +14,13 @@ Source3:        main10-contract.sh
 Source4:        rate-negotiation.sh
 Source5:        dimension-contract.sh
 Source6:        decode-error-contract.sh
+Source7:        shared-surface-cache-contract.sh
 Patch0:         0001-runtime-capability-intersection.patch
 Patch1:         0002-main10-p010-encode.patch
 Patch2:         0003-runtime-encode-rate-limits.patch
 Patch3:         0004-runtime-frame-dimensions.patch
 Patch4:         0005-preserve-decode-error-status.patch
+Patch5:         0006-shared-surface-write-combined.patch
 BuildRequires:  gcc-c++
 BuildRequires:  meson >= 0.61
 BuildRequires:  ninja-build
@@ -44,6 +46,7 @@ echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
 %patch -P 2 -p1
 %patch -P 3 -p1
 %patch -P 4 -p1
+%patch -P 5 -p1
 
 %build
 %meson -Dgpu_copy=enabled -Dfastcv=disabled
@@ -58,6 +61,7 @@ bash %{SOURCE3} "$PWD"
 bash %{SOURCE4} "$PWD"
 bash %{SOURCE5} "$PWD"
 bash %{SOURCE6} "$PWD"
+bash %{SOURCE7} "$PWD"
 
 %install
 %meson_install
@@ -72,6 +76,11 @@ install -m 0644 %{SOURCE2} UKE-README.md
 %{_libdir}/dri/msm_drv_video.so
 
 %changelog
+* Wed Oct 28 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.7.20261028git6d03c3f
+- Allocate shared VA surfaces as write-combined storage across import domains.
+- Retain private encoder allocation and checked allocation/export cleanup.
+- Keep sustained browser and device acceptance separate from allocator checks.
+
 * Mon Oct 26 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.6.20261026git6d03c3f
 - Preserve hardware decode errors after sanitizing client-visible storage.
 - Verify error propagation through recovery and surface synchronization.

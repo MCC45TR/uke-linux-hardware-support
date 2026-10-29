@@ -3,6 +3,6 @@ SHELL := /bin/bash
 .ONESHELL:
 outdir ?= $(CURDIR)/build/srpm
 .PHONY: srpm
-# Intermediate input for uke-additional; never a separate COPR source package.
+# Source input for independent Rawhide builds and retained stable/test cohorts.
 srpm:
 	bash packaging/source.sh '$(outdir)'
