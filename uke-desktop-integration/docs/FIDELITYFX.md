@@ -100,3 +100,19 @@ Vulkan calls without altering their result. The wrapper limits execution to
 below 65 C, and stops at 75 C or below 512 MiB available memory.
 It initializes optical-flow/interpolation pipelines only; dispatch, pixel
 correctness, presentation and game integration remain separate work.
+
+## Package result
+
+29 October 2026. [COPR build 11228276](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11228276/)
+successfully builds `uke-fidelityfx-1.1.4-3.fc46` for Rawhide AArch64 from
+source `0982197bac4c32391c752cc800a5ebaaa9335df6`. Native shader generation,
+fortified compilation, strict linkage and CPU API/CRT checks pass. The three
+runtime, development and diagnostic RPM signatures and digests pass with only
+the unstable project key in an isolated verification database. The source RPM
+is unsigned; its retained SHA-256 and the pinned source inputs identify it.
+
+The payload has native AArch64 binaries, no Python files or Python linkage,
+and no automatic GPU workload. Physical installation and the new GPU
+diagnostic remain pending the separately owned channel migration. This build
+does not supersede the earlier unsuccessful physical context trial or
+establish working frame generation.

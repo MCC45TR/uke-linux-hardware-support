@@ -52,7 +52,27 @@
     "native_compiler_sha256": "d7611f22601cae1ffb7e5352629be12c5ff4c1905785277017714d7f098511b0",
     "source_script": "packaging/fidelityfx/source.sh",
     "binary_chroots": ["fedora-rawhide-aarch64"],
-    "physical_gpu_pipeline_status": "Earlier caller returned FFX_ERROR_BACKEND_API_ERROR; instrumented COPR build pending"
+    "physical_gpu_pipeline_status": "Earlier caller returned FFX_ERROR_BACKEND_API_ERROR; instrumented COPR build succeeded, installed test pending"
+  },
+  "copr_package_result": {
+    "date": "2026-10-29",
+    "project": "mcc45tr/uke-linux-unstable",
+    "build_id": 11228276,
+    "source_commit": "0982197bac4c32391c752cc800a5ebaaa9335df6",
+    "nevra": "uke-fidelityfx-1.1.4-3.fc46.aarch64",
+    "srpm_sha256": "4b6caad04d8683f83d21ae8bd3b267fc604a2dc4724b26b399fc6464d81eef41",
+    "runtime_rpm_sha256": "2bf1307fa4e7376941eb4efca41b5418c64659049755142ab0fbcebad1509157",
+    "tests_rpm_sha256": "2e43d178262863da80f414bd163b26f774dc79caab2498d8146d1bd58774bc9f",
+    "devel_rpm_sha256": "3574faee1546848495626fcdc89ced0d059f26bd13526353e84051f9cbf632fe",
+    "library_sha256": "56c891c75f8be4b8bbc1738c6084482bdf6472fa04875f1c647c3b501826e7c1",
+    "binary_signing_key": "2204A661EA630A5303500085538797E72A3E4ECA",
+    "binary_signature_digests": "passed in isolated database containing only the project key",
+    "srpm_signature": "unsigned; SHA256 retained",
+    "remote_native_shader_generation": "passed with Fedora hardening enabled",
+    "remote_cpu_checks": "passed; no GPU effect dispatch",
+    "python_payload_or_linkage": false,
+    "tablet_installed": false,
+    "instrumented_physical_gpu_tested": false
   },
   "game_integration_accepted": false,
   "bounded_fsr1_trial": {
