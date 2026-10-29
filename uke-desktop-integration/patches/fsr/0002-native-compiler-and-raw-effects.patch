@@ -1,0 +1,34 @@
+--- a/sdk/include/FidelityFX/gpu/CMakeCompileShaders.txt
++++ b/sdk/include/FidelityFX/gpu/CMakeCompileShaders.txt
+@@ -86,7 +86,9 @@
+ 		set(WAVE64_16BIT_PERMUTATION_HEADER ${OUTPUT_PATH}/${PASS_SHADER_TARGET}_wave64_16bit_permutations.h)
+ 
+ 		# combine base and permutation args
+-		set(SC_ARGS ${BASE_ARGS} ${API_BASE_ARGS} ${PERMUTATION_ARGS})
++		string(REPLACE "{" "" NATIVE_PERMUTATION_ARGS "${PERMUTATION_ARGS}")
++		string(REPLACE "}" "" NATIVE_PERMUTATION_ARGS "${NATIVE_PERMUTATION_ARGS}")
++		set(SC_ARGS ${BASE_ARGS} ${API_BASE_ARGS} ${NATIVE_PERMUTATION_ARGS} -num-threads=2)
+ 
+ 		# Wave32
+ 		add_custom_command(
+@@ -141,4 +143,4 @@
+     endforeach()
+ 
+ 	set (FFX_SC_PERMUTATION_OUTPUTS ${FFX_SC_PERMUTATION_OUTPUTS} PARENT_SCOPE)
+-endmacro()
+\ No newline at end of file
++endmacro()
+--- a/sdk/src/backends/vk/ffx_vk.cpp
++++ b/sdk/src/backends/vk/ffx_vk.cpp
+@@ -341,7 +341,11 @@
+     backendInterface->fpBreadcrumbsWrite = BreadcrumbsWriteVK;
+     backendInterface->fpBreadcrumbsPrintDeviceInfo = BreadcrumbsPrintDeviceInfoVK;
+     backendInterface->fpRegisterConstantBufferAllocator = RegisterConstantBufferAllocatorVK;
++#ifdef _WIN32
+     backendInterface->fpSwapChainConfigureFrameGeneration = ffxSetFrameGenerationConfigToSwapchainVK;
++#else
++    backendInterface->fpSwapChainConfigureFrameGeneration = nullptr;
++#endif
+ 
+     // Memory assignments
+     backendInterface->scratchBuffer = scratchBuffer;

@@ -1,0 +1,11 @@
+--- a/sdk/src/backends/vk/CMakeLists.txt
++++ b/sdk/src/backends/vk/CMakeLists.txt
+@@ -439,6 +439,8 @@
+         # variables as code addresses → segfault.
+         target_link_libraries(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE Vulkan::Vulkan)
+         target_link_options(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE -Wl,-Bsymbolic)
++        set_target_properties(ffx_backend_vk_${FFX_PLATFORM_NAME} PROPERTIES
++            OUTPUT_NAME uke_fidelityfx_raw SOVERSION 0 VERSION 1.1.4)
+     endif()
+ else()
+     add_library(ffx_backend_vk_${FFX_PLATFORM_NAME} STATIC ${PRIVATE_SOURCE} ${PUBLIC_SOURCE} ${PRIVATE_SHADERS} ${PUBLIC_SHADERS})
