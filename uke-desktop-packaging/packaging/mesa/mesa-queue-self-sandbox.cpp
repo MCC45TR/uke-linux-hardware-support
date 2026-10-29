@@ -147,7 +147,7 @@ static void exercise(bool minimum, bool sandboxed)
    util_queue queue{};
    const unsigned flags = minimum ? UTIL_QUEUE_INIT_USE_MINIMUM_PRIORITY : 0;
    check(util_queue_init(&queue, "sandbox", 8, 4, flags, &completed), "create Mesa queue");
-   util_queue_adjust_num_threads(&queue, 4, false);
+   util_queue_adjust_num_threads(&queue, 4);
    check(queue.num_threads == 4, "create all requested workers");
    for (unsigned round = 0; round < 2; ++round) {
       std::array<Job, 64> jobs;
@@ -171,8 +171,8 @@ static void exercise(bool minimum, bool sandboxed)
       }
       util_queue_finish(&queue);
       if (round == 0) {
-         util_queue_adjust_num_threads(&queue, 2, false);
-         util_queue_adjust_num_threads(&queue, 4, false);
+         util_queue_adjust_num_threads(&queue, 2);
+         util_queue_adjust_num_threads(&queue, 4);
          check(queue.num_threads == 4, "recreate workers after shrink");
       }
    }

@@ -8,8 +8,8 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.3.0' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.0"' >/dev/null
+grep -Fx 'uke-control 2.3.1' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.1"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
