@@ -8,6 +8,13 @@
 
 int main(int argc, char **argv) {
     assert(argc == 2);
+    std::ostringstream release; auto *saved = std::cout.rdbuf(release.rdbuf());
+    emit_release(false); emit_release(true);
+    std::cout.rdbuf(saved);
+    assert(release.str().find("\"owned_lease_revoke_completed\":false") != std::string::npos);
+    assert(release.str().find("\"owned_lease_revoke_completed\":true") != std::string::npos);
+    assert(release.str().find("\"firmware_setting_restore_performed\":false") != std::string::npos);
+    assert(release.str().find("\"physical_charge_stopped\":null") != std::string::npos);
     const auto rejects = [](const auto &action, const std::string &expected) {
         bool rejected = false;
         try { action(); }

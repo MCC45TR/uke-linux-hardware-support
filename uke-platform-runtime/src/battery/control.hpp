@@ -93,6 +93,9 @@ Admission inspect_admission(const Context &context, const Profile &profile);
 uint32_t current_ceiling(const Profile &profile, const State &state, uint64_t now);
 class Automatic {
     uint64_t previous_ns_ = 0, stable_since_ = 0;
+    uint64_t instance_ = 0;
+    uint32_t generation_ = 0, firmware_ = 0, source_ = 0;
+    std::string evidence_;
     uint32_t ceiling_ = 0, baseline_ = 0;
 public:
     // Uses fresh firmware FCC readback as the baseline. Voltage remains under
@@ -126,6 +129,6 @@ public:
     void wet_guard(uint64_t now);
     bool write_attempted() const { return write_attempted_; }
     // Revocation removes permission, not an already-applied firmware setting.
-    void revoke();
+    bool revoke();
 };
 }

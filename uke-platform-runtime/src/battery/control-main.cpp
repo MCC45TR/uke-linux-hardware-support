@@ -254,8 +254,16 @@ void emit(const State &s, const Profile &p, const char *operation, bool applied,
         << ",\"battery_voltage_uv\":" << (s.measurement_valid ? std::to_string(s.voltage_uv) : "null")
         << ",\"battery_current_ua\":" << (s.measurement_valid ? std::to_string(s.measured_current_ua) : "null")
         << ",\"measurement_boottime_ns\":" << s.measurement_ns
+        << ",\"control_lease_reported_live\":" << (s.live ? "true" : "false")
+        << ",\"lease_release_restores_settings\":false,\"settings_may_persist_after_release\":true"
         << ",\"physical_charge_stopped\":null,\"current_control_qualified\":" << (p.current_control ? "true" : "false")
         << ",\"voltage_writer\":false,\"cv_owner\":\"firmware\"}\n" << std::flush;
+}
+void emit_release(bool revoke_completed) {
+    std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_release\",\"controller_stopped\":true"
+        << ",\"owned_lease_revoke_completed\":" << (revoke_completed ? "true" : "false")
+        << ",\"firmware_setting_restore_performed\":false,\"settings_may_persist\":true"
+        << ",\"physical_charge_stopped\":null}\n" << std::flush;
 }
 uint32_t percent(const char *value) {
     uint32_t result; const std::string text(value);
@@ -500,7 +508,9 @@ int main(int argc, char **argv) {
             emit(result, profile, command == "verify" ? "verified_refresh" : current_action ?
                 (command == "slow" ? "slow_current" : "profile_current_restore") : "threshold_apply", command != "verify");
         }
-        session->revoke(); session.reset(); return 0;
+        const bool revoked = session->revoke(); session.reset();
+        if (command == "serve" || command == "automatic") emit_release(revoked);
+        return 0;
     } catch (const std::exception &e) {
         if (protection_query) {
             std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_protection\",\"firmware_get_complete\":false,\"reason\":\""
@@ -540,6 +550,7 @@ int main(int argc, char **argv) {
         std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control\",\"status\":\"failed\",\"reason\":\""
             << reason << "\",\"applied\":" << (uncertain ? "null" : "false")
             << ",\"write_delivery_may_be_uncertain\":" << (uncertain ? "true" : "false")
+            << ",\"lease_release_restores_settings\":false,\"settings_may_persist_after_release\":true"
             << ",\"physical_charge_stopped\":null}\n";
         return uncertain ? 1 : 69;
     }

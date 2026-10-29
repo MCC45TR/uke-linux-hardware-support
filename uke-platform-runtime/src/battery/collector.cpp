@@ -250,10 +250,11 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
         << ",\"driver_instance_boottime_ns\":" << (last.valid ? std::to_string(last.instance) : "null")
         << ",\"attach_generation\":null,\"protocol\":null,\"contract\":null,\"cable_identity\":null,\"fields\":{";
     std::optional<int64_t> online, current;
-    std::string health_label;
+    std::string health_label, battery_status;
     Observation sample; sample.fault = true;
     sample.valid = coherent; sample.boottime_ns = end; sample.monotonic_ns = now(CLOCK_MONOTONIC);
-    if (last.valid) sample.epoch = std::to_string(last.instance) + ":" + std::to_string(last.firmware) + ":" + std::to_string(last.generation);
+    if (last.valid) sample.epoch = std::to_string(last.instance) + ":" + std::to_string(last.firmware) + ":" +
+        std::to_string(last.generation) + ":" + std::to_string(last.source);
     for (size_t i = 0; i < readings.size(); ++i) {
         auto &r = readings[i]; const auto &f = fields[i];
         if (!coherent && !r.error && r.validity == "unqualified") r.validity = "stale";
@@ -283,12 +284,20 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
             else if (name == "charge_full_design") sample.design_full_uah = n;
             else if (name == "state_of_health") sample.vendor_soh = n;
             else if (name == "cycle_count") sample.hardware_cycles = n;
+            else if (name == "status") battery_status = r.text;
             else if (name == "health") { health_label = r.text; sample.fault = r.text != "Good"; }
         }
     }
     const char *direction = !current ? "unknown" : *current > 0 ? "charging_current_observed" :
         *current < 0 ? "discharging_current_observed" : "zero_current_reported";
     const bool external_discharge = online && *online == 1 && current && *current < 0;
+    const bool hold_reported = battery_status == "Full" || battery_status == "Not charging";
+    const bool status_known = hold_reported || battery_status == "Charging" || battery_status == "Discharging";
+    const char *power_path = !coherent ? "unavailable" : !online || !current ? "unknown" :
+        *online == 1 ? (*current < 0 ? "external_source_online_battery_discharging" :
+            *current > 0 ? "external_source_online_charging_current" :
+            hold_reported ? "external_source_online_hold_reported" : "external_source_online_zero_current_reported") :
+        *current < 0 ? "battery_discharge_reported" : *current > 0 ? "charging_current_source_unknown" : "zero_current_reported";
     IdentityContext identity;
     identity.fixture = fixture; identity.provider_verified = verified && coherent;
     identity.kernel_release = kernel.release; identity.driver_instance_ns = last.instance;
@@ -302,6 +311,11 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
     sample.battery_id = profile.battery_id; sample.boot_id = identity.boot_id;
     const auto derived = models.observe(sample, qualification);
     out << "},\"battery_flow\":" << quote(direction) << ",\"safety\":\"unknown_safety_state\""
+        << ",\"power_path\":{\"observation\":" << quote(power_path)
+        << ",\"reported_battery_status\":" << (battery_status.empty() ? "null" : quote(battery_status))
+        << ",\"external_source_reported_online\":" << (!online ? "null" : *online ? "true" : "false")
+        << ",\"charge_hold_reported\":" << (!status_known ? "null" : hold_reported ? "true" : "false")
+        << ",\"hold_effect_verified\":false,\"bypass\":null,\"electrical_isolation_verified\":false}"
         << ",\"policy\":\"unsupported\",\"external_power_with_negative_battery_current\":"
         << (external_discharge ? "true" : "false")
         << ",\"limiting_reasons\":[\"protocol_unqualified\""

@@ -351,10 +351,16 @@ uint32_t current_ceiling(const Profile &p, const State &s, uint64_t now) {
     fail("control_current_temperature_outside_bands");
 }
 uint32_t Automatic::propose(const Profile &p, const State &s, uint64_t now) {
-    const auto ceiling = current_ceiling(p, s, now);
+    uint32_t ceiling;
+    try { ceiling = current_ceiling(p, s, now); }
+    catch (...) { *this = Automatic{}; throw; }
     if (!previous_ns_ || now <= previous_ns_ || now - previous_ns_ > p.lease_ns ||
+        instance_ != s.instance || generation_ != s.generation || firmware_ != s.firmware ||
+        source_ != s.source || evidence_ != p.evidence ||
         ceiling != ceiling_ || s.current_ua != baseline_ || s.measured_current_ua < 0)
         stable_since_ = now;
+    instance_ = s.instance; generation_ = s.generation; firmware_ = s.firmware;
+    source_ = s.source; evidence_ = p.evidence;
     previous_ns_ = now; ceiling_ = ceiling; baseline_ = s.current_ua;
     if (ceiling < s.current_ua) return ceiling;
     if (s.measured_current_ua < 0 || now - stable_since_ < p.increase_dwell_ns) return s.current_ua;
@@ -375,7 +381,9 @@ State Session::thresholds(uint32_t start, uint32_t end, uint64_t now) {
         s.verified_ns < now || s.expires_ns <= s.verified_ns) fail("control_threshold_readback_mismatch");
     return s;
 }
-void Session::revoke() {
-    if (owns_lease_) { io_.write("uke_charge_lease", "revoke\n"); owns_lease_ = false; }
+bool Session::revoke() {
+    if (!owns_lease_) return false;
+    io_.write("uke_charge_lease", "revoke\n"); owns_lease_ = false;
+    return true;
 }
 }

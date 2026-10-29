@@ -321,6 +321,40 @@ int main() {
         }
         rejects([&] { current_ceiling(p, s, 2 * second); });
     }
+    {
+        Fake io; Session borrowed(io, profile(), io.value);
+        assert(!borrowed.revoke() && io.writes.empty());
+        io.value.live = false; io.value.expires_ns = 0;
+        Session owned(io, profile(), io.value); owned.admit(2 * second);
+        io.value.current_ua = 500000;
+        assert(owned.revoke());
+        assert(!io.value.live && io.value.current_ua == 500000 && io.writes.back() == "uke_charge_lease");
+        const auto count = io.writes.size();
+        assert(!owned.revoke() && io.writes.size() == count);
+    }
+    // A rejected observation must discard the pre-fault increase dwell.
+    {
+        auto limits = profile(); auto observed = sample(); Automatic recovered;
+        assert(recovered.propose(limits, observed, 2 * second) == observed.current_ua);
+        observed.error = -5;
+        rejects([&] { recovered.propose(limits, observed, 3 * second); });
+        observed.error = 0;
+        observed.measurement_ns = observed.current_verified_ns = 12 * second;
+        assert(recovered.propose(limits, observed, 12 * second) == observed.current_ua);
+        observed.measurement_ns = observed.current_verified_ns = 22 * second;
+        assert(recovered.propose(limits, observed, 22 * second) == observed.current_ua + limits.increase_step_ua);
+    }
+    for (unsigned changed = 0; changed < 5; ++changed) {
+        auto limits = profile(); auto observed = sample(); Automatic rebound;
+        assert(rebound.propose(limits, observed, 2 * second) == observed.current_ua);
+        if (changed == 0) ++observed.instance;
+        if (changed == 1) ++observed.generation;
+        if (changed == 2) ++observed.firmware;
+        if (changed == 3) ++observed.source;
+        if (changed == 4) observed.evidence = limits.evidence = std::string(64, 'b');
+        observed.measurement_ns = observed.current_verified_ns = 12 * second;
+        assert(rebound.propose(limits, observed, 12 * second) == observed.current_ua);
+    }
     // Invalid targets must not acquire permission or issue a control write.
     for (const auto value : {uint32_t(0), uint32_t(99), uint32_t(2000001),
                             std::numeric_limits<uint32_t>::max()}) {

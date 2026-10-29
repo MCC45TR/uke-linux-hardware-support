@@ -41,7 +41,29 @@ jq -e '.schema_version == 1 and .origin == "fixture" and .provider_verified and 
     and .engineering.signed_c_rate_per_hour == null and .engineering.nominal_full_energy_uwh == null
     and (.engineering.cell_topology.qualified | not) and .engineering.cell_topology.series_cells == null
     and .engineering.remaining_life_seconds == null and .engineering.remaining_life_reason == "aging_model_unqualified"
-    and .efc_coverage.checkpoint == "disabled_unqualified" and .capabilities.read_only and (.capabilities.charge_threshold | not)' "$work/snapshot.json" >/dev/null
+    and .efc_coverage.checkpoint == "disabled_unqualified" and .capabilities.read_only and (.capabilities.charge_threshold | not)
+    and .power_path.observation == "external_source_online_battery_discharging"
+    and .power_path.bypass == null and (.power_path.electrical_isolation_verified | not)' "$work/snapshot.json" >/dev/null
+printf '0\n' > "$sys/class/power_supply/qcom-battmgr-bat/current_now"
+for reported in Full 'Not charging'; do
+    printf '%s\n' "$reported" > "$sys/class/power_supply/qcom-battmgr-bat/status"
+    "$work/build/uke-battery" --sysfs-root "$sys" > "$work/hold-reported.json"
+    jq -e '.power_path.observation == "external_source_online_hold_reported" and .power_path.charge_hold_reported
+        and .power_path.bypass == null and (.power_path.hold_effect_verified | not)
+        and .forecast.time_to_target_seconds == null' "$work/hold-reported.json" >/dev/null
+done
+printf 'Full\n' > "$sys/class/power_supply/qcom-battmgr-bat/status"
+printf '100000\n' > "$sys/class/power_supply/qcom-battmgr-bat/current_now"
+"$work/build/uke-battery" --sysfs-root "$sys" > "$work/full-positive.json"
+jq -e '.power_path.charge_hold_reported and .power_path.observation == "external_source_online_charging_current"
+    and .power_path.bypass == null and (.power_path.hold_effect_verified | not)' "$work/full-positive.json" >/dev/null
+for reported in Unknown Unexpected; do
+    printf '%s\n' "$reported" > "$sys/class/power_supply/qcom-battmgr-bat/status"
+    "$work/build/uke-battery" --sysfs-root "$sys" > "$work/unknown-status.json"
+    jq -e '.power_path.charge_hold_reported == null and .power_path.bypass == null' "$work/unknown-status.json" >/dev/null
+done
+printf 'Discharging\n' > "$sys/class/power_supply/qcom-battmgr-bat/status"
+printf '%s\n' -500000 > "$sys/class/power_supply/qcom-battmgr-bat/current_now"
 jq -e '.fields["battery.temp"].value == null and .safety == "unknown_safety_state"' "$work/snapshot.json" >/dev/null
 jq -e 'all(.fields["battery.current_avg"], .fields["battery.power_avg"], .fields["usb.temp"];
     .value == null and .validity == "unsupported")' "$work/snapshot.json" >/dev/null
