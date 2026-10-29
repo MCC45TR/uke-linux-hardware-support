@@ -67,7 +67,13 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/rgb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-rgb
 	LD_LIBRARY_PATH=build build/test-rgb
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/rgb-bus.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux) -o build/test-rgb-bus
-	if test "$$(id -u)" = 0; then LD_LIBRARY_PATH="$$PWD/build" timeout 20s setpriv --reuid=65534 --regid=65534 --clear-groups dbus-run-session -- build/test-rgb-bus; else LD_LIBRARY_PATH=build timeout 20s dbus-run-session -- build/test-rgb-bus; fi
+	if test "$$(id -u)" = 0; then
+		bus_fixture=$$(mktemp -d)
+		trap 'rm -rf -- "$$bus_fixture"' EXIT
+		chmod 755 "$$bus_fixture"
+		install -m755 build/test-rgb-bus build/libuke-control.so.0 "$$bus_fixture/"
+		LD_LIBRARY_PATH="$$bus_fixture" timeout 20s setpriv --reuid=65534 --regid=65534 --clear-groups dbus-run-session -- "$$bus_fixture/test-rgb-bus"
+	else LD_LIBRARY_PATH=build timeout 20s dbus-run-session -- build/test-rgb-bus; fi
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
 	bash tests/light-worker.sh
