@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 # SPDX-License-Identifier: MIT
-# Run only in the COPR source builder. No native compilation occurs here.
+# Run only in the COPR source builder; return flat spec/source inputs to COPR.
 set -Eeuo pipefail
 out=$(realpath -m "${1:?COPR result directory}")
 component=$(cd -- "$(dirname -- "$0")/../.." && pwd)
@@ -41,7 +41,5 @@ tar -C "$stage" --sort=name --mtime=@1793232000 --owner=0 --group=0 --numeric-ow
     -cf - uke-fidelityfx-1.1.4 | gzip -n > "$stage/rpmbuild/SOURCES/uke-fidelityfx-1.1.4.tar.gz"
 cp "$component/packaging/fidelityfx/uke-fidelityfx.spec" "$stage/rpmbuild/SPECS/"
 (cd "$stage/rpmbuild/SOURCES" && sha256sum ./*.tar.gz > source-sha256.txt)
-rpmbuild -bs --define "_topdir $stage/rpmbuild" "$stage/rpmbuild/SPECS/uke-fidelityfx.spec"
-mapfile -t srpms < <(find "$stage/rpmbuild/SRPMS" -maxdepth 1 -name '*.src.rpm' -type f)
-[[ ${#srpms[@]} == 1 ]]
-cp -- "${srpms[0]}" "$out/"
+cp -- "$stage/rpmbuild/SPECS/uke-fidelityfx.spec" "$out/"
+cp -- "$stage/rpmbuild/SOURCES/"* "$out/"
