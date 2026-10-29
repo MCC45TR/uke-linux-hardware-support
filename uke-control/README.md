@@ -1,5 +1,10 @@
 # Uke Control
 
+29 October 2026: the 2.4.0 source draft routes `unstable` to the independent
+Rawhide COPR project and retains local touch/video firmware during channel
+synchronization. Signing-key enrollment, native COPR builds and tablet migration
+remain pending. See [CHANNELS.md](CHANNELS.md).
+
 29 October 2026: version 1.18.0 adds a qualified 70/80 preset and a duration-only
 temporary-full preview. Temporary full activation remains unavailable without
 a reviewed device-side return path. See [CHARGING.md](CHARGING.md) for limits;

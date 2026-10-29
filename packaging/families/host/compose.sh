@@ -8,7 +8,11 @@ fedora_target=${FEDORA_TARGET:-$fedora_number}
 if [[ -z ${FEDORA_TARGET:-} && $fedora_number != 44 && $fedora_number != 45 ]]; then fedora_target=rawhide; fi
 case $fedora_target in
     44|45) [[ $fedora_number == "$fedora_target" ]] || { echo 'Use a matching Fedora source worker' >&2; exit 1; };;
-    rawhide) grep -Eq '^VERSION="?Rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; };;
+    rawhide)
+        if ! grep -Eq '^VERSION="?Rawhide"?$' /etc/os-release; then
+            grep -Fxq "VERSION=\"$fedora_number (Rawhide Prerelease)\"" /etc/os-release &&
+                grep -Eq '^RELEASE_TYPE="?development"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; }
+        fi;;
     *) echo 'Fedora target must be 44, 45 or rawhide' >&2; exit 1;;
 esac
 dist=.fc$fedora_number
@@ -91,7 +95,7 @@ uke-metas)
 esac
 touch "$stage/inputs"
 # Fedora variants are regenerated from the current verified Rawhide source lock.
-jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' uke-desktop-packaging/manifests/native-runtime.json >"$stage/native-packages"
+jq -r --arg family "$family" --arg component "${UKE_COMPONENT:-}" '.packages[]|select(.family==$family and ($component=="" or .name==$component))|.name' uke-desktop-packaging/manifests/native-runtime.json >"$stage/native-packages"
 while IFS= read -r package; do
     make -C uke-desktop-packaging srpm PACKAGE="$package" outdir="$stage/native/$package" >"$stage/native-$package.log"
     files=("$stage/native/$package/"*.src.rpm)
@@ -111,7 +115,7 @@ while IFS=$'\t' read -r key url hash; do
     fi
     printf '%s  %s\n' "$hash" "$input" | sha256sum -c - >&2
     printf '%s\t%s\n' "$key" "$input" >>"$stage/inputs"
-done < <(jq -r --arg family "$family" 'map(select(.family==$family))|sort_by(if .name=="libssc" then 0 else 1 end)[]|[.name,.url,.sha256]|@tsv' packaging/families/source-inputs.json)
+done < <(jq -r --arg family "$family" --arg component "${UKE_COMPONENT:-}" 'map(select(.family==$family and ($component=="" or .name==$component)))|sort_by(if .name=="libssc" then 0 else 1 end)[]|[.name,.url,.sha256]|@tsv' packaging/families/source-inputs.json)
 # Generated SensorProxy inputs need the same provider-first order as archives.
 awk -F '\t' '$1=="libssc"' "$stage/inputs" >"$stage/ordered-inputs"
 awk -F '\t' '$1!="libssc"' "$stage/inputs" >>"$stage/ordered-inputs"
@@ -143,11 +147,19 @@ while IFS=$'\t' read -r key input; do
     rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
-    [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc[0-9]+$ ]]
+    if [[ -n ${UKE_COMPONENT:-} ]]; then
+        [[ $key == "$UKE_COMPONENT" ]] || continue
+        release_override=$(jq -er --arg key "$key" '.packages[]|select(.input==$key)|.release|tostring' packaging/standalone/packages.json).unstable1.fc$fedora_number
+    fi
+    [[ -z $release_override || $release_override =~ ^[1-9][0-9]*([.]unstable1)?[.]fc[0-9]+$ ]]
     [[ -z $release_override ]] || release_override=${release_override%%.fc*}$dist
     awk -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
+if [[ -n ${UKE_COMPONENT:-} ]]; then
+    bash packaging/standalone/host/emit.sh "$UKE_COMPONENT" "$family" "$stage" "$output" "$target" "$dist"
+    exit
+fi
 spec="$output/SPECS/$family.spec"
 {
     printf '%%global debug_package %%{nil}\nName: %s\nVersion: %s\nRelease: %s%%{?dist}\nSummary: Uke %s package selection and source family\nLicense: MIT\nURL: https://github.com/MCC45TR/uke-linux-hardware-support\nSource0: %s-%s.tar.xz\nExclusiveArch: %s\n' "$family" "$version" "$release" "${family#uke-}" "$family" "$version" "$target"

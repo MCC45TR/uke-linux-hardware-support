@@ -22,11 +22,17 @@ int main() {
     for(auto args:{std::initializer_list<const char*>{"brunch"},{"brunch","bad"},{"brunch","stable","--nodeps"},{"brunch","sync","--yes","--yes"},{"brunch","status","--yes"},{"update","--allowerasing"}}) {
         bool rejected=false;try{options(args);}catch(const std::exception&){rejected=true;}assert(rejected);
     }
-    assert(project("unstable")=="uke-linux-test"&&project("stable")=="uke-linux");
+    assert(project("unstable")=="uke-linux-unstable"&&project("test")=="uke-linux-test"&&project("stable")=="uke-linux");
     assert(private_package("uke-local-touch-data"));
+    assert(private_package("uke-video-firmware-local"));
     assert(!private_package("uke-local-sensor-data")&&!private_package("uke-local-touch-data-extra"));
     assert(managed_repo(prefix+"uke-linux-test:custom:experiment"));assert(!managed_repo(prefix+"unrelated"));
     assert(infer_channel({prefix+"uke-linux-test"})=="test");
+    assert(infer_channel({prefix+"uke-linux-unstable"})=="unstable");
+    assert(infer_channel({prefix+"uke-linux-test",prefix+"uke-linux-unstable"}).empty());
+    assert(managed_repo(prefix+"uke-linux-unstable:custom:experiment"));
+    assert(managed_source("experimental-alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/"}));
+    assert(!managed_source("other",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable-unrelated/"}));
     assert(infer_channel({"uke-linux"})=="stable");
     assert(infer_channel({}).empty());
     assert(infer_channel({prefix+"uke-linux",prefix+"uke-linux-test"}).empty());

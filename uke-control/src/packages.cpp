@@ -42,15 +42,15 @@ const std::array<std::string,3> prerelease_excludes{"senemos-uke-linux-kernel-*-
     "senemos-uke-linux-kernel-*-*alpha*.*","senemos-uke-linux-kernel-*-*beta*.*"};
 void need(bool ok,const std::string& why){if(!ok)throw std::runtime_error(why);}
 bool channel(const std::string& s){return s=="stable"||s=="test"||s=="unstable";}
-std::string project(const std::string& s){need(channel(s),"Unknown channel: "+s);return s=="stable"?"uke-linux":"uke-linux-test";}
+std::string project(const std::string& s){need(channel(s),"Unknown channel: "+s);return s=="stable"?"uke-linux":s=="test"?"uke-linux-test":"uke-linux-unstable";}
 bool managed_repo(const std::string& id) {
-    for(const auto& p:{std::string("uke-linux"),std::string("uke-linux-test")})
+    for(const auto& p:{std::string("uke-linux"),std::string("uke-linux-test"),std::string("uke-linux-unstable")})
         if(id==p||id==prefix+p||id.starts_with(prefix+p+":custom:"))return true;
     return false;
 }
 bool managed_source(const std::string& id,const std::vector<std::string>& urls) {
     if(managed_repo(id))return true;
-    for(const auto& url:urls)for(const auto& p:{"uke-linux/","uke-linux-test/"})
+    for(const auto& url:urls)for(const auto& p:{"uke-linux/","uke-linux-test/","uke-linux-unstable/"})
         if(url.starts_with(std::string("https://download.copr.fedorainfracloud.org/results/mcc45tr/")+p))return true;
     return false;
 }
@@ -63,12 +63,12 @@ std::set<std::string> enabled_managed_repos(libdnf5::Base& base) {
 }
 std::string infer_channel(const std::set<std::string>& enabled) {
     if(enabled.size()!=1)return {};
-    for(const auto& selection:{"stable","test"})
+    for(const auto& selection:{"stable","test","unstable"})
         if(*enabled.begin()==project(selection)||*enabled.begin()==prefix+project(selection))return selection;
     return {};
 }
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
-bool private_package(const std::string& name){return name=="uke-local-touch-data";}
+bool private_package(const std::string& name){return name=="uke-local-touch-data"||name=="uke-video-firmware-local";}
 bool protected_package(const Package& p) {
     if(private_package(p.get_name()))return true;
     if(p.get_name().starts_with("uke-senemos-kernel-"))return true;
@@ -175,8 +175,9 @@ Options parse(int argc,char** argv) {
 class Keys:public libdnf5::repo::RepoCallbacks {
     std::string fingerprint;
 public:
-    explicit Keys(bool stable):fingerprint(stable?"30DFB81A724CE0762F9DF77F844A293E5068FAFE":"DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E"){}
+    explicit Keys(const std::string& selected_project):fingerprint(selected_project=="uke-linux"?"30DFB81A724CE0762F9DF77F844A293E5068FAFE":selected_project=="uke-linux-test"?"DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E":""){}
     bool repokey_import(const libdnf5::rpm::KeyInfo& k) override {
+        need(!fingerprint.empty(),"Unstable COPR signing key enrollment is pending; this draft manager cannot import it");
         auto f=k.get_fingerprint();f.erase(std::remove(f.begin(),f.end(),' '),f.end());
         std::transform(f.begin(),f.end(),f.begin(),[](unsigned char c){return std::toupper(c);});
         need(f==fingerprint,"COPR key changed; review its fingerprint before importing");return true;
@@ -203,6 +204,7 @@ void unique_repository_ids(libdnf5::Base& base) {
 }
 Repositories configure(libdnf5::Base& base,const std::string& selected) {
     const auto release=fedora_target(read_file("/etc/os-release"));
+    need(selected!="unstable"||release=="rawhide","The unstable channel is available only on Fedora Rawhide");
     const auto chroot="fedora-"+release+"-$basearch/";
     auto sack=base.get_repo_sack();
     Repositories result;
@@ -211,14 +213,15 @@ Repositories configure(libdnf5::Base& base,const std::string& selected) {
         if(ours){result.ids.insert(repo->get_id());repo->get_config().get_enabled_option().set(priority,false);}
         repo->get_config().get_pkg_gpgcheck_option().set(priority,true);
     }
-    for(const auto& p:{std::string("uke-linux"),std::string("uke-linux-test")}) {
+    for(const auto& p:{std::string("uke-linux"),std::string("uke-linux-test"),std::string("uke-linux-unstable")}) {
         const auto id=prefix+p;
         libdnf5::repo::RepoQuery found(base);found.filter_id(id);
         const bool missing=found.empty();auto repo=missing?sack->create_repo(id):*found.begin();
         auto& c=repo->get_config();const bool enabled=p==project(selected);
         const auto url="https://download.copr.fedorainfracloud.org/results/mcc45tr/"+p+"/";
         // A channel change stays within the installed Fedora release.
-        c.get_baseurl_option().set(priority,{url+chroot});
+        const auto project_chroot=p=="uke-linux-unstable"?"fedora-rawhide-$basearch/":chroot;
+        c.get_baseurl_option().set(priority,{url+project_chroot});
         c.get_metalink_option().set(priority,"");c.get_mirrorlist_option().set(priority,"");
         c.get_gpgkey_option().set(priority,{url+"pubkey.gpg"});
         c.get_enabled_option().set(priority,enabled);c.get_skip_if_unavailable_option().set(priority,false);
@@ -227,16 +230,16 @@ Repositories configure(libdnf5::Base& base,const std::string& selected) {
         auto excludes=c.get_excludepkgs_option().get_value();for(const auto& expression:prerelease_excludes)std::erase(excludes,expression);
         // RC policy is applied below after all candidates have been examined.
         c.get_excludepkgs_option().set(priority,excludes);
-        repo->set_callbacks(std::make_unique<Keys>(p=="uke-linux"));
+        repo->set_callbacks(std::make_unique<Keys>(p));
         result.ids.insert(id);
         std::ostringstream stanza;
-        stanza<<'['<<id<<"]\nenabled="<<enabled<<"\nbaseurl="<<url<<chroot<<"\nmetalink=\nmirrorlist=\ngpgkey="<<url<<"pubkey.gpg\ngpgcheck=1\npkg_gpgcheck=1\nsslverify=1\npriority=1\nskip_if_unavailable=0\n";
+        stanza<<'['<<id<<"]\nenabled="<<enabled<<"\nbaseurl="<<url<<project_chroot<<"\nmetalink=\nmirrorlist=\ngpgkey="<<url<<"pubkey.gpg\ngpgcheck=1\npkg_gpgcheck=1\nsslverify=1\npriority=1\nskip_if_unavailable=0\n";
         if(selected!="unstable")excludes.insert(excludes.end(),prerelease_excludes.begin(),prerelease_excludes.end());
         stanza<<"excludepkgs=";for(const auto& e:excludes)stanza<<e<<' ';stanza<<"\n\n";
         result.overrides+=stanza.str();
-        if(missing)result.definitions+='['+id+"]\nname=Uke "+p+"\nbaseurl="+url+chroot+"\nenabled=0\ngpgcheck=1\n\n";
+        if(missing)result.definitions+='['+id+"]\nname=Uke "+p+"\nbaseurl="+url+project_chroot+"\nenabled=0\ngpgcheck=1\n\n";
     }
-    for(const auto& id:result.ids)if(id!=prefix+"uke-linux"&&id!=prefix+"uke-linux-test")result.overrides+='['+id+"]\nenabled=0\n\n";
+    for(const auto& id:result.ids)if(id!=prefix+"uke-linux"&&id!=prefix+"uke-linux-test"&&id!=prefix+"uke-linux-unstable")result.overrides+='['+id+"]\nenabled=0\n\n";
     return result;
 }
 void verify_repositories(const std::set<std::string>& ids,const std::string& selected) {

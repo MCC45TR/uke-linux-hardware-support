@@ -1,5 +1,13 @@
 # Package channels
 
+29 October 2026 unstable source change: `unstable` selects the separate
+`mcc45tr/uke-linux-unstable` project, available only on Fedora Rawhide AArch64.
+Stable and test continue to follow the installed Fedora release. Independent
+component source packages replace the former aggregate source builds. The
+device-private touch and video firmware RPMs are retained outside public
+synchronization. Source checks are separate from COPR publication and tablet
+channel acceptance; these runtime gates remain pending for this change.
+
 29 October 2026: source routing selects Fedora 44, Fedora 45 or Rawhide from the
 installed os-release data. Channel changes stay in that release's COPR chroot;
 a distribution upgrade is a separate operation. Candidate RPM dist tags must
@@ -35,8 +43,8 @@ firmware providers. Calibration is never uploaded or substituted from COPR.
 21 October 2026 correction: without a saved selection, status and implicit
 operations use exactly one enabled normal stable/test COPR. They do not silently
 select stable over an enabled test repository. Missing, multiple or custom-only
-repositories require an explicit selection. Unstable preference must be saved
-explicitly because it shares the test repository. Unreadable, empty, malformed,
+repositories require an explicit selection. Unstable has a separate repository
+and signing key. Unreadable, empty, malformed,
 symlink or hardlinked channel records are refused. Status reads no package
 metadata from the network; private pending state remains root-only.
 
@@ -67,7 +75,7 @@ containing updates; it is not DNF's check-upgrade exit-code interface.
 |---|---|---|
 | stable | mcc45tr/uke-linux | Latest non-prerelease Uke kernel in that repository |
 | test | mcc45tr/uke-linux-test | Latest non-prerelease Uke kernel in that repository |
-| unstable | mcc45tr/uke-linux-test | Latest available Uke RC; otherwise the test kernel |
+| unstable | mcc45tr/uke-linux-unstable | Latest available Uke RC; otherwise that repository's final kernel |
 
 The requested unstable selection is retained when no RC exists. A later sync
 or update checks again. An RC older than or equal to the newest final package
@@ -108,8 +116,8 @@ must come from Fedora's `rawhide` repository, including a necessary downgrade.
 No other project package is handed to an arbitrary outside repository. If the
 original replacement is unavailable, the whole transaction is refused.
 
-`sync` repairs the saved selection; without a saved selection the default is
-stable. `update` performs the same synchronization and upgrades the other
+`sync` repairs the saved selection; without a saved selection it requires one
+unambiguous enabled main Uke repository. `update` performs the same synchronization and upgrades the other
 distribution packages in the same dependency transaction. Dependency failures,
 version locks, missing candidates, duplicate repository definitions and
 unintended package removal are errors. There is no `nodeps`, signature bypass,
@@ -129,7 +137,8 @@ access. Synchronization checks the persisted repository policy before running RP
 New COPR key imports accept only these reviewed fingerprints:
 
 - stable: `30DFB81A724CE0762F9DF77F844A293E5068FAFE`
-- test/unstable: `DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E`
+- test: `DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E`
+- unstable: enrollment pending creation of the separate project; imports fail closed.
 
 A changed key requires review and an updated application; it is not silently
 trusted. The selected repository's canonical HTTPS metadata/key URLs are used.

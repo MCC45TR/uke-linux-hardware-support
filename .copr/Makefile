@@ -8,6 +8,21 @@ srpm:
 	# already supplied by COPR, so root discovery needs no additional tool.
 	root="$(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)"
 	subdir="$$(realpath --relative-to="$$root" .)"
+	if [[ "$$subdir" == packaging/standalone/uke-* ]]; then
+		package="$${subdir##*/}"
+		dnf -y --setopt=install_weak_deps=False install git make curl jq xz tar gzip rpm-build coreutils cpio gawk bash kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros
+		profile=$$(jq -ce --arg name "$$package" '.packages[]|select(.name==$$name)' "$$root/packaging/standalone/packages.json")
+		(cd "$$root"; bash packaging/standalone/tests/recipes.sh)
+		group=$$(jq -er .group <<<"$$profile")
+		if [[ $$group == uke-sound ]]; then
+			dnf -y --setopt=install_weak_deps=False install gcc-c++ alsa-lib-devel alsa-utils pkgconf-pkg-config
+		fi
+		stage="$$root/packaging/standalone/build/$$package"
+		UKE_COMPONENT=$$(jq -er .input <<<"$$profile") $(MAKE) -C "$$root/packaging/families" srpm FAMILY="$$group" outdir="$$stage"
+		mkdir -p "$(outdir)"
+		install -m644 "$$stage/SRPMS/"*.src.rpm "$(outdir)/"
+		exit 0
+	fi
 	if [[ "$$subdir" == packaging/families/uke-* ]]; then
 		family="$${subdir##*/}"
 		case "$$family" in uke-core|uke-hw|uke-power|uke-sensors|uke-extras|uke-additional|uke-metas|uke-camera|uke-sound) ;; *) exit 1;; esac
