@@ -1,9 +1,9 @@
 # Uke Control
 
-29 October 2026: version 1.17.0 adds explicit `charge protocol-inspect` routing
-for the default-off kernel USB7/USB11 diagnostic pair. It requires root and
-never requests a protocol, current, voltage or authentication change. Source
-and host checks do not qualify physical charging. See [CHARGING.md](CHARGING.md).
+29 October 2026: version 1.18.0 adds a qualified 70/80 preset and a duration-only
+temporary-full preview. Temporary full activation remains unavailable without
+a reviewed device-side return path. See [CHARGING.md](CHARGING.md) for limits;
+source preparation does not establish installed or electrical acceptance.
 
 29 October 2026: version 1.16.0 adds explicit `charge review FILE` and
 `charge restore-current` routes to the existing qualified helper. Review installs

@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.17.0
+Version: 1.18.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.18.0-1
+- Add guarded daily 70/80 routing and an unarmed temporary-full preview
+- Keep voltage regulation in firmware and refuse unqualified timed activation
+
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.17.0-1
 - Route explicit default-off firmware protocol inspection without charging SET
 - Preserve reported OEM classes and default charging admission

@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
-Version: 1.3.0
+Version: 1.4.0
 Release: 1%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
@@ -86,7 +86,7 @@ sha256sum -c SOURCE-SHA256SUMS
 
 %files -n uke-charge-control
 %license LICENSE
-%doc docs/CHARGE-CONTROL.md docs/CHARGING-PROTOCOLS.md
+%doc docs/CHARGE-CONTROL.md docs/CHARGING-PROTOCOLS.md docs/BATTERY-LONGEVITY.md
 %{_libexecdir}/uke-charge-control
 %{_datadir}/uke-battery/protection-readiness.json
 %{_unitdir}/uke-charge-control.service
@@ -117,6 +117,11 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
+- Reset current-increase dwell after faults and source identity changes
+- Bind forecasts and EFC continuity to accepted measurements and clock ordering
+- Distinguish reported charge hold and permission release from physical safety
+
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.3.0-1
 - Add fixed USB7/USB11 inspection parser and explicit manufacturer exclusions
 - Keep negotiation and genuine Xiaomi authentication outside diagnostic control

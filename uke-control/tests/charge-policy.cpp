@@ -32,10 +32,10 @@ int main() {
     c.start_threshold = true; assert(step(hold).soc_demand == "firmware_hysteresis");
     s.soc = 79;
     p = step({Target::cap80, Rate::slow}); assert(p.eligible && p.battery_current_ua == 300000 && p.end_percent == 80);
-    p = step({Target::full, Rate::automatic}); assert(p.eligible && p.battery_current_ua == 1250000 && p.battery_voltage_uv == 4200000);
+    p = step({Target::full, Rate::automatic}); assert(p.eligible && p.battery_current_ua == 1250000 && p.firmware_voltage_ceiling_uv == 4200000);
     s.temperature_deci_c = 300; p = step({Target::full, Rate::automatic});
-    assert(p.battery_current_ua == 500000 && p.battery_voltage_uv == 4100000);
-    s.temperature_deci_c = 200; p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 500000 && p.battery_voltage_uv == 4100000);
+    assert(p.battery_current_ua == 500000 && p.firmware_voltage_ceiling_uv == 4100000);
+    s.temperature_deci_c = 200; p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 500000 && p.firmware_voltage_ceiling_uv == 4100000);
     s.boottime_ns += 20; p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 600000);
     s.battery_ua = -100000; s.boottime_ns += 20;
     p = step({Target::full, Rate::automatic}); assert(p.battery_current_ua == 600000);
@@ -57,6 +57,56 @@ int main() {
     assert(!planner.evaluate({}, {}, {}, {}).eligible);
     assert(planner.evaluate({}, {}, {}, {}).state == "firmware_managed");
     assert(!preset("80; reboot") && preset("hold80-90"));
+    {
+        Planner daily;
+        auto observed = s; observed.suspended = false; observed.fault = false;
+        auto admitted = c; admitted.qualified = admitted.start_threshold = admitted.end_threshold = true;
+        admitted.epoch = observed.epoch;
+        const auto tick = [&](double soc) {
+            observed.soc = soc; observed.receipt_ns = ++observed.boottime_ns;
+            return daily.evaluate(*preset("hold70-80"), observed, e, admitted);
+        };
+        auto band = tick(75); assert(band.eligible && band.start_percent == 70 && band.end_percent == 80);
+        assert(band.soc_demand == "firmware_hysteresis");
+        assert(tick(80).soc_demand == "hold" && tick(75).soc_demand == "hold");
+        assert(tick(70).soc_demand == "charge" && tick(75).soc_demand == "charge");
+        observed.fault = true; assert(!tick(75).eligible);
+        observed.fault = false; assert(tick(75).soc_demand == "firmware_hysteresis");
+    }
+    {
+        Planner timed;
+        auto observed = s; observed.soc = 75; observed.suspended = false; observed.fault = false;
+        observed.boottime_ns = observed.receipt_ns = 100; observed.boot_id = "synthetic-boot";
+        auto admitted = c; admitted.qualified = admitted.start_threshold = admitted.end_threshold = true;
+        admitted.epoch = observed.epoch;
+        Request request{Target::temporary_full, Rate::firmware};
+        request.full_window = FullWindow{observed.epoch, observed.boot_id, 100, 60000000100ULL};
+        assert(timed.evaluate(request, observed, e, admitted).reason == "temporary_full_autonomous_return_unqualified");
+        admitted.autonomous_target_return = true;
+        observed.receipt_ns = ++observed.boottime_ns;
+        auto full = timed.evaluate(request, observed, e, admitted);
+        assert(full.eligible && full.start_percent == 0 && full.end_percent == 100 && full.temporary_phase == "active_proposal");
+        observed.boottime_ns = observed.receipt_ns = request.full_window->expires_ns;
+        admitted.autonomous_target_return = false; // Returning does not authorize another boost.
+        auto expired = timed.evaluate(request, observed, e, admitted);
+        assert(expired.eligible && expired.start_percent == 70 && expired.end_percent == 80 && expired.temporary_phase == "return_due");
+        observed.boottime_ns = observed.receipt_ns = 101;
+        assert(!timed.evaluate(request, observed, e, admitted).eligible);
+        admitted.autonomous_target_return = true;
+        for (unsigned fault = 0; fault < 8; ++fault) {
+            Planner fresh; auto invalid = request; auto input = observed;
+            if (fault == 0) invalid.full_window.reset();
+            if (fault == 1) invalid.full_window->epoch = "other-source";
+            if (fault == 2) invalid.full_window->issued_ns = 0;
+            if (fault == 3) invalid.full_window->expires_ns = invalid.full_window->issued_ns;
+            if (fault == 4) invalid.full_window->expires_ns = invalid.full_window->issued_ns + 1;
+            if (fault == 5) invalid.full_window->expires_ns = UINT64_MAX;
+            if (fault == 6) invalid.rate = Rate::automatic;
+            if (fault == 7) input.boot_id = "other-boot";
+            const auto refused = fresh.evaluate(invalid, input, e, admitted);
+            assert(!refused.eligible && refused.reason == "temporary_full_window_unbound_or_invalid");
+        }
+    }
     // A preview cannot turn a proposal into applied state.
     std::ostringstream output; auto* original = std::cout.rdbuf(output.rdbuf());
     char exe[] = "uke-control", charge[] = "charge", mode[] = "plan", name[] = "charge80";
@@ -66,4 +116,19 @@ int main() {
     assert(output.str().find("\"applied\":false") != std::string::npos);
     assert(output.str().find("\"effective\":null") != std::string::npos);
     assert(policy_modes_json().find("\"qualification_checked\":false") != std::string::npos);
+    assert(policy_modes_json().find("\"voltage_control_owner\":\"firmware\"") != std::string::npos);
+    char temporary[] = "temporary-full", duration[] = "30";
+    char* timed_argv[] = {exe, charge, mode, temporary, duration};
+    output.str(""); output.clear(); original = std::cout.rdbuf(output.rdbuf());
+    assert(policy_command(5, timed_argv) == 0);
+    std::cout.rdbuf(original);
+    assert(output.str().find("\"duration_minutes\":30") != std::string::npos);
+    assert(output.str().find("\"armed\":false") != std::string::npos);
+    assert(output.str().find("\"expires_boottime_ns\":null") != std::string::npos);
+    for (const char *invalid : {"0", "1441", "-1", "+1", "1x", "999999999999999999999"}) {
+        timed_argv[4] = const_cast<char*>(invalid);
+        bool refused = false;
+        try { policy_command(5, timed_argv); } catch (...) { refused = true; }
+        assert(refused);
+    }
 }

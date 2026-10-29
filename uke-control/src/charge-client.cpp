@@ -33,7 +33,9 @@ Result control_query(const std::string& operation) {
 }
 Result control_mode(const std::string& mode) {
     if (mode == "charge80") return execute({helper, "cap80"}, 35, 65536);
+    if (mode == "hold70-80") return execute({helper, "pair", "70", "80"}, 35, 65536);
     if (mode == "hold80-90") return execute({helper, "band80-90"}, 35, 65536);
+    if (mode == "temporary-full") return refused("temporary_full_autonomous_return_unqualified");
     if (mode == "firmware") return refused("firmware_factory_restore_not_qualified");
     if (mode != "slow" && mode != "automatic" && mode != "profile-restore") throw std::runtime_error("Unknown charge mode");
     // This query reads qualification metadata only. The helper rechecks before

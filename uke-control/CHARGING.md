@@ -1,5 +1,22 @@
 # Charging policy source — 18 October 2026
 
+29 October 2026 longevity candidate: `charge plan hold70-80` previews the daily
+band and `charge mode hold70-80` routes the existing qualified pair70/80 helper.
+Neither operation qualifies a profile or proves physical cutoff. Original KDE
+threshold controls remain the desktop interface; no duplicate widget is added.
+
+`charge plan temporary-full MINUTES` validates 1-1440 minutes and reports an
+unarmed, unpersisted preview. The pure planner binds a hypothetical window to
+boot/source identity and proposes a 70/80 return at expiry. Applying temporary
+full is explicitly refused: a userspace timer cannot guarantee return after a
+crash, suspend or reboot, and no reviewed device-side return backend exists.
+No full-charge setting, worker or timer is installed by a preview.
+
+Thermal/current proposals require qualified battery-current control and
+firmware-owned CV/protection. A voltage ceiling is a safety constraint, not a
+voltage request. Permission release is not restoration of a firmware setting.
+See the runtime [longevity contract](../uke-platform-runtime/docs/BATTERY-LONGEVITY.md).
+
 29 October 2026 protocol follow-up: `charge protocols` remains cache-only and
 separates the six manufacturer-listed receiver protocols from excluded QC4/4+,
 PPS and UFCS. `charge protocol-inspect` is a separate root-only operation for
