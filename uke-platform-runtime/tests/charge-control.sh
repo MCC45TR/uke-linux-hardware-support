@@ -18,4 +18,9 @@ mkdir "$work/records"
     "$root/src/battery/control-profile.cpp" "$root/src/battery/record.cpp" \
     $(pkg-config --cflags --libs libsystemd libcrypto) -o "$work/protection-log"
 "$work/protection-log"
+"${CXX:-c++}" -std=c++17 -O2 -Wall -Wextra -Werror \
+    "$root/tests/charge-io.cpp" "$root/src/battery/control.cpp" \
+    "$root/src/battery/control-profile.cpp" "$root/src/battery/record.cpp" \
+    $(pkg-config --cflags --libs libsystemd libcrypto) -o "$work/charge-io"
+"$work/charge-io" "$work"
 echo 'Synthetic control permission, readback, expiry and current-policy fixtures passed; no physical qualification'

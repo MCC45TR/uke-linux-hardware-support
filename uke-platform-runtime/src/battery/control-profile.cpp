@@ -96,7 +96,8 @@ Profile resolve(const Context &c, const std::string &path, const std::string &id
         if (result.temperature_min >= result.temperature_max || !result.voltage_min_uv ||
             result.voltage_min_uv >= result.voltage_max_uv || !result.current_abs_max_ua ||
             result.lease_ns < 15000000000ULL || result.lease_ns > 30000000000ULL || result.ack_bytes < 12 ||
-            result.ack_bytes > 4096 || !result.usb_type || result.usb_type > 64 || result.cap_resume_percent >= 80)
+            result.ack_bytes > 4096 || !result.usb_type || result.usb_type > 64 ||
+            result.cap_resume_percent < 50 || result.cap_resume_percent >= 80)
             reject("control_limits_invalid");
         auto *current = field(p.get(), "current_limits");
         if (!result.current_control) {

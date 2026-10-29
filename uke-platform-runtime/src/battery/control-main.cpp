@@ -30,12 +30,16 @@ uint64_t now() {
     timespec t{}; if (clock_gettime(CLOCK_BOOTTIME, &t)) fail("control_clock_unavailable");
     return uint64_t(t.tv_sec) * 1000000000ULL + uint64_t(t.tv_nsec);
 }
-std::string read_fd(int fd) {
+std::string read_fd(int fd, const char *field) {
     std::string data; char buffer[4097];
     for (;;) {
         const auto n = read(fd, buffer, sizeof(buffer));
         if (n < 0 && errno == EINTR) continue;
-        if (n < 0 || (n > 0 && data.size() + size_t(n) > 4096)) fail("control_metadata_read_failed");
+        if (n < 0) {
+            const int error = errno;
+            throw std::runtime_error("control_metadata_read_failed_" + std::string(field) + "_errno_" + std::to_string(error));
+        }
+        if (n > 0 && data.size() + size_t(n) > 4096) fail("control_metadata_too_large");
         if (!n) break;
         data.append(buffer, size_t(n));
     }
@@ -43,8 +47,11 @@ std::string read_fd(int fd) {
 }
 std::string read_file(const fs::path &path) {
     const int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-    if (fd < 0) fail("control_metadata_unavailable");
-    try { auto data = read_fd(fd); close(fd); return data; }
+    if (fd < 0) {
+        const int error = errno;
+        throw std::runtime_error("control_metadata_unavailable_errno_" + std::to_string(error));
+    }
+    try { auto data = read_fd(fd, "file"); close(fd); return data; }
     catch (...) { close(fd); throw; }
 }
 class Sysfs final : public Io {
@@ -70,8 +77,11 @@ public:
     ~Sysfs() override { if (directory_ >= 0) close(directory_); }
     std::string read_attribute(const char *name) {
         const int fd = openat(directory_, name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-        if (fd < 0) fail("control_backend_unavailable");
-        try { auto data = read_fd(fd); close(fd); return data; }
+        if (fd < 0) {
+            const int error = errno;
+            throw std::runtime_error("control_backend_unavailable_" + std::string(name) + "_errno_" + std::to_string(error));
+        }
+        try { auto data = read_fd(fd, name); close(fd); return data; }
         catch (...) { close(fd); throw; }
     }
     State state() override { return parse_state(read_attribute("uke_charge_state")); }

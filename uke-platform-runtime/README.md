@@ -1,5 +1,11 @@
 # uke-platform-runtime
 
+29 October 2026: the source candidate rejects unsupported threshold pairs and
+cap80 profiles before admission, using the retained OEM ranges. Bounded sysfs
+read diagnostics retain the fixed attribute and errno without file paths or
+contents. Host fake-I/O and actual-reader tests pass; no tablet control,
+calibration or electrical protection is qualified by these changes.
+
 Status, **18 October 2026**: signed COPR 11169204 installs observer/helper 7 and
 the separate offline-charging interface on POCO Pad X1, Fedora Rawhide AArch64.
 The tablet now runs Linux 7.2.11-2 with normal display and touch. Explicit

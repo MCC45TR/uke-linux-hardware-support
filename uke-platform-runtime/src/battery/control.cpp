@@ -320,7 +320,9 @@ uint32_t Automatic::propose(const Profile &p, const State &s, uint64_t now) {
     return uint32_t(std::min<uint64_t>(ceiling, uint64_t(s.current_ua) + p.increase_step_ua));
 }
 State Session::thresholds(uint32_t start, uint32_t end, uint64_t now) {
-    if (start >= end || end > 100) fail("control_threshold_pair_invalid");
+    if (start >= end || end > 100 ||
+        ((start || end != 100) && (start < 50 || start > 95 || end < 55)))
+        fail("control_threshold_pair_invalid");
     admit(now);
     write_attempted_ = true;
     io_.write("uke_charge_thresholds", std::to_string(start) + " " + std::to_string(end) + "\n");

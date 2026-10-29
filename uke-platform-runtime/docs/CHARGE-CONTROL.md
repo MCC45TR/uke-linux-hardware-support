@@ -82,12 +82,12 @@ references: [KDE settings](https://docs.kde.org/stable_kf6/en/powerdevil/kcontro
 [UPower device API](https://upower.freedesktop.org/docs/Device.html).
 
 The original helper reads/writes the standard threshold files through KAuth.
-This backend returns cached verified settings only while a live admission
-explicitly allows standard clients; otherwise reads return `ENODATA`. Do not
-show guessed thresholds, mark unsupported hardware supported, or fabricate
-UPower support flags. An admitted broker must refresh the cache for desktop
-availability. PowerDevil discovery/refresh and the installed UPower threshold
-flags still require coordinator validation. Activating/restarting desktop or
+The 28 October kernel candidate keeps admitted cached reads and otherwise
+observes the existing firmware band through three bounded GETs. Observation
+does not grant a writer lease. Earlier kernels still require admitted cached
+readback. Do not show guessed thresholds, mark unsupported hardware supported,
+or fabricate UPower support flags. PowerDevil discovery/refresh and installed
+UPower threshold flags still require validation. Activating/restarting desktop or
 battery services can issue GETs or restore stored desired thresholds; inspect
 those settings and the exact consumers before any activation.
 
@@ -98,6 +98,19 @@ kernel request mutex, although the feature-enable/target sequence itself is
 not an atomic remote transaction. An 80–90 band means firmware-reported start80,
 end90; it does not establish battery bypass or constant SOC. `cap80` uses a
 reviewed resume percentage from the profile rather than an invented default.
+
+The native helper and kernel reject enabled pairs outside restart 50–95 /
+stop 55–100, including equal/inverted targets. Native rejection occurs before
+lease acquisition or firmware I/O. The distinct 0/100 pair disables the feature;
+0/80 is not a supported request. A qualified cap80 profile must use restart
+50–79. KDE's wider generic range does not override these device bounds.
+
+29 October 2026: failed bounded reads now retain the fixed attribute and Linux
+errno in their diagnostic reason, for example
+`control_metadata_read_failed_uke_charge_settings_errno_16`. Oversized metadata
+has the separate `control_metadata_too_large` reason. File paths and contents
+are omitted. The diagnostic reports the observed error; it does not infer
+contention or retry a command. Firmware SET delivery rules are unchanged.
 
 No standard KDE slow/automatic charging control was established by this source
 review. The native commands below provide those requested functions after

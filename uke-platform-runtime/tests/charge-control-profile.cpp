@@ -52,6 +52,16 @@ int main(int argc, char **argv) {
     save(path, profile); save(identity, replace(attestation, "@P@", hash(profile)));
     auto result = resolve(c, path, identity, getuid());
     assert(result.qualified && result.current_control && result.maximum_ua == 2000000 && result.evidence == hash(profile));
+    for (const auto value : {0, 49, 80, 95, 100}) {
+        const auto invalid = replace(profile, "\"cap_resume_percent\":70", "\"cap_resume_percent\":" + std::to_string(value));
+        save(path, invalid); save(identity, replace(attestation, "@P@", hash(invalid)));
+        assert(!resolve(c, path, identity, getuid()).qualified);
+    }
+    for (const auto value : {50, 79}) {
+        const auto valid = replace(profile, "\"cap_resume_percent\":70", "\"cap_resume_percent\":" + std::to_string(value));
+        save(path, valid); save(identity, replace(attestation, "@P@", hash(valid)));
+        assert(resolve(c, path, identity, getuid()).qualified);
+    }
     for (const char *key : {"protocol_property_abi", "source_contract", "cable_contract", "usb_moisture_abi", "usb_moisture_response", "external_thermal_path", "input_suspend_abi", "input_suspend_effect", "input_suspend_restore", "periodic_charge_guard"}) {
         const auto invalid = replace(profile, std::string("\"") + key + "\":\"" + sha + "\"", std::string("\"") + key + "\":null");
         save(path, invalid); save(identity, replace(attestation, "@P@", hash(invalid)));

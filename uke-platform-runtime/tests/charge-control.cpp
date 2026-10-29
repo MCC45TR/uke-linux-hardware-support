@@ -290,9 +290,16 @@ int main() {
         rejects([&] { session.current(value, 2 * second); });
         assert(io.writes.empty() && !session.write_attempted());
     }
-    for (const auto pair : {std::pair<uint32_t,uint32_t>{80,80}, {90,80}, {80,101}}) {
+    for (const auto pair : {std::pair<uint32_t,uint32_t>{80,80}, {90,80}, {80,101},
+                           {0,80}, {49,80}, {50,54}, {96,100},
+                           {std::numeric_limits<uint32_t>::max(),100}}) {
         Fake io; Session session(io, profile(), io.value);
         rejects([&] { session.thresholds(pair.first,pair.second,2 * second); });
         assert(io.writes.empty() && !session.write_attempted());
+    }
+    for (const auto pair : {std::pair<uint32_t,uint32_t>{50,55}, {95,100}, {70,80}, {0,100}}) {
+        Fake io; Session session(io, profile(), io.value);
+        const auto result = session.thresholds(pair.first,pair.second,2 * second);
+        assert(pair.first == 0 ? !result.enabled : result.enabled && result.start == pair.first && result.end == pair.second);
     }
 }
