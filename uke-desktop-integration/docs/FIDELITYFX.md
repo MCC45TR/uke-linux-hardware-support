@@ -66,6 +66,12 @@ The C++ shader compiler input is the pinned DethRaid source; the selected
 Linux build/context changes retain attribution to the pinned ychwch comparison.
 Neither donor's build scripts are executed.
 
+The native compiler carries one explicit downstream MD5 formatting correction:
+each two-digit output is bounded to three bytes including its terminator.
+The previous constant 32-byte bound exceeds the remaining array region on
+later iterations and is rejected by Fedora's fortified libc. Build hardening
+remains enabled; this build-tool fix does not change GPU effect algorithms.
+
 The API self-check loads the library and compares its three CPU-side effect
 versions with the matched headers. It does not create a Vulkan device or run
 a GPU shader. Vendor headers use `-isystem`; warnings remain errors in the

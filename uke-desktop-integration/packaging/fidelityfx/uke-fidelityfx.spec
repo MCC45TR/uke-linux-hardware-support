@@ -1,6 +1,6 @@
 Name:           uke-fidelityfx
 Version:        1.1.4
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Experimental native FidelityFX raw Vulkan effects
 License:        MIT
 URL:            https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK
@@ -54,6 +54,7 @@ cd -
 for change in patches/*.patch; do
     patch --directory=fidelityfx-1.1.4 -p1 < "$change"
 done
+patch --directory=fidelityfx-native-compiler -p1 < src/native-compiler-md5.patch
 cp src/posix-compat.h fidelityfx-1.1.4/sdk/src/backends/vk/ffx_posix_compat.h
 cp src/compiler.CMakeLists.txt fidelityfx-native-compiler/CMakeLists.txt
 
@@ -136,6 +137,9 @@ fi
 %{_bindir}/uke-fidelityfx-gpu-test
 
 %changelog
+* Thu Oct 29 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.4-3
+- Bound native shader compiler MD5 formatting to each two-digit output.
+
 * Thu Oct 29 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.4-2
 - Preserve matching Rawhide SRPM and binary distribution identities.
 
