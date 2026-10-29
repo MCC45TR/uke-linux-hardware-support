@@ -11,7 +11,7 @@ Source3: dual-light.cpp
 Patch0: 0001-initialize-before-dbus-name.patch
 Patch1: 0002-uke-dual-light.patch
 BuildRequires: gcc gcc-c++ meson ninja-build pkgconf-pkg-config systemd-rpm-macros
-BuildRequires: python3 = 3.15.1-1.fc46
+BuildRequires: python3 = 3.15.2-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
 BuildRequires: pkgconfig(udev) pkgconfig(systemd) pkgconfig(gio-2.0)
 BuildRequires: pkgconfig(gudev-1.0) pkgconfig(polkit-gobject-1) pkgconfig(libssc)

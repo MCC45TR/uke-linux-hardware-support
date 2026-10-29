@@ -44,10 +44,9 @@ case $key in
 esac
 if [[ -n $component ]]; then
     make -C "$component" "$target" "${args[@]}" outdir="$stage/input"
-    mapfile -t inputs < <(find "$stage/input" -type f -name '*.src.rpm' | LC_ALL=C sort)
-    [[ ${#inputs[@]} -gt 0 ]]
-    # Several owning recipes also copy their SRPM out of the rpmbuild directory.
-    [[ $(sha256sum "${inputs[@]}" | cut -d ' ' -f1 | sort -u | wc -l) == 1 ]]
+    # Fedora provenance SRPMs in SOURCES are inputs, not generated results.
+    mapfile -t inputs < <(find "$stage/input" -type f -path '*/SRPMS/*.src.rpm' | LC_ALL=C sort)
+    [[ ${#inputs[@]} == 1 ]] || { echo 'Expected one generated component SRPM' >&2; exit 1; }
     input=${inputs[0]}
 fi
 SOURCE_PACKAGE="$key" SOURCE_RPM="$input" FEDORA_TARGET=rawhide bash packaging/families/host/compose.sh "$group" "$stage/output"
