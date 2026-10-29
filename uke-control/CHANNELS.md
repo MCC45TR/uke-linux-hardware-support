@@ -38,6 +38,11 @@ excluded; any indirect transaction that replaces or removes it is refused.
 The exception does not cover other `uke-local-*` names or obsolete generic
 firmware providers. Calibration is never uploaded or substituted from COPR.
 
+29 October 2026: the exact `uke-video-firmware-local` package is also retained
+outside public synchronization. Its locally extracted VPU firmware has no
+reviewed redistribution license. Public candidates cannot replace or remove it;
+other similarly named packages receive no exemption.
+
 21 October 2026 correction: without a saved selection, status and implicit
 operations use exactly one enabled normal stable/test/unstable COPR. They do not silently
 select stable over an enabled test repository. Missing, multiple or custom-only

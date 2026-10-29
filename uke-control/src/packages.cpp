@@ -68,7 +68,7 @@ std::string infer_channel(const std::set<std::string>& enabled) {
     return {};
 }
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
-bool private_package(const std::string& name){return name=="uke-local-touch-data";}
+bool private_package(const std::string& name){return name=="uke-local-touch-data"||name=="uke-video-firmware-local";}
 bool protected_package(const Package& p) {
     if(private_package(p.get_name()))return true;
     if(p.get_name().starts_with("uke-senemos-kernel-"))return true;

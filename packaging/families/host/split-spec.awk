@@ -103,6 +103,7 @@ END {
     }
     if(release_override!="")newrelease=release_override
     sub(/[.]fc[0-9]+/,dist,newrelease)
+    print renamed(original) "\t" newversion "\t" newrelease >out "/standalone-identity"
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0) {
@@ -114,7 +115,7 @@ END {
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0){split(headers[i],a,/[[:space:]]+/);pkg=a[2]=="-n"?a[3]:original "-" a[2]}
-        output("preamble","%package -n " renamed(pkg))
+        output("preamble",standalone && i==0?"Name: " renamed(pkg):"%package -n " renamed(pkg))
         output("preamble","Version: " newversion "\nRelease: " newrelease "\nLicense:" (i in licenses?licenses[i]:license))
         if(epoch!="")output("preamble","Epoch: " epoch)
         if(arch!="")output("preamble","BuildArch: " arch)
