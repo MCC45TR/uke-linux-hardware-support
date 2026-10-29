@@ -14,7 +14,7 @@ It does not add FSR 3 to 0 A.D. or qualify a game, presentation or device result
 Patched context headers and the library must be used together: their opaque
 storage accommodates Linux's 32-bit `wchar_t` and differs from the Windows ABI.
 
-## Host build
+## COPR build
 
 The standalone `uke-fidelityfx` source package builds in COPR for
 `fedora-rawhide-aarch64`. Its normal `-devel` and `-tests` subpackages come
@@ -24,40 +24,12 @@ generated source archive digests in the SRPM and runtime documentation.
 The older manifest archive digests describe the earlier curated prototype
 archives; they are not asserted as digests of newly generated COPR archives.
 
-All further compilation runs in COPR. The commands below document the earlier
-host prototype and are not instructions to compile on the tablet.
-
-Use a Linux build environment with GCC supporting C++23, CMake 3.23 or newer,
-Ninja, utf8cpp headers, glslangValidator, Vulkan headers and the Vulkan loader.
-Compilation does not require a GPU. Check the two source archive SHA-256 values
-against `manifests/fsr-research-20261029.json` before extraction. Commands run
-from this component directory; use a fresh build directory.
-
-```sh
-make test-fsr-compat
-mkdir -p build/fidelityfx-source
-tar -xzf referances/fsr-20261029/fidelityfx-1.1.4.tar.gz -C build/fidelityfx-source
-tar -xzf referances/fsr-20261029/fidelityfx-native-compiler.tar.gz -C build/fidelityfx-source
-patch -d build/fidelityfx-source/fidelityfx-1.1.4 -p1 < patches/fsr/0001-linux-sdk-build.patch
-patch -d build/fidelityfx-source/fidelityfx-1.1.4 -p1 < patches/fsr/0002-native-compiler-and-raw-effects.patch
-cp src/fsr/posix-compat.h build/fidelityfx-source/fidelityfx-1.1.4/sdk/src/backends/vk/ffx_posix_compat.h
-cp src/fsr/compiler.CMakeLists.txt build/fidelityfx-source/fidelityfx-native-compiler/CMakeLists.txt
-cmake -S build/fidelityfx-source/fidelityfx-native-compiler -B build/fidelityfx-compiler -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build/fidelityfx-compiler --parallel 2
-cmake -S build/fidelityfx-source/fidelityfx-1.1.4/sdk -B build/fidelityfx-effects -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_PROCESSOR="$(uname -m)" \
-  -DFFX_API_BACKEND=VK_X64 -DFFX_BUILD_AS_DLL=OFF \
-  -DFFX_FSR3UPSCALER=ON -DFFX_FI=ON -DFFX_OF=ON -DFFX_SPD=ON \
-  -DFFX_NATIVE_COMPILER="$(realpath build/fidelityfx-compiler/FidelityFX_SC)"
-cmake --build build/fidelityfx-effects --parallel 2
-c++ -std=c++20 -Wall -Wextra -Werror \
-  -isystem build/fidelityfx-source/fidelityfx-1.1.4/sdk/include \
-  src/fsr/api-selfcheck.cpp \
-  "build/fidelityfx-effects/src/backends/vk/libffx_backend_vk_$(uname -m).so" \
-  -o build/fidelityfx-api-selfcheck
-LD_LIBRARY_PATH="$(realpath build/fidelityfx-effects/src/backends/vk)" \
-  LD_BIND_NOW=1 ./build/fidelityfx-api-selfcheck
-```
+All further compilation runs in COPR. Its custom source entry runs
+`packaging/fidelityfx/source.sh` from this component to prepare flat spec/source
+inputs. `packaging/fidelityfx/uke-fidelityfx.spec` is the complete native recipe:
+GCC C++23, CMake, Ninja, system utf8cpp, native glslang, Vulkan headers/loader,
+the three SDK patches and the separate native-compiler patch. The worker needs
+no GPU. Historical host commands and trial logs remain in the private journal.
 
 `VK_X64` retains the upstream API selector; the actual native compiler and
 `CMAKE_SYSTEM_PROCESSOR` determine the CPU target. Check the resulting ELF
@@ -90,8 +62,9 @@ A caller still has to supply valid frame color, depth, motion vectors,
 resource synchronization and generated-frame presentation. Raw effect
 dispatch may be evaluated separately from the stock swapchain. Do not remove
 its queue validation or claim that an SDK build enables frame generation.
-Tablet package installation remains through DNF update after a useful caller
-and its separate GPU, pixel, pacing and thermal checks exist.
+Tablet package delivery uses DNF after source/package verification and the
+separately owned channel migration. Installed GPU, pixel, pacing and thermal
+checks remain required before claiming frame-generation support.
 
 The tests subpackage includes CPU version/CRT checks and an opt-in
 `uke-fidelityfx-gpu-test --execute` pipeline diagnostic. It records failed
