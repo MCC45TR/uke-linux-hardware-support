@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-core-meta
-Version: 1.1.0
+Version: 1.0.6
 Release: 1%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
@@ -23,7 +23,6 @@ Requires: bash coreutils util-linux-core kmod
 Requires: NetworkManager openssh-server sudo
 Requires: senemos-native-runtime(libstdc++)
 Recommends: uke-plymonth >= 1.0.2-3
-Recommends: 0ad
 %description
 A minimal console package selection and explicit Uke readiness record.
 No unqualified firmware, Nabu hardware services or boot selection is installed.
@@ -39,9 +38,6 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
-* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
-- Recommend the original Fedora 0 A.D. package with its built-in FSR 1 option.
-
 * Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.6-1
 - Pull the matched speaker kernel and desktop policy through normal DNF updates.
 

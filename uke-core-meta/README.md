@@ -1,10 +1,5 @@
 # Uke core package selection
 
-29 October 2026. Version `1.1.0` recommends the original Fedora `0ad` package
-through normal DNF updates. It can be removed independently. 0 A.D. 0.28.0
-includes FSR 1 scaling; it does not implement FSR 3 frame generation. This
-recommendation alone does not establish Uke graphics acceptance.
-
 22 October 2026. Version `1.0.5` recommends `uke-plymonth` for installation with
 normal `dnf update` when weak dependencies are enabled. It is not required:
 `sudo dnf remove uke-plymonth` keeps Core installed. DNF's default

@@ -19,5 +19,35 @@
     "tablet_payload_installed": false
   },
   "frame_generation_device_accepted": false,
-  "game_integration_accepted": false
+  "game_integration_accepted": false,
+  "bounded_fsr1_trial": {
+    "application": "Original Flatpak 0 A.D. 0.28.0, Vulkan, Arcadia scenario",
+    "render_size": "1280x720",
+    "output_size": "1920x1080",
+    "frame_limit": 30,
+    "observed_fps_last_ten_seconds": 29.9884588914477,
+    "duration_seconds": 24,
+    "gpu_sensor_range_celsius": [54.3, 72.1],
+    "status": "Bounded functional result only; no comparative performance, endurance or physical image-quality acceptance"
+  },
+  "stock_sdk_1_1_4_vulkan_swapchain": {
+    "required_distinct_queues": 4,
+    "device_graphics_compute_queues": 1,
+    "device_sparse_only_queues": 1,
+    "requirements_satisfied": false,
+    "source": "sdk/src/backends/vk/FrameInterpolationSwapchain/FrameInterpolationSwapchainVK.cpp:1503-1510",
+    "limit": "This rejects the reviewed stock Vulkan presentation path; it does not establish that every alternative integration or translated DirectX path is impossible."
+  },
+  "game_candidates": [
+    {"repository": "SemiRealProductions/godot", "commit": "fb6f403106813dc1fb55aebbc0d4ffed4050ef80", "file": "modules/fsr3/README.md", "finding": "Source FSR 3.1.6 upscaler; explicitly excludes frame generation. Not a qualifying game."},
+    {"repository": "Kelsidavis/WoWee", "commit": "9cf6238fd4efb71a696e2b695bcdfe22c33f6076", "file": "CMakeLists.txt:30-49", "finding": "Experimental FSR 3 frame-generation interface probe is disabled by default; upstream records it as broken on RADV/Mesa. Also requires separately supplied game assets. Not validated on Turnip."},
+    {"repository": "ndepoel/FSR3Unity", "commit": "71879e71aa72465a79bdf009d7d71f9f7ab83066", "file": "README.md", "finding": "FSR 3.1 upscaling implementation, not a ready frame-generation game for Fedora AArch64."}
+  ],
+  "withdrawn_package_candidate": {
+    "copr_build_id": 11222113,
+    "state": "Canceled and deleted after the requested target changed to FSR 3 frame generation",
+    "tablet_transaction_performed": false,
+    "flatpak_removed": false,
+    "meta_recommendation_retained": false
+  }
 }
