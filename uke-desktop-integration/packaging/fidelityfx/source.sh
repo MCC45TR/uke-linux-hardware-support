@@ -41,5 +41,8 @@ tar -C "$stage" --sort=name --mtime=@1793232000 --owner=0 --group=0 --numeric-ow
     -cf - uke-fidelityfx-1.1.4 | gzip -n > "$stage/rpmbuild/SOURCES/uke-fidelityfx-1.1.4.tar.gz"
 cp "$component/packaging/fidelityfx/uke-fidelityfx.spec" "$stage/rpmbuild/SPECS/"
 (cd "$stage/rpmbuild/SOURCES" && sha256sum ./*.tar.gz > source-sha256.txt)
-cp -- "$stage/rpmbuild/SPECS/uke-fidelityfx.spec" "$out/"
+fedora=$(rpm --eval '%{fedora}')
+[[ $fedora =~ ^[0-9]+$ ]]
+# COPR's outer SRPM phase does not inherit the custom worker's RPM macros.
+sed "s/%{?dist}/.fc$fedora/g" "$stage/rpmbuild/SPECS/uke-fidelityfx.spec" > "$out/uke-fidelityfx.spec"
 cp -- "$stage/rpmbuild/SOURCES/"* "$out/"

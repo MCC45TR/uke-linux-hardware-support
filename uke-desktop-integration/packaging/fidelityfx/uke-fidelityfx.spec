@@ -1,6 +1,6 @@
 Name:           uke-fidelityfx
 Version:        1.1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Experimental native FidelityFX raw Vulkan effects
 License:        MIT
 URL:            https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK
@@ -136,5 +136,8 @@ fi
 %{_bindir}/uke-fidelityfx-gpu-test
 
 %changelog
+* Thu Oct 29 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.4-2
+- Preserve matching Rawhide SRPM and binary distribution identities.
+
 * Thu Oct 29 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.4-1
 - Package pinned raw Vulkan effects and opt-in native diagnostics separately.
