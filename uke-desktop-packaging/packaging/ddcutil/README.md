@@ -5,6 +5,12 @@
 corrects failed and unterminated first-line reads in the common utility code.
 The source input and SHA-256 are recorded in [source.json](source.json).
 
+[COPR build 11228224](https://copr.fedorainfracloud.org/coprs/build/11228224)
+passes the native AArch64 regression. All six binary RPMs pass signature and
+digest verification against the unstable project key. Their runtime payloads
+retain SONAME 5 and contain no Python or regression executable. Device
+installation and monitor acceptance remain pending.
+
 `getline` may allocate a buffer before failing. The patched function frees that
 buffer and returns null. A successful read removes only an actual newline,
 preserving the last character of an unterminated line. The packaged CLI and
