@@ -25,7 +25,7 @@ int main(int argc,char** argv) {
     const auto selected=phase=="test-preference"?"test":phase=="upgrade"||phase=="rc"||phase=="fallback"?"unstable":"stable";
     const fs::path repo=std::string(selected)=="stable"?stable:test;
     session(root,repo,selected,[&](libdnf5::Base& base) {
-        const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test"};
+        const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test",prefix+"uke-linux-unstable"};
         if(phase=="foreign-release") {
             bool refused=false;try{plan(base,selected,ids,".fc44");}catch(const std::exception&){refused=true;}assert(refused);return;
         }

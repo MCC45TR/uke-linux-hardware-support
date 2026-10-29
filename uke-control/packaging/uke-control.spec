@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.3.0
+Version: 2.3.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -181,6 +181,9 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-1
+- Select a separately signed Rawhide unstable repository and defer guarded kernel activation.
+
 * Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.0-1
 - Add expiring identity review and the qualified positive-current restore command.
 - Report the coherent UCSI PDO/RDO cache and correct battery topology decoding.
