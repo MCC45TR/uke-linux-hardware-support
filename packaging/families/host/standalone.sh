@@ -5,7 +5,7 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 key=${1:?source package}; output=$(realpath -m "${2:?output directory}")
 [[ $key =~ ^[a-zA-Z0-9+_.-]+$ ]]
-grep -Eq '^VERSION="?Rawhide"?$' /etc/os-release
+grep -Eq '^VERSION="?(Rawhide|[0-9]+ \(Rawhide( Prerelease)?\))"?$|^VERSION_ID="?rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; }
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 ]]
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT

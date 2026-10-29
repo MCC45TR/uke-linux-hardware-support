@@ -15,7 +15,8 @@ inline std::string fedora_target(const std::string& text) {
         if(key=="ID")id=value;else if(key=="VERSION_ID")version=value;else if(key=="VERSION")name=value;
     }
     if(id!="fedora")throw std::runtime_error("Channel changes require Fedora");
-    if(version=="rawhide"||name=="Rawhide")return "rawhide";
+    const bool numbered=!version.empty()&&version.find_first_not_of("0123456789")==std::string::npos;
+    if(version=="rawhide"||name=="Rawhide"||(numbered&&(name==version+" (Rawhide)"||name==version+" (Rawhide Prerelease)")))return "rawhide";
     if(version=="44"||version=="45")return version;
     throw std::runtime_error("Unsupported Fedora release; channel switching is not a distribution upgrade");
 }

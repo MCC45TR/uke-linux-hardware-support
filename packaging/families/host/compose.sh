@@ -8,7 +8,7 @@ fedora_target=${FEDORA_TARGET:-$fedora_number}
 if [[ -z ${FEDORA_TARGET:-} && $fedora_number != 44 && $fedora_number != 45 ]]; then fedora_target=rawhide; fi
 case $fedora_target in
     44|45) [[ $fedora_number == "$fedora_target" ]] || { echo 'Use a matching Fedora source worker' >&2; exit 1; };;
-    rawhide) grep -Eq '^VERSION="?Rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; };;
+    rawhide) grep -Eq '^VERSION="?(Rawhide|[0-9]+ \(Rawhide( Prerelease)?\))"?$|^VERSION_ID="?rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; };;
     *) echo 'Fedora target must be 44, 45 or rawhide' >&2; exit 1;;
 esac
 dist=.fc$fedora_number
