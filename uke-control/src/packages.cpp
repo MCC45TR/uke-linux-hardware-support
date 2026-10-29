@@ -442,7 +442,7 @@ void run(Options o) {
     need(channel(o.selected),"No unambiguous saved or enabled main COPR channel; choose brunch stable|test|unstable explicitly");
     const auto dist=fedora_dist(release,base.get_vars()->get_value("releasever"));
     auto repos=configure(base,o.selected);
-    base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING);
+    need(base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING),"Another package manager holds the system repository lock");
     base.get_repo_sack()->load_repos();
     const auto p=plan(base,o.selected,repos.ids,dist);auto tx=resolve(base,p,o.selected,o.update);
     utsname current{};need(uname(&current)==0,"Cannot read running kernel identity");
@@ -475,7 +475,13 @@ void run(Options o) {
     atomic_write(state/"channel-transaction.json",tx.serialize(),0600);
     tx.set_description("uke-control channel "+o.selected+(o.update?" update":" sync"));
     const auto result=tx.run();
-    need(result==libdnf5::base::Transaction::TransactionRunResult::SUCCESS,"RPM transaction incomplete; keep the pending record and run channel sync. See DNF history and the private channel transaction record");
+    if(result!=libdnf5::base::Transaction::TransactionRunResult::SUCCESS) {
+        std::string errors=libdnf5::base::Transaction::transaction_result_to_string(result);
+        for(const auto& error:tx.get_transaction_problems())errors+='\n'+error;
+        for(const auto& error:tx.get_gpg_signature_problems())errors+='\n'+error;
+        for(const auto& error:tx.get_rpm_messages())errors+='\n'+error;
+        throw std::runtime_error("RPM transaction incomplete: "+errors+"\nKeep the pending record and run channel sync after correcting these problems");
+    }
     // The RPM hook may already have written this bundle. The updater verifies an idempotent match.
     if(!p.krel.empty()&&automatic)boot_kernel(p.krel,o.json);
     atomic_write(config/"channel",o.selected+'\n');

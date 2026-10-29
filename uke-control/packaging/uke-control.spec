@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.3.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -181,6 +181,9 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-4
+- Report native RPM transaction problems and check system-repository lock admission.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-3
 - Resolve the numbered RPM dist tag when DNF identifies the release as Rawhide.
 

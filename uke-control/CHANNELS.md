@@ -1,5 +1,10 @@
 # Package channels
 
+30 October 2026: a failed native transaction reports its RPM, signature and
+transaction diagnostics while retaining the pending channel. Correct the
+reported problem before running `channel sync`. Failure before RPM execution
+may have no DNF history entry.
+
 30 October 2026: Fedora 46 Rawhide reports `releasever=rawhide` to DNF.
 The RPM dist check uses the numeric `VERSION_ID` from os-release in this case.
 Numeric DNF and os-release versions must agree; an unresolved numeric version
