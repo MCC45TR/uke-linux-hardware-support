@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.15.1
-Release: 2%{?dist}
+Version: 1.16.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.16.0-1
+- Route explicit expiring identity review and admitted positive-current restore
+- Preserve helper admission and automatic-worker stop failures
+
 * Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
 - Deliver the diagnostic correction with its matching Core family dependency.
 - Advance the rebuilt children beyond the earlier standalone test identity.

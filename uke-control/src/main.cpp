@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.15.1 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.16.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -58,6 +58,8 @@ static void help() {
       "  charge status               Native control metadata, or standard capability\n"
       "  charge capabilities|admission|protocols  Native backend metadata\n"
       "  charge settings             Read three firmware threshold fields (root; no SET)\n"
+      "  charge review FILE          Install an explicitly reviewed expiring identity (root; no SET)\n"
+      "  charge restore-current      Request the admitted positive-current restore\n"
       "  charge protection           Read firmware moisture fields (root; no SET)\n"
       "  charge protection-status    Read cached moisture and inhibit status\n"
       "  charge moisture-enable      Enable-only protection request (qualified, offline)\n"
@@ -183,6 +185,12 @@ int main(int argc,char** argv) {
             if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);return 0;}
         }
         if(command=="charge") {
+            if(argc==4&&std::string_view(argv[2])=="review") {
+                auto result=uke::charge_review(argv[3]);std::cout<<result.output;return result.status;
+            }
+            if(argc==3&&std::string_view(argv[2])=="restore-current") {
+                auto result=uke::charge_control_mode("profile-restore");std::cout<<result.output;return result.status;
+            }
             if(argc==3&&std::string_view(argv[2])=="notifications") {uke::charge::moisture_notifications();return 0;}
             if(argc==3&&std::string_view(argv[2])=="moisture-enable") {
                 auto result=uke::charge_enable_moisture();std::cout<<result.output;return result.status;

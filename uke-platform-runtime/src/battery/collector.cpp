@@ -139,6 +139,8 @@ constexpr Field fields[] = {
     {"battery", "voltage_now", "uV", true}, {"battery", "voltage_ocv", "uV", true},
     {"battery", "current_now", "uA_positive_into_battery", true},
     {"battery", "power_now", "uW_positive_into_battery", true},
+    {"battery", "current_avg", "uA_basis_unqualified", true},
+    {"battery", "power_avg", "uW_basis_unqualified", true},
     {"battery", "energy_now", "uWh_basis_unqualified", true},
     {"battery", "temp", "deciC", true}, {"battery", "charge_counter", "uAh_relative_semantics_unqualified", true},
     {"battery", "charge_full", "uAh_basis_unqualified", true},
@@ -150,7 +152,8 @@ constexpr Field fields[] = {
     {"battery", "time_to_empty_avg", "s_firmware_unqualified", true},
     {"usb", "online", "boolean", true}, {"usb", "usb_type", "enum", false},
     {"usb", "voltage_now", "uV", true}, {"usb", "current_now", "uA", true},
-    {"usb", "current_max", "uA_advertised", true}, {"usb", "input_current_limit", "uA_reported_limit", true}
+    {"usb", "current_max", "uA_advertised", true}, {"usb", "input_current_limit", "uA_reported_limit", true},
+    {"usb", "temp", "deciC_sensor_location_unqualified", true}
 };
 bool range(const Field &f, const Reading &r) {
     if (!f.numeric) return !r.text.empty() && r.text.size() <= 128;
@@ -159,7 +162,8 @@ bool range(const Field &f, const Reading &r) {
     const std::string_view name(f.name);
     if (name == "capacity" || name == "state_of_health") return v >= 0 && v <= 100;
     if (name == "present" || name == "online") return v == 0 || v == 1;
-    if (name == "current_now" || name == "charge_counter" || name == "power_now") return v >= INT32_MIN && v <= INT32_MAX;
+    if (name == "current_now" || name == "current_avg" || name == "charge_counter" ||
+        name == "power_now" || name == "power_avg") return v >= INT32_MIN && v <= INT32_MAX;
     if (name == "input_current_limit") return v >= 0 && v <= INT32_MAX;
     if (name == "cycle_count") return v >= 0 && v <= INT32_MAX;
     if (name == "temp") return v > INT32_MIN && v < INT32_MAX;

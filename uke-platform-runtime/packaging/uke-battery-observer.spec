@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
-Version: 1.1.0
+Version: 1.2.1
 Release: 1%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
@@ -117,6 +117,10 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.2.1-1
+- Integrate reviewed identities, cached PD observations and optional telemetry
+- Preserve threshold bounds and unqualified sensor and energy semantics
+
 * Tue Oct 20 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
 - Collect diagnostic snapshots on demand and exit after idle client sessions.
 - Retain the reviewed charging protection, observation and offline UI behavior.

@@ -35,16 +35,16 @@ Result control_mode(const std::string& mode) {
     if (mode == "charge80") return execute({helper, "cap80"}, 35, 65536);
     if (mode == "hold80-90") return execute({helper, "band80-90"}, 35, 65536);
     if (mode == "firmware") return refused("firmware_factory_restore_not_qualified");
-    if (mode != "slow" && mode != "automatic") throw std::runtime_error("Unknown charge mode");
+    if (mode != "slow" && mode != "automatic" && mode != "profile-restore") throw std::runtime_error("Unknown charge mode");
     // This query reads qualification metadata only. The helper rechecks before
     // acquiring a lease or sending a control request.
     const auto inspected = control_query("admission");
     if (!admission(inspected, mode == "automatic" ? "automatic_admission_ready" : "profile_qualified"))
         return refused("charge_control_admission_not_ready");
-    if (mode == "slow") {
+    if (mode == "slow" || mode == "profile-restore") {
         const auto stopped = execute({"/usr/bin/systemctl", "stop", unit}, 40, 65536);
         if (stopped.status != 0) return refused("automatic_policy_stop_failed");
-        return execute({helper, "slow"}, 35, 65536);
+        return execute({helper, mode}, 35, 65536);
     }
     const auto started = execute({"/usr/bin/systemctl", "start", unit}, 15, 65536);
     if (started.status != 0) return refused("automatic_policy_start_failed");

@@ -85,9 +85,9 @@
       "binary_name": "upower",
       "version": "1.91.5",
       "release": "1.fc46",
-      "native_release": "6",
+      "native_release": "7",
       "sha256": "130bb7f071104e10ea4960c5c4b4bb3fdd3f9d582d16488102fbb7cb4eebc5de",
-      "delta": "Propagate threshold errors, preserve reported health, recognize wireless sources and recover late capacity units; controls remain qualified separately",
+      "delta": "Propagate threshold errors, preserve reported health, recognize wireless sources and recover late capacity units; controls remain qualified separately; deterministic host history self-test clock without changing production history",
       "signed_mirror_sha256": "ae102a4e75d4f1a214e28713ff6ea4ca0d8e1395b0b87e8e8a621c698e36a4ee",
       "source_payload_sha256": "4accbe303d13122222490032e4627ea199fed204daf51233dc58c545875fb858"
     },

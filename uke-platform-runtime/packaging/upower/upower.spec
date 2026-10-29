@@ -1,7 +1,7 @@
 Summary:        Power Management Service
 Name:           upower
 Version:        1.91.5
-Release:        9%{?dist}
+Release:        10%{?dist}
 License:        GPL-2.0-or-later
 URL:            https://upower.freedesktop.org/
 Source0:        https://gitlab.freedesktop.org/upower/%{name}/-/archive/v%{version}/%{name}-v%{version}.tar.bz2
@@ -14,6 +14,7 @@ Patch0:         0001-required-threshold-write-errors.patch
 Patch1:         0002-preserve-reported-health-capacity.patch
 Patch2:         0003-recognize-standard-wireless-supplies.patch
 Patch3:         0004-recover-late-capacity-units.patch
+Patch4:         0005-deterministic-history-selftest.patch
 
 BuildRequires:  meson
 BuildRequires:  git
@@ -90,6 +91,7 @@ echo 'c465a1c7fc05d00ac2bc7321c19b9b7e479410d8392bd7eb3e714275729629fd  %{SOURCE
 %find_lang upower
 
 %check
+LD_LIBRARY_PATH=%{_vpath_builddir}/libupower-glib timeout -k 5s 30s %{_vpath_builddir}/src/up_self_test -p /power/history
 # Native host contracts, then the actual daemon on a private bus/synthetic sysfs.
 bash %{SOURCE1} src/linux/up-device-supply-battery.c
 bash %{SOURCE2} src/up-device-battery.c

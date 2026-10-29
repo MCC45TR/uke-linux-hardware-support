@@ -1,5 +1,19 @@
 # Charging policy source — 18 October 2026
 
+29 October 2026 source integration: `charge review FILE` accepts an absolute
+path to a root-owned private artifact review. The helper verifies profile and
+artifact digests, the current boot and driver/firmware/source epochs, and an
+expiry no more than 15 minutes away before atomically installing the identity.
+This route neither qualifies a profile nor acquires control or sends firmware
+requests. Default profiles remain unqualified.
+
+`charge restore-current` stops the automatic worker and asks the existing
+admitted helper to restore the profile's positive current. It does not restore
+unknown factory settings. `charge protocols` can consume a coherent read-only
+UCSI PDO/RDO cache; it reports firmware observations separately from electrical
+measurements and leaves negotiated PD revision unknown. Synthetic host tests
+pass; installation, control requests and physical charging tests are deferred.
+
 Environment: Uke Control source, 18 October 2026. The shared backend and CLI
 include metadata-only policy previews. Synthetic host fixtures pass; no charging
 write or physical policy acceptance has been established.

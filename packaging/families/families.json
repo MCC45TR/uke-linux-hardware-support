@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "1.15.1",
-      "release": 3,
+      "version": "1.16.0",
+      "release": 1,
       "requires": [
-        "uke-control = 1.15.1-3%{?dist}"
+        "uke-control = 1.16.0-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -16,7 +16,9 @@
         "uke-control/src",
         "uke-control/shared",
         "uke-control/packaging",
-        "uke-control/Makefile"
+        "uke-control/Makefile",
+        "uke-control/tests/charge-review.sh",
+        "uke-control/tests/charge-client.cpp"
       ]
     },
     {
@@ -49,7 +51,7 @@
     },
     {
       "name": "uke-power",
-      "version": "1.3.3",
+      "version": "1.4.1",
       "requires": [
         "uke-upower",
         "power-profiles-daemon",
@@ -57,7 +59,7 @@
         "uke-boot-integration >= 1.3.4"
       ],
       "suggests": [
-        "uke-adaptive-display = 1.0.16-9%{?dist}",
+        "uke-adaptive-display = 1.0.16-10%{?dist}",
         "uke-battery-observer",
         "uke-charge-control"
       ],
@@ -82,9 +84,11 @@
         "uke-platform-runtime/tests/charge-control.sh",
         "uke-platform-runtime/tests/charge-control.cpp",
         "uke-platform-runtime/tests/charge-control-profile.cpp",
-        "uke-platform-runtime/tests/charge-io.cpp"
+        "uke-platform-runtime/tests/charge-io.cpp",
+        "uke-platform-runtime/tests/pd-contract.cpp",
+        "uke-platform-runtime/tests/battery-collector.sh"
       ],
-      "release": 6
+      "release": 1
     },
     {
       "name": "uke-sensors",
@@ -256,10 +260,10 @@
     "material-decoration": "uke-material-decoration"
   },
   "native_versions": {
-    "uke-control": "1.15.1",
+    "uke-control": "1.16.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.5",
-    "uke-battery-observer": "1.1.0",
+    "uke-battery-observer": "1.2.1",
     "uke-front-color": "1.0.2",
     "uke-installation-profile": "1.8.5",
     "uke-speaker-controls": "0.1.0",
@@ -270,8 +274,8 @@
     "uke-boot-integration": "1.fc46",
     "uke-plymonth": "5.fc46",
     "uke-orangefox-recovery": "6.fc46",
-    "upower": "17.fc46",
-    "uke-adaptive-display": "9.fc46",
+    "upower": "18.fc46",
+    "uke-adaptive-display": "10.fc46",
     "uke-firmware": "14.fc46",
     "libssc": "19.fc46",
     "uke-ssc-fileservice": "24.fc46",
@@ -282,7 +286,7 @@
     "libwacom": "14.fc46",
     "libstdcxx-uke-runtime": "15.fc46",
     "mesa": "16.fc46",
-    "uke-battery-observer": "13.fc46",
+    "uke-battery-observer": "1.fc46",
     "accountsservice": "12.fc46",
     "material-decoration": "7.fc46",
     "uke-desktop-metas": "24.fc46",
@@ -292,7 +296,7 @@
     "uke-displayport-audio": "8.fc46",
     "uke-vaapi-v4l2": "4.fc46",
     "uke-mesa-libclc22-spirv": "3.fc46",
-    "uke-control": "3.fc46",
+    "uke-control": "1.fc46",
     "pipewire": "2.fc46",
     "uke-speaker-orientation": "5.fc46",
     "uke-speaker-firmware": "2.fc46"

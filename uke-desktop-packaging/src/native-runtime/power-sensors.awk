@@ -3,6 +3,7 @@ BEGIN { print "%global debug_package %{nil}" }
 function check() {
     print "%check"
     if (name=="upower") {
+        print "LD_LIBRARY_PATH=%{_vpath_builddir}/libupower-glib timeout -k 5s 30s %{_vpath_builddir}/src/up_self_test -p /power/history"
         print "bash %{SOURCE9996} src/linux/up-device-supply-battery.c"
         print "bash %{SOURCE9997} src/up-device-battery.c"
         print "mkdir -p charging-fixture/tests/fixtures/upower"
@@ -19,13 +20,14 @@ function check() {
     print "if find %{buildroot} -type f \\( -name '*.py' -o -name '*.pyc' -o -name '*.pyo' -o -name 'python*' \\) -print -quit | grep -q .; then exit 1; fi"
     print "while IFS= read -r -d '' file; do if head -c 256 \"$file\" | LC_ALL=C grep -aE '^#!.*(python|pypy)'; then exit 1; fi; done < <(find %{buildroot} -type f -print0)"
 }
-/^(Source|Patch)999[4-9]:/ || /^Patch10000:/ || /^%check([[:space:]]|$)/ { print "Unsupported upstream overlay layout" >"/dev/stderr"; bad=1; exit 1 }
+/^(Source|Patch)999[4-9]:/ || /^Patch1000[01]:/ || /^%check([[:space:]]|$)/ { print "Unsupported upstream overlay layout" >"/dev/stderr"; bad=1; exit 1 }
 /^Release:/ { print "Release: " release "%{?dist}"; next }
 /^Source0:/ {
     sources++; print
     if (name=="upower") {
         print "Patch9997: 0001-required-threshold-write-errors.patch\nPatch9998: 0002-preserve-reported-health-capacity.patch\nPatch9999: 0003-recognize-standard-wireless-supplies.patch"
         print "Patch10000: 0004-recover-late-capacity-units.patch\nSource9994: upower-late-capacity.sh"
+        print "Patch10001: 0005-deterministic-history-selftest.patch"
         print "Source9996: upower-threshold-contract.sh\nSource9997: upower-health-contract.sh\nSource9998: upower-fixture.sh\nSource9999: ac-net-discharge.umockdev"
         print "BuildRequires: glib2-devel >= 2.76\nBuildRequires: gcc python3 umockdev dbus-daemon systemd-rpm-macros"
     } else {

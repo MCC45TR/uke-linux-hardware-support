@@ -1,5 +1,13 @@
 # uke-platform-runtime
 
+29 October 2026 integration candidate: observer 1.2.1 retains optional standard
+`current_avg`, `power_avg` and USB temperature readings with unqualified basis
+and sensor location. Missing values remain null; these fields do not affect
+energy, ETA or charging policy. The charge helper adds explicitly reviewed,
+expiring identities and cached UCSI PDO/RDO observations. Existing qualification
+and threshold bounds remain enforced. Host and AArch64 user-mode fixtures pass;
+no tablet operation, sensor calibration or electrical acceptance is claimed.
+
 29 October 2026: the source candidate rejects unsupported threshold pairs and
 cap80 profiles before admission, using the retained OEM ranges. Bounded sysfs
 read diagnostics retain the fixed attribute and errno without file paths or

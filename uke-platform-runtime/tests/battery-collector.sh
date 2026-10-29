@@ -43,6 +43,23 @@ jq -e '.schema_version == 1 and .origin == "fixture" and .provider_verified and 
     and .engineering.remaining_life_seconds == null and .engineering.remaining_life_reason == "aging_model_unqualified"
     and .efc_coverage.checkpoint == "disabled_unqualified" and .capabilities.read_only and (.capabilities.charge_threshold | not)' "$work/snapshot.json" >/dev/null
 jq -e '.fields["battery.temp"].value == null and .safety == "unknown_safety_state"' "$work/snapshot.json" >/dev/null
+jq -e 'all(.fields["battery.current_avg"], .fields["battery.power_avg"], .fields["usb.temp"];
+    .value == null and .validity == "unsupported")' "$work/snapshot.json" >/dev/null
+printf '%s\n' -400000 > "$sys/class/power_supply/qcom-battmgr-bat/current_avg"
+printf '%s\n' -1600000 > "$sys/class/power_supply/qcom-battmgr-bat/power_avg"
+printf '450\n' > "$sys/class/power_supply/qcom-battmgr-usb/temp"
+"$work/build/uke-battery" --sysfs-root "$sys" > "$work/optional-telemetry.json"
+jq -e '.fields["battery.current_avg"].value == -400000 and .fields["battery.power_avg"].value == -1600000
+    and .fields["usb.temp"].value == 450 and .fields["usb.temp"].validity == "unqualified"
+    and .fields["battery.temp"].value == null and .engineering.reported_terminal_power_uw == -2000000
+    and .engineering.nominal_full_energy_uwh == null and .forecast.time_to_full_seconds == null
+    and .safety == "unknown_safety_state"' "$work/optional-telemetry.json" >/dev/null
+printf '%s\n' -2147483649 > "$sys/class/power_supply/qcom-battmgr-bat/current_avg"
+printf '%s\n' 2147483648 > "$sys/class/power_supply/qcom-battmgr-bat/power_avg"
+printf '2147483647\n' > "$sys/class/power_supply/qcom-battmgr-usb/temp"
+"$work/build/uke-battery" --sysfs-root "$sys" > "$work/invalid-optional-telemetry.json"
+jq -e 'all(.fields["battery.current_avg"], .fields["battery.power_avg"], .fields["usb.temp"];
+    .value == null and .validity == "out_of_range")' "$work/invalid-optional-telemetry.json" >/dev/null
 for value in -1 2147483648 missing; do
     if [[ $value == missing ]]; then rm "$sys/class/power_supply/qcom-battmgr-bat/cycle_count";
     else printf '%s\n' "$value" > "$sys/class/power_supply/qcom-battmgr-bat/cycle_count"; fi

@@ -1,5 +1,12 @@
 # Uke Control
 
+29 October 2026: version 1.16.0 adds explicit `charge review FILE` and
+`charge restore-current` routes to the existing qualified helper. Review installs
+a private identity with a maximum 15-minute lifetime and performs no firmware
+request. Restore requires admission and a successful automatic-worker stop;
+it is not a factory reset. Host checks pass. No tablet operation or electrical
+qualification was performed. See [CHARGING.md](CHARGING.md).
+
 27 October 2026: version 1.15.1 records logind and UPower lid states separately
 and queries the current session's screensaver state without activation. Sleep
 reports include both lid consumers; display reports include actual stream depth

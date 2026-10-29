@@ -1,5 +1,15 @@
 # Fedora UPower overlay — 18 October 2026
 
+29 October 2026: patch0005 makes only the uninstalled history self-test use a
+controlled clock. A forced scheduling delay reproduces the previous expiry
+failure; the corrected history test passes without weakening production history
+expiry. The actual suite passes five cases and explicitly skips two cases that
+require the unavailable system bus. Production daemon sources are unchanged by
+this patch. Both source recipes include the history regression. The native
+source candidate is `upower-1.91.5-7.fc46`, coordinated as `uke-power 1.4.1-1`.
+Source packaging and host checks do not establish installed KDE or charging
+behavior. Earlier package identities below remain historical records.
+
 28 October 2026: source candidate patch0004 retries failed capacity discovery
 and preserves the charge/energy basis across unavailable readings. The actual
 daemon fixture fails on the previous source and passes delayed, missing and
