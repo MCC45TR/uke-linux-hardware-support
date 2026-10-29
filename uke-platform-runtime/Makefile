@@ -69,10 +69,10 @@ srpm:
 	# Package exactly the reviewed worktree, with a per-file byte inventory.
 	stage=$$(mktemp -d)
 	trap 'rm -r -- "$$stage"' EXIT
-	mkdir "$$stage/uke-battery-observer-1.2.0"
-	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-1.2.0/"
-	(cd "$$stage/uke-battery-observer-1.2.0"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-1.2.0.tar.xz" -C "$$stage" uke-battery-observer-1.2.0
+	mkdir "$$stage/uke-battery-observer-1.4.0"
+	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-1.4.0/"
+	(cd "$$stage/uke-battery-observer-1.4.0"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
+	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-1.4.0.tar.xz" -C "$$stage" uke-battery-observer-1.4.0
 	cp packaging/uke-battery-observer.spec "$(outdir)/rpmbuild/SPECS/"
 	cp packaging/sysusers/uke-battery.conf "$(outdir)/rpmbuild/SOURCES/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $(outdir)/rpmbuild" "$(outdir)/rpmbuild/SPECS/uke-battery-observer.spec"

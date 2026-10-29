@@ -16,7 +16,11 @@
         "uke-control/src",
         "uke-control/shared",
         "uke-control/packaging",
-        "uke-control/Makefile"
+        "uke-control/Makefile",
+        "uke-control/tests/charge-review.sh",
+        "uke-control/tests/charge-client.cpp",
+        "uke-control/tests/charge-policy.cpp",
+        "uke-control/tests/charge-policy.sh"
       ]
     },
     {
@@ -49,7 +53,7 @@
     },
     {
       "name": "uke-power",
-      "version": "1.4.0",
+      "version": "1.6.0",
       "requires": [
         "uke-upower",
         "power-profiles-daemon",
@@ -57,7 +61,7 @@
         "uke-boot-integration >= 1.3.4"
       ],
       "suggests": [
-        "uke-adaptive-display = 1.0.16-7%{?dist}",
+        "uke-adaptive-display = 1.0.16-12%{?dist}",
         "uke-battery-observer",
         "uke-charge-control"
       ],
@@ -77,9 +81,20 @@
         "uke-desktop-integration/tests/ppd-cpufreq.cpp",
         "uke-desktop-integration/docs/POWER-PROFILES.md",
         ":(exclude)uke-desktop-integration/src/bluetooth-address.cpp",
-        ":(exclude)uke-desktop-integration/packaging/uke-bluetooth-address.service"
+        ":(exclude)uke-desktop-integration/packaging/uke-bluetooth-address.service",
+        "uke-platform-runtime/tests/upower-late-capacity.sh",
+        "uke-platform-runtime/tests/charge-control.sh",
+        "uke-platform-runtime/tests/charge-control.cpp",
+        "uke-platform-runtime/tests/charge-control-profile.cpp",
+        "uke-platform-runtime/tests/charge-io.cpp",
+        "uke-platform-runtime/tests/pd-contract.cpp",
+        "uke-platform-runtime/tests/battery-collector.sh",
+        "uke-platform-runtime/docs/CHARGING-PROTOCOLS.md",
+        "uke-platform-runtime/tests/battery-model.cpp",
+        "uke-platform-runtime/tests/battery-engineering.cpp",
+        "uke-platform-runtime/docs/BATTERY-LONGEVITY.md"
       ],
-      "release": 4
+      "release": 1
     },
     {
       "name": "uke-sensors",
@@ -255,7 +270,7 @@
     "uke-control": "2.3.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.5",
-    "uke-battery-observer": "1.2.0",
+    "uke-battery-observer": "1.4.0",
     "uke-front-color": "1.0.2",
     "uke-installation-profile": "1.8.5",
     "uke-speaker-controls": "0.1.0",
@@ -266,8 +281,8 @@
     "uke-boot-integration": "1.fc46",
     "uke-plymonth": "5.fc46",
     "uke-orangefox-recovery": "6.fc46",
-    "upower": "15.fc46",
-    "uke-adaptive-display": "7.fc46",
+    "upower": "20.fc46",
+    "uke-adaptive-display": "12.fc46",
     "uke-firmware": "14.fc46",
     "libssc": "19.fc46",
     "uke-ssc-fileservice": "24.fc46",

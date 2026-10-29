@@ -8,13 +8,25 @@
 #include <vector>
 
 namespace uke::charge {
-enum class Target { full, cap80, band80_90 };
+enum class Target { full, cap80, band70_80, band80_90, temporary_full };
 enum class Rate { firmware, slow, automatic };
-struct Request { Target target = Target::full; Rate rate = Rate::firmware; };
+struct FullWindow {
+    std::string epoch, boot_id;
+    uint64_t issued_ns = 0, expires_ns = 0;
+    bool operator==(const FullWindow&) const = default;
+};
+struct Request {
+    Target target = Target::full;
+    Rate rate = Rate::firmware;
+    std::optional<FullWindow> full_window = {};
+    bool operator==(const Request&) const = default;
+};
 inline std::optional<Request> preset(const std::string& name) {
     if (name == "firmware") return Request{};
     if (name == "charge80") return Request{Target::cap80, Rate::firmware};
+    if (name == "hold70-80") return Request{Target::band70_80, Rate::firmware};
     if (name == "hold80-90") return Request{Target::band80_90, Rate::firmware};
+    if (name == "temporary-full") return Request{Target::temporary_full, Rate::firmware};
     if (name == "slow") return Request{Target::full, Rate::slow};
     if (name == "automatic") return Request{Target::full, Rate::automatic};
     return {};
@@ -22,13 +34,15 @@ inline std::optional<Request> preset(const std::string& name) {
 struct Controls {
     // Independent, reviewed control admission; model attestation is insufficient.
     bool qualified = false, end_threshold = false, start_threshold = false;
-    bool battery_current = false, battery_voltage = false, autonomous_protection = false;
+    bool battery_current = false, firmware_cv = false, autonomous_protection = false;
     std::string epoch;
+    // Requires a reviewed device-side expiry/return path, not a userspace timer.
+    bool autonomous_target_return = false;
 };
 struct Sample {
     bool coherent = false, measurements_qualified = false, sink = false, fault = true;
     bool suspended = false, net_discharging = false;
-    std::string epoch;
+    std::string epoch, boot_id;
     uint64_t boottime_ns = 0, receipt_ns = 0;
     std::optional<double> soc, temperature_deci_c, battery_uv, battery_ua;
     // Available battery-side power after qualified conversion loss and system load.
@@ -53,7 +67,8 @@ struct Plan {
     bool eligible = false;
     std::string state = "blocked", reason = "control_backend_unqualified";
     std::optional<unsigned> start_percent, end_percent;
-    std::optional<uint32_t> battery_current_ua, battery_voltage_uv;
+    std::optional<uint32_t> battery_current_ua, firmware_voltage_ceiling_uv;
+    std::string temporary_phase = "not_requested";
     // Informational SOC demand only. Never maps a zero ICL to a physical stop.
     std::string soc_demand = "unknown";
 };
@@ -87,8 +102,7 @@ public:
             previous_ua_.reset(); previous_uv_.reset(); soc_charge_.reset(); stable_since_ns_ = 0;
             p.reason = "sample_time_not_increasing"; return p;
         }
-        const bool same_request = previous_request_ && previous_request_->target == request.target &&
-            previous_request_->rate == request.rate;
+        const bool same_request = previous_request_ && *previous_request_ == request;
         if (s.epoch != epoch_ || !same_request || !s.boottime_ns ||
             (last_ns_ && e.max_gap_ns && s.boottime_ns - last_ns_ > e.max_gap_ns)) reset();
         epoch_ = s.epoch; last_ns_ = s.boottime_ns; previous_request_ = request;
@@ -96,7 +110,23 @@ public:
             p = {}; p.reason = reason; previous_ua_.reset(); previous_uv_.reset();
             soc_charge_.reset(); stable_since_ns_ = 0; return p;
         };
-        if (request.target == Target::full && request.rate == Rate::firmware) {
+        bool temporary_active = false;
+        if (request.target == Target::temporary_full) {
+            if (!request.full_window || request.full_window->epoch.empty() ||
+                request.full_window->epoch != s.epoch || request.full_window->boot_id.empty() ||
+                request.full_window->boot_id != s.boot_id || !request.full_window->issued_ns ||
+                request.full_window->expires_ns <= request.full_window->issued_ns ||
+                request.full_window->expires_ns - request.full_window->issued_ns < 60000000000ULL ||
+                request.full_window->expires_ns - request.full_window->issued_ns > 86400000000000ULL ||
+                s.boottime_ns < request.full_window->issued_ns || request.rate != Rate::firmware)
+                return blocked("temporary_full_window_unbound_or_invalid");
+            temporary_active = s.boottime_ns < request.full_window->expires_ns;
+            if (temporary_active && !c.autonomous_target_return)
+                return blocked("temporary_full_autonomous_return_unqualified");
+            request.target = temporary_active ? Target::full : Target::band70_80;
+            p.temporary_phase = temporary_active ? "active_proposal" : "return_due";
+        }
+        if (request.target == Target::full && request.rate == Rate::firmware && !temporary_active) {
             p.state = "firmware_managed"; p.reason = "no_ap_control_requested";
             return p;
         }
@@ -106,22 +136,26 @@ public:
             !s.receipt_ns || s.boottime_ns < s.receipt_ns || !e.max_age_ns || !e.max_gap_ns ||
             s.boottime_ns - s.receipt_ns > e.max_age_ns)
             return blocked("telemetry_unqualified_or_unavailable");
-        if (request.target != Target::full) {
-            if (!c.end_threshold || (request.target == Target::band80_90 && !c.start_threshold))
+        if (request.target != Target::full || temporary_active) {
+            const bool band = request.target == Target::band70_80 || request.target == Target::band80_90;
+            if (!c.end_threshold || ((band || temporary_active) && !c.start_threshold))
                 return blocked("autonomous_thresholds_unavailable");
             if (!finite(s.soc) || *s.soc < 0 || *s.soc > 100) return blocked("soc_unavailable");
-            p.end_percent = request.target == Target::cap80 ? 80 : 90;
-            if (request.target == Target::band80_90) {
-                p.start_percent = 80;
-                if (*s.soc >= 90) soc_charge_ = false;
-                else if (*s.soc <= 80) soc_charge_ = true;
+            p.end_percent = temporary_active ? 100 : request.target == Target::band80_90 ? 90 : 80;
+            if (temporary_active) {
+                p.start_percent = 0;
+                p.soc_demand = "firmware_managed";
+            } else if (band) {
+                p.start_percent = request.target == Target::band70_80 ? 70 : 80;
+                if (*s.soc >= *p.end_percent) soc_charge_ = false;
+                else if (*s.soc <= *p.start_percent) soc_charge_ = true;
                 // In the band after restart, let autonomous firmware thresholds decide.
                 p.soc_demand = !soc_charge_ ? "firmware_hysteresis" : *soc_charge_ ? "charge" : "hold";
             } else p.soc_demand = *s.soc >= 80 ? "hold" : "charge";
         }
         if (request.rate != Rate::firmware) {
             if (!valid(e) || e.epoch != s.epoch) return blocked("electrical_profile_unqualified");
-            if (!c.battery_current || !c.battery_voltage) return blocked("battery_cc_cv_controls_unavailable");
+            if (!c.battery_current || !c.firmware_cv) return blocked("battery_current_or_firmware_cv_unqualified");
             if (!finite(s.temperature_deci_c) || !finite(s.battery_uv) || *s.battery_uv <= 0 ||
                 !finite(s.battery_ua) || !finite(s.available_battery_uw) || *s.available_battery_uw <= 0)
                 return blocked("electrical_measurements_unavailable");
@@ -150,7 +184,7 @@ public:
                 }
             }
             previous_ua_ = current; previous_uv_ = voltage;
-            p.battery_current_ua = current; p.battery_voltage_uv = voltage;
+            p.battery_current_ua = current; p.firmware_voltage_ceiling_uv = voltage;
         }
         p.eligible = true; p.state = "proposal_only"; p.reason = "actuator_and_readback_required";
         return p;

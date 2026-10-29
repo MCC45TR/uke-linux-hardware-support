@@ -10,7 +10,7 @@ digest=$(sha256sum -- "$archive"); digest=${digest%% *}
 mkdir -p "$out"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
 out=$(realpath "$out")
 cp -- "$archive" "$out/SOURCES/upower-v1.91.5.tar.bz2"
-cp -- "$root"/patches/upower/*.patch "$root"/tests/upower-{threshold-contract,health-contract,fixture}.sh "$root/tests/fixtures/upower/ac-net-discharge.umockdev" "$out/SOURCES/"
+cp -- "$root"/patches/upower/*.patch "$root"/tests/upower-{threshold-contract,health-contract,fixture,late-capacity}.sh "$root/tests/fixtures/upower/ac-net-discharge.umockdev" "$out/SOURCES/"
 cp -- "$root/packaging/upower/upower.spec" "$out/SPECS/"
 cp -- "$root/packaging/upower/source-lock.json" "$out/"
 rpmbuild -bs --nodeps --target aarch64 --define "_topdir $out" "$out/SPECS/upower.spec"

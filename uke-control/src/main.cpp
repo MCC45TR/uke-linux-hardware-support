@@ -150,7 +150,7 @@ static int run(int argc,char** argv,bool as_json) {
             if(argc==3&&std::string_view(argv[2])=="apply-cap80") {
                 auto result=uke::charge_apply_preconfigured_cap();uke::cli::print(result.output,as_json);return result.status;
             }
-            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="settings"||std::string_view(argv[2])=="protection"||std::string_view(argv[2])=="protection-status")) {
+            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="protocol-inspect"||std::string_view(argv[2])=="settings"||std::string_view(argv[2])=="protection"||std::string_view(argv[2])=="protection-status")) {
                 auto result=uke::charge_control_query(argv[2]);uke::cli::print(result.output,as_json);return result.status;
             }
             if(argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::charge_status(),as_json);return 0;}

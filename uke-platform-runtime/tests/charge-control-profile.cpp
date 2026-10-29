@@ -53,6 +53,17 @@ int main(int argc, char **argv) {
     save(path, profile); save(identity, replace(attestation, "@P@", hash(profile)));
     auto result = resolve(c, path, identity, getuid());
     assert(result.qualified && result.current_control && result.maximum_ua == 2000000 && result.evidence == hash(profile));
+    for (const auto value : {0, 49, 80, 95, 100}) {
+        const auto invalid = replace(profile, "\"cap_resume_percent\":70", "\"cap_resume_percent\":" + std::to_string(value));
+        save(path, invalid); save(identity, replace(attestation, "@P@", hash(invalid)));
+        assert(!resolve(c, path, identity, getuid()).qualified);
+    }
+    for (const auto value : {50, 79}) {
+        const auto valid = replace(profile, "\"cap_resume_percent\":70", "\"cap_resume_percent\":" + std::to_string(value));
+        save(path, valid); save(identity, replace(attestation, "@P@", hash(valid)));
+        assert(resolve(c, path, identity, getuid()).qualified);
+    }
+    save(path, profile); save(identity, replace(attestation, "@P@", hash(profile)));
     const auto review = replace(R"({
 "schema_version":1,"kind":"control_artifact_review","reviewed_control":true,
 "boot_id":"synthetic-boot","driver_instance_boottime_ns":42,"firmware_generation":2,"source_event_generation":3,

@@ -32,12 +32,16 @@ uint64_t now() {
     timespec t{}; if (clock_gettime(CLOCK_BOOTTIME, &t)) fail("control_clock_unavailable");
     return uint64_t(t.tv_sec) * 1000000000ULL + uint64_t(t.tv_nsec);
 }
-std::string read_fd(int fd) {
+std::string read_fd(int fd, const char *field) {
     std::string data; char buffer[4097];
     for (;;) {
         const auto n = read(fd, buffer, sizeof(buffer));
         if (n < 0 && errno == EINTR) continue;
-        if (n < 0 || (n > 0 && data.size() + size_t(n) > 4096)) fail("control_metadata_read_failed");
+        if (n < 0) {
+            const int error = errno;
+            throw std::runtime_error("control_metadata_read_failed_" + std::string(field) + "_errno_" + std::to_string(error));
+        }
+        if (n > 0 && data.size() + size_t(n) > 4096) fail("control_metadata_too_large");
         if (!n) break;
         data.append(buffer, size_t(n));
     }
@@ -45,8 +49,11 @@ std::string read_fd(int fd) {
 }
 std::string read_file(const fs::path &path) {
     const int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-    if (fd < 0) fail("control_metadata_unavailable");
-    try { auto data = read_fd(fd); close(fd); return data; }
+    if (fd < 0) {
+        const int error = errno;
+        throw std::runtime_error("control_metadata_unavailable_errno_" + std::to_string(error));
+    }
+    try { auto data = read_fd(fd, "file"); close(fd); return data; }
     catch (...) { close(fd); throw; }
 }
 class Sysfs final : public Io {
@@ -72,8 +79,11 @@ public:
     ~Sysfs() override { if (directory_ >= 0) close(directory_); }
     std::string read_attribute(const char *name) {
         const int fd = openat(directory_, name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-        if (fd < 0) fail("control_backend_unavailable");
-        try { auto data = read_fd(fd); close(fd); return data; }
+        if (fd < 0) {
+            const int error = errno;
+            throw std::runtime_error("control_backend_unavailable_" + std::string(name) + "_errno_" + std::to_string(error));
+        }
+        try { auto data = read_fd(fd, name); close(fd); return data; }
         catch (...) { close(fd); throw; }
     }
     State state() override { return parse_state(read_attribute("uke_charge_state")); }
@@ -217,7 +227,10 @@ void emit_protocols(const ProtocolState &s, bool available, const std::string &r
         first = false;
         std::cout << "{\"protocol\":\"" << name << "\",\"manufacturer_declared\":true,\"runtime_qualified\":null}";
     }
-    std::cout << "],\"manufacturer_source\":\"https://www.mi.com/ph/support/faq/details/KA-628084/\""
+    std::cout << "],\"manufacturer_excluded_protocols\":[\"QC4\",\"QC4+\",\"PPS\",\"UFCS\"]"
+        << ",\"negotiation_owner\":\"adsp_firmware\",\"mi_fc2_native_authentication_backend\":false"
+        << ",\"mi_fc2_authentication_reason\":\"genuine_native_authentication_and_session_backend_missing\""
+        << ",\"manufacturer_source\":\"https://www.mi.com/ph/support/faq/details/KA-628084/\""
         << ",\"manufacturer_list_is_negotiation_evidence\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
 }
 void emit(const State &s, const Profile &p, const char *operation, bool applied, bool qualification_checked = true) {
@@ -241,8 +254,16 @@ void emit(const State &s, const Profile &p, const char *operation, bool applied,
         << ",\"battery_voltage_uv\":" << (s.measurement_valid ? std::to_string(s.voltage_uv) : "null")
         << ",\"battery_current_ua\":" << (s.measurement_valid ? std::to_string(s.measured_current_ua) : "null")
         << ",\"measurement_boottime_ns\":" << s.measurement_ns
+        << ",\"control_lease_reported_live\":" << (s.live ? "true" : "false")
+        << ",\"lease_release_restores_settings\":false,\"settings_may_persist_after_release\":true"
         << ",\"physical_charge_stopped\":null,\"current_control_qualified\":" << (p.current_control ? "true" : "false")
         << ",\"voltage_writer\":false,\"cv_owner\":\"firmware\"}\n" << std::flush;
+}
+void emit_release(bool revoke_completed) {
+    std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_release\",\"controller_stopped\":true"
+        << ",\"owned_lease_revoke_completed\":" << (revoke_completed ? "true" : "false")
+        << ",\"firmware_setting_restore_performed\":false,\"settings_may_persist\":true"
+        << ",\"physical_charge_stopped\":null}\n" << std::flush;
 }
 uint32_t percent(const char *value) {
     uint32_t result; const std::string text(value);
@@ -257,6 +278,7 @@ int main(int argc, char **argv) {
     std::unique_ptr<Session> session;
     const bool admission_query = argc == 2 && std::strcmp(argv[1], "admission") == 0;
     const bool protocol_query = argc == 2 && std::strcmp(argv[1], "protocols") == 0;
+    const bool protocol_inspect = argc == 2 && std::strcmp(argv[1], "protocol-inspect") == 0;
     const bool settings_query = argc == 2 && std::strcmp(argv[1], "settings") == 0;
     const bool protection_query = argc == 2 && std::strcmp(argv[1], "protection") == 0;
     const bool preconfigured_cap = argc == 2 && std::strcmp(argv[1], "enable-cap80") == 0;
@@ -272,6 +294,7 @@ int main(int argc, char **argv) {
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
                 << "uke-charge-control identity-review REVIEW_FILE  (explicit expiring review; no charging SET)\n"
+                << "uke-charge-control protocol-inspect  (root; default-off development ABI; two firmware GETs, no SET)\n"
                 << "uke-charge-control enable-cap80 | apply-cap80\n"
                 << "uke-charge-control moisture-enable  (qualified profile, offline, enable-only)\n"
                 << "settings requires root and performs three diagnostic GETs without control permission.\n"
@@ -288,7 +311,7 @@ int main(int argc, char **argv) {
         if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "protection" && command != "protection-status" && command != "protection-serve" && command != "moisture-enable" && command != "enable-cap80" && command != "apply-cap80" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore" &&
-            command != "identity-review") fail("control_command_unsupported");
+            command != "identity-review" && command != "protocol-inspect") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
         if (command == "status") { emit(io->state(), {}, "metadata_only", false, false); return 0; }
         if (command == "protection-status") {
@@ -300,6 +323,21 @@ int main(int argc, char **argv) {
             return 0;
         }
         if (geteuid() != 0) fail("control_root_required");
+        if (protocol_inspect) {
+            Lock owner;
+            const auto before = context(*io);
+            const auto p = parse_protocol_inspection(io->read_attribute("uke_charge_protocols"));
+            if (!protocol_inspection_matches(p, before, context(*io))) fail("protocol_inspection_epoch_or_time_changed");
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_protocol_inspection\",\"firmware_get_complete\":true"
+                << ",\"firmware_get_count\":2,\"property_family\":\"USB\",\"adapter_wire_id\":7,\"real_type_wire_id\":11"
+                << ",\"adapter_type_raw\":" << p.adapter_type << ",\"adapter_type_oem_name\":\"" << oem_usb_type_name(p.adapter_type)
+                << "\",\"real_type_raw\":" << p.real_type << ",\"real_type_oem_name\":\"" << oem_usb_type_name(p.real_type)
+                << "\",\"received_boottime_ns\":" << p.received_ns << ",\"source_event_generation\":" << p.source
+                << ",\"atomic_remote_snapshot\":false,\"xm_properties_read\":false,\"firmware_set_performed\":false"
+                << ",\"negotiation_requested\":false,\"authentication_overridden\":false,\"control_authorization_granted\":false"
+                << ",\"negotiated_protocol\":null,\"negotiated_pd_revision\":null,\"electrical_qualification\":false,\"applied\":false}\n";
+            return 0;
+        }
         if (command == "identity-review") {
             Lock lock;
             const auto before = context(*io);
@@ -470,7 +508,9 @@ int main(int argc, char **argv) {
             emit(result, profile, command == "verify" ? "verified_refresh" : current_action ?
                 (command == "slow" ? "slow_current" : "profile_current_restore") : "threshold_apply", command != "verify");
         }
-        session->revoke(); session.reset(); return 0;
+        const bool revoked = session->revoke(); session.reset();
+        if (command == "serve" || command == "automatic") emit_release(revoked);
+        return 0;
     } catch (const std::exception &e) {
         if (protection_query) {
             std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_protection\",\"firmware_get_complete\":false,\"reason\":\""
@@ -495,6 +535,11 @@ int main(int argc, char **argv) {
                 << identifier(e.what()) << "\",\"firmware_set_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
             return 69;
         }
+        if (protocol_inspect) {
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_protocol_inspection\",\"firmware_get_complete\":false,\"reason\":\""
+                << identifier(e.what()) << "\",\"firmware_set_performed\":false,\"negotiation_requested\":false,\"applied\":false}\n";
+            return 69;
+        }
         if (protocol_query) { emit_protocols({}, false, e.what()); return 69; }
         if (admission_query) {
             Admission a; a.reason = e.what(); emit_admission(a); return 69;
@@ -505,6 +550,7 @@ int main(int argc, char **argv) {
         std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control\",\"status\":\"failed\",\"reason\":\""
             << reason << "\",\"applied\":" << (uncertain ? "null" : "false")
             << ",\"write_delivery_may_be_uncertain\":" << (uncertain ? "true" : "false")
+            << ",\"lease_release_restores_settings\":false,\"settings_may_persist_after_release\":true"
             << ",\"physical_charge_stopped\":null}\n";
         return uncertain ? 1 : 69;
     }

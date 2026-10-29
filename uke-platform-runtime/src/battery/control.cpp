@@ -78,6 +78,48 @@ ProtocolState parse_protocol_state(const std::string &text) {
         s.sample_firmware != s.firmware || s.sample_source != s.source)) fail("protocol_state_epoch_invalid");
     return s;
 }
+ProtocolInspection parse_protocol_inspection(const std::string &text) {
+    if (text.size() > 512 || text.find('\0') != std::string::npos) fail("protocol_inspection_size_invalid");
+    std::array<std::string, 8> t;
+    std::istringstream in(text);
+    for (auto &value : t) if (!(in >> value)) fail("protocol_inspection_fields_missing");
+    ProtocolInspection s;
+    const auto version = decimal<unsigned>(t[0]);
+    s.instance = decimal<uint64_t>(t[1]); s.generation = decimal<uint32_t>(t[2]);
+    s.firmware = decimal<uint32_t>(t[3]); s.source = decimal<uint32_t>(t[4]);
+    s.received_ns = decimal<uint64_t>(t[5]);
+    s.adapter_type = decimal<uint32_t>(t[6]); s.real_type = decimal<uint32_t>(t[7]);
+    if (version != 1 || !s.instance || !s.received_ns || !(in >> std::ws).eof())
+        fail("protocol_inspection_invalid");
+    return s;
+}
+// OEM USB7/USB11 names only: wire6, XM and mainline enum9+ are different ABIs.
+const char *oem_usb_type_name(uint32_t value) {
+    static constexpr const char *standard[] = {
+        "Unknown", "SDP", "DCP", "CDP", "ACA", "Type-C", "PD", "PD_DRP", "PD_PPS", "Apple_Brick_ID"
+    };
+    if (value < std::size(standard)) return standard[value];
+    switch (value) {
+    case 0x80: return "HVDCP";
+    case 0x81: return "HVDCP_3";
+    case 0x82: return "HVDCP_3P5";
+    case 0x83: return "USB_FLOAT";
+    case 0x84: return "HVDCP_3_CLASSB";
+    default: return "Unrecognized";
+    }
+}
+bool protocol_inspection_matches(const ProtocolInspection &s, const Context &before, const Context &after) {
+    const auto matches = [&](const Context &c) {
+        return c.provider_verified && !c.state.live && !c.state.verified && !c.state.current_verified &&
+            c.state.instance == s.instance && c.state.generation == s.generation &&
+            c.state.firmware == s.firmware && c.state.source == s.source;
+    };
+    return s.instance && s.received_ns && matches(before) && matches(after) &&
+        !before.boot_id.empty() && before.boot_id == after.boot_id &&
+        !before.kernel_release.empty() && before.kernel_release == after.kernel_release &&
+        before.boottime_ns && before.boottime_ns <= s.received_ns && s.received_ns <= after.boottime_ns &&
+        after.boottime_ns - before.boottime_ns <= 3ULL * 1000000000ULL;
+}
 Settings parse_settings(const std::string &text) {
     if (text.size() > 4096) fail("settings_size_invalid");
     std::array<std::string, 9> t;
@@ -309,10 +351,16 @@ uint32_t current_ceiling(const Profile &p, const State &s, uint64_t now) {
     fail("control_current_temperature_outside_bands");
 }
 uint32_t Automatic::propose(const Profile &p, const State &s, uint64_t now) {
-    const auto ceiling = current_ceiling(p, s, now);
+    uint32_t ceiling;
+    try { ceiling = current_ceiling(p, s, now); }
+    catch (...) { *this = Automatic{}; throw; }
     if (!previous_ns_ || now <= previous_ns_ || now - previous_ns_ > p.lease_ns ||
+        instance_ != s.instance || generation_ != s.generation || firmware_ != s.firmware ||
+        source_ != s.source || evidence_ != p.evidence ||
         ceiling != ceiling_ || s.current_ua != baseline_ || s.measured_current_ua < 0)
         stable_since_ = now;
+    instance_ = s.instance; generation_ = s.generation; firmware_ = s.firmware;
+    source_ = s.source; evidence_ = p.evidence;
     previous_ns_ = now; ceiling_ = ceiling; baseline_ = s.current_ua;
     if (ceiling < s.current_ua) return ceiling;
     if (s.measured_current_ua < 0 || now - stable_since_ < p.increase_dwell_ns) return s.current_ua;
@@ -320,7 +368,9 @@ uint32_t Automatic::propose(const Profile &p, const State &s, uint64_t now) {
     return uint32_t(std::min<uint64_t>(ceiling, uint64_t(s.current_ua) + p.increase_step_ua));
 }
 State Session::thresholds(uint32_t start, uint32_t end, uint64_t now) {
-    if (start >= end || end > 100) fail("control_threshold_pair_invalid");
+    if (start >= end || end > 100 ||
+        ((start || end != 100) && (start < 50 || start > 95 || end < 55)))
+        fail("control_threshold_pair_invalid");
     admit(now);
     write_attempted_ = true;
     io_.write("uke_charge_thresholds", std::to_string(start) + " " + std::to_string(end) + "\n");
@@ -331,7 +381,9 @@ State Session::thresholds(uint32_t start, uint32_t end, uint64_t now) {
         s.verified_ns < now || s.expires_ns <= s.verified_ns) fail("control_threshold_readback_mismatch");
     return s;
 }
-void Session::revoke() {
-    if (owns_lease_) { io_.write("uke_charge_lease", "revoke\n"); owns_lease_ = false; }
+bool Session::revoke() {
+    if (!owns_lease_) return false;
+    io_.write("uke_charge_lease", "revoke\n"); owns_lease_ = false;
+    return true;
 }
 }

@@ -104,6 +104,7 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	bash tests/report.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-client.cpp src/charge-client.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-client
 	build/test-charge-client
+	bash tests/charge-review.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-notify.cpp src/charge-notify.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify
 	build/test-charge-notify
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -pthread tests/charge-notify-bus.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify-bus
