@@ -23,6 +23,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
+      - name: Install XML validation tool explicitly
+        run: dnf5 -y install libxml2
       - run: make validate && make test-native
       - run: make -C packaging/families check
       - name: Exercise signed repositories and the private sensor bus
