@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Synthetic host records only. No firmware identities or numerical Uke defaults.
 #include "../src/battery/control.hpp"
+#include "../src/battery/record.hpp"
 #include <openssl/evp.h>
 #include <cassert>
 #include <filesystem>
@@ -52,6 +53,44 @@ int main(int argc, char **argv) {
     save(path, profile); save(identity, replace(attestation, "@P@", hash(profile)));
     auto result = resolve(c, path, identity, getuid());
     assert(result.qualified && result.current_control && result.maximum_ua == 2000000 && result.evidence == hash(profile));
+    const auto review = replace(R"({
+"schema_version":1,"kind":"control_artifact_review","reviewed_control":true,
+"boot_id":"synthetic-boot","driver_instance_boottime_ns":42,"firmware_generation":2,"source_event_generation":3,
+"expires_boottime_ns":60000000000,"evidence_id":"@H@","control_profile_sha256":"@P@",
+"identities":{"kernel_release":"synthetic-test","firmware_sha256":"@H@","pack_identity_sha256":"@H@","dt_sha256":"@H@","module_manifest_sha256":"@H@"}})", "@H@", sha);
+    const auto review_path = std::string(argv[2]) + "/review.json";
+    save(review_path, replace(review, "@P@", hash(profile)));
+    const auto reviewed = review_identity(c, path, review_path, getuid());
+    uke::battery::record::write_private_json(argv[2], "reviewed.json", reviewed, getuid());
+    const auto installed = std::string(argv[2]) + "/reviewed.json";
+    assert(resolve(c, path, installed, getuid()).qualified);
+    const auto refused = [&](auto action) { bool bad = false; try { action(); } catch (...) { bad = true; } assert(bad); };
+    auto stale = c; ++stale.state.source;
+    refused([&] { review_identity(stale, path, review_path, getuid()); });
+    stale = c; stale.boottime_ns = 60000000000;
+    refused([&] { review_identity(stale, path, review_path, getuid()); });
+    for (const auto &bad : {
+        replace(review, "\"reviewed_control\":true", "\"reviewed_control\":false"),
+        replace(review, "\"expires_boottime_ns\":60000000000", "\"expires_boottime_ns\":99000000000000"),
+        replace(review, "\"firmware_generation\":2", "\"firmware_generation\":1"),
+        replace(review, "\"evidence_id\":\"" + sha + "\"", "\"evidence_id\":null")}) {
+        save(review_path, replace(bad, "@P@", hash(profile)));
+        refused([&] { review_identity(c, path, review_path, getuid()); });
+    }
+    save(review_path, replace(review, "@P@", hash(profile)));
+    assert(chmod(review_path.c_str(), 0666) == 0);
+    refused([&] { review_identity(c, path, review_path, getuid()); });
+    assert(chmod(review_path.c_str(), 0600) == 0);
+    // Atomic replacement never follows an existing output symlink.
+    std::filesystem::remove(installed);
+    std::filesystem::create_symlink(review_path, installed);
+    uke::battery::record::write_private_json(argv[2], "reviewed.json", reviewed, getuid());
+    assert(!std::filesystem::is_symlink(installed));
+    assert(resolve(c, path, installed, getuid()).qualified);
+    refused([&] { uke::battery::record::write_private_json(argv[2], "../escape", reviewed, getuid()); });
+    assert(chmod(argv[2], 0777) == 0);
+    refused([&] { uke::battery::record::write_private_json(argv[2], "reviewed.json", reviewed, getuid()); });
+    assert(chmod(argv[2], 0700) == 0);
     for (const char *key : {"protocol_property_abi", "source_contract", "cable_contract", "usb_moisture_abi", "usb_moisture_response", "external_thermal_path", "input_suspend_abi", "input_suspend_effect", "input_suspend_restore", "periodic_charge_guard"}) {
         const auto invalid = replace(profile, std::string("\"") + key + "\":\"" + sha + "\"", std::string("\"") + key + "\":null");
         save(path, invalid); save(identity, replace(attestation, "@P@", hash(invalid)));

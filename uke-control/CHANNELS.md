@@ -46,17 +46,17 @@ tablet acceptance are separate. The original Fedora repositories and unrelated
 third-party repositories retain their configuration.
 
 ```sh
-uke-control brunch status
-sudo uke-control brunch stable --dry-run
-sudo uke-control brunch stable
-sudo uke-control brunch test
-sudo uke-control brunch unstable
-sudo uke-control brunch sync
+uke-control channel status
+sudo uke-control channel set stable --dry-run
+sudo uke-control channel set stable
+sudo uke-control channel set test
+sudo uke-control channel set unstable
+sudo uke-control channel sync
 sudo uke-control update --check
 sudo uke-control update
 ```
 
-`branch` is an alias for the requested `brunch` spelling. Mutations show the
+`branch` and `brunch` remain compatibility aliases for `channel`; use `channel set NAME` in new commands. Mutations show the
 resolved transaction and ask for confirmation; `--yes` accepts that transaction.
 `--dry-run`, also spelled `--check` for `update`, resolves without RPM, channel,
 repository or boot changes. It may refresh metadata and requires root for the
@@ -122,7 +122,7 @@ continue to supply dependencies. Canonical missing definitions are added to
 are stored in `/etc/dnf/repos.override.d/zz-uke-control.repo`. Both definitions
 may remain visible in `dnf repo list --all`; only the selected Uke channel is
 enabled for normal DNF use. Files are retained for recovery rather than deleted.
-Manual changes made by a root administrator can override policy; `brunch status`
+Manual changes made by a root administrator can override policy; `channel status`
 shows the saved selection and configured repository enablement without network
 access. Synchronization checks the persisted repository policy before running RPM.
 
@@ -153,7 +153,7 @@ Downloads and signatures precede persistent channel changes. Root-private
 `channel-repositories.before` records under `/var/lib/uke-control` describe
 interrupted work. The saved successful channel is committed only after the RPM
 transaction and required boot selection succeed. If an operation is interrupted,
-`brunch sync` resumes the pending selection against current signed metadata;
+`channel sync` resumes the pending selection against current signed metadata;
 it does not promise the old exact transaction or an automatic package rollback.
 An interrupted `.new` file is refused for inspection. RPM/scriptlet failure can
 leave some packages installed; read DNF history and the retained record. Do not

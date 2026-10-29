@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "usb.hpp"
+#include "cli.hpp"
 #include "sysfs.hpp"
 #include <algorithm>
 #include <chrono>
@@ -60,10 +61,13 @@ std::string snapshot(const fs::path& requested_root) {
 namespace uke {
 std::string usb_status(){return usb::snapshot("/");}
 void usb_watch(unsigned seconds) {
+    usb_watch(seconds,false);
+}
+void usb_watch(unsigned seconds,bool as_json) {
     if(seconds<1||seconds>300)throw std::runtime_error("USB watch duration must be 1..300 seconds");
     const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);
     do {
-        std::cout<<usb_status()<<std::flush;
+        cli::print(usb_status(),as_json,"USB snapshot");std::cout.flush();
         const auto next=std::chrono::steady_clock::now()+std::chrono::seconds(1);
         std::this_thread::sleep_until(std::min(next,deadline));
     } while(std::chrono::steady_clock::now()<deadline);

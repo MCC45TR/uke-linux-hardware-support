@@ -1,0 +1,2 @@
+# Private, bounded maintenance maps must not be offered for desktop automount.
+SUBSYSTEM=="block", ENV{DM_UUID}=="UKE-LAYOUT-*", ENV{UDISKS_IGNORE}="1"

@@ -14,6 +14,9 @@ pkg-config --atleast-version=257 libsystemd
 mkdir "$work/records"
 "$work/profile" "$root/manifests/control-profile.json" "$work/records"
 "${CXX:-c++}" -std=c++17 -O2 -Wall -Wextra -Werror \
+    "$root/tests/pd-contract.cpp" -o "$work/pd-contract"
+"$work/pd-contract"
+"${CXX:-c++}" -std=c++17 -O2 -Wall -Wextra -Werror \
     "$root/tests/protection-log.cpp" "$root/src/battery/control.cpp" \
     "$root/src/battery/control-profile.cpp" "$root/src/battery/record.cpp" \
     $(pkg-config --cflags --libs libsystemd libcrypto) -o "$work/protection-log"

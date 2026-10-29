@@ -80,6 +80,11 @@ int main() {
     reset({{0,qualified},{1,"stop failed"}});assert(control_mode("slow").status==69&&calls.size()==2);
     reset({{0,qualified},{0,""},{0,"applied"}});assert(control_mode("slow").status==0&&calls.size()==3);
     assert(calls[1][1]=="stop"&&calls[2][1]=="slow");
+    reset({{0,qualified},{1,"stop failed"}});assert(control_mode("profile-restore").status==69&&calls.size()==2);
+    reset({{0,qualified},{0,""},{69,"restore failed"}});
+    assert(control_mode("profile-restore").status==69&&calls.size()==3&&calls[2][1]=="profile-restore");
+    reset({{0,qualified},{0,""},{0,"verified positive FCC"}});
+    assert(control_mode("profile-restore").status==0&&calls[2][1]=="profile-restore");
     reset({});assert(control_mode("firmware").status==69&&calls.empty());
     bool rejected=false;try{control_mode("raw-voltage");}catch(const std::exception&){rejected=true;}
     assert(rejected&&calls.empty());

@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "component": "recovery-uke-ofox",
+  "commit": "8395560393f78bcbe2adeaedc44057c0aa7141de",
+  "directory": "src/device/xiaomi/uke/recoveryctl/libuke",
+  "license": "Apache-2.0",
+  "files": {
+    "block.cpp": "6b1d1eaf713405314a71a25343fe65d3177dbd93f46c03185dd8e59f3e08adb2",
+    "boot_state.hpp": "ddab4323f60716985df3edb999de1720d5eb317286307a7b05c25732faae0b38",
+    "core.cpp": "1c198b144f56a087f8ff02f39e0aef0d1c270974f5e972ed76aba618929f60b8",
+    "dualboot_quarantine.hpp": "e9a1938c1c5eb0436a4dedb43f59a0bf0e0bf2e9b4e55130a38ca10aa599570a",
+    "gpt.cpp": "0dadd27d1e2d168f4ecc6a2ec6b51285d57164a478708b216d7a2d47104f4fe4",
+    "job_registry.hpp": "68d196c60647863e58b0a611676fefdb2cb55d36118054cce01954b20c7663b4",
+    "layout.cpp": "6003faba38f892c1d3c9c2e8a3d392697c13da036d5cc92b7fa0e5cab052e13e",
+    "lifecycle_policy.hpp": "b8eded5952c95e039580c757cca69284220a2e96438d679b16913a4eca434048",
+    "multiboot.cpp": "67e1b172c627040bf8a5f9ab8a041be7a45cf1fb584472a4d6a43be9b95036aa",
+    "operation_guard.hpp": "96fcf1638d9b5350437fd0c3ebbe045c7e27de2cbc04b063ce77ceb2d42b0f69",
+    "operation_lease.hpp": "8b61751aeecde5b884120b00e1ae1daf3d0e975d1fb8375f50cfb0483eba324a",
+    "partition_names.hpp": "e827cecb2ee1ebf39d932f856d46803394f92fac111f218a479b0804c67af6f0",
+    "recovery_write_policy.hpp": "945e52cae85386a5ece3e6e2216bd143b7f33faa6bc0e9a5b323139957ca54bb",
+    "storage.cpp": "7c431fe0369345cefc4c1dd2c7eeec251c74f43f2ee25cbc44ba04c4ba25b6a1",
+    "uke.h": "839e7f7d5599ca639b8c186e40b999316c6a69a723bf72a0fdd0540f05039547"
+  },
+  "repository": "https://github.com/MCC45TR/orangefox_device_xiaomi_uke"
+}

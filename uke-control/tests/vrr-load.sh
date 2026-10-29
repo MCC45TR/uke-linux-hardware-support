@@ -5,7 +5,8 @@ work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
 cat > "$work/control" <<'SH'
 #!/bin/sh
-printf '%s\n' "$UKE_TEST_MINIMUM"
+[ "$*" = '--json display vrr-min configured' ] || exit 1
+printf '{"configured_minimum_hz":%s}\n' "$UKE_TEST_MINIMUM"
 SH
 cat > "$work/modinfo" <<'SH'
 #!/bin/sh
@@ -25,7 +26,7 @@ for minimum in 30 90 143; do
     output=$(UKE_TEST_MINIMUM=$minimum sh "$work/load" preserved=1)
     [[ $output == *'<preserved=1>'* && $output == *"<o82_vrr_test_min_hz=$minimum>"* ]]
 done
-for minimum in unset 1 29 144 '90;false'; do
+for minimum in null unset 1 29 144 '90;false' '90,"unexpected":1' '90,"configured_minimum_hz":80'; do
     output=$(UKE_TEST_MINIMUM=$minimum sh "$work/load" preserved=1)
     [[ $output == $'<--ignore-install>\n<msm>\n<preserved=1>' ]]
 done

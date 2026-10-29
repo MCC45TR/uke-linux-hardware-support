@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "sensors.hpp"
+#include "cli.hpp"
 #include "front-color.hpp"
 #include <algorithm>
 #include <array>
@@ -186,12 +187,12 @@ static unsigned positive(const std::string& s,unsigned max) {
     if(s.empty()||r.ec!=std::errc{}||r.ptr!=s.data()+s.size()||v<1||v>max)throw std::runtime_error("Expected integer in 1.."+std::to_string(max));
     return v;
 }
-int command(int argc,char** argv) {
+int command(int argc,char** argv,bool as_json) {
     if(argc==1&&std::string_view(argv[0])=="--help") {
         std::cout<<"uke-control sensors [-nSECONDS | -n SECONDS] [--count=N] [--once] [--json] [--list]\n"
             "Default: one snapshot. -n5: repeat every five seconds; Ctrl-C stops. No device configuration is changed.\n";return 0;
     }
-    unsigned interval=0,count=0;bool as_json=false,list=false,once=false;
+    unsigned interval=0,count=0;bool list=false,once=false;
     for(int i=0;i<argc;i++) {
         const std::string a=argv[i];
         if(a=="--json")as_json=true;

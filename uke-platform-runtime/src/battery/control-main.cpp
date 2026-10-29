@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "control.hpp"
+#include "pd-contract.hpp"
+#include "record.hpp"
 #include "provider.hpp"
 #include <algorithm>
 #include <cerrno>
@@ -182,7 +184,23 @@ void emit_protocols(const ProtocolState &s, bool available, const std::string &r
         << (available ? "true" : "false") << ",\"reason\":\"" << identifier(reason)
         << "\",\"firmware_rpc_performed\":false,\"service_activation_performed\":false,\"helper_protocol_request_api\":false"
         << ",\"protocol_qualification_checked\":false,\"negotiated_protocol\":null,\"negotiated_pd_revision\":null"
-        << ",\"accepted_pdo\":null,\"accepted_rdo\":null,\"measured_input_power_w\":null"
+        << ",\"accepted_pdo\":null,\"accepted_rdo\":null,\"measured_input_power_w\":null";
+    PdContract pd;
+    try {
+        unsigned inspected = 0, found = 0;
+        for (const auto &entry : fs::directory_iterator("/sys/class/power_supply")) {
+            if (++inspected > 64) fail("pd_supply_inventory_limit");
+            if (entry.path().filename().string().rfind("ucsi-source-psy-", 0) != 0) continue;
+            const auto device = fs::canonical(entry.path() / "device");
+            if (device.string().rfind("/sys/devices/", 0) != 0) continue;
+            const auto driver = fs::canonical(device / "driver").filename().string();
+            if (driver != "ucsi_glink.pmic_glink_ucsi") continue;
+            const auto candidate = parse_pd_contract(read_file(entry.path() / "uke_pd_contract"), time);
+            if (++found > 1) fail("pd_multiple_contract_providers");
+            pd = candidate;
+        }
+    } catch (...) { pd = {}; }
+    std::cout << ",\"pd_contract\":" << pd_contract_report(pd)
         << ",\"cached_observation\":{\"property_family\":\"USB\",\"wire_id\":6,\"adapter_wire7_read\":false,\"xm_real_type_read\":false"
         << ",\"driver_instance_boottime_ns\":" << (available ? std::to_string(s.instance) : "null")
         << ",\"cache_matches_epochs\":" << (s.cache_matches_epochs ? "true" : "false")
@@ -253,6 +271,7 @@ int main(int argc, char **argv) {
                 << "uke-charge-control protection-serve  (fixed observations; inhibition requires qualification)\n"
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
+                << "uke-charge-control identity-review REVIEW_FILE  (explicit expiring review; no charging SET)\n"
                 << "uke-charge-control enable-cap80 | apply-cap80\n"
                 << "uke-charge-control moisture-enable  (qualified profile, offline, enable-only)\n"
                 << "settings requires root and performs three diagnostic GETs without control permission.\n"
@@ -264,10 +283,12 @@ int main(int argc, char **argv) {
         }
         if (argc < 2) fail("control_command_required");
         const std::string command(argv[1]);
-        if ((command == "pair" && argc != 4) || (command != "pair" && argc != 2)) fail("control_arguments_invalid");
+        if ((command == "pair" && argc != 4) || (command == "identity-review" && argc != 3) ||
+            (command != "pair" && command != "identity-review" && argc != 2)) fail("control_arguments_invalid");
         if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "protection" && command != "protection-status" && command != "protection-serve" && command != "moisture-enable" && command != "enable-cap80" && command != "apply-cap80" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
-            command != "slow" && command != "automatic" && command != "profile-restore") fail("control_command_unsupported");
+            command != "slow" && command != "automatic" && command != "profile-restore" &&
+            command != "identity-review") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
         if (command == "status") { emit(io->state(), {}, "metadata_only", false, false); return 0; }
         if (command == "protection-status") {
@@ -279,6 +300,29 @@ int main(int argc, char **argv) {
             return 0;
         }
         if (geteuid() != 0) fail("control_root_required");
+        if (command == "identity-review") {
+            Lock lock;
+            const auto before = context(*io);
+            const auto document = review_identity(before, "/etc/uke-battery/control-profile.json", argv[2]);
+            const auto after = context(*io);
+            if (before.boot_id != after.boot_id || before.kernel_release != after.kernel_release ||
+                before.state.instance != after.state.instance || before.state.generation != after.state.generation ||
+                before.state.firmware != after.state.firmware || before.state.source != after.state.source ||
+                before.state.invalidation_ns != after.state.invalidation_ns)
+                fail("control_review_context_changed");
+            if (mkdir("/run/uke-battery", 0700) && errno != EEXIST)
+                fail("identity_directory_create_failed");
+            uke::battery::record::write_private_json("/run/uke-battery", "control-identity.json", document);
+            const auto admitted = resolve(context(*io));
+            if (!admitted.qualified) {
+                unlink("/run/uke-battery/control-identity.json");
+                fail("control_identity_commit_became_invalid");
+            }
+            std::cout << "{\"kind\":\"uke_charge_identity_review\",\"identity_installed\":true,"
+                "\"expires_boottime_ns\":" << admitted.expires_ns <<
+                ",\"firmware_rpc_performed\":false,\"service_activation_performed\":false,\"applied\":false}\n";
+            return 0;
+        }
         if (command == "protection-serve") {
             signal(SIGTERM, stop); signal(SIGINT, stop);
             std::string previous_report;

@@ -65,8 +65,9 @@ std::vector<Source> sources(const fs::path& sys) {
     admit(result[3], sys/"bus/platform/devices/a600000.ssusb/power/wakeup");
     admit(result[4], sys/"bus/platform/devices/888000.qcom,qup_uart/power/wakeup");
     const auto touch = sys/"bus/spi/devices/spi0.0";
-    if (sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"0\"" ||
-        sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"1\"")
+    if (sysfs::driver(sys,touch)=="\"nt36532-uke-thp\"" &&
+        (sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"0\"" ||
+        sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"1\""))
         admit(result[7], touch/"power/wakeup");
     admit(result[8], sys/"bus/platform/devices/hall-lid/power/wakeup");
     const auto controller = sysfs::resolved(*devices,
@@ -107,16 +108,27 @@ bool recovery_key(const std::vector<Source>& sources) {
     });
 }
 std::string snapshot(const fs::path& sys) {
+    return snapshot(sys,{});
+}
+std::string snapshot(const fs::path& sys,const std::string& selected) {
     std::string result = std::string("{\"scope\":\"device_wake_permission\",\"board_compatible\":") +
         (applicable(sys) ? "true" : "false") + ",\"physical_acceptance\":null,\"sources\":[";
-    bool comma = false;
+    bool comma = false,matched=selected.empty();
     for (const auto& source : sources(sys)) {
+        if(!selected.empty()&&source.name!=selected)continue;
+        matched=true;
         if (comma) result += ',';
         comma = true;
         result += "{\"name\":" + sysfs::quote(source.name) + ",\"control_available\":" + (source.path.empty() ? "false" : "true") +
             ",\"enabled\":" + (source.path.empty() ? "null" : source.enabled ? "true" : "false") +
-            ",\"reason\":" + (source.reason.empty() ? "null" : sysfs::quote(source.reason)) + "}";
+            ",\"reason\":" + (source.reason.empty() ? "null" : sysfs::quote(source.reason));
+        if(source.name=="double-tap") {
+            const auto armed=source.path.empty()?"null":sysfs::attribute(sys,source.path.parent_path().parent_path()/"gesture_wake_armed");
+            result+=",\"gesture_armed\":"+std::string(armed=="\"1\""?"true":armed=="\"0\""?"false":"null");
+        }
+        result+='}';
     }
+    if(!matched)throw std::runtime_error("Unknown wake source");
     return result + "]}\n";
 }
 }

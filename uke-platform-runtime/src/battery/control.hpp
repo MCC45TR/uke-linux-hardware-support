@@ -72,6 +72,10 @@ struct Profile {
 Profile resolve(const Context &context,
     const std::string &profile = "/etc/uke-battery/control-profile.json",
     const std::string &identity = "/run/uke-battery/control-identity.json", uid_t trusted_uid = 0);
+// Consumes an explicit root-reviewed, expiring artifact record; never probes or
+// authenticates remote firmware, renews a review, acquires a lease or sends SET.
+std::string review_identity(const Context &, const std::string &profile,
+                           const std::string &review, uid_t trusted_uid = 0);
 struct Admission {
     bool profile_qualified = false, threshold_ready = false, automatic_ready = false, standard_client_ready = false;
     std::string reason = "control_admission_not_checked";

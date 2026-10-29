@@ -60,6 +60,12 @@ int main(int argc,char** argv){
  assert(current[0].enabled&&!current[1].enabled&&current[2].enabled);
  atomic_file(state/"wake-bluetooth-uart","disabled\n");wake_apply();assert(!current[2].enabled);
  atomic_file(state/"wake-power-key","disabled\n");writes.clear();refuses([]{wake_apply();});assert(writes.empty());
+ fs::remove(state/"wake-power-key");fs::remove(state/"wake-volume-up");fs::remove(state/"wake-bluetooth-uart");
+ current={{"power-key","","/power",true},{"bluetooth-uart","","/uart",false},
+          {"double-tap","","/gesture",false},{"lid-open","","/lid",false},{"usb-device-1-1","","/usb-child",false}};
+ wake_apply();for(const auto& item:current)assert(item.enabled);
+ for(const auto* name:{"bluetooth-uart","double-tap","lid-open","usb-device-1-1"})atomic_file(state/(std::string("wake-")+name),"disabled\n");
+ wake_apply();assert(current[0].enabled);for(size_t i=1;i<current.size();++i)assert(!current[i].enabled);
 }
 CPP
 c++ -std=c++20 -O2 -Wall -Wextra -Werror -I "$root/src" "$work/test.cpp" -o "$work/test"

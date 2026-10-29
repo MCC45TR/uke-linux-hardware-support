@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "lights.hpp"
+#include "cli.hpp"
 #include "rgb.hpp"
+#include "torch.hpp"
 #include "backend.hpp"
 #include "sysfs.hpp"
 #include "wake.hpp"
@@ -25,7 +27,6 @@
 namespace fs=std::filesystem;
 namespace uke::lights {
 static constexpr const char* pmic="soc/qcom,spmi@c42d000/qcom,pmxr2230@1";
-static constexpr const char* unit="uke-control-flashlight.service";
 static void need(bool ok, const std::string& message) { if(!ok)throw std::runtime_error(message); }
 struct Fd { int n=-1; ~Fd(){if(n>=0)close(n);} };
 static std::string raw(const fs::path& sys, const fs::path& path) {
@@ -145,83 +146,7 @@ std::string snapshot(const fs::path& sys) {
     }
     return out+"}\n";
 }
-static void root() {need(geteuid()==0,"Use sudo uke-control for light changes");need(wake::applicable(),"Light changes require exact Uke / SM7675 identity");}
-static Source required(bool rgb) {auto s=discover(rgb);need(!s.path.empty(),s.reason);return s;}
-static void write_fd(int fd,const std::string& value) {
-    struct statfs type{};
-    need(fd>=0 && !fstatfs(fd,&type) && type.f_type==SYSFS_MAGIC,"Light target is not sysfs");
-    need(lseek(fd,0,SEEK_SET)==0,"Cannot seek light attribute");
-    ssize_t n;do{n=write(fd,value.data(),value.size());}while(n<0 && errno==EINTR);
-    need(n==ssize_t(value.size()),"Light write failed");
-}
-static void put(const fs::path& path,const std::string& value) {
-    Fd fd{open(path.c_str(),O_WRONLY|O_NOFOLLOW|O_CLOEXEC)};
-    write_fd(fd.n,value+"\n");
-    need(raw("/sys",path)==value,"Light readback differs");
-}
-struct Lock {
-    Fd fd;
-    explicit Lock(bool rgb,bool wait=false):fd{open(rgb?"/run/uke-control-rgb.lock":"/run/uke-control-torch.lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600)} {
-        struct stat info{};
-        need(fd.n>=0 && !fstat(fd.n,&info) && S_ISREG(info.st_mode) && info.st_uid==0 && info.st_nlink==1 && !(info.st_mode&0077),"Invalid light lock");
-        need(flock(fd.n,LOCK_EX|(wait?0:LOCK_NB))==0,"Another light operation is active");
-    }
-};
-static void save_target(unsigned value) {
-    need(value<=2,"Invalid torch target");Lock lock(false);
-    const char byte=char('0'+value);
-    need(pwrite(lock.fd.n,&byte,1,0)==1 && ftruncate(lock.fd.n,1)==0,"Cannot save torch target");
-}
-static unsigned read_target() {
-    Lock lock(false,true);char bytes[2];
-    need(pread(lock.fd.n,bytes,2,0)==1 && bytes[0]>='0' && bytes[0]<='2',"Invalid torch target");
-    return unsigned(bytes[0]-'0');
-}
-static volatile sig_atomic_t stopped=0;
-static void stop(int) {stopped=1;}
-static void hold() {
-    root(); const auto source=required(false);
-    need(source.brightness==0,"Torch already owned outside the managed service");
-    for(int sig:{SIGTERM,SIGINT,SIGHUP})std::signal(sig,stop);
-    Fd fd{open((source.path/"brightness").c_str(),O_WRONLY|O_NOFOLLOW|O_CLOEXEC)};
-    struct Off {int fd;~Off(){try{write_fd(fd,"0\n");}catch(const std::exception& e){std::cerr<<e.what()<<'\n';}}} off{fd.n};
-    bool ready=false;unsigned previous=3;
-    while(!stopped) {
-        const unsigned desired=read_target();
-        if(stopped)break;
-        if(desired!=previous) {
-            write_fd(fd.n,std::to_string(desired)+"\n");
-            need(raw("/sys",source.path/"brightness")==std::to_string(desired),"Torch brightness readback differs");
-            previous=desired;
-        }
-        if(!ready) {need(sd_notify(0,"READY=1")>=0,"Cannot notify the torch supervisor");ready=true;}
-        if(!desired)break;
-        (void)poll(nullptr,0,100);
-    }
-}
-int command(bool rgb,int argc,char** argv) {
-    if(rgb)return uke::rgb::command(argc,argv);
-    if(argc==1 && std::string_view(argv[0])=="status") {std::cout<<snapshot();return 0;}
-    if(!rgb && argc==1) {
-        const std::string action=argv[0];
-        if(action=="hold") {hold();return 0;}
-        if(action=="reset") {root();Lock lock(false);put(required(false).path/"brightness","0");return 0;}
-    }
-    if(!rgb && ((argc==1 && (std::string_view(argv[0])=="on" || std::string_view(argv[0])=="off")) ||
-                (argc==2 && std::string_view(argv[0])=="set"))) {
-        const unsigned desired=argc==2?level(percent(argv[1]),2):(std::string_view(argv[0])=="on"?2:0);
-        root();if(desired){(void)required(false);save_target(desired);}
-        const auto result=execute({"/usr/bin/systemctl",desired?"start":"stop",unit},10,8192);
-        need(result.status==0,"Torch supervisor request failed: "+result.output);
-        if(!desired) {save_target(0);Lock lock(false);put(required(false).path/"brightness","0");}
-        bool applied=false;
-        for(unsigned i=0;i<30;++i) {
-            if(required(false).brightness==desired){applied=true;break;}
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        need(applied,"Torch brightness was not applied");
-        std::cout<<snapshot();return 0;
-    }
-    throw std::runtime_error("Usage: uke-control flashlight status|on|off|set BRIGHTNESS (0..100; hardware steps 0, 50, 100)");
+int command(bool rgb,int argc,char** argv,bool as_json) {
+    return rgb?uke::rgb::command(argc,argv,as_json):uke::torch::command(argc,argv,as_json);
 }
 }
