@@ -25,6 +25,12 @@ struct ProtocolState {
     bool cache_matches_epochs = false;
 };
 ProtocolState parse_protocol_state(const std::string &text);
+struct ProtocolInspection {
+    uint64_t instance = 0, received_ns = 0;
+    uint32_t generation = 0, firmware = 0, source = 0, adapter_type = 0, real_type = 0;
+};
+ProtocolInspection parse_protocol_inspection(const std::string &text);
+const char *oem_usb_type_name(uint32_t value);
 struct Context {
     bool provider_verified = false;
     std::string kernel_release, boot_id;
@@ -36,6 +42,7 @@ struct Settings {
     uint32_t generation = 0, firmware = 0, source = 0, start = 0, end = 0;
     bool enabled = false;
 };
+bool protocol_inspection_matches(const ProtocolInspection &, const Context &, const Context &);
 Settings parse_settings(const std::string &text);
 struct Protection {
     uint64_t instance = 0, received_ns = 0;

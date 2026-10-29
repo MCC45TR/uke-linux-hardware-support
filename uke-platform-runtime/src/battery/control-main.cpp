@@ -227,7 +227,10 @@ void emit_protocols(const ProtocolState &s, bool available, const std::string &r
         first = false;
         std::cout << "{\"protocol\":\"" << name << "\",\"manufacturer_declared\":true,\"runtime_qualified\":null}";
     }
-    std::cout << "],\"manufacturer_source\":\"https://www.mi.com/ph/support/faq/details/KA-628084/\""
+    std::cout << "],\"manufacturer_excluded_protocols\":[\"QC4\",\"QC4+\",\"PPS\",\"UFCS\"]"
+        << ",\"negotiation_owner\":\"adsp_firmware\",\"mi_fc2_native_authentication_backend\":false"
+        << ",\"mi_fc2_authentication_reason\":\"genuine_native_authentication_and_session_backend_missing\""
+        << ",\"manufacturer_source\":\"https://www.mi.com/ph/support/faq/details/KA-628084/\""
         << ",\"manufacturer_list_is_negotiation_evidence\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
 }
 void emit(const State &s, const Profile &p, const char *operation, bool applied, bool qualification_checked = true) {
@@ -267,6 +270,7 @@ int main(int argc, char **argv) {
     std::unique_ptr<Session> session;
     const bool admission_query = argc == 2 && std::strcmp(argv[1], "admission") == 0;
     const bool protocol_query = argc == 2 && std::strcmp(argv[1], "protocols") == 0;
+    const bool protocol_inspect = argc == 2 && std::strcmp(argv[1], "protocol-inspect") == 0;
     const bool settings_query = argc == 2 && std::strcmp(argv[1], "settings") == 0;
     const bool protection_query = argc == 2 && std::strcmp(argv[1], "protection") == 0;
     const bool preconfigured_cap = argc == 2 && std::strcmp(argv[1], "enable-cap80") == 0;
@@ -282,6 +286,7 @@ int main(int argc, char **argv) {
                 << "uke-charge-control verify | cap80 | band80-90 | threshold-off | pair START END | serve\n"
                 << "uke-charge-control slow | automatic | profile-restore\n"
                 << "uke-charge-control identity-review REVIEW_FILE  (explicit expiring review; no charging SET)\n"
+                << "uke-charge-control protocol-inspect  (root; default-off development ABI; two firmware GETs, no SET)\n"
                 << "uke-charge-control enable-cap80 | apply-cap80\n"
                 << "uke-charge-control moisture-enable  (qualified profile, offline, enable-only)\n"
                 << "settings requires root and performs three diagnostic GETs without control permission.\n"
@@ -298,7 +303,7 @@ int main(int argc, char **argv) {
         if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "protection" && command != "protection-status" && command != "protection-serve" && command != "moisture-enable" && command != "enable-cap80" && command != "apply-cap80" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore" &&
-            command != "identity-review") fail("control_command_unsupported");
+            command != "identity-review" && command != "protocol-inspect") fail("control_command_unsupported");
         io = std::make_unique<Sysfs>();
         if (command == "status") { emit(io->state(), {}, "metadata_only", false, false); return 0; }
         if (command == "protection-status") {
@@ -310,6 +315,21 @@ int main(int argc, char **argv) {
             return 0;
         }
         if (geteuid() != 0) fail("control_root_required");
+        if (protocol_inspect) {
+            Lock owner;
+            const auto before = context(*io);
+            const auto p = parse_protocol_inspection(io->read_attribute("uke_charge_protocols"));
+            if (!protocol_inspection_matches(p, before, context(*io))) fail("protocol_inspection_epoch_or_time_changed");
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_protocol_inspection\",\"firmware_get_complete\":true"
+                << ",\"firmware_get_count\":2,\"property_family\":\"USB\",\"adapter_wire_id\":7,\"real_type_wire_id\":11"
+                << ",\"adapter_type_raw\":" << p.adapter_type << ",\"adapter_type_oem_name\":\"" << oem_usb_type_name(p.adapter_type)
+                << "\",\"real_type_raw\":" << p.real_type << ",\"real_type_oem_name\":\"" << oem_usb_type_name(p.real_type)
+                << "\",\"received_boottime_ns\":" << p.received_ns << ",\"source_event_generation\":" << p.source
+                << ",\"atomic_remote_snapshot\":false,\"xm_properties_read\":false,\"firmware_set_performed\":false"
+                << ",\"negotiation_requested\":false,\"authentication_overridden\":false,\"control_authorization_granted\":false"
+                << ",\"negotiated_protocol\":null,\"negotiated_pd_revision\":null,\"electrical_qualification\":false,\"applied\":false}\n";
+            return 0;
+        }
         if (command == "identity-review") {
             Lock lock;
             const auto before = context(*io);
@@ -503,6 +523,11 @@ int main(int argc, char **argv) {
         if (settings_query) {
             std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_settings\",\"firmware_get_complete\":false,\"reason\":\""
                 << identifier(e.what()) << "\",\"firmware_set_performed\":false,\"applied\":false,\"physical_charge_stopped\":null}\n";
+            return 69;
+        }
+        if (protocol_inspect) {
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_protocol_inspection\",\"firmware_get_complete\":false,\"reason\":\""
+                << identifier(e.what()) << "\",\"firmware_set_performed\":false,\"negotiation_requested\":false,\"applied\":false}\n";
             return 69;
         }
         if (protocol_query) { emit_protocols({}, false, e.what()); return 69; }

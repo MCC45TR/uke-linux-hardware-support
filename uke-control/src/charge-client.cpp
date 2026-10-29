@@ -27,7 +27,7 @@ bool admission(const Result& result, const char* field) {
 }
 }
 Result control_query(const std::string& operation) {
-    if (operation != "status" && operation != "admission" && operation != "protocols" && operation != "capabilities" && operation != "settings" && operation != "protection" && operation != "protection-status")
+    if (operation != "status" && operation != "admission" && operation != "protocols" && operation != "protocol-inspect" && operation != "capabilities" && operation != "settings" && operation != "protection" && operation != "protection-status")
         throw std::runtime_error("Unsupported charge-control query");
     return execute({helper, operation}, 10, 65536);
 }

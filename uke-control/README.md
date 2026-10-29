@@ -1,5 +1,10 @@
 # Uke Control
 
+29 October 2026: version 1.17.0 adds explicit `charge protocol-inspect` routing
+for the default-off kernel USB7/USB11 diagnostic pair. It requires root and
+never requests a protocol, current, voltage or authentication change. Source
+and host checks do not qualify physical charging. See [CHARGING.md](CHARGING.md).
+
 29 October 2026: version 1.16.0 adds explicit `charge review FILE` and
 `charge restore-current` routes to the existing qualified helper. Review installs
 a private identity with a maximum 15-minute lifetime and performs no firmware

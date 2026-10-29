@@ -78,6 +78,48 @@ ProtocolState parse_protocol_state(const std::string &text) {
         s.sample_firmware != s.firmware || s.sample_source != s.source)) fail("protocol_state_epoch_invalid");
     return s;
 }
+ProtocolInspection parse_protocol_inspection(const std::string &text) {
+    if (text.size() > 512 || text.find('\0') != std::string::npos) fail("protocol_inspection_size_invalid");
+    std::array<std::string, 8> t;
+    std::istringstream in(text);
+    for (auto &value : t) if (!(in >> value)) fail("protocol_inspection_fields_missing");
+    ProtocolInspection s;
+    const auto version = decimal<unsigned>(t[0]);
+    s.instance = decimal<uint64_t>(t[1]); s.generation = decimal<uint32_t>(t[2]);
+    s.firmware = decimal<uint32_t>(t[3]); s.source = decimal<uint32_t>(t[4]);
+    s.received_ns = decimal<uint64_t>(t[5]);
+    s.adapter_type = decimal<uint32_t>(t[6]); s.real_type = decimal<uint32_t>(t[7]);
+    if (version != 1 || !s.instance || !s.received_ns || !(in >> std::ws).eof())
+        fail("protocol_inspection_invalid");
+    return s;
+}
+// OEM USB7/USB11 names only: wire6, XM and mainline enum9+ are different ABIs.
+const char *oem_usb_type_name(uint32_t value) {
+    static constexpr const char *standard[] = {
+        "Unknown", "SDP", "DCP", "CDP", "ACA", "Type-C", "PD", "PD_DRP", "PD_PPS", "Apple_Brick_ID"
+    };
+    if (value < std::size(standard)) return standard[value];
+    switch (value) {
+    case 0x80: return "HVDCP";
+    case 0x81: return "HVDCP_3";
+    case 0x82: return "HVDCP_3P5";
+    case 0x83: return "USB_FLOAT";
+    case 0x84: return "HVDCP_3_CLASSB";
+    default: return "Unrecognized";
+    }
+}
+bool protocol_inspection_matches(const ProtocolInspection &s, const Context &before, const Context &after) {
+    const auto matches = [&](const Context &c) {
+        return c.provider_verified && !c.state.live && !c.state.verified && !c.state.current_verified &&
+            c.state.instance == s.instance && c.state.generation == s.generation &&
+            c.state.firmware == s.firmware && c.state.source == s.source;
+    };
+    return s.instance && s.received_ns && matches(before) && matches(after) &&
+        !before.boot_id.empty() && before.boot_id == after.boot_id &&
+        !before.kernel_release.empty() && before.kernel_release == after.kernel_release &&
+        before.boottime_ns && before.boottime_ns <= s.received_ns && s.received_ns <= after.boottime_ns &&
+        after.boottime_ns - before.boottime_ns <= 3ULL * 1000000000ULL;
+}
 Settings parse_settings(const std::string &text) {
     if (text.size() > 4096) fail("settings_size_invalid");
     std::array<std::string, 9> t;

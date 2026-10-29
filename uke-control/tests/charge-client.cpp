@@ -28,6 +28,9 @@ int main() {
     reset({{0,"{\"kind\":\"uke_charge_settings\",\"applied\":false}\n"}});
     assert(uke::charge::control_query("settings").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","settings"}}));
+    reset({{69,"protocol diagnostics disabled"}});
+    assert(uke::charge::control_query("protocol-inspect").status==69);
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","protocol-inspect"}}));
     reset({{0,"cached protection"}});
     assert(uke::charge::control_query("protection-status").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","protection-status"}}));

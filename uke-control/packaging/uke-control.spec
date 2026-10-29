@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 1.16.0
+Version: 1.17.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
@@ -151,6 +151,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.17.0-1
+- Route explicit default-off firmware protocol inspection without charging SET
+- Preserve reported OEM classes and default charging admission
+
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.16.0-1
 - Route explicit expiring identity review and admitted positive-current restore
 - Preserve helper admission and automatic-worker stop failures

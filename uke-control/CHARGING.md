@@ -1,5 +1,14 @@
 # Charging policy source — 18 October 2026
 
+29 October 2026 protocol follow-up: `charge protocols` remains cache-only and
+separates the six manufacturer-listed receiver protocols from excluded QC4/4+,
+PPS and UFCS. `charge protocol-inspect` is a separate root-only operation for
+the default-off EXPERT kernel interface. It reads exactly USB adapter7 and
+real-type11, checks provider/boot/source epochs and preserves OEM type names.
+It performs no XM access, protocol selection or charging SET. Do not run it
+until active firmware ABI review and an attended test window are available.
+See the runtime [protocol coverage](../uke-platform-runtime/docs/CHARGING-PROTOCOLS.md).
+
 29 October 2026 source integration: `charge review FILE` accepts an absolute
 path to a root-owned private artifact review. The helper verifies profile and
 artifact digests, the current boot and driver/firmware/source epochs, and an

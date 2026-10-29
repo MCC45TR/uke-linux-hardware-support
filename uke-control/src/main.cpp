@@ -18,7 +18,7 @@
 #include "usb-request.hpp"
 #include "link-policy.hpp"
 static void help() {
-    std::cout << "uke-control 1.16.0 — native device management and development diagnostics\n"
+    std::cout << "uke-control 1.17.0 — native device management and development diagnostics\n"
       "  status                      Swap, qualified charge controls and USB state\n"
       "  desktop status              Existing standard desktop interfaces; no activation\n"
       "  desktop plasma              KDE panel control availability and saved policies\n"
@@ -57,6 +57,7 @@ static void help() {
       "  charge plan MODE            Preview metadata; performs no hardware write\n"
       "  charge status               Native control metadata, or standard capability\n"
       "  charge capabilities|admission|protocols  Native backend metadata\n"
+      "  charge protocol-inspect     Two firmware GETs (root; development kernel; no SET)\n"
       "  charge settings             Read three firmware threshold fields (root; no SET)\n"
       "  charge review FILE          Install an explicitly reviewed expiring identity (root; no SET)\n"
       "  charge restore-current      Request the admitted positive-current restore\n"
@@ -201,7 +202,7 @@ int main(int argc,char** argv) {
             if(argc==3&&std::string_view(argv[2])=="apply-cap80") {
                 auto result=uke::charge_apply_preconfigured_cap();std::cout<<result.output;return result.status;
             }
-            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="settings"||std::string_view(argv[2])=="protection"||std::string_view(argv[2])=="protection-status")) {
+            if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="protocol-inspect"||std::string_view(argv[2])=="settings"||std::string_view(argv[2])=="protection"||std::string_view(argv[2])=="protection-status")) {
                 auto result=uke::charge_control_query(argv[2]);std::cout<<result.output;return result.status;
             }
             if(argc==3&&std::string_view(argv[2])=="status"){std::cout<<uke::charge_status();return 0;}

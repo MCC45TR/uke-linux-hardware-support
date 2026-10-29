@@ -1,5 +1,11 @@
 # uke-platform-runtime
 
+29 October 2026 protocol candidate: observer/helper 1.3.0 distinguishes cached
+protocol reporting from an explicit, default-off kernel USB7/USB11 inspection.
+OEM enum9 means Apple Brick ID here; it is not the mainline AVS enum. Vendor
+classes retain their names and never qualify QC/MI sessions. Firmware negotiation
+ownership and charging admission remain unchanged. See [coverage](docs/CHARGING-PROTOCOLS.md).
+
 29 October 2026 integration candidate: observer 1.2.1 retains optional standard
 `current_avg`, `power_avg` and USB temperature readings with unqualified basis
 and sensor location. Missing values remain null; these fields do not affect
