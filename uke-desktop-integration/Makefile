@@ -57,3 +57,15 @@ test-oem-brightness:
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror tests/oem-brightness-curve.cpp -o build/oem-brightness-test
 	./build/oem-brightness-test
 	$(CXX) -std=c++20 -O2 -Wall -Wextra -Werror src/oem-brightness-curve.cpp -o build/uke-oem-brightness-curve
+
+.PHONY: speaker-orientation-srpm test-speaker-orientation
+speaker-orientation-srpm:
+	mkdir -p $(BUILD_DIR)/speaker-orientation/rpmbuild/{SOURCES,SRPMS,SPECS}
+	bash tests/speaker-orientation.sh
+	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-speaker-orientation-0.1.0/,' -czf $(BUILD_DIR)/speaker-orientation/rpmbuild/SOURCES/uke-speaker-orientation-0.1.0.tar.gz LICENSE SPEAKER-ORIENTATION.md src/uke-speaker-orientation.cpp src/uke-speaker-orientation.desktop tests/speaker-orientation.cpp tests/speaker-orientation.sh
+	cp packaging/uke-speaker-orientation.spec $(BUILD_DIR)/speaker-orientation/rpmbuild/SPECS/
+	rpmbuild -bs --target aarch64 --define '_topdir $(abspath $(BUILD_DIR))/speaker-orientation/rpmbuild' --define '_buildhost copr-builder' $(BUILD_DIR)/speaker-orientation/rpmbuild/SPECS/uke-speaker-orientation.spec
+
+test-speaker-orientation:
+	bash tests/speaker-orientation.sh
+test-native: test-speaker-orientation
