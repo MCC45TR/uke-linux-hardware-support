@@ -426,7 +426,7 @@ void run(Options o) {
     need(geteuid()==0,"Package operations require root; use sudo uke-control (preview also requires the system RPM lock)");
     const auto dt=read_file("/sys/firmware/devicetree/base/compatible");
     need(dt.find(std::string("xiaomi,uke\0",11))!=std::string::npos&&dt.find(std::string("qcom,sm7675\0",12))!=std::string::npos,"Package changes require Uke / SM7675");
-    const auto release=fedora_target(read_file("/etc/os-release"));
+    const auto release=fedora_release(read_file("/etc/os-release"));
     trusted_directory(state,0700);Fd lock(open((state/"lock").c_str(),O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600));
     need(lock.n>=0&&flock(lock.n,LOCK_EX|LOCK_NB)==0,"Another uke-control operation is running");
     auto pending=saved(state/"channel-pending");
@@ -440,10 +440,7 @@ void run(Options o) {
     base.setup();unique_repository_ids(base);base.get_repo_sack()->create_repos_from_system_configuration();
     if(o.selected.empty())o.selected=infer_channel(enabled_managed_repos(base));
     need(channel(o.selected),"No unambiguous saved or enabled main COPR channel; choose brunch stable|test|unstable explicitly");
-    const auto releasever=base.get_vars()->get_value("releasever");
-    need(release=="rawhide"||releasever==release,"Installed Fedora release disagrees with DNF releasever");
-    need(!releasever.empty()&&releasever.find_first_not_of("0123456789")==std::string::npos,"Cannot resolve the Fedora RPM dist tag");
-    const auto dist=".fc"+releasever;
+    const auto dist=fedora_dist(release,base.get_vars()->get_value("releasever"));
     auto repos=configure(base,o.selected);
     base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING);
     base.get_repo_sack()->load_repos();

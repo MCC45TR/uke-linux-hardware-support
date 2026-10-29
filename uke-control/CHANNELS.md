@@ -1,5 +1,10 @@
 # Package channels
 
+30 October 2026: Fedora 46 Rawhide reports `releasever=rawhide` to DNF.
+The RPM dist check uses the numeric `VERSION_ID` from os-release in this case.
+Numeric DNF and os-release versions must agree; an unresolved numeric version
+still blocks the transaction.
+
 29 October 2026: unstable uses the separate `mcc45tr/uke-linux-unstable`
 repository, available only on Fedora Rawhide AArch64. Its signing key is pinned
 independently. With `automatic=0`, package synchronization installs the matched
