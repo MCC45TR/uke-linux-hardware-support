@@ -69,6 +69,14 @@ std::string infer_channel(const std::set<std::string>& enabled) {
 }
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
 bool private_package(const std::string& name){return name=="uke-local-touch-data"||name=="uke-video-firmware-local";}
+void retain_kernels(libdnf5::Base& base) {
+    auto& c=base.get_config();auto names=c.get_installonlypkgs_option().get_value();
+    // The real selection RPM lacks the installonly provide carried by its payloads.
+    if(std::find(names.begin(),names.end(),kernel)==names.end())names.push_back(kernel);
+    c.get_installonlypkgs_option().set(priority,names);
+    c.get_installonly_limit_option().set(priority,0);
+    c.get_protect_running_kernel_option().set(priority,true);
+}
 bool protected_package(const Package& p) {
     if(private_package(p.get_name()))return true;
     if(p.get_name().starts_with("uke-senemos-kernel-"))return true;
@@ -425,8 +433,7 @@ void run(Options o) {
     if(!pending.empty()){need(o.sync,"An interrupted channel transaction exists; run channel sync");o.selected=pending;}
     if(o.selected.empty())o.selected=saved(config/"channel");
     libdnf5::Base base;base.load_config();
-    base.get_config().get_installonly_limit_option().set(priority,0);
-    base.get_config().get_protect_running_kernel_option().set(priority,true);
+    retain_kernels(base);
     base.get_config().get_pkg_gpgcheck_option().set(priority,true);
     base.get_config().get_best_option().set(priority,true);
     base.get_config().get_skip_unavailable_option().set(priority,false);

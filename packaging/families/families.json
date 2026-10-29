@@ -5,9 +5,9 @@
     {
       "name": "uke-core",
       "version": "2.3.1",
-      "release": 1,
+      "release": 2,
       "requires": [
-        "uke-control = 2.3.1-1%{?dist}"
+        "uke-control = 2.3.1-2%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -303,7 +303,7 @@
     "uke-displayport-audio": "8.fc46",
     "uke-vaapi-v4l2": "8.fc46",
     "uke-mesa-libclc22-spirv": "4.fc46",
-    "uke-control": "1.fc46",
+    "uke-control": "2.fc46",
     "pipewire": "2.fc46",
     "uke-speaker-orientation": "5.fc46",
     "uke-speaker-firmware": "2.fc46"

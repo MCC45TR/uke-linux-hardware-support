@@ -9,6 +9,14 @@ static Options options(std::initializer_list<const char*> input) {
     return parse(int(args.size()),args.data());
 }
 int main() {
+    {
+        libdnf5::Base base;auto& c=base.get_config();
+        c.get_installonlypkgs_option().set(std::vector<std::string>{"custom-kernel","installonlypkg(kernel)"});
+        c.get_installonly_limit_option().set(2);c.get_protect_running_kernel_option().set(false);
+        retain_kernels(base);retain_kernels(base);
+        assert((c.get_installonlypkgs_option().get_value()==std::vector<std::string>{"custom-kernel","installonlypkg(kernel)",kernel}));
+        assert(c.get_installonly_limit_option().get_value()==0&&c.get_protect_running_kernel_option().get_value());
+    }
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
     assert(options({"update"}).update);assert(options({"update","--check"}).dry);

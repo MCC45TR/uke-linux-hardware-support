@@ -147,6 +147,11 @@ trusted. The selected repository's canonical HTTPS metadata/key URLs are used.
 Package signatures are checked before repository policy is changed.
 
 All installed kernel tuples are retained. Same-NEVRA kernels are not reinstalled
+to change their origin. The manager explicitly retains normal kernel selection
+RPMs as installonly packages as well as the payloads carrying that capability;
+other configured installonly selectors remain in force. This also preserves an
+older singleboot profile's exact dependency without replacing its selection RPM.
+Same-NEVRA kernels are not reinstalled
 to change their origin, and a candidate with a different RPM identity cannot
 reuse an installed `kernel-uname-r` module directory. This is a deliberate
 exception to ordinary-package replacement: the running and recovery modules

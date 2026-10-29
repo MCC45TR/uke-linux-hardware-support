@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.3.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -181,6 +181,9 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-2
+- Retain normal kernel selection RPMs alongside their matching installed payloads.
+
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-1
 - Select a separately signed Rawhide unstable repository and defer guarded kernel activation.
 
