@@ -192,7 +192,7 @@ spec="$output/SPECS/$family.spec"
     for part in "$stage/parts/"*; do
         [[ -f $part/preamble ]] || continue
         if [[ $standalone == uke-core-meta ]]; then
-            jq -r --arg dist "$dist" '.families[] | (.version+"-"+((.release // 1)|tostring)+$dist) as $evr | "Provides: "+.name+" = "+$evr+"\nObsoletes: "+.name+" <= "+$evr' packaging/families/families.json >"$stage/retired-selections"
+            jq -r --arg dist "$dist" '. as $catalog | .families[] | (.version+"-"+(($catalog.retired_selection_releases[.name] // .release // 1)|tostring)+$dist) as $evr | "Provides: "+.name+" = "+$evr+"\nObsoletes: "+.name+" <= "+$evr' packaging/families/families.json >"$stage/retired-selections"
         else
             : >"$stage/retired-selections"
         fi

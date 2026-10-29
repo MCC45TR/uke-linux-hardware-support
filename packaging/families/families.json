@@ -297,7 +297,7 @@
     "accountsservice": "13.fc46",
     "material-decoration": "7.fc46",
     "uke-desktop-metas": "24.fc46",
-    "uke-core-meta": "7.fc46",
+    "uke-core-meta": "8.fc46",
     "uke-proximity-capture": "6.fc46",
     "uke-speaker-controls": "4.fc46",
     "uke-displayport-audio": "8.fc46",
@@ -307,5 +307,8 @@
     "pipewire": "2.fc46",
     "uke-speaker-orientation": "5.fc46",
     "uke-speaker-firmware": "2.fc46"
+  },
+  "retired_selection_releases": {
+    "uke-additional": 16
   }
 }
