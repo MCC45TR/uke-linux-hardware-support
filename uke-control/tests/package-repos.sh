@@ -168,3 +168,7 @@ rpm --root "$fixture/privateerasure" -i "$fixture/test/uke-private-replacer-1-1.
 build/test-package-repos "$fixture/privateerasure" "$fixture/private-replacement" "$fixture/test" private-obsolete
 rpm --root "$fixture/privateerasure" -q uke-local-touch-data | grep -Fx uke-local-touch-data-1-1.noarch
 printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, bounded vendor transitions, RC fallback/selection, update, missing-package refusal, shared-module refusal and unsigned rejection'
+
+# A signed repository cannot authorize a candidate from a different Fedora release.
+root foreignrelease
+build/test-package-repos "$fixture/foreignrelease" "$fixture/stable" "$fixture/test" foreign-release

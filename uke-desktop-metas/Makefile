@@ -12,6 +12,7 @@ validate:
 	jq -e '.device == "uke" and .hardware_tested == false and .boot_tested == false' src/profile.json >/dev/null
 	if grep -Eq '^(Requires|Recommends):.*(python|pypy|libpython|nabu)' packaging/*.spec; then exit 1; fi
 	bash tests/plasma-profile.sh
+	bash tests/cutefish-profile.sh
 test-native: validate
 test-applet:
 	node tests/applet.cjs

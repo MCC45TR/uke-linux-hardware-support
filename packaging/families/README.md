@@ -391,3 +391,12 @@ cohort and separately retained signed archives.
 The replacement increases every rebuilt child's RPM release so DNF can replace
 the complete cohort. The initial `1.3.0` candidate reused child NEVRAs and is
 superseded; do not treat a parent-only upgrade as child synchronization.
+
+29 October 2026: run source-family composition in a worker matching the Fedora
+target. Set `FEDORA_TARGET=44`, `45` or `rawhide`; the composer checks its worker
+release and derives RPM macros there. Child release overrides and cohort checks
+use that target. Generated family SRPMs contain expanded upstream recipes and
+must be generated separately per release; a Rawhide-generated family SRPM is
+not a Fedora 44/45 source profile. Existing Rawhide lock archives are source
+evidence, not proof of compatibility with earlier Fedora libraries. Native
+builds, dependency resolution and signed provenance remain required per target.

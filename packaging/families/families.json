@@ -172,7 +172,8 @@
       ],
       "suggests": [
         "uke-core-meta",
-        "uke-kde-plasma-meta"
+        "uke-kde-plasma-meta",
+        "uke-cutefish-meta"
       ],
       "watch_paths": [
         "uke-core-meta/packaging",

@@ -1,5 +1,13 @@
 # Package channels
 
+29 October 2026: source routing selects Fedora 44, Fedora 45 or Rawhide from the
+installed os-release data. Channel changes stay in that release's COPR chroot;
+a distribution upgrade is a separate operation. Candidate RPM dist tags must
+match DNF's installed Fedora release. Signatures, vendor restrictions, private
+touch-data exclusions and exact kernel guards remain required. Native Fedora 44
+x86_64 compilation is separate from AArch64 RPM and tablet acceptance.
+
+
 21 October 2026 vendor correction: planned replacements use an exact package
 NEVRA with its selected repository and vendor as per-job constraints. This
 permits declared renames under `allow_vendor_change=False` without changing

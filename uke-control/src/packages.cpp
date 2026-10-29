@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#include "fedora-target.hpp"
 #include <libdnf5/base/base.hpp>
 #include <libdnf5/base/goal.hpp>
 #include <libdnf5/repo/repo_query.hpp>
@@ -194,6 +195,8 @@ void unique_repository_ids(libdnf5::Base& base) {
     }
 }
 Repositories configure(libdnf5::Base& base,const std::string& selected) {
+    const auto release=fedora_target(read_file("/etc/os-release"));
+    const auto chroot="fedora-"+release+"-$basearch/";
     auto sack=base.get_repo_sack();
     Repositories result;
     for(const auto& repo:libdnf5::repo::RepoQuery(base)) {
@@ -207,8 +210,8 @@ Repositories configure(libdnf5::Base& base,const std::string& selected) {
         const bool missing=found.empty();auto repo=missing?sack->create_repo(id):*found.begin();
         auto& c=repo->get_config();const bool enabled=p==project(selected);
         const auto url="https://download.copr.fedorainfracloud.org/results/mcc45tr/"+p+"/";
-        // This package is qualified for Rawhide. Do not silently route a released Fedora to it.
-        c.get_baseurl_option().set(priority,{url+"fedora-rawhide-$basearch/"});
+        // A channel change stays within the installed Fedora release.
+        c.get_baseurl_option().set(priority,{url+chroot});
         c.get_metalink_option().set(priority,"");c.get_mirrorlist_option().set(priority,"");
         c.get_gpgkey_option().set(priority,{url+"pubkey.gpg"});
         c.get_enabled_option().set(priority,enabled);c.get_skip_if_unavailable_option().set(priority,false);
@@ -220,11 +223,11 @@ Repositories configure(libdnf5::Base& base,const std::string& selected) {
         repo->set_callbacks(std::make_unique<Keys>(p=="uke-linux"));
         result.ids.insert(id);
         std::ostringstream stanza;
-        stanza<<'['<<id<<"]\nenabled="<<enabled<<"\nbaseurl="<<url<<"fedora-rawhide-$basearch/\nmetalink=\nmirrorlist=\ngpgkey="<<url<<"pubkey.gpg\ngpgcheck=1\npkg_gpgcheck=1\nsslverify=1\npriority=1\nskip_if_unavailable=0\n";
+        stanza<<'['<<id<<"]\nenabled="<<enabled<<"\nbaseurl="<<url<<chroot<<"\nmetalink=\nmirrorlist=\ngpgkey="<<url<<"pubkey.gpg\ngpgcheck=1\npkg_gpgcheck=1\nsslverify=1\npriority=1\nskip_if_unavailable=0\n";
         if(selected!="unstable")excludes.insert(excludes.end(),prerelease_excludes.begin(),prerelease_excludes.end());
         stanza<<"excludepkgs=";for(const auto& e:excludes)stanza<<e<<' ';stanza<<"\n\n";
         result.overrides+=stanza.str();
-        if(missing)result.definitions+='['+id+"]\nname=Uke "+p+"\nbaseurl="+url+"fedora-rawhide-$basearch/\nenabled=0\ngpgcheck=1\n\n";
+        if(missing)result.definitions+='['+id+"]\nname=Uke "+p+"\nbaseurl="+url+chroot+"\nenabled=0\ngpgcheck=1\n\n";
     }
     for(const auto& id:result.ids)if(id!=prefix+"uke-linux"&&id!=prefix+"uke-linux-test")result.overrides+='['+id+"]\nenabled=0\n\n";
     return result;
@@ -240,12 +243,15 @@ void verify_repositories(const std::set<std::string>& ids,const std::string& sel
     }
 }
 struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope;bool fallback=false;std::string kernel_nevra,krel;};
-Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids) {
+Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids,const std::string& dist={}) {
     Plan p;const auto repo=prefix+project(selected);
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();
     libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(repo);
     std::map<std::string,std::vector<Package>> candidates;
-    for(const auto& pkg:available)candidates[key(pkg)].push_back(pkg);
+    for(const auto& pkg:available) {
+        if(!dist.empty())need(fedora_package_release(pkg.get_release(),dist),"Foreign-release candidate: "+pkg.get_nevra());
+        candidates[key(pkg)].push_back(pkg);
+    }
     std::map<std::string,std::vector<Package>> replacements;
     for(const auto& pkg:available)if(!protected_package(pkg)) {
         std::set<std::string> provides;
@@ -264,8 +270,8 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         const auto k=key(pkg);
         if(pkg.get_name()=="fastfetch") {
             // The project fork is withdrawn; return only this package to Fedora.
-            libdnf5::rpm::PackageQuery fedora(base);fedora.filter_available();fedora.filter_repo_id("rawhide");fedora.filter_name("fastfetch");fedora.filter_arch(pkg.get_arch());
-            need(!fedora.empty(),"Original Fedora Rawhide Fastfetch is unavailable; keep the installed package until its signed replacement is available");
+            libdnf5::rpm::PackageQuery fedora(base);fedora.filter_available();fedora.filter_repo_id(std::vector<std::string>{"fedora","updates","rawhide"});fedora.filter_name("fastfetch");fedora.filter_arch(pkg.get_arch());
+            need(!fedora.empty(),"Original Fedora Fastfetch is unavailable; keep the installed package until its signed replacement is available");
             const auto target=*std::max_element(fedora.begin(),fedora.end(),older);
             p.scope.insert(k);p.targets.insert_or_assign(k,target);continue;
         }
@@ -392,7 +398,7 @@ void run(Options o) {
     need(geteuid()==0,"Package operations require root; use sudo uke-control (preview also requires the system RPM lock)");
     const auto dt=read_file("/sys/firmware/devicetree/base/compatible");
     need(dt.find(std::string("xiaomi,uke\0",11))!=std::string::npos&&dt.find(std::string("qcom,sm7675\0",12))!=std::string::npos,"Package changes require Uke / SM7675");
-    need(read_file("/etc/os-release").find("Rawhide")!=std::string::npos,"Channel routing is currently qualified only for Fedora Rawhide");
+    const auto release=fedora_target(read_file("/etc/os-release"));
     trusted_directory(state,0700);Fd lock(open((state/"lock").c_str(),O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600));
     need(lock.n>=0&&flock(lock.n,LOCK_EX|LOCK_NB)==0,"Another uke-control operation is running");
     auto pending=saved(state/"channel-pending");
@@ -407,10 +413,14 @@ void run(Options o) {
     base.setup();unique_repository_ids(base);base.get_repo_sack()->create_repos_from_system_configuration();
     if(o.selected.empty())o.selected=infer_channel(enabled_managed_repos(base));
     need(channel(o.selected),"No unambiguous saved or enabled main COPR channel; choose brunch stable|test|unstable explicitly");
+    const auto releasever=base.get_vars()->get_value("releasever");
+    need(release=="rawhide"||releasever==release,"Installed Fedora release disagrees with DNF releasever");
+    need(!releasever.empty()&&releasever.find_first_not_of("0123456789")==std::string::npos,"Cannot resolve the Fedora RPM dist tag");
+    const auto dist=".fc"+releasever;
     auto repos=configure(base,o.selected);
     base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING);
     base.get_repo_sack()->load_repos();
-    const auto p=plan(base,o.selected,repos.ids);auto tx=resolve(base,p,o.selected,o.update);
+    const auto p=plan(base,o.selected,repos.ids,dist);auto tx=resolve(base,p,o.selected,o.update);
     utsname current{};need(uname(&current)==0,"Cannot read running kernel identity");
     const auto gate=read_file("/etc/senemos/kernel-update.conf");std::istringstream gates(gate);std::string line;bool automatic=false;
     while(std::getline(gates,line))if(line=="automatic=1")automatic=true;

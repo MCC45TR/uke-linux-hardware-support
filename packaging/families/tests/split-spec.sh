@@ -51,3 +51,10 @@ if awk -v out="$stage/missing-macro" -v mapping="$stage/rename" -f host/split-sp
 fi
 grep -Fq 'Unexpanded build macro' "$stage/missing-macro.log"
 printf '%s\n' 'PASS: missing source-host RPM macros fail before a family SRPM is emitted.'
+
+# A release-specific source worker keeps every generated child in its target release.
+for fedora in 44 45 46; do
+    mkdir "$stage/fedora-$fedora"
+    awk -v dist=".fc$fedora" -v out="$stage/fedora-$fedora" -v mapping="$stage/rename" -v native_version=9.0.0 -f host/split-spec.awk "$stage/input"
+    grep -Fx "Release: 1.fc$fedora" "$stage/fedora-$fedora/preamble"
+done

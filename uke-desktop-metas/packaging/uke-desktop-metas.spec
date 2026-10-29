@@ -103,6 +103,15 @@ Hardware support is tested separately.
 KDE Connect uses Fedora's session autostart and a local-address-only firewalld
 policy. Pairing still requires confirmation in the original application.
 
+%package -n uke-cutefish-meta
+Summary: Optional upstream Cutefish Wayland session selection
+Requires: cutefish-desktop >= 1.0^20261027
+
+%description -n uke-cutefish-meta
+Select the separately packaged upstream Cutefish desktop. This removable
+metadata package enables no display manager and creates no account.
+Graphical login, first-account setup and tablet integration remain unqualified.
+
 %package -n uke-plasma-controls
 Summary: Removable Plasma system tray controls using uke-control
 License: GPL-3.0-or-later
@@ -121,6 +130,7 @@ without removing the KDE meta package. No GNOME integration is included.
 %build
 %install
 install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/desktops/profile.json
+install -Dm644 src/cutefish.json %{buildroot}%{_datadir}/senemos/uke/desktops/cutefish.json
 install -Dm644 src/plasma.json %{buildroot}%{_datadir}/senemos/uke/desktops/plasma.json
 install -Dm644 src/uke-kdeconnect.xml %{buildroot}%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 install -d %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls
@@ -128,6 +138,7 @@ cp -a src/plasma-applet/. %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.u
 %check
 xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
+bash tests/cutefish-profile.sh
 %make_build test-applet-load
 
 %posttrans -n uke-kde-plasma-meta
@@ -148,6 +159,10 @@ fi
 %doc README.md
 %{_datadir}/senemos/uke/desktops/plasma.json
 %{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
+
+%files -n uke-cutefish-meta
+%license LICENSE
+%{_datadir}/senemos/uke/desktops/cutefish.json
 
 %files -n uke-plasma-controls
 %license src/plasma-applet/LICENSE

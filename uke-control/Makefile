@@ -8,7 +8,7 @@ CPPFLAGS += -Isrc -Ibuild $(shell pkg-config --cflags libdrm libsystemd wayland-
 LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
-.PHONY: all check check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
+.PHONY: all check check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system
 build:
 	mkdir -p build
@@ -16,7 +16,7 @@ build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/lights.cpp src/li
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/lights.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
 build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
-build/uke-control-packages: src/packages.cpp | build
+build/uke-control-packages: src/packages.cpp src/fedora-target.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(shell pkg-config --cflags --libs libdnf5 rpm)
 build/resize-system: src/resize-system.cpp shared/userdata-grow.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
@@ -39,7 +39,10 @@ build/test-front-color: tests/front-color.cpp src/front-color.cpp src/front-colo
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
 build/test-execute: tests/execute.cpp src/backend.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -Lbuild -l:libuke-control.so.0 -o $@
-check: all build/test-front-color build/test-execute
+check-fedora-target: | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG tests/fedora-target.cpp -o build/test-fedora-target
+	build/test-fedora-target
+check: all build/test-front-color build/test-execute check-fedora-target
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
 	bash tests/light-worker.sh
@@ -92,7 +95,7 @@ check: all build/test-front-color build/test-execute
 	build/test-packages
 check-repositories: build/test-package-repos
 	bash tests/package-repos.sh
-build/test-package-repos: tests/package-repos.cpp src/packages.cpp | build
+build/test-package-repos: tests/package-repos.cpp src/packages.cpp src/fedora-target.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(shell pkg-config --cflags --libs libdnf5 rpm) -o $@
 check-sensor-proxy: build/test-sensor-proxy
 	bash tests/sensor-proxy.sh

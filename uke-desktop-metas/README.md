@@ -1,5 +1,11 @@
 # Uke desktop selections
 
+29 October 2026: `uke-cutefish-meta` selects the real `cutefish-desktop` RPM from
+the separate `mcc45tr/cutefish` upstream-packaging project. It enables no display
+manager, creates no account and requires no KDE meta package. This source-only
+selection is removable. Graphical login, image composition and tablet tests
+remain pending; package installation cannot establish those results.
+
 25 October 2026: release `1.0.0-19` recommends Chromium rather than requiring
 it. Default DNF weak-dependency handling installs it with KDE, while removing
 the browser no longer requires removal of the KDE meta package. Browser data
