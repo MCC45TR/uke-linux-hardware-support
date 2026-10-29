@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-29",
+  "scope": "Native Fedora AArch64 FSR 1 and experimental FSR 3 Vulkan integration",
+  "sources": [
+    {"id": "amd-fidelityfx-1.1.4", "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK", "commit": "c6efa6bf7f2027b3ec94f28578bb5965eabb9e55", "license": "MIT", "archive_sha256": "127aa34e2a2f7c983238b34d351176cc4d8d019867f8ec795a018868389daee5", "files": ["sdk/include/FidelityFX", "sdk/src/components", "sdk/src/backends/vk"], "finding": "Original FSR 3.1.4 Vulkan effect and shader source; upstream swapchain uses Win32 threading and is not a native Linux provider."},
+    {"id": "native-shader-compiler", "url": "https://github.com/DethRaid/FidelityFX-SDK-Linux", "commit": "5a86dac1e1fdea3dd9f132947c30e7fc08205e9c", "license": "MIT; embedded dependencies retain their licenses", "archive_sha256": "4db94663e47c1b78f015cd2b6a6b33c589d6e69dde59ad987aa2f5fdde65b6c6", "files": ["sdk/tools/ffx_shader_compiler/src", "sdk/tools/ffx_shader_compiler/libs"], "finding": "Native C++ shader compiler comparison and selected source input; prebuilt executables and Win32 SDK updates are excluded."},
+    {"id": "linux-raw-effects-comparison", "url": "https://github.com/ychwch/FidelityFX-SDK-Linux", "commit": "2c90b7f4b877b97e5779aa4d09d338c1e29cb75c", "license": "MIT", "files": ["sdk/CMakeLists.txt", "sdk/toolchain.cmake", "sdk/src/backends/vk/CMakeLists.txt", "sdk/src/backends/vk/ffx_vk.cpp"], "finding": "Selected Linux build/header corrections only. Python compiler, prebuilt library, global GPU caches and dummy-image changes are not selected as runtime fixes."},
+    {"id": "0ad-upscaler-integration", "url": "https://github.com/0ad/0ad", "commit": "61a3b9507d974084e6badb88a0826bd89a6d5b8b", "license": "GPL-2.0-or-later; shader dependencies retain upstream notices", "files": ["source/renderer/PostprocManager.cpp", "binaries/data/mods/public/gui/options/options.json", "binaries/data/config/default.cfg", "source/main.cpp"], "finding": "The settings enumerate FSR 1.0, bilinear and pixelated upscaling. FSR uses compute upscale plus RCAS. There is no FSR 3 frame-generation integration in this reviewed path. The installed Flatpak 0.28.0 has the same FSR 1.0 option."}
+  ],
+  "board_reference": "Workspace SM7675 survey and local acquisition inventory dated 2026-10-14; userspace effects do not justify OEM KGSL or donor board-value changes.",
+  "donor_scripts_executed": false,
+  "python_target_payload": false,
+  "host_prototype": {
+    "architecture": "x86_64",
+    "effect_dispatch_exports_and_link_check": "passed; not a GPU dispatch test",
+    "recipe": "referances/fsr-20261029/native-prototype-recipe.tar.gz",
+    "recipe_sha256": "c30a306fe931e5d5c99e364feee6bc6fc9ad93babc6b6b80e0b68dd72ea1dc89",
+    "tablet_payload_installed": false
+  },
+  "frame_generation_device_accepted": false,
+  "game_integration_accepted": false
+}
