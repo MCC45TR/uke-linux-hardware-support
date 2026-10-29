@@ -4,8 +4,11 @@
 this change does not establish new tablet hardware acceptance.
 
 Package count, desktop application count and resident process count are separate.
-The 13 COPR source families remain the publication structure. Original Fedora
-desktop applications retain their distribution identities and implementations.
+30 October 2026: unstable publishes independent component source packages on
+Rawhide AArch64 through [the standalone converter](STANDALONE.md). Existing
+stable/test family definitions remain available for their older releases.
+Original Fedora desktop applications retain their distribution identities and
+implementations.
 
 | Function | Kernel / DT responsibility | Retained userspace responsibility and action |
 |---|---|---|
