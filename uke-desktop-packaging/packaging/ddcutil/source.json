@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "package": "ddcutil",
+  "source_nvr": "ddcutil-3.0.2-1.fc46",
+  "source_url": "https://kojipkgs.fedoraproject.org/packages/ddcutil/3.0.2/1.fc46/src/ddcutil-3.0.2-1.fc46.src.rpm",
+  "sha256": "666546358c31cad3f0be38e07ec894c4bb91f1c889242342efb4d6c453440152",
+  "source_payload_sha256": "ced766244babcfcfac8055f812a066817c6aa0cd355419561f98da398e28ee0a",
+  "signed_mirror_url": "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/source/tree/Packages/d/ddcutil-3.0.2-1.fc46.src.rpm",
+  "signed_mirror_sha256": "94fae9998f205ea9d1993cfce2472a6f4215df74d7ad059d2110ba715115d43c",
+  "fedora_key_fingerprint": "D924B10D3E810DABDD8B56B596E7E91491211FCE",
+  "upstream_commit": "5085ae9bb1a8e5bd8db717d80dd80a279a0f05fb",
+  "version": "3.0.2",
+  "release": "2.uke1",
+  "copr": "mcc45tr/uke-linux-unstable",
+  "chroots": ["fedora-rawhide-aarch64"],
+  "hardware_tested": false,
+  "python_target_payload": false
+}

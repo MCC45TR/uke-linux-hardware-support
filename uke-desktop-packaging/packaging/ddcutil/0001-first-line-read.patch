@@ -1,0 +1,24 @@
+Subject: [PATCH] util: preserve first-line read failure and unterminated data
+
+Upstream base: ddcutil 3.0.2, 5085ae9bb1a8e5bd8db717d80dd80a279a0f05fb.
+Return NULL after a failed getline and free its allocated buffer.
+Remove only an actual newline so an unterminated last character survives.
+
+--- a/src/util/file_util.c
++++ b/src/util/file_util.c
+@@ -170,11 +170,13 @@
+       if (read == -1) {
+          if (verbose)
+            printf("Nothing to read from %s\n", fn);
++         free(single_line);
++         single_line = NULL;
+       }
+       else {
+-         if (strlen(single_line) > 0) {
++         if (read > 0 && single_line[read-1] == '\n') {
+             // single_line has trailing \n, replace it with '\0'
+-            single_line[strlen(single_line)-1] = '\0';
++            single_line[read-1] = '\0';
+             // printf("\n%s", single_line);     // single_line has trailing \n
+          }
+       }
