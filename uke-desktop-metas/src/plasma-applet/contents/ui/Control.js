@@ -7,6 +7,8 @@ function command(action, values) {
         return "/usr/bin/uke-control --json flashlight set " + values.join(" ")
     }
     const commands = {
+        hub: "/usr/bin/uke-control --json hub status",
+        maintenance: "/usr/bin/konsole -e /usr/bin/uke-control chroot manage",
         storage: "/usr/bin/uke-control --json storage status",
         plasma: "/usr/bin/uke-control --json desktop plasma",
         desktop: "/usr/bin/uke-control --json desktop status",
@@ -31,6 +33,7 @@ function command(action, values) {
 function parse(kind, output) {
     const value = JSON.parse(output)
     const schemas = {
+        hub: "org.uke.control.hub.v1",
         storage: "org.uke.control.storage.v1",
         plasma: "org.uke.control.plasma.v1",
         desktop: "org.uke.control.desktop.v1",
@@ -46,6 +49,11 @@ function parse(kind, output) {
             return item !== null && typeof item !== "boolean"
         })))
         throw new Error("Malformed uke-control state")
+    if (kind === "hub" && (value.read_only !== true || !Array.isArray(value.items) || value.items.some(function(item) {
+        return !item || typeof item.id !== "string" || typeof item.label !== "string" || typeof item.unit !== "string" ||
+            ["available", "unsupported", "unknown", "error"].indexOf(item.state) < 0 ||
+            (item.state === "available" ? typeof item.value !== "string" : item.value !== null || typeof item.reason !== "string")
+    }))) throw new Error("Malformed hardware overview")
     if (kind === "storage" && (value.mode !== "inventory_only" || value.mutation_supported !== false ||
         value.chroot_execution_supported !== false || !Array.isArray(value.devices) || value.devices.some(function(device) {
             return !device || typeof device.path !== "string" || !/^\/dev\/[a-zA-Z0-9_.-]+$/.test(device.path) ||

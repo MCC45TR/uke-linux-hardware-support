@@ -18,10 +18,12 @@ PlasmoidItem {
     property var lights: ({})
     property var rgb: ({})
     property var storage: ({})
+    property var hub: ({})
     property var requests: ({})
     property string errorText: ""
     property int serial: 0
     property int pending: 0
+    property bool maintenancePending: false
     property string requestedAction: ""
 
     function execute(action, values) {
@@ -29,7 +31,8 @@ PlasmoidItem {
         if (!command) return
         const source = "UKE_TRAY_REQUEST=" + (++serial) + " " + command
         requests[source] = action
-        ++pending
+        if (action === "maintenance") maintenancePending = true
+        else ++pending
         executable.connectSource(source)
     }
     function refresh() {
@@ -40,6 +43,7 @@ PlasmoidItem {
         execute("lights")
         execute("rgb")
         execute("storage")
+        execute("hub")
     }
     function change(action, values) {
         if (pending > 0) return
@@ -50,8 +54,13 @@ PlasmoidItem {
         const action = requests[source]
         if (!action) return
         delete requests[source]
+        if (action === "maintenance") {
+            maintenancePending = false
+            if (data["exit code"] !== 0) errorText = i18n("Maintenance terminal exited with an error. Check the terminal result and that Konsole is installed.")
+            return
+        }
         --pending
-        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights" || action === "rgb" || action === "storage"
+        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights" || action === "rgb" || action === "storage" || action === "hub"
         if (query) {
             let value = {}
             try {
@@ -64,12 +73,27 @@ PlasmoidItem {
             else if (action === "desktop") desktop = value
             else if (action === "usb") usb = value
             else if (action === "lights") lights = value
+            else if (action === "hub") hub = value
             else if (action === "storage") storage = value
             else rgb = value
         } else {
             if (data["exit code"] !== 0)
                 errorText = i18n("The change failed or authorization was cancelled.")
             refresh()
+        }
+    }
+    function storageReason(device) {
+        switch (device.reason) {
+        case "device_identity_unverified": return i18n("Device identity unverified")
+        case "whole_disk_is_not_a_root_filesystem": return i18n("Whole disk; select a root filesystem partition")
+        case "mount_inventory_unknown": return i18n("Mount state unknown; inspection blocked")
+        case "mounted_device": return i18n("Mounted / in use")
+        case "swap_dependencies_unknown": return i18n("Active swap or unknown swap dependencies")
+        case "holder_inventory_unknown": return i18n("Device dependencies unknown")
+        case "device_has_holders": return i18n("In use by another block device")
+        case "read_only_or_unknown": return i18n("Read-only state or write permission unknown")
+        case "filesystem_inspection_required": return i18n("Filesystem inspection required")
+        default: return i18n("Unknown prerequisite; operation unavailable")
         }
     }
     function role() {
@@ -91,8 +115,8 @@ PlasmoidItem {
 
     Plasmoid.icon: "input-tablet"
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
-    toolTipMainText: i18n("Uke Tablet Controls")
-    toolTipSubText: i18n("Display, cover and USB")
+    toolTipMainText: i18n("Uke Control Center")
+    toolTipSubText: i18n("Hardware, lights and maintenance")
     onExpandedChanged: { if (expanded) refresh() }
 
     Timer {
@@ -105,6 +129,13 @@ PlasmoidItem {
                 if (root.rgb.mode === "test") root.execute("rgb")
             }
         }
+    }
+
+    Timer {
+        interval: 10000
+        repeat: true
+        running: root.expanded
+        onTriggered: { if (root.pending === 0) root.execute("hub") }
     }
 
     Plasma5Support.DataSource {
@@ -156,13 +187,49 @@ PlasmoidItem {
             }
             Kirigami.Heading {
                 Layout.margins: Kirigami.Units.largeSpacing
+                text: i18n("Live hardware")
+                level: 3
+            }
+            PC.Label {
+                Layout.fillWidth: true
+                Layout.margins: Kirigami.Units.largeSpacing
+                text: root.hub.items ? i18n("Kernel-reported observations; physical operation is not inferred.") : i18n("Hardware state unknown. Refresh to retry.")
+                wrapMode: Text.WordWrap
+            }
+            Repeater {
+                model: root.hub.items || []
+                delegate: RowLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Kirigami.Units.largeSpacing
+                    Layout.rightMargin: Kirigami.Units.largeSpacing
+                    PC.Label { text: modelData.label; textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                    PC.Label {
+                        Layout.maximumWidth: Kirigami.Units.gridUnit * 15
+                        text: modelData.state === "available" ? modelData.value + " " + modelData.unit : modelData.state === "unsupported" ? i18n("Not exported by kernel") : modelData.state === "error" ? i18n("Read error") : i18n("Unknown")
+                        textFormat: Text.PlainText
+                        wrapMode: Text.WordWrap
+                        QQC2.ToolTip.text: modelData.reason || i18n("Live kernel sample")
+                    }
+                }
+            }
+            PC.Button {
+                Layout.margins: Kirigami.Units.largeSpacing
+                text: i18n("Open maintenance terminal…")
+                icon.name: "utilities-terminal"
+                enabled: root.pending === 0 && !root.maintenancePending
+                onClicked: root.change("maintenance")
+                Accessible.description: i18n("Administrator authorization and explicit target trust are required for a read-only chroot session.")
+            }
+            Kirigami.Heading {
+                Layout.margins: Kirigami.Units.largeSpacing
                 text: i18n("Storage and maintenance")
                 level: 3
             }
             PC.Label {
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.largeSpacing
-                text: root.storage.devices ? i18n("%1 block devices. Read-only inventory; chroot execution is not available yet.", root.storage.devices.length) : i18n("Storage state unknown. Refresh to retry.")
+                text: root.storage.devices ? i18n("%1 block devices. Read-only inventory. Open the maintenance terminal for authorized root inspection.", root.storage.devices.length) : i18n("Storage state unknown. Refresh to retry.")
                 wrapMode: Text.WordWrap
                 textFormat: Text.PlainText
             }
@@ -173,7 +240,7 @@ PlasmoidItem {
                     Layout.fillWidth: true
                     Layout.leftMargin: Kirigami.Units.largeSpacing
                     Layout.rightMargin: Kirigami.Units.largeSpacing
-                    text: modelData.path + " (" + modelData.major_minor + ") — " + (modelData.mounts.length ? i18n("Mounted / in use") : modelData.identity_verified ? i18n("Not ready for chroot; filesystem inspection required") : i18n("Device identity unverified"))
+                    text: modelData.path + " (" + modelData.major_minor + ") — " + root.storageReason(modelData)
                     wrapMode: Text.WordWrap
                     textFormat: Text.PlainText
                 }

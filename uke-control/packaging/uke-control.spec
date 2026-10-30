@@ -10,7 +10,7 @@ BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
-BuildRequires: dbus-daemon jq
+BuildRequires: dbus-daemon jq libxml2
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 BuildRequires: xfsprogs-devel
@@ -73,6 +73,8 @@ install -Dm644 packaging/org.senemos.Uke.Rgb.service %{buildroot}%{_datadir}/dbu
 install -Dm644 packaging/org.senemos.uke.rgb.policy %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.rgb.policy
 install -Dm755 build/uke-control-packages %{buildroot}%{_libexecdir}/uke-control/packages
 install -Dm755 build/resize-system %{buildroot}%{_libexecdir}/uke-control/resize-system
+install -Dm755 build/chroot-manager %{buildroot}%{_libexecdir}/uke-control/chroot-manager
+install -Dm644 packaging/org.senemos.uke.chroot.policy %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.chroot.policy
 install -Dm755 build/layout-manager %{buildroot}%{_libexecdir}/uke-control/layout-manager
 install -Dm644 packaging/91-uke-control-layout.rules %{buildroot}%{_udevrulesdir}/91-uke-control-layout.rules
 install -Dm755 packaging/vrr-min-load %{buildroot}%{_libexecdir}/uke-control/vrr-min-load
@@ -142,6 +144,8 @@ fi
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
+%{_libexecdir}/uke-control/chroot-manager
+%{_datadir}/polkit-1/actions/org.senemos.uke.chroot.policy
 %{_udevrulesdir}/91-uke-control-torch.rules
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
 %{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service

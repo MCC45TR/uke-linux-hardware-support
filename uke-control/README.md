@@ -551,6 +551,7 @@ armed state from the verified NT36532 driver. The xHCI fixes from `b025866` and
 `f4ceae7` are retained. See [commands and limitations](CLI.md). Source and host
 fixtures do not establish physical NFC, individual cell health or gesture wake.
 
-Read-only storage planning and its execution limits are documented in
-[Maintenance inventory](MAINTENANCE.md). `storage status` and `chroot plan`
-never mount, modify or execute the selected filesystem.
+Live hardware state, partition operation plans and the administrator-authorized
+read-only Fedora/Arch chroot manager are documented in
+[Hardware and maintenance center](MAINTENANCE.md). Destructive partition execution
+and writable chroot sessions remain unavailable.

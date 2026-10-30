@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "storage.hpp"
+#include "hub.hpp"
 #include "cli.hpp"
 #include "charge-policy.hpp"
 #include "front-color.hpp"
@@ -48,10 +49,29 @@ static int run(int argc,char** argv,bool as_json) {
             execv(arguments[0],const_cast<char* const*>(arguments));
             throw std::runtime_error("The native resize helper is unavailable");
         }
+        if(command=="hub" && argc==3 && std::string_view(argv[2])=="status") {
+            uke::cli::print(uke::hub::snapshot("/"),as_json);return 0;
+        }
+        if(command=="storage" && (argc==5||argc==6) && std::string_view(argv[2])=="plan") {
+            uke::cli::print(uke::storage::plan("/",argv[3],argv[4],argc==6?argv[5]:""),as_json);return 0;
+        }
+        if(command=="chroot" && argc>=3 && std::string_view(argv[2])!="plan") {
+            const std::string action=argv[2];
+            if(!((action=="scan"&&argc==4)||(action=="manage"&&argc==3)||(action=="enter"&&argc==6&&std::string_view(argv[5])=="--trust-target-root-code")))
+                throw uke::cli::UsageError("expected chroot manage | scan /dev/DEVICE | enter /dev/PARTITION TOKEN --trust-target-root-code");
+            if(as_json && action!="scan")throw uke::cli::UsageError("Interactive chroot execution does not support --json");
+            std::vector<char*> arguments;
+            if(geteuid()!=0)arguments.push_back(const_cast<char*>("/usr/bin/pkexec"));
+            arguments.push_back(const_cast<char*>("/usr/libexec/uke-control/chroot-manager"));
+            for(int i=2;i<argc;++i)arguments.push_back(argv[i]);
+            if(as_json)arguments.push_back(const_cast<char*>("--json"));
+            arguments.push_back(nullptr);execv(arguments[0],arguments.data());
+            throw std::runtime_error("Chroot manager or pkexec is unavailable");
+        }
         if(command=="storage" || command=="chroot") {
             const std::string expected=command=="storage"?"status":"plan";
             if((argc!=3 && argc!=4) || std::string_view(argv[2])!=expected)
-                throw uke::cli::UsageError("expected "+command+" "+expected+" [/dev/DEVICE]; execution is not implemented");
+                throw uke::cli::UsageError("expected "+command+" "+expected+" [/dev/DEVICE]");
             uke::cli::print(uke::storage::snapshot("/",argc==4?argv[3]:""),as_json);return 0;
         }
         if(command=="diagnostics")return uke::diagnostic::command(argc-2,argv+2,as_json);

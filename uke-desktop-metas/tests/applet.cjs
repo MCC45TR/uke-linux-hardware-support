@@ -61,3 +61,11 @@ for (const [key,value] of [["mutation_supported",true],["devices",{}],["chroot_e
     assert.throws(()=>context.parse("storage",JSON.stringify({...storage,[key]:value})));
 for(const [key,value] of [["path","<b>/dev/sda</b>"],["major_minor","bad"],["identity_verified",null],["chroot_ready",true]])
     assert.throws(()=>context.parse("storage",JSON.stringify({...storage,devices:[{...storage.devices[0],[key]:value}]})));
+assert.equal(context.command("maintenance"), "/usr/bin/konsole -e /usr/bin/uke-control chroot manage");
+assert.equal(context.command("hub"), "/usr/bin/uke-control --json hub status");
+const hub = {schema:"org.uke.control.hub.v1",read_only:true,items:[{id:"battery",label:"Battery",state:"unknown",value:null,unit:"%",reason:"No sample"}]};
+assert.equal(context.parse("hub",JSON.stringify(hub)).items[0].state,"unknown");
+for(const [key,value] of [["state","healthy"],["value",100],["reason",null]])
+    assert.throws(()=>context.parse("hub",JSON.stringify({...hub,items:[{...hub.items[0],[key]:value}]})));
+for(const reason of ["mounted_device","swap_dependencies_unknown","holder_inventory_unknown","device_has_holders","read_only_or_unknown","mount_inventory_unknown"])
+    assert.ok(qml.includes('case "'+reason+'":'));
