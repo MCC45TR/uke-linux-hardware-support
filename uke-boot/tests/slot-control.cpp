@@ -97,7 +97,12 @@ int main(int argc,char **argv) {
             slot::Disk healthy(fd.value,st.st_size,sector);healthy.success(1);healthy.commit();
         }
         const unsigned failed=1-good;
-        slot::Disk stage(fd.value,st.st_size,sector);assert(stage.prepare(good,failed));stage.commit();
+        slot::Disk stage(fd.value,st.st_size,sector);
+        reject([&]{stage.prepare(good,failed,0);});reject([&]{stage.prepare(good,failed,8);});
+        assert(stage.prepare(good,failed,3));stage.commit();
+        slot::Disk armed(fd.value,st.st_size,sector);
+        assert(((armed.parts.at(failed?"boot_b":"boot_a").attrs&slot::retries)>>51)==3);
+        assert(!(armed.parts.at(failed?"boot_b":"boot_a").attrs&slot::successful));
         const auto staged=slot::snapshot(fd.value,st.st_size,sector);
         auto stale_header=staged.backup;set32(stale_header,88,le32(stale_header,88)^1);header_crc(stale_header);
         slot::write_at(fd.value,staged.last*sector,stale_header);

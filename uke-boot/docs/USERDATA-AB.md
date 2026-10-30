@@ -1,5 +1,37 @@
 # Userdata boot A/B updates
 
+30 October 2026. Version 1.9.0 adds a startup deadline for booted, unaccepted
+alternating trials. Stable boots, pre-reboot transactions, current-slot
+maintenance and a return to the accepted kernel skip this guard. It observes
+the durable state without holding the updater lock. Healthy acceptance stops
+the guard, including when another update has already been staged afterwards.
+At 300 seconds of boot time it requests the existing validated fallback.
+The service also bounds a stalled monitor after trial admission. If fallback
+cannot complete within 60 seconds, PID 1 requests an ordinary forced restart,
+leaving the unsuccessful bootloader trial available to its retry logic.
+
+New automatic candidates require the RPM manifest capability
+`boot_reset_capability=uke-gunyah-reset-v1` and one matching aligned UKE ELF
+note of type `0x554b4502`. The descriptor is
+`boot-reset-v1;watchdog=gunyah;open-timeout=180;runtime-timeout=30`.
+The wrapper adds only `senemos.boot_reset=1`; the signed kernel admits that
+token only for userdata and sets the fixed watchdog controls. Boot-image bytes
+are fully verified before selection and the running slot is preserved.
+These candidates receive three QTI retry attempts rather than seven.
+The currently running legacy kernel can still be accepted, and explicit manual
+maintenance remains separate. Automatic staging refuses an older candidate
+without the reset capability instead of silently claiming hang recovery.
+
+The matching kernel arms the Gunyah watchdog at driver probe, gives userspace
+180 seconds to take ownership, enables the original systemd watchdog at 30
+seconds, and bounds incomplete initramfs startup at 180 seconds. The Gunyah
+hardware maximum is 32 seconds. The initramfs guard is canceled on switch-root.
+This does not prove reset coverage before the Gunyah probe, the stock ABL retry
+countdown, hard-hang reset, suspend or physical fallback. Those require an
+attended recoverable device test. Accepted runtime kernels are not automatically
+demoted by this startup-only guard; watchdog restart and late-runtime rollback
+are distinct policies. Userdata and RPM state remain shared.
+
 30 October 2026. Version 1.8.7 adds `transaction BUNDLE` for kernel RPM hooks.
 On userdata it resolves the installed singleboot profile after the transaction,
 so a hook from a retained kernel cannot select its own older bundle. Both

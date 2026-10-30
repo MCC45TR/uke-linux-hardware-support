@@ -1,0 +1,15 @@
+[Unit]
+Description=Recover an expired Uke A/B startup trial
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionKernelCommandLine=root=PARTLABEL=userdata
+After=uke-userdata-deadline.service
+FailureAction=reboot-force
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/uke-kernel-update fallback
+TimeoutStartSec=60
+TimeoutStopSec=3
+UMask=0077
+ProtectHome=yes
+PrivateTmp=yes

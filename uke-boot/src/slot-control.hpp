@@ -144,8 +144,8 @@ public:
                  "GPT and UFS boot LUN selection differ");
         }
     }
-    bool prepare(unsigned running,unsigned target) {
-        need(running<2 && target==1-running,"Inactive slot required");bool changed=false;
+    bool prepare(unsigned running,unsigned target,unsigned attempts=7) {
+        need(running<2 && target==1-running && attempts>=1 && attempts<=7,"Inactive slot and bounded boot attempts required");bool changed=false;
         for(const auto &[name,a]:parts) {
             if(!name.ends_with("_a"))continue;
             const auto bname=name.substr(0,name.size()-1)+"b";
@@ -157,7 +157,7 @@ public:
             if(name=="boot_a")need(old.attrs&priority,"Current boot slot has no priority");
             const auto old_flags=name=="boot_a"?
                 (old.attrs&~(priority|active))|(uint64_t(2)<<48):old.attrs&~active;
-            const auto next_flags=name=="boot_a"?(next.attrs&~flags)|(uint64_t(0x3f)<<48):next.attrs|active;
+            const auto next_flags=name=="boot_a"?(next.attrs&~flags)|priority|active|(uint64_t(attempts)<<51):next.attrs|active;
             auto set_type=[&](const Part &p,const std::string &type) {
                 std::unique_ptr<fdisk_parttype,decltype(&fdisk_unref_parttype)> value(fdisk_new_parttype(),fdisk_unref_parttype);
                 need(bool(value) && !fdisk_parttype_set_typestr(value.get(),type.c_str()) &&

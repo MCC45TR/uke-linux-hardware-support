@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.7
+Version: 1.9.0
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -91,6 +91,7 @@ Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
 Provides: uke-kernel-update(transaction-v1) = 1
+Provides: uke-kernel-update(boot-reset-v1) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
@@ -209,6 +210,8 @@ install -Dm644 src/profiles/userdata-update.conf %{buildroot}%{_sysconfdir}/sene
 install -Dm644 src/profiles/80-uke-boot.preset %{buildroot}%{_presetdir}/80-uke-boot.preset
 install -Dm644 src/units/uke-userdata-accept.service %{buildroot}%{_unitdir}/uke-userdata-accept.service
 install -Dm644 src/units/uke-userdata-fallback.service %{buildroot}%{_unitdir}/uke-userdata-fallback.service
+install -Dm644 src/units/uke-userdata-deadline.service %{buildroot}%{_unitdir}/uke-userdata-deadline.service
+install -Dm644 src/units/uke-userdata-deadline-fallback.service %{buildroot}%{_unitdir}/uke-userdata-deadline-fallback.service
 install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
 install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm644 src/units/uke-root-grow.service %{buildroot}%{_unitdir}/uke-root-grow.service
@@ -242,13 +245,13 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 # @touch-migration-restore
 
 %post -n uke-kernel-update
-%systemd_post uke-userdata-accept.service
+%systemd_post uke-userdata-accept.service uke-userdata-deadline.service
 
 %preun -n uke-kernel-update
-%systemd_preun uke-userdata-accept.service
+%systemd_preun uke-userdata-accept.service uke-userdata-deadline.service
 
 %postun -n uke-kernel-update
-%systemd_postun uke-userdata-accept.service
+%systemd_postun uke-userdata-accept.service uke-userdata-deadline.service
 
 %post -n uke-installation-profile
 %systemd_post uke-root-grow.service
@@ -335,6 +338,8 @@ fi
 %config(noreplace) %{_sysconfdir}/senemos/userdata-update.conf
 %{_unitdir}/uke-userdata-accept.service
 %{_unitdir}/uke-userdata-fallback.service
+%{_unitdir}/uke-userdata-deadline.service
+%{_unitdir}/uke-userdata-deadline-fallback.service
 
 %files -n uke-installation-profile
 %license LICENSE
@@ -355,6 +360,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.9.0-1
+- Require a signed early-reset capability for new automatic A/B trials.
+- Bound unaccepted startup and select three bootloader attempts per trial.
+- Preserve accepted kernels and leave physical reset qualification separate.
 * Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.7-1
 - Route kernel transaction hooks through the selected profile and both policies.
 - Report disabled activation and validate automatic A/B admission without writes.
