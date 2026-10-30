@@ -29,7 +29,31 @@ bool admission(const Result& result, const char* field) {
 Result control_query(const std::string& operation) {
     if (operation != "status" && operation != "admission" && operation != "protocols" && operation != "protocol-inspect" && operation != "capabilities" && operation != "settings" && operation != "protection" && operation != "protection-status")
         throw std::runtime_error("Unsupported charge-control query");
-    return execute({helper, operation}, 10, 65536);
+    auto result = execute({helper, operation}, 10, 65536);
+    if (operation != "protection-status" || result.status) return result;
+    sd_json_variant *raw=nullptr;
+    if (result.output.size()>65536 || result.output.find('\0')!=std::string::npos ||
+        sd_json_parse(result.output.c_str(),sd_json_parse_flags_t(0),&raw,nullptr,nullptr)<0)
+        return refused("moisture_telemetry_invalid");
+    std::unique_ptr<sd_json_variant,decltype(&sd_json_variant_unref)> doc(raw,sd_json_variant_unref);
+    const auto field=[&](const char *name){return sd_json_variant_by_key(doc.get(),name);};
+    auto kind=field("kind");
+    if (!sd_json_variant_is_object(raw) || !sd_json_variant_is_string(kind) ||
+        std::string_view(sd_json_variant_string(kind))!="uke_charge_protection_cache")
+        return refused("moisture_telemetry_invalid");
+    for (const auto name:{"fresh","reported_moisture_detection_enabled","reported_moisture","wet_latched"})
+        if (!sd_json_variant_is_boolean(field(name))) return refused("moisture_telemetry_invalid");
+    const bool fresh=sd_json_variant_boolean(field("fresh")), enabled=sd_json_variant_boolean(field("reported_moisture_detection_enabled"));
+    const bool wet=sd_json_variant_boolean(field("reported_moisture")) || sd_json_variant_boolean(field("wet_latched"));
+    const char *state=!fresh?"unknown_stale":wet?"wet_reported":!enabled?"unknown_detector_disabled":"dry_reported";
+    if (sd_json_variant_set_field_string(&raw,"moisture_state",state)<0) throw std::runtime_error("Moisture report allocation failed");
+    doc.release();doc.reset(raw);
+    if (sd_json_variant_set_field_boolean(&raw,"physical_protection_qualified",false)<0) throw std::runtime_error("Moisture report allocation failed");
+    doc.release();doc.reset(raw);
+    char *text=nullptr;
+    if (sd_json_variant_format(raw,SD_JSON_FORMAT_NEWLINE,&text)<0) throw std::runtime_error("Moisture report formatting failed");
+    const std::unique_ptr<char,decltype(&free)> output(text,free);
+    result.output=output.get();return result;
 }
 Result control_mode(const std::string& mode) {
     if (mode == "charge80") return execute({helper, "cap80"}, 35, 65536);

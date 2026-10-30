@@ -115,6 +115,17 @@ int main() {
         assert(selected.find("\"gesture_armed\":false")!=std::string::npos&&selected.find("\"name\":\"usb\"")==std::string::npos);
         put(touch/"gesture_wake_armed","1\n");
         assert(uke::wake::snapshot(sys,"double-tap").find("\"gesture_armed\":true")!=std::string::npos);
+        const auto current_driver=sys/"bus/spi/drivers/nt36532-uke-touch";
+        fs::create_directories(current_driver);
+        fs::remove(touch/"driver");fs::create_directory_symlink(current_driver,touch/"driver");
+        fs::remove(sys/"bus/spi/devices/spi0.0");
+        fs::create_directory_symlink(touch,sys/"bus/spi/devices/spi7.0");
+        assert(source(sys,"double-tap").path.empty());
+        put(touch/"of_node/compatible",std::string("novatek,nt36532-uke-touch")+'\0');
+        assert(source(sys,"double-tap").path==touch/"power/wakeup");
+        fs::create_directory_symlink(touch,sys/"bus/spi/devices/spi8.0");
+        assert(source(sys,"double-tap").reason=="ambiguous_touch_provider");
+        fs::remove(sys/"bus/spi/devices/spi8.0");
         fs::remove(touch/"driver");fs::create_directory_symlink(sys,touch/"driver");
         assert(source(sys,"double-tap").path.empty());fs::remove(touch/"driver");fs::create_directory_symlink(touch_driver,touch/"driver");
         put(touch/"gesture_wake_armed","2\n");
