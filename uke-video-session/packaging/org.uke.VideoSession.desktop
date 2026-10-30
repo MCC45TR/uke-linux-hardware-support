@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=YouTube (Chrome)
+Name[tr]=YouTube (Chrome)
+Comment=Watch YouTube with the existing Chrome profile
+Comment[tr]=Mevcut Chrome profiliyle YouTube izle
+Exec=uke-video-session %u
+Icon=google-chrome
+Terminal=false
+Categories=AudioVideo;Video;Network;
+StartupNotify=true
