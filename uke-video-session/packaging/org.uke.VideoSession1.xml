@@ -1,0 +1,14 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.uke.VideoSession1">
+    <method name="Report">
+      <arg name="stream" type="t" direction="in"/>
+      <arg name="width" type="u" direction="in"/>
+      <arg name="height" type="u" direction="in"/>
+      <arg name="active" type="b" direction="in"/>
+    </method>
+    <property name="ActiveStreams" type="u" access="read"/>
+    <property name="Held" type="b" access="read"/>
+    <property name="Suppressed" type="b" access="read"/>
+  </interface>
+</node>

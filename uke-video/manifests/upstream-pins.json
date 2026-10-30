@@ -2,10 +2,10 @@
   "schema_version": 1,
   "date": "2026-10-25",
   "publication": {
-    "source_family": "uke-additional",
+    "source_family": null,
     "binary_package": "uke-vaapi-v4l2",
-    "standalone_copr_source_allowed": false,
-    "standalone_source_record_deleted": true,
+    "standalone_copr_source_allowed": true,
+    "standalone_source_record_deleted": false,
     "retired_build_ids": [
       11204584,
       11205659,
@@ -60,6 +60,15 @@
       "reason": "Retain the installed revision-7 shared-surface write-combined fix during independent migration",
       "native_build_pending": true,
       "tablet_acceptance": false
+    },
+    "automatic_video_policy": {
+      "date": "2026-10-30",
+      "source_package": "uke-vaapi-v4l2",
+      "release": 9,
+      "service_package": "uke-video-session",
+      "service_minimum": "1.1.0",
+      "native_build_pending": true,
+      "tablet_acceptance": false
     }
   },
   "upstream": {
@@ -93,6 +102,10 @@
     {
       "path": "patches/0006-shared-surface-write-combined.patch",
       "sha256": "29116d2a380c268a765c1fab2b7dc82ed493264106c212ceb43f2a57172db659"
+    },
+    {
+      "path": "patches/0007-automatic-user-video-policy.patch",
+      "sha256": "27e4fa2c5c73fc4337c59b2d4bf9e0aedfeed0f64d3bb12ad6956730835aa979"
     }
   ],
   "delivery": {

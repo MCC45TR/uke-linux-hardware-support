@@ -1,9 +1,10 @@
+%global debug_package %{nil}
 %global upstream_commit 6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41
 %global source_digest e8756bf642eb3fc458209b8dd2380571dcb52ec4b2201e9d09db208b7e995d52
 
 Name:           uke-vaapi-v4l2
 Version:        1.0.0
-Release:        0.7.20261028git6d03c3f%{?dist}
+Release:        9%{?dist}
 Summary:        Experimental stateful Iris VA-API backend
 License:        MIT
 URL:            https://github.com/radxa-pkg/libva-v4l2
@@ -15,12 +16,17 @@ Source4:        rate-negotiation.sh
 Source5:        dimension-contract.sh
 Source6:        decode-error-contract.sh
 Source7:        shared-surface-cache-contract.sh
+Source8:        uke-video-activity.cpp
+Source9:        uke-video-activity.hpp
+Source10:       uke-video-protocol.hpp
+Source11:       activity-client-contract.sh
 Patch0:         0001-runtime-capability-intersection.patch
 Patch1:         0002-main10-p010-encode.patch
 Patch2:         0003-runtime-encode-rate-limits.patch
 Patch3:         0004-runtime-frame-dimensions.patch
 Patch4:         0005-preserve-decode-error-status.patch
 Patch5:         0006-shared-surface-write-combined.patch
+Patch6:         0007-automatic-user-video-policy.patch
 BuildRequires:  gcc-c++
 BuildRequires:  meson >= 0.61
 BuildRequires:  ninja-build
@@ -29,6 +35,9 @@ BuildRequires:  pkgconfig(libdrm)
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(glesv2) >= 3.2
 BuildRequires:  pkgconfig(gbm)
+BuildRequires:  pkgconfig(libsystemd)
+BuildRequires:  dbus-daemon
+Requires:       uke-video-session >= 1.1.0
 
 %description
 Experimental VA-API backend for the Qualcomm Iris stateful V4L2 API. Profiles and
@@ -47,6 +56,8 @@ echo '%{source_digest}  %{SOURCE0}' | sha256sum --check --status
 %patch -P 3 -p1
 %patch -P 4 -p1
 %patch -P 5 -p1
+%patch -P 6 -p1
+install -m644 %{SOURCE8} %{SOURCE9} %{SOURCE10} src/
 
 %build
 %meson -Dgpu_copy=enabled -Dfastcv=disabled
@@ -62,6 +73,7 @@ bash %{SOURCE4} "$PWD"
 bash %{SOURCE5} "$PWD"
 bash %{SOURCE6} "$PWD"
 bash %{SOURCE7} "$PWD"
+bash %{SOURCE11} "$PWD"
 
 %install
 %meson_install
@@ -76,6 +88,11 @@ install -m 0644 %{SOURCE2} UKE-README.md
 %{_libdir}/dri/msm_drv_video.so
 
 %changelog
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-9
+- Prefer synchronous CPU copies for decoder exports, retaining encoder policy.
+- Publish native UHD activity asynchronously to the per-user D-Bus policy.
+- Preserve decode completion, fences, cache maintenance and explicit overrides.
+
 * Wed Oct 28 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-0.7.20261028git6d03c3f
 - Allocate shared VA surfaces as write-combined storage across import domains.
 - Retain private encoder allocation and checked allocation/export cleanup.

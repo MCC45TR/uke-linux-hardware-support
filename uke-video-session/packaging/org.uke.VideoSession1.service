@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.uke.VideoSession1
+Exec=/usr/libexec/uke-video-session
+SystemdService=uke-video-session.service

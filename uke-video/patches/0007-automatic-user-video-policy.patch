@@ -1,0 +1,152 @@
+Subject: [PATCH] Prefer decoder CPU copying and report native UHD activity
+
+Use the already validated synchronous CPU-copy path by default for decoder
+exports while preserving explicit overrides and the encoder's GPU default.
+Publish only decoder activity through an asynchronous native client. The
+per-user policy service authenticates the sender and expires stale reports;
+no URL, browser profile, user ID, frame payload or firmware value is sent.
+Keep all existing decoder completion, DMA-BUF fence and cache maintenance.
+
+Base: libva-v4l2 6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41 plus patches0001-0006.
+License: MIT, matching the modified upstream files.
+
+--- a/meson.build
++++ b/meson.build
+@@ -9,6 +9,7 @@
+ va = dependency('libva', version: '>=1.10')
+ drm = dependency('libdrm')
+ threads = dependency('threads')
++systemd = dependency('libsystemd')
+ gpu_copy_option = get_option('gpu_copy')
+ egl = dependency('egl', required: gpu_copy_option)
+ gles = dependency('glesv2', version: '>=3.2', required: gpu_copy_option)
+@@ -60,6 +61,7 @@
+   'src/runtime-caps.cpp',
+   'src/backend.cpp',
+   'src/decoder.cpp',
++  'src/uke-video-activity.cpp',
+   'src/encoder.cpp',
+   'src/h264.cpp',
+   'src/hevc.cpp',
+@@ -74,7 +76,7 @@
+ shared_library(
+   'v4l2_drv_video',
+   sources + copy_source,
+-  dependencies: [va, drm, threads] + copy_dependencies + vpp_dependencies,
++  dependencies: [va, drm, threads, systemd] + copy_dependencies + vpp_dependencies,
+   name_prefix: '',
+   install: true,
+   install_dir: driver_install_dir,
+--- a/src/internal.hpp
++++ b/src/internal.hpp
+@@ -22,6 +22,7 @@
+ #include <cstdlib>
+ #include <atomic>
+ #include <type_traits>
++#include "uke-video-activity.hpp"
+ 
+ extern "C" int irisva_msm_allocate(int drm_fd, uint64_t size, int *coherent);
+ extern "C" int irisva_msm_allocate_wc(int drm_fd, uint64_t size);
+@@ -59,15 +60,17 @@
+     uint8_t *map();
+ };
+ class Decoder;
++enum class CopyDefault { Gpu, Cpu };
+ class SurfaceCopier {
+     // Calls are serialized by the owning decoder or encoder, including lazy setup.
+     struct Impl;
+     // Borrowed VA display fd; duplicated when GPU copying is first used.
+     [[maybe_unused]] int render_fd_;
++    CopyDefault default_;
+     std::unique_ptr<Impl> impl_;
+ 
+   public:
+-    explicit SurfaceCopier(int render_fd);
++    explicit SurfaceCopier(int render_fd, CopyDefault fallback = CopyDefault::Gpu);
+     ~SurfaceCopier();
+     void copy(const std::shared_ptr<Memory> &destination, const std::shared_ptr<Memory> &source,
+               unsigned width, unsigned height);
+@@ -183,6 +186,8 @@
+     std::vector<std::shared_ptr<Memory>> output_, capture_;
+     std::map<uint64_t, std::shared_ptr<Surface>> pending_;
+     SurfaceCopier copier_;
++    std::unique_ptr<VideoActivity> activity_;
++    bool activity_attempted_ = false;
+     void allocate(unsigned type, unsigned count, std::vector<std::shared_ptr<Memory>> &pool);
+     void configure_capture();
+     void pump(int timeout_ms);
+--- a/src/gpu-copy.cpp
++++ b/src/gpu-copy.cpp
+@@ -200,11 +200,11 @@
+     bool stop = false;
+     std::packaged_task<void(GpuCopy *, std::exception_ptr)> task;
+     std::thread worker;
+-    explicit Impl(int render_fd) {
++    explicit Impl(int render_fd, CopyDefault fallback) {
+         const char *mode = std::getenv("IRIS_VAAPI_COPY");
+         check(!mode || !strcmp(mode, "gpu") || !strcmp(mode, "cpu"),
+               "IRIS_VAAPI_COPY must be gpu or cpu", VA_STATUS_ERROR_INVALID_PARAMETER);
+-        cpu = mode && !strcmp(mode, "cpu");
++        cpu = mode ? !strcmp(mode, "cpu") : fallback == CopyDefault::Cpu;
+         trace("surface copy selected mode=%s", cpu ? "cpu" : "gpu");
+         if (!cpu)
+             worker = std::thread([this, render_fd] {
+@@ -241,13 +241,14 @@
+     }
+ };
+ 
+-SurfaceCopier::SurfaceCopier(int render_fd) : render_fd_(render_fd) {}
++SurfaceCopier::SurfaceCopier(int render_fd, CopyDefault fallback)
++    : render_fd_(render_fd), default_(fallback) {}
+ SurfaceCopier::~SurfaceCopier() = default;
+ void SurfaceCopier::copy(const std::shared_ptr<Memory> &dst, const std::shared_ptr<Memory> &src,
+                          unsigned w, unsigned h) {
+     try {
+         if (!impl_)
+-            impl_ = std::make_unique<Impl>(render_fd_);
++            impl_ = std::make_unique<Impl>(render_fd_, default_);
+         if (impl_->cpu) {
+             copy_surface(*dst, *src, w, h);
+             return;
+--- a/src/cpu-copy.cpp
++++ b/src/cpu-copy.cpp
+@@ -14,7 +14,8 @@
+     }
+ };
+ 
+-SurfaceCopier::SurfaceCopier(int render_fd) : render_fd_(render_fd) {}
++SurfaceCopier::SurfaceCopier(int render_fd, CopyDefault fallback)
++    : render_fd_(render_fd), default_(fallback) {}
+ SurfaceCopier::~SurfaceCopier() = default;
+ void SurfaceCopier::copy(const std::shared_ptr<Memory> &dst, const std::shared_ptr<Memory> &src,
+                          unsigned w, unsigned h) {
+--- a/src/decoder.cpp
++++ b/src/decoder.cpp
+@@ -97,7 +97,7 @@
+       pool_size_(std::min(64u, std::max(32u, surfaces + 4))),
+       fourcc_((is_10bit(profile) && (rt_format == VA_RT_FORMAT_YUV420_10)) ? VA_FOURCC_P010
+                                                                            : VA_FOURCC_NV12),
+-      copier_(render_fd) {
++      copier_(render_fd, CopyDefault::Cpu) {
+     fd_ = open(device.c_str(), O_RDWR | O_NONBLOCK | O_CLOEXEC);
+     check(fd_ >= 0, "open Iris decoder");
+     try {
+@@ -404,6 +404,18 @@
+             pump(20);
+         }
+     }
++    if (uint64_t(width_) * height_ >= 3840ULL * 2160) {
++        // Policy transport is optional and runs off the decoder path.
++        try {
++            if (!activity_attempted_) {
++                activity_attempted_ = true;
++                activity_ = std::make_unique<VideoActivity>(width_, height_);
++            }
++            if (activity_) activity_->touch();
++        } catch (const std::exception &) {
++            trace("user video activity transport unavailable");
++        }
++    }
+ }
+ void Decoder::refresh() {
+     std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);

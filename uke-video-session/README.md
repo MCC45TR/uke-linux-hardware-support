@@ -1,36 +1,32 @@
-# Uke video session
+# Uke video session policy
 
-30 October 2026. Experimental Fedora Rawhide AArch64 launcher for the original
-Google Chrome Default profile. It uses the installed Iris CPU-copy option,
-keeps GPU-process threads within the higher-capacity allowed CPUs, and requests
-the standard performance profile while that Chrome session exists. It adds no
-browser build, frame interpolation, firmware or clock/thermal override.
+30 October 2026. Fedora Rawhide AArch64 integration for ordinary Chrome
+sessions. The native VA backend reports actual UHD decode activity to a
+D-Bus-activated service in the current user's session. It does not launch or
+replace Chrome, select a profile, inspect URLs or require a special shortcut.
+Each user receives the same activation files through the RPM.
 
-Open **YouTube (Chrome)** after closing existing Chrome windows, or run
-`uke-video-session https://www.youtube.com/watch?v=LXb3EKWsInQ`. An already
-running Chrome process retains its existing environment; a forwarded window
-does not establish an optimized session. The package does not close it.
+Fresh UHD activity from an authenticated original Chrome GPU process requests
+a standard performance hold and a capacity-based CPU preference for that
+process. Pausing, closing or losing the decoder expires activity and restores
+the original affinity. A private runtime checkpoint supports recovery after
+service failure. Manual affinity/profile changes and power-saving selection
+take priority. Hardware clocks, thermal limits and the browser sandbox remain
+under their existing owners.
 
-The power hold belongs to this launcher's D-Bus connection. It is released
-when the launcher exits, including abnormal termination. Manual power-profile
-changes take priority. Missing capacity data preserves the allowed CPU mask;
-an unavailable power hold leaves the selected profile intact. Only descendant
-GPU processes from this launch receive scheduling hints.
+The service starts only when requested and exits after inactivity. It runs as
+the session user, with no root daemon, login-time polling or browser extension.
+The native protocol contains a context counter, dimensions and activity state;
+it carries no media, website, account or profile data.
 
-Package 1.0.0-3.fc46, built in [COPR 11229819](https://copr.fedorainfracloud.org/coprs/build/11229819),
-was tested on POCO Pad X1 with kernel 7.3.0-54, Chrome 156, VA 1.0.0-8 and
-Mesa 26.2.6-17. A 180-second 1.25x 4K60 trial measured 70.48 compositor
-submissions/s without waiting or resolution fallback; drops remain at the
-75 fps target. This is headroom, not 70 distinct frames from normal 60 fps content.
-
-A 300-second normal-speed trial measured 59.94 submissions/s, 62 reported
-drops and no waiting, player error or resolution fallback. Actual video dimensions
-stayed 3840x2160; output was 2560x1440 at 74.997 Hz with HDR disabled. Native
-tracing confirmed CPU copying. Session exit restored balanced power; a manual
-profile change also remained effective. Optical cadence and HDR remain unverified.
+The earlier launcher 1.0.0-3 measured 70.48 compositor submissions/s in a
+180-second accelerated 4K60 trial and 59.94/s in a 300-second normal trial.
+Those results do not qualify this automatic implementation. COPR, installed
+normal-Chrome behavior, per-user activation, recovery, optical cadence and HDR
+remain separate validation gates.
 
 The implementation uses the standard
-[power-profile hold API](https://upower.pages.freedesktop.org/power-profiles-daemon/gdbus-org.freedesktop.UPower.PowerProfiles.html)
-and Linux CPU affinity within the calling user's existing limits. It is
-compiled only in COPR for `fedora-rawhide-aarch64`; policy fixtures are build
-controls, not tablet playback evidence.
+[D-Bus activation contract](https://dbus.freedesktop.org/doc/dbus-specification.html),
+[Power Profiles API](https://upower.pages.freedesktop.org/power-profiles-daemon/gdbus-org.freedesktop.UPower.PowerProfiles.html)
+and Linux thread affinity. All native compilation and fixtures run in COPR
+for `fedora-rawhide-aarch64`; the runtime payload is C++.
