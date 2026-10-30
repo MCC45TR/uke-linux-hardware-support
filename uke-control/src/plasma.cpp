@@ -9,10 +9,11 @@ namespace {
 struct State { std::string rotation = "null", brightness = "null", output, rotation_policy; };
 State inspect() {
     // execute() selects the child's locale without changing the caller's environment.
+    static const std::vector<std::string> command{"/usr/bin/kscreen-doctor", "-o"};
+    const auto result = execute(command, 5, 65536);
+    if (result.status) return {};
     static const std::regex ansi("\x1b\\[[0-9;]*m");
     static const std::regex internal("^Output: +[0-9]+ +(DSI-[0-9]{1,3})( |$)");
-    const auto result = execute({"/usr/bin/kscreen-doctor", "-o"}, 5, 65536);
-    if (result.status) return {};
     const auto plain = std::regex_replace(result.output, ansi, "");
     std::istringstream lines(plain);
     State state;

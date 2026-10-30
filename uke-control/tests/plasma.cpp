@@ -13,7 +13,7 @@ namespace uke {
 Result execute(const std::vector<std::string>& args, unsigned seconds, size_t limit) {
     assert(seconds == 5 && limit == 65536);
     calls.push_back(args);
-    if(args==std::vector<std::string>({"/usr/bin/kscreen-doctor","-o"}))return response;
+    if(args.size()==2&&args[0]=="/usr/bin/kscreen-doctor"&&args[1]=="-o")return response;
     if(after)response=*after;
     return mutation;
 }

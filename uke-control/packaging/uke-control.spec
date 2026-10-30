@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.3.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -185,6 +185,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.5-2
+- Reuse fixed query arguments and initialize parser expressions only after a successful query.
+- Avoid temporary argument-comparison allocations in the native LTO fixtures.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.5-1
 - Reuse desktop parser expressions without changing the caller's locale.
 - Replace notification wake polling with an interruptible monotonic wait.

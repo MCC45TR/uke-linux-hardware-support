@@ -8,7 +8,7 @@
 #include <iostream>
 namespace uke {
 Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limit) {
-    assert(args==std::vector<std::string>({"/usr/bin/kscreen-doctor","-o"})&&seconds==5&&limit==65536);
+    assert(args.size()==2&&args[0]=="/usr/bin/kscreen-doctor"&&args[1]=="-o"&&seconds==5&&limit==65536);
     return {0,"\033[01;32mOutput: \033[0m1 DP-1\nAuto Rotate Policy: incapable\nAutomatic brightness: supported, disabled\n"
         "\033[01;32mOutput: \033[0m2 DSI-1\nAuto Rotate Policy: inTabletMode\nAutomatic brightness: supported, enabled\n"};
 }
