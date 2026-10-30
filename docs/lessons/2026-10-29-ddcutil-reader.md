@@ -68,3 +68,24 @@
   operator-approved display window.
 - **Supersedes / superseded by:** Closes only the pending native build and
   inspected binary-payload gates in UKE-DDC-PKG-L001.
+
+## UKE-DDC-PKG-L003: Keep installed reader behavior separate from DDC forwarding
+
+On 30 October 2026, installed `ddcutil`/`libddcutil` `3.0.2-2.uke1.fc46`
+pass RPM verification and match the audited native CLI/library payloads exactly.
+On POCO Pad X1 running Linux `7.3.0-49`, root brightness GetVCP fails without
+the preceding empty-reader warnings. A locked raw request again receives eleven
+zero bytes despite successful I2C command status. A fixed-gray Wayland pattern
+and tablet-connected Konftel Cam10 show no visible brightness change for
+accepted 20/70 commands and the historical return request 45. Because GetVCP
+fails, 45 is not described as a verified original setting or restoration.
+
+After separately approved activation and reboot into installed Linux
+`7.3.0-54`, explicit root GetVCP still returns `VCP 10 ERR`, exit one. Camera
+USB disconnects prevent a fresh sustained optical comparison in that boot.
+No additional SetVCP is issued there. This closes the installed-package
+checkpoint but leaves DDC forwarding and monitor-control acceptance open.
+Raw media, timing, measurement limits and the failed native camera capture
+remain in the canonical private Juo lesson journal, UKE-DDC-L016-L017 and
+UKE-DP-REC-L029. No new source fix, local compilation or hardware success is
+inferred from these negative trials.
