@@ -1,5 +1,10 @@
 # Uke Control
 
+30 October 2026: release 2.3.1-5 recognizes the driver's automatic DSC policy
+and live DRM control interface. Policy and cached activation are reported
+separately; older boolean drivers retain their existing restrictions.
+See [DISPLAY.md](DISPLAY.md). Physical compression acceptance remains open.
+
 29 October 2026: version 1.18.0 adds a qualified 70/80 preset and a duration-only
 temporary-full preview. Temporary full activation remains unavailable without
 a reviewed device-side return path. See [CHARGING.md](CHARGING.md) for limits;

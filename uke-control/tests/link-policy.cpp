@@ -68,6 +68,50 @@ int main() {
         assert(compression.find("\"requested\":false")!=compression.npos&&compression.find(root.string())==compression.npos);
         put(dp/"uke_dp_dsc","1\n");
         assert(uke::links::compression_status(root).find("\"requested\":true")!=std::string::npos);
+        assert(uke::links::compression_status(root).find("\"requires_disconnected\":true")!=std::string::npos);
+        assert(uke::links::compression_value("on",1)=="1");
+        assert(uke::links::compression_value("off",1)=="0");
+        refuses([&]{uke::links::compression_value("auto",1);});
+        refuses([&]{uke::links::compression_value("on",3);});
+        refuses([&]{uke::links::compression_value("on;unexpected",2);});
+        put(dp/"uke_dp_dsc","auto\n");
+        assert(uke::links::compression_status(root).find("invalid_kernel_policy")!=std::string::npos);
+        const std::string live="version=1 active=1 dsc_active=0 dsc_control=2 dsc_failed=0\n";
+        put(dp/"uke_dp_stream_state",live);
+        compression=uke::links::compression_status(root);
+        assert(compression.find("\"control_available\":true")!=compression.npos);
+        assert(compression.find("\"driver_interface_version\":2")!=compression.npos);
+        assert(compression.find("\"policy\":\"auto\"")!=compression.npos);
+        assert(compression.find("\"requested\":true")!=compression.npos);
+        assert(compression.find("\"forced\":false")!=compression.npos);
+        assert(compression.find("\"dsc_active\":false")!=compression.npos);
+        assert(compression.find("\"requires_disconnected\":false")!=compression.npos);
+        assert(compression.find("\"live_change_supported\":true")!=compression.npos);
+        assert(uke::links::compression_value("auto",2)=="auto");
+        assert(uke::links::compression_value("on",2)=="1");
+        assert(uke::links::compression_value("off",2)=="0");
+        put(dp/"uke_dp_dsc","1\n");
+        put(dp/"uke_dp_stream_state","version=1 active=1 dsc_active=1 dsc_control=2\n");
+        compression=uke::links::compression_status(root);
+        assert(compression.find("\"forced\":true")!=compression.npos);
+        assert(compression.find("\"dsc_active\":true")!=compression.npos);
+        // A retained request can coexist with plain output after receiver failure.
+        put(dp/"uke_dp_stream_state","version=1 active=1 dsc_active=0 dsc_control=2 dsc_failed=1 dsc_fallbacks=1\n");
+        compression=uke::links::compression_status(root);
+        assert(compression.find("\"requested\":true")!=compression.npos);
+        assert(compression.find("\"dsc_active\":false")!=compression.npos);
+        for(const auto* bad:{"version=2 active=1 dsc_control=2", "version=1 dsc_control=3",
+                "version=1 dsc_control=-1", "version=1 dsc_control=2junk", "version=1 dsc_control=2 dsc_control=2",
+                "version=1 version=1 dsc_control=2"}) {
+            put(dp/"uke_dp_stream_state",bad);
+            assert(uke::links::compression_status(root).find("unsupported_driver_interface")!=std::string::npos);
+        }
+        for(const auto* uncertain:{"version=1 dsc_control=2", "version=1 active=1 dsc_active=2 dsc_control=2",
+                "version=1 active=0 dsc_active=1 dsc_control=2", "version=1 active=1 dsc_active=1 dsc_active=1 dsc_control=2"}) {
+            put(dp/"uke_dp_stream_state",uncertain);
+            assert(uke::links::compression_status(root).find("\"dsc_active\":null")!=std::string::npos);
+        }
+        put(dp/"uke_dp_stream_state",live);
         put(dp/"uke_dp_dsc","2\n");
         assert(uke::links::compression_status(root).find("invalid_kernel_policy")!=std::string::npos);
         const auto dp2=root/"sys/bus/platform/devices/dp2";put(dp2/"uke_dp_dsc","0\n");
