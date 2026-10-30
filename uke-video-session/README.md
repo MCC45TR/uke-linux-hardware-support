@@ -17,12 +17,17 @@ changes take priority. Missing capacity data preserves the allowed CPU mask;
 an unavailable power hold leaves the selected profile intact. Only descendant
 GPU processes from this launch receive scheduling hints.
 
-Manual controls on POCO Pad X1 with kernel 7.3.0-54, Chrome 156, VA 1.0.0-8 and
-Mesa 26.2.6-17 measured 70.9 compositor submissions/s during an explicit 1.25x
-4K60 stress trial, without waiting or resolution fallback. Drops remain at the
-75 fps target. This is processing headroom, not 70 distinct frames from normal
-60fps content. Packaged-launcher, optical presentation and HDR acceptance
-remain separate checks.
+Package 1.0.0-3.fc46, built in [COPR 11229819](https://copr.fedorainfracloud.org/coprs/build/11229819),
+was tested on POCO Pad X1 with kernel 7.3.0-54, Chrome 156, VA 1.0.0-8 and
+Mesa 26.2.6-17. A 180-second 1.25x 4K60 trial measured 70.48 compositor
+submissions/s without waiting or resolution fallback; drops remain at the
+75 fps target. This is headroom, not 70 distinct frames from normal 60 fps content.
+
+A 300-second normal-speed trial measured 59.94 submissions/s, 62 reported
+drops and no waiting, player error or resolution fallback. Actual video dimensions
+stayed 3840x2160; output was 2560x1440 at 74.997 Hz with HDR disabled. Native
+tracing confirmed CPU copying. Session exit restored balanced power; a manual
+profile change also remained effective. Optical cadence and HDR remain unverified.
 
 The implementation uses the standard
 [power-profile hold API](https://upower.pages.freedesktop.org/power-profiles-daemon/gdbus-org.freedesktop.UPower.PowerProfiles.html)
