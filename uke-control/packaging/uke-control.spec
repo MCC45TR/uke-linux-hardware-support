@@ -187,6 +187,10 @@ fi
 - Respect updater transaction policy and the selected userdata boot profile during channel synchronization.
 - Keep activation pending until the package-selected kernel is running.
 
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-5
+- Recognize automatic DSC policy and versioned live DRM control.
+- Separate requested, forced and cached active compression state.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-4
 - Report native RPM transaction problems and check system-repository lock admission.
 

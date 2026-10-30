@@ -1,17 +1,25 @@
 # Display controls and raw front-color data
 
-## Experimental DisplayPort compression, 25 October 2026
+## DisplayPort compression policy, 30 October 2026
 
-`uke-control display compression` reads the requested DSC policy and cached
-driver state. A missing or ambiguous kernel provider is reported as unavailable;
-the query performs no AUX transfer or firmware request. With the matching
-kernel, `sudo uke-control display compression on|off` changes the root-owned
-request only while the display is disconnected. A matched readback describes
-the requested policy, not successful link activation. It is not persisted.
+`uke-control display compression` reports the driver interface version, policy,
+requested/forced state and cached DSC activation separately. Driver interface 2
+accepts `sudo uke-control display compression auto|on|off` while connected and
+uses DRM atomic state, link-status and hotplug handling for the transition.
+`auto` allows the driver to choose compression for the link budget; `on`
+requests a forced compressed stream and `off` requests plain output. The
+command does not manage KWin layouts, USB roles or Type-C pins. Kernel errors
+remain errors and a matched readback is policy evidence only. No setting is
+persisted by this command. Physical DSC/FEC acceptance remains separate.
+
+Older boolean drivers retain disconnected-only on/off requests; automatic
+policy is refused without interface 2. Unknown or malformed interface versions
+are unavailable. A missing or inconsistent activation snapshot remains unknown.
+The query reads cached files only and performs no AUX or firmware request.
 
 The candidate pipeline is RGB 8/10 bpc at 8 compressed bits per pixel, with
-checked receiver DSC/FEC capabilities and one or two bounded slices. It is off
-by default. Cached `dsc_active` means the last enable sequence observed FEC
+checked receiver DSC/FEC capabilities and one or two bounded slices. The
+selected kernel owns its default policy. Cached `dsc_active` means the last enable sequence observed FEC
 decode enable and received the DSC-enable acknowledgment; it is not an optical
 or sustained-error acceptance result. `display bits` remains the separate
 source-stream report. A new monitor still requires a recoverable physical test.
