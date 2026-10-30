@@ -268,7 +268,7 @@
     "material-decoration": "uke-material-decoration"
   },
   "native_versions": {
-    "uke-control": "2.3.0",
+    "uke-control": "2.5.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.5",
     "uke-battery-observer": "1.4.0",

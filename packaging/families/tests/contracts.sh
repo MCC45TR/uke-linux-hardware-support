@@ -55,6 +55,8 @@ if [[ -f $hw_spec ]]; then
     ! grep -Fq /etc/fastfetch/ "$hw_spec"
 fi
 grep -Fx 'Version: 2.5.0' uke-control/packaging/uke-control.spec
+control_version=$(awk '/^Version:/ {print $2}' uke-control/packaging/uke-control.spec)
+jq -e --arg version "$control_version" '.native_versions["uke-control"] == $version' packaging/families/families.json >/dev/null
 grep -Fx 'Version: 1.0.16' uke-desktop-integration/packaging/uke-adaptive-display.spec
 grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then
