@@ -21,6 +21,9 @@ These candidates receive three QTI retry attempts rather than seven.
 The currently running legacy kernel can still be accepted, and explicit manual
 maintenance remains separate. Automatic staging refuses an older candidate
 without the reset capability instead of silently claiming hang recovery.
+The same admission applies to explicit alternating `apply` and `check` calls,
+so older RPM scriptlets cannot bypass it. The separate current-slot maintenance
+and restoration commands keep their existing explicit single-slot limits.
 
 The matching kernel arms the Gunyah watchdog at driver probe, gives userspace
 180 seconds to take ownership, enables the original systemd watchdog at 30

@@ -521,13 +521,17 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     auto saved=decode(file(statefile));need(saved.good_image==good_hash,"Running boot bytes differ from the accepted baseline");
     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
     auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
-    if(boot_reset)bytes=userdata_boot_reset(std::move(bytes),manifest);
+    const bool require_reset=boot_reset || action=="apply" || action=="check";
+    if(require_reset) {
+        bytes=userdata_boot_reset(std::move(bytes),manifest);
+        require_boot_reset_guard();
+    }
     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next));
     saved.candidate_image=digest(bytes);
     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();
     need(valid_boot_id(boot_id),"Malformed staging boot identity");saved.staged_boot_id=boot_id;verify_early_firmware();
     std::vector<SlotMetadata*> changed;
-    for(auto &disk:disks)if(disk->gpt->prepare(running,target,boot_reset?3:7))changed.push_back(disk.get());
+    for(auto &disk:disks)if(disk->gpt->prepare(running,target,require_reset?3:7))changed.push_back(disk.get());
     need(!changed.empty(),"No consistent QTI slot metadata found");
     if(action=="check"){std::cout<<"Matched userdata bundle, running Image, inactive slot, GPTs, early firmware and UFS boot LUN checks passed; no hardware writes\n";return;}
     need(charging(),"Verified battery must be at least 50%, or at least 30% with external power");
