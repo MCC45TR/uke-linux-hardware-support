@@ -16,6 +16,8 @@ int main(){
     assert(syscall(SYS_capget,&header,data)==0);
     for(const auto& word:data)assert(!word.effective&&!word.permitted&&!word.inheritable);
     struct statvfs filesystem{};assert(statvfs("/",&filesystem)==0 && (filesystem.f_flag&ST_RDONLY));
+    assert(statvfs("/proc",&filesystem)==0 && (filesystem.f_flag&ST_RDONLY));
+    assert(open("/proc/sys/kernel/hostname",O_WRONLY)<0 && errno==EROFS);
     assert(open("/etc/should-not-exist",O_CREAT|O_WRONLY,0600)<0 && errno==EROFS);
     assert(open("/proc/1/mem",O_RDONLY)<0 && (errno==EACCES||errno==EPERM));
     assert(open("/dev/sda",O_RDONLY)<0 && errno==ENOENT);

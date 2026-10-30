@@ -251,7 +251,7 @@ int session(Mounts& mounts) {
         try {
             bind_parent_lifetime(parent_pidfd.n);
             // /proc must be mounted by a process inside the new PID namespace.
-            need(::mount("proc",(mounts.root/"proc").c_str(),"proc",MS_NOSUID|MS_NODEV|MS_NOEXEC,nullptr)==0,"Cannot mount private process view");
+            need(::mount("proc",(mounts.root/"proc").c_str(),"proc",MS_RDONLY|MS_NOSUID|MS_NODEV|MS_NOEXEC,nullptr)==0,"Cannot mount private process view");
             const pid_t shell=fork();need(shell>=0,"Cannot start target shell");
             if(shell>0) {
                 // This trusted namespace init never executes target code.

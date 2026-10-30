@@ -69,7 +69,9 @@ staging directory even after a process crash. Normal inspection restores the
 original mount namespace before returning or scanning another partition.
 
 Execution keeps the root read-only and nosuid/nodev. It provides private runtime
-and temporary tmpfs mounts, a private process view and read-only sysfs. Only null,
+and temporary tmpfs mounts, a read-only private process view and read-only sysfs.
+Read-only proc prevents UID-0 writes to global sysctls without relying on every
+individual proc handler to check capabilities. Only null,
 zero, random, urandom and tty are bind-mounted from host devices; there are no host
 block devices, home directories, runtime sockets or copied resolver credentials.
 A new network namespace has no configured connectivity. `/bin/bash --noprofile
