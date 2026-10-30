@@ -1,8 +1,8 @@
 Name: uke-control
-Version: 2.3.2
-Release: 1%{?dist}
+Version: 2.4.0
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
-License: MIT AND Apache-2.0
+License: MIT AND Apache-2.0 AND (GPL-2.0-only WITH Linux-syscall-note)
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
 Source0: %{name}-%{version}.tar.gz
 ExclusiveArch: aarch64 x86_64
@@ -61,7 +61,6 @@ package selections. Numeric readings alone do not establish physical acceptance.
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
 install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
-install -Dm755 build/torch-access %{buildroot}%{_libexecdir}/uke-control/torch-access
 install -Dm644 packaging/91-uke-control-torch.rules %{buildroot}%{_udevrulesdir}/91-uke-control-torch.rules
 install -Dm644 packaging/org.senemos.Uke.Torch.conf %{buildroot}%{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
 install -Dm644 packaging/org.senemos.Uke.Torch.service %{buildroot}%{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service
@@ -105,8 +104,12 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %make_build check
 
 %pre
-# Stop the previous root worker while its matching cleanup executable still exists.
-/usr/bin/systemctl stop uke-control-flashlight.service >/dev/null 2>&1 || :
+# Stop both old brokers before replacing their authorization policy and helpers.
+/usr/bin/systemctl stop uke-control-flashlight.service uke-control-rgb.service >/dev/null 2>&1 || :
+# Revoke the old sysfs grant before replacing its helper and SELinux policy.
+if [ -x %{_libexecdir}/uke-control/torch-access ]; then
+    %{_libexecdir}/uke-control/torch-access --remove || exit 1
+fi
 
 %post
 /usr/bin/systemd-sysusers %{_sysusersdir}/uke-control-rgb.conf || exit 1
@@ -118,14 +121,12 @@ if /usr/bin/systemctl -q is-active dbus.service; then
 fi
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 /usr/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-%{_libexecdir}/uke-control/torch-access || exit 1
-/usr/bin/udevadm trigger --action=add --subsystem-match=leds --sysname-match=uke:white:torch >/dev/null 2>&1 || :
+/usr/bin/udevadm trigger --action=add --subsystem-match=misc --sysname-match=uke-torch >/dev/null 2>&1 || :
 /usr/bin/udevadm trigger --action=add --subsystem-match=misc --sysname-match=uke-rgb >/dev/null 2>&1 || :
 %systemd_user_post uke-control-moisture-notify.service
 %preun
 %systemd_preun uke-control-rgb.service
 %systemd_preun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
-if [ "$1" = 0 ]; then %{_libexecdir}/uke-control/torch-access --remove || exit 1; fi
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
 %systemd_postun uke-control-rgb.service
@@ -133,6 +134,8 @@ if [ "$1" = 0 ]; then
     if [ -c /dev/uke-rgb ] && [ ! -L /dev/uke-rgb ]; then chown root:root /dev/uke-rgb; chmod 0600 /dev/uke-rgb; fi
     %{_sbindir}/semodule -r uke_control_rgb >/dev/null 2>&1 || :
     %{_sbindir}/restorecon /dev/uke-rgb >/dev/null 2>&1 || :
+    if [ -c /dev/uke-torch ] && [ ! -L /dev/uke-torch ]; then chown root:root /dev/uke-torch; chmod 0600 /dev/uke-torch; fi
+    %{_sbindir}/restorecon /dev/uke-torch >/dev/null 2>&1 || :
 fi
 %systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
@@ -140,10 +143,9 @@ fi
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+%doc README.md CHARGING.md DISPLAY.md DISPLAY-EYE-CARE.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md LIGHT-INTERFACES.md OWNERSHIP.md CLI.md BOOT-LAYOUT.md
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
-%{_libexecdir}/uke-control/torch-access
 %{_udevrulesdir}/91-uke-control-torch.rules
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
 %{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service
@@ -183,6 +185,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-1
+- Transport torch requests through the kernel-owned lifetime and status ABI.
+- Remove sysfs write grants and the userspace brightness/cleanup policy.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.2-1
 - Respect updater transaction policy and the selected userdata boot profile during channel synchronization.
 - Keep activation pending until the package-selected kernel is running.

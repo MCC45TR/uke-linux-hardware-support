@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: MIT
 #include "torch.hpp"
 #include "cli.hpp"
+#include "../shared/uke-torch.h"
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
-#include <grp.h>
 #include <iostream>
-#include <linux/magic.h>
 #include <memory>
 #include <pwd.h>
 #include <selinux/context.h>
 #include <selinux/selinux.h>
 #include <stdexcept>
-#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/vfs.h>
 #include <systemd/sd-bus.h>
 #include <unistd.h>
 namespace uke::torch {
@@ -30,82 +28,50 @@ bool labeled(int fd,const char* expected) {
     if(label)freecon(label);
     return ok;
 }
-void sysfs_file(int fd) {
-    struct statfs filesystem{};struct stat info{};
-    need(fd>=0 && !fstatfs(fd,&filesystem) && filesystem.f_type==SYSFS_MAGIC &&
-         !fstat(fd,&info) && S_ISREG(info.st_mode),"Torch target is not a regular sysfs attribute");
-}
-lights::Source admitted() {
-    auto result=lights::discover(false);
-    need(!result.path.empty(),result.reason);return result;
-}
-void write_level(int fd,unsigned level) {
-    need(level<=2,"Torch current step exceeds the admitted 20 mA ceiling");
-    need(lseek(fd,0,SEEK_SET)==0,"Cannot seek torch attribute");
-    const std::string value=std::to_string(level)+"\n";
-    ssize_t n;do{n=write(fd,value.data(),value.size());}while(n<0 && errno==EINTR);
-    need(n==ssize_t(value.size()),"Torch write failed: "+std::string(std::strerror(errno)));
+uke_torch_status read_status(int fd) {
+    uke_torch_status value{};
+    need(ioctl(fd,UKE_TORCH_STATUS,&value)==0,"Kernel torch status unavailable");
+    need(value.abi==UKE_TORCH_ABI && value.requested_percent>=1 && value.requested_percent<=100 &&
+         value.brightness<=2 && value.brightness_valid<=1 && value.max_microamp==UKE_TORCH_MAX_UA &&
+         value.suspended<=1 && value.last_io_error<=0 && value.last_io_error>=-4095 && !value.reserved,
+         "Kernel torch status failed ABI validation");
+    return value;
 }
 }
 Actuator::Actuator() {
     const auto* user=getpwnam("uke-rgb");
     need(user && user->pw_uid>0 && geteuid()==user->pw_uid,"Run the torch through its dedicated service");
-    source=admitted();
-    Fd lock{open("/run/uke-control-torch/lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600)};
+    Fd device{open("/dev/uke-torch",O_RDWR|O_NOFOLLOW|O_CLOEXEC)};
     struct stat info{};
-    need(lock.n>=0 && !fstat(lock.n,&info) && S_ISREG(info.st_mode) &&
-         info.st_uid==geteuid() && info.st_nlink==1 && !(info.st_mode&0077),"Invalid torch ownership lock");
-    need(flock(lock.n,LOCK_EX|LOCK_NB)==0,"Another torch writer is active");
-    Fd brightness{open((source.path/"brightness").c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC)};
-    sysfs_file(brightness.n);
-    need(!fstat(brightness.n,&info) && info.st_uid==0 && info.st_gid==getegid() &&
-         (info.st_mode&0777)==0664 && labeled(brightness.n,"uke_torch_brightness_t"),
-         "Torch attribute lacks the admitted ownership or SELinux label");
-    write_level(brightness.n,0);
-    need(admitted().brightness==0,"Torch startup-off readback differs");
-    lock_fd=lock.release();brightness_fd=brightness.release();
+    need(device.n>=0 && !fstat(device.n,&info) && S_ISCHR(info.st_mode) &&
+         info.st_uid==0 && info.st_gid==getegid() && (info.st_mode&0777)==0660 &&
+         labeled(device.n,"uke_torch_device_t"),"Kernel torch device lacks the admitted ownership or SELinux label");
+    (void)read_status(device.n);
+    fd=device.release();
 }
 Actuator::~Actuator() {
-    if(brightness_fd>=0) {
-        try{write_level(brightness_fd,0);}catch(const std::exception& e){std::cerr<<e.what()<<'\n';}
-        close(brightness_fd);
-    }
-    if(lock_fd>=0)close(lock_fd);
+    if(fd>=0)close(fd);
 }
-void Actuator::apply(unsigned level) {
-    try {
-        need(admitted().path==source.path,"Torch provider changed");
-        write_level(brightness_fd,level);
-        need(admitted().brightness==level,"Torch brightness readback differs");
-    } catch(...) {try{write_level(brightness_fd,0);}catch(...){}throw;}
+void Actuator::request(unsigned command,unsigned value) {
+    const uke_torch_request input{UKE_TORCH_ABI,value,{0,0}};
+    if(ioctl(fd,command,&input)<0)
+        throw std::runtime_error("Kernel torch request refused: "+std::string(std::strerror(errno)));
 }
 void Actuator::set(unsigned percent) {
     need(percent<=100,"Torch percentage exceeds 100");
-    if(percent)requested=percent;
-    apply(lights::level(percent,2));
+    request(UKE_TORCH_SET,percent);
 }
-void Actuator::enable(bool on){apply(on?lights::level(requested,2):0);}
+void Actuator::enable(bool on){request(UKE_TORCH_ENABLE,on?1:0);}
 std::string Actuator::status() {
-    need(admitted().path==source.path,"Torch provider changed");
-    auto result=lights::snapshot();
-    const auto position=result.find(",\"max_microamp\":");
-    need(position!=std::string::npos,"Invalid torch status");
-    result.insert(position,",\"requested_percent\":"+std::to_string(requested));return result;
-}
-int prepare_access(bool remove) {
-    need(geteuid()==0,"Torch permission setup is reserved for package and device initialization");
-    auto source=lights::discover(false);
-    if(source.path.empty())return 0;
-    need(is_selinux_enabled()==1 && security_getenforce()==1,"Torch permissions require SELinux Enforcing");
-    const auto* group=getgrnam("uke-rgb");need(group && group->gr_gid>0,"LED service group unavailable");
-    Fd fd{open((source.path/"brightness").c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC)};
-    sysfs_file(fd.n);
-    need(labeled(fd.n,"sysfs_t") || labeled(fd.n,"uke_torch_brightness_t"),"Unexpected torch attribute label");
-    const char* context=remove?"system_u:object_r:sysfs_t:s0":"system_u:object_r:uke_torch_brightness_t:s0";
-    need(fsetfilecon(fd.n,context)==0,"Cannot label the admitted torch attribute");
-    need(fchown(fd.n,0,remove?0:group->gr_gid)==0 && fchmod(fd.n,remove?0644:0664)==0,
-         "Cannot set the admitted torch permissions");
-    return 0;
+    const auto value=read_status(fd);
+    return "{\"schema\":\"org.uke.control.lights.v1\",\"physical_acceptance\":null,\"flashlight\":{\"available\":true,\"policy_owner\":\"kernel\",\"on\":"+
+        std::string(value.brightness_valid?(value.brightness?"true":"false"):"null")+
+        ",\"brightness_percent\":"+(value.brightness_valid?std::to_string(value.brightness*50):"null")+
+        ",\"requested_percent\":"+std::to_string(value.requested_percent)+
+        ",\"max_microamp\":"+std::to_string(value.max_microamp)+",\"request_min_percent\":1,\"request_max_percent\":100,\"request_step_percent\":1"+
+        ",\"brightness_rounding\":\"up_to_provider_step\",\"native_max_brightness\":2,\"brightness_step_percent\":50,\"max_seconds\":null,\"suspended\":"+
+        (value.suspended?"true":"false")+",\"kernel_io_error\":"+std::to_string(value.last_io_error)+
+        ",\"reason\":null},\"rgb\":{\"available\":false,\"on\":null,\"brightness_percent\":null}}\n";
 }
 int command(int argc,char** argv,bool as_json) {
     const bool status=argc==1 && std::string_view(argv[0])=="status";
@@ -117,9 +83,9 @@ int command(int argc,char** argv,bool as_json) {
         percent=lights::percent(argv[1]);
     }
     if(!status)need(geteuid()!=0,"Run torch requests as the active desktop user; sudo is not needed");
-    sd_bus* raw=nullptr;need(sd_bus_open_system(&raw)>=0,"System bus unavailable");
-    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);
-    sd_bus_set_method_call_timeout(raw,3000000);
+    sd_bus* raw=lights::client_bus();
+    sd_bus_set_method_call_timeout(raw,status?3000000:130000000);
+    need(sd_bus_set_allow_interactive_authorization(raw,!status)>=0,"Cannot set system authorization policy");
     sd_bus_message* answer=nullptr;sd_bus_error error=SD_BUS_ERROR_NULL;
     const char* method=status?"Status":on||off?"SetEnabled":"SetBrightness";
     const int result=status?sd_bus_call_method(raw,bus_name,object_path,interface,method,&error,&answer,""):

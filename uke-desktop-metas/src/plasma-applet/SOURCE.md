@@ -27,3 +27,22 @@ The package check loads the actual QML component with the original Plasma
 imports, without creating the widget or executing device commands. Release 13
 sizes the confirmation dialog directly; the label's implicit width is read-only
 on the tested original Fedora Qt 6.11 runtime.
+
+30 October 2026 source candidate, release 25: light controls use a small native
+Qt D-Bus client on a dedicated persistent connection. It exposes only fixed
+status, torch percentage/enable and RGB-test methods; it cannot access a device,
+sysfs path or arbitrary bus destination. The original system authorization window
+opens for the initial light change. Control binds a fixed two-minute grant to
+that exact connection. Closing the popup closes the connection; another process
+or widget instance has a different peer identity. Brightness is applied once
+when the settings dialog is accepted. An unknown kernel output state is shown
+as unavailable, rather than as an assumed zero brightness.
+
+Release 26 supersedes the earlier test-only RGB scope: decimal R/G/B (0–255)
+and brightness (0–100) are fixed typed requests through the same connection.
+Torch accepts direct integer entry from 1 to 100. Kernel quantization and
+camera/battery priority are preserved; no LED sysfs permission is granted.
+
+The QML module is part of the removable Uke applet package and uses original
+Fedora Qt/Plasma. No KDE application is forked. Native private-bus and QML-load
+checks are separate from a live authentication-window or physical light trial.

@@ -9,7 +9,7 @@ LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check check-rgb-policy check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
-all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
+all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/selinux/uke_control_rgb.pp
 build/libuke-control.so.0: src/battery.cpp src/battery.hpp src/nfc.cpp src/nfc.hpp
 build/test-battery: tests/battery.cpp src/battery.cpp src/battery.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/battery.cpp src/battery.cpp $(shell pkg-config --libs libsystemd) -o $@
@@ -20,14 +20,13 @@ build:
 	mkdir -p build
 build/uke-control-rgb: src/rgb-service.cpp src/rgb.hpp shared/uke-rgb.h build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/rgb-service.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux)
-build/torch-access: src/torch-access.cpp build/libuke-control.so.0
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $< -Lbuild -l:libuke-control.so.0
 build/selinux/uke_control_rgb.pp: packaging/selinux/uke_control_rgb.te packaging/selinux/uke_control_rgb.fc | build
 	mkdir -p build/selinux
 	cp packaging/selinux/uke_control_rgb.{te,fc} build/selinux/
 	$(MAKE) -C build/selinux -f /usr/share/selinux/devel/Makefile uke_control_rgb.pp
 build/libuke-control.so.0: src/cli.cpp src/cli.hpp src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/cli.cpp src/backend.cpp src/battery.cpp src/nfc.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
+build/libuke-control.so.0: shared/uke-torch.h
 build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
 build/uke-control-packages: src/packages.cpp src/cli.cpp src/cli.hpp src/fedora-target.hpp | build
@@ -76,6 +75,8 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	else LD_LIBRARY_PATH=build timeout 20s dbus-run-session -- build/test-rgb-bus; fi
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/light-client.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd) -o build/test-light-client
+	LD_LIBRARY_PATH=build build/test-light-client
 	bash tests/light-worker.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp -o build/test-plasma
 	build/test-plasma
@@ -136,13 +137,14 @@ check-copr-trigger:
 build/test-sensor-proxy: tests/sensor-proxy.cpp src/sensors.cpp src/front-color.cpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $< src/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
 validate:
+	bash tests/kernel-lights-source.sh
 	test -s src/backend.cpp -a -s src/diagnostics.cpp -a -s packaging/uke-control.spec
 	cmp shared/ssc-discovery.cpp ../uke-sensors/src/ssc-discovery.cpp
 	cmp shared/ssc-sample.cpp ../uke-sensors/src/ssc-sample.cpp
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.3.2/#' -czf "$$top/SOURCES/uke-control-2.3.2.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.4.0/#' -czf "$$top/SOURCES/uke-control-2.4.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md DISPLAY-EYE-CARE.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md LIGHT-INTERFACES.md OWNERSHIP.md CLI.md BOOT-LAYOUT.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

@@ -8,6 +8,7 @@ import org.kde.plasma.components as PC
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.plasma5support as Plasma5Support
+import org.senemos.uke.controls 1.0 as Uke
 import "Control.js" as Control
 
 PlasmoidItem {
@@ -24,6 +25,11 @@ PlasmoidItem {
     property string requestedAction: ""
 
     function execute(action, values) {
+        if (Control.isLightAction(action)) {
+            if (lightClient.request(action, values || [])) ++pending
+            else errorText = i18n("Could not contact the tablet controls service.")
+            return
+        }
         const command = Control.command(action, values)
         if (!command) return
         const source = "UKE_TRAY_REQUEST=" + (++serial) + " " + command
@@ -66,7 +72,7 @@ PlasmoidItem {
         } else {
             if (data["exit code"] !== 0)
                 errorText = i18n("The change failed or authorization was cancelled.")
-            refresh()
+            if (root.expanded) refresh()
         }
     }
     function role() {
@@ -90,7 +96,32 @@ PlasmoidItem {
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
     toolTipMainText: i18n("Uke Tablet Controls")
     toolTipSubText: i18n("Display, cover and USB")
-    onExpandedChanged: { if (expanded) refresh() }
+    onExpandedChanged: { if (expanded) refresh(); else lightClient.close() }
+
+    Uke.LightClient {
+        id: lightClient
+        onCompleted: function(action, output, error) {
+            --root.pending
+            if (error.length > 0) {
+                if (action === "lights") root.lights = ({})
+                else if (action === "rgb") root.rgb = ({})
+                if (root.expanded) root.errorText = action === "lights" || action === "rgb"
+                    ? i18n("Could not read tablet state. Refresh to try again.")
+                    : i18n("The change failed or authorization was cancelled.")
+            } else if (action === "lights" || action === "rgb") {
+                try {
+                    const value = Control.parse(action, output)
+                    if (action === "lights") root.lights = value
+                    else root.rgb = value
+                } catch (error) {
+                    if (action === "lights") root.lights = ({})
+                    else root.rgb = ({})
+                    root.errorText = i18n("Could not read tablet state. Refresh to try again.")
+                }
+            }
+            if (action !== "lights" && action !== "rgb" && root.expanded) root.refresh()
+        }
+    }
 
     Timer {
         interval: 2000
@@ -215,8 +246,10 @@ PlasmoidItem {
             ControlRow {
                 title: i18n("Flashlight")
                 iconName: "flashlight-off"
-                description: i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight?.brightness_percent ?? 0)
-                available: root.lights.flashlight?.available === true
+                description: Number.isInteger(root.lights.flashlight?.brightness_percent)
+                    ? i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight.brightness_percent)
+                    : i18n("Applied state unavailable")
+                available: root.lights.flashlight?.available === true && typeof root.lights.flashlight?.on === "boolean"
                 busy: root.pending > 0
                 action: Component {
                     RowLayout {
@@ -231,6 +264,18 @@ PlasmoidItem {
                             onClicked: lightSettings.configure()
                         }
                     }
+                }
+            }
+            ControlRow {
+                title: i18n("RGB color and brightness")
+                iconName: "color-management"
+                description: root.rgb.available === true && Array.isArray(root.rgb.requested_color_rgb)
+                    ? i18n("Requested: %1 %2 %3 at %4%", root.rgb.requested_color_rgb[0], root.rgb.requested_color_rgb[1], root.rgb.requested_color_rgb[2], root.rgb.requested_percent)
+                    : i18n("State unavailable")
+                available: root.rgb.available === true && root.rgb.kernel_io_error === 0
+                busy: root.pending > 0
+                action: Component {
+                    PC.Button { text: i18n("Configure"); onClicked: rgbSettings.configure() }
                 }
             }
             ControlRow {
@@ -264,22 +309,54 @@ PlasmoidItem {
             standardButtons: QQC2.Dialog.Ok | QQC2.Dialog.Cancel
             contentItem: ColumnLayout {
                 PC.Label { text: i18n("Brightness: %1%", Math.round(lightBrightness.value)) }
-                QQC2.Slider {
+                QQC2.SpinBox {
                     id: lightBrightness
                     Layout.fillWidth: true
                     from: 1
                     to: 100
                     stepSize: 1
-                    snapMode: QQC2.Slider.SnapAlways
+                    editable: true
                     Accessible.name: i18n("Brightness")
                 }
                 PC.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
-                    text: i18n("Hardware has two lit steps: 1–99% requests use 50%; 100% uses 100%. Maximum 20 mA. No automatic timeout; turns off before sleep.")
+                    text: i18n("Every integer from 1 to 100 is accepted. Hardware applies 50% for requests 1–50 and 100% for 51–100. Maximum 20 mA. Turns off before sleep.")
                 }
             }
             onAccepted: root.change("flashlightSet", [Math.round(lightBrightness.value)])
+        }
+        QQC2.Dialog {
+            id: rgbSettings
+            function configure() {
+                redValue.value = root.rgb.requested_color_rgb[0]
+                greenValue.value = root.rgb.requested_color_rgb[1]
+                blueValue.value = root.rgb.requested_color_rgb[2]
+                rgbBrightness.value = root.rgb.requested_percent
+                open()
+            }
+            anchors.centerIn: parent
+            width: Math.min(parent.width, Kirigami.Units.gridUnit * 24)
+            modal: true
+            title: i18n("RGB color and brightness")
+            standardButtons: QQC2.Dialog.Ok | QQC2.Dialog.Cancel
+            contentItem: ColumnLayout {
+                PC.Label { text: i18n("Red") }
+                QQC2.SpinBox { id: redValue; from: 0; to: 255; editable: true; Layout.fillWidth: true; Accessible.name: i18n("Red") }
+                PC.Label { text: i18n("Green") }
+                QQC2.SpinBox { id: greenValue; from: 0; to: 255; editable: true; Layout.fillWidth: true; Accessible.name: i18n("Green") }
+                PC.Label { text: i18n("Blue") }
+                QQC2.SpinBox { id: blueValue; from: 0; to: 255; editable: true; Layout.fillWidth: true; Accessible.name: i18n("Blue") }
+                PC.Label { text: i18n("Brightness (%)") }
+                QQC2.SpinBox { id: rgbBrightness; from: 0; to: 100; editable: true; Layout.fillWidth: true; Accessible.name: i18n("RGB brightness") }
+                PC.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: i18n("Brightness follows the device limit. Zero restores automatic colors. Camera and low-battery warnings take priority over a manual color.")
+                }
+                PC.Button { text: i18n("Restore automatic colors"); onClicked: { rgbSettings.close(); root.change("rgbAuto") } }
+            }
+            onAccepted: root.change("rgbSet", [redValue.value, greenValue.value, blueValue.value, rgbBrightness.value])
         }
         QQC2.Dialog {
             id: confirmation

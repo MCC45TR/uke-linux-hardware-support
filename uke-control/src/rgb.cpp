@@ -27,23 +27,25 @@ int command(int argc,char** argv,bool as_json) {
     const bool status=argc==1 && std::string_view(argv[0])=="status";
     const bool test=argc==1 && std::string_view(argv[0])=="test";
     const bool off=argc==1 && (std::string_view(argv[0])=="off" || std::string_view(argv[0])=="auto");
-    Color color{};unsigned percent=0;
+    Color color{};unsigned percent=0;bool channels=false;
     if(!status&&!test&&!off) {
         need(argc>=2 && std::string_view(argv[0])=="set","Usage: uke-control led status|auto|off|test|set HEX [BRIGHTNESS]");
         if(argc==2 || argc==3) {color=parse_hex(argv[1]);percent=argc==3?lights::percent(argv[2]):100;}
         else if(argc==4 || argc==5) {
+            channels=true;
             for(unsigned i=0;i<3;++i)color[i]=lights::color(argv[i+1]);
             percent=argc==5?lights::percent(argv[4]):100;
-        } else throw std::runtime_error("Usage: uke-control led set #RRGGBB [0..100]");
+        } else throw std::runtime_error("Usage: uke-control led set #RRGGBB [0..100] | set R G B [0..100]");
     }
     if(!status)need(geteuid()!=0,"Run RGB requests as the active desktop user; sudo is not needed");
-    sd_bus* raw=nullptr;need(sd_bus_open_system(&raw)>=0,"System bus unavailable");
-    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);
-    sd_bus_set_method_call_timeout(raw,3000000);
+    sd_bus* raw=lights::client_bus();
+    sd_bus_set_method_call_timeout(raw,status?3000000:130000000);
+    need(sd_bus_set_allow_interactive_authorization(raw,!status)>=0,"Cannot set system authorization policy");
     sd_bus_message* answer=nullptr;sd_bus_error error=SD_BUS_ERROR_NULL;
-    const char* method=status?"Status":test?"TestColors":off?"Automatic":"SetColor";
+    const char* method=status?"Status":test?"TestColors":off?"Automatic":channels?"SetRgb":"SetColor";
     const int result=status||test||off?
         sd_bus_call_method(raw,bus_name,object_path,interface,method,&error,&answer,""):
+        channels?sd_bus_call_method(raw,bus_name,object_path,interface,method,&error,&answer,"uuuu",color[0],color[1],color[2],percent):
         sd_bus_call_method(raw,bus_name,object_path,interface,method,&error,&answer,"su",hex(color).c_str(),percent);
     std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(answer,sd_bus_message_unref);
     const std::string message=error.message?error.message:"RGB service unavailable";sd_bus_error_free(&error);

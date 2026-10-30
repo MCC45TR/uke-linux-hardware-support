@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "2.3.2",
-      "release": 1,
+      "version": "2.4.0",
+      "release": 2,
       "requires": [
-        "uke-control = 2.3.2-1%{?dist}"
+        "uke-control = 2.4.0-2%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -193,7 +193,7 @@
     {
       "name": "uke-metas",
       "version": "1.4.0",
-      "release": 4,
+      "release": 6,
       "requires": [
         "uke-core-meta >= 1.0.6-7"
       ],
@@ -267,7 +267,7 @@
     "material-decoration": "uke-material-decoration"
   },
   "native_versions": {
-    "uke-control": "2.3.2",
+    "uke-control": "2.4.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.6",
     "uke-battery-observer": "1.4.0",
@@ -296,14 +296,14 @@
     "uke-battery-observer": "11.fc46",
     "accountsservice": "16.fc46",
     "material-decoration": "7.fc46",
-    "uke-desktop-metas": "24.fc46",
+    "uke-desktop-metas": "26.fc46",
     "uke-core-meta": "8.fc46",
     "uke-proximity-capture": "6.fc46",
     "uke-speaker-controls": "4.fc46",
     "uke-displayport-audio": "8.fc46",
     "uke-vaapi-v4l2": "8.fc46",
     "uke-mesa-libclc22-spirv": "7.fc46",
-    "uke-control": "1.fc46",
+    "uke-control": "2.fc46",
     "pipewire": "2.fc46",
     "uke-speaker-orientation": "5.fc46",
     "uke-speaker-firmware": "2.fc46"

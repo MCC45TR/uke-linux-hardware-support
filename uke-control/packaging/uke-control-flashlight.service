@@ -1,19 +1,15 @@
 [Unit]
-Description=Uke Control torch request broker
-After=dbus.service
-Before=sleep.target
-Conflicts=sleep.target
-ConditionPathExists=/sys/class/leds/uke:white:torch/brightness
+Description=Uke Control kernel torch request broker
+After=dbus.service dev-uke\x2dtorch.device
+BindsTo=dev-uke\x2dtorch.device
+ConditionPathExists=/dev/uke-torch
 
 [Service]
 Type=dbus
 BusName=org.senemos.Uke.Torch
 User=uke-rgb
 Group=uke-rgb
-RuntimeDirectory=uke-control-torch
-RuntimeDirectoryMode=0700
 ExecStart=/usr/libexec/uke-control/rgb-led --torch
-ExecStopPost=/usr/libexec/uke-control/rgb-led --torch-off
 TimeoutStartSec=5
 TimeoutStopSec=3
 Restart=no
@@ -23,7 +19,6 @@ AmbientCapabilities=
 ProtectSystem=strict
 ProtectHome=yes
 ProtectKernelTunables=yes
-ReadWritePaths=/sys/class/leds/uke:white:torch/brightness
 ProtectKernelModules=yes
 ProtectKernelLogs=yes
 ProtectControlGroups=yes
@@ -33,4 +28,5 @@ RestrictRealtime=yes
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
 DevicePolicy=closed
+DeviceAllow=/dev/uke-torch rw
 UMask=0077

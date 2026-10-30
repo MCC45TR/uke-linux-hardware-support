@@ -7,10 +7,8 @@ inline constexpr const char* object_path="/org/senemos/Uke/Torch";
 inline constexpr const char* interface="org.senemos.Uke.Torch1";
 inline constexpr const char* action="org.senemos.uke.torch.control";
 class Actuator {
-    int lock_fd=-1,brightness_fd=-1;
-    lights::Source source;
-    unsigned requested=100;
-    void apply(unsigned level);
+    int fd=-1;
+    void request(unsigned command,unsigned value);
 public:
     Actuator();
     ~Actuator();
@@ -21,5 +19,4 @@ public:
     std::string status();
 };
 int command(int argc,char** argv,bool as_json=false);
-int prepare_access(bool remove=false);
 }

@@ -12,6 +12,11 @@
 #include <thread>
 static std::atomic<bool> invalid_percentage = false;
 static std::atomic<int> screensaver_state = 0;
+static std::atomic<bool> night_supported = true;
+static int get_color(sd_bus *,const char *,const char *,const char *name,sd_bus_message *reply,void *,sd_bus_error *) {
+    if(!std::strcmp(name,"Temperature"))return sd_bus_message_append(reply,"u",night_supported?4200U:0U);
+    return sd_bus_message_append(reply,"b",!std::strcmp(name,"DisabledUntilTomorrow")?0:int(night_supported));
+}
 static int get(sd_bus *, const char *, const char *, const char *name, sd_bus_message *reply, void *, sd_bus_error *) {
     if (!std::strcmp(name,"State")) return sd_bus_message_append(reply,"u",2U);
     if (!std::strcmp(name,"Percentage")) return sd_bus_message_append(reply,"d",invalid_percentage ? NAN : 3.0);
@@ -56,7 +61,7 @@ static void verify(const std::string &json,bool bad) {
     assert(sd_json_parse(json.c_str(),sd_json_parse_flags_t(0),&raw,nullptr,nullptr)>=0);
     std::unique_ptr<sd_json_variant,decltype(&sd_json_variant_unref)> root(raw,sd_json_variant_unref);
     assert(!sd_json_variant_boolean(sd_json_variant_by_key(raw,"physical_acceptance")));
-    auto list=sd_json_variant_by_key(raw,"interfaces");assert(sd_json_variant_elements(list)==11);
+    auto list=sd_json_variant_by_key(raw,"interfaces");assert(sd_json_variant_elements(list)==13);
     auto display=sd_json_variant_by_index(list,1);
     assert(sd_json_variant_boolean(sd_json_variant_by_key(display,"available")));
     auto properties=sd_json_variant_by_key(display,"properties");
@@ -87,9 +92,15 @@ static void verify(const std::string &json,bool bad) {
     assert(sd_json_variant_boolean(sd_json_variant_by_key(saver,"available"))==(screensaver_state>=0));
     if(screensaver_state<0)assert(sd_json_variant_is_null(saver_value));
     else assert(sd_json_variant_is_boolean(saver_value) && sd_json_variant_boolean(saver_value)==bool(screensaver_state));
+    auto mutter=sd_json_variant_by_key(sd_json_variant_by_index(list,11),"properties");
+    auto supported=sd_json_variant_by_key(sd_json_variant_by_key(mutter,"NightLightSupported"),"value");
+    assert(sd_json_variant_is_boolean(supported) && sd_json_variant_boolean(supported)==night_supported);
+    auto color=sd_json_variant_by_key(sd_json_variant_by_index(list,12),"properties");
+    auto temperature=sd_json_variant_by_key(sd_json_variant_by_key(color,"Temperature"),"value");
+    assert(night_supported?sd_json_variant_unsigned(temperature)==4200:sd_json_variant_is_null(temperature));
 }
 int main() {
-    sd_bus *server=nullptr,*client=nullptr;std::array<sd_bus_slot*,7> slots{};
+    sd_bus *server=nullptr,*client=nullptr;std::array<sd_bus_slot*,9> slots{};
     assert(sd_bus_open_user(&server)>=0 && sd_bus_open_user(&client)>=0);
     static const sd_bus_vtable root[]={SD_BUS_VTABLE_START(0),
         SD_BUS_PROPERTY("DaemonVersion","s",get,0,0), SD_BUS_PROPERTY("OnBattery","b",get,0,0),
@@ -115,6 +126,12 @@ int main() {
         SD_BUS_PROPERTY("ActiveProfile","b",get,0,0),SD_BUS_VTABLE_END};
     static const sd_bus_vtable saver[]={SD_BUS_VTABLE_START(0),
         SD_BUS_METHOD("GetActive","","b",method,SD_BUS_VTABLE_UNPRIVILEGED),SD_BUS_VTABLE_END};
+    static const sd_bus_vtable mutter[]={SD_BUS_VTABLE_START(0),
+        SD_BUS_PROPERTY("NightLightSupported","b",get_color,0,0),SD_BUS_VTABLE_END};
+    static const sd_bus_vtable color[]={SD_BUS_VTABLE_START(0),
+        SD_BUS_PROPERTY("NightLightActive","b",get_color,0,0),
+        SD_BUS_PROPERTY("Temperature","u",get_color,0,0),
+        SD_BUS_PROPERTY("DisabledUntilTomorrow","b",get_color,0,0),SD_BUS_VTABLE_END};
     assert(sd_bus_add_object_vtable(server,&slots[0],"/org/freedesktop/UPower","org.freedesktop.UPower",root,nullptr)>=0);
     assert(sd_bus_add_object_vtable(server,&slots[1],"/org/freedesktop/UPower/devices/DisplayDevice","org.freedesktop.UPower.Device",battery,nullptr)>=0);
     assert(sd_bus_add_object_vtable(server,&slots[2],"/org/freedesktop/login1","org.freedesktop.login1.Manager",login,nullptr)>=0);
@@ -122,14 +139,17 @@ int main() {
     assert(sd_bus_add_object_vtable(server,&slots[4],"/org/freedesktop/UPower/devices/battery_BAT0","org.freedesktop.UPower.Device",pack,nullptr)>=0);
     assert(sd_bus_add_object_vtable(server,&slots[5],"/org/freedesktop/UPower/PowerProfiles","org.freedesktop.UPower.PowerProfiles",ppd,nullptr)>=0);
     assert(sd_bus_add_object_vtable(server,&slots[6],"/ScreenSaver","org.freedesktop.ScreenSaver",saver,nullptr)>=0);
+    assert(sd_bus_add_object_vtable(server,&slots[7],"/org/gnome/Mutter/DisplayConfig","org.gnome.Mutter.DisplayConfig",mutter,nullptr)>=0);
+    assert(sd_bus_add_object_vtable(server,&slots[8],"/org/gnome/SettingsDaemon/Color","org.gnome.SettingsDaemon.Color",color,nullptr)>=0);
     assert(sd_bus_add_filter(server,nullptr,filter,nullptr)>=0);
-    for(const auto *name:{"org.freedesktop.UPower","org.freedesktop.UPower.PowerProfiles","org.freedesktop.login1","org.kde.Solid.PowerManagement","org.freedesktop.ScreenSaver"})
+    for(const auto *name:{"org.freedesktop.UPower","org.freedesktop.UPower.PowerProfiles","org.freedesktop.login1","org.kde.Solid.PowerManagement","org.freedesktop.ScreenSaver","org.gnome.Mutter.DisplayConfig","org.gnome.SettingsDaemon.Color"})
         assert(sd_bus_request_name(server,name,0)>=0);
     std::atomic<bool> done=false;
     std::thread worker([&]{while(!done){int r=sd_bus_process(server,nullptr);assert(r>=0);if(!r)assert(sd_bus_wait(server,10000)>=0);}});
     verify(uke::desktop::snapshot(client,client),false);
     invalid_percentage=true;screensaver_state=1;verify(uke::desktop::snapshot(client,client),true);
     screensaver_state=-1;verify(uke::desktop::snapshot(client,client),true);
+    night_supported=false;verify(uke::desktop::snapshot(client,client),true);
     auto missing=uke::desktop::snapshot(nullptr,nullptr);assert(missing.find("\"available\":true")==std::string::npos);
     done=true;worker.join();for(auto *slot:slots)sd_bus_slot_unref(slot);sd_bus_unref(client);sd_bus_unref(server);
 }

@@ -555,3 +555,10 @@ changes only a unique NFC rfkill permission. Double-tap reports permission and
 armed state from the verified NT36532 driver. The xHCI fixes from `b025866` and
 `f4ceae7` are retained. See [commands and limitations](CLI.md). Source and host
 fixtures do not establish physical NFC, individual cell health or gesture wake.
+
+30 October 2026: source candidate 2.4.0 moves torch request lifetime, current-step
+selection and sleep/shutdown cleanup into the kernel. Control transports the
+fixed ABI and retains active-session authorization. The old sysfs permission
+helper and duplicate light discovery are removed. See [ownership](OWNERSHIP.md)
+and [light controls](LIGHTS.md) for the matching-kernel requirement and separate
+native/package/hardware validation.
