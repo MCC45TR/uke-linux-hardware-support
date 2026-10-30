@@ -65,6 +65,12 @@ int main() {
         reject([&]{userdata_boot_reset(duplicate,manifest);});
         auto corrupt=bytes;corrupt[at+8]^=1;reject([&]{userdata_boot_reset(corrupt,manifest);});
         reject([&]{userdata_boot_reset(derived,manifest);});
+        for(const auto command:{"senemos.root=userdata senemos.boot_reset=0",
+                                "senemos.root=userdata senemos.boot_reset=1 senemos.boot_reset=1",
+                                "senemos.root=userdata senemos.boot_reset=1 extra=1"}) {
+            auto unknown=bytes;memset(unknown.data()+44,0,1536);memcpy(unknown.data()+44,command,strlen(command));
+            reject([&]{boot_kernel(unknown);});
+        }
     }
     assert(userdata_bundle("kernel-updates/7.3.0-54/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-54");
     assert(userdata_bundle("kernel-updates/7.3.0-14-unstable/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-14-unstable");

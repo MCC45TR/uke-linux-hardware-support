@@ -146,7 +146,9 @@ static Bytes boot_kernel(const Bytes &b) {
     need(terminator!=b.begin()+1580,"Unterminated boot command line");
     const std::string command(b.begin()+44,terminator);
     need(command.empty() || command=="senemos.root=userdata" ||
-         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30","Unexpected boot command line");
+         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30" ||
+         command=="senemos.root=userdata senemos.boot_reset=1" ||
+         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30 senemos.boot_reset=1","Unexpected boot command line");
     for(auto it=terminator;it!=b.begin()+page;++it)need(!*it,"Unexpected boot header data");
     const size_t size=le32(b,8);
     need(size>=64 && size<=b.size()-page,"Invalid kernel length");
