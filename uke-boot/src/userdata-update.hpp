@@ -229,6 +229,19 @@ static bool display_enabled(const fs::path &directory) {
     return display;
 }
 #ifndef UKE_KERNEL_UPDATE_TEST
+static void require_boot_reset_guard() {
+    need(fs::canonical("/sys/class/watchdog/watchdog0/device/driver").filename()=="gunyah-wdt",
+         "Automatic boot-reset trials require Gunyah watchdog0");
+    sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Boot-reset admission requires the system bus");
+    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);sd_bus_message *response=nullptr;
+    need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound boot-reset admission");
+    need(sd_bus_call_method(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1","org.freedesktop.systemd1.Manager",
+                           "GetUnitFileState",nullptr,&response,"s","uke-userdata-deadline.service")>=0,
+         "Boot-reset startup guard is unavailable");
+    std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(response,sd_bus_message_unref);const char *state=nullptr;
+    need(sd_bus_message_read(reply.get(),"s",&state)>0 && state && std::string(state)=="enabled",
+         "Enable the packaged A/B startup guard before automatic staging");
+}
 static int guard_userdata_trial(bool check_only=false) {
     bool armed=false;
     try {

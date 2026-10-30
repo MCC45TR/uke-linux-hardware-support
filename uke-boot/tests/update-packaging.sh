@@ -48,6 +48,7 @@ grep -Fxq 'TimeoutStartSec=infinity' src/units/uke-userdata-deadline.service
 grep -Fxq 'FailureAction=reboot-force' src/units/uke-userdata-deadline-fallback.service
 grep -Fxq 'TimeoutStartSec=60' src/units/uke-userdata-deadline-fallback.service
 grep -Fxq 'enable uke-userdata-deadline.service' src/profiles/80-uke-boot.preset
+grep -Fq 'sysinit.target.wants/uke-userdata-deadline.service' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(root-filesystem-v2) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(current-slot-restore) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(kernel-touch-client-v1) = 1' packaging/uke-boot-integration.spec

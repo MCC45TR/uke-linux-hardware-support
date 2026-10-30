@@ -464,7 +464,10 @@ int main(int argc,char **argv) {
             if(automatic || preflight) {
                 const auto raw=file(bundle/"manifest");
                 auto candidate=userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
-                if(bundle.filename().string()!=current.release)(void)userdata_boot_reset(std::move(candidate),properties(std::string(raw.begin(),raw.end())));
+                if(bundle.filename().string()!=current.release) {
+                    (void)userdata_boot_reset(std::move(candidate),properties(std::string(raw.begin(),raw.end())));
+                    require_boot_reset_guard();
+                }
                 verify_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);

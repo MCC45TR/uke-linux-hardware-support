@@ -221,6 +221,7 @@ install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-l
 install -Dm755 src/dracut/93uke-boot-guard/module-setup.sh %{buildroot}%{_prefix}/lib/dracut/modules.d/93uke-boot-guard/module-setup.sh
 install -d %{buildroot}%{_unitdir}/sysinit.target.wants %{buildroot}/usr/local/{bin,sbin}
 ln -s ../uke-boot-guard.service %{buildroot}%{_unitdir}/sysinit.target.wants/uke-boot-guard.service
+ln -s ../uke-userdata-deadline.service %{buildroot}%{_unitdir}/sysinit.target.wants/uke-userdata-deadline.service
 ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/bin/reboot
 ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 
@@ -340,6 +341,7 @@ fi
 %{_unitdir}/uke-userdata-fallback.service
 %{_unitdir}/uke-userdata-deadline.service
 %{_unitdir}/uke-userdata-deadline-fallback.service
+%{_unitdir}/sysinit.target.wants/uke-userdata-deadline.service
 
 %files -n uke-installation-profile
 %license LICENSE
