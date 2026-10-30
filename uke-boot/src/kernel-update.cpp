@@ -85,6 +85,10 @@ static Fd directory(const fs::path &path,bool create=false) {
 #else
         trusted_fd(next.value,true);
 #endif
+        // Persist each directory entry before callers can place recovery data
+        // below it. Also sync existing entries on create-mode retries: a prior
+        // mkdir may have succeeded before its parent sync failed or was killed.
+        if(create)need(!fsync(dir.value),"Cannot sync update directory link");
         dir=std::move(next);
     }
     return dir;

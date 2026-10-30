@@ -50,6 +50,7 @@ test-kernel-update:
 	bash tests/installation-policy.sh
 	bash tests/slot-control.sh
 	bash tests/userdata-update.sh
+	bash tests/update-durability.sh
 test-usb:
 	mkdir -p build/tests
 	c++ -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o build/tests/usb-port-contract

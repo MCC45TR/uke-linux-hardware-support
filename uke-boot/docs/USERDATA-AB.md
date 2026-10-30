@@ -238,3 +238,21 @@ non-atomic under power loss. Host tests do not qualify physical recovery.
 
 Private lessons retain the comparison details and failed trials. No device
 identifiers, raw GPT backups, credentials or calibration are public payloads.
+
+## Recovery directory durability, 30 October 2026
+
+Create-mode traversal now synchronizes each validated directory's entry in its
+parent before returning a state or transaction directory to its caller. It also
+synchronizes existing links on retries: a previous mkdir may have completed
+before a failed parent fsync or process termination. A failed sync stops the
+caller before it can proceed to recovery-data or boot writes. File fsync and
+state rename/readback checks remain in place.
+
+`bash tests/update-durability.sh` injects directory-sync errors and termination,
+then retries. It also tests ordinary-file state publication at pwrite, file
+fsync, rename and parent-fsync boundaries, plus a short write followed by ENOSPC.
+The visible state must remain a complete old or new record and a retry must
+publish the requested state. This is process/error handling evidence, not a
+power-cut simulation. Filesystem/device flush guarantees, multiple GPTs, UFS
+selection, bootloader retries and shared userspace rollback remain separate
+qualification gates. No automatic policy or slot-selection behavior is changed.

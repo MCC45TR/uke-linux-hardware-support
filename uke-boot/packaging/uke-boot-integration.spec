@@ -135,6 +135,7 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
 bash tests/userdata-update.sh
+bash tests/update-durability.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-health.cpp -o touch-health-contract
 ./touch-health-contract
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o usb-port-contract
