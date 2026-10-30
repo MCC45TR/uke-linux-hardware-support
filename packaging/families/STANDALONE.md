@@ -6,6 +6,12 @@ Conventional upstream subpackages, such as a library and its development files,
 remain in that component's source build. The nine umbrella source packages are
 not submitted to this repository.
 
+30 October 2026: the [source receipt](unstable-source-receipt-20261030.json)
+records 33 verified producer definitions and their installed RPM provenance.
+Thirteen stale defaults were restored to the exact successful COPR recipes.
+The kernel's later source guard requires a fresh release before another build;
+conventional optional components remain separately installable.
+
 `host/standalone.sh NAME OUTPUT` runs in the COPR source worker. It uses the
 owning component's recipe or its existing exact-pinned public source archive.
 The shared specification converter retains package names, capabilities,
