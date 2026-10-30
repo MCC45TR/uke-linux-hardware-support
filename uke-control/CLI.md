@@ -6,6 +6,10 @@ This is a major CLI compatibility change: scripts that consumed default JSON
 must add that option. Existing backend/D-Bus schemas remain structured.
 Source and host validation are separate from native RPM and tablet acceptance.
 
+30 October 2026: compression queries and policy requests follow the same
+contract. Use `display compression` for terminal output or add `--json` for a
+structured result. Request exit codes and privilege checks are preserved.
+
 ```sh
 uke-control --help
 uke-control charge --help

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "usb-request.hpp"
+#include "usb.hpp"
 #include "link-policy.hpp"
 #include "rpm-api.hpp"
 #include "sysfs.hpp"
@@ -76,9 +77,6 @@ std::vector<fs::path> children(const fs::path& path) {
     if(error&&error!=std::errc::no_such_file_or_directory)throw std::runtime_error("CLASS_INVENTORY_FAILED");
     std::sort(out.begin(),out.end());return out;
 }
-bool port_name(const std::string& name) {
-    return name.starts_with("port")&&name.size()>4&&name.find_first_not_of("0123456789",4)==std::string::npos;
-}
 bool usb_ancestor(fs::path path) {
     std::error_code error;path=fs::canonical(path,error);
     if(error)return false;
@@ -110,7 +108,7 @@ Graph graph() {
         compatible.find(std::string("qcom,sm7675\0",12))!=std::string::npos&&
         value("/sys/firmware/devicetree/base/chosen/senemos,usb-profile")=="typec-v1";
     auto ports=children("/sys/class/typec");
-    std::erase_if(ports,[](const fs::path& p){return !port_name(p.filename().string());});
+    std::erase_if(ports,[](const fs::path& p){return !typec_port_name(p.filename().string());});
     const auto roles=children("/sys/class/usb_role");
     g.state.port=ports.size()==1;g.state.role_switch=roles.size()==1;
     if(g.state.port) {
@@ -259,12 +257,18 @@ std::string display_profiles(const fs::path& requested_root) {
     const auto root=fs::canonical(requested_root);
     const auto nodes=dp_controls(root);
     const auto mst=mst_state(root);
+    const auto control_reason=[&](const std::string& profile)->std::string {
+        if(nodes.size()!=1)return nodes.empty()?"DP_ALTMODE_CONTROL_UNAVAILABLE":"DP_ALTMODE_CONTROL_AMBIGUOUS";
+        try{(void)profile_pin(value(nodes.front()),profile);return {};}
+        catch(const std::exception& e){return e.what();}
+    };
+    const auto usb3_reason=control_reason("usb3-display"),four_reason=control_reason("display4");
     auto mst_reason=mst.refusal();
-    if(mst_reason.empty()) {
-        if(nodes.size()!=1)mst_reason=nodes.empty()?"DP_ALTMODE_CONTROL_UNAVAILABLE":"DP_ALTMODE_CONTROL_AMBIGUOUS";
-        else try{(void)profile_pin(value(nodes.front()),"dual-display");}
-             catch(const std::exception& e){mst_reason=e.what();}
-    }
+    if(mst_reason.empty())mst_reason=control_reason("dual-display");
+    const auto availability=[](const std::string& reason) {
+        return ",\"available\":"+std::string(reason.empty()?"true":"false")+",\"reason\":"+
+            (reason.empty()?"null":sysfs::quote(reason));
+    };
     std::string out="{\"schema\":\"org.uke.control.display.profiles.v1\",\"live\":";
     out+=root=="/"?"true":"false";
     out+=",\"selection_interface\":"+sysfs::quote(nodes.size()==1?"standard_typec_pin_assignment":
@@ -281,9 +285,9 @@ std::string display_profiles(const fs::path& requested_root) {
         ",\"values\":[1,2,4],\"current\":"+(limits.size()==1?sysfs::attribute(root,limits.front()):"null")+
         ",\"requires_disconnected\":true,\"changes_typec_pin_assignment\":false}";
     out+=",\"physical_validation\":\"NOT_ESTABLISHED\",\"persisted\":false";
-    out+=",\"profiles\":[{\"id\":\"usb3-display\",\"requested_dp_lanes\":2,\"usb3_lanes_reserved\":true},";
+    out+=",\"profiles\":[{\"id\":\"usb3-display\",\"requested_dp_lanes\":2,\"usb3_lanes_reserved\":true"+availability(usb3_reason)+"},";
     out+="{\"id\":\"display4\",\"requested_dp_lanes\":4,\"usb3_lanes_reserved\":false,";
-    out+="\"usb2_fallback_verified\":false,\"ethernet_fallback_verified\":false},";
+    out+="\"usb2_fallback_verified\":false,\"ethernet_fallback_verified\":false"+availability(four_reason)+"},";
     out+="{\"id\":\"dual-display\",\"requested_dp_lanes\":4,\"requires_mst\":true,";
     out+="\"available\":"+std::string(mst_reason.empty()?"true":"false")+",\"reason\":"+
         (mst_reason.empty()?"null":sysfs::quote(mst_reason))+"}]}\n";

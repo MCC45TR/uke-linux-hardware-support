@@ -77,10 +77,10 @@ static int run(int argc,char** argv,bool as_json) {
             const auto result=uke::display_lane_limit(argv[3]);uke::cli::print(result.output,as_json);return result.status;
         }
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="compression") {
-            std::cout<<uke::links::compression_status("/");return 0;
+            uke::cli::print(uke::links::compression_status("/"),as_json);return 0;
         }
         if(command=="display"&&argc==4&&std::string_view(argv[2])=="compression") {
-            const auto result=uke::display_compression(argv[3]);std::cout<<result.output;return result.status;
+            const auto result=uke::display_compression(argv[3]);uke::cli::print(result.output,as_json);return result.status;
         }
         if(command=="ethernet"&&argc==4&&std::string_view(argv[2])=="status") {
             uke::cli::print(uke::links::ethernet_status(argv[3]),as_json);return 0;

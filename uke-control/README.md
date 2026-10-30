@@ -1,5 +1,10 @@
 # Uke Control
 
+30 October 2026: version 2.3.3 separates USB-C ports from partners, reports
+availability for every DP profile and validates saved CDC intent consistently
+with the controller. Compression commands follow the standard terminal/JSON
+output contract. Physical display and role-switch acceptance remain separate.
+
 30 October 2026: release 2.3.1-5 recognizes the driver's automatic DSC policy
 and live DRM control interface. Policy and cached activation are reported
 separately; older boolean drivers retain their existing restrictions.
