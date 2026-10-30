@@ -12,6 +12,13 @@ int main() {
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
     assert(options({"update"}).update);assert(options({"update","--check"}).dry);
+    assert(options({"channel","set","stable","--json","--yes"}).json);
+    assert(options({"channel","status","--json"}).status);
+    assert(options({"channel","set","test","--dry-run","--json"}).dry);
+    assert(options({"update","--check","--json"}).json);
+    for(auto input:{std::initializer_list<const char*>{"channel","set"},{"channel","set","bad"},{"channel","set","stable","--json"},{"channel","sync","--json"},{"update","--json"},{"channel","status","--json","--json"}}) {
+        bool rejected=false;try{options(input);}catch(const uke::cli::UsageError&){rejected=true;}assert(rejected);
+    }
     for(auto args:{std::initializer_list<const char*>{"brunch"},{"brunch","bad"},{"brunch","stable","--nodeps"},{"brunch","sync","--yes","--yes"},{"brunch","status","--yes"},{"update","--allowerasing"}}) {
         bool rejected=false;try{options(args);}catch(const std::exception&){rejected=true;}assert(rejected);
     }

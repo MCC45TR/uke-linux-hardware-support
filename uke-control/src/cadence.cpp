@@ -53,7 +53,7 @@ struct App {
     xdg_wm_base *shell{}; wp_presentation *presentation{}; wl_surface *surface{};
     xdg_surface *xdg{}; xdg_toplevel *toplevel{};
     std::array<Buffer,3> buffers{}; std::unordered_set<Feedback*> pending;
-    int width=1208,height=807; bool configured{},failed{}; uint32_t clock{},presented{},discarded{};
+    int width=1208,height=807; bool configured{},failed{},csv{}; uint32_t clock{},presented{},discarded{};
     ~App() {
         for (auto *f:pending) { wp_presentation_feedback_destroy(f->object); delete f; }
         for (auto &b:buffers) { if(b.object)wl_buffer_destroy(b.object); if(b.pixels)munmap(b.pixels,b.bytes); }
@@ -109,13 +109,14 @@ static void presented(void *data,struct wp_presentation_feedback*,uint32_t hi,ui
     ++f->app->presented;
     const uint64_t stamp=((uint64_t(hi)<<32)|lo)*1000000000ULL+ns;
     const uint64_t sequence=(uint64_t(seq_hi)<<32)|seq_lo;
-    std::printf("present,%u,%u,%llu,%llu,%llu,%llu,%u,%u\n",f->frame,f->stage,
+    std::printf(f->app->csv?"present,%u,%u,%llu,%llu,%llu,%llu,%u,%u\n":
+        "Frame %u, stage %u: requested interval %llu ns; submitted %llu ns; presented %llu ns; sequence %llu; refresh %u ns; flags %u\n",f->frame,f->stage,
         (unsigned long long)f->requested,(unsigned long long)f->submitted,
         (unsigned long long)stamp,(unsigned long long)sequence,refresh,flags);forget(f);
 }
 static void discarded(void *data,struct wp_presentation_feedback*) {
     auto *f=static_cast<Feedback*>(data);++f->app->discarded;
-    std::printf("discard,%u,%u\n",f->frame,f->stage);forget(f);
+    std::printf(f->app->csv?"discard,%u,%u\n":"Frame %u, stage %u: discarded\n",f->frame,f->stage);forget(f);
 }
 static void require_presentation(unsigned count) {
     if(!count)throw std::runtime_error("No frame was presented; unlock the session and expose the test window");
@@ -150,11 +151,16 @@ int run(int argc,char **argv) {
         assert(refused);require_presentation(1);
         std::puts("Bounded rates, irregular intervals, eight-second idle and termination passed");return 0;
     }
-    if(argc==2) {char *end{};auto value=strtoul(argv[1],&end,10);if(*end||value<30||value>144)return 64;maximum=value;}
-    else if(argc!=1)return 64;
+    bool csv=false,rate=false;
+    for(int i=1;i<argc;++i) {
+        if(!strcmp(argv[i],"--csv")){if(csv)return 64;csv=true;continue;}
+        char *end{};auto value=strtoul(argv[i],&end,10);
+        if(rate || *end || value<30 || value>144)return 64;
+        maximum=value;rate=true;
+    }
     std::signal(SIGINT,[](int){stopped=1;});std::signal(SIGTERM,[](int){stopped=1;});
     try {
-        App a;a.display=wl_display_connect(nullptr);if(!a.display)throw std::runtime_error("Wayland display");
+        App a;a.csv=csv;a.display=wl_display_connect(nullptr);if(!a.display)throw std::runtime_error("Wayland display");
         a.registry=wl_display_get_registry(a.display);wl_registry_add_listener(a.registry,&registry_listener,&a);
         if(wl_display_roundtrip(a.display)<0||!a.compositor||!a.shm||!a.shell||!a.presentation)throw std::runtime_error("Required original Wayland globals");
         a.surface=wl_compositor_create_surface(a.compositor);a.xdg=xdg_wm_base_get_xdg_surface(a.shell,a.surface);
@@ -169,13 +175,14 @@ int run(int argc,char **argv) {
         }
         if(!a.configured||a.failed||stopped)throw std::runtime_error("Fullscreen configure timeout or unsupported size");
         allocate(a);const auto start=now();uint64_t deadline=start;unsigned frame=0,last_stage=99;
-        std::printf("# clock_id=%u maximum_requested_fps=%u width=%d height=%d\n",a.clock,maximum,a.width,a.height);
-        std::puts("# present,frame,stage,requested_interval_ns,submit_monotonic_ns,presentation_ns,sequence,refresh_ns,flags");
+        std::printf(csv?"# clock_id=%u maximum_requested_fps=%u width=%d height=%d\n":
+            "Presentation clock %u; maximum requested rate %u fps; test surface %d × %d pixels\n",a.clock,maximum,a.width,a.height);
+        if(csv)std::puts("# present,frame,stage,requested_interval_ns,submit_monotonic_ns,presentation_ns,sequence,refresh_ns,flags");
         while(!stopped&&!a.failed) {
             if(wl_display_dispatch_pending(a.display)<0)throw std::runtime_error("Pending dispatch");
             if(now()-start>5000000000ULL)require_presentation(a.presented);
             auto s=schedule(now()-start,frame,maximum);if(s.done)break;
-            if(s.stage!=last_stage){std::printf("stage,%u,%llu\n",s.stage,(unsigned long long)now());last_stage=s.stage;}
+            if(s.stage!=last_stage){std::printf(csv?"stage,%u,%llu\n":"Stage %u started at %llu monotonic ns\n",s.stage,(unsigned long long)now());last_stage=s.stage;}
             if(now()>=deadline) {
                 Buffer *buffer=nullptr;for(auto &b:a.buffers)if(!b.busy){buffer=&b;break;}
                 if(!s.idle&&buffer) {
@@ -187,7 +194,7 @@ int run(int argc,char **argv) {
                     a.pending.insert(f);wp_presentation_feedback_add_listener(f->object,&feedback_listener,f);
                     buffer->busy=true;wl_surface_attach(a.surface,buffer->object,0,0);wl_surface_damage(a.surface,0,0,a.width,a.height);
                     wl_surface_commit(a.surface);++frame;
-                } else if(!s.idle)std::printf("busy,%u,%u\n",frame,s.stage);
+                } else if(!s.idle)std::printf(csv?"busy,%u,%u\n":"Frame %u, stage %u: buffers busy\n",frame,s.stage);
                 // Absolute targets exclude rendering cost without a catch-up burst.
                 deadline=next_deadline(deadline,now(),s.interval);
             }
@@ -204,7 +211,7 @@ int run(int argc,char **argv) {
         }
         if(a.failed)throw std::runtime_error("Output size changed");
         require_presentation(a.presented);
-        std::printf("done,%u,%llu,presented=%u,discarded=%u\n",frame,(unsigned long long)now(),a.presented,a.discarded);
+        std::printf(csv?"done,%u,%llu,presented=%u,discarded=%u\n":"Finished after %u frames at %llu monotonic ns: %u presented, %u discarded\n",frame,(unsigned long long)now(),a.presented,a.discarded);
     }catch(const std::exception &error){std::fprintf(stderr,"%s\n",error.what());return 1;}
     return 0;
 }

@@ -31,7 +31,7 @@ static void atomic_file(const fs::path& path,const std::string& value){std::ofst
 static Result execute(const std::vector<std::string>& args,unsigned) {
     if(args.size()==2&&args[0]=="/usr/bin/uname"&&args[1]=="-r")return {0,"7.2.11-fixture\n"};
     if(args[0]=="/usr/bin/uke-battery") {assert(args.size()==1);return {0,"private battery snapshot\n"};}
-    if(args[0]=="/usr/bin/uke-control") {assert((args==std::vector<std::string>{"/usr/bin/uke-control","desktop","status"}));return {0,"private desktop interfaces\n"};}
+    if(args[0]=="/usr/bin/uke-control") {assert((args==std::vector<std::string>{"/usr/bin/uke-control","--json","desktop","status"}));return {0,"private desktop interfaces\n"};}
     if(args[0]=="/usr/bin/pidstat") {assert((args==std::vector<std::string>{"/usr/bin/pidstat","-h","-u","-r","-d","-t","-p","ALL","1","5"}));return {0,"private process sample\n"};}
     if(args[0]=="/usr/bin/mpstat") {assert((args==std::vector<std::string>{"/usr/bin/mpstat","-P","ALL","1","5"}));return {127,"missing optional sampler\n"};}
     if(args[0]=="/usr/bin/cat") {
@@ -89,7 +89,7 @@ int main(int argc,char** argv) {
         assert(summary.find("private unavailable battery")==std::string::npos);
         assert(summary.find("private process sample")==std::string::npos);
         assert(summary.find("private frequency snapshot")==std::string::npos);
-        assert(summary.find("Application: uke-control 1.10.2")!=std::string::npos);
+        assert(summary.find("Application: uke-control 2.3.0")!=std::string::npos);
     }
 }
 CPP

@@ -1,0 +1,166 @@
+Subject: [PATCH] egl: match known DRM descriptors before repeating device discovery
+
+Remember character-node identity when enumerating an EGL device. Match a live
+fd against its device, inode and change timestamp before requesting new sysfs
+metadata. Use that exact cached identity before loader capability discovery;
+retain render-only lookup and drmGetDevice2 for unknown or changed nodes.
+This does not open additional devices or expand a process sandbox's policy.
+
+Mesa 26.2.5 src/egl/main/egldevice.c retains Collabora's original MIT license.
+The internal EGL header and DRI2 caller retain their upstream attribution.
+
+--- a/src/egl/main/egldevice.c
++++ b/src/egl/main/egldevice.c
+@@ -27,6 +27,7 @@
+ 
+ #ifdef HAVE_LIBDRM
+ #include <xf86drm.h>
++#include <sys/stat.h>
+ #endif
+ #include "util/compiler.h"
+ #include "util/macros.h"
+@@ -52,6 +53,7 @@
+ 
+ #ifdef HAVE_LIBDRM
+    drmDevicePtr device;
++   struct stat node_stat[DRM_NODE_MAX];
+ #endif
+ 
+    /* Cache for EGL_EXT_device_query_name and EXT_device_persistent_id. */
+@@ -115,6 +117,29 @@
+ 
+ #ifdef HAVE_LIBDRM
+ extern const _EGLDriver _eglDriver;
++
++static bool
++_eglSameDrmNode(const struct stat *cached, const struct stat *live)
++{
++   return S_ISCHR(cached->st_mode) && S_ISCHR(live->st_mode) &&
++          cached->st_nlink && live->st_nlink &&
++          cached->st_dev == live->st_dev && cached->st_ino == live->st_ino &&
++          cached->st_rdev == live->st_rdev &&
++          cached->st_ctim.tv_sec == live->st_ctim.tv_sec &&
++          cached->st_ctim.tv_nsec == live->st_ctim.tv_nsec;
++}
++
++static void
++_eglCacheDrmNodes(_EGLDevice *dev, const drmDevice *device)
++{
++   memset(dev->node_stat, 0, sizeof(dev->node_stat));
++   for (int i = 0; i < DRM_NODE_MAX; i++) {
++      if ((device->available_nodes & (1 << i)) &&
++          stat(device->nodes[i], &dev->node_stat[i]) != 0)
++         memset(&dev->node_stat[i], 0, sizeof(dev->node_stat[i]));
++   }
++}
++
+ /*
+  * Negative value on error, zero if newly added, one if already in list.
+  */
+@@ -144,8 +169,10 @@
+       dev = dev->Next;
+ 
+       assert(_eglDeviceSupports(dev, _EGL_DEVICE_DRM));
+-      if (drmDevicesEqual(device, dev->device) != 0)
++      if (drmDevicesEqual(device, dev->device) != 0) {
++         _eglCacheDrmNodes(dev, device);
+          return 1;
++      }
+    }
+ 
+    dev->Next = calloc(1, sizeof(_EGLDevice));
+@@ -172,11 +199,39 @@
+       dev->EXT_device_persistent_id = EGL_TRUE;
+    }
+    dev->device = device;
++   _eglCacheDrmNodes(dev, device);
+ 
+    return 0;
+ }
+ #endif
+ 
++static _EGLDevice *
++_eglFindCachedDeviceLocked(int fd)
++{
++   (void)fd;
++#ifdef HAVE_LIBDRM
++   struct stat live;
++   if (fstat(fd, &live) == 0 && S_ISCHR(live.st_mode)) {
++      for (_EGLDevice *dev = _eglGlobal.DeviceList->Next; dev; dev = dev->Next) {
++         for (int i = 0; i < DRM_NODE_MAX; i++) {
++            if (_eglSameDrmNode(&dev->node_stat[i], &live))
++               return dev;
++         }
++      }
++   }
++#endif
++   return NULL;
++}
++
++_EGLDevice *
++_eglFindCachedDevice(int fd)
++{
++   simple_mtx_lock(_eglGlobal.Mutex);
++   _EGLDevice *dev = _eglFindCachedDeviceLocked(fd);
++   simple_mtx_unlock(_eglGlobal.Mutex);
++   return dev;
++}
++
+ /* Finds a device in DeviceList, for the given fd.
+  *
+  * The fd must be of a render-capable device, as there are only render-capable
+@@ -199,6 +254,14 @@
+       goto out;
+ 
+ #ifdef HAVE_LIBDRM
++   {
++      _EGLDevice *cached = _eglFindCachedDeviceLocked(fd);
++      if (cached) {
++         dev = cached;
++         goto out;
++      }
++   }
++
+    drmDevicePtr device;
+ 
+    if (drmGetDevice2(fd, 0, &device) != 0) {
+--- a/src/egl/main/egldevice.h
++++ b/src/egl/main/egldevice.h
+@@ -60,6 +60,9 @@
+ _EGLDevice *
+ _eglFindDevice(int fd, bool software);
+ 
++_EGLDevice *
++_eglFindCachedDevice(int fd);
++
+ enum _egl_device_extension {
+    _EGL_DEVICE_SOFTWARE,
+    _EGL_DEVICE_DRM,
+--- a/src/egl/drivers/dri2/egl_dri2.c
++++ b/src/egl/drivers/dri2/egl_dri2.c
+@@ -834,6 +834,13 @@
+    /* If we're not software, we need a DRM node FD */
+    assert(software || dri2_dpy->fd_render_gpu >= 0);
+ 
++   /* An enumerated render-capable node needs no new sysfs discovery. */
++   dev = software ? NULL : _eglFindCachedDevice(dri2_dpy->fd_render_gpu);
++   if (dev) {
++      disp->Device = dev;
++      return EGL_TRUE;
++   }
++
+    /* fd_render_gpu is what we got from WSI, so might actually be a lie and
+     * not a render node... */
+    if (software) {
+--- a/src/egl/drivers/dri2/platform_drm.c
++++ b/src/egl/drivers/dri2/platform_drm.c
+@@ -597,7 +597,8 @@
+    assert(!gbm_dri->software);
+ 
+    /* Render-capable device, so just return the same fd. */
+-   if (loader_is_device_render_capable(fd_display_gpu))
++   if (_eglFindCachedDevice(fd_display_gpu) ||
++       loader_is_device_render_capable(fd_display_gpu))
+       return fd_display_gpu;
+ 
+    /* Display-only device, so return a compatible render-only device. */

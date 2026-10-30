@@ -1,5 +1,12 @@
 # Diagnostic logs
 
+27 October 2026: version 1.15.1 adds independent logind/UPower lid queries and
+the invoking session's screensaver state to `sleep` reports. `display` reports
+include actual active-stream depth and cached DSC policy/activation. These are
+read-only observations; they do not wake an output, activate a D-Bus service or
+establish physical monitor acceptance. A sudo/SSH process may have no session
+bus, and that failure remains explicit rather than selecting a guessed user.
+
 24 October 2026. Version 1.6.2 adds loaded MSM, O82 panel and THP module build-ID
 notes and taint flags to `display` and `all` reports. Notes are recorded as hex
 through the existing bounded collector. Compare these loaded-image identities
@@ -10,12 +17,12 @@ do not establish which module image is running. Missing notes remain explicit.
 hardware-variant comparisons. Run it from the directory where the log belongs:
 
 ```sh
-sudo uke-control diagnostic all
-sudo uke-control diagnostic wifi
-sudo uke-control diagnostic bluetooth
-sudo uke-control diagnostic sensors
-sudo uke-control diagnostic sleep
-uke-control diagnostic --help
+sudo uke-control diagnostics all
+sudo uke-control diagnostics wifi
+sudo uke-control diagnostics bluetooth
+sudo uke-control diagnostics sensors
+sudo uke-control diagnostics sleep
+uke-control diagnostics --help
 ```
 
 The first command writes `uke-diagnostic-all.log`; focused commands write

@@ -105,7 +105,9 @@ class Forecast {
         const auto &last = window_.back();
         return s.boottime_ns == last.boottime_ns && s.monotonic_ns == last.monotonic_ns &&
             s.battery_id == last.battery_id && s.boot_id == last.boot_id && s.epoch == last.epoch &&
-            s.current_ua == last.current_ua && s.voltage_uv == last.voltage_uv && s.soc == last.soc;
+            s.current_ua == last.current_ua && s.voltage_uv == last.voltage_uv && s.soc == last.soc &&
+            s.energy_uwh == last.energy_uwh && s.learned_full_uah == last.learned_full_uah &&
+            s.design_full_uah == last.design_full_uah && s.conditions == last.conditions;
     }
 public:
     void reset() { window_.clear(); charge_curve_.fill({}); conditions_.clear(); qualification_.reset(); }
@@ -239,6 +241,10 @@ public:
             const uint64_t sequence = state_.sequence;
             state_ = {}; state_.sequence = sequence;
             state_.battery_id = s.battery_id; state_.reference_uah = reference_uah;
+        }
+        if (state_.boot_id == s.boot_id && state_.last_boottime_ns &&
+            (s.boottime_ns <= state_.last_boottime_ns || s.monotonic_ns < state_.last_monotonic_ns)) {
+            break_continuity(); return;
         }
         double dt = s.boottime_ns > state_.last_boottime_ns ? (s.boottime_ns - state_.last_boottime_ns) / 1e9 : 0;
         double dm = s.monotonic_ns > state_.last_monotonic_ns ? (s.monotonic_ns - state_.last_monotonic_ns) / 1e9 : 0;

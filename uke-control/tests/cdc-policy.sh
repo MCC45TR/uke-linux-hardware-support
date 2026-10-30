@@ -5,7 +5,7 @@ ulimit -c 0
 root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
-awk '/^static void cdc_validate\(/{copy=1} /^std::string status\(/{copy=0} copy' "$root/src/backend.cpp" > "$work/policy.inc"
+awk '/^static void cdc_validate\(/{copy=1} /^std::string (swap_)?status\(/{copy=0} copy' "$root/src/backend.cpp" > "$work/policy.inc"
 cat > "$work/check.cpp" <<'CPP'
 #include "backend.hpp"
 #include "rpm-api.hpp"

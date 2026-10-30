@@ -1,5 +1,24 @@
 # uke-platform-runtime
 
+29 October 2026: observer/helper 1.4.0 resets current-increase dwell after faults,
+rejects reordered EFC samples and binds forecasts to their observed inputs.
+Power-path reports distinguish reported hold from unverified bypass. Charging
+qualification remains closed. See [battery longevity](docs/BATTERY-LONGEVITY.md).
+
+29 October 2026 integration candidate: observer 1.2.1 retains optional standard
+`current_avg`, `power_avg` and USB temperature readings with unqualified basis
+and sensor location. Missing values remain null; these fields do not affect
+energy, ETA or charging policy. The charge helper adds explicitly reviewed,
+expiring identities and cached UCSI PDO/RDO observations. Existing qualification
+and threshold bounds remain enforced. Host and AArch64 user-mode fixtures pass;
+no tablet operation, sensor calibration or electrical acceptance is claimed.
+
+29 October 2026: the source candidate rejects unsupported threshold pairs and
+cap80 profiles before admission, using the retained OEM ranges. Bounded sysfs
+read diagnostics retain the fixed attribute and errno without file paths or
+contents. Host fake-I/O and actual-reader tests pass; no tablet control,
+calibration or electrical protection is qualified by these changes.
+
 Status, **18 October 2026**: signed COPR 11169204 installs observer/helper 7 and
 the separate offline-charging interface on POCO Pad X1, Fedora Rawhide AArch64.
 The tablet now runs Linux 7.2.11-2 with normal display and touch. Explicit

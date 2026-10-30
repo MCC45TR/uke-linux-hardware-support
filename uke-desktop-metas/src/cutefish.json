@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "package": "uke-cutefish-meta",
+  "provider": "cutefish-desktop",
+  "upstream": "https://github.com/cutefishos",
+  "session": "/usr/share/wayland-sessions/cutefish-wayland.desktop",
+  "command": "/usr/bin/cutefish-wayland-session",
+  "copr": "mcc45tr/cutefish",
+  "image_profile": "blocked: graphical login and first-account validation pending",
+  "graphical_session_tested": false,
+  "hardware_tested": false,
+  "automatic_session_or_display_configuration": false
+}

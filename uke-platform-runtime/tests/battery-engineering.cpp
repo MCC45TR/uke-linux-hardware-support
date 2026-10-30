@@ -19,6 +19,11 @@ int main() {
     for (unsigned t : {1, 16, 31}) f.observe(sample(t), q);
     auto s = sample(31);
     assert(f.target(s, q, 80).seconds);
+    auto changed = s;
+    changed.learned_full_uah = 16000000;
+    assert(!f.target(changed, q, 80).seconds);
+    changed = s; changed.conditions = "different-thermal-or-load-band";
+    assert(!f.target(changed, q, 80).seconds);
     s.current_ua = NAN;
     assert(!f.target(s, q, 80).seconds);
     s = sample(32); // A query must match an actually observed sample.
@@ -64,6 +69,8 @@ int main() {
         changed_reserve.observe(s, q);
     }
     assert(changed_reserve.empty(s, q).seconds);
+    auto different_energy = s; different_energy.energy_uwh = 20000000;
+    assert(!changed_reserve.empty(different_energy, q).seconds);
     auto different = q; different.reserve_uwh = 2000000;
     assert(!changed_reserve.empty(s, different).seconds);
     different = q; different.voltage = false;
@@ -95,6 +102,21 @@ int main() {
     s.current_ua = INFINITY; assert(!engineering(s, q).signed_c_rate_per_hour);
     s.valid = false; assert(!engineering(s, q).nominal_full_energy_uwh);
     s = sample(1); q.series_cells = 0; assert(!engineering(s, q).pack_basis_qualified);
+
+    // Reordered samples cannot rewind a cursor and double-count discharge.
+    Efc ordered;
+    ordered.observe(sample(1, 50, -1000000), q, 1000000);
+    ordered.observe(sample(31, 50, -1000000), q, 1000000);
+    const double accepted = ordered.state().discharge_uah;
+    ordered.observe(sample(16, 50, -1000000), q, 1000000);
+    assert(ordered.state().last_boottime_ns == 31 * 1000000000ULL);
+    ordered.observe(sample(32, 50, -1000000), q, 1000000);
+    assert(ordered.state().discharge_uah == accepted);
+    auto reversed_clock = sample(33, 50, -1000000); reversed_clock.monotonic_ns = 1;
+    ordered.observe(reversed_clock, q, 1000000);
+    assert(ordered.state().last_boottime_ns == 32 * 1000000000ULL);
+    ordered.observe(sample(34, 50, -1000000), q, 1000000);
+    assert(ordered.state().discharge_uah == accepted);
 
     Efc efc;
     s = sample(1, 50, -1000000); efc.observe(s, q, 1000000);

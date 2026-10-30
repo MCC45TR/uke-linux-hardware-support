@@ -1,5 +1,26 @@
 # Display controls and raw front-color data
 
+## Experimental DisplayPort compression, 25 October 2026
+
+`uke-control display compression` reads the requested DSC policy and cached
+driver state. A missing or ambiguous kernel provider is reported as unavailable;
+the query performs no AUX transfer or firmware request. With the matching
+kernel, `sudo uke-control display compression on|off` changes the root-owned
+request only while the display is disconnected. A matched readback describes
+the requested policy, not successful link activation. It is not persisted.
+
+The candidate pipeline is RGB 8/10 bpc at 8 compressed bits per pixel, with
+checked receiver DSC/FEC capabilities and one or two bounded slices. It is off
+by default. Cached `dsc_active` means the last enable sequence observed FEC
+decode enable and received the DSC-enable acknowledgment; it is not an optical
+or sustained-error acceptance result. `display bits` remains the separate
+source-stream report. A new monitor still requires a recoverable physical test.
+
+Compression does not raise the HDMI converter's TMDS limit. The measured
+320 MHz monitor admits 1440p/60 Hz RGB 10-bit, but not 75 Hz RGB 10-bit. Chroma
+conversion, MST, actual four-lane negotiation and 4K monitor acceptance remain
+separate. The current 1440p monitor cannot qualify 4K output.
+
 ## USB-C DisplayPort profiles, 24 October 2026
 
 `sudo uke-control display lane-limit 1|2|4` sets the matching kernel's
@@ -45,7 +66,7 @@ they do not establish a visible image or working USB devices.
 | --- | --- | --- |
 | `usb3-display` | 2, pins D/F | Reserve lanes for USB3 alongside DP. |
 | `display4` | 4, pins C/E | Prioritize DP bandwidth, including direct monitor cables. USB2 uses separate pins; dock USB/Ethernet fallback needs physical testing. |
-| `dual-display` | 4 plus MST | Unavailable until the Uke driver implements MST stream/connector management. |
+| `dual-display` | 4 plus MST | Available only with two kernel streams, a cached MST-capable sink and a unique standard C/E selection interface. |
 
 Request an available standard profile with
 `sudo uke-control display profile display4` or
@@ -57,12 +78,20 @@ physical validation. Attached storage, active USB networking, a bound gadget,
 ambiguous ports or a changed attachment refuse the transition. Changing lanes
 can interrupt video and SuperSpeed devices; retain another management path.
 
-On POCO Pad X1 running 7.2.12-31 with Juo JH925, the firmware reports no UCSI
+On POCO Pad X1 running 7.3.0-15 with Juo JH925, the firmware reports no UCSI
 alternate-mode details or override feature, and no standard DP alternate-mode
 control appears. Requests therefore return `DP_ALTMODE_CONTROL_UNAVAILABLE`.
 The existing firmware-negotiated display/USB path is retained. This failure
 does not establish that automatic four-lane negotiation with a direct DP cable
 is impossible. No forced PHY/mux setting or raw firmware command is used.
+
+26 October 2026: the 7.3.0-16 source candidate adds MST stream management.
+`display profiles` reports `mst.state_available`, `driver_available`,
+`sink_capable`, `active` and `max_streams` separately. Missing or malformed
+driver state cannot advertise availability. The observed JH925 route has
+MST_CAP=0 and two lanes; a profile cannot change that report. Candidate MST
+accepts RGB8 SDR only. HDR and compressed MST, two visible external streams,
+four-lane negotiation and USB/Ethernet fallback require separate qualification.
 
 Resolution, refresh rate, HDR, color depth and Adaptive Sync remain under the
 distribution's original KDE controls and actual DRM/monitor capabilities.
@@ -165,3 +194,18 @@ while VRR is enabled and shows `Measured DPU` separately. For example, a 144 Hz
 configured mode can coexist with a 30 Hz measured vblank cadence. VRR changes frame
 timing inside that mode; the selected-mode label need not follow each interval.
 This measurement keeps interrupts referenced and is not optical panel metrology.
+
+## Active output depth
+
+`sudo uke-control display bits` reads each DP/DSI output's kernel stream
+snapshot. `bits_per_component` is the active component depth; `bits_per_pixel`
+is the uncompressed pixel depth. `dsc_bits_per_pixel_x16` reports the DSC wire
+rate separately (128 means 8 compressed bits per pixel). A 10-bpc DSC input
+therefore reports 30 uncompressed bits per pixel, independently of its wire rate.
+
+The command reports null depth for inactive, unavailable, malformed or changing
+outputs. It does not substitute the requested maximum or an EDID capability.
+Older kernels without `output_bits` snapshots require an update; debugfs access
+normally requires root. This read-only status does not qualify HDR or optical
+panel output. Host fixtures cover inactive/stale data, malformed values and
+path containment; tablet verification uses the matching kernel package.

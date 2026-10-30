@@ -16,7 +16,7 @@ $(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/
 	mkdir -p "$(outdir)"
 	pkg-config --atleast-version=257 libsystemd
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -pthread -ffile-prefix-map=$(CURDIR)=. $(battery_sources) $$(pkg-config --cflags --libs libsystemd) $(LDFLAGS) -o "$@"
-$(outdir)/uke-charge-control: $(control_sources) src/battery/control.hpp src/battery/record.hpp src/battery/provider.hpp
+$(outdir)/uke-charge-control: $(control_sources) src/battery/control.hpp src/battery/record.hpp src/battery/provider.hpp src/battery/pd-contract.hpp
 	mkdir -p "$(outdir)"
 	pkg-config --atleast-version=257 libsystemd
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -pthread -ffile-prefix-map=$(CURDIR)=. $(control_sources) $$(pkg-config --cflags --libs libsystemd libcrypto) $(LDFLAGS) -o "$@"
@@ -69,10 +69,10 @@ srpm:
 	# Package exactly the reviewed worktree, with a per-file byte inventory.
 	stage=$$(mktemp -d)
 	trap 'rm -r -- "$$stage"' EXIT
-	mkdir "$$stage/uke-battery-observer-1.1.0"
-	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-1.1.0/"
-	(cd "$$stage/uke-battery-observer-1.1.0"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-1.1.0.tar.xz" -C "$$stage" uke-battery-observer-1.1.0
+	mkdir "$$stage/uke-battery-observer-1.4.0"
+	cp -a Makefile LICENSE README.md src manifests docs packaging patches tests "$$stage/uke-battery-observer-1.4.0/"
+	(cd "$$stage/uke-battery-observer-1.4.0"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
+	tar --sort=name --mtime='2026-10-18 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$(outdir)/rpmbuild/SOURCES/uke-battery-observer-1.4.0.tar.xz" -C "$$stage" uke-battery-observer-1.4.0
 	cp packaging/uke-battery-observer.spec "$(outdir)/rpmbuild/SPECS/"
 	cp packaging/sysusers/uke-battery.conf "$(outdir)/rpmbuild/SOURCES/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $(outdir)/rpmbuild" "$(outdir)/rpmbuild/SPECS/uke-battery-observer.spec"

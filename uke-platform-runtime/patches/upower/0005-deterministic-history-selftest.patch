@@ -1,0 +1,114 @@
+Subject: [PATCH] tests: use a controlled clock for history retention
+
+The two-second retention assertion assumes a 1.1-second sleep plus all file
+operations finish before another second boundary. Scheduling or fsync delays
+can expire every sample and fail the otherwise unrelated native suite.
+
+Advance a test clock instead. Wrap only the uninstalled self-test executable's
+clock and history-item timestamp calls; upowerd and its history policy are
+unchanged. Retain upstream GPL-2.0-or-later attribution.
+
+--- a/src/up-self-test.c
++++ b/src/up-self-test.c
+@@ -37,6 +37,28 @@
+ 
+ gchar *history_dir = NULL;
+ 
++/* History assertions must not depend on scheduler or filesystem latency. */
++static gint64 history_test_now;
++gint64 __real_g_get_real_time (void);
++gint64 __wrap_g_get_real_time (void);
++void __real_up_history_item_set_time_to_present (UpHistoryItem *item);
++void __wrap_up_history_item_set_time_to_present (UpHistoryItem *item);
++
++gint64
++__wrap_g_get_real_time (void)
++{
++	return history_test_now ? history_test_now : __real_g_get_real_time ();
++}
++
++void
++__wrap_up_history_item_set_time_to_present (UpHistoryItem *item)
++{
++	if (history_test_now)
++		up_history_item_set_time (item, history_test_now / G_USEC_PER_SEC);
++	else
++		__real_up_history_item_set_time_to_present (item);
++}
++
+ #define DBUS_SYSTEM_SOCKET "/var/run/dbus/system_bus_socket"
+ 
+ static void
+@@ -67,7 +89,7 @@
+ 
+ 	/* needs polkit, which only listens to the system bus */
+ 	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
+-		puts("No system D-BUS running, skipping test");
++		g_test_skip ("No system D-Bus running");
+ 		return;
+ 	}
+ 
+@@ -153,6 +175,8 @@
+ 	gchar *filename;
+ 	UpHistoryItem *item, *item2, *item3;
+ 
++	history_test_now = __real_g_get_real_time ();
++
+ 	history = up_history_new ();
+ 	g_assert (history != NULL);
+ 
+@@ -183,14 +207,14 @@
+ 	up_history_set_time_full_data (history, 54322);
+ 	up_history_set_voltage_data (history, 3.7f);
+ 
+-	g_usleep (2 * G_USEC_PER_SEC);
++	history_test_now += 2 * G_USEC_PER_SEC;
+ 	up_history_set_charge_data (history, 90);
+ 	up_history_set_rate_data (history, 1.00f);
+ 	up_history_set_time_empty_data (history, 12345);
+ 	up_history_set_time_full_data (history, 54321);
+ 	up_history_set_voltage_data (history, 3.9f);
+ 
+-	g_usleep (2 * G_USEC_PER_SEC);
++	history_test_now += 2 * G_USEC_PER_SEC;
+ 	up_history_set_charge_data (history, 95);
+ 	up_history_set_rate_data (history, 1.01f);
+ 	up_history_set_time_empty_data (history, 12344);
+@@ -267,7 +291,7 @@
+ 
+ 	/* ensure old entries are purged */
+ 	up_history_set_max_data_age (history, 2);
+-	g_usleep (1100 * G_USEC_PER_SEC / 1000);
++	history_test_now += 1100 * G_USEC_PER_SEC / 1000;
+ 	g_object_unref (history);
+ 
+ 	/* ensure only 2 points are returned */
+@@ -287,6 +311,7 @@
+ 	rmdir (history_dir);
+ 	g_free (history_dir);
+ 	history_dir = NULL;
++	history_test_now = 0;
+ }
+ 
+ static void
+@@ -296,7 +321,7 @@
+ 
+ 	/* polkit only listens to the system bus */
+ 	if (!g_file_test (DBUS_SYSTEM_SOCKET, G_FILE_TEST_EXISTS)) {
+-		puts("No system D-BUS running, skipping test");
++		g_test_skip ("No system D-Bus running");
+ 		return;
+ 	}
+ 
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -75,7 +75,8 @@
+     ],
+     dependencies: upowerd_deps,
+     link_with: [ upowerd_private, upshared['dummy'] ],
+-    gnu_symbol_visibility: 'hidden',
++    link_args: [ '-Wl,--wrap=g_get_real_time', '-Wl,--wrap=up_history_item_set_time_to_present' ],
++    gnu_symbol_visibility: 'default',
+     build_by_default: true,
+     install: false,
+ )

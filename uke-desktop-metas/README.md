@@ -1,9 +1,42 @@
 # Uke desktop selections
 
+29 October 2026: `uke-cutefish-meta` selects the real `cutefish-desktop` RPM from
+the separate `mcc45tr/cutefish` upstream-packaging project. It enables no display
+manager, creates no account and requires no KDE meta package. This source-only
+selection is removable. Graphical login, image composition and tablet tests
+remain pending; package installation cannot establish those results.
+
 25 October 2026: release `1.0.0-19` recommends Chromium rather than requiring
 it. Default DNF weak-dependency handling installs it with KDE, while removing
 the browser no longer requires removal of the KDE meta package. Browser data
 and original Fedora packages are not modified by this metadata change.
+25 October 2026: source revision 23 requests explicit JSON from Control 2.0 and
+uses the canonical CDC/USB-role commands. The dependency/conflict pair requires
+the matching CLI/client cohort while preserving separate widget removal. Host
+command/schema and QML checks are separate from native packaging and tablet use.
+
+Chromium is recommended by default and can be removed while retaining the KDE
+meta package. This preserves the packaging correction in release 19.
+
+25 October 2026: source release `1.0.0-22` requires Control 1.13.0. Torch on/off
+and brightness use fixed unprivileged client commands. The 1–100 slider shows
+the requested percentage separately from the two physical lit steps. The
+separate widget package remains a removable KDE recommendation and is excluded
+from the GNOME selection. QML loading and command/schema fixtures pass on the host;
+signed package and tablet acceptance remain separate.
+
+25 October 2026: source release `1.0.0-21` requires Control 1.12.0. Regular
+RGB color/brightness controls are removed. One **Test colors** button requests
+the kernel's ten-second color transition without sudo or pkexec. It remains
+unavailable without the matched kernel device and confined service. Torch
+brightness is retained. The actual applet component and cache check pass on
+the host; no new RPM or tablet result is claimed for this source revision.
+
+25 October 2026: source release `1.0.0-20` requires Control 1.11.0. The widget
+adds a 0–100 torch brightness dialog and RGB components/brightness with a color
+preview. Apply sends one validated backend request. Percentages stay within
+the retained limits; hardware torch steps are 0/50/100. No package or tablet
+result is claimed for this source revision.
 
 25 October 2026: release `1.0.0-17` requires Control 1.10.2 with corrected
 original LED-class provider discovery and the bounded, suspend-aware supervisor.

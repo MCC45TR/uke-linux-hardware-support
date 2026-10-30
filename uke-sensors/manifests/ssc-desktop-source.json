@@ -1,5 +1,10 @@
 {
   "schema_version": 1,
+  "copr_build_host": {
+    "date": "2026-10-27",
+    "python": "3.15.1-1.fc46",
+    "scope": "Pinned upstream Meson build tool only; no tablet Python payload"
+  },
   "scope": "SSC desktop package preview; physical automatic rotation and brightness pending",
   "libssc": {
     "version": "0.4.4",

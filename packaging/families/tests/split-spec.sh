@@ -24,11 +24,13 @@ done
 grep -Fx 'Release: 2.fc46' "$stage/1.0.19/preamble"
 grep -Fx 'Release: 1.fc46' "$stage/0.1.0/preamble"
 mkdir "$stage/material"
-printf 'material-decoration\tmaterial-decoration\n' >"$stage/rename"
+printf 'material-decoration\tuke-material-decoration\n' >"$stage/rename"
 sed 's/Name: uke-control/Name: material-decoration/' "$stage/input" >"$stage/material-input"
 awk -v out="$stage/material" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/material-input"
-grep -Fx '%package -n material-decoration' "$stage/material/preamble"
-! grep -q '^Conflicts: material-decoration' "$stage/material/preamble"
+grep -Fx '%package -n uke-material-decoration' "$stage/material/preamble"
+grep -Fx 'Provides: material-decoration = 0.1.0-3.fc46' "$stage/material/preamble"
+grep -Fx 'Obsoletes: material-decoration < 0.1.0-3.fc46' "$stage/material/preamble"
+grep -Fx 'Conflicts: material-decoration' "$stage/material/preamble"
 mkdir "$stage/sensor"
 sed 's/Name: uke-control/Name: iio-sensor-proxy/; /Summary: Fixture/aProvides: iio-sensor-proxy(ssc) = 1\nProvides: iio-sensor-proxy(uke-dual-light) = 1' "$stage/input" >"$stage/sensor-input"
 awk -v out="$stage/sensor" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/sensor-input"
@@ -51,3 +53,10 @@ if awk -v out="$stage/missing-macro" -v mapping="$stage/rename" -f host/split-sp
 fi
 grep -Fq 'Unexpanded build macro' "$stage/missing-macro.log"
 printf '%s\n' 'PASS: missing source-host RPM macros fail before a family SRPM is emitted.'
+
+# A release-specific source worker keeps every generated child in its target release.
+for fedora in 44 45 46; do
+    mkdir "$stage/fedora-$fedora"
+    awk -v dist=".fc$fedora" -v out="$stage/fedora-$fedora" -v mapping="$stage/rename" -v native_version=9.0.0 -f host/split-spec.awk "$stage/input"
+    grep -Fx "Release: 1.fc$fedora" "$stage/fedora-$fedora/preamble"
+done

@@ -82,12 +82,12 @@ references: [KDE settings](https://docs.kde.org/stable_kf6/en/powerdevil/kcontro
 [UPower device API](https://upower.freedesktop.org/docs/Device.html).
 
 The original helper reads/writes the standard threshold files through KAuth.
-This backend returns cached verified settings only while a live admission
-explicitly allows standard clients; otherwise reads return `ENODATA`. Do not
-show guessed thresholds, mark unsupported hardware supported, or fabricate
-UPower support flags. An admitted broker must refresh the cache for desktop
-availability. PowerDevil discovery/refresh and the installed UPower threshold
-flags still require coordinator validation. Activating/restarting desktop or
+The 28 October kernel candidate keeps admitted cached reads and otherwise
+observes the existing firmware band through three bounded GETs. Observation
+does not grant a writer lease. Earlier kernels still require admitted cached
+readback. Do not show guessed thresholds, mark unsupported hardware supported,
+or fabricate UPower support flags. PowerDevil discovery/refresh and installed
+UPower threshold flags still require validation. Activating/restarting desktop or
 battery services can issue GETs or restore stored desired thresholds; inspect
 those settings and the exact consumers before any activation.
 
@@ -98,6 +98,19 @@ kernel request mutex, although the feature-enable/target sequence itself is
 not an atomic remote transaction. An 80–90 band means firmware-reported start80,
 end90; it does not establish battery bypass or constant SOC. `cap80` uses a
 reviewed resume percentage from the profile rather than an invented default.
+
+The native helper and kernel reject enabled pairs outside restart 50–95 /
+stop 55–100, including equal/inverted targets. Native rejection occurs before
+lease acquisition or firmware I/O. The distinct 0/100 pair disables the feature;
+0/80 is not a supported request. A qualified cap80 profile must use restart
+50–79. KDE's wider generic range does not override these device bounds.
+
+29 October 2026: failed bounded reads now retain the fixed attribute and Linux
+errno in their diagnostic reason, for example
+`control_metadata_read_failed_uke_charge_settings_errno_16`. Oversized metadata
+has the separate `control_metadata_too_large` reason. File paths and contents
+are omitted. The diagnostic reports the observed error; it does not infer
+contention or retry a command. Firmware SET delivery rules are unchanged.
 
 No standard KDE slow/automatic charging control was established by this source
 review. The native commands below provide those requested functions after
@@ -378,3 +391,75 @@ Moisture, faults, freshness and input-suspend readback remain in the compared
 report; an error-to-healthy transition is logged even when the healthy fields
 match an earlier report. Firmware polling and the two-second guard cadence are
 unchanged. Desktop cached-status queries still return a full report each time.
+
+## Explicit identity commissioning (26 October 2026)
+
+Runtime 1.2.0 provides `uke-charge-control identity-review /absolute/review.json`;
+Control 2.3.0 exposes `uke-control charge review /absolute/review.json` with human
+output by default and explicit `--json`. Both require root. Supply a root-owned,
+non-symlink, non-group/world-writable regular input (maximum32KiB) with these
+fields; placeholder values are not usable evidence:
+
+```json
+{
+  "schema_version": 1,
+  "kind": "control_artifact_review",
+  "reviewed_control": true,
+  "boot_id": "CURRENT_BOOT_ID",
+  "driver_instance_boottime_ns": 0,
+  "firmware_generation": 0,
+  "source_event_generation": 0,
+  "expires_boottime_ns": 0,
+  "evidence_id": "REVIEWED_EVIDENCE_SHA256",
+  "control_profile_sha256": "EXACT_PROFILE_BYTES_SHA256",
+  "identities": {
+    "kernel_release": "CURRENT_KERNEL_RELEASE",
+    "firmware_sha256": "REVIEWED_FIRMWARE_SHA256",
+    "pack_identity_sha256": "REVIEWED_PACK_IDENTITY_SHA256",
+    "dt_sha256": "REVIEWED_DT_SHA256",
+    "module_manifest_sha256": "REVIEWED_MODULE_MANIFEST_SHA256"
+  }
+}
+```
+
+The operation applies the existing full profile resolver to its proposed identity;
+unknown/duplicate keys, wrong types, missing proofs, limits or mismatched artifacts
+still reject. It brackets preparation with current driver context, atomically
+replaces `/run/uke-battery/control-identity.json` with mode0600, then repeats
+admission. The supplied fixed expiry must be in the future and no more than15
+minutes away. Reusing the input cannot extend its expiry. No lease, firmware
+GET/SET, service activation or automatic qualification is performed. Root review
+asserts inspected evidence; it is not remote firmware authentication. A source,
+firmware, boot, profile, suspend or expiry change still requires another valid
+review. Unattended long-lived identity renewal is not qualified by this command.
+
+The PD report additionally consumes the exact UCSI driver's `uke_pd_contract`
+attribute when present. The driver returns one locked cache snapshot, invalidated
+by status replacement, disconnect, suspend-time offset or teardown. Userspace
+bounds the record and object index, decodes fixed PDO voltage and operating/
+maximum current, rejects inconsistent envelopes, and leaves other PDO types raw.
+`pd_contract` includes receipt times and separate contract power. It is not an
+input meter, a PS_RDY trace, exact PD revision, or QC/MI authentication. No extra
+UCSI command, property probe, TCPM or voltage writer is added.
+
+## Remaining electrical acceptance
+
+Source implementation cannot supply the missing physical facts. The shipped
+control/model/protection profiles remain unqualified. Do not fill their limits
+from marketing specifications or synthetic test values. Before enabling control,
+record the exact firmware/kernel/DT/modules, fitted pack and gauge mapping,
+calibrated unit/sign/scale evidence, pack CV/termination/recharge/JEITA bounds,
+autonomous protections, USB moisture/thermal inhibit and restore behavior.
+FG1/FG2 identifiers alone do not justify querying unknown XM IDs or labelling
+physical cell1/cell2. No new blind XM probe is issued by these changes.
+
+For each manufacturer-supported QC2.0, QC3.0, QC3+, PD2.0, PD3.0 and MI FC2.0
+case, record adapter and cable identity plus independent electrical/protocol
+measurements. Test normal/high system load, negotiated fallback, current/thermal
+derating, threshold stop/restart, positive-current restore, detach/reattach,
+source replacement, dock, missing/late telemetry, daemon failure, suspend/resume,
+PDR, reboot and charger-only boot. Record hardware evidence and result separately
+for every case; do not convert a missing case into a pass. Use a controlled rig
+for fault injection. Never wet, short or deliberately overheat the tablet.
+Factory reset, bypass, all-night control, individual-cell health, peak45W and
+exact QC/MI negotiation remain unqualified until their separate evidence exists.

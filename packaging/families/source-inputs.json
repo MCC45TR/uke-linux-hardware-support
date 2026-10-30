@@ -27,5 +27,32 @@
     "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/srpm-builds/11122182/material-decoration-20261006.094154-3.src.rpm",
     "archive_build": 11179253,
     "archive_method": "project-fork"
+  },
+  {
+    "name": "uke-mesa-libclc22-spirv",
+    "family": "uke-additional",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/uke-mesa-libclc22-spirv-0.2.0-1.fc46.src.rpm",
+    "sha256": "e648ef77ffb84523a675fb4a879a18e3cad0d64c1af3d8248e8fd91f03de0643"
+  },
+  {
+    "family": "uke-sound",
+    "name": "pipewire",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/pipewire-1.6.10-1.uke1.fc46.src.rpm",
+    "sha256": "3886da54cea4251eb2448cd629a5ace298535c92545974ad10ea81b4413dd153",
+    "build": 11202636
+  },
+  {
+    "family": "uke-sound",
+    "name": "uke-speaker-orientation",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/uke-speaker-orientation-0.1.0-4.fc46.src.rpm",
+    "sha256": "65e036d2f7f18038c43a9fd14a8cff344eac7414fd1e8e08b7793470c3a9e5aa",
+    "build": 11213564
+  },
+  {
+    "family": "uke-sound",
+    "name": "uke-speaker-firmware",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/uke-speaker-firmware-3.0.304.0-1.fc46.src.rpm",
+    "sha256": "ddded730ac0a182f3006009ab9524768c0899a219ef532d90bee6e5807eab9b3",
+    "build": 11215498
   }
 ]

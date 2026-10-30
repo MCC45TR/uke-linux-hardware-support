@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 19%{?dist}
+Release: 23%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -16,8 +16,8 @@ Desktop selection metadata for Uke. The base installs no graphical session.
 Display, touch, GPU and tablet boot remain independently unqualified.
 
 %package -n uke-kde-plasma-meta
-Provides: kde-plasma-uke-meta = 1.0.0-19
-Obsoletes: kde-plasma-uke-meta < 1.0.0-19
+Provides: kde-plasma-uke-meta = 1.0.0-23
+Obsoletes: kde-plasma-uke-meta < 1.0.0-23
 Conflicts: kde-plasma-uke-meta
 Summary: Original Fedora Plasma applications for the Uke development platform
 Requires: (senemos-uke-linux-kernel-mainline >= 7.2.11-16 or senemos-uke-linux-kernel-mainline-singleboot >= 7.2.11-16)
@@ -103,11 +103,20 @@ Hardware support is tested separately.
 KDE Connect uses Fedora's session autostart and a local-address-only firewalld
 policy. Pairing still requires confirmation in the original application.
 
+%package -n uke-cutefish-meta
+Summary: Optional upstream Cutefish Wayland session selection
+Requires: cutefish-desktop >= 1.0^20261027
+
+%description -n uke-cutefish-meta
+Select the separately packaged upstream Cutefish desktop. This removable
+metadata package enables no display manager and creates no account.
+Graphical login, first-account setup and tablet integration remain unqualified.
+
 %package -n uke-plasma-controls
 Summary: Removable Plasma system tray controls using uke-control
 License: GPL-3.0-or-later
 BuildArch: noarch
-Requires: uke-control >= 1.10.2
+Requires: uke-control >= 2.0.0
 Requires: plasma-workspace plasma5support polkit
 
 %description -n uke-plasma-controls
@@ -121,6 +130,7 @@ without removing the KDE meta package. No GNOME integration is included.
 %build
 %install
 install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/desktops/profile.json
+install -Dm644 src/cutefish.json %{buildroot}%{_datadir}/senemos/uke/desktops/cutefish.json
 install -Dm644 src/plasma.json %{buildroot}%{_datadir}/senemos/uke/desktops/plasma.json
 install -Dm644 src/uke-kdeconnect.xml %{buildroot}%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 install -d %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls
@@ -128,6 +138,7 @@ cp -a src/plasma-applet/. %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.u
 %check
 xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
+bash tests/cutefish-profile.sh
 %make_build test-applet-load
 
 %posttrans -n uke-kde-plasma-meta
@@ -149,14 +160,33 @@ fi
 %{_datadir}/senemos/uke/desktops/plasma.json
 %{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 
+%files -n uke-cutefish-meta
+%license LICENSE
+%{_datadir}/senemos/uke/desktops/cutefish.json
+
 %files -n uke-plasma-controls
 %license src/plasma-applet/LICENSE
 %doc src/plasma-applet/SOURCE.md
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
-* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-19
-- Recommend Chromium by default without requiring it to retain the KDE meta package.
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-23
+- Request explicit JSON from Control 2.0 and use canonical CDC/USB-role commands.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-22
+- Send torch requests without privilege escalation through Control 1.13.0.
+- Add a 1–100 slider and show the requested percentage beside the applied hardware step.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-21
+- Replace manual RGB controls with the kernel's bounded ten-second color test.
+- Send RGB requests through Control 1.12.0 without a sudo or pkexec path.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-20
+- Combine the deferred light settings with the removable Chromium recommendation.
+
+* Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-18
+- Add torch brightness and RGB color/brightness dialogs through Control 1.11.0.
+- Apply one validated request after confirmation rather than during slider movement.
 
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-17
 - Require the corrected original LED-class provider discovery.

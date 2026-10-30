@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Uke browser graphics probe</title>
+<body>
+<h1>Browser graphics probe</h1>
+<p>Canvas pixels, WebGL2 shaders and context restoration, WebGPU rendering and 64 compute rounds. Video, GPU reset and physical presentation require separate tests.</p>
+<canvas id="canvas2d" width="32" height="32"></canvas>
+<canvas id="webgl" width="32" height="32"></canvas>
+<canvas id="webgpu" width="32" height="32"></canvas>
+<pre id="result">Running…</pre>
+<script>
+window.gpuProbeDone = false;
+function hardwareRenderer(gl) {
+  const debug = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
+  if (/llvmpipe|swiftshader|softpipe|lavapipe/i.test(renderer)) throw new Error('Software renderer: ' + renderer);
+  return renderer;
+}
+function drawShader(gl) {
+  const shaders = [
+    [gl.VERTEX_SHADER, `#version 300 es
+      void main() {
+        vec2 p[3] = vec2[3](vec2(-1,-1),vec2(3,-1),vec2(-1,3));
+        gl_Position = vec4(p[gl_VertexID],0,1);
+      }`],
+    [gl.FRAGMENT_SHADER, `#version 300 es
+      precision highp float;
+      out vec4 color;
+      void main() { color=vec4(0.125,0.375,0.625,1.0); }`]
+  ].map(([type, source]) => {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+    return shader;
+  });
+  const program = gl.createProgram();
+  shaders.forEach(shader => gl.attachShader(program, shader));
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+  gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(program);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+  const pixel = new Uint8Array(4);
+  gl.readPixels(16,16,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+  const passed = [32,96,159,255].every((value,i) => Math.abs(value-pixel[i])<=1) &&
+    gl.getError()===gl.NO_ERROR && !gl.isContextLost();
+  gl.useProgram(null);
+  gl.deleteProgram(program);
+  shaders.forEach(shader => gl.deleteShader(shader));
+  return {pixel: Array.from(pixel), passed};
+}
+function restoreContext(canvas, gl) {
+  return new Promise((resolve,reject) => {
+    const extension = gl.getExtension('WEBGL_lose_context');
+    if (!extension) { reject(new Error('WEBGL_lose_context unavailable')); return; }
+    const timer = setTimeout(() => reject(new Error('Context restoration timed out')),5000);
+    let lost = false;
+    canvas.addEventListener('webglcontextlost',event => {
+      event.preventDefault(); lost=true;
+      setTimeout(() => extension.restoreContext(),100);
+    },{once:true});
+    canvas.addEventListener('webglcontextrestored',() => {
+      clearTimeout(timer);
+      try {
+        const renderer=hardwareRenderer(gl), draw=drawShader(gl);
+        resolve({lostEvent:lost,renderer,...draw,passed:lost && draw.passed});
+      } catch(error) { reject(error); }
+    },{once:true});
+    extension.loseContext();
+  });
+}
+async function drawWebGPU(device) {
+  const canvas=document.querySelector('#webgpu'), context=canvas.getContext('webgpu');
+  if(!context) throw new Error('WebGPU canvas unavailable');
+  const format=navigator.gpu.getPreferredCanvasFormat();
+  if(!['rgba8unorm','bgra8unorm'].includes(format)) throw new Error('Unexpected canvas format: '+format);
+  context.configure({device,format,alphaMode:'opaque',
+    usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
+  const module=device.createShaderModule({code:`
+    @vertex fn vertex(@builtin(vertex_index) i:u32) -> @builtin(position) vec4<f32> {
+      let positions=array<vec2<f32>,3>(vec2<f32>(-1,-1),vec2<f32>(3,-1),vec2<f32>(-1,3));
+      return vec4<f32>(positions[i],0,1);
+    }
+    @fragment fn fragment() -> @location(0) vec4<f32> { return vec4<f32>(0.2,0.4,0.6,1); }
+  `});
+  const pipeline=await device.createRenderPipelineAsync({layout:'auto',
+    vertex:{module,entryPoint:'vertex'},fragment:{module,entryPoint:'fragment',targets:[{format}]}});
+  const texture=context.getCurrentTexture(), commands=device.createCommandEncoder();
+  const pass=commands.beginRenderPass({colorAttachments:[{view:texture.createView(),
+    loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
+  pass.setPipeline(pipeline);
+  pass.draw(3);
+  pass.end();
+  const pixels=device.createBuffer({size:256*32,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+  commands.copyTextureToBuffer({texture},{buffer:pixels,bytesPerRow:256},{width:32,height:32,depthOrArrayLayers:1});
+  device.queue.submit([commands.finish()]);
+  await pixels.mapAsync(GPUMapMode.READ);
+  const bytes=new Uint8Array(pixels.getMappedRange()), order=format==='bgra8unorm'?[2,1,0,3]:[0,1,2,3];
+  const pixel=order.map(channel => bytes[16*256+16*4+channel]);
+  const passed=[51,102,153,255].every((value,i) => Math.abs(value-pixel[i])<=1);
+  pixels.unmap();
+  pixels.destroy();
+  context.unconfigure();
+  return {format,pixel,passed};
+}
+(async () => {
+  const result = {secureContext: isSecureContext};
+  const context = document.querySelector('#canvas2d').getContext('2d');
+  context.fillStyle = '#112233';
+  context.fillRect(0, 0, 32, 32);
+  const pixel2d = Array.from(context.getImageData(0, 0, 1, 1).data);
+  result.canvas = {pixel: pixel2d, passed: pixel2d.join(',') === '17,34,51,255'};
+  const canvas = document.querySelector('#webgl');
+  const gl = canvas.getContext('webgl2');
+  try {
+    if (!gl) throw new Error('WebGL2 unavailable');
+    gl.clearColor(0.25, 0.5, 0.75, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    const pixel = new Uint8Array(4);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+    const renderer = hardwareRenderer(gl), draw=drawShader(gl);
+    result.webgl = {renderer, clearPixel: Array.from(pixel), shader:draw, passed:
+      [64,128,191,255].every((value,i) => Math.abs(value-pixel[i])<=1) && draw.passed};
+    result.webglContextRestore = await restoreContext(canvas,gl);
+  } catch(error) {
+    result.webgl ??= {passed:false,error:String(error)};
+    result.webglContextRestore ??= {passed:false,error:String(error)};
+  }
+  let roundsCompleted=0;
+  try {
+    if (!navigator.gpu) throw new Error('WebGPU unavailable');
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) throw new Error('No WebGPU adapter');
+    const info = adapter.info;
+    const device = await adapter.requestDevice();
+    device.pushErrorScope('validation');
+    const wordCount=4096, rounds=64, bytes=wordCount*4;
+    const source = device.createBuffer({size: bytes,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST});
+    const output = device.createBuffer({size: bytes,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ});
+    const parameters = device.createBuffer({size:16,
+      usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    const module = device.createShaderModule({code: `
+      @group(0) @binding(0) var<storage, read_write> values: array<u32>;
+      @group(0) @binding(1) var<uniform> iteration: vec4<u32>;
+      @compute @workgroup_size(64)
+      fn main(@builtin(global_invocation_id) id: vec3<u32>) {
+        if (id.x < ${wordCount}u) { values[id.x] = id.x * 3u + 7u + iteration.x * 257u; }
+      }`});
+    const pipeline = await device.createComputePipelineAsync({layout: 'auto',
+      compute: {module, entryPoint: 'main'}});
+    const group = device.createBindGroup({layout: pipeline.getBindGroupLayout(0),
+      entries: [{binding:0,resource:{buffer:source}},{binding:1,resource:{buffer:parameters}}]});
+    device.queue.writeBuffer(source,0,new Uint32Array(wordCount));
+    for(let round=0;round<rounds;++round) {
+      device.queue.writeBuffer(parameters,0,new Uint32Array([round,0,0,0]));
+      const commands=device.createCommandEncoder(), pass=commands.beginComputePass();
+      pass.setPipeline(pipeline);
+      pass.setBindGroup(0,group);
+      pass.dispatchWorkgroups(wordCount/64);
+      pass.end();
+      commands.copyBufferToBuffer(source,0,output,0,bytes);
+      device.queue.submit([commands.finish()]);
+      await output.mapAsync(GPUMapMode.READ);
+      const words=new Uint32Array(output.getMappedRange());
+      const valid=words.every((value,i) => value===i*3+7+round*257);
+      output.unmap();
+      if(!valid) throw new Error('Compute mismatch in round '+round);
+      ++roundsCompleted;
+    }
+    const render=await drawWebGPU(device);
+    const error = await device.popErrorScope();
+    result.webgpu = {adapter: {vendor: info.vendor, architecture: info.architecture,
+      device: info.device, description: info.description,
+      fallback: info.isFallbackAdapter}, roundsCompleted,wordsChecked:roundsCompleted*wordCount,
+      render,passed: roundsCompleted===rounds && render.passed && !error && !info.isFallbackAdapter &&
+        !/llvmpipe|swiftshader|softpipe/i.test(info.description),
+      error: error ? error.message : null};
+    source.destroy();
+    output.destroy();
+    parameters.destroy();
+    device.destroy();
+  } catch (error) {
+    result.webgpu = {passed: false,roundsCompleted,error: String(error)};
+  }
+  result.passed = result.canvas.passed && result.webgl.passed && result.webglContextRestore.passed && result.webgpu.passed;
+  window.gpuProbeResult = result;
+  document.querySelector('#result').textContent = JSON.stringify(result, null, 2);
+})().catch(error => {
+  window.gpuProbeResult = {passed: false, error: String(error)};
+  document.querySelector('#result').textContent = JSON.stringify(window.gpuProbeResult, null, 2);
+}).finally(() => { window.gpuProbeDone = true; });
+</script>
+</body>
+</html>

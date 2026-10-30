@@ -63,3 +63,13 @@ evidence; it cannot admit a speaker or manufacture camera/pen support.
 2026-10-21: cached chipset inventory checks pass on the host. The new native
 RPM and tablet readback remain separate validation gates. Cache records sharing
 shared_cpu_list overlap and must not be summed as independent capacity.
+
+## 27 October 2026: DT identity and firmware-owned sensors
+
+The hardware snapshot reads the DT board, processor, LPDDR5X and accessory
+presentation fields and recognizes the Uke SSC sensor map, FM19511 tag and
+upstream IR transmitter. Model candidates remain arrays with
+`identity_confirmed=false`; the accessory profile retains `connected=null`.
+FM19511 misc and LIRC endpoint inventory reads standard metadata only. It does
+not open a device, issue firmware RPCs, scan a bus, program NDEF or emit IR.
+The existing SSC discovery path remains the actual sensor identity source.

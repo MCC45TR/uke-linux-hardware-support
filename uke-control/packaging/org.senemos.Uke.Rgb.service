@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.senemos.Uke.Rgb
+Exec=/usr/libexec/uke-control/rgb-led
+User=uke-rgb
+SystemdService=uke-control-rgb.service

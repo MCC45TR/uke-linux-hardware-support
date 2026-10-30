@@ -33,7 +33,9 @@ std::vector<Source> sources(const fs::path& sys) {
         {"bluetooth-uart", "wake_permission_unavailable", {}},
         {"charge-connect", "independent_firmware_wake_filter_unqualified", {}},
         {"charge-disconnect", "independent_firmware_wake_filter_unqualified", {}},
-        {"double-tap", "touch_gesture_wake_not_implemented", {}}
+        {"double-tap", "touch_gesture_wake_not_implemented", {}},
+        {"lid-open", "selective_lid_wake_not_implemented", {}},
+        {"usb-host", "wake_permission_unavailable", {}}
     };
     const auto devices = sysfs::resolved(sys, sys/"devices");
     if (!devices) return result;
@@ -62,6 +64,41 @@ std::vector<Source> sources(const fs::path& sys) {
     }
     admit(result[3], sys/"bus/platform/devices/a600000.ssusb/power/wakeup");
     admit(result[4], sys/"bus/platform/devices/888000.qcom,qup_uart/power/wakeup");
+    const auto touch = sys/"bus/spi/devices/spi0.0";
+    if (sysfs::driver(sys,touch)=="\"nt36532-uke-thp\"" &&
+        (sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"0\"" ||
+        sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"1\""))
+        admit(result[7], touch/"power/wakeup");
+    admit(result[8], sys/"bus/platform/devices/hall-lid/power/wakeup");
+    const auto controller = sysfs::resolved(*devices,
+        sys/"bus/platform/devices/a600000.ssusb");
+    unsigned hosts = 0;
+    const auto host_driver = sysfs::resolved(sys, sys/"bus/platform/drivers/xhci-hcd");
+    if (controller && host_driver) for (const auto& entry : sysfs::entries(sys, *controller)) {
+        const auto leaf = entry.filename().string();
+        if (!leaf.starts_with("xhci-hcd.") || !leaf.ends_with(".auto") || leaf.size() <= 14 ||
+            leaf.substr(9, leaf.size()-14).find_first_not_of("0123456789") != leaf.npos)
+            continue;
+        const auto target = sysfs::resolved(*controller, entry);
+        if (!target || sysfs::resolved(sys, entry/"driver") != host_driver) continue;
+        ++hosts;
+        admit(result[9], *target/"power/wakeup");
+    }
+    if (hosts > 1) {
+        result[9].path.clear(); result[9].enabled = false;
+        result[9].reason = "ambiguous_usb_host_provider";
+    }
+    if (controller) for (const auto& entry : sysfs::entries(sys, sys/"bus/usb/devices")) {
+        const auto leaf = entry.filename().string();
+        if (leaf.empty() || leaf.find_first_not_of("0123456789.usb-") != leaf.npos)
+            continue;
+        const auto target = sysfs::resolved(*controller, entry);
+        if (!target || !fs::is_regular_file(*target/"idVendor"))
+            continue;
+        Source source{"usb-device-"+leaf, "remote_wakeup_not_advertised", {}};
+        admit(source, *target/"power/wakeup");
+        result.push_back(std::move(source));
+    }
     return result;
 }
 bool recovery_key(const std::vector<Source>& sources) {
@@ -71,16 +108,27 @@ bool recovery_key(const std::vector<Source>& sources) {
     });
 }
 std::string snapshot(const fs::path& sys) {
+    return snapshot(sys,{});
+}
+std::string snapshot(const fs::path& sys,const std::string& selected) {
     std::string result = std::string("{\"scope\":\"device_wake_permission\",\"board_compatible\":") +
         (applicable(sys) ? "true" : "false") + ",\"physical_acceptance\":null,\"sources\":[";
-    bool comma = false;
+    bool comma = false,matched=selected.empty();
     for (const auto& source : sources(sys)) {
+        if(!selected.empty()&&source.name!=selected)continue;
+        matched=true;
         if (comma) result += ',';
         comma = true;
         result += "{\"name\":" + sysfs::quote(source.name) + ",\"control_available\":" + (source.path.empty() ? "false" : "true") +
             ",\"enabled\":" + (source.path.empty() ? "null" : source.enabled ? "true" : "false") +
-            ",\"reason\":" + (source.reason.empty() ? "null" : sysfs::quote(source.reason)) + "}";
+            ",\"reason\":" + (source.reason.empty() ? "null" : sysfs::quote(source.reason));
+        if(source.name=="double-tap") {
+            const auto armed=source.path.empty()?"null":sysfs::attribute(sys,source.path.parent_path().parent_path()/"gesture_wake_armed");
+            result+=",\"gesture_armed\":"+std::string(armed=="\"1\""?"true":armed=="\"0\""?"false":"null");
+        }
+        result+='}';
     }
+    if(!matched)throw std::runtime_error("Unknown wake source");
     return result + "]}\n";
 }
 }

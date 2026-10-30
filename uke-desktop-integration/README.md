@@ -32,3 +32,11 @@ actual internal GENI adapters while retaining DP AUX. The helper only reads
 sysfs topology and writes private runtime configuration; existing user/admin
 ddcutil files retain precedence. Offline topology and configuration tests pass;
 package and tablet startup checks remain separate gates.
+
+## Optional graphics source probes
+
+29 October 2026. The explicit `vulkan-probe`, `gles-probe` and `opencl-probe`
+Make targets retain the native diagnostic sources and require their respective
+SDK headers and libraries. They are outside default package builds. Browser
+workload fixtures and pinned research manifests are source tools; their
+presence does not establish conformance or a new tablet result.

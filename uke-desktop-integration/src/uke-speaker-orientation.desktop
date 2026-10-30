@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Uke speaker orientation
+Exec=/usr/libexec/uke-speaker-orientation
+OnlyShowIn=KDE;GNOME;
+NoDisplay=true

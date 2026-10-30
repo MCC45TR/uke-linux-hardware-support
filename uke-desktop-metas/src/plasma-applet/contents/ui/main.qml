@@ -16,14 +16,15 @@ PlasmoidItem {
     property var desktop: ({})
     property var usb: ({})
     property var lights: ({})
+    property var rgb: ({})
     property var requests: ({})
     property string errorText: ""
     property int serial: 0
     property int pending: 0
     property string requestedAction: ""
 
-    function execute(action) {
-        const command = Control.command(action)
+    function execute(action, values) {
+        const command = Control.command(action, values)
         if (!command) return
         const source = "UKE_TRAY_REQUEST=" + (++serial) + " " + command
         requests[source] = action
@@ -36,18 +37,19 @@ PlasmoidItem {
         execute("desktop")
         execute("usb")
         execute("lights")
+        execute("rgb")
     }
-    function change(action) {
+    function change(action, values) {
         if (pending > 0) return
         errorText = ""
-        execute(action)
+        execute(action, values)
     }
     function finish(source, data) {
         const action = requests[source]
         if (!action) return
         delete requests[source]
         --pending
-        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights"
+        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights" || action === "rgb"
         if (query) {
             let value = {}
             try {
@@ -59,7 +61,8 @@ PlasmoidItem {
             if (action === "plasma") panel = value
             else if (action === "desktop") desktop = value
             else if (action === "usb") usb = value
-            else lights = value
+            else if (action === "lights") lights = value
+            else rgb = value
         } else {
             if (data["exit code"] !== 0)
                 errorText = i18n("The change failed or authorization was cancelled.")
@@ -92,8 +95,13 @@ PlasmoidItem {
     Timer {
         interval: 2000
         repeat: true
-        running: root.expanded && root.lights.flashlight?.on === true
-        onTriggered: { if (root.pending === 0) root.execute("lights") }
+        running: root.expanded && (root.lights.flashlight?.on === true || root.rgb.mode === "test")
+        onTriggered: {
+            if (root.pending === 0) {
+                if (root.lights.flashlight?.on === true) root.execute("lights")
+                if (root.rgb.mode === "test") root.execute("rgb")
+            }
+        }
     }
 
     Plasma5Support.DataSource {
@@ -207,30 +215,33 @@ PlasmoidItem {
             ControlRow {
                 title: i18n("Flashlight")
                 iconName: "flashlight-off"
-                description: i18n("20 mA total; switches off within 60 seconds")
+                description: i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight?.brightness_percent ?? 0)
                 available: root.lights.flashlight?.available === true
                 busy: root.pending > 0
                 action: Component {
-                    PC.Switch {
-                        checked: root.lights.flashlight?.on === true
-                        Accessible.name: i18n("Flashlight")
-                        onToggled: root.change(checked ? "flashlightOn" : "flashlightOff")
+                    RowLayout {
+                        PC.Switch {
+                            checked: root.lights.flashlight?.on === true
+                            Accessible.name: i18n("Flashlight")
+                            onToggled: root.change(checked ? "flashlightOn" : "flashlightOff")
+                        }
+                        PC.ToolButton {
+                            icon.name: "configure"
+                            Accessible.name: i18n("Flashlight brightness")
+                            onClicked: lightSettings.configure()
+                        }
                     }
                 }
             }
             ControlRow {
-                title: i18n("Notification LED")
+                title: i18n("RGB color test")
                 iconName: "color-management"
-                description: i18n("Low brightness; administrator authorization required")
-                available: root.lights.rgb?.available === true
-                busy: root.pending > 0
+                description: root.rgb.mode === "test" ? i18n("Running the 10-second color transition")
+                    : i18n("A 10-second transition through the color wheel")
+                available: root.rgb.available === true && root.rgb.kernel_io_error === 0
+                busy: root.pending > 0 || root.rgb.mode === "test" || root.rgb.mode === "front-camera"
                 action: Component {
-                    RowLayout {
-                        PC.Button { text: i18n("Red"); onClicked: root.change("red") }
-                        PC.Button { text: i18n("Green"); onClicked: root.change("green") }
-                        PC.Button { text: i18n("Blue"); onClicked: root.change("blue") }
-                        PC.Button { text: i18n("Off"); onClicked: root.change("ledOff") }
-                    }
+                    PC.Button { text: i18n("Test colors"); onClicked: root.change("rgbTest") }
                 }
             }
             PC.Label {
@@ -239,6 +250,36 @@ PlasmoidItem {
                 wrapMode: Text.WordWrap
                 text: i18n("Unsupported controls remain unavailable. Refresh reads the current state.")
             }
+        }
+        QQC2.Dialog {
+            id: lightSettings
+            function configure() {
+                lightBrightness.value = root.lights.flashlight.requested_percent
+                open()
+            }
+            anchors.centerIn: parent
+            width: Math.min(parent.width, Kirigami.Units.gridUnit * 24)
+            modal: true
+            title: i18n("Flashlight brightness")
+            standardButtons: QQC2.Dialog.Ok | QQC2.Dialog.Cancel
+            contentItem: ColumnLayout {
+                PC.Label { text: i18n("Brightness: %1%", Math.round(lightBrightness.value)) }
+                QQC2.Slider {
+                    id: lightBrightness
+                    Layout.fillWidth: true
+                    from: 1
+                    to: 100
+                    stepSize: 1
+                    snapMode: QQC2.Slider.SnapAlways
+                    Accessible.name: i18n("Brightness")
+                }
+                PC.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: i18n("Hardware has two lit steps: 1–99% requests use 50%; 100% uses 100%. Maximum 20 mA. No automatic timeout; turns off before sleep.")
+                }
+            }
+            onAccepted: root.change("flashlightSet", [Math.round(lightBrightness.value)])
         }
         QQC2.Dialog {
             id: confirmation

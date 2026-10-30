@@ -5,7 +5,7 @@ spec=${1:?specification}; target=${2:-aarch64}
 [[ $target == aarch64 || $target == x86_64 ]]
 stage=$(mktemp -d)
 trap 'rm -r -- "$stage"' EXIT
-query=(rpmspec --target "$target" --define 'dist .fc46' --define 'fedora 46' -q)
+query=(rpmspec --target "$target" --define "dist .fc$(rpm --eval '%{fedora}')" --define "fedora $(rpm --eval '%{fedora}')" -q)
 "${query[@]}" --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "$spec" > "$stage/packages"
 "${query[@]}" --qf '[%{REQUIRENAME}\t%{REQUIREFLAGS:depflags}\t%{REQUIREVERSION}\n]' "$spec" > "$stage/requires"
 awk -F '\t' '

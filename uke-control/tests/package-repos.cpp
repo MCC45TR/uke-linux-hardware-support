@@ -26,6 +26,9 @@ int main(int argc,char** argv) {
     const fs::path repo=std::string(selected)=="stable"?stable:test;
     session(root,repo,selected,[&](libdnf5::Base& base) {
         const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test"};
+        if(phase=="foreign-release") {
+            bool refused=false;try{plan(base,selected,ids,".fc44");}catch(const std::exception&){refused=true;}assert(refused);return;
+        }
         if(phase=="rename-upper-bound"||phase=="ambiguous-rename"||phase=="provides-only"||phase=="missing-fedora-fastfetch"||phase=="private-obsolete") {
             bool refused=false;try{auto p=plan(base,selected,ids);resolve(base,p,selected,false);}catch(const std::exception& e){std::cout<<e.what()<<'\n';refused=true;}assert(refused);return;
         }

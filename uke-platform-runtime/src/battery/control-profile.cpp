@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <climits>
 #include <limits>
+#include <stdexcept>
 
 namespace uke::battery::control {
 namespace {
@@ -31,7 +32,8 @@ std::string sha256(const std::string &bytes) {
     return result;
 }
 }
-Profile resolve(const Context &c, const std::string &path, const std::string &identity, uid_t uid) {
+static Profile resolve_identity(const Context &c, const std::string &path,
+                                const std::string &identity, uid_t uid, record::V *proposed = nullptr) {
     using namespace record;
     Profile result;
     if (!c.provider_verified || !c.state.compiled || !c.state.instance || !c.boottime_ns ||
@@ -96,7 +98,8 @@ Profile resolve(const Context &c, const std::string &path, const std::string &id
         if (result.temperature_min >= result.temperature_max || !result.voltage_min_uv ||
             result.voltage_min_uv >= result.voltage_max_uv || !result.current_abs_max_ua ||
             result.lease_ns < 15000000000ULL || result.lease_ns > 30000000000ULL || result.ack_bytes < 12 ||
-            result.ack_bytes > 4096 || !result.usb_type || result.usb_type > 64 || result.cap_resume_percent >= 80)
+            result.ack_bytes > 4096 || !result.usb_type || result.usb_type > 64 ||
+            result.cap_resume_percent < 50 || result.cap_resume_percent >= 80)
             reject("control_limits_invalid");
         auto *current = field(p.get(), "current_limits");
         if (!result.current_control) {
@@ -141,24 +144,25 @@ Profile resolve(const Context &c, const std::string &path, const std::string &id
         auto *ids = field(p.get(), "identities");
         keys(ids, {"kernel_release", "firmware_sha256", "pack_identity_sha256", "dt_sha256", "module_manifest_sha256"});
         if (string(field(ids, "kernel_release")) != c.kernel_release) reject("control_kernel_mismatch");
-        const auto a = record::read_json(identity, uid);
-        keys(a.get(), {"schema_version", "kind", "provider", "boot_id", "driver_instance_boottime_ns",
+        const auto owned = proposed ? record::Json(nullptr, &sd_json_variant_unref) : record::read_json(identity, uid);
+        auto *a = proposed ? proposed : owned.get();
+        keys(a, {"schema_version", "kind", "provider", "boot_id", "driver_instance_boottime_ns",
             "firmware_generation", "source_event_generation", "reviewed_at_boottime_ns", "expires_boottime_ns",
             "identities", "reviewed_control", "evidence_id", "control_profile_sha256"});
         result.evidence = sha256(bytes);
-        if (integer(field(a.get(), "schema_version")) != 1 || string(field(a.get(), "kind")) != "control_identity_attestation" ||
-            string(field(a.get(), "provider")) != "pmic_glink_power_supply" || !boolean(field(a.get(), "reviewed_control")) ||
-            digest(field(a.get(), "evidence_id")) != evidence || digest(field(a.get(), "control_profile_sha256")) != result.evidence)
+        if (integer(field(a, "schema_version")) != 1 || string(field(a, "kind")) != "control_identity_attestation" ||
+            string(field(a, "provider")) != "pmic_glink_power_supply" || !boolean(field(a, "reviewed_control")) ||
+            digest(field(a, "evidence_id")) != evidence || digest(field(a, "control_profile_sha256")) != result.evidence)
             reject("control_attestation_invalid");
-        if (string(field(a.get(), "boot_id")) != c.boot_id || integer(field(a.get(), "driver_instance_boottime_ns")) != c.state.instance ||
-            integer(field(a.get(), "firmware_generation")) != c.state.firmware ||
-            integer(field(a.get(), "source_event_generation")) != c.state.source) reject("control_running_identity_mismatch");
-        const auto reviewed = integer(field(a.get(), "reviewed_at_boottime_ns"));
+        if (string(field(a, "boot_id")) != c.boot_id || integer(field(a, "driver_instance_boottime_ns")) != c.state.instance ||
+            integer(field(a, "firmware_generation")) != c.state.firmware ||
+            integer(field(a, "source_event_generation")) != c.state.source) reject("control_running_identity_mismatch");
+        const auto reviewed = integer(field(a, "reviewed_at_boottime_ns"));
         result.reviewed_ns = reviewed;
-        result.expires_ns = integer(field(a.get(), "expires_boottime_ns"));
+        result.expires_ns = integer(field(a, "expires_boottime_ns"));
         if (!reviewed || reviewed <= c.state.invalidation_ns || reviewed > c.boottime_ns || result.expires_ns <= c.boottime_ns || result.expires_ns <= reviewed ||
             result.expires_ns - reviewed > 900000000000ULL) reject("control_attestation_expired");
-        auto *running = field(a.get(), "identities");
+        auto *running = field(a, "identities");
         keys(running, {"kernel_release", "firmware_sha256", "pack_identity_sha256", "dt_sha256", "module_manifest_sha256"});
         if (string(field(running, "kernel_release")) != c.kernel_release) reject("control_attested_kernel_mismatch");
         for (const char *key : {"firmware_sha256", "pack_identity_sha256", "dt_sha256", "module_manifest_sha256"})
@@ -166,5 +170,49 @@ Profile resolve(const Context &c, const std::string &path, const std::string &id
         result.qualified = true; result.reason = "operator_attested_control_evidence_not_hardware_authentication";
     } catch (const std::exception &e) { result = {}; result.reason = e.what(); }
     return result;
+}
+Profile resolve(const Context &c, const std::string &path, const std::string &identity, uid_t uid) {
+    return resolve_identity(c, path, identity, uid);
+}
+std::string review_identity(const Context &c, const std::string &path, const std::string &review, uid_t uid) {
+    using namespace record;
+    const auto r = read_json(review, uid);
+    keys(r.get(), {"schema_version", "kind", "reviewed_control", "evidence_id",
+        "control_profile_sha256", "identities", "boot_id", "driver_instance_boottime_ns",
+        "firmware_generation", "source_event_generation", "expires_boottime_ns"});
+    if (integer(field(r.get(), "schema_version")) != 1 ||
+        string(field(r.get(), "kind")) != "control_artifact_review" ||
+        !boolean(field(r.get(), "reviewed_control"))) reject("control_review_required");
+    // A review is bound to this source and boot; it cannot silently renew itself.
+    if (string(field(r.get(), "boot_id")) != c.boot_id ||
+        integer(field(r.get(), "driver_instance_boottime_ns")) != c.state.instance ||
+        integer(field(r.get(), "firmware_generation")) != c.state.firmware ||
+        integer(field(r.get(), "source_event_generation")) != c.state.source)
+        reject("control_review_epoch_mismatch");
+    const auto expiry = integer(field(r.get(), "expires_boottime_ns"));
+    if (!c.boottime_ns || expiry <= c.boottime_ns ||
+        expiry - c.boottime_ns > 900000000000ULL) reject("control_review_expiry_invalid");
+    auto *ids = field(r.get(), "identities");
+    keys(ids, {"kernel_release", "firmware_sha256", "pack_identity_sha256", "dt_sha256", "module_manifest_sha256"});
+    std::string out = "{\"schema_version\":1,\"kind\":\"control_identity_attestation\","
+        "\"provider\":\"pmic_glink_power_supply\",\"reviewed_control\":true,\"boot_id\":\"" +
+        string(field(r.get(), "boot_id")) + "\",\"driver_instance_boottime_ns\":" + std::to_string(c.state.instance) +
+        ",\"firmware_generation\":" + std::to_string(c.state.firmware) +
+        ",\"source_event_generation\":" + std::to_string(c.state.source) +
+        ",\"reviewed_at_boottime_ns\":" + std::to_string(c.boottime_ns) +
+        ",\"expires_boottime_ns\":" + std::to_string(expiry) +
+        ",\"evidence_id\":\"" + digest(field(r.get(), "evidence_id")) +
+        "\",\"control_profile_sha256\":\"" + digest(field(r.get(), "control_profile_sha256")) +
+        "\",\"identities\":{\"kernel_release\":\"" + string(field(ids, "kernel_release")) + "\"";
+    for (const char *key : {"firmware_sha256", "pack_identity_sha256", "dt_sha256", "module_manifest_sha256"})
+        out += ",\"" + std::string(key) + "\":\"" + digest(field(ids, key)) + "\"";
+    out += "}}\n";
+    record::V *value = nullptr;
+    if (sd_json_parse(out.c_str(), sd_json_parse_flags_t(0), &value, nullptr, nullptr) < 0)
+        reject("control_identity_format_failed");
+    const record::Json proposed(value, &sd_json_variant_unref);
+    const auto checked = resolve_identity(c, path, {}, uid, value);
+    if (!checked.qualified) throw std::runtime_error(checked.reason);
+    return out;
 }
 }

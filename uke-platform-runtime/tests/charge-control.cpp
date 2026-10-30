@@ -195,6 +195,44 @@ int main() {
     rejects([&] { parse_protocol_state("1 42 7 2 3 1 4294967296 0 2000000000 7 2 3"); });
     rejects([&] { parse_protocol_state("1 42 7 2 3 1 1 1 2000000000 7 2 3 extra"); });
     {
+        const auto p = parse_protocol_inspection("1 42 7 2 3 2000000000 128 130\n");
+        assert(p.adapter_type == 128 && p.real_type == 130);
+        for (const auto &bad : {"", "1 0 7 2 3 2000000000 128 130", "1 42 7 2 3 0 128 130",
+            "2 42 7 2 3 2000000000 128 130", "1 42 7 2 3 2000000000 -1 130",
+            "1 42 7 2 3 2000000000 4294967296 130", "1 42 7 2 3 2000000000 128 130 extra"})
+            rejects([&] { parse_protocol_inspection(bad); });
+        rejects([&] { parse_protocol_inspection(std::string(513, ' ')); });
+        const auto unknown = parse_protocol_inspection("1 42 7 2 3 2000000000 4294967295 4294967295");
+        assert(unknown.adapter_type == UINT32_MAX && std::string(oem_usb_type_name(unknown.real_type)) == "Unrecognized");
+        const char *names[] = {"Unknown", "SDP", "DCP", "CDP", "ACA", "Type-C", "PD", "PD_DRP", "PD_PPS", "Apple_Brick_ID"};
+        for (uint32_t i = 0; i < 10; ++i) assert(std::string(oem_usb_type_name(i)) == names[i]);
+        const char *vendor[] = {"HVDCP", "HVDCP_3", "HVDCP_3P5", "USB_FLOAT", "HVDCP_3_CLASSB"};
+        for (uint32_t i = 0; i < 5; ++i) assert(std::string(oem_usb_type_name(128+i)) == vendor[i]);
+        Context before; before.provider_verified = true; before.boot_id = "synthetic";
+        before.kernel_release = "synthetic"; before.boottime_ns = second; before.state = sample();
+        before.state.live = before.state.verified = before.state.current_verified = false;
+        before.state.compiled = false; // Observation does not require a charging actuator.
+        auto after = before; after.boottime_ns = 2 * second;
+        assert(protocol_inspection_matches(p, before, after));
+        for (unsigned fault = 0; fault < 13; ++fault) {
+            auto stale = after;
+            if (fault == 0) ++stale.state.instance;
+            if (fault == 1) ++stale.state.generation;
+            if (fault == 2) ++stale.state.firmware;
+            if (fault == 3) ++stale.state.source;
+            if (fault == 4) stale.boot_id = "other";
+            if (fault == 5) stale.kernel_release = "other";
+            if (fault == 6) stale.provider_verified = false;
+            if (fault == 7) stale.boottime_ns = second;
+            if (fault == 8) stale.boottime_ns = 5 * second;
+            if (fault == 9) stale.state.live = true;
+            if (fault == 10) stale.state.verified = true;
+            if (fault == 11) stale.state.current_verified = true;
+            if (fault == 12) stale.boot_id.clear();
+            assert(!protocol_inspection_matches(p, before, stale));
+        }
+    }
+    {
         Context c; c.provider_verified = true; c.boottime_ns = 2 * second; c.state = sample();
         auto p = profile();
         auto a = inspect_admission(c, p);
@@ -283,6 +321,40 @@ int main() {
         }
         rejects([&] { current_ceiling(p, s, 2 * second); });
     }
+    {
+        Fake io; Session borrowed(io, profile(), io.value);
+        assert(!borrowed.revoke() && io.writes.empty());
+        io.value.live = false; io.value.expires_ns = 0;
+        Session owned(io, profile(), io.value); owned.admit(2 * second);
+        io.value.current_ua = 500000;
+        assert(owned.revoke());
+        assert(!io.value.live && io.value.current_ua == 500000 && io.writes.back() == "uke_charge_lease");
+        const auto count = io.writes.size();
+        assert(!owned.revoke() && io.writes.size() == count);
+    }
+    // A rejected observation must discard the pre-fault increase dwell.
+    {
+        auto limits = profile(); auto observed = sample(); Automatic recovered;
+        assert(recovered.propose(limits, observed, 2 * second) == observed.current_ua);
+        observed.error = -5;
+        rejects([&] { recovered.propose(limits, observed, 3 * second); });
+        observed.error = 0;
+        observed.measurement_ns = observed.current_verified_ns = 12 * second;
+        assert(recovered.propose(limits, observed, 12 * second) == observed.current_ua);
+        observed.measurement_ns = observed.current_verified_ns = 22 * second;
+        assert(recovered.propose(limits, observed, 22 * second) == observed.current_ua + limits.increase_step_ua);
+    }
+    for (unsigned changed = 0; changed < 5; ++changed) {
+        auto limits = profile(); auto observed = sample(); Automatic rebound;
+        assert(rebound.propose(limits, observed, 2 * second) == observed.current_ua);
+        if (changed == 0) ++observed.instance;
+        if (changed == 1) ++observed.generation;
+        if (changed == 2) ++observed.firmware;
+        if (changed == 3) ++observed.source;
+        if (changed == 4) observed.evidence = limits.evidence = std::string(64, 'b');
+        observed.measurement_ns = observed.current_verified_ns = 12 * second;
+        assert(rebound.propose(limits, observed, 12 * second) == observed.current_ua);
+    }
     // Invalid targets must not acquire permission or issue a control write.
     for (const auto value : {uint32_t(0), uint32_t(99), uint32_t(2000001),
                             std::numeric_limits<uint32_t>::max()}) {
@@ -290,9 +362,16 @@ int main() {
         rejects([&] { session.current(value, 2 * second); });
         assert(io.writes.empty() && !session.write_attempted());
     }
-    for (const auto pair : {std::pair<uint32_t,uint32_t>{80,80}, {90,80}, {80,101}}) {
+    for (const auto pair : {std::pair<uint32_t,uint32_t>{80,80}, {90,80}, {80,101},
+                           {0,80}, {49,80}, {50,54}, {96,100},
+                           {std::numeric_limits<uint32_t>::max(),100}}) {
         Fake io; Session session(io, profile(), io.value);
         rejects([&] { session.thresholds(pair.first,pair.second,2 * second); });
         assert(io.writes.empty() && !session.write_attempted());
+    }
+    for (const auto pair : {std::pair<uint32_t,uint32_t>{50,55}, {95,100}, {70,80}, {0,100}}) {
+        Fake io; Session session(io, profile(), io.value);
+        const auto result = session.thresholds(pair.first,pair.second,2 * second);
+        assert(pair.first == 0 ? !result.enabled : result.enabled && result.start == pair.first && result.end == pair.second);
     }
 }

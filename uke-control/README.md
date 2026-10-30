@@ -1,5 +1,93 @@
 # Uke Control
 
+29 October 2026: version 1.18.0 adds a qualified 70/80 preset and a duration-only
+temporary-full preview. Temporary full activation remains unavailable without
+a reviewed device-side return path. See [CHARGING.md](CHARGING.md) for limits;
+source preparation does not establish installed or electrical acceptance.
+
+29 October 2026: version 1.16.0 adds explicit `charge review FILE` and
+`charge restore-current` routes to the existing qualified helper. Review installs
+a private identity with a maximum 15-minute lifetime and performs no firmware
+request. Restore requires admission and a successful automatic-worker stop;
+it is not a factory reset. Host checks pass. No tablet operation or electrical
+qualification was performed. See [CHARGING.md](CHARGING.md).
+
+27 October 2026: version 1.15.1 records logind and UPower lid states separately
+and queries the current session's screensaver state without activation. Sleep
+reports include both lid consumers; display reports include actual stream depth
+and cached DSC state. These observations do not establish physical cover or
+monitor behavior. The CLI version banner is corrected to match the package.
+
+26 October 2026: version 1.15.0 reports driver stream capacity and cached sink
+MST support in `display profiles`. The dual-display request requires both,
+plus a unique standard Type-C C/E control. Missing firmware controls remain
+unavailable. Host fixtures pass; native delivery and physical four-lane/MST
+output remain unvalidated. See [DISPLAY.md](DISPLAY.md).
+
+25 October 2026: version 1.14.0 adds an experimental disconnected DSC request
+and cached driver-state query. Missing kernel support is reported explicitly.
+The request does not establish physical activation or override HDMI limits.
+Native package and tablet compression acceptance remain pending.
+
+25 October 2026: version 1.13.2 searches only the verified USB controller's
+children for its xHCI host. The 1.13.1 platform-bus scan exceeds the tablet's
+bounded inventory limit and refuses wake-policy application. A fixture with
+300 unrelated platform entries reproduces that refusal and checks the scoped
+correction. The inventory bound and driver/containment checks remain unchanged.
+
+25 October 2026: version 1.13.1 also admits the xHCI host wake permission under
+the verified Uke controller and checks its bound driver. Release 1.13.0 enabled
+USB-device and hub permissions but missed this platform host. A physical mouse
+wakes s2idle after the host permission is enabled; this does not qualify keyboard,
+Bluetooth or touch wake. The kernel battery-resume regression remains separate.
+
+25 October 2026: version 1.13.0 exposes the kernel's selective `lid-open` and
+`double-tap` wake permissions when present. Before sleep, it enables supported
+USB remote-wakeup devices under the verified Uke controller and Bluetooth UART
+unless an explicit saved choice disables them. Empty USB wake attributes remain
+unsupported. Source fixtures cover discovery, containment, saved choices and
+rollback; physical accessory and touch wake validation remains required.
+
+25 October 2026: packaging revision 1.12.0-5 names `uke-rgb` as owner of its
+Polkit action so the non-root mechanism can query authorization for a client.
+Revision 4's transport is healthy, but Polkit refuses that cross-user query
+without the ownership annotation. Active-local-only defaults and the
+no-interaction flag are unchanged. Host configuration checks pass; signed
+target authorization and physical color validation remain separate gates.
+See [Polkit action ownership](https://polkit.pages.freedesktop.org/polkit/polkit.8.html).
+25 October 2026: source version **2.1.0** defaults to human-readable terminal
+output. Scripts and the KDE widget request `--json` explicitly. Canonical command
+groups, contextual help, compatibility aliases and output/exit contracts are
+documented in [the CLI guide](CLI.md). Native COPR/DNF delivery and tablet
+validation remain on hold during the separate device-recovery window.
+
+25 October 2026: source version 1.13.0 adds passwordless active-local torch
+requests through a confined non-root service. The widget's 1–100 slider keeps
+the original 20 mA total ceiling and reports the two real lit steps separately
+from the requested percentage. No kernel electrical setting changes. Host
+fixtures and QML loading are separate from signed package and tablet validation.
+
+25 October 2026, POCO Pad X1, Linux 7.3.0-5: signed Control/core/tests
+1.12.0-5 from [COPR 11205434](https://copr.fedorainfracloud.org/coprs/build/11205434)
+are installed through DNF. RGB policy and animation run in the kernel; a
+dedicated broker accepts active local-session requests without sudo. SELinux
+Enforcing, the confined domain, zero effective capabilities and NoNewPrivileges
+are verified. Remote/root-origin writes and direct desktop device access are
+refused. The system bus and desktop processes are retained.
+
+The operator confirms a visible ten-second color sweep. It returns to off,
+zero brightness and zero remaining time with no kernel I/O error. The widget
+retains one RGB test button; CLI HEX colors and percentages retain the reviewed
+low-duty ceiling. The existing display-bit diagnostics are preserved.
+Battery-threshold behavior, camera integration, suspend/removal and measured
+electrical/thermal endurance remain separate gates. See
+[light controls, security and validation limits](LIGHTS.md).
+
+25 October 2026: version 1.11.0 adds torch brightness and independent RGB
+color/brightness percentages. The fixed torch deadline is removed; supervised
+stop/failure cleanup and stop-before-sleep remain. This requires the reviewed
+kernel's real torch current steps; physical electrical/lifecycle tests remain open.
+
 25 October 2026: version 1.10.2 validates the original LED class through its
 parent controller DT link and fixed child label. Host fixtures cover the
 standard layout without a per-LED OF symlink and refuse foreign parents/labels.
@@ -65,15 +153,15 @@ prompting or rebooting. See [filesystem capacity repair](RESIZE.md).
 23 October 2026: version 1.5.0 adds saved CDC ACM startup policy:
 
 ```sh
-sudo uke-control set cdc on --persistent
-sudo uke-control set cdc off --persistent
+sudo uke-control cdc on --persistent
+sudo uke-control cdc off --persistent
 sudo uke-control usb status
 ```
 
 The saved opt-in applies at boot and on Type-C, USB-role and controller readiness
 events. It uses the existing owned ACM gadget; it exports no root shell or USB
 network and does not force a data/power role. No polling daemon or boot delay
-is added. Without `--persistent`, `set cdc on|off` remains a one-shot request.
+is added. Without `--persistent`, `cdc on|off` remains a one-shot request.
 Use persistent off to prevent a saved on policy from reapplying on the next
 USB event. A successful bind does not prove host enumeration or net charging.
 
@@ -82,7 +170,7 @@ explicit offline F2FS userdata growth at the next normal reboot. It prepares
 maintenance in RAM without changing GPT, boot partitions or the selected slot.
 See [filesystem expansion](RESIZE.md) for admission, power and verification.
 
-22 October 2026: version 1.3.0 adds `uke-control diagnostic all` and focused
+22 October 2026: version 1.3.0 adds `uke-control diagnostics all` and focused
 subsystem reports. Each command creates `uke-diagnostic-TOPIC.log` in the current
 directory with mode 0600, preserving existing files. See [diagnostic collection](DIAGNOSTIC.md)
 for scope, private-data handling, limits and optional tools. Source/host checks,
@@ -189,11 +277,11 @@ from an actual channel transition.
 
 ```sh
 uke-control status
-uke-control brunch status
-sudo uke-control brunch stable --dry-run
-sudo uke-control brunch test
-sudo uke-control brunch unstable
-sudo uke-control brunch sync
+uke-control channel status
+sudo uke-control channel set stable --dry-run
+sudo uke-control channel set test
+sudo uke-control channel set unstable
+sudo uke-control channel sync
 sudo uke-control update --check
 sudo uke-control update
 uke-control sensors -n5
@@ -216,9 +304,9 @@ sudo uke-control charge mode automatic # requires qualified per-boot admission
 sudo uke-control charge limit 80 # same qualified native 80% request
 uke-control usb status
 uke-control usb watch 60
-sudo uke-control usb request data host
-sudo uke-control set cdc on
-sudo uke-control set cdc off
+sudo uke-control usb role host
+sudo uke-control cdc on
+sudo uke-control cdc off
 uke-control test display 60
 uke-control test display 30 --csv
 uke-control test cadence 144
@@ -260,7 +348,7 @@ or an automatic white-point setting.
 
 ## USB and CDC
 
-`usb status` returns bounded JSON containing cached Type-C and controller roles,
+`usb status --json` returns bounded JSON containing cached Type-C and controller roles,
 UDC state, USB device/interface IDs and speeds, bound drivers, USB NIC counters
 and external display modes. Missing values remain null. `usb watch` records one
 snapshot per second for a bounded interval. Neither command reads power-supply
@@ -269,7 +357,7 @@ attributes or EDID bytes. Interface names may still encode device identifiers;
 snapshots belong in private reports. These observations do not prove PD contracts, coherent
 attachment epochs, display depth or physical functionality.
 
-`usb request data host|device` requires root, the matched `typec-v1` Uke profile
+`usb role host|device` requires root, the matched `typec-v1` Uke profile
 and the shared gadget ownership API. It requests the standard Type-C `data_role`
 through the kernel's UCSI provider; it never writes `usb_role`, PHY registers or
 charger properties. Attached USB storage, an active USB NIC or enabled external
@@ -279,10 +367,10 @@ request. A successful sysfs write and a matching Type-C/controller readback are
 reported separately; neither establishes physical acceptance. There is no
 automatic retry or saved role override, and no power-source or lane-force control.
 
-CDC defaults to off. With manual CDC API2, `set cdc on` invokes the existing
+CDC defaults to off. With manual CDC API2, `cdc on` invokes the existing
 root helper once; a computer must already attach in device data role. A missing
 or ambiguous attachment is refused without a background watcher or retry.
-`set cdc off` removes only the recorded manual ACM gadget and refuses an old
+`cdc off` removes only the recorded manual ACM gadget and refuses an old
 automatic or foreign project gadget profile before disconnecting it. Neither
 command starts/enables a service, saves a startup opt-in, unloads an inherited
 serial owner or enables a root console, Ethernet gadget, hotspot or network
@@ -377,7 +465,7 @@ Release 18 keeps the class object ID in name and the kernel's descriptive name
 in device_name; release 17 emitted a duplicate name key for remote processors.
 Both identities are now preserved, with a regression for that observed output.
 
-`uke-control firmware status` returns a bounded JSON snapshot of SCMI base
+`uke-control firmware status --json` returns a bounded JSON snapshot of SCMI base
 identity, agent-visible protocol discovery, Linux protocol consumers and
 remote-processor state. It reads cached kernel interfaces only, without vendor
 RPCs, firmware loading, background polling, resets or policy changes. It shares
@@ -397,22 +485,68 @@ crash dumps and power-supply attributes are not read by this command.
 
 ## Wake permissions
 
-The source candidate `1.2.0` adds `uke-control wake status`,
+25 October 2026: source version `2.1.1` retains `uke-control wake status`,
 `sudo uke-control wake set SOURCE on|off` and `sudo uke-control wake apply`.
 Named sources are `power-key`, `volume-up`, `volume-down`, `usb`,
-`bluetooth-uart`, `charge-connect`, `charge-disconnect` and `double-tap`.
+`bluetooth-uart`, `charge-connect`, `charge-disconnect`, `double-tap` and
+`lid-open`. Supported USB devices below the verified Uke controller are listed
+as `usb-device-PORT`. Empty wake attributes remain unavailable.
 Unavailable controls return their actual reason and cannot be written.
 
 Settings persist in root-private state and are restored before each sleep,
 after input providers are available. The native helper admits only Uke/SM7675, unique canonical sysfs
 providers and the expected key capability. It verifies writes, restores
 previous permissions on failure and refuses to disable every recovery key.
-USB attach/removal share one device wake permission. Independent firmware
-charge-event filters and touch-gesture wake remain unimplemented.
+USB attach/removal share one controller wake permission. Its bound xHCI host,
+USB hubs and supported remote-wakeup devices also receive their permissions.
+Independent firmware charge-event filters remain unavailable. The touch-gesture
+permission does not prove that firmware entry or physical wake succeeds.
 
 On the 21 October tablet trial, an enabled Bluetooth UART wake permission
 caused an immediate s2idle return through IRQ135. Temporarily disabling that
-permission allowed the 25-second RTC trial to complete. Its default policy is
-therefore disabled until Bluetooth accessory wake is qualified; this does not
-power Bluetooth off. An explicit saved setting overrides that default.
+permission allowed the 25-second RTC trial to complete. That earlier diagnostic
+setting is not a general Bluetooth wake acceptance result. Version 1.13 enables
+supported USB, lid, touch and Bluetooth wake sources for the requested accessory
+trials unless an explicit saved setting disables them.
 Permission readback is not a physical wake or low-power acceptance result.
+USB attach/removal share the controller permission; supported downstream remote
+wake permissions are applied individually. Independent firmware charge-event
+filters remain unavailable. Double-tap requires the kernel's gesture admission
+attribute; selective lid wake requires its actual wake control.
+
+Without an explicit saved override, supported USB devices, Bluetooth UART,
+lid-open and double-tap are enabled before sleep. Saved disabled choices take
+precedence. This carries the requested policy from commit `3f35b388` into the
+2.1 source without changing its human-readable CLI or explicit JSON contract.
+
+A 21 October Uke trial observed immediate suspend return with Bluetooth UART
+wake enabled. The new default does not establish that this earlier behavior is
+resolved. Physical accessory, lid, gesture and RTC suspend validation remains
+required; permission readback is not physical wake or low-power acceptance.
+
+The explicit [boot layout wizard](BOOT-LAYOUT.md) adds `singleboot` and
+`multiboot`, constrained to proven original userdata and its owned children.
+Live filesystem operations and a one-shot RAM shutdown route share the same
+reviewed plan. The source implementation does not establish physical conversion
+or fastboot acceptance.
+
+Control 2.1.1 pins the exact interactive consent, saves verified before/after GPT
+archives, stops metadata writes on I/O errors and reverses only completed kernel
+partition changes. F2FS preservation shrink is disabled following a VM integrity
+failure. F2FS growth preserves its native multicall alias; final capacity is
+checked independently, with mounted XFS geometry queried from the kernel.
+
+26 October 2026: source version 2.3.0 adds explicit expiring charge identity review,
+reviewed positive-current restore and coherent UCSI PDO/RDO cache reporting.
+The battery topology view reads the observer's engineering object. Host/source
+checks are separate from physical charging qualification; profiles remain closed.
+
+26 October 2026: source version 2.2.0 adds `battery status|health|cells|protocol`,
+`nfc status|on|off` and `wake status SOURCE` (including double-tap). Battery views
+reuse the existing native observer and charge helper. Individual cell health and
+exact negotiated charging revisions stay unavailable when their backend does not
+report them. NFC distinguishes the OEM FM19511 tag from active Linux readers and
+changes only a unique NFC rfkill permission. Double-tap reports permission and
+armed state from the verified NT36532 driver. The xHCI fixes from `b025866` and
+`f4ceae7` are retained. See [commands and limitations](CLI.md). Source and host
+fixtures do not establish physical NFC, individual cell health or gesture wake.

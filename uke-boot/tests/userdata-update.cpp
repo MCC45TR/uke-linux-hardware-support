@@ -53,15 +53,17 @@ int main() {
             fs::create_directories(drm/name);
             std::ofstream(drm/name/"status")<<status;std::ofstream(drm/name/"enabled")<<enabled;
         };
-        assert(!internal_display_enabled(drm));
-        connector("card0-DP-1","connected\n","enabled\n");
-        connector("card0-HDMI-A-1","connected\n","enabled\n");
-        assert(!internal_display_enabled(drm));
-        for(const auto name:{"card1-DSI-1","card2-DSI-2","card3-DSI-12"}) {
-            connector(name,"connected\n","enabled\n");assert(internal_display_enabled(drm));
-            connector(name,"disconnected\n","enabled\n");assert(!internal_display_enabled(drm));
-            connector(name,"connected\n","disabled\n");assert(!internal_display_enabled(drm));
-            fs::remove(drm/name/"enabled");assert(!internal_display_enabled(drm));
+        assert(!display_enabled(drm));
+        for(const auto name:{"card0-Unknown-1","card0-Writeback-1","card0-Virtual-1"}) {
+            connector(name,"connected\n","enabled\n");assert(!display_enabled(drm));
+            fs::remove_all(drm/name);
+        }
+        for(const auto name:{"card1-DSI-1","card2-DSI-2","card3-DSI-12","card0-DP-1","card2-DP-1-1","card0-HDMI-A-1"}) {
+            connector(name,"connected\n","enabled\n");assert(display_enabled(drm));
+            connector(name,"disconnected\n","enabled\n");assert(!display_enabled(drm));
+            connector(name,"connected\n","disabled\n");assert(!display_enabled(drm));
+            connector(name,"connected\n","invalid\n");assert(!display_enabled(drm));
+            fs::remove(drm/name/"enabled");assert(!display_enabled(drm));
             fs::remove_all(drm/name);
         }
         fs::remove_all(drm);

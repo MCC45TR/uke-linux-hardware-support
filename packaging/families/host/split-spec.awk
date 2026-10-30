@@ -92,12 +92,17 @@ END {
     if(cwd=="" || cwd ~ /%|^\/|(^|\/)\.\.(\/|$)/)fail("Missing or unsafe build subdirectory")
     if(buildroot=="" || builddir=="")fail("Missing build paths")
     print original "\t" version "\t" release "\t" cwd "\t" builddir "\t" buildroot >out "/identity"
+    if(dist=="") {
+        if(!match(release,/\.fc[0-9]+/))fail("Missing Fedora dist tag")
+        dist=substr(release,RSTART,RLENGTH)
+    }
     newversion=native_version!=""?native_version:version
-    newrelease=native_version!="" && native_version!=version?"1.fc46":release
+    newrelease=native_version!="" && native_version!=version?"1" dist:release
     if(native_version=="" && original!="uke-plymonth" && original!="uke-desktop-metas" && original!="uke-firmware") {
-        split(release,r,".");newrelease=(r[1]+1) ".fc46"
+        split(release,r,".");newrelease=(r[1]+1) dist
     }
     if(release_override!="")newrelease=release_override
+    sub(/[.]fc[0-9]+/,dist,newrelease)
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0) {

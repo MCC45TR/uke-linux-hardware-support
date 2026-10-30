@@ -1,5 +1,45 @@
 # Charging policy source — 18 October 2026
 
+29 October 2026 longevity candidate: `charge plan hold70-80` previews the daily
+band and `charge mode hold70-80` routes the existing qualified pair70/80 helper.
+Neither operation qualifies a profile or proves physical cutoff. Original KDE
+threshold controls remain the desktop interface; no duplicate widget is added.
+
+`charge plan temporary-full MINUTES` validates 1-1440 minutes and reports an
+unarmed, unpersisted preview. The pure planner binds a hypothetical window to
+boot/source identity and proposes a 70/80 return at expiry. Applying temporary
+full is explicitly refused: a userspace timer cannot guarantee return after a
+crash, suspend or reboot, and no reviewed device-side return backend exists.
+No full-charge setting, worker or timer is installed by a preview.
+
+Thermal/current proposals require qualified battery-current control and
+firmware-owned CV/protection. A voltage ceiling is a safety constraint, not a
+voltage request. Permission release is not restoration of a firmware setting.
+See the runtime [longevity contract](../uke-platform-runtime/docs/BATTERY-LONGEVITY.md).
+
+29 October 2026 protocol follow-up: `charge protocols` remains cache-only and
+separates the six manufacturer-listed receiver protocols from excluded QC4/4+,
+PPS and UFCS. `charge protocol-inspect` is a separate root-only operation for
+the default-off EXPERT kernel interface. It reads exactly USB adapter7 and
+real-type11, checks provider/boot/source epochs and preserves OEM type names.
+It performs no XM access, protocol selection or charging SET. Do not run it
+until active firmware ABI review and an attended test window are available.
+See the runtime [protocol coverage](../uke-platform-runtime/docs/CHARGING-PROTOCOLS.md).
+
+29 October 2026 source integration: `charge review FILE` accepts an absolute
+path to a root-owned private artifact review. The helper verifies profile and
+artifact digests, the current boot and driver/firmware/source epochs, and an
+expiry no more than 15 minutes away before atomically installing the identity.
+This route neither qualifies a profile nor acquires control or sends firmware
+requests. Default profiles remain unqualified.
+
+`charge restore-current` stops the automatic worker and asks the existing
+admitted helper to restore the profile's positive current. It does not restore
+unknown factory settings. `charge protocols` can consume a coherent read-only
+UCSI PDO/RDO cache; it reports firmware observations separately from electrical
+measurements and leaves negotiated PD revision unknown. Synthetic host tests
+pass; installation, control requests and physical charging tests are deferred.
+
 Environment: Uke Control source, 18 October 2026. The shared backend and CLI
 include metadata-only policy previews. Synthetic host fixtures pass; no charging
 write or physical policy acceptance has been established.
@@ -74,6 +114,30 @@ delegating the manual current request. Services are not enabled across boots.
 firmware defaults were restored. The qualified profile's positive restore
 current is not presented as a factory reset. Other standard `charge limit`
 values remain separate; file presence never establishes qualification.
+
+26 October 2026 source update (Control 2.3.0, runtime 1.2.0):
+`charge restore-current` exposes the existing qualified positive FCC restore.
+It requires admission before stopping the automatic worker, then checks the
+current thermal/source ceiling and firmware readback. Failure is terminal;
+there is no guessed factory sentinel, blind rollback or SET replay.
+
+`charge review /absolute/review.json` consumes a root-owned artifact review
+bound to the current boot, driver instance, firmware/source generations, exact
+profile bytes and reviewed artifact hashes. Its fixed expiry cannot exceed
+15 minutes. The helper validates the complete control profile, installs the
+identity atomically with mode0600, and repeats admission after installation.
+It does not authenticate remote firmware, extend the supplied expiry,
+activate a service, issue firmware RPC or make an unqualified profile usable.
+Suspend, source replacement, PDR, expiry and mismatches still invalidate control.
+See runtime docs/CHARGE-CONTROL.md for the review input.
+
+On the matched 7.3 driver, `charge protocols` and `battery protocol` also expose
+the cache-only UCSI pd_contract: raw PDO/RDO, receipt times and bounded fixed-PDO
+voltage/current/power decoding. These values describe the firmware's cached
+contract, not measured input power, exact negotiated PD revision, QC/MI
+authentication or electrical acceptance. Missing/invalid records remain null.
+The individual-cell view now reads the observer's actual engineering topology
+object; it continues to report missing individual-cell measurements explicitly.
 
 The synthetic host fixture checks SOC boundaries/hysteresis, source-power and
 thermal ceilings, slow/automatic composition, invalid/stale inputs, identity

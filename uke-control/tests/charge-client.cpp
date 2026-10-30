@@ -28,6 +28,9 @@ int main() {
     reset({{0,"{\"kind\":\"uke_charge_settings\",\"applied\":false}\n"}});
     assert(uke::charge::control_query("settings").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","settings"}}));
+    reset({{69,"protocol diagnostics disabled"}});
+    assert(uke::charge::control_query("protocol-inspect").status==69);
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","protocol-inspect"}}));
     reset({{0,"cached protection"}});
     assert(uke::charge::control_query("protection-status").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","protection-status"}}));
@@ -61,7 +64,10 @@ int main() {
     assert(control_mode("charge80").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","cap80"}}));
     reset({{69,"unqualified"}});assert(control_mode("hold80-90").status==69);
-    assert(calls[0][1]=="band80-90");
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","band80-90"}}));
+    reset({{69,"unqualified"}});assert(control_mode("hold70-80").status==69);
+    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","pair","70","80"}}));
+    reset({});assert(control_mode("temporary-full").status==69&&calls.empty());
     for(const char* reply:{"{}", "bad json", "{\"kind\":\"foreign\",\"automatic_admission_ready\":true}",
         "{\"kind\":\"uke_charge_control_admission\",\"automatic_admission_ready\":false}",
         "{\"kind\":\"uke_charge_control_admission\",\"automatic_admission_ready\":\"true\"}"}) {
@@ -80,6 +86,11 @@ int main() {
     reset({{0,qualified},{1,"stop failed"}});assert(control_mode("slow").status==69&&calls.size()==2);
     reset({{0,qualified},{0,""},{0,"applied"}});assert(control_mode("slow").status==0&&calls.size()==3);
     assert(calls[1][1]=="stop"&&calls[2][1]=="slow");
+    reset({{0,qualified},{1,"stop failed"}});assert(control_mode("profile-restore").status==69&&calls.size()==2);
+    reset({{0,qualified},{0,""},{69,"restore failed"}});
+    assert(control_mode("profile-restore").status==69&&calls.size()==3&&calls[2][1]=="profile-restore");
+    reset({{0,qualified},{0,""},{0,"verified positive FCC"}});
+    assert(control_mode("profile-restore").status==0&&calls[2][1]=="profile-restore");
     reset({});assert(control_mode("firmware").status==69&&calls.empty());
     bool rejected=false;try{control_mode("raw-voltage");}catch(const std::exception&){rejected=true;}
     assert(rejected&&calls.empty());

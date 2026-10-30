@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
 # Compose complete source recipes into a source family; no binary repackaging.
 set -Eeuo pipefail
+# Expand upstream source recipes in the selected Fedora worker, without binary retagging.
+fedora_number=$(rpm --eval '%{fedora}')
+[[ $fedora_number =~ ^[0-9]+$ ]]
+fedora_target=${FEDORA_TARGET:-$fedora_number}
+if [[ -z ${FEDORA_TARGET:-} && $fedora_number != 44 && $fedora_number != 45 ]]; then fedora_target=rawhide; fi
+case $fedora_target in
+    44|45) [[ $fedora_number == "$fedora_target" ]] || { echo 'Use a matching Fedora source worker' >&2; exit 1; };;
+    rawhide) grep -Eq '^VERSION="?Rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; };;
+    *) echo 'Fedora target must be 44, 45 or rawhide' >&2; exit 1;;
+esac
+dist=.fc$fedora_number
+rpm_target=(--define "dist $dist" --define "fedora $fedora_number")
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
 [[ $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
 [[ $target == aarch64 || $target == x86_64 ]]
-[[ $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
+# Sound contains metadata and desktop data; other families compile native payloads.
+[[ $family == uke-sound || $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
     printf '%s\n' 'Generate a family source on its native architecture; --target alone does not retarget RPM build/host triplets.' >&2
     exit 1
 }
@@ -26,6 +39,13 @@ cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 case $family in
+uke-sound)
+    make -C uke-desktop-integration speaker-controls-srpm outdir="$stage/speaker-controls" >"$stage/local.log"
+    controls=("$stage/speaker-controls/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
+    printf '%s\t%s\n' uke-speaker-controls "${controls[0]}" >"$stage/inputs"
+    make -C uke-desktop-integration displayport-audio-srpm outdir="$stage/audio-policy" >>"$stage/local.log"
+    policies=("$stage/audio-policy/"*.src.rpm); [[ ${#policies[@]} == 1 && -f ${policies[0]} ]]
+    printf '%s\t%s\n' uke-displayport-audio "${policies[0]}" >>"$stage/inputs";;
 uke-hw)
     make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
     boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]
@@ -57,6 +77,11 @@ uke-power)
 uke-extras)
     make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
     printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-4$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+uke-additional)
+    make -C uke-video srpm outdir="$stage/video" >"$stage/local.log"
+    backends=("$stage/video/SRPMS/"*.src.rpm)
+    [[ ${#backends[@]} == 1 && -s ${backends[0]} ]]
+    printf '%s\t%s\n' uke-vaapi-v4l2 "${backends[0]}" >"$stage/inputs";;
 uke-metas)
     for component in uke-core-meta uke-desktop-metas; do
         make -C "$component" srpm outdir="$stage/$component" >"$stage/local.log"
@@ -115,11 +140,12 @@ while IFS=$'\t' read -r key input; do
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
-    rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
+    rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
-    [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc46$ ]]
-    awk -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc[0-9]+$ ]]
+    [[ -z $release_override ]] || release_override=${release_override%%.fc*}$dist
+    awk -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
 spec="$output/SPECS/$family.spec"
@@ -165,7 +191,7 @@ spec="$output/SPECS/$family.spec"
         # Manifest order is build order, including libssc before SensorProxy.
         while IFS=$'\t' read -r key input; do
             part="$stage/parts/$key"; [[ -s $part/$phase ]] || continue
-            IFS=$'\t' read -r old oldversion oldrelease cwd builddir buildroot <"$part/identity"
+            IFS=$'\t' read -r _ _ _ cwd builddir buildroot <"$part/identity"
             base="%{_builddir}/$family-$version"
             printf '(\n'
             if [[ $phase == prep ]]; then
@@ -188,7 +214,7 @@ spec="$output/SPECS/$family.spec"
     printf '\n%%files\n%%license LICENSE\n%%doc README\n'
     while IFS=$'\t' read -r key input; do
         part="$stage/parts/$key"; [[ -f $part/tail ]] || continue
-        IFS=$'\t' read -r old oldversion oldrelease cwd builddir buildroot <"$part/identity"
+        IFS=$'\t' read -r _ _ _ cwd builddir buildroot <"$part/identity"
         awk -v prefix="work/$key/$cwd/" -v base="%{_builddir}/$family-$version" -v key="$key" -v source="$bundle/inputs/$key" '
           function replace(s,old,new, p,r){r="";while((p=index(s,old))){r=r substr(s,1,p-1) new;s=substr(s,p+length(old))}return r s}
           /^%files/ {files=1;for(i=2;i<=NF;i++)if($i=="-f")$(i+1)=prefix $(i+1); print;next}
@@ -212,5 +238,5 @@ bash packaging/families/host/check-cohort.sh "$spec" "$target"
 # The archive contains complete upstream sources, patches, licenses and original specs.
 (cd "$bundle"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum >SOURCE-SHA256SUMS)
 tar --sort=name --mtime='2026-10-20 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$output/SOURCES/$family-$version.tar.xz" -C "$stage" "$family-$version"
-rpmspec --parse --target "$target" --define 'dist .fc46' --define 'fedora 46' "$spec" >"$output/parsed.spec"
-rpmbuild -bs --nodeps --target "$target" --define 'dist .fc46' --define 'fedora 46' --define "_topdir $output" "$spec"
+rpmspec --parse --target "$target" "${rpm_target[@]}" "$spec" >"$output/parsed.spec"
+rpmbuild -bs --nodeps --target "$target" "${rpm_target[@]}" --define "_topdir $output" "$spec"
