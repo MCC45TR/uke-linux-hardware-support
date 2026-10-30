@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 2.4.0
-Release: 2%{?dist}
+Version: 2.5.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -146,6 +146,7 @@ fi
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
+%{_libexecdir}/uke-control/ssc-sample
 %{_udevrulesdir}/91-uke-control-torch.rules
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
 %{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service
@@ -181,10 +182,12 @@ fi
 %files tests
 %{_libexecdir}/uke-control/tests
 %{_libexecdir}/uke-control/ssc-discovery
-%{_libexecdir}/uke-control/ssc-sample
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.0-1
+- Expose bounded sensor capture from the main Control package for application consumers.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-2
 - Apply the existing motion stabilization interval before timed captures.
 

@@ -1,5 +1,8 @@
 # Sensor view
 
+30 October 2026: `sensors capture DATATYPE [SECONDS] --json` exposes bounded
+native SSC data from the main Control package. See [SENSOR-CAPTURE.md](SENSOR-CAPTURE.md).
+
 18 October 2026. Native C++ reader for kernel-exported measurements, the running
 SensorProxy service and the existing front-color publisher. This interface adds
 observation commands; it does not add drivers or qualify physical measurements.

@@ -9,10 +9,19 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.4.0' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.4.0"' >/dev/null
+grep -Fx 'uke-control 2.5.0' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.5.0"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
+"$app" sensors --help > "$stage/help"
+grep -Fq 'sensors capture DATATYPE' "$stage/help"
+for invalid in '' 0 61; do
+    if test -z "$invalid"; then
+        if "$app" sensors capture > "$stage/refused" 2>&1; then exit 1; fi
+    else
+        if "$app" sensors capture gyro "$invalid" > "$stage/refused" 2>&1; then exit 1; fi
+    fi
+done
 "$app" charge plan charge80 > "$stage/human"
 grep -Fx 'Applied: no' "$stage/human"
 grep -Fx 'Effective: not reported' "$stage/human"

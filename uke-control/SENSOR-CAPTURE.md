@@ -1,16 +1,16 @@
 # Native sensor capture
 
-30 October 2026. Control 2.4.0 provides bounded native JSON Lines for motion,
+30 October 2026. Control 2.5.0 provides bounded native JSON Lines for motion,
 front CCT streaming and IMU temperature. COPR and tablet results are recorded
 separately. This interface does not replace original SensorProxy or KDE.
 
-Use the optional tests package for explicit acquisition. A collection keeps one
+Use explicit acquisition from the main Control package. A collection keeps one
 QRTR client, closes it on completion, and changes no calibration or registry:
 
 ```sh
-sudo uke-control test sample sensor_temperature 10 --json
-sudo uke-control test sample gyro 30 --json
-sudo uke-control test sample cct_front_strm 10 --json
+sudo uke-control sensors capture sensor_temperature 10 --json
+sudo uke-control sensors capture gyro 30 --json
+sudo uke-control sensors capture cct_front_strm 10 --json
 ```
 
 Durations are 1–60 seconds after the existing three-second motion stabilization

@@ -1,6 +1,6 @@
 # Uke Control
 
-30 October 2026: Control 2.4.0 adds bounded native motion, raw CCT-stream and IMU
+30 October 2026: Control 2.5.0 adds bounded native motion, raw CCT-stream and IMU
 temperature diagnostics, reads original KWin tablet mode and corrects touch-wake
 provider discovery. Disabled moisture detection remains unknown. See
 [SENSOR-CAPTURE.md](SENSOR-CAPTURE.md) for the API and measurement limits.
