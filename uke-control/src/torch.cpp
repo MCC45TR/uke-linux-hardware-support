@@ -82,9 +82,9 @@ int command(int argc,char** argv,bool as_json) {
         percent=lights::percent(argv[1]);
     }
     if(!status)need(geteuid()!=0,"Run torch requests as the active desktop user; sudo is not needed");
-    sd_bus* raw=nullptr;need(sd_bus_open_system(&raw)>=0,"System bus unavailable");
-    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);
-    sd_bus_set_method_call_timeout(raw,3000000);
+    sd_bus* raw=lights::client_bus();
+    sd_bus_set_method_call_timeout(raw,status?3000000:130000000);
+    need(sd_bus_set_allow_interactive_authorization(raw,!status)>=0,"Cannot set system authorization policy");
     sd_bus_message* answer=nullptr;sd_bus_error error=SD_BUS_ERROR_NULL;
     const char* method=status?"Status":on||off?"SetEnabled":"SetBrightness";
     const int result=status?sd_bus_call_method(raw,bus_name,object_path,interface,method,&error,&answer,""):

@@ -12,5 +12,9 @@ grep -Fxq 'BindsTo=dev-uke\x2dtorch.device' "$unit"
 grep -Fq 'KERNEL=="uke-torch"' "$root/packaging/91-uke-control-torch.rules"
 ! grep -q 'RUN+=' "$root/packaging/91-uke-control-torch.rules"
 ! grep -Eq 'uke_torch_brightness_t|uke_torch_runtime_t|relabelto|relabelfrom' "$root/packaging/selinux/uke_control_rgb.te"
+for name in rgb torch; do
+    grep -Fq '<allow_active>auth_admin</allow_active>' "$root/packaging/org.senemos.uke.$name.policy"
+    ! grep -Eq '_keep|<allow_active>yes</allow_active>' "$root/packaging/org.senemos.uke.$name.policy"
+done
 awk '/^%pre$/ {pre=1; next} /^%post$/ {pre=0} pre && /torch-access --remove/ {found=1} END {exit !found}' "$root/packaging/uke-control.spec"
 printf '%s\n' 'Kernel torch ownership and legacy grant revocation: source contract PASS; no native or device result'

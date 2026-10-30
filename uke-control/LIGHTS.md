@@ -28,8 +28,9 @@ RGB requests use no sudo or pkexec. The dedicated `uke-rgb` service account is
 locked and owns no login session. `/dev/uke-rgb` is root:`uke-rgb`, mode 0660,
 with SELinux type `uke_rgb_device_t`. Only the confined `uke_rgb_t` broker gets
 the device permission in the supplied policy. Its fixed D-Bus methods accept
-requests from an active local session through Polkit without authentication
-interaction. Inactive, remote and root-origin writes are refused by the API.
+requests from an active local session through the original system authentication
+window. A fixed two-minute grant belongs only to that D-Bus connection; it is
+not shared with another application under the same UID. Inactive, remote and root-origin writes are refused by the API.
 Normal users receive no direct device or LED sysfs write permission. An
 administrator who changes the security policy remains outside this boundary.
 
@@ -73,7 +74,9 @@ Repeating a running test is refused; it does not extend the deadline. Widget
 testing uses a separate original Fedora `plasmoidviewer` without restarting
 Plasma.
 
-The torch slider accepts **1–100** without root, sudo or pkexec. The retained **20,000 microampere total**
+The torch request range is **1–100** without running the client as root, sudo or
+pkexec. Changes require the original system authorization window; a persistent
+client connection reuses its own fixed two-minute grant. The retained **20,000 microampere total**
 ceiling and 5 mA per-channel resolution provide two nonzero steps: 50% requests
 10 mA total and 100% requests 20 mA total. Zero turns it off. Positive
 intermediate requests round down to the minimum nonzero step. CLI zero is a

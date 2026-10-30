@@ -21,9 +21,13 @@ int main() {
         const auto valid=response;
         for(unsigned field=0;field<7;++field){
             response=valid;
-            if(field==0)response.abi=99;if(field==1)response.brightness=3;
-            if(field==2)response.max_microamp=20001;if(field==3)response.requested_percent=0;
-            if(field==4)response.suspended=2;if(field==5)response.last_io_error=-4096;if(field==6)response.reserved=1;
+            if(field==0)response.abi=99;
+            if(field==1)response.brightness=3;
+            if(field==2)response.max_microamp=20001;
+            if(field==3)response.requested_percent=0;
+            if(field==4)response.suspended=2;
+            if(field==5)response.last_io_error=-4096;
+            if(field==6)response.reserved=1;
             refuses([&]{a.status();});
         }
         response=valid;fail_status=true;refuses([&]{a.status();});fail_status=false;

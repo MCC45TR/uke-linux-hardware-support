@@ -28,6 +28,12 @@ if grep -Eq '^\(allow uke_rgb_t sysfs_t \(file \([^)]*write([ )])' "$cil"; then
     echo 'LED broker must not write generic sysfs attributes' >&2; exit 1
 fi
 ! grep -Eq 'uke_torch_brightness_t|uke_torch_runtime_t' "$cil"
+for name in rgb torch; do
+    grep -Fq '<allow_active>auth_admin</allow_active>' "$root/packaging/org.senemos.uke.$name.policy"
+    ! grep -Eq 'auth_.*_keep|<allow_active>yes</allow_active>' "$root/packaging/org.senemos.uke.$name.policy"
+done
+grep -Eq '^\(allowx uke_rgb_t uke_torch_device_t \(ioctl chr_file' "$cil"
+grep -Eq '^\(allowx uke_rgb_t uke_rgb_device_t \(ioctl chr_file' "$cil"
 grep -Fq '<associate own="org.senemos.Uke.Torch" context="system_u:object_r:uke_rgb_t:s0"/>' "$root/packaging/org.senemos.Uke.Torch.conf"
 grep -Fq '<annotate key="org.freedesktop.policykit.owner">unix-user:uke-rgb</annotate>' "$root/packaging/org.senemos.uke.torch.policy"
 grep -Fq '<associate own="org.senemos.Uke.Rgb" context="system_u:object_r:uke_rgb_t:s0"/>' "$root/packaging/org.senemos.Uke.Rgb.conf" || {

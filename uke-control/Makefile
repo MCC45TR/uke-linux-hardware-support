@@ -75,6 +75,8 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	else LD_LIBRARY_PATH=build timeout 20s dbus-run-session -- build/test-rgb-bus; fi
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/light-client.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd) -o build/test-light-client
+	LD_LIBRARY_PATH=build build/test-light-client
 	bash tests/light-worker.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp -o build/test-plasma
 	build/test-plasma

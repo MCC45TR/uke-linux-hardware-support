@@ -1,4 +1,4 @@
-policy_module(uke_control_rgb, 1.3)
+policy_module(uke_control_rgb, 1.4)
 
 type uke_rgb_t;
 type uke_rgb_exec_t;
@@ -9,11 +9,13 @@ selinux_get_enforce_mode(uke_rgb_t)
 type uke_rgb_device_t;
 dev_node(uke_rgb_device_t)
 allow uke_rgb_t uke_rgb_device_t:chr_file { getattr open read write ioctl };
+allowxperm uke_rgb_t uke_rgb_device_t:chr_file ioctl { 0xb700 0xb701 0xb702 0xb703 };
 
 # Both brokers transport requests; the kernel owns output and writer lifetime.
 type uke_torch_device_t;
 dev_node(uke_torch_device_t)
 allow uke_rgb_t uke_torch_device_t:chr_file { getattr open read write ioctl };
+allowxperm uke_rgb_t uke_torch_device_t:chr_file ioctl { 0x5480 0x5481 0x5482 };
 dev_read_sysfs(uke_rgb_t)
 auth_read_passwd(uke_rgb_t)
 libs_use_ld_so(uke_rgb_t)

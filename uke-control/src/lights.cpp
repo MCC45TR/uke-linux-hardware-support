@@ -4,7 +4,23 @@
 #include "torch.hpp"
 #include <charconv>
 #include <stdexcept>
+#include <systemd/sd-bus.h>
+#include <unistd.h>
 namespace uke::lights {
+sd_bus* client_bus() {
+    struct Connection {
+        sd_bus* bus=nullptr;
+        pid_t process=0;
+        ~Connection(){sd_bus_unref(bus);}
+    };
+    static thread_local Connection connection;
+    if(connection.process!=getpid() || !connection.bus) {
+        sd_bus_unref(connection.bus);connection.bus=nullptr;
+        if(sd_bus_open_system(&connection.bus)<0)throw std::runtime_error("System bus unavailable");
+        connection.process=getpid();
+    }
+    return connection.bus;
+}
 static unsigned number(const std::string& value,unsigned maximum) {
     unsigned n=0;
     const auto [end,error]=std::from_chars(value.data(),value.data()+value.size(),n);

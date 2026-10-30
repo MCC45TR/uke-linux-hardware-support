@@ -62,3 +62,43 @@ Native validation must run the actual-function lifecycle fixture, supplier
 checks, complete Control checks, compiled SELinux checks and a target kernel
 object build in COPR. Separate attended hardware validation must cover visible
 output, kill/close, suspend and supplier removal with recoverable rollback.
+
+## Authorization and local IPC
+
+Ordinary applications cannot open either light device. DAC, a dedicated locked
+service account, SELinux and each service's device allowlist protect the kernel
+endpoint. SELinux ioctl allowlists admit only the fixed ABI commands. There is
+no network listener, arbitrary device/path request, embedded shared secret or
+custom cryptographic protocol.
+
+The previous `allow_active=yes` defaults could authorize another application
+running in the active session. They are replaced with `auth_admin` without
+Polkit's `_keep` cache. The original desktop authentication agent displays the
+system dialog. Successful authentication grants only the requesting unique
+D-Bus connection a **fixed two-minute** light-control session. The prompt names
+the requested operation and this scope. Requests never extend the deadline;
+a different connection, even under the same UID, cannot reuse it. Closing the
+connection revokes it. A new process or a fork receives a fresh client connection.
+Native library clients reuse a thread's connection to avoid prompting for every
+slider request. Separate CLI invocations have separate connections.
+
+The broker binds the authorization to the bus-supplied sender, not a supplied
+PID, executable name, UID string or reusable bearer token. It keeps at most one
+pending authorization and processes status queries while the dialog is open.
+Caller disconnect cancels the pending check; an old approval cannot execute a
+later request. Missing agents, denied/challenge/error replies and expired leases
+leave the hardware unchanged. Suspended time counts against the lease.
+
+Read-only light status remains public metadata. Encryption would not establish
+application identity or prevent an unauthorized local process from submitting
+its own requests. This design uses the OS's authenticated local transport and
+access controls instead. It does not claim protection against a compromised
+kernel, administrator policy changes, process compromise or injected code in an
+already authorized client. Application sandboxing remains necessary for hostile
+code running with a user's broader desktop privileges. No zero-vulnerability or
+physical security acceptance is inferred from source/native tests.
+
+The actual authentication window and persistent GUI caller require separate
+session validation. These source changes do not claim that an existing widget
+which launches one CLI process per operation has been converted to a persistent
+client.

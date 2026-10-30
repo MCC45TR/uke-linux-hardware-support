@@ -4,8 +4,8 @@
   <vendor>Senemos</vendor>
   <action id="org.senemos.uke.rgb.control">
     <description>Control the Uke notification LED</description>
-    <message>Only an active local user can control the notification LED.</message>
-    <defaults><allow_any>no</allow_any><allow_inactive>no</allow_inactive><allow_active>yes</allow_active></defaults>
+    <message>Authenticate to authorize this Uke notification LED change.</message>
+    <defaults><allow_any>no</allow_any><allow_inactive>no</allow_inactive><allow_active>auth_admin</allow_active></defaults>
     <annotate key="org.freedesktop.policykit.owner">unix-user:uke-rgb</annotate>
   </action>
 </policyconfig>
