@@ -31,11 +31,8 @@ test-applet-load: all
 	trap 'rm -rf -- "$$runtime"' EXIT
 	QML_IMPORT_PATH="$(CURDIR)/build/qml" XDG_RUNTIME_DIR="$$runtime" QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=generic QT_QUICK_BACKEND=software build/applet-load "$(CURDIR)/src/plasma-applet/contents/ui/main.qml"
 	QML_IMPORT_PATH="$(CURDIR)/build/qml" bash tests/applet-cache.sh
-build/light-client-test.moc: tests/light-client.cpp
-	mkdir -p build
-	$$(pkg-config --variable=libexecdir Qt6Core)/moc $$(pkg-config --cflags Qt6Qml Qt6DBus) $< -o $@
-test-light-client: all build/light-client-test.moc
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -UNDEBUG -Ibuild $(LDFLAGS) tests/light-client.cpp $$(pkg-config --cflags --libs Qt6Qml Qt6DBus) -o build/test-light-client
+test-light-client: all
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -UNDEBUG -pthread -Ibuild $(LDFLAGS) tests/light-client.cpp $$(pkg-config --cflags --libs Qt6Qml Qt6DBus libsystemd) -o build/test-light-client
 	dbus-run-session -- bash -c 'DBUS_SYSTEM_BUS_ADDRESS="$$DBUS_SESSION_BUS_ADDRESS" build/test-light-client'
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"

@@ -5,8 +5,10 @@
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QQmlExtensionPlugin>
+#include <QtQml/qqml.h>
 #include <QUuid>
 #include <QVariantList>
+#include <QMap>
 #include <memory>
 #include <cmath>
 
@@ -15,14 +17,19 @@ class LightClient : public QObject {
     std::unique_ptr<QDBusConnection> bus;
     QString connectionName;
     quint64 generation=0;
+    QMap<QDBusPendingCallWatcher*,QString> pending;
 public:
     explicit LightClient(QObject* parent=nullptr):QObject(parent){}
     ~LightClient() override {close();}
     Q_INVOKABLE void close() {
         ++generation;
+        const auto cancelled=pending;pending.clear();
+        for(auto* watcher:cancelled.keys()){watcher->disconnect(this);delete watcher;}
         if(bus){QDBusConnection::disconnectFromBus(connectionName);bus.reset();}
+        for(const auto& action:cancelled)emit completed(action,{},QStringLiteral("Request cancelled"));
     }
     Q_INVOKABLE bool request(const QString& action,const QVariantList& values={}) {
+        if(pending.size()>=8)return false;
         const bool rgb=action=="rgb" || action=="rgbTest";
         const bool query=action=="rgb" || action=="lights";
         QString method;
@@ -51,12 +58,13 @@ public:
         message.setArguments(arguments);message.setInteractiveAuthorizationAllowed(!query);
         const auto requestGeneration=generation;
         auto* watcher=new QDBusPendingCallWatcher(bus->asyncCall(message,query?3000:130000),this);
+        pending.insert(watcher,action);
         connect(watcher,&QDBusPendingCallWatcher::finished,this,[this,action,requestGeneration](QDBusPendingCallWatcher* finished){
+            if(requestGeneration!=generation)return;
+            pending.remove(finished);
             const QDBusPendingReply<QString> reply=*finished;
-            const bool cancelled=requestGeneration!=generation;
-            emit completed(action,cancelled || reply.isError()?QString():reply.value(),
-                cancelled?QStringLiteral("Request cancelled"):reply.isError()?reply.error().message():QString());
             finished->deleteLater();
+            emit completed(action,reply.isError()?QString():reply.value(),reply.isError()?reply.error().message():QString());
         });
         return true;
     }

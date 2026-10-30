@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz bash jq diffutils firewalld-filesystem firewalld libxml2
 BuildRequires: make gcc-c++ pkgconf-pkg-config pkgconfig(Qt6Gui) pkgconfig(Qt6Qml)
-BuildRequires: pkgconfig(Qt6DBus) dbus-daemon
+BuildRequires: pkgconfig(Qt6DBus) pkgconfig(libsystemd) dbus-daemon
 BuildRequires: libplasma plasma5support kf6-kirigami
 Requires: uke-core-meta >= 1.0.0-3
 %description

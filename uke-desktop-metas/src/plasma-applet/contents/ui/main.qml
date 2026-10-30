@@ -72,7 +72,7 @@ PlasmoidItem {
         } else {
             if (data["exit code"] !== 0)
                 errorText = i18n("The change failed or authorization was cancelled.")
-            refresh()
+            if (root.expanded) refresh()
         }
     }
     function role() {

@@ -104,8 +104,8 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %make_build check
 
 %pre
-# Stop the previous root worker while its matching cleanup executable still exists.
-/usr/bin/systemctl stop uke-control-flashlight.service >/dev/null 2>&1 || :
+# Stop both old brokers before replacing their authorization policy and helpers.
+/usr/bin/systemctl stop uke-control-flashlight.service uke-control-rgb.service >/dev/null 2>&1 || :
 # Revoke the old sysfs grant before replacing its helper and SELinux policy.
 if [ -x %{_libexecdir}/uke-control/torch-access ]; then
     %{_libexecdir}/uke-control/torch-access --remove || exit 1
