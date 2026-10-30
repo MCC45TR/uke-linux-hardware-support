@@ -23,11 +23,13 @@ inline uid_t euid(){return uid;}inline gid_t egid(){return 983;}
 inline int opened(const char* name,int flags,...){assert(std::string(name)=="/dev/uke-torch" && flags==(O_RDWR|O_NOFOLLOW|O_CLOEXEC));return 82;}
 inline int stat(int fd,struct stat* out){assert(fd==82);out->st_mode=(wrong_type?S_IFREG:S_IFCHR)|0660;out->st_uid=0;out->st_gid=wrong_owner?42:983;return 0;}
 inline int filecon(int fd,char** label){assert(fd==82);*label=strdup(wrong_label?"system_u:object_r:device_t:s0":"system_u:object_r:uke_torch_device_t:s0");return 1;}
-inline int ioctl(int fd,unsigned long command,const void* data){
-    assert(fd==82);
-    if(command==UKE_TORCH_STATUS){if(fail_status){errno=ENODEV;return -1;}*const_cast<uke_torch_status*>(static_cast<const uke_torch_status*>(data))=response;return 0;}
-    assert(command==UKE_TORCH_SET || command==UKE_TORCH_ENABLE);
-    const auto& value=*static_cast<const uke_torch_request*>(data);
+inline int ioctl(int fd,unsigned long command,uke_torch_status* data){
+    assert(fd==82 && command==UKE_TORCH_STATUS);
+    if(fail_status){errno=ENODEV;return -1;}*data=response;return 0;
+}
+inline int ioctl(int fd,unsigned long command,const uke_torch_request* data){
+    assert(fd==82 && (command==UKE_TORCH_SET || command==UKE_TORCH_ENABLE));
+    const auto& value=*data;
     assert(value.abi==UKE_TORCH_ABI && !value.reserved[0] && !value.reserved[1]);
     requests.emplace_back(command,value.value);if(fail_request){errno=EIO;return -1;}return 0;
 }

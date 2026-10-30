@@ -18,12 +18,14 @@ static int test_clock_gettime(clockid_t clock,timespec* value) {
     assert(clock==CLOCK_BOOTTIME);if(clock_error)return -1;
     value->tv_sec=boottime_ms/1000;value->tv_nsec=(boottime_ms%1000)*1000000;return 0;
 }
-static int test_ioctl(int fd,unsigned long command,void* arg) {
-    assert(fd==91);
-    if(command==UKE_RGB_STATUS){*static_cast<uke_rgb_status*>(arg)=fake_status;return 0;}
+static int test_ioctl(int fd,unsigned long command,uke_rgb_status* arg) {
+    assert(fd==91 && command==UKE_RGB_STATUS);*arg=fake_status;return 0;
+}
+static int test_ioctl(int fd,unsigned long command,uke_rgb_color* arg) {
+    assert(fd==91 && command!=UKE_RGB_STATUS);
     ++changes;
     if(command==UKE_RGB_SET) {
-        auto c=*static_cast<uke_rgb_color*>(arg);assert(c.abi==1 && c.rgb<=0xffffff && c.brightness_percent<=100 && !c.reserved);
+        auto c=*arg;assert(c.abi==1 && c.rgb<=0xffffff && c.brightness_percent<=100 && !c.reserved);
         fake_status.mode=UKE_RGB_MANUAL;fake_status.rgb=c.rgb;fake_status.requested_rgb=c.rgb;
         fake_status.brightness=c.brightness_percent*8/100;
     } else if(command==UKE_RGB_TEST_COLORS) {
