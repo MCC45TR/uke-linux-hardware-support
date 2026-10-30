@@ -144,7 +144,7 @@ License: MIT, matching the modified upstream files.
 +            }
 +            if (activity_) activity_->touch();
 +        } catch (const std::exception &) {
-+            trace("user video activity transport unavailable");
++            trace("%s", "user video activity transport unavailable");
 +        }
 +    }
  }

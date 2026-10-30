@@ -64,11 +64,15 @@
     "automatic_video_policy": {
       "date": "2026-10-30",
       "source_package": "uke-vaapi-v4l2",
-      "release": 9,
+      "release": 10,
       "service_package": "uke-video-session",
       "service_minimum": "1.1.0",
       "native_build_pending": true,
-      "tablet_acceptance": false
+      "tablet_acceptance": false,
+      "failed_native_build": {
+        "id": 11230050,
+        "reason": "Diagnostic template requires a literal-format argument under Fedora format-security flags"
+      }
     }
   },
   "upstream": {
@@ -105,7 +109,7 @@
     },
     {
       "path": "patches/0007-automatic-user-video-policy.patch",
-      "sha256": "27e4fa2c5c73fc4337c59b2d4bf9e0aedfeed0f64d3bb12ad6956730835aa979"
+      "sha256": "6a66a044d281b123e44b4206c51519c7fece36e942fa03b4518cc6c587e11864"
     }
   ],
   "delivery": {
