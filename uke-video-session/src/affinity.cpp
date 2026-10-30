@@ -45,8 +45,18 @@ std::uint64_t ticks_now() {
     return std::uint64_t(now.tv_sec) * hz + std::uint64_t(now.tv_nsec) * hz / 1000000000;
 }
 bool owned(pid_t pid) {
-    struct stat info{};
-    return !stat(("/proc/" + std::to_string(pid)).c_str(), &info) && info.st_uid == geteuid();
+    std::ifstream status("/proc/" + std::to_string(pid) + "/status");
+    std::string key;
+    while (status >> key) {
+        if (key == "Uid:") {
+            uid_t real = ~uid_t{}, effective = ~uid_t{};
+            status >> real >> effective;
+            return status && effective == geteuid();
+        }
+        std::string rest;
+        std::getline(status, rest);
+    }
+    return false;
 }
 std::set<pid_t> threads(pid_t pid) {
     std::set<pid_t> result;
@@ -76,7 +86,9 @@ bool chrome_gpu(pid_t pid) {
     if (!owned(pid)) return false;
     const auto base = "/proc/" + std::to_string(pid);
     std::error_code error;
-    if (fs::read_symlink(base + "/exe", error) != "/opt/google/chrome/chrome" || error) return false;
+    const auto executable = fs::read_symlink(base + "/exe", error).string();
+    if (error || (executable != "/opt/google/chrome/chrome" &&
+                  executable != "/opt/google/chrome/chrome (deleted)")) return false;
     std::ifstream command(base + "/cmdline");
     char title[512]{};
     command.read(title, sizeof(title));
@@ -174,7 +186,7 @@ bool AffinityHints::load() {
     return true;
 }
 bool AffinityHints::restore(pid_t pid, Process &process) {
-    if (!eligible_(pid) || process_start(pid) != process.start) return true;
+    if (!owned(pid) || process_start(pid) != process.start) return true;
     bool ok = true;
     for (const auto tid : threads(pid)) {
         cpu_set_t current;

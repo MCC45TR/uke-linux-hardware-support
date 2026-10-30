@@ -15,9 +15,9 @@ export XDG_DATA_HOME="$work/data" XDG_RUNTIME_DIR="$work/runtime"
 export DBUS_SESSION_BUS_ADDRESS
 # A private native D-Bus session tests activation and caller rejection only.
 dbus-run-session -- bash -euo pipefail -c '
- busctl --user get-property org.uke.VideoSession1 /org/uke/VideoSession1 org.uke.VideoSession1 ActiveStreams | rg -x "u 0"
+ busctl --user get-property org.uke.VideoSession1 /org/uke/VideoSession1 org.uke.VideoSession1 ActiveStreams | grep -x "u 0"
  if busctl --user call org.uke.VideoSession1 /org/uke/VideoSession1 org.uke.VideoSession1 Report tuub 1 3840 2160 true; then exit 1; fi
- busctl --user get-property org.uke.VideoSession1 /org/uke/VideoSession1 org.uke.VideoSession1 Held | rg -x "b false"
+ busctl --user get-property org.uke.VideoSession1 /org/uke/VideoSession1 org.uke.VideoSession1 Held | grep -x "b false"
  read -r type pid < <(busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s org.uke.VideoSession1)
  [[ $type == u && $pid =~ ^[0-9]+$ ]]
  kill -TERM "$pid"
