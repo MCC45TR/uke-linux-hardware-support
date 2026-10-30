@@ -9,6 +9,7 @@ trap 'rm -rf -- "$work"' EXIT
 awk '/^std::string report\(\)/{copy=1} /^void report_github/{copy=0} copy' "$project/src/backend.cpp" > "$work/report.inc"
 test -s "$work/report.inc"
 cat > "$work/test.cpp" <<'CPP'
+#include "cli.hpp"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -21,6 +22,7 @@ cat > "$work/test.cpp" <<'CPP'
 #include <utility>
 #include <vector>
 namespace fs=std::filesystem;
+namespace cli=uke::cli;
 static fs::path state;
 static bool bad_inventory=false,bad_status=false,bad_firmware=false;
 struct Lock {};
@@ -89,10 +91,10 @@ int main(int argc,char** argv) {
         assert(summary.find("private unavailable battery")==std::string::npos);
         assert(summary.find("private process sample")==std::string::npos);
         assert(summary.find("private frequency snapshot")==std::string::npos);
-        assert(summary.find("Application: uke-control 2.3.0")!=std::string::npos);
+        assert(summary.find("Application: uke-control 2.3.1")!=std::string::npos);
     }
 }
 CPP
-${CXX:-c++} -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-variable "$work/test.cpp" -o "$work/test"
+${CXX:-c++} -std=c++20 -O2 -Wall -Wextra -Werror -Wno-unused-variable -I"$project/src" "$work/test.cpp" -o "$work/test"
 "$work/test" "$work/output"
 printf '%s\n' 'Report partial inventory/status failures preserve logs and private/public separation'

@@ -120,7 +120,7 @@ int main() {
     char temporary[] = "temporary-full", duration[] = "30";
     char* timed_argv[] = {exe, charge, mode, temporary, duration};
     output.str(""); output.clear(); original = std::cout.rdbuf(output.rdbuf());
-    assert(policy_command(5, timed_argv) == 0);
+    assert(policy_command(5, timed_argv,true) == 0);
     std::cout.rdbuf(original);
     assert(output.str().find("\"duration_minutes\":30") != std::string::npos);
     assert(output.str().find("\"armed\":false") != std::string::npos);

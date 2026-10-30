@@ -1,5 +1,11 @@
 # COPR source families
 
+30 October 2026: `mcc45tr/uke-linux-unstable` uses
+[independent component source packages](STANDALONE.md), with only
+`fedora-rawhide-aarch64` enabled. It does not publish the nine umbrella source
+packages. The family recipes and earlier observations below remain the legacy
+stable/test path.
+
 27 October 2026: the [hardware update cohort](../../docs/DNF-UPDATE-20261027.md)
 joins Core `1.15.1-3`, hardware `1.8.5-1`, power `1.3.3-4`, sensors `1.0.9-5`,
 extras `1.0.4-2`, additional `1.0.0-13`, metas `1.4.0-4`, camera `1.0.0-3`

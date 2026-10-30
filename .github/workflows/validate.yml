@@ -18,15 +18,16 @@ jobs:
     runs-on: ubuntu-24.04
     container: registry.fedoraproject.org/fedora:rawhide
     steps:
-      - name: Install official host validation tools
-        run: dnf5 -y install git curl jq gcc-c++ libasan libubsan make pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel libplasma plasma5support kf6-kirigami dtc libdrm-devel systemd-devel systemd-udev umockdev-devel libselinux-devel selinux-policy-devel alsa-lib-devel jsoncpp-devel xfsprogs-devel e2fsprogs dosfstools f2fs-tools wayland-devel wayland-protocols-devel libdnf5-devel rpm-devel openssl-devel rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros 'pkgconfig(fdisk)' 'pkgconfig(zlib)' util-linux dbus-daemon selinux-policy-devel
+      - name: Install official source validation tools
+        run: dnf5 -y install git curl jq make rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros binutils cpio xz tar diffutils gawk util-linux
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      - run: make validate && make test-native
+      - name: Validate source and packaging metadata
+        run: make validate
       - run: make -C packaging/families check
-      - name: Exercise signed repositories and the private sensor bus
-        run: dnf5 -y install dbus-daemon && make -C uke-control check-repositories check-sensor-proxy check-copr-trigger
+      - name: Record the native build boundary
+        run: echo 'Native compilation and package checks run in COPR; this workflow validates source only.' >> "$GITHUB_STEP_SUMMARY"
       - name: Request changed source families after validation
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         env:

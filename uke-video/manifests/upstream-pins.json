@@ -6,7 +6,14 @@
     "binary_package": "uke-vaapi-v4l2",
     "standalone_copr_source_allowed": false,
     "standalone_source_record_deleted": true,
-    "retired_build_ids": [11204584, 11205659, 11205969, 11206106, 11206385, 11209327],
+    "retired_build_ids": [
+      11204584,
+      11205659,
+      11205969,
+      11206106,
+      11206385,
+      11209327
+    ],
     "source_and_working_rollback_retained": true,
     "family_candidate": {
       "date": "2026-10-26",
@@ -39,6 +46,20 @@
       "tablet_resolved_dependency_transaction_verified": false,
       "installed_on_tablet": false,
       "tablet_tested": false
+    },
+    "unstable": {
+      "date": "2026-10-29",
+      "project": "mcc45tr/uke-linux-unstable",
+      "source_package": "uke-vaapi-v4l2",
+      "source_package_family": false,
+      "preserved_component_from": "uke-additional-1.0.0-16.fc46.src.rpm",
+      "preserved_source_sha256": "5d24aead31e8eccd4edd7a994254dcf04ef7f1623d8d7467a058bff216c3980d",
+      "preserved_copr_build": 11219537,
+      "source_signature_present": false,
+      "source_header_and_payload_digests_verified": true,
+      "reason": "Retain the installed revision-7 shared-surface write-combined fix during independent migration",
+      "native_build_pending": true,
+      "tablet_acceptance": false
     }
   },
   "upstream": {
@@ -68,6 +89,10 @@
     {
       "path": "patches/0005-preserve-decode-error-status.patch",
       "sha256": "e62be3e7485e0d1297df2a1c9432eace1ae460026690205af1d6f32a4424d4db"
+    },
+    {
+      "path": "patches/0006-shared-surface-write-combined.patch",
+      "sha256": "29116d2a380c268a765c1fab2b7dc82ed493264106c212ceb43f2a57172db659"
     }
   ],
   "delivery": {

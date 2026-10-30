@@ -38,6 +38,10 @@ extern "C" int irisva_msm_allocate(int, uint64_t size, int *coherent) {
     assert(fd >= 0 && !ftruncate(fd, size));
     return fd;
 }
+extern "C" int irisva_msm_allocate_wc(int fd, uint64_t size) {
+    int coherent;
+    return irisva_msm_allocate(fd, size, &coherent);
+}
 extern "C" int __wrap_ioctl(int fd, unsigned long request, ...) {
     assert(fd >= 0 && request == DMA_BUF_IOCTL_SYNC);
     va_list args; va_start(args,request);

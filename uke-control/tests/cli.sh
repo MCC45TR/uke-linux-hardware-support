@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Host-only CLI checks. Only static metadata, help and refusal paths are invoked.
 set -Eeuo pipefail
+trap 'if [[ $- == *e* ]]; then printf "CLI fixture failed at line %s: %s\n" "$LINENO" "$BASH_COMMAND" >&2; fi' ERR
 cd "$(dirname "$0")/.."
 export LD_LIBRARY_PATH="$PWD/build"
 stage=$(mktemp -d)
@@ -8,8 +9,8 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.3.0' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.0"' >/dev/null
+grep -Fx 'uke-control 2.3.1' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.1"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
@@ -21,7 +22,7 @@ jq -e '.applied==false and .effective==null and .requested=="charge80"' "$stage/
 "$app" charge plan charge80 --json | cmp "$stage/json" -
 "$app" charge modes > "$stage/modes"
 grep -q 'Charging modes' "$stage/modes"
-"$app" charge modes --json | jq -e '.qualification_checked==false and (.modes|length)==5' >/dev/null
+"$app" charge modes --json | jq -e '.qualification_checked==false and (.modes|map(.id)|sort)==["automatic","charge80","firmware","hold70-80","hold80-90","slow","temporary-full"] and any(.modes[]; .id=="temporary-full" and .apply_implemented==false)' >/dev/null
 for args in 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resize system --json' 'sensors -- --json' 'channel status -- --json' 'test -- --help' 'singleboot status -- --json' 'multiboot -- --help'; do
     read -r -a words <<< "$args"
     set +e

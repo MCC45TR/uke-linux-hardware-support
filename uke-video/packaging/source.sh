@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepare the reviewed child recipe for composition into uke-additional.
+# Prepare the reviewed video component source for the selected COPR channel.
 set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/.."; pwd)
 output=$(realpath -m "${1:?source RPM output directory}")
@@ -20,6 +20,6 @@ while IFS=$'\t' read -r patchfile hash; do
     printf '%s  %s\n' "$hash" "$patchfile" | sha256sum --check --status
     cp "$patchfile" "$output/SOURCES/"
 done < <(jq -r '.patches[]|[.path,.sha256]|@tsv' manifests/upstream-pins.json)
-cp "$archive" README.md tests/{runtime-caps.cpp,main10-contract.sh,rate-negotiation.sh,dimension-contract.sh,decode-error-contract.sh} "$output/SOURCES/"
+cp "$archive" README.md tests/{runtime-caps.cpp,main10-contract.sh,rate-negotiation.sh,dimension-contract.sh,decode-error-contract.sh,shared-surface-cache-contract.sh} "$output/SOURCES/"
 cp packaging/uke-vaapi-v4l2.spec "$output/SPECS/"
 rpmbuild -bs --nodeps --define "_topdir $output" "$output/SPECS/uke-vaapi-v4l2.spec"

@@ -43,7 +43,9 @@ EOF
 kernel() {
     local version=$1 repo=$2 uname=$3 suffix extra
     for suffix in '' -core -modules -dtbs -boot; do
-        extra='Provides: installonlypkg(kernel)'
+        extra=''
+        # Match the real recipe: only the payload subpackages provide installonly.
+        if [[ -n $suffix ]]; then extra='Provides: installonlypkg(kernel)'; fi
         if [[ $suffix == -core ]]; then extra+=$'\n'"Provides: kernel-uname-r($uname)"; fi
         build "senemos-uke-linux-kernel-mainline$suffix" "$version" "$repo" "$extra"
     done
