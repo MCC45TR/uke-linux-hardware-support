@@ -7,6 +7,9 @@ BUILD_DIR ?= build
 .PHONY: pipewire-monitor-srpm
 pipewire-monitor-srpm:
 	bash scripts/build-pipewire-monitor-srpm.sh "$(FEDORA_PIPEWIRE_SRPM)" "$(abspath $(BUILD_DIR))/pipewire-monitor/rpmbuild"
+.PHONY: test-inxi-soc-thermal
+test-inxi-soc-thermal:
+	bash tests/inxi-soc-thermal.sh "$(INXI_SOURCE)"
 .PHONY: speaker-controls-srpm
 .PHONY: displayport-audio-srpm
 displayport-audio-srpm:

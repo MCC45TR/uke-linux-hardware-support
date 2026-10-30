@@ -1,0 +1,18 @@
+--- a/inxi
++++ b/inxi
+@@ -32010,9 +32010,14 @@
+ # 0: $type; 1 OF_NAME: $vendor_id OF_COMPATIBLE_0; 2: $driver
+ sub soc_type {
+ 	my ($type,$info,$driver) = @_;
++	# Thermal consumers may be named after the component they measure.
++	if (($driver && $driver =~ /(?:^|[-_])thermal(?:[-_]|$)/i) ||
++	 $type =~ /(?:^|[-_])thermal(?:[-_]|$)/i){
++		$type = 'thermal';
++	}
+ 	# I2S or i2s. I2C is i2 controller |[iI]2[Ss]. note: odroid hdmi item is sound only
+ 	# snd_soc_dummy. simple-audio-amplifier driver: speaker_amp
+-	if (($driver && $driver =~ /codec/) || ($info && $info =~ /codec/) ||
++	elsif (($driver && $driver =~ /codec/) || ($info && $info =~ /codec/) ||
+ 	 ($type && $type =~ /codec/)){
+ 		$type = 'codec';
+ 	}
