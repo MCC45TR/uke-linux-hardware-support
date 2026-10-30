@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.3.2
+Version: 2.3.3
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -183,6 +183,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.3-1
+- Separate Type-C ports and partners and report all DP profile capabilities.
+- Align compression CLI output and CDC preference reporting with existing contracts.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.2-1
 - Respect updater transaction policy and the selected userdata boot profile during channel synchronization.
 - Keep activation pending until the package-selected kernel is running.

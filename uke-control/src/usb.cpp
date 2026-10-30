@@ -4,6 +4,8 @@
 #include "cli.hpp"
 #include "sysfs.hpp"
 #include <algorithm>
+#include <array>
+#include <cerrno>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -11,10 +13,24 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include <sys/stat.h>
 
 namespace fs = std::filesystem;
 namespace uke::usb {
 using namespace uke::sysfs;
+namespace {
+std::string saved_cdc(const fs::path& root) {
+    const auto path=root/"var/lib/uke-control/cdc-on";struct stat st{};
+    if(lstat(path.c_str(),&st)<0)return errno==ENOENT?quote("disabled"):"null";
+    if(!S_ISREG(st.st_mode)||st.st_uid!=0||st.st_nlink!=1||(st.st_mode&0077)||!resolved(root,path))
+        return quote("invalid");
+    std::ifstream input(path,std::ios::binary);
+    if(!input)return "null";
+    std::array<char,4> content{};input.read(content.data(),content.size());
+    if(input.bad())return "null";
+    return quote(input.gcount()==3&&std::string_view(content.data(),3)=="on\n"?"on":"invalid");
+}
+}
 std::string snapshot(const fs::path& requested_root) {
     const auto root=fs::canonical(requested_root);
     const auto now=[] {return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();};
@@ -22,12 +38,7 @@ std::string snapshot(const fs::path& requested_root) {
     std::string out="{\"schema\":\"org.uke.control.usb.v1\",\"live\":"+std::string(root=="/"?"true":"false");
     out+=",\"coherence\":\"sequential_sysfs_reads\",\"power_supply_reads\":false";
     out+=",\"boot_profile\":"+attribute(root,root/"sys/firmware/devicetree/base/chosen/senemos,usb-profile");
-    const auto policy=root/"var/lib/uke-control/cdc-on";
-    std::error_code error;
-    const auto kind=fs::symlink_status(policy,error);
-    const auto saved=error==std::errc::no_such_file_or_directory||kind.type()==fs::file_type::not_found?
-        quote("disabled"):error?"null":fs::is_regular_file(kind)?attribute(root,policy):quote("invalid");
-    out+=",\"cdc_saved_policy\":"+saved;
+    out+=",\"cdc_saved_policy\":"+saved_cdc(root);
     out+=",\"cdc_legacy_policy\":"+attribute(root,root/"etc/senemos/usb-sharing");
     out+=",\"cdc_manager_state\":"+attribute(root,root/"run/senemos-uke/usb-auto-state");
     const auto group=[&](const std::string& name,const fs::path& directory,const std::vector<std::string>& fields,auto include) {
@@ -40,7 +51,11 @@ std::string snapshot(const fs::path& requested_root) {
         out+=']';
     };
     const auto all=[](const fs::path&){return true;};
-    group("typec","sys/class/typec",{"data_role","power_role","port_type","preferred_role","orientation","power_operation_mode","supports_usb_power_delivery","usb_power_delivery_revision"},all);
+    group("typec","sys/class/typec",{"data_role","power_role","port_type","preferred_role","orientation","power_operation_mode","supports_usb_power_delivery","usb_power_delivery_revision"},[](const fs::path& p){return typec_port_name(p.filename().string());});
+    group("typec_partners","sys/class/typec",{"supports_usb_power_delivery","usb_power_delivery_revision","accessory_mode","number_of_alternate_modes"},[](const fs::path& p){
+        const auto name=p.filename().string();
+        return name.ends_with("-partner")&&typec_port_name(std::string_view(name).substr(0,name.size()-8));
+    });
     group("altmodes","sys/bus/typec/devices",{"svid","mode","vdo","active"},[&](const fs::path& p){return exists(root,p/"svid");});
     group("role_switches","sys/class/usb_role",{"role"},all);
     // Driver-owned caches only; none of these attributes initiates a bus transaction.

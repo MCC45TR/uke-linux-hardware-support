@@ -70,6 +70,12 @@ wire bits per pixel. A missing cache, unsupported version, inactive stream or
 invalid data remains `null`. These are sequential software observations;
 they do not establish a visible image or working USB devices.
 
+Every profile includes an availability flag and a refusal reason. Availability
+requires a unique active standard pin-selection interface and compatible pin
+assignments; dual-display also requires MST support. A profile definition is
+not proof that the firmware exposes its selection interface. Storage, network
+and gadget safeguards are rechecked separately when a request is made.
+
 | Profile | Requested DP lanes | USB and display contract |
 | --- | --- | --- |
 | `usb3-display` | 2, pins D/F | Reserve lanes for USB3 alongside DP. |
@@ -137,6 +143,13 @@ every minimum. Each minimum requires separate physical validation. A 1 Hz
 minimum is not supported.
 
 ## Cached external-display diagnosis, 20 October 2026
+
+30 October 2026: the USB snapshot lists real connector ports in `typec` and
+attached partners in `typec_partners`. A partner is not a second port. Saved
+CDC intent is reported as `on` only for the same root-owned, private,
+single-link file and exact contents accepted by the controller; unreadable
+state remains unknown and invalid records are identified explicitly. Saved
+intent does not establish an applied gadget or working USB connection.
 
 `uke-control usb status` includes standard Type-C alternate modes and cached
 UCSI, QMP PHY and WCD AUX routing attributes. The same snapshot is retained in

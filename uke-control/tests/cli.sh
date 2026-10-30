@@ -9,8 +9,8 @@ trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.3.2' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.2"' >/dev/null
+grep -Fx 'uke-control 2.3.3' "$stage/version"
+"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.3"' >/dev/null
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
@@ -87,5 +87,15 @@ set -e
 test "$result" = 69
 "$app" nfc status --json | jq -e '.available==false and .powered==null and .polling_started==false' >/dev/null
 "$app" nfc status | grep -Fx 'Available: no'
+"$app" display compression > "$stage/compression-human"
+grep -Fx 'Policy: auto' "$stage/compression-human"
+grep -Fx 'Dsc active: no' "$stage/compression-human"
+! grep -qE '^\s*\{|org[.]uke[.]control' "$stage/compression-human"
+"$app" display compression --json | jq -e '.policy=="auto" and .requested==true and .dsc_active==false' >/dev/null
+for policy in auto on off; do
+    "$app" display compression "$policy" > "$stage/compression-request"
+    grep -Fx "Requested: $policy" "$stage/compression-request"
+    "$app" display compression "$policy" --json | jq -e --arg policy "$policy" '.requested==$policy and .physical_validation=="NOT_ESTABLISHED"' >/dev/null
+done
 unset LD_PRELOAD
 printf '%s\n' 'Actual CLI with host-only backend fixture: coherent status, USB role aliases, explicit JSON and preserved EX_UNAVAILABLE result PASS'

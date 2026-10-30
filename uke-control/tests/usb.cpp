@@ -5,13 +5,32 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <systemd/sd-json.h>
 #include <sys/stat.h>
 #include <unistd.h>
 namespace fs=std::filesystem;
 static void put(const fs::path& path,const std::string& value) {
     fs::create_directories(path.parent_path());std::ofstream out(path);out<<value;assert(out.good());
 }
+static bool profile_available(const std::string& data,const char* id,const char* reason=nullptr) {
+    sd_json_variant* document=nullptr;
+    assert(sd_json_parse(data.c_str(),static_cast<sd_json_parse_flags_t>(0),&document,nullptr,nullptr)>=0);
+    auto* profiles=sd_json_variant_by_key(document,"profiles");bool found=false,available=false;
+    for(size_t i=0;i<sd_json_variant_elements(profiles);++i) {
+        auto* profile=sd_json_variant_by_index(profiles,i);
+        if(std::string(sd_json_variant_string(sd_json_variant_by_key(profile,"id")))!=id)continue;
+        found=true;
+        auto* flag=sd_json_variant_by_key(profile,"available");assert(sd_json_variant_is_boolean(flag));
+        available=sd_json_variant_boolean(flag);
+        auto* explanation=sd_json_variant_by_key(profile,"reason");
+        if(reason)assert(sd_json_variant_is_string(explanation)&&std::string(sd_json_variant_string(explanation))==reason);
+        else if(available)assert(sd_json_variant_is_null(explanation));
+    }
+    sd_json_variant_unref(document);assert(found);return available;
+}
 int main() {
+    for(const auto* name:{"port0","port1","port123"})assert(uke::usb::typec_port_name(name));
+    for(const auto* name:{"port","portA","port0-partner","port0-cable","port0.0","other"})assert(!uke::usb::typec_port_name(name));
     assert(uke::usb::profile_pin("C [D] E F","usb3-display")=='D');
     assert(uke::usb::profile_pin("C [D] E F","display4")=='C');
     assert(uke::usb::profile_pin("C D [E] F","display4")=='E');
@@ -50,19 +69,34 @@ int main() {
         const auto empty=uke::usb::snapshot(root);
         const auto profiles=uke::usb::display_profiles(root);
         assert(profiles.find("\"selection_interface\":\"unavailable\"")!=profiles.npos);
+        assert(!profile_available(profiles,"usb3-display","DP_ALTMODE_CONTROL_UNAVAILABLE"));
+        assert(!profile_available(profiles,"display4","DP_ALTMODE_CONTROL_UNAVAILABLE"));
         assert(profiles.find("MST_STATE_UNAVAILABLE")!=profiles.npos);
         assert(profiles.find("\"observed_link\":null")!=profiles.npos);
         assert(empty.find("\"live\":false")!=std::string::npos);
         assert(empty.find("\"usb_devices\":[]")!=std::string::npos);
         assert(empty.find("\"cdc_saved_policy\":\"disabled\"")!=std::string::npos);
         put(root/"var/lib/uke-control/cdc-on","on\n");
-        assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"on\"")!=std::string::npos);
+        const auto policy=root/"var/lib/uke-control/cdc-on";
+        chmod(policy.c_str(),0600);
+        assert(uke::usb::snapshot(root).find(geteuid()==0?"\"cdc_saved_policy\":\"on\"":"\"cdc_saved_policy\":\"invalid\"")!=std::string::npos);
+        chmod(policy.c_str(),0644);
+        assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"invalid\"")!=std::string::npos);
+        chmod(policy.c_str(),0600);fs::create_hard_link(policy,root/"var/lib/uke-control/cdc-alias");
+        assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"invalid\"")!=std::string::npos);
+        fs::remove(root/"var/lib/uke-control/cdc-alias");
+        for(const auto* invalid:{"on", "on\nx", "off\n", ""}) {
+            put(policy,invalid);
+            assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"invalid\"")!=std::string::npos);
+        }
         fs::remove(root/"var/lib/uke-control/cdc-on");
         fs::create_symlink("/etc/passwd",root/"var/lib/uke-control/cdc-on");
         assert(uke::usb::snapshot(root).find("\"cdc_saved_policy\":\"invalid\"")!=std::string::npos);
         fs::remove(root/"var/lib/uke-control/cdc-on");
         put(root/"sys/class/typec/port0/data_role","[host] device\n");
         put(root/"sys/class/typec/port0/power_role","source [sink]\n");
+        put(root/"sys/class/typec/port0-partner/supports_usb_power_delivery","yes\n");
+        put(root/"sys/class/typec/port0-partner/number_of_alternate_modes","0\n");
         put(root/"sys/bus/usb/devices/1-1/idVendor","0bda\n");
         put(root/"sys/bus/usb/devices/1-1/idProduct","8153\n");
         put(root/"sys/bus/usb/devices/1-1/speed","5000\n");
@@ -86,6 +120,15 @@ int main() {
         const auto selectable=uke::usb::display_profiles(root);
         assert(selectable.find("standard_typec_pin_assignment")!=selectable.npos);
         assert(selectable.find("C [D] E")!=selectable.npos);
+        assert(profile_available(selectable,"usb3-display"));
+        assert(profile_available(selectable,"display4"));
+        put(partner/"displayport/pin_assignment","[D] F\n");
+        assert(profile_available(uke::usb::display_profiles(root),"usb3-display"));
+        assert(!profile_available(uke::usb::display_profiles(root),"display4","PROFILE_PIN_ASSIGNMENT_UNSUPPORTED"));
+        put(partner/"displayport/pin_assignment","[C] E\n");
+        assert(!profile_available(uke::usb::display_profiles(root),"usb3-display","PROFILE_PIN_ASSIGNMENT_UNSUPPORTED"));
+        assert(profile_available(uke::usb::display_profiles(root),"display4"));
+        put(partner/"displayport/pin_assignment","C [D] E\n");
         put(partner/"active","no\n");
         assert(uke::usb::display_profiles(root).find("standard_typec_pin_assignment")==std::string::npos);
         put(partner/"active","yes\n");fs::remove(partner/"displayport/pin_assignment");
@@ -97,6 +140,8 @@ int main() {
         put(second/"svid","ff01\n");put(second/"active","yes\n");
         put(second/"displayport/pin_assignment","[C] D\n");
         assert(uke::usb::display_profiles(root).find("\"selection_interface\":\"ambiguous\"")!=std::string::npos);
+        assert(!profile_available(uke::usb::display_profiles(root),"usb3-display","DP_ALTMODE_CONTROL_AMBIGUOUS"));
+        assert(!profile_available(uke::usb::display_profiles(root),"display4","DP_ALTMODE_CONTROL_AMBIGUOUS"));
         fs::remove_all(second);
         const auto provider=[&](const fs::path& directory,const std::string& name,const std::string& driver) {
             const auto object=root/directory/"devices"/name;
@@ -154,6 +199,14 @@ int main() {
         assert(mkfifo((root/"sys/class/power_supply/uevent").c_str(),0600)==0);
         fs::create_directory_symlink("/sys/class/typec",root/"sys/class/typec/escape");
         const auto data=uke::usb::snapshot(root);
+        sd_json_variant* inventory=nullptr;
+        assert(sd_json_parse(data.c_str(),static_cast<sd_json_parse_flags_t>(0),&inventory,nullptr,nullptr)>=0);
+        auto* ports=sd_json_variant_by_key(inventory,"typec");
+        auto* partners=sd_json_variant_by_key(inventory,"typec_partners");
+        assert(sd_json_variant_elements(ports)==1&&sd_json_variant_elements(partners)==1);
+        assert(std::string(sd_json_variant_string(sd_json_variant_by_key(sd_json_variant_by_index(ports,0),"name")))=="port0");
+        assert(std::string(sd_json_variant_string(sd_json_variant_by_key(sd_json_variant_by_index(partners,0),"name")))=="port0-partner");
+        sd_json_variant_unref(inventory);
         assert(data.find("\"driver\":\"r8152\"")!=std::string::npos);
         assert(data.find("\"speed\":\"5000\"")!=std::string::npos);
         assert(data.find("\"usb_network\":[{\"name\":\"enx-test\"")!=std::string::npos);
