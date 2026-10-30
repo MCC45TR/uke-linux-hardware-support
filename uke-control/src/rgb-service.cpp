@@ -21,15 +21,19 @@
 #include <unistd.h>
 namespace {
 void need(bool ok,const std::string& error){if(!ok)throw std::runtime_error(error);}
-struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;uke::torch::Lease lease;};
+struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;uke::torch::Lease lease;bool off_pending=false;uint64_t retry_after=0;};
 uint64_t boottime() {
     timespec now{};need(clock_gettime(CLOCK_BOOTTIME,&now)==0,"Cannot read torch safety clock");
     return uint64_t(now.tv_sec)*1000000+uint64_t(now.tv_nsec)/1000;
 }
 void expire_torch(State& state,uint64_t now=boottime()) {
-    if(state.torch && state.lease.expired(now)) {
-        state.torch->enable(false);
-        state.lease.applied(false,now);
+    if(!state.torch || (!state.off_pending && !state.lease.expired(now)) || now<state.retry_after)return;
+    try {
+        state.torch->enable(false); // includes kernel-provider readback, not just a successful write
+        state.lease.applied(false,now);state.off_pending=false;state.retry_after=0;
+    } catch(const std::exception& e) {
+        state.off_pending=true;state.retry_after=now+1000000;
+        std::cerr<<"Torch OFF remains unverified: "<<e.what()<<'\n';
     }
 }
 const char* mode_name(unsigned n) {
@@ -39,7 +43,7 @@ const char* mode_name(unsigned n) {
 std::string status(State& state) {
     if(state.torch) {
         auto value=state.torch->status();
-        value.insert(1,"\"auto_off_remaining_ms\":"+std::to_string(state.lease.remaining(boottime())/1000)+",");
+        value.insert(1,"\"off_verification_pending\":"+std::string(state.off_pending?"true":"false")+",\"auto_off_remaining_ms\":"+std::to_string(state.lease.remaining(boottime())/1000)+",");
         return value;
     }
     uke_rgb_status value{};
@@ -74,6 +78,20 @@ bool authorized(sd_bus_message* message,const char* action) {
     return r>=0 && sd_bus_message_enter_container(answer,'r',"bba{ss}")>0 &&
         sd_bus_message_read(answer,"bb",&allowed,&challenge)>0 && allowed && !challenge;
 }
+void change_torch(State& state,bool brightness,unsigned percent,bool enabled) {
+    expire_torch(state);
+    const bool on=brightness?percent!=0:enabled!=0;
+    need(!on || !state.off_pending,"Torch OFF is not yet verified; new ON requests are blocked");
+    // Arm before any potentially energizing write, including writes whose readback fails.
+    if(on)state.lease.applied(true,boottime());
+    try {
+        if(brightness)state.torch->set(percent);else state.torch->enable(enabled);
+        if(!on){state.lease.applied(false,boottime());state.off_pending=false;state.retry_after=0;}
+    } catch(...) {
+        state.off_pending=true;state.retry_after=boottime()+1000000;
+        throw;
+    }
+}
 int request(sd_bus_message* message,void* userdata,sd_bus_error* error) {
     auto& state=*static_cast<State*>(userdata);
     try {
@@ -84,9 +102,7 @@ int request(sd_bus_message* message,void* userdata,sd_bus_error* error) {
             if(method=="SetBrightness")need(sd_bus_message_read(message,"u",&percent)>0 && percent<=100,"Invalid torch percentage");
             else need(method=="SetEnabled" && sd_bus_message_read(message,"b",&enabled)>0,"Invalid torch request");
             if(!authorized(message,uke::torch::action))return sd_bus_error_set_const(error,SD_BUS_ERROR_ACCESS_DENIED,"Only an active local user may request torch changes");
-            expire_torch(state);
-            if(method=="SetBrightness")state.torch->set(percent);else state.torch->enable(enabled);
-            state.lease.applied(method=="SetBrightness"?percent!=0:enabled!=0,boottime());
+            change_torch(state,method=="SetBrightness",percent,enabled);
             return sd_bus_reply_method_return(message,"s",status(state).c_str());
         }
         uke_rgb_color value{};unsigned command=UKE_RGB_AUTOMATIC;

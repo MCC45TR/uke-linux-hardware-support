@@ -103,10 +103,22 @@ int main() {
         assert(timed.lease.remaining(60000100)==0);
         timed.torch->enable(true);timed.lease.applied(true,100);
         torch_fixture::fail_level=0;
-        bool failed=false;try{expire_torch(timed,60000100);}catch(...){failed=true;}
-        assert(failed && timed.lease.expired(60000100)); // failed off is not reported as cleared
-        torch_fixture::fail_level=9;expire_torch(timed,60000101);
-        assert(torch_fixture::brightness==0);
+        expire_torch(timed,60000100);
+        assert(timed.off_pending && timed.lease.expired(60000100));
+        const auto count=torch_fixture::writes.size();expire_torch(timed,60000101);
+        assert(torch_fixture::writes.size()==count);
+        torch_fixture::fail_level=9;expire_torch(timed,61000100);
+        assert(torch_fixture::brightness==0 && !timed.off_pending);
+        torch_fixture::bad_readback=true;torch_fixture::fail_level=0;
+        bool failed=false;try{change_torch(timed,true,100,true);}catch(...){failed=true;}
+        assert(failed && torch_fixture::brightness==2 && timed.off_pending);
+        assert(timed.lease.remaining(boottime())>0);
+        const auto uncertain_writes=torch_fixture::writes.size();
+        failed=false;try{change_torch(timed,false,0,true);}catch(...){failed=true;}
+        assert(failed && torch_fixture::writes.size()==uncertain_writes);
+        torch_fixture::bad_readback=false;torch_fixture::fail_level=9;
+        expire_torch(timed,timed.retry_after);
+        assert(torch_fixture::brightness==0 && !timed.off_pending && !timed.lease.remaining(boottime()));
     }
     std::cout<<"Actual LED brokers: private-bus caller authorization, no-interaction Polkit, HEX/torch bounds and denied-request isolation passed; simulated hardware only\n";
 }

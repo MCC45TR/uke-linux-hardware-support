@@ -120,3 +120,11 @@ a blocked broker or an uninterruptible kernel write can delay off. Normal idle
 polling adds up to one second; authorization calls can add their bounded bus
 latency. Kernel-side fail-off and physical suspend/crash acceptance still need
 separate validation. No new security policy is installed by source tests.
+
+The lease is armed **before** an ON write. If that write, its readback or rollback
+fails, the broker blocks further ON requests and retries verified OFF at most
+once per second in its normal event loop. Failure does not clear the lease or
+terminate the loop. `off_verification_pending` reports the outstanding failure
+when provider status remains readable. Service termination retains the existing
+destructor and ExecStopPost attempts; persistent hardware failure cannot be
+solved by userspace retries.
