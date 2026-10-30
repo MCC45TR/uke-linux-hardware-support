@@ -105,7 +105,9 @@ PlasmoidItem {
             if (error.length > 0) {
                 if (action === "lights") root.lights = ({})
                 else if (action === "rgb") root.rgb = ({})
-                if (root.expanded) root.errorText = i18n("The change failed or authorization was cancelled.")
+                if (root.expanded) root.errorText = action === "lights" || action === "rgb"
+                    ? i18n("Could not read tablet state. Refresh to try again.")
+                    : i18n("The change failed or authorization was cancelled.")
             } else if (action === "lights" || action === "rgb") {
                 try {
                     const value = Control.parse(action, output)
