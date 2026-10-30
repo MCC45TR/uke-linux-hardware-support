@@ -1,5 +1,14 @@
 # Desktop interface and engineering contract
 
+30 October 2026: Control 2.3.4 verifies the exact KDE policy after a successful
+setting request. An unchanged policy, missing panel or different panel is a
+failure; an already matching request returns without a configuration write.
+`desktop plasma` also reports `rotation_policy` (`always`, `never`,
+`inTabletMode` or null), retaining the existing boolean for compatibility.
+Turning rotation off explicitly requires `never`; tablet-only behavior is not
+treated as an already matching off request. A successful receipt establishes
+policy readback, not physical rotation or measured brightness.
+
 27 October 2026: `desktop status` and `test desktop` also query logind's
 `LidClosed`, `Docked` and `PreparingForSleep` independently of UPower's lid
 properties. Conflicting reported states remain separate. The current session's

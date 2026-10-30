@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -138,6 +139,20 @@ static void wake_write(const wake::Source& source, bool enabled) {
     write_all(fd.n, enabled ? "enabled\n" : "disabled\n");
     need(read(source.path.string(), 32) == (enabled ? "enabled\n" : "disabled\n"), "Wake permission readback differs");
 }
+static std::optional<bool> saved_wake(const fs::path& path) {
+    Fd fd{open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK)};
+    if(fd.n<0&&errno==ENOENT)return std::nullopt;
+    need(fd.n>=0,"Cannot read saved wake permission");
+    struct stat st{};
+    need(fstat(fd.n,&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1&&!(st.st_mode&0077),
+         "Untrusted saved wake permission");
+    std::array<char,10> buffer{};ssize_t count;
+    do {count=::read(fd.n,buffer.data(),buffer.size());} while(count<0&&errno==EINTR);
+    need(count>=0,"Cannot read saved wake permission");
+    const std::string value(buffer.data(),size_t(count));
+    need(value=="enabled\n"||value=="disabled\n","Invalid saved wake permission");
+    return value=="enabled\n";
+}
 void wake_set(const std::string& name, bool enabled) {
     root(); need(wake::applicable(), "Wake policy requires exact Uke / SM7675 identity"); Lock lock;
     auto sources = wake::sources();
@@ -162,26 +177,31 @@ void wake_apply() {
     auto requested = previous;
     for (auto& source : requested) {
         const auto path = state/("wake-"+source.name);
-        if (fs::exists(path)) {
-            const auto value = read(path.string(), 32);
-            need(value == "enabled\n" || value == "disabled\n", "Invalid saved wake permission");
+        if (const auto enabled = saved_wake(path)) {
             need(!source.path.empty(), "Saved wake source is no longer available: " + source.name);
-            source.enabled = value == "enabled\n";
+            source.enabled = *enabled;
         } else if (source.name == "bluetooth-uart" || source.name == "lid-open" || source.name == "usb-host" ||
                    source.name == "double-tap" || source.name.starts_with("usb-device-")) {
             source.enabled = true;
         }
     }
     need(wake::recovery_key(requested), "Saved policy disables every recovery key");
+    std::vector<size_t> attempted;
     try {
         // Enable recovery paths before disabling any existing permission.
         for (bool enabled : {true, false}) for (size_t i = 0; i < requested.size(); ++i)
-            if (!requested[i].path.empty() && requested[i].enabled != previous[i].enabled && requested[i].enabled == enabled)
+            if (!requested[i].path.empty() && requested[i].enabled != previous[i].enabled && requested[i].enabled == enabled) {
+                attempted.push_back(i);
                 wake_write(requested[i], enabled);
+            }
     } catch (...) {
         bool restored = true;
-        for (bool enabled : {true, false}) for (const auto& source : previous)
-            if (!source.path.empty() && source.enabled == enabled) try { wake_write(source, enabled); } catch (...) { restored = false; }
+        for (bool enabled : {true, false}) {
+            // Keep additional recovery paths enabled if restoring an old one fails.
+            if(!enabled&&!restored)break;
+            for(const auto i:attempted) if(previous[i].enabled==enabled)
+                try { wake_write(previous[i],enabled); } catch(...) { restored=false; }
+        }
         need(restored, "Wake policy and rollback failed; inspect wake status before suspending");
         throw;
     }

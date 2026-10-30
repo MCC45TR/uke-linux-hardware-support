@@ -7,7 +7,7 @@
 
 namespace uke::desktop {
 namespace {
-struct State { std::string rotation = "null", brightness = "null", output; };
+struct State { std::string rotation = "null", brightness = "null", output, rotation_policy; };
 State inspect() {
     // kscreen-doctor's human-readable capability names are English.
     setenv("LC_ALL", "C", 1);
@@ -32,8 +32,10 @@ State inspect() {
         if (line.starts_with("Auto Rotate Policy: ")) {
             ++rotations;
             const auto value = line.substr(20);
-            if (value == "always") state.rotation = "true";
-            else if (value == "never" || value == "inTabletMode") state.rotation = "false";
+            if (value == "always" || value == "never" || value == "inTabletMode") {
+                state.rotation_policy = value;
+                state.rotation = value == "always" ? "true" : "false";
+            }
         }
         if (line.starts_with("Automatic brightness: ")) {
             ++brightnesses;
@@ -43,7 +45,7 @@ State inspect() {
         }
     }
     if (panels != 1) return {};
-    if (rotations != 1) state.rotation = "null";
+    if (rotations != 1) { state.rotation = "null"; state.rotation_policy.clear(); }
     if (brightnesses != 1) state.brightness = "null";
     return state;
 }
@@ -51,7 +53,8 @@ State inspect() {
 std::string plasma_status() {
     const auto state = inspect();
     return "{\"schema\":\"org.uke.control.plasma.v1\",\"output\":" + (state.output.empty() ? "null" : '"' + state.output + '"') + ",\"rotation\":" + state.rotation +
-        ",\"automatic_brightness\":" + state.brightness + "}\n";
+        ",\"automatic_brightness\":" + state.brightness + ",\"rotation_policy\":" +
+        (state.rotation_policy.empty() ? "null" : '"' + state.rotation_policy + '"') + "}\n";
 }
 Result plasma_set(const std::string& feature, const std::string& value) {
     if ((feature != "rotation" && feature != "brightness") || (value != "on" && value != "off"))
@@ -60,9 +63,23 @@ Result plasma_set(const std::string& feature, const std::string& value) {
     if ((feature == "rotation" ? state.rotation : state.brightness) == "null")
         throw std::runtime_error("The current KDE session does not expose this panel control");
     const bool on = value == "on";
-    const std::string setting = feature == "rotation" ?
-        std::string("autoRotatePolicy.") + (on ? "always" : "never") :
-        std::string("autoBrightness.") + (on ? "enable" : "disable");
-    return execute({"/usr/bin/kscreen-doctor", "output." + state.output + '.' + setting}, 5, 65536);
+    const std::string wanted = feature == "rotation" ? (on ? "always" : "never") : (on ? "true" : "false");
+    const auto matches = [&](const State& current) {
+        return current.output == state.output &&
+            (feature == "rotation" ? current.rotation_policy : current.brightness) == wanted;
+    };
+    const bool noop = matches(state);
+    if (!noop) {
+        const std::string setting = feature == "rotation" ? "autoRotatePolicy." + wanted :
+            std::string("autoBrightness.") + (on ? "enable" : "disable");
+        const auto result = execute({"/usr/bin/kscreen-doctor", "output." + state.output + '.' + setting}, 5, 65536);
+        if (result.status) return result;
+        const auto after = inspect();
+        if (!matches(after)) throw std::runtime_error("KDE panel policy readback did not match; inspect the current desktop state");
+    }
+    return {0, "{\"schema\":\"org.uke.control.plasma.request.v1\",\"output\":\"" + state.output +
+        "\",\"feature\":\"" + feature + "\",\"requested\":\"" + value +
+        "\",\"already_matching\":" + (noop ? "true" : "false") +
+        ",\"policy_readback_matched\":true,\"physical_validation\":\"NOT_ESTABLISHED\"}\n"};
 }
 }

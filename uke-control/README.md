@@ -1,5 +1,10 @@
 # Uke Control
 
+30 October 2026: version 2.3.4 verifies KDE panel-policy changes, preserves
+recovery wake paths when rollback fails and validates saved wake records without
+blocking on special files. Display depth includes HDMI and retains unknown
+connector states. Physical cover, display and wake acceptance remain separate.
+
 30 October 2026: version 2.3.3 separates USB-C ports from partners, reports
 availability for every DP profile and validates saved CDC intent consistently
 with the controller. Compression commands follow the standard terminal/JSON
@@ -507,6 +512,11 @@ Settings persist in root-private state and are restored before each sleep,
 after input providers are available. The native helper admits only Uke/SM7675, unique canonical sysfs
 providers and the expected key capability. It verifies writes, restores
 previous permissions on failure and refuses to disable every recovery key.
+Rollback covers only attempted changes. If restoring an enabled permission
+fails, additional enabled paths remain enabled and the operation reports failure.
+Saved wake records must be private, root-owned, single-link regular files with
+exact enabled/disabled content. Symlinks, special files and malformed records
+are refused before any permission write.
 USB attach/removal share one controller wake permission. Its bound xHCI host,
 USB hubs and supported remote-wakeup devices also receive their permissions.
 Independent firmware charge-event filters remain unavailable. The touch-gesture

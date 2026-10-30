@@ -153,12 +153,25 @@ int main() {
         put(output/"status","connected\n");put(output/"enabled","disabled\n");
         status=uke::links::display_bits_status(root);
         assert(status.find("\"bits_per_component\":null")!=status.npos);
+        fs::remove(output/"enabled");status=uke::links::display_bits_status(root);
+        assert(status.find("\"active\":null")!=status.npos&&status.find("output_state_unavailable")!=status.npos);
+        put(output/"enabled","enabled\n");put(output/"status","unknown\n");
+        status=uke::links::display_bits_status(root);
+        assert(status.find("\"connected\":null,\"active\":true")!=status.npos);
+        fs::remove(output/"status");status=uke::links::display_bits_status(root);
+        assert(status.find("\"connected\":null")!=status.npos);
+        put(output/"status","connected\n");
         put(output/"enabled","enabled\n");put(bits,"version=1 active=0 bpc=0 bpp=0 dsc_bpp_x16=0\n");
         status=uke::links::display_bits_status(root);
         assert(status.find("\"active\":false")!=status.npos);
         fs::remove(bits);fs::create_symlink("/etc/passwd",bits);
         status=uke::links::display_bits_status(root);
         assert(status.find("snapshot_unavailable")!=status.npos);
+        const auto hdmi=root/"sys/class/drm/card2-HDMI-A-1";
+        put(hdmi/"status","connected\n");put(hdmi/"enabled","enabled\n");
+        put(root/"sys/kernel/debug/dri/2/HDMI-A-1/output_bits","version=1 active=1 bpc=8 bpp=24 dsc_bpp_x16=0\n");
+        status=uke::links::display_bits_status(root);
+        assert(status.find("\"connector\":\"HDMI-A-1\",\"connected\":true,\"active\":true,\"bits_per_component\":8")!=status.npos);
         fs::remove_all(root);
     }catch(...){fs::remove_all(root);throw;}
     std::cout<<"Link policy: interface/USB topology scope, sysfs containment, speed support, JSON errors and advertisement readback passed; host only\n";

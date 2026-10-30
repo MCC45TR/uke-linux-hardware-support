@@ -4,27 +4,38 @@ set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 work=$(mktemp -d)
 trap 'rm -r -- "$work"' EXIT
-awk '/^void wake_set\(/{copy=1} /^uint64_t swap_mib\(/{copy=0} copy' "$root/src/backend.cpp" > "$work/policy.inc"
+awk '/^static std::optional<bool> saved_wake\(/{copy=1} /^uint64_t swap_mib\(/{copy=0} copy' "$root/src/backend.cpp" > "$work/policy.inc"
 cat > "$work/test.cpp" <<'CPP'
 #include "wake.hpp"
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <cerrno>
 #include <filesystem>
 #include <fstream>
+#include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 namespace fs=std::filesystem;
 static fs::path state;
 static bool foreign=false, disk_failure=false;
 static int fail_after=-1;
+static unsigned write_call=0;
+static std::set<unsigned> fail_calls,partial_fail_calls;
+static bool foreign_record=false;
 static std::vector<uke::wake::Source> current;
 static std::vector<std::string> writes;
 static void need(bool value,const std::string& reason){if(!value)throw std::runtime_error(reason);}
 static void root(){}
 struct Lock{Lock(){}};
+struct Fd{int n;~Fd(){if(n>=0)close(n);}};
 static std::string read(const std::string& path,size_t){std::ifstream in(path);return {std::istreambuf_iterator<char>(in),{}};}
-static void atomic_file(const fs::path& path,const std::string& value){if(disk_failure)throw std::runtime_error("disk failure");std::ofstream(path)<<value;}
+static void atomic_file(const fs::path& path,const std::string& value){if(disk_failure)throw std::runtime_error("disk failure");std::ofstream(path)<<value;assert(chmod(path.c_str(),0600)==0);}
 namespace uke::wake {
 bool applicable(const fs::path&){return !foreign;}
 std::vector<Source> sources(const fs::path&){return current;}
@@ -33,12 +44,19 @@ bool recovery_key(const std::vector<Source>& list){return std::any_of(list.begin
 using namespace uke;
 static void wake_write(const wake::Source& source,bool enabled){
  need(!source.path.empty(),"unsupported source");
+ ++write_call;
+ if(fail_calls.contains(write_call)&&!partial_fail_calls.contains(write_call))throw std::runtime_error("injected write failure");
  if(fail_after==0){fail_after=-1;throw std::runtime_error("write failure");}
  if(fail_after>0)--fail_after;
  writes.push_back(source.name+ (enabled?" on":" off"));
  for(auto& item:current)if(item.name==source.name)item.enabled=enabled;
+ if(fail_calls.contains(write_call))throw std::runtime_error("injected readback failure");
 }
+// Model root-owned fixture records in the unprivileged native worker; retain real mode/type/link checks.
+static int policy_fstat(int fd,struct stat* st){const int result=::fstat(fd,st);if(!result)st->st_uid=foreign_record?65534:0;return result;}
+#define fstat policy_fstat
 #include "policy.inc"
+#undef fstat
 template<class Call> void refuses(Call call){bool refused=false;try{call();}catch(const std::runtime_error&){refused=true;}assert(refused);}
 int main(int argc,char** argv){
  assert(argc==2);state=argv[1];fs::create_directories(state);
@@ -66,6 +84,24 @@ int main(int argc,char** argv){
  wake_apply();for(const auto& item:current)assert(item.enabled);
  for(const auto* name:{"bluetooth-uart","double-tap","lid-open","usb-device-1-1"})atomic_file(state/(std::string("wake-")+name),"disabled\n");
  wake_apply();assert(current[0].enabled);for(size_t i=1;i<current.size();++i)assert(!current[i].enabled);
+ fs::remove_all(state);fs::create_directories(state);
+ current={{"power-key","","/power",true},{"bluetooth-uart","","/uart",false}};
+ writes.clear();fail_after=0;refuses([]{wake_apply();});
+ assert(writes==std::vector<std::string>{"bluetooth-uart off"});assert(current[0].enabled&&!current[1].enabled);
+ const auto record=state/"wake-power-key";
+ atomic_file(record,"enabled\n");foreign_record=true;writes.clear();refuses([]{wake_apply();});assert(writes.empty());foreign_record=false;
+ chmod(record.c_str(),0644);refuses([]{wake_apply();});assert(writes.empty());chmod(record.c_str(),0600);
+ fs::create_hard_link(record,state/"alias");refuses([]{wake_apply();});assert(writes.empty());fs::remove(state/"alias");
+ for(const auto* bad:{"enabled", "enabled\nx", "disabled\ntrailing", ""}){
+  atomic_file(record,bad);refuses([]{wake_apply();});assert(writes.empty());
+ }
+ fs::remove(record);fs::create_symlink(state/"missing",record);refuses([]{wake_apply();});assert(writes.empty());fs::remove(record);
+ assert(mkfifo(record.c_str(),0600)==0);refuses([]{wake_apply();});assert(writes.empty());fs::remove(record);
+ current={{"power-key","","/power",true},{"volume-up","","/volume",false}};
+ atomic_file(record,"disabled\n");atomic_file(state/"wake-volume-up","enabled\n");
+ write_call=0;fail_calls={2,3};partial_fail_calls={2};writes.clear();refuses([]{wake_apply();});
+ assert(write_call==3&&!current[0].enabled&&current[1].enabled);
+ assert(uke::wake::recovery_key(current));
 }
 CPP
 c++ -std=c++20 -O2 -Wall -Wextra -Werror -I "$root/src" "$work/test.cpp" -o "$work/test"

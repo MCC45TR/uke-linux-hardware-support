@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.3.3
+Version: 2.3.4
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -183,6 +183,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.4-1
+- Verify exact KDE panel policy readback and avoid redundant configuration writes.
+- Preserve recovery wake paths on rollback failure and validate bounded private records.
+- Include HDMI stream reports and retain unknown connector states.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.3-1
 - Separate Type-C ports and partners and report all DP profile capabilities.
 - Align compression CLI output and CDC preference reporting with existing contracts.
