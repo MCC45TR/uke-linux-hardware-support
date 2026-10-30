@@ -1,8 +1,8 @@
 # Uke light controls
 
-25 October 2026. Control 1.13.0 uses the original kernel LED providers on
-Xiaomi Pad 7 / POCO Pad X1. RGB policy now belongs to the kernel; Control is a
-request broker and client. Host source checks do not establish physical light
+30 October 2026. Control 2.4.0 uses the original kernel LED providers on
+Xiaomi Pad 7 / POCO Pad X1. RGB and torch policy belong to the kernel; Control is a
+request broker and client. See [the ownership contract](OWNERSHIP.md). Host source checks do not establish physical light
 output, electrical measurements or acceptance of a new kernel/RPM on the tablet.
 
 On POCO Pad X1, signed Control/core/tests 1.12.0-5 from
@@ -35,8 +35,8 @@ administrator who changes the security policy remains outside this boundary.
 
 The brokers require SELinux Enforcing, their exact domain and admitted device
 ownership/type before acquiring the bus name. The service has no capabilities,
-uses device cgroup restrictions. RGB's unit has read-only sysfs; the torch unit
-admits only its brightness attribute. Neither exposes GPIO, firmware or
+uses device cgroup restrictions. Both units have read-only sysfs and admit only
+their matching character device. Neither exposes GPIO, firmware or
 regulators. RGB transports ioctls; it contains no animation loop or battery
 monitor. Package installation loads the policy before triggering device
 activation. A missing or mismatched kernel device leaves RGB unavailable.
@@ -84,21 +84,23 @@ percentage from the applied 50/100 step. The reviewed provider has
 are refused.
 
 Torch has its own fixed D-Bus interface and active-local-only Polkit action.
-A native package/udev helper validates the exact existing board, driver, DT
-mapping, scale and current limit before changing metadata on that one sysfs
-brightness file. It grants root:`uke-rgb` mode 0664 and SELinux type
-`uke_torch_brightness_t`; it never writes a light value. No desktop group
-membership, setuid executable or arbitrary path request is installed. Final
-package removal restores root:root mode 0644 and the generic sysfs label.
-The non-root actuator retains a descriptor and checks provider/readback on
-each request. Its unit has no capabilities and stops independently of RGB.
+The kernel validates the exact board, driver, DT mapping, scale and current limit
+before exposing `/dev/uke-torch`. Udev grants root:`uke-rgb` mode 0660 and
+SELinux type `uke_torch_device_t`; normal users have no direct access. The
+broker sends fixed ioctls and reports kernel status, including unknown brightness
+and the original I/O error when output cannot be confirmed by the provider.
+The kernel owns the two current steps, remembered positive request, exclusive
+writer and off on writer close, system sleep, shutdown and provider removal.
+Closing a read-only status descriptor leaves the writer unchanged. Resume never
+automatically restores an on request.
 
-The torch worker has no fixed deadline. Manual off, normal stop, signals and
-failure cleanup request zero; it stops before system sleep, has no restart
-loop and saves no persistent on policy. Its original QCOM flash driver,
-PMXR2230 rear channels 1 and 4 and 20 mA total ceiling are unchanged. No strobe,
-regulator voltage or arbitrary sysfs path is exposed. Removing the deadline
-does not establish continuous-use thermal acceptance.
+There is no fixed deadline or persistent-on policy. The original QCOM flash
+driver, PMXR2230 rear channels 1 and 4 and 20 mA total ceiling remain unchanged.
+No strobe, regulator voltage or arbitrary sysfs path is exposed. The previous
+sysfs permission helper and userspace cleanup are removed; the RPM upgrade
+revokes the old grant before replacing its policy. Kernels without the new
+character-device ABI leave torch requests unavailable. Source and fixture checks
+do not establish continuous-use thermal acceptance.
 
 Remaining physical validation includes calibrated colors and waveform timing,
 measured electrical/thermal behavior, actual battery thresholds, camera

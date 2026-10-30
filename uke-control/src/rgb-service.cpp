@@ -118,11 +118,10 @@ void stop(int){stopping=1;}
 int main(int argc,char** argv) {
     State state;
     try {
-        const bool torch=argc==2 && (std::string_view(argv[1])=="--torch" || std::string_view(argv[1])=="--torch-off");
+        const bool torch=argc==2 && std::string_view(argv[1])=="--torch";
         need(argc==1 || torch,"Unknown LED service mode");
         require_confinement();
         if(torch)state.torch=std::make_unique<uke::torch::Actuator>();
-        if(torch && std::string_view(argv[1])=="--torch-off")return 0;
         if(!torch) {
         state.fd=open("/dev/uke-rgb",O_RDWR|O_NOFOLLOW|O_CLOEXEC);
         struct stat info{};char* label=nullptr;

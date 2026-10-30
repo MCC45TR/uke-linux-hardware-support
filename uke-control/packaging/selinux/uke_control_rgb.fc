@@ -1,4 +1,3 @@
 /usr/libexec/uke-control/rgb-led -- gen_context(system_u:object_r:uke_rgb_exec_t,s0)
 /dev/uke-rgb -c gen_context(system_u:object_r:uke_rgb_device_t,s0)
-/sys/devices/.*/leds/uke:white:torch/brightness -- gen_context(system_u:object_r:uke_torch_brightness_t,s0)
-/run/uke-control-torch(/.*)? gen_context(system_u:object_r:uke_torch_runtime_t,s0)
+/dev/uke-torch -c gen_context(system_u:object_r:uke_torch_device_t,s0)

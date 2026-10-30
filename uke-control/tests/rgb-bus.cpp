@@ -94,6 +94,7 @@ int main() {
     torch_call("SetBrightness",99,true);torch_call("SetBrightness",100,true);torch_call("SetEnabled",0,true);
     sd_bus_unref(bus);running=false;auth.join();service.join();
     assert(changes==4); // Set, test, refused duplicate test, automatic; no unauthorized ioctl.
-    assert((torch_fixture::writes==std::vector<unsigned>{0,1,1,2,0,0}));
+    assert((torch_fixture::requests==std::vector<std::pair<unsigned long,unsigned>>{
+        {UKE_TORCH_SET,1},{UKE_TORCH_SET,99},{UKE_TORCH_SET,100},{UKE_TORCH_ENABLE,0}}));
     std::cout<<"Actual LED brokers: private-bus caller authorization, no-interaction Polkit, HEX/torch bounds and denied-request isolation passed; simulated hardware only\n";
 }
