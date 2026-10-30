@@ -1,5 +1,10 @@
 # Uke boot integration
 
+30 October 2026. Version `1.8.6` adds vendor defaults that restrict kernel
+pointers and kernel logs. Installation applies these two keys using the
+effective sysctl.d configuration, including administrative overrides.
+COPR package checks and installed validation remain pending.
+
 23 October 2026. Version `1.8.2` recognizes an enabled internal DSI output
 without assuming connector index 1. A POCO Pad X1 repeat boot exposed DSI-2;
 the former health check refused that connected, enabled output. Host fixtures
