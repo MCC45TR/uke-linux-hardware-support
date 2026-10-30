@@ -218,7 +218,7 @@ This measurement keeps interrupts referenced and is not optical panel metrology.
 
 ## Active output depth
 
-`sudo uke-control display bits` reads each DP/DSI output's kernel stream
+`sudo uke-control display bits` reads each DP/DSI/HDMI-A output's kernel stream
 snapshot. `bits_per_component` is the active component depth; `bits_per_pixel`
 is the uncompressed pixel depth. `dsc_bits_per_pixel_x16` reports the DSC wire
 rate separately (128 means 8 compressed bits per pixel). A 10-bpc DSC input
@@ -226,6 +226,10 @@ therefore reports 30 uncompressed bits per pixel, independently of its wire rate
 
 The command reports null depth for inactive, unavailable, malformed or changing
 outputs. It does not substitute the requested maximum or an EDID capability.
+Unknown or unreadable connector status remains `connected=null`. Only an
+explicit disconnection or disabled output establishes inactivity without a
+driver snapshot. A missing enabled state remains `active=null`; an enabled
+connector with unknown detection can still have a valid active-stream snapshot.
 Older kernels without `output_bits` snapshots require an update; debugfs access
 normally requires root. This read-only status does not qualify HDR or optical
 panel output. Host fixtures cover inactive/stale data, malformed values and

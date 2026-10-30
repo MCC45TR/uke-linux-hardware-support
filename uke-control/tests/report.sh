@@ -91,7 +91,7 @@ int main(int argc,char** argv) {
         assert(summary.find("private unavailable battery")==std::string::npos);
         assert(summary.find("private process sample")==std::string::npos);
         assert(summary.find("private frequency snapshot")==std::string::npos);
-        assert(summary.find("Application: uke-control 2.3.3")!=std::string::npos);
+        assert(summary.find("Application: uke-control 2.3.4")!=std::string::npos);
     }
 }
 CPP

@@ -87,11 +87,13 @@ std::string display_bits_status(const fs::path& root) {
         if(!name.starts_with("card")||dash==name.npos||dash==4||
            name.substr(4,dash-4).find_first_not_of("0123456789")!=name.npos)continue;
         const auto connector=name.substr(dash+1);
-        if(!named(connector)||(!connector.starts_with("DSI-")&&!connector.starts_with("DP-")))continue;
+        if(!named(connector)||(!connector.starts_with("DSI-")&&!connector.starts_with("DP-")&&!connector.starts_with("HDMI-A-")))continue;
         const auto connected=value(entry/"status"),enabled=value(entry/"enabled");
         std::string active="null",bpc="null",bpp="null",wire="null",reason="driver_snapshot_unavailable_use_sudo_or_update_kernel";
-        if(connected!="connected"||enabled!="enabled") {
+        if(connected=="disconnected"||enabled=="disabled") {
             active="false";reason="output_inactive";
+        } else if(enabled!="enabled") {
+            reason="output_state_unavailable";
         } else {
             const auto snapshot=sysfs::resolved(root,root/"sys/kernel/debug/dri"/name.substr(4,dash-4)/connector/"output_bits");
             if(snapshot) {
@@ -125,7 +127,7 @@ std::string display_bits_status(const fs::path& root) {
         }
         if(comma)out+=',';
         comma=true;
-        out+="{\"connector\":"+sysfs::quote(connector)+",\"connected\":"+(connected=="connected"?"true":"false")+
+        out+="{\"connector\":"+sysfs::quote(connector)+",\"connected\":"+(connected=="connected"?"true":connected=="disconnected"?"false":"null")+
             ",\"active\":"+active+",\"bits_per_component\":"+bpc+",\"bits_per_pixel\":"+bpp+
             ",\"dsc_bits_per_pixel_x16\":"+wire+",\"reason\":"+sysfs::quote(reason)+'}';
     }
