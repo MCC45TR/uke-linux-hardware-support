@@ -4,6 +4,12 @@
 #include <map>
 
 int main() {
+    const char argv[] = "/opt/google/chrome/chrome\0--type=gpu-process\0--ozone-platform=wayland";
+    assert(uke::chrome_gpu_title(std::string_view(argv, sizeof(argv) - 1)));
+    assert(uke::chrome_gpu_title("/opt/google/chrome/chrome --type=gpu-process --ozone-platform=wayland"));
+    assert(!uke::chrome_gpu_title("/opt/google/chrome/chrome --type=renderer --url=--type=gpu-process"));
+    assert(!uke::chrome_gpu_title("/tmp/chrome --type=gpu-process"));
+    assert(!uke::chrome_gpu_title("/opt/google/chrome/chrome --type=gpu-process-fake"));
     cpu_set_t allowed;
     CPU_ZERO(&allowed);
     for (int cpu = 0; cpu < 8; ++cpu) CPU_SET(cpu, &allowed);

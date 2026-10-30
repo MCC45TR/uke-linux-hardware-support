@@ -47,11 +47,10 @@ bool chrome_gpu(pid_t pid, pid_t browser) {
     if (fs::read_symlink(base + "/exe", error) != "/opt/google/chrome/chrome" || error)
         return false;
     std::ifstream command(base + "/cmdline");
-    std::string argument;
-    bool gpu = false;
-    while (std::getline(command, argument, '\0'))
-        if (argument == "--type=gpu-process") gpu = true;
-    return gpu && uke::descendant(pid, browser, parent_pid);
+    char title[512]{};
+    command.read(title, sizeof(title));
+    return uke::chrome_gpu_title(std::string_view(title, command.gcount())) &&
+           uke::descendant(pid, browser, parent_pid);
 }
 bool hint_gpu(pid_t browser, const cpu_set_t &preferred) {
     bool found = false;

@@ -6,6 +6,20 @@
 #include <sys/types.h>
 
 namespace uke {
+inline bool chrome_gpu_title(std::string_view title) {
+    const auto token = [&title]() {
+        while (!title.empty() && (title.front() == '\0' || title.front() == ' '))
+            title.remove_prefix(1);
+        std::size_t end = 0;
+        while (end < title.size() && title[end] != '\0' && title[end] != ' ') ++end;
+        const auto result = title.substr(0, end);
+        title.remove_prefix(end);
+        return result;
+    };
+    // Chrome can join argv into one process title after its initial exec.
+    return token() == "/opt/google/chrome/chrome" && token() == "--type=gpu-process";
+}
+
 inline cpu_set_t preferred_cpus(const cpu_set_t &allowed,
                                const std::array<unsigned, CPU_SETSIZE> &capacity) {
     unsigned minimum = ~0u;

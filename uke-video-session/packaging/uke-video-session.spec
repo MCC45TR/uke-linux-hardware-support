@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name:           uke-video-session
 Version:        1.0.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Scoped scheduling and power hints for original Chrome video
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -43,6 +43,10 @@ make check
 %{_datadir}/applications/org.uke.VideoSession.desktop
 
 %changelog
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-3
+- Recognize Chrome GPU titles after argv is joined for process reporting.
+- Cover both NUL-separated arguments and joined titles with exact type checks.
+
 * Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-2
 - Keep a single standalone runtime package without debug subpackages.
 
