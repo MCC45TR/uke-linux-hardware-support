@@ -167,6 +167,8 @@ std::string snapshot(sd_bus *system, sd_bus *session) {
     reader.properties(system, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager",
         {{"LidClosed","b","reported switch state"},{"Docked","b","reported dock state"},{"PreparingForSleep","b","reported transition"}});
     reader.method(session, "org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver", "GetActive", "b", "screensaver state; not display power or authentication status");
+    reader.properties(session,"org.kde.KWin","/org/kde/KWin","org.kde.KWin.TabletModeManager",
+        {{"tabletModeAvailable","b","interface capability"},{"tabletMode","b","reported compositor mode"}});
     return reader.json();
 }
 std::string status() {

@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "2.3.5",
+      "version": "2.5.0",
       "release": 1,
       "requires": [
-        "uke-control = 2.3.5-2%{?dist}"
+        "uke-control = 2.5.0-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -267,7 +267,7 @@
     "material-decoration": "uke-material-decoration"
   },
   "native_versions": {
-    "uke-control": "2.3.5",
+    "uke-control": "2.5.0",
     "uke-adaptive-display": "1.0.16",
     "uke-boot-integration": "1.8.6",
     "uke-battery-observer": "1.4.0",
@@ -303,7 +303,7 @@
     "uke-displayport-audio": "8.fc46",
     "uke-vaapi-v4l2": "8.fc46",
     "uke-mesa-libclc22-spirv": "7.fc46",
-    "uke-control": "2.fc46",
+    "uke-control": "1.fc46",
     "pipewire": "2.fc46",
     "uke-speaker-orientation": "5.fc46",
     "uke-speaker-firmware": "2.fc46"

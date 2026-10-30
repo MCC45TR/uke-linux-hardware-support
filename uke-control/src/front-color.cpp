@@ -92,6 +92,8 @@ std::string front_color_snapshot(std::string_view payload, std::uint64_t now_ns)
         const char *reason=!alive?"publisher_stale":!connected?"disconnected":!has?"awaiting_sample":
             !fresh?"sample_stale":status==0?"sample_unreliable":"";
         require(sd_json_variant_set_field_boolean(&doc.p,"fresh",fresh)>=0 &&
+            sd_json_variant_set_field_boolean(&doc.p,"color_application_ready",false)>=0 &&
+            sd_json_variant_set_field_string(&doc.p,"color_application_reason","units_and_calibration_unverified")>=0 &&
             sd_json_variant_set_field_boolean(&doc.p,"available",available)>=0 &&
             sd_json_variant_set_field_boolean(&doc.p,"publisher_alive",alive)>=0 &&
             sd_json_variant_set_field_unsigned(&doc.p,"reader_boottime_ns",now_ns)>=0 &&

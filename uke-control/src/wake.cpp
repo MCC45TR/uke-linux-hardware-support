@@ -64,11 +64,19 @@ std::vector<Source> sources(const fs::path& sys) {
     }
     admit(result[3], sys/"bus/platform/devices/a600000.ssusb/power/wakeup");
     admit(result[4], sys/"bus/platform/devices/888000.qcom,qup_uart/power/wakeup");
-    const auto touch = sys/"bus/spi/devices/spi0.0";
-    if (sysfs::driver(sys,touch)=="\"nt36532-uke-thp\"" &&
-        (sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"0\"" ||
-        sysfs::attribute(sys, touch/"gesture_wake_armed") == "\"1\""))
-        admit(result[7], touch/"power/wakeup");
+    unsigned touch_matches = 0;
+    for (const auto& touch : sysfs::entries(sys, sys/"bus/spi/devices")) {
+        const auto driver = sysfs::driver(sys,touch);
+        const bool current = driver == "\"nt36532-uke-touch\"" &&
+            sysfs::attribute(sys,touch/"of_node/compatible") == "\"novatek,nt36532-uke-touch\"";
+        if (!current && driver != "\"nt36532-uke-thp\"") continue;
+        ++touch_matches;
+        const auto armed = sysfs::attribute(sys,touch/"gesture_wake_armed");
+        if (armed == "\"0\"" || armed == "\"1\"") admit(result[7],touch/"power/wakeup");
+    }
+    if (touch_matches > 1) {
+        result[7].path.clear(); result[7].enabled = false; result[7].reason = "ambiguous_touch_provider";
+    }
     admit(result[8], sys/"bus/platform/devices/hall-lid/power/wakeup");
     const auto controller = sysfs::resolved(*devices,
         sys/"bus/platform/devices/a600000.ssusb");

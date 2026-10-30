@@ -188,8 +188,18 @@ static unsigned positive(const std::string& s,unsigned max) {
     return v;
 }
 int command(int argc,char** argv,bool as_json) {
+    if(argc && std::string_view(argv[0])=="capture") {
+        if(argc<2 || argc>3)throw std::runtime_error("Usage: sensors capture DATATYPE [SECONDS] [--json]");
+        if(argc==3)(void)positive(argv[2],60);
+        std::vector<char*> args{const_cast<char*>("/usr/libexec/uke-control/ssc-sample"),argv[1]};
+        if(argc==3)args.push_back(argv[2]);
+        if(as_json)args.push_back(const_cast<char*>("--json"));
+        args.push_back(nullptr);alarm(85);
+        execv(args[0],args.data());throw std::runtime_error("Native sensor capture unavailable");
+    }
     if(argc==1&&std::string_view(argv[0])=="--help") {
         std::cout<<"uke-control sensors [-nSECONDS | -n SECONDS] [--count=N] [--once] [--json] [--list]\n"
+            "uke-control sensors capture DATATYPE [SECONDS] [--json]\n"
             "Default: one snapshot. -n5: repeat every five seconds; Ctrl-C stops. No device configuration is changed.\n";return 0;
     }
     unsigned interval=0,count=0;bool list=false,once=false;

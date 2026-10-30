@@ -169,7 +169,7 @@ static void help() {
         "  desktop                    Existing UPower, profiles, sensors, logind and KDE interfaces\n"
         "  hardware                   Cached chipset/audio/media/input paths; no device opens\n"
         "  discover [all|datatype]    Bounded existing SSC metadata helper\n"
-        "  sample datatype           Bounded existing SSC sample helper\n"
+        "  sample datatype [seconds] [--json]  Native samples; 1..60s motion/CCT/IMU-temperature capture\n"
         "  --self-test               Host checks; no device or bus access\n"
         "Default observation: 30 seconds; Ctrl-C exits. Numeric data alone is not a physical sensor acceptance result.");
 }
@@ -179,8 +179,9 @@ int main(int argc,char **argv) {
         if(options.help){help();return 0;}
         std::vector<char*> words;for(auto& word:options.words)words.push_back(word.data());words.push_back(nullptr);
         argc=int(words.size()-1);argv=words.data();
-        if(options.json && (argc!=2 || (std::string_view(argv[1])!="desktop" && std::string_view(argv[1])!="hardware")))
-            throw uke::cli::UsageError("--json supports desktop and hardware snapshots; use --csv for display measurements");
+        if(options.json && (argc<2 || (std::string_view(argv[1])!="sample" &&
+            (argc!=2 || (std::string_view(argv[1])!="desktop" && std::string_view(argv[1])!="hardware")))))
+            throw uke::cli::UsageError("--json supports sample, desktop and hardware snapshots; use --csv for display measurements");
         std::signal(SIGINT,[](int){stopped=1;});std::signal(SIGTERM,[](int){stopped=1;});
         if(argc==1||std::string_view(argv[1])=="--help"){help();return 0;}
         const std::string_view command=argv[1];
@@ -194,7 +195,13 @@ int main(int argc,char **argv) {
         if(command=="touch")return contact_test(argc-1,argv+1);
         if(command=="cadence")return cadence::run(argc-1,argv+1);
         if(command=="discover"&&argc<=3)return helper("ssc-discovery",argc==3?argv[2]:"all");
-        if(command=="sample"&&argc==3)return helper("ssc-sample",argv[2]);
+        if(command=="sample"&&(argc==3||argc==4)) {
+            std::vector<char*> args{const_cast<char*>("/usr/libexec/uke-control/ssc-sample"),argv[2]};
+            if(argc==4)args.push_back(argv[3]);
+            if(options.json)args.push_back(const_cast<char*>("--json"));
+            args.push_back(nullptr);alarm(85);
+            execv(args[0],args.data());throw std::runtime_error("Native sample helper unavailable");
+        }
         if(command=="display"&&argc<=4) {
             const bool csv=std::string_view(argv[argc-1])=="--csv";
             const unsigned seconds=argc>2&&std::string_view(argv[2])!="--csv"?number(argv[2]):30;

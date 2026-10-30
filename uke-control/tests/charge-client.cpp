@@ -31,9 +31,21 @@ int main() {
     reset({{69,"protocol diagnostics disabled"}});
     assert(uke::charge::control_query("protocol-inspect").status==69);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","protocol-inspect"}}));
-    reset({{0,"cached protection"}});
+    reset({{0,"{\"kind\":\"uke_charge_protection_cache\",\"fresh\":true,\"reported_moisture_detection_enabled\":false,\"reported_moisture\":false,\"wet_latched\":false}"}});
     assert(uke::charge::control_query("protection-status").status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","protection-status"}}));
+    for (auto enabled:{false,true}) for(auto fresh:{false,true}) for(auto wet:{false,true}) {
+        reset({{0,std::string("{\"kind\":\"uke_charge_protection_cache\",\"fresh\":")+(fresh?"true":"false")+
+            ",\"reported_moisture_detection_enabled\":"+(enabled?"true":"false")+
+            ",\"reported_moisture\":"+(wet?"true":"false")+",\"wet_latched\":false}"}});
+        const auto report=uke::charge::control_query("protection-status");
+        assert(report.status==0);
+        const auto expected=!fresh?"unknown_stale":wet?"wet_reported":!enabled?"unknown_detector_disabled":"dry_reported";
+        assert(report.output.find(expected)!=std::string::npos);
+        assert(report.output.find("\"physical_protection_qualified\":false")!=std::string::npos);
+    }
+    reset({{0,"invalid protection"}});
+    assert(uke::charge::control_query("protection-status").status==69);
     reset({{0,"moisture enabled"}});
     assert(uke::charge::enable_moisture().status==0);
     assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","moisture-enable"}}));

@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
+#include <functional>
 
 using Bytes = std::vector<std::uint8_t>;
 using View = std::span<const std::uint8_t>;
@@ -240,8 +241,11 @@ static void trace_rpc_event(std::ostream *trace, unsigned &count, unsigned id) {
         ++count;
     }
 }
-static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool settle_motion = false, std::ostream *trace = nullptr) {
+static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool settle_motion = false, std::ostream *trace = nullptr,
+                 const std::function<bool(View)> &consume = {}, unsigned capture_seconds = 0) {
     require(!settle_motion || wanted_event == 1025, "Settling is restricted to sensor data");
+    require(capture_seconds <= 60 && bool(consume) == (capture_seconds != 0) &&
+            (!consume || wanted_event == 1025), "Invalid bounded capture");
     sockaddr_qrtr local{};
     socklen_t size = sizeof(local);
     require(getsockname(fd, reinterpret_cast<sockaddr *>(&local), &size) == 0 && size == sizeof(local), "QRTR local address unavailable");
@@ -271,8 +275,21 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
     const auto settled = std::chrono::steady_clock::now() + std::chrono::seconds(3);
     bool accepted = false; std::uint64_t client = 0;
     unsigned traced = 0;
-    for (unsigned i = 0; i < 64; ++i) {
+    for (unsigned i = 0; i < (consume ? 4096U : 64U); ++i) {
         auto data = receive(fd, peer, deadline);
+        if (peer.sq_node == local.sq_node && peer.sq_port == QRTR_PORT_CTRL) {
+            require(data.size() == sizeof(qrtr_ctrl_pkt), "Invalid QRTR lifecycle packet");
+            const View control_data = data;
+            const auto command = little(control_data.first(4));
+            if ((command == QRTR_TYPE_DEL_SERVER || command == QRTR_TYPE_NEW_SERVER) &&
+                little(control_data.subspan(4,4)) == 400 && little(control_data.subspan(8,4)) == 1) {
+                const bool same = little(control_data.subspan(12,4)) == server.sq_node &&
+                                  little(control_data.subspan(16,4)) == server.sq_port;
+                require(command != QRTR_TYPE_DEL_SERVER || !same, "SSC capture server removed");
+                require(command != QRTR_TYPE_NEW_SERVER || same, "SSC capture server replaced");
+            }
+            continue;
+        }
         if (peer.sq_node != server.sq_node || peer.sq_port != server.sq_port) continue;
         auto items = tlvs(data); auto message = little(View(data).subspan(3, 2));
         if (data[0] == 2 && message == 0x20) {
@@ -283,6 +300,7 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
             client = little(id);
             for (auto &t : items) if (t.type == 0x11) require(t.data.size() == 4 && little(t.data) == 0, "SSC protobuf request rejected");
             accepted = true;
+            if (consume) deadline = std::chrono::steady_clock::now() + std::chrono::seconds(capture_seconds + 5);
             if (trace) *trace << "SSC request acknowledged\n";
         } else if (data[0] == 4 && message == 0x21) {
             require(accepted, "SSC event precedes acknowledged request");
@@ -302,6 +320,7 @@ static Bytes rpc(int fd, const Bytes &packet, unsigned wanted_event = 0, bool se
                 if (!matching) continue;
                 if (settle_motion && std::chrono::steady_clock::now() < settled) continue;
             }
+            if (consume && consume(event)) continue;
             return Bytes(event.begin(), event.end());
         } else throw std::runtime_error("Unexpected SSC discovery message");
     }

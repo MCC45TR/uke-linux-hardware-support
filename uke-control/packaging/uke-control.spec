@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 2.3.5
-Release: 2%{?dist}
+Version: 2.5.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -142,10 +142,11 @@ fi
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md SENSOR-CAPTURE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
+%{_libexecdir}/uke-control/ssc-sample
 %{_udevrulesdir}/91-uke-control-torch.rules
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.Torch.conf
 %{_datadir}/dbus-1/system-services/org.senemos.Uke.Torch.service
@@ -181,10 +182,19 @@ fi
 %files tests
 %{_libexecdir}/uke-control/tests
 %{_libexecdir}/uke-control/ssc-discovery
-%{_libexecdir}/uke-control/ssc-sample
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.0-1
+- Expose bounded sensor capture from the main Control package for application consumers.
+
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-2
+- Apply the existing motion stabilization interval before timed captures.
+
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-1
+- Add bounded native motion, CCT-stream and IMU-temperature capture with timing reports.
+- Report original KWin tablet mode, discover the current touch-wake provider and keep disabled moisture detection unknown.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.5-2
 - Reuse fixed query arguments and initialize parser expressions only after a successful query.
 - Avoid temporary argument-comparison allocations in the native LTO fixtures.

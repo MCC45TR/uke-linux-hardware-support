@@ -7,6 +7,16 @@ template<class F> void rejects(F operation) {
     try { operation(); } catch (const std::exception &) { rejected = true; }
     assert(rejected);
 }
+static Bytes capture_attributes(bool available=true, unsigned stream=0, std::string_view api="sns_sensor_temperature.proto") {
+    const auto text=[](std::string_view s){Bytes b;length_field(b,2,View(reinterpret_cast<const std::uint8_t*>(s.data()),s.size()));return b;};
+    Bytes streaming{0x21};put(streaming,stream,8);
+    const std::array<Bytes,4> values{text("sensor_temperature"),Bytes{0x28,std::uint8_t(available)},text(api),streaming};
+    const std::array<unsigned,4> ids{2,3,5,16};Bytes payload;
+    for(unsigned i=0;i<4;++i){Bytes value;length_field(value,1,values[i]);Bytes attr{8,std::uint8_t(ids[i])};length_field(attr,2,value);length_field(payload,1,attr);}
+    Bytes uid{9};put(uid,1,8);uid.push_back(0x11);put(uid,2,8);
+    Bytes e{0x0d};put(e,128,4);e.push_back(0x11);put(e,1,8);length_field(e,3,payload);
+    Bytes root;length_field(root,1,uid);length_field(root,2,e);return root;
+}
 int main() {
     // Independent protobuf vector: sensor {1,2}, event 1025, tick 7, XYZ {1,-2,0}, high accuracy.
     Bytes event{0x0a,18,9,1,0,0,0,0,0,0,0,0x11,2,0,0,0,0,0,0,0,
@@ -92,6 +102,21 @@ int main() {
     const auto logged = trace.str();
     assert(traced == 8 && std::count(logged.begin(), logged.end(), '\n') == 8);
     assert(logged.find("event_id=1000") != std::string::npos && logged.find("event_id=1008") == std::string::npos);
-    (void)&rpc; (void)&request; (void)&suids; (void)&attributes;
+    assert(duration("1")==1 && duration("60")==60);
+    for (auto invalid:{"0","61","-1","1x","1.0",""}) rejects([&]{duration(invalid);});
+    Capture capture;
+    capture.accept({100,3,{1,2,3}},1'000'000'000);
+    capture.accept({120,3,{3,4,5}},2'000'000'000);
+    assert(capture.count==2 && capture.mean[0]==2 && capture.m2[0]==2);
+    assert(capture.min_dt==20 && capture.max_dt==20 && capture.integral[0]==40);
+    rejects([&]{capture.accept({120,3,{3,4,5}},3'000'000'000);});
+    rejects([&]{capture.accept({130,3,{3}},3'000'000'000);});
+    rejects([&]{capture_metadata({}, {1,2}, "sensor_temperature");});
+    capture_metadata(capture_attributes(),{1,2},"sensor_temperature");
+    rejects([]{capture_metadata(capture_attributes(false),{1,2},"sensor_temperature");});
+    rejects([]{capture_metadata(capture_attributes(true,1),{1,2},"sensor_temperature");});
+    rejects([]{capture_metadata(capture_attributes(true,0,"sns_ambient_light.proto"),{1,2},"sensor_temperature");});
+    rejects([]{capture_metadata(capture_attributes(),{2,1},"sensor_temperature");});
+    (void)&rpc; (void)&request; (void)&suids; (void)&attributes; (void)&receipt_time;
     std::cout << "SSC sample framing, finite floats, dimensions, status and foreign-source checks passed\n";
 }
