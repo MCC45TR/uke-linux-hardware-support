@@ -22,6 +22,65 @@ static Bytes image(const std::string &release) {
     memcpy(bytes.data()+page+128,banner.data(),banner.size());return bytes;
 }
 int main() {
+    assert(reset_runtime_healthy("Gunyah Watchdog\n","active\n","30\n",30000000));
+    assert(!reset_runtime_healthy("Other Watchdog\n","active\n","30\n",30000000));
+    assert(!reset_runtime_healthy("Gunyah Watchdog\n","inactive\n","30\n",30000000));
+    assert(!reset_runtime_healthy("Gunyah Watchdog\n","active\n","32\n",30000000));
+    assert(!reset_runtime_healthy("Gunyah Watchdog\n","active\n","30\n",0));
+    {
+        const std::string staged="00000000-1234-5678-aaaa-ffffffffffff",booted="11111111-1234-5678-aaaa-ffffffffffff";
+        for(const auto good:{uke_install::Slot::a,uke_install::Slot::b}) {
+            UserdataUpdate trial{{uke_install::Profile::userdata,good,"7.3.0-54",uke_install::Phase::trial,"7.3.0-61",{}},
+                                 std::string(64,'a'),std::string(64,'b'),staged};
+            assert(!trial_watch_required(trial,"7.3.0-54",booted));
+            assert(!trial_watch_required(trial,"7.3.0-61",staged));
+            assert(trial_watch_required(trial,"7.3.0-61",booted));
+            assert(trial_watch_state(trial,trial,"7.3.0-61",booted,299.9)==TrialWatch::wait);
+            assert(trial_watch_state(trial,trial,"7.3.0-61",booted,300)==TrialWatch::expired);
+            auto accepted=trial;uke_install::accept(accepted.policy,uke_install::opposite(good),"7.3.0-61",true);
+            accepted.good_image=trial.candidate_image;accepted.candidate_image.clear();accepted.staged_boot_id.clear();
+            assert(!trial_watch_required(accepted,"7.3.0-61",booted));
+            assert(trial_watch_state(trial,accepted,"7.3.0-61",booted,301)==TrialWatch::accepted);
+            (void)uke_install::stage(accepted.policy,uke_install::opposite(good),"7.3.0-61","7.3.0-62");
+            accepted.candidate_image=std::string(64,'c');accepted.staged_boot_id=booted;
+            assert(trial_watch_state(trial,accepted,"7.3.0-61",booted,301)==TrialWatch::accepted);
+            auto changed=trial;changed.candidate_image=std::string(64,'c');
+            reject([&]{trial_watch_state(trial,changed,"7.3.0-61",booted,301);});
+            trial.policy.phase=uke_install::Phase::staging;
+            assert(!trial_watch_required(trial,"7.3.0-61",booted));
+            trial.policy.phase=uke_install::Phase::verified;
+            assert(!trial_watch_required(trial,"7.3.0-61",booted));
+            if(good==uke_install::Slot::b) {
+                trial.policy.phase=uke_install::Phase::current_slot_trial;
+                assert(!trial_watch_required(trial,"7.3.0-61",booted));
+            }
+        }
+        auto bytes=image("7.3.0-61");put32(bytes,8,1024);put32(bytes,page+16,1024);
+        capability(bytes,page+256,true);
+        std::map<std::string,std::string> manifest{{"root_selector_capability","uke-elfnote-v2"},{"boot_reset_capability","uke-gunyah-reset-v1"}};
+        reject([&]{userdata_boot_reset(bytes,manifest);});
+        const std::string descriptor="boot-reset-v1;watchdog=gunyah;open-timeout=180;runtime-timeout=30";
+        const size_t at=page+352;
+        put32(bytes,at,4);put32(bytes,at+4,descriptor.size()+1);put32(bytes,at+8,0x554b4502);
+        memcpy(bytes.data()+at+12,"UKE",4);memcpy(bytes.data()+at+16,descriptor.c_str(),descriptor.size()+1);
+        const auto derived=userdata_boot_reset(userdata_vrr(bytes,true,manifest),manifest);
+        assert(boot_kernel(derived)==boot_kernel(bytes));
+        assert(std::string(reinterpret_cast<const char*>(derived.data()+44))=="senemos.root=userdata msm.o82_vrr_test_min_hz=30 senemos.boot_reset=1");
+        const auto disabled_vrr=userdata_boot_reset(userdata_vrr(bytes,false,manifest),manifest);
+        assert(std::string(reinterpret_cast<const char*>(disabled_vrr.data()+44))=="senemos.root=userdata senemos.boot_reset=1");
+        auto missing=manifest;missing.erase("boot_reset_capability");reject([&]{userdata_boot_reset(bytes,missing);});
+        missing["boot_reset_capability"]="unknown";reject([&]{userdata_boot_reset(bytes,missing);});
+        auto duplicate=bytes;memcpy(duplicate.data()+page+512,bytes.data()+at,((descriptor.size()+17+3)/4)*4);
+        reject([&]{userdata_boot_reset(duplicate,manifest);});
+        auto corrupt=bytes;corrupt[at+8]^=1;reject([&]{userdata_boot_reset(corrupt,manifest);});
+        reject([&]{userdata_boot_reset(derived,manifest);});
+        for(const auto command:{"senemos.root=userdata senemos.boot_reset=0",
+                                "senemos.root=userdata senemos.boot_reset=1 senemos.boot_reset=1",
+                                "senemos.root=userdata senemos.boot_reset=1 extra=1"}) {
+            auto unknown=bytes;memset(unknown.data()+44,0,1536);memcpy(unknown.data()+44,command,strlen(command));
+            reject([&]{boot_kernel(unknown);});
+        }
+    }
     assert(userdata_bundle("kernel-updates/7.3.0-54/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-54");
     assert(userdata_bundle("kernel-updates/7.3.0-14-unstable/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-14-unstable");
     for(const auto target:{"/kernel-updates/7.3.0-54/userdata.img","kernel-updates/../userdata.img",

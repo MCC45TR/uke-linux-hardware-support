@@ -5,3 +5,4 @@ enable uke-wifi-factory.service
 enable uke-install-profile.service
 enable uke-root-grow.service
 enable uke-userdata-accept.service
+enable uke-userdata-deadline.service

@@ -154,6 +154,40 @@ static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,st
     }
     need(boot_kernel(bytes)==kernel,"Derived wrapper changed the signed package Image");return bytes;
 }
+static Bytes userdata_boot_reset(Bytes bytes,const std::map<std::string,std::string> &manifest) {
+    need(manifest.contains("boot_reset_capability") && manifest.at("boot_reset_capability")=="uke-gunyah-reset-v1",
+         "Automatic A/B requires a kernel with verified early watchdog and initramfs boot-deadline support");
+    const auto kernel=boot_kernel(bytes);
+    const std::string descriptor="boot-reset-v1;watchdog=gunyah;open-timeout=180;runtime-timeout=30";
+    Bytes note{4,0,0,0,static_cast<uint8_t>(descriptor.size()+1),0,0,0,2,0x45,0x4b,0x55,'U','K','E',0};
+    note.insert(note.end(),descriptor.begin(),descriptor.end());note.push_back(0);note.resize((note.size()+3)/4*4,0);
+    const auto found=std::search(kernel.begin(),kernel.end(),note.begin(),note.end());
+    need(found!=kernel.end() && (found-kernel.begin())%4==0 &&
+         std::search(found+1,kernel.end(),note.begin(),note.end())==kernel.end(),"Kernel lacks a unique aligned early-reset capability note");
+    std::string command(reinterpret_cast<const char*>(bytes.data()+44));
+    need(command=="senemos.root=userdata" || command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30",
+         "Unexpected userdata wrapper before boot-reset derivation");
+    command+=" senemos.boot_reset=1";memcpy(bytes.data()+44,command.c_str(),command.size()+1);
+    need(boot_kernel(bytes)==kernel,"Boot-reset wrapper changed the signed package Image");return bytes;
+}
+static bool trial_watch_required(const UserdataUpdate &saved,const std::string &release,const std::string &boot_id) {
+    (void)encode(saved);need(valid_boot_id(boot_id),"Invalid boot-deadline identity");
+    return saved.policy.phase==uke_install::Phase::trial && saved.policy.candidate==release && saved.staged_boot_id!=boot_id;
+}
+enum class TrialWatch { wait,accepted,expired };
+static bool reset_runtime_healthy(const std::string &identity,const std::string &state,
+                                  const std::string &timeout,uint64_t manager_timeout) {
+    return identity=="Gunyah Watchdog\n" && state=="active\n" && timeout=="30\n" && manager_timeout==30000000;
+}
+static TrialWatch trial_watch_state(const UserdataUpdate &started,const UserdataUpdate &observed,
+                                    const std::string &release,const std::string &boot_id,double seconds) {
+    need(trial_watch_required(started,release,boot_id),"Boot deadline requires a booted alternating trial");
+    (void)encode(observed);
+    if(observed.policy.good==uke_install::opposite(started.policy.good) && observed.policy.good_release==release &&
+       observed.good_image==started.candidate_image)return TrialWatch::accepted;
+    need(encode(started)==encode(observed),"Boot trial identity changed before acceptance");
+    return seconds>=300?TrialWatch::expired:TrialWatch::wait;
+}
 static void require_current_b(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
     need(identify_slot(cmdline,images,running)==1,"Explicit current-slot update requires a proven running boot_b");
 }
@@ -199,6 +233,58 @@ static bool display_enabled(const fs::path &directory) {
     return display;
 }
 #ifndef UKE_KERNEL_UPDATE_TEST
+static void require_boot_reset_guard() {
+    need(fs::canonical("/sys/class/watchdog/watchdog0/device/driver").filename()=="gunyah-wdt",
+         "Automatic boot-reset trials require Gunyah watchdog0");
+    sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Boot-reset admission requires the system bus");
+    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);sd_bus_message *response=nullptr;
+    need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound boot-reset admission");
+    need(sd_bus_call_method(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1","org.freedesktop.systemd1.Manager",
+                           "GetUnitFileState",nullptr,&response,"s","uke-userdata-deadline.service")>=0,
+         "Boot-reset startup guard is unavailable");
+    std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(response,sd_bus_message_unref);const char *state=nullptr;
+    need(sd_bus_message_read(reply.get(),"s",&state)>0 && state && std::string(state)=="enabled",
+         "Enable the packaged A/B startup guard before automatic staging");
+}
+static void require_running_boot_reset() {
+    require_boot_reset_guard();
+    sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Running watchdog verification requires the system bus");
+    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);
+    need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound runtime watchdog verification");
+    uint64_t timeout=0;
+    need(sd_bus_get_property_trivial(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1",
+                                    "org.freedesktop.systemd1.Manager","RuntimeWatchdogUSec",nullptr,'t',&timeout)>=0 &&
+         reset_runtime_healthy(read_text("/sys/class/watchdog/watchdog0/identity"),read_text("/sys/class/watchdog/watchdog0/state"),
+                               read_text("/sys/class/watchdog/watchdog0/timeout"),timeout),
+         "Unaccepted trial lacks an active 30-second Gunyah/PID1 watchdog");
+}
+static int guard_userdata_trial(bool check_only=false) {
+    bool armed=false;
+    try {
+        if(!uke_device(read_text("/sys/firmware/devicetree/base/compatible")) ||
+           root_label(read_text("/proc/cmdline"))!="userdata")return check_only?1:0;
+        const fs::path state="/var/lib/senemos/kernel-update/userdata.state";
+        if(!fs::exists(state))return check_only?1:0;
+        const auto started=decode(file(state));struct utsname current{};
+        need(!uname(&current),"Running kernel unavailable to the boot deadline");
+        auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
+        need(boot_id.ends_with('\n'),"Missing boot-deadline identity");boot_id.pop_back();
+        if(!trial_watch_required(started,current.release,boot_id))return check_only?1:0;
+        if(check_only)return 0;
+        armed=true;
+        std::cout<<"Watching unaccepted A/B trial until 300 seconds of boot time\n"<<std::flush;
+        for(;;) {
+            timespec now{};need(!clock_gettime(CLOCK_BOOTTIME,&now),"Boot deadline clock unavailable");
+            const auto result=trial_watch_state(started,decode(file(state)),current.release,boot_id,now.tv_sec+now.tv_nsec/1e9);
+            if(result==TrialWatch::accepted)return 0;
+            if(result==TrialWatch::expired)throw std::runtime_error("Unaccepted A/B trial exceeded its startup deadline");
+            timespec pause{1,0};while(nanosleep(&pause,&pause)<0)need(errno==EINTR,"Boot-deadline wait failed");
+        }
+    } catch(const std::exception &error) {
+        std::cerr<<"uke-kernel-update guard: "<<error.what()<<'\n';
+        return check_only?1:armed?1:0;
+    }
+}
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
     Fd fd(open(("/dev/"+part.first).c_str(),(write?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));
     struct stat st{};uint64_t bytes=0;
@@ -297,7 +383,7 @@ static void request_fallback_reboot() {
                            "RebootWithFlags",nullptr,nullptr,"t",uint64_t(1))>=0,
          "Accepted slot selected; reboot refused or inhibited, retain trial state and reboot normally");
 }
-static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem) {
+static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem,bool boot_reset=false) {
     need(read_text("/var/lib/senemos/installation/profile")=="format=1\nroot=userdata\n","A classified userdata installation is required");
     const auto statefile=state/"userdata.state";
     if(action=="fallback" && (!fs::exists(statefile) || decode(file(statefile)).policy.phase!=uke_install::Phase::trial)) {
@@ -331,7 +417,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         need((good_flags&slot::successful) && !(good_flags&slot::unbootable) &&
              (next_flags&slot::priority) && (next_flags&slot::retries) && !(next_flags&(slot::successful|slot::unbootable)),
              "Pending trial or accepted fallback flags differ");
-        if(action!="accept" && action!="fallback") {
+        if(action!="accept" && action!="check-accept" && action!="fallback") {
             const auto raw=file(bundle/"manifest");
             need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==prior->policy.candidate,
                  "A different candidate cannot replace the pending trial");
@@ -387,6 +473,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
     for(auto &disk:disks)disk->gpt->require_selected(running);
     if(action=="accept" || action=="check-accept") {
+        const std::string selector(reinterpret_cast<const char*>(images[running].data()+44));
+        if(prior && prior->policy.phase==uke_install::Phase::trial && prior->policy.candidate==release &&
+           selector.ends_with(" senemos.boot_reset=1"))require_running_boot_reset();
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
@@ -431,13 +520,18 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     need(fs::exists(statefile),"Run the packaged userdata acceptance service before the first automatic update");
     auto saved=decode(file(statefile));need(saved.good_image==good_hash,"Running boot bytes differ from the accepted baseline");
     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
-    const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
+    auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
+    const bool require_reset=boot_reset || action=="apply" || action=="check";
+    if(require_reset) {
+        bytes=userdata_boot_reset(std::move(bytes),manifest);
+        require_boot_reset_guard();
+    }
     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next));
     saved.candidate_image=digest(bytes);
     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();
     need(valid_boot_id(boot_id),"Malformed staging boot identity");saved.staged_boot_id=boot_id;verify_early_firmware();
     std::vector<SlotMetadata*> changed;
-    for(auto &disk:disks)if(disk->gpt->prepare(running,target))changed.push_back(disk.get());
+    for(auto &disk:disks)if(disk->gpt->prepare(running,target,require_reset?3:7))changed.push_back(disk.get());
     need(!changed.empty(),"No consistent QTI slot metadata found");
     if(action=="check"){std::cout<<"Matched userdata bundle, running Image, inactive slot, GPTs, early firmware and UFS boot LUN checks passed; no hardware writes\n";return;}
     need(charging(),"Verified battery must be at least 50%, or at least 30% with external power");

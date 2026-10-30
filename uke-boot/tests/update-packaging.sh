@@ -38,6 +38,20 @@ grep -Fq 'docs/USERDATA-AB.md' Makefile
 grep -Fq 'Provides: uke-kernel-update(userdata-ab) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(guarded-automatic) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(transaction-v1) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'Provides: uke-kernel-update(boot-reset-v1) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'ExecStart=/usr/bin/uke-kernel-update guard' src/units/uke-userdata-deadline.service
+grep -Fxq 'OnFailure=uke-userdata-deadline-fallback.service' src/units/uke-userdata-deadline.service
+grep -Fxq 'ExecCondition=/usr/bin/uke-kernel-update guard-required' src/units/uke-userdata-deadline.service
+grep -Fxq 'RuntimeMaxSec=300' src/units/uke-userdata-deadline.service
+grep -Fxq 'TimeoutStartSec=infinity' src/units/uke-userdata-deadline.service
+! grep -Eq '^FailureAction=' src/units/uke-userdata-deadline.service
+grep -Fxq 'FailureAction=reboot-force' src/units/uke-userdata-deadline-fallback.service
+grep -Fxq 'DefaultDependencies=no' src/units/uke-userdata-deadline-fallback.service
+grep -Fxq 'Before=shutdown.target' src/units/uke-userdata-deadline-fallback.service
+! grep -Eq '^After=.*(sysinit|basic|local-fs)\.target' src/units/uke-userdata-deadline-fallback.service
+grep -Fxq 'TimeoutStartSec=60' src/units/uke-userdata-deadline-fallback.service
+grep -Fxq 'enable uke-userdata-deadline.service' src/profiles/80-uke-boot.preset
+grep -Fq 'sysinit.target.wants/uke-userdata-deadline.service' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(root-filesystem-v2) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(current-slot-restore) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(kernel-touch-client-v1) = 1' packaging/uke-boot-integration.spec

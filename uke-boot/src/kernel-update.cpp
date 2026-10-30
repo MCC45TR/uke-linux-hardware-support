@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <vector>
+#include <time.h>
 #ifndef UKE_KERNEL_UPDATE_TEST
 #include <systemd/sd-bus.h>
 #endif
@@ -145,7 +146,9 @@ static Bytes boot_kernel(const Bytes &b) {
     need(terminator!=b.begin()+1580,"Unterminated boot command line");
     const std::string command(b.begin()+44,terminator);
     need(command.empty() || command=="senemos.root=userdata" ||
-         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30","Unexpected boot command line");
+         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30" ||
+         command=="senemos.root=userdata senemos.boot_reset=1" ||
+         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30 senemos.boot_reset=1","Unexpected boot command line");
     for(auto it=terminator;it!=b.begin()+page;++it)need(!*it,"Unexpected boot header data");
     const size_t size=le32(b,8);
     need(size>=64 && size<=b.size()-page,"Invalid kernel length");
@@ -322,10 +325,11 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     const std::set<std::string> keys={"format","kernel_release","linux_image_sha256","userdata_image_sha256","linux_kernel_sha256","userdata_kernel_sha256","modules_sha256"};
     for(const auto &[key,value]:manifest) {
         (void)value;
-        need(keys.contains(key) || key=="root_selector_capability" || key=="touch_client_sha256","Unexpected update manifest fields");
+        need(keys.contains(key) || key=="root_selector_capability" || key=="touch_client_sha256" || key=="boot_reset_capability","Unexpected update manifest fields");
     }
     if(manifest.contains("root_selector_capability"))
         need(manifest.at("root_selector_capability")=="uke-elfnote-v1" || manifest.at("root_selector_capability")=="uke-elfnote-v2","Unknown root selector capability");
+    if(manifest.contains("boot_reset_capability"))need(manifest.at("boot_reset_capability")=="uke-gunyah-reset-v1","Unknown boot-reset capability");
     for(const auto &key:keys) need(manifest.contains(key),"Missing manifest field");
     need(manifest.at("format")=="1" && token(manifest.at("kernel_release")),"Unsupported bundle format");
     const auto release=manifest.at("kernel_release");
@@ -414,10 +418,11 @@ int main(int argc,char **argv) {
         need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction")) ||
-             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | accept | fallback | auto | check-auto");
+             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="guard"||std::string(argv[1])=="guard-required")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | accept | fallback | auto | check-auto | guard | guard-required");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
+        if(action=="guard" || action=="guard-required")return guard_userdata_trial(action=="guard-required");
         const bool restore=action=="check-restore-current"||action=="restore-current";
         const bool current_only=restore||action=="check-current"||action=="apply-current";
         const bool apply=action=="restore-current"||action=="apply"||action=="apply-current"||action=="transaction";
@@ -460,7 +465,11 @@ int main(int argc,char **argv) {
         if(label=="userdata" && !current_only) {
             if(automatic || preflight) {
                 const auto raw=file(bundle/"manifest");
-                (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
+                auto candidate=userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
+                if(bundle.filename().string()!=current.release) {
+                    (void)userdata_boot_reset(std::move(candidate),properties(std::string(raw.begin(),raw.end())));
+                    require_boot_reset_guard();
+                }
                 verify_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
@@ -472,7 +481,7 @@ int main(int argc,char **argv) {
                 }
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
             }
-            userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem);return 0;
+            userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem,automatic||preflight);return 0;
         }
         const auto target=partition("boot_b");
         need(ufs_controller(fs::path("/sys/class/block")/target.first)==ufs_controller(fs::path("/sys/class/block")/root.first),"Root and boot_b must share the measured UFS controller");
