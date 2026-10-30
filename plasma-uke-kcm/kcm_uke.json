@@ -1,0 +1,15 @@
+{
+  "KPlugin": {
+    "Id": "kcm_uke",
+    "Name": "Uke Tablet",
+    "Name[tr]": "Uke Tablet",
+    "Description": "Battery, display, connectivity and maintenance observations",
+    "Description[tr]": "Batarya, ekran, bağlantı ve bakım gözlemleri",
+    "Icon": "input-tablet",
+    "License": "MIT",
+    "Version": "0.2.0"
+  },
+  "X-KDE-Keywords": "Uke,tablet,battery,charging,display,USB,sensors,recovery",
+  "X-KDE-System-Settings-Parent-Category": "hardware",
+  "X-KDE-Weight": 90
+}

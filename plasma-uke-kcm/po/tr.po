@@ -1,0 +1,216 @@
+# SPDX-License-Identifier: MIT
+msgid ""
+msgstr ""
+"Project-Id-Version: Uke controls\n"
+"PO-Revision-Date: 2026-10-30 17:00+0000\n"
+"Last-Translator: Uke Maintainers\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Battery and energy"
+msgstr "Batarya ve enerji"
+
+msgid "Charging protection"
+msgstr "Şarj koruması"
+
+msgid "Display and dock"
+msgstr "Ekran ve bağlantı istasyonu"
+
+msgid "USB"
+msgstr "USB"
+
+msgid "Desktop"
+msgstr "Masaüstü"
+
+msgid "Hardware"
+msgstr "Donanım"
+
+msgid "Sensors and accessories"
+msgstr "Sensörler ve aksesuarlar"
+
+msgid "Audio and microphone"
+msgstr "Ses ve mikrofon"
+
+msgid "Camera"
+msgstr "Kamera"
+
+msgid "NFC"
+msgstr "NFC"
+
+msgid "Sleep and wake"
+msgstr "Uyku ve uyanma"
+
+msgid "Storage"
+msgstr "Depolama"
+
+msgid "Updates"
+msgstr "Güncellemeler"
+
+msgid "Recovery"
+msgstr "Kurtarma"
+
+msgid "Workload and memory"
+msgstr "İş yükü ve bellek"
+
+msgid "Not read yet"
+msgstr "Henüz okunmadı"
+
+msgid "Reading…"
+msgstr "Okunuyor…"
+
+msgid "Observation available"
+msgstr "Okuma tamamlandı"
+
+msgid "Not supported by this provider"
+msgstr "Bu sağlayıcı desteklemiyor"
+
+msgid "Permission denied"
+msgstr "İzin verilmedi"
+
+msgid "Previous observation is stale"
+msgstr "Önceki okuma güncel değil"
+
+msgid "Not qualified"
+msgstr "Kullanım için doğrulanmadı"
+
+msgid "Could not read this component"
+msgstr "Bu bileşen okunamadı"
+
+msgid "State unknown"
+msgstr "Durum bilinmiyor"
+
+msgid "Reported battery state"
+msgstr "Bildirilen batarya durumu"
+
+msgid "Reported charge"
+msgstr "Bildirilen doluluk"
+
+msgid "Battery voltage"
+msgstr "Batarya gerilimi"
+
+msgid "Net battery current"
+msgstr "Net batarya akımı"
+
+msgid "Battery temperature"
+msgstr "Batarya sıcaklığı"
+
+msgid "Reported cycles"
+msgstr "Bildirilen döngü sayısı"
+
+msgid "External power reported"
+msgstr "Harici güç bildirimi"
+
+msgid "Provider identity verified"
+msgstr "Sağlayıcı kimliği doğrulandı"
+
+msgid "Charging controls qualified"
+msgstr "Şarj kontrolleri doğrulandı"
+
+msgid "Automatic policy admitted"
+msgstr "Otomatik politikaya izin verildi"
+
+msgid "Automatic rotation"
+msgstr "Otomatik döndürme"
+
+msgid "Automatic brightness"
+msgstr "Otomatik parlaklık"
+
+msgid "Reported USB data role"
+msgstr "Bildirilen USB veri rolü"
+
+msgid "Serial startup policy"
+msgstr "Açılışta seri bağlantı"
+
+msgid "Sensor channels found"
+msgstr "Bulunan sensör kanalı"
+
+msgid "ALSA nodes found"
+msgstr "Bulunan ALSA düğümü"
+
+msgid "Audio session query succeeded"
+msgstr "Ses oturumu sorgusu başarılı"
+
+msgid "Video nodes found"
+msgstr "Bulunan video düğümü"
+
+msgid "Media nodes found"
+msgstr "Bulunan medya düğümü"
+
+msgid "NFC provider available"
+msgstr "NFC sağlayıcısı mevcut"
+
+msgid "NFC radio enabled"
+msgstr "NFC etkin"
+
+msgid "Kernel sleep modes"
+msgstr "Çekirdek uyku kipleri"
+
+msgid "Wake sources reported"
+msgstr "Bildirilen uyanma kaynağı"
+
+msgid "Root filesystem capacity"
+msgstr "Kök dosya sistemi kapasitesi"
+
+msgid "Root filesystem available"
+msgstr "Kök dosya sistemi boş alanı"
+
+msgid "Selected package channel"
+msgstr "Seçilen paket kanalı"
+
+msgid "Pending package channel"
+msgstr "Bekleyen paket kanalı"
+
+msgid "Layout maintenance prepared"
+msgstr "Bölüm bakımı hazırlandı"
+
+msgid "Filesystem growth prepared"
+msgstr "Dosya sistemi büyütme hazırlandı"
+
+msgid "Not reported"
+msgstr "Bildirilmedi"
+
+msgid "Off or tablet mode only"
+msgstr "Kapalı veya yalnızca tablet kipinde"
+
+msgid "Yes"
+msgstr "Evet"
+
+msgid "No"
+msgstr "Hayır"
+
+msgid "Uke Tablet"
+msgstr "Uke Tablet"
+
+msgid "Refresh"
+msgstr "Yenile"
+
+msgid "Simulation: hardware queries are disabled."
+msgstr "Simülasyon: donanım sorguları devre dışı."
+
+msgid "Read-only observations. Missing providers do not prevent other cards from loading. Driver reports and physical validation are separate."
+msgstr "Salt okunur durum bilgisi. Eksik sağlayıcılar diğer kartların yüklenmesini engellemez. Sürücü bildirimleri fiziksel işlev doğrulaması değildir."
+
+msgid "Positive current flows into the battery."
+msgstr "Pozitif akım bataryaya girer."
+
+msgid "Measurement status: %1"
+msgstr "Ölçüm durumu: %1"
+
+msgid "Last observation: %1"
+msgstr "Son okuma: %1"
+
+msgid "Hide details"
+msgstr "Ayrıntıları gizle"
+
+msgid "Show details"
+msgstr "Ayrıntıları göster"
+
+msgid "Component observations"
+msgstr "Bileşen okumaları"
+
+msgid "cycles"
+msgstr "döngü"
