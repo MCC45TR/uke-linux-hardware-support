@@ -46,6 +46,9 @@ grep -Fxq 'RuntimeMaxSec=300' src/units/uke-userdata-deadline.service
 grep -Fxq 'TimeoutStartSec=infinity' src/units/uke-userdata-deadline.service
 ! grep -Eq '^FailureAction=' src/units/uke-userdata-deadline.service
 grep -Fxq 'FailureAction=reboot-force' src/units/uke-userdata-deadline-fallback.service
+grep -Fxq 'DefaultDependencies=no' src/units/uke-userdata-deadline-fallback.service
+grep -Fxq 'Before=shutdown.target' src/units/uke-userdata-deadline-fallback.service
+! grep -Eq '^After=.*(sysinit|basic|local-fs)\.target' src/units/uke-userdata-deadline-fallback.service
 grep -Fxq 'TimeoutStartSec=60' src/units/uke-userdata-deadline-fallback.service
 grep -Fxq 'enable uke-userdata-deadline.service' src/profiles/80-uke-boot.preset
 grep -Fq 'sysinit.target.wants/uke-userdata-deadline.service' packaging/uke-boot-integration.spec

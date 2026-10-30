@@ -29,12 +29,16 @@ ExecStart=/usr/bin/sleep infinity
 RuntimeMaxSec=1s
 UNIT
 cat > "$units/$name-fallback.service" <<UNIT
+[Unit]
+$(grep '^DefaultDependencies=' src/units/uke-userdata-deadline-fallback.service)
+After=$name.service
 [Service]
-Type=oneshot
+$(grep -E '^(Type|TimeoutStartSec|TimeoutStopSec)=' src/units/uke-userdata-deadline-fallback.service)
 ExecStart=/bin/sh -c 'printf f >> $stage/fallback'
 UNIT
 printf '[Unit]\nDescription=Inert switch-root fixture\n' > "$units/$name-switch.target"
 systemctl --user daemon-reload
+! systemctl --user show "$name-fallback.service" -p After --value | grep -wq basic.target
 systemctl --user start "$name.service"
 test "$(systemctl --user show "$name.service" -p ActiveState --value)" = inactive
 test ! -e "$stage/fallback"
