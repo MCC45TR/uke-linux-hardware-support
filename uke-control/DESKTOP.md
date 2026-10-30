@@ -1,5 +1,11 @@
 # Desktop interface and engineering contract
 
+30 October 2026: Control 2.3.5 caches the immutable parser expressions and leaves
+the caller's locale unchanged; the existing child-command runner supplies its
+own C locale. `make check-memory` runs bounded Memcheck fixtures and repeated
+owned-connection cycles on a private bus. These are host build checks, not
+commands for the live desktop or a system-wide leak qualification.
+
 30 October 2026: Control 2.3.4 verifies the exact KDE policy after a successful
 setting request. An unchanged policy, missing panel or different panel is a
 failure; an already matching request returns without a configuration write.

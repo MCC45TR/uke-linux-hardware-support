@@ -1,5 +1,10 @@
 # Uke Control
 
+30 October 2026: version 2.3.5 reuses desktop parser expressions without changing
+the caller's locale. Charging notifications retain their two-second query
+interval with one interruptible wait. Private-bus resource cycles and Memcheck
+checks remain separate from physical device acceptance.
+
 30 October 2026: version 2.3.4 verifies KDE panel-policy changes, preserves
 recovery wake paths when rollback fails and validates saved wake records without
 blocking on special files. Display depth includes HDMI and retains unknown

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstring>
+#include <thread>
 namespace uke::charge { Result control_query(const std::string &) { throw std::runtime_error("Unexpected helper execution"); } }
 static unsigned calls;
 static int handle(sd_bus_message *m,void *,sd_bus_error *) {

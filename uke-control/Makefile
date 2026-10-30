@@ -60,7 +60,19 @@ check-rgb-policy: build/selinux/uke_control_rgb.pp
 	bash tests/rgb-policy.sh
 build/test-cli: tests/cli.cpp src/cli.cpp src/cli.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cli.cpp src/cli.cpp $(shell pkg-config --libs libsystemd) -o $@
-check: all check-fedora-target check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli
+build/test-plasma: tests/plasma.cpp src/plasma.cpp src/plasma.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp -o $@
+build/benchmark-plasma: tests/plasma-benchmark.cpp src/plasma.cpp src/plasma.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma-benchmark.cpp src/plasma.cpp -o $@
+build/test-desktop-bus: tests/desktop-bus.cpp src/desktop.cpp src/desktop.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/desktop-bus.cpp src/desktop.cpp $(shell pkg-config --libs libsystemd) -o $@
+build/test-desktop-memory: tests/desktop-memory.cpp src/desktop.cpp src/desktop.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/desktop-memory.cpp src/desktop.cpp -Wl,--wrap=sd_bus_open_system $(shell pkg-config --libs libsystemd) -o $@
+build/test-charge-wait: tests/charge-wait.cpp src/charge-notify.cpp src/charge-notify.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/charge-wait.cpp $(shell pkg-config --libs libsystemd) -o $@
+build/test-charge-notify-bus: tests/charge-notify-bus.cpp src/charge-notify.cpp src/charge-notify.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/charge-notify-bus.cpp $(shell pkg-config --libs libsystemd) -o $@
+check: all check-fedora-target check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli build/test-plasma build/test-desktop-bus build/test-desktop-memory build/test-charge-wait build/test-charge-notify-bus
 	build/test-battery
 	build/test-nfc
 	bash tests/cli.sh
@@ -77,7 +89,6 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
 	bash tests/light-worker.sh
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp -o build/test-plasma
 	build/test-plasma
 	LD_LIBRARY_PATH=build build/test-execute
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/resize-system.cpp -o build/test-resize-system
@@ -107,10 +118,10 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	bash tests/charge-review.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-notify.cpp src/charge-notify.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify
 	build/test-charge-notify
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -pthread tests/charge-notify-bus.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify-bus
 	dbus-run-session -- build/test-charge-notify-bus
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -pthread tests/desktop-bus.cpp src/desktop.cpp $(shell pkg-config --libs libsystemd) -o build/test-desktop-bus
 	dbus-run-session -- build/test-desktop-bus
+	timeout 60s dbus-run-session -- build/test-desktop-memory
+	timeout 10s build/test-charge-wait
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/usb.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd) -o build/test-usb
 	LD_LIBRARY_PATH=build build/test-usb
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/link-policy.cpp -Lbuild -l:libuke-control.so.0 -o build/test-link-policy
@@ -142,7 +153,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.3.4/#' -czf "$$top/SOURCES/uke-control-2.3.4.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.3.5/#' -czf "$$top/SOURCES/uke-control-2.3.5.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
@@ -170,3 +181,15 @@ build/test-layout-safety: tests/layout-safety.cpp tests/layout-fixture.hpp src/l
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-safety.cpp src/layout-policy.cpp src/layout-runtime.cpp src/layout-shutdown.cpp $(layout_recovery) $(layout_libs)
 build/test-layout-shutdown-vm: tests/layout-shutdown-vm.cpp tests/layout-vm-common.hpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-shutdown-vm.cpp src/layout-policy.cpp src/layout-runtime.cpp $(layout_recovery) $(layout_libs)
+
+.PHONY: check-memory
+check-memory: build/test-plasma build/benchmark-plasma build/test-desktop-bus build/test-desktop-memory build/test-charge-notify-bus build/test-charge-wait
+	for fixture in test-plasma test-charge-wait; do
+		if ! timeout 90s valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=97 --log-file="build/memory-$$fixture.log" "build/$$fixture"; then cat "build/memory-$$fixture.log"; exit 1; fi
+		cat "build/memory-$$fixture.log"
+	done
+	for fixture in test-desktop-bus test-desktop-memory test-charge-notify-bus; do
+		if ! timeout 90s dbus-run-session -- valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=97 --log-file="build/memory-$$fixture.log" "build/$$fixture"; then cat "build/memory-$$fixture.log"; exit 1; fi
+		cat "build/memory-$$fixture.log"
+	done
+	timeout 90s valgrind --leak-check=full --errors-for-leak-kinds=definite,indirect --error-exitcode=97 build/benchmark-plasma 200

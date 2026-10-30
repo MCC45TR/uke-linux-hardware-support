@@ -4,10 +4,12 @@
 #include <systemd/sd-bus.h>
 #include <systemd/sd-json.h>
 #include <chrono>
+#include <cerrno>
 #include <csignal>
 #include <memory>
 #include <stdexcept>
-#include <thread>
+#include <poll.h>
+#include <pthread.h>
 #include <unistd.h>
 
 namespace uke::charge {
@@ -48,6 +50,25 @@ MoistureObservation parse_moisture_notice(std::string_view text) {
 namespace {
 volatile sig_atomic_t stopping=0;
 void stop(int) { stopping=1; }
+void wait_interval() {
+    sigset_t blocked,previous;
+    sigemptyset(&blocked);sigaddset(&blocked,SIGTERM);sigaddset(&blocked,SIGINT);
+    if(pthread_sigmask(SIG_BLOCK,&blocked,&previous))throw std::runtime_error("Cannot guard notification wait");
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+    bool failed=false;
+    while(!stopping) {
+        const auto remaining=std::chrono::duration_cast<std::chrono::nanoseconds>(deadline-std::chrono::steady_clock::now());
+        if(remaining.count()<=0)break;
+        const auto seconds=std::chrono::duration_cast<std::chrono::seconds>(remaining);
+        const timespec timeout{seconds.count(),(remaining-seconds).count()};
+        // Atomically unblock stop signals while sleeping, avoiding a lost-stop race.
+        const int r=ppoll(nullptr,0,&timeout,&previous);
+        if(r==0)break;
+        if(r<0&&errno!=EINTR){failed=true;break;}
+    }
+    if(pthread_sigmask(SIG_SETMASK,&previous,nullptr)||failed)
+        throw std::runtime_error("Notification wait failed");
+}
 bool notify(sd_bus *bus, uint32_t &id, MoistureNotice notice) {
     const bool cleared=notice==MoistureNotice::cleared;
     const bool safety=notice==MoistureNotice::safety_inhibited || notice==MoistureNotice::safety_unverified;
@@ -95,8 +116,7 @@ void moisture_notifications() {
         const auto event=state.observe(observation);
         if(event!=MoistureNotice::none) pending=event;
         if(pending!=MoistureNotice::none && notify(bus.get(),id,pending)) pending=MoistureNotice::none;
-        for(unsigned ticks=0;ticks<20 && !stopping;++ticks)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        wait_interval();
     }
 }
 }
