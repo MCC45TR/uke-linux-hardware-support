@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 namespace uke {
-inline constexpr const char* application_version="2.4.0";
+inline constexpr const char* application_version="2.5.0";
 }

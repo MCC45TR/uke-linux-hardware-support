@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.4.0
+Version: 2.5.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -13,6 +13,8 @@ BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon jq
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
+BuildRequires: pkgconfig(ncursesw)
+BuildRequires: pkgconfig(vterm)
 BuildRequires: xfsprogs-devel
 BuildRequires: e2fsprogs dosfstools f2fs-tools
 Requires: util-linux-core util-linux systemd procps-ng
@@ -27,6 +29,7 @@ Requires: kmod
 Requires: dialog e2fsprogs device-mapper dosfstools
 Requires: libdnf5 >= 5.4.6.0
 Recommends: uke-battery-observer
+Recommends: uke-control-tui%{?_isa} = %{version}-%{release}
 Provides: uke-control(channel-api) = 1
 Conflicts: uke-plasma-controls < 1.0.0-23
 %{?systemd_requires}
@@ -38,6 +41,16 @@ otherwise it creates a swap file using half RAM by default. Unattended policy
 never formats partitions. The explicit terminal boot-layout wizard is limited
 to proven original userdata, with two approvals for data loss. Charge and USB
 controls follow real driver capabilities.
+
+%package tui
+Summary: Guided bilingual C++ terminal interface for Uke Control
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description tui
+Native UTF-8 terminal interface with bilingual action and option guides,
+search, parameter validation, previews, explicit review, bounded read queries,
+private result receipts and a simulation mode that executes no commands.
+GTK and QML frontends can reuse the same UI-independent C++ client library.
 
 %package tests
 Summary: Development-only Uke display, touch and sensor diagnostics
@@ -58,6 +71,11 @@ package selections. Numeric readings alone do not establish physical acceptance.
 
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
+install -Dm755 build/uke-control-tui %{buildroot}%{_bindir}/uke-control-tui
+install -Dm755 build/libuke-control-client.so.1 %{buildroot}%{_libdir}/libuke-control-client.so.1
+ln -s libuke-control-client.so.1 %{buildroot}%{_libdir}/libuke-control-client.so
+install -Dm644 src/client.hpp %{buildroot}%{_includedir}/uke-control/client.hpp
+install -Dm644 build/uke-control-client.pc %{buildroot}%{_libdir}/pkgconfig/uke-control-client.pc
 install -Dm644 packaging/uke-control.bash %{buildroot}%{_datadir}/bash-completion/completions/uke-control
 install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
 install -Dm755 build/torch-access %{buildroot}%{_libexecdir}/uke-control/torch-access
@@ -139,7 +157,7 @@ fi
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md TUI.md
 %{_bindir}/uke-control
 %{_datadir}/bash-completion/completions/uke-control
 %{_libexecdir}/uke-control/rgb-led
@@ -163,6 +181,9 @@ fi
 %{_libexecdir}/uke-control/vrr-min-load
 %{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf
 %{_libdir}/libuke-control.so.0
+%{_libdir}/libuke-control-client.so.1
+%{_libdir}/libuke-control-client.so
+%{_libdir}/pkgconfig/uke-control-client.pc
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
 %{_unitdir}/uke-control-wake.service
@@ -176,6 +197,9 @@ fi
 %{_userpresetdir}/80-uke-control-user.preset
 %dir %attr(0700,root,root) %{_localstatedir}/lib/uke-control
 
+%files tui
+%{_bindir}/uke-control-tui
+
 %files tests
 %{_libexecdir}/uke-control/tests
 %{_libexecdir}/uke-control/ssc-discovery
@@ -183,6 +207,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.0-1
+- Add a guided bilingual native terminal interface as an optional subpackage.
+- Share frontend action metadata, typed plans, read ownership and receipts in C++.
+- Retain existing backend authorization and maintenance approval boundaries.
+
 * Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-1
 - Add read-only component snapshots, root inspection, comparison and safe export.
 - Correct CLI contracts, bounded execution, persistence and maintenance ownership.

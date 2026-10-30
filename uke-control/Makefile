@@ -11,6 +11,32 @@ version := $(shell awk -F '"' '/application_version=/ {print $$2}' src/version.h
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check check-native check-bus check-rgb-policy check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
+all: build/uke-control-tui build/uke-control-client.pc
+client_sources := src/client.cpp src/client-catalog.cpp src/client-process.cpp
+client_flags := $(shell pkg-config --cflags jsoncpp)
+client_libs := $(shell pkg-config --libs jsoncpp) -pthread
+build/libuke-control-client.so.1: $(client_sources) src/client.hpp src/sysfs.hpp src/version.hpp | build
+	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -shared -Wl,-soname,libuke-control-client.so.1 -o $@ $(client_sources) $(client_libs)
+build/uke-control-tui: src/tui.cpp src/tui-text.hpp src/client.hpp src/version.hpp build/libuke-control-client.so.1
+	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -o $@ src/tui.cpp -Lbuild -l:libuke-control-client.so.1 $(shell pkg-config --cflags --libs ncursesw jsoncpp)
+libdir ?= /usr/lib64
+includedir ?= /usr/include
+build/uke-control-client.pc: packaging/uke-control-client.pc.in src/version.hpp | build
+	sed -e 's|@VERSION@|$(version)|g' -e 's|@LIBDIR@|$(libdir)|g' -e 's|@INCLUDEDIR@|$(includedir)|g' $< > $@
+build/test-client-child: tests/client-child.cpp | build
+	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -o $@ $< $(client_libs)
+build/test-client: tests/client.cpp $(client_sources) src/client.hpp src/tui-text.hpp src/sysfs.hpp src/version.hpp build/test-client-child
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(client_flags) $(LDFLAGS) -DUKE_CLIENT_PROGRAM='"$(CURDIR)/build/test-client-child"' -o $@ tests/client.cpp $(client_sources) $(client_libs)
+.PHONY: check-client check-tui
+check-client: build/test-client build/uke-control
+	ulimit -c 0
+	timeout 45s build/test-client
+	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} bash tests/client-cli.sh
+build/test-tui: tests/tui.cpp | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -o $@ $< -lutil $(shell pkg-config --cflags --libs vterm)
+check-tui: build/uke-control-tui build/test-tui
+	ulimit -c 0
+	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} timeout 45s build/test-tui
 build/libuke-control.so.0: src/battery.cpp src/battery.hpp src/nfc.cpp src/nfc.hpp
 build/test-battery: tests/battery.cpp src/battery.cpp src/battery.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/battery.cpp src/battery.cpp $(shell pkg-config --libs libsystemd) -o $@
@@ -29,8 +55,8 @@ build/selinux/uke_control_rgb.pp: packaging/selinux/uke_control_rgb.te packaging
 	$(MAKE) -C build/selinux -f /usr/share/selinux/devel/Makefile uke_control_rgb.pp
 build/libuke-control.so.0: src/cli.cpp src/cli.hpp src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/cli.cpp src/backend.cpp src/battery.cpp src/nfc.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
-build/uke-control: src/main.cpp src/overview.cpp src/overview.hpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/overview.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --cflags --libs libsystemd jsoncpp)
+build/uke-control: src/main.cpp src/overview.cpp src/overview.hpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp src/client.hpp build/libuke-control.so.0 build/libuke-control-client.so.1
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/overview.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 -l:libuke-control-client.so.1 $(shell pkg-config --cflags --libs libsystemd jsoncpp)
 build/uke-control-packages: src/packages.cpp src/cli.cpp src/cli.hpp src/fedora-target.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< src/cli.cpp -Isrc $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd)
 build/uke-control-packages build/test-package-repos: src/package-operation.hpp src/maintenance.hpp
@@ -85,7 +111,7 @@ build/test-roots: tests/roots.cpp src/overview.cpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG -ffunction-sections -fdata-sections $(LDFLAGS) tests/roots.cpp $(shell pkg-config --cflags --libs jsoncpp) -Wl,--gc-sections -o $@
 build/test-cadence-handshake: tests/cadence-handshake.cpp src/cadence.cpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cadence-handshake.cpp build/*-protocol.o $(shell pkg-config --libs wayland-client) -o $@
-check: check-native check-bus
+check: check-native check-bus check-client check-tui
 check-native check-bus check-repositories check-sensor-proxy: CXXFLAGS += -UNDEBUG
 check-native: build/test-contact build/test-maintenance build/test-report-budget build/test-package-operation build/test-usb-transition build/test-charge-intent build/test-roots build/test-cadence-handshake
 check-native: all check-fedora-target check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli
@@ -182,7 +208,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-$(version)/#' -czf "$$top/SOURCES/uke-control-$(version).tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-$(version)/#' -czf "$$top/SOURCES/uke-control-$(version).tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md TUI.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define '_buildhost uke-builder' --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

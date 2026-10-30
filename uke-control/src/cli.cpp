@@ -35,6 +35,8 @@ Arguments arguments(int argc,char** argv) {
 namespace {
 struct Group {const char* name;const char* summary;const char* usage;};
 constexpr Group groups[]={
+    {"tui","Bilingual native terminal interface with guided parameters", "tui [--language tr|en] [--read-only] [--no-color] [--start CATEGORY|ACTION] [--fixture FILE]\n\nRequires uke-control-tui and an interactive UTF-8 terminal. F1 opens full help.\nRun as the session user; privileged actions authorize only their validated command.\nFixture mode executes no commands. Read-only mode also disables receipt writes."},
+    {"actions","Shared frontend catalog and validated plans (metadata only)", "actions\nactions describe ID\nactions plan ID KEY=VALUE...\n\nUse --json for versioned bilingual metadata and exact argv plans.\nThese commands do not query hardware, execute plans or authorize changes."},
     {"status","Device overview", "status"},
     {"overview","Read-only component snapshots and private snapshot files", "overview [battery|charge|display|usb|desktop|hardware|sensors|audio|camera|nfc|sleep|storage|updates|recovery|workload]\noverview save FILE [COMPONENT]\noverview --fixture FILE\n\nSnapshots separate observations from physical acceptance. Fixture mode performs no queries."},
     {"capabilities","Discover the versioned read-only interface", "capabilities\n\nStatic command metadata does not qualify hardware controls."},

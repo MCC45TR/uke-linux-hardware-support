@@ -19,12 +19,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [contracts, native, bus, repositories, interfaces]
+        suite: [contracts, native, bus, repositories, interfaces, tui]
     runs-on: ubuntu-24.04
     container: registry.fedoraproject.org/fedora:rawhide
     steps:
       - name: Install official host validation tools
-        run: dnf5 -y install git curl jq gcc-c++ libasan libubsan make cmake cmake-rpm-macros extra-cmake-modules kf6-kcmutils-devel kf6-kcoreaddons-devel kf6-ki18n-devel gettext nodejs pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel libplasma plasma5support kf6-kirigami dtc libdrm-devel systemd-devel systemd-udev umockdev-devel libselinux-devel selinux-policy-devel alsa-lib-devel jsoncpp-devel xfsprogs-devel e2fsprogs dosfstools f2fs-tools wayland-devel wayland-protocols-devel libdnf5-devel rpm-devel openssl-devel rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros 'pkgconfig(fdisk)' 'pkgconfig(zlib)' util-linux dbus-daemon
+        run: dnf5 -y install git curl jq gcc-c++ ncurses-devel libvterm-devel libasan libubsan make cmake cmake-rpm-macros extra-cmake-modules kf6-kcmutils-devel kf6-kcoreaddons-devel kf6-ki18n-devel gettext nodejs pkgconf-pkg-config qt6-qtbase-devel qt6-qtdeclarative-devel libplasma plasma5support kf6-kirigami dtc libdrm-devel systemd-devel systemd-udev umockdev-devel libselinux-devel selinux-policy-devel alsa-lib-devel jsoncpp-devel xfsprogs-devel e2fsprogs dosfstools f2fs-tools wayland-devel wayland-protocols-devel libdnf5-devel rpm-devel openssl-devel rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros 'pkgconfig(fdisk)' 'pkgconfig(zlib)' util-linux dbus-daemon
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
@@ -39,6 +39,7 @@ jobs:
             bus) make -C uke-control check-bus check-sensor-proxy ;;
             repositories) make -C uke-control check-repositories check-copr-trigger ;;
             interfaces) make -C uke-desktop-metas test-applet test-applet-state test-applet-load; make -C plasma-uke-kcm check ;;
+            tui) make -C uke-control check-client check-tui ;;
           esac
   request-build:
     needs: validation

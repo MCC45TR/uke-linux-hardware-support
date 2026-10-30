@@ -1,5 +1,10 @@
 # Command-line interface
 
+30 October 2026, Control 2.5: `uke-control tui` opens the optional guided C++
+terminal interface. `actions [describe ID|plan ID KEY=VALUE...] --json` exposes
+the same versioned bilingual catalog and validated plans without device access
+or execution. See [the terminal and frontend API guide](TUI.md).
+
 25 October 2026. Control 2.0 defaults to readable terminal output, including when
 stdout is redirected or piped. Structured output requires an explicit `--json`.
 This is a major CLI compatibility change: scripts that consumed default JSON

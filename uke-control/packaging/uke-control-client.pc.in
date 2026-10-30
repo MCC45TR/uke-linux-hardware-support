@@ -1,0 +1,11 @@
+prefix=/usr
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: uke-control-client
+Description: Uke frontend catalog, validated plans and read query ownership (C++20)
+Version: @VERSION@
+Libs: -L${libdir} -luke-control-client
+Cflags: -I${includedir}
+Requires.private: jsoncpp
+Libs.private: -pthread

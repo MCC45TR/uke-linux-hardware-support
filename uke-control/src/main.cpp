@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "overview.hpp"
+#include "client.hpp"
 #include "cli.hpp"
 #include "charge-policy.hpp"
 #include "front-color.hpp"
@@ -26,6 +27,30 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(const int result=uke::charge::policy_command(argc,argv,as_json);result>=0)return result;
         std::string command=argv[1];
+        if(command=="tui") {
+            if(as_json)throw uke::cli::UsageError("tui requires a terminal; use actions --json for frontend metadata");
+            execv("/usr/bin/uke-control-tui",argv+1);
+            throw std::runtime_error("Install uke-control-tui to open the terminal interface");
+        }
+        if(command=="actions") {
+            try {
+                std::string output;
+                if(argc==2)output=uke::client::catalog_json();
+                else if(argc==4&&std::string_view(argv[2])=="describe")output=uke::client::describe_json(argv[3]);
+                else if(argc>=4&&std::string_view(argv[2])=="plan") {
+                    uke::client::Values values;
+                    for(int i=4;i<argc;++i) {
+                        const std::string entry=argv[i];const auto equal=entry.find('=');
+                        if(equal==entry.npos||!equal||!values.emplace(entry.substr(0,equal),entry.substr(equal+1)).second)
+                            throw uke::cli::UsageError("parameters must be distinct KEY=VALUE arguments");
+                    }
+                    output=uke::client::plan_json(uke::client::plan(argv[3],values));
+                } else throw uke::cli::UsageError("expected actions [describe ID|plan ID KEY=VALUE...]");
+                if(as_json)std::cout<<output<<'\n';
+                else std::cout<<uke::client::format_output(output,uke::client::Language::english,false);
+                return 0;
+            } catch(const std::invalid_argument& error){throw uke::cli::UsageError(error.what());}
+        }
         if(command=="overview"||command=="capabilities"||command=="complete"||command=="compare"||command=="support"||command=="roots")
             return uke::overview::command(argc-1,argv+1,as_json);
         if(command=="singleboot"||command=="multiboot") {
