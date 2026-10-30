@@ -1,0 +1,39 @@
+name: Hardware source contracts
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hardware-source-contracts-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    container: registry.fedoraproject.org/fedora:rawhide
+    steps:
+      - name: Install source validation tools
+        run: dnf5 -y install git curl jq make rpm-build rpm-sign gnupg2 createrepo_c systemd-rpm-macros binutils cpio xz tar diffutils gawk util-linux
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Validate source without native compilation or RPM generation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          guard=$(mktemp -d)
+          trap 'rm -rf -- "$guard"' EXIT
+          cat > "$guard/refuse-build" <<'GUARD'
+          #!/bin/sh
+          echo "Native compilation and RPM generation belong in COPR: ${0##*/}" >&2
+          exit 97
+          GUARD
+          chmod +x "$guard/refuse-build"
+          for tool in gcc g++ cc c++ clang clang++ as ld rpmbuild; do
+            ln -s refuse-build "$guard/$tool"
+          done
+          export PATH="$guard:$PATH"
+          make validate
+          make -C packaging/families check
+          echo 'Source contracts passed. Native compilation and RPM generation run in COPR.' >> "$GITHUB_STEP_SUMMARY"
