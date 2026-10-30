@@ -104,3 +104,19 @@ Remaining physical validation includes calibrated colors and waveform timing,
 measured electrical/thermal behavior, actual battery thresholds, camera
 integration, service/driver removal and suspend/resume. Installing an RPM does
 not activate its DT graph; the matched kernel must be booted separately.
+
+## Continuous-on limit (TEST, 30 October 2026)
+
+The torch broker now expires a continuous-on request after 60 seconds using
+`CLOCK_BOOTTIME`, including suspended time. Brightness changes and repeated
+on requests do not extend the current lease. Off clears it; a subsequent on
+starts a new lease. The broker checks expiry before each bus message, so a
+request flood cannot starve the check. Status includes `auto_off_remaining_ms`.
+The existing startup/off readback, shutdown cleanup, 20 mA limit, dedicated
+account, SELinux confinement and active-local-session authorization remain.
+
+This is a userspace timeout, not a kernel thermal interlock: scheduling delays,
+a blocked broker or an uninterruptible kernel write can delay off. Normal idle
+polling adds up to one second; authorization calls can add their bounded bus
+latency. Kernel-side fail-off and physical suspend/crash acceptance still need
+separate validation. No new security policy is installed by source tests.

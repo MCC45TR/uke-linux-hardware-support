@@ -54,3 +54,10 @@ for (const output of ["null", "invalid", '{"schema":"wrong"}', '{"schema":"org.u
 assert.equal(context.property({}, "UPower", "LidIsClosed"), null);
 assert.equal(context.property({interfaces: [{service:"UPower", available:false, properties:{LidIsClosed:{value:true}}}]}, "UPower", "LidIsClosed"), null);
 console.log("Applet fixed-command boundary, response schemas and unavailable state passed");
+assert.equal(context.command("storage"), "/usr/bin/uke-control --json storage status");
+const storage = {schema:"org.uke.control.storage.v1", mode:"inventory_only",mutation_supported:false,chroot_execution_supported:false, devices:[{path:"/dev/sda1",major_minor:"8:1",identity_verified:false,chroot_ready:false,reason:"device_identity_unverified",mounts:[]}]};
+assert.equal(context.parse("storage", JSON.stringify(storage)).devices.length,1);
+for (const [key,value] of [["mutation_supported",true],["devices",{}],["chroot_execution_supported",true]])
+    assert.throws(()=>context.parse("storage",JSON.stringify({...storage,[key]:value})));
+for(const [key,value] of [["path","<b>/dev/sda</b>"],["major_minor","bad"],["identity_verified",null],["chroot_ready",true]])
+    assert.throws(()=>context.parse("storage",JSON.stringify({...storage,devices:[{...storage.devices[0],[key]:value}]})));

@@ -550,3 +550,7 @@ changes only a unique NFC rfkill permission. Double-tap reports permission and
 armed state from the verified NT36532 driver. The xHCI fixes from `b025866` and
 `f4ceae7` are retained. See [commands and limitations](CLI.md). Source and host
 fixtures do not establish physical NFC, individual cell health or gesture wake.
+
+Read-only storage planning and its execution limits are documented in
+[Maintenance inventory](MAINTENANCE.md). `storage status` and `chroot plan`
+never mount, modify or execute the selected filesystem.

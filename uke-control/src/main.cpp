@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "storage.hpp"
 #include "cli.hpp"
 #include "charge-policy.hpp"
 #include "front-color.hpp"
@@ -46,6 +47,12 @@ static int run(int argc,char** argv,bool as_json) {
             const char* arguments[]={"/usr/libexec/uke-control/resize-system",count==4?"--check":"--interactive",as_json?"--json":nullptr,nullptr};
             execv(arguments[0],const_cast<char* const*>(arguments));
             throw std::runtime_error("The native resize helper is unavailable");
+        }
+        if(command=="storage" || command=="chroot") {
+            const std::string expected=command=="storage"?"status":"plan";
+            if((argc!=3 && argc!=4) || std::string_view(argv[2])!=expected)
+                throw uke::cli::UsageError("expected "+command+" "+expected+" [/dev/DEVICE]; execution is not implemented");
+            uke::cli::print(uke::storage::snapshot("/",argc==4?argv[3]:""),as_json);return 0;
         }
         if(command=="diagnostics")return uke::diagnostic::command(argc-2,argv+2,as_json);
         if(command=="wake") {

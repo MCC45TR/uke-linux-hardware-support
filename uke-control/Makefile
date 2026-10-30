@@ -18,7 +18,7 @@ build/test-nfc: tests/nfc.cpp src/nfc.cpp src/nfc.hpp | build
 check: build/test-battery build/test-nfc
 build:
 	mkdir -p build
-build/uke-control-rgb: src/rgb-service.cpp src/rgb.hpp shared/uke-rgb.h build/libuke-control.so.0
+build/uke-control-rgb: src/rgb-service.cpp src/torch-lease.hpp src/rgb.hpp shared/uke-rgb.h build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/rgb-service.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux)
 build/torch-access: src/torch-access.cpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $< -Lbuild -l:libuke-control.so.0
@@ -28,8 +28,8 @@ build/selinux/uke_control_rgb.pp: packaging/selinux/uke_control_rgb.te packaging
 	$(MAKE) -C build/selinux -f /usr/share/selinux/devel/Makefile uke_control_rgb.pp
 build/libuke-control.so.0: src/cli.cpp src/cli.hpp src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/cli.cpp src/backend.cpp src/battery.cpp src/nfc.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
-build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
+build/uke-control: src/storage.cpp src/storage.hpp src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/storage.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
 build/uke-control-packages: src/packages.cpp src/cli.cpp src/cli.hpp src/fedora-target.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< src/cli.cpp -Isrc $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd)
 build/resize-system: src/resize-system.cpp shared/userdata-grow.hpp | build
@@ -142,7 +142,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.3.0/#' -czf "$$top/SOURCES/uke-control-2.3.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.3.0/#' -czf "$$top/SOURCES/uke-control-2.3.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md MAINTENANCE.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
@@ -170,3 +170,11 @@ build/test-layout-safety: tests/layout-safety.cpp tests/layout-fixture.hpp src/l
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-safety.cpp src/layout-policy.cpp src/layout-runtime.cpp src/layout-shutdown.cpp $(layout_recovery) $(layout_libs)
 build/test-layout-shutdown-vm: tests/layout-shutdown-vm.cpp tests/layout-vm-common.hpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-shutdown-vm.cpp src/layout-policy.cpp src/layout-runtime.cpp $(layout_recovery) $(layout_libs)
+
+.PHONY: check-maintenance
+check: check-maintenance
+check-maintenance: | build
+	$(CXX) $(CXXFLAGS) -UNDEBUG -Isrc tests/torch-lease.cpp -o build/test-torch-lease
+	build/test-torch-lease
+	$(CXX) $(CXXFLAGS) -UNDEBUG -Isrc tests/storage.cpp src/storage.cpp -o build/test-storage
+	build/test-storage

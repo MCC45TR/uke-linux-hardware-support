@@ -17,6 +17,7 @@ PlasmoidItem {
     property var usb: ({})
     property var lights: ({})
     property var rgb: ({})
+    property var storage: ({})
     property var requests: ({})
     property string errorText: ""
     property int serial: 0
@@ -38,6 +39,7 @@ PlasmoidItem {
         execute("usb")
         execute("lights")
         execute("rgb")
+        execute("storage")
     }
     function change(action, values) {
         if (pending > 0) return
@@ -49,7 +51,7 @@ PlasmoidItem {
         if (!action) return
         delete requests[source]
         --pending
-        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights" || action === "rgb"
+        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights" || action === "rgb" || action === "storage"
         if (query) {
             let value = {}
             try {
@@ -62,6 +64,7 @@ PlasmoidItem {
             else if (action === "desktop") desktop = value
             else if (action === "usb") usb = value
             else if (action === "lights") lights = value
+            else if (action === "storage") storage = value
             else rgb = value
         } else {
             if (data["exit code"] !== 0)
@@ -150,6 +153,30 @@ PlasmoidItem {
                 visible: root.errorText.length > 0
                 text: root.errorText
                 type: Kirigami.MessageType.Error
+            }
+            Kirigami.Heading {
+                Layout.margins: Kirigami.Units.largeSpacing
+                text: i18n("Storage and maintenance")
+                level: 3
+            }
+            PC.Label {
+                Layout.fillWidth: true
+                Layout.margins: Kirigami.Units.largeSpacing
+                text: root.storage.devices ? i18n("%1 block devices. Read-only inventory; chroot execution is not available yet.", root.storage.devices.length) : i18n("Storage state unknown. Refresh to retry.")
+                wrapMode: Text.WordWrap
+                textFormat: Text.PlainText
+            }
+            Repeater {
+                model: root.storage.devices || []
+                delegate: PC.Label {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Kirigami.Units.largeSpacing
+                    Layout.rightMargin: Kirigami.Units.largeSpacing
+                    text: modelData.path + " (" + modelData.major_minor + ") — " + (modelData.mounts.length ? i18n("Mounted / in use") : modelData.identity_verified ? i18n("Not ready for chroot; filesystem inspection required") : i18n("Device identity unverified"))
+                    wrapMode: Text.WordWrap
+                    textFormat: Text.PlainText
+                }
             }
             ControlRow {
                 title: i18n("Automatic rotation")
@@ -276,7 +303,7 @@ PlasmoidItem {
                 PC.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
-                    text: i18n("Hardware has two lit steps: 1–99% requests use 50%; 100% uses 100%. Maximum 20 mA. No automatic timeout; turns off before sleep.")
+                    text: i18n("Hardware has two lit steps: 1–99% requests use 50%; 100% uses 100%. Maximum 20 mA. Automatic off after 60 seconds; turns off before sleep.")
                 }
             }
             onAccepted: root.change("flashlightSet", [Math.round(lightBrightness.value)])

@@ -2,6 +2,8 @@
 // Only transports authorized requests. The kernel owns policy and animation.
 #include "rgb.hpp"
 #include "torch.hpp"
+#include "torch-lease.hpp"
+#include <time.h>
 #include "../shared/uke-rgb.h"
 #include <cerrno>
 #include <csignal>
@@ -19,13 +21,27 @@
 #include <unistd.h>
 namespace {
 void need(bool ok,const std::string& error){if(!ok)throw std::runtime_error(error);}
-struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;};
+struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;uke::torch::Lease lease;};
+uint64_t boottime() {
+    timespec now{};need(clock_gettime(CLOCK_BOOTTIME,&now)==0,"Cannot read torch safety clock");
+    return uint64_t(now.tv_sec)*1000000+uint64_t(now.tv_nsec)/1000;
+}
+void expire_torch(State& state,uint64_t now=boottime()) {
+    if(state.torch && state.lease.expired(now)) {
+        state.torch->enable(false);
+        state.lease.applied(false,now);
+    }
+}
 const char* mode_name(unsigned n) {
     static const char* names[]={"off","manual","low-battery","critical-battery","front-camera","test"};
     need(n<=UKE_RGB_TEST,"Invalid kernel RGB mode");return names[n];
 }
 std::string status(State& state) {
-    if(state.torch)return state.torch->status();
+    if(state.torch) {
+        auto value=state.torch->status();
+        value.insert(1,"\"auto_off_remaining_ms\":"+std::to_string(state.lease.remaining(boottime())/1000)+",");
+        return value;
+    }
     uke_rgb_status value{};
     need(::ioctl(state.fd,UKE_RGB_STATUS,&value)==0,"Kernel RGB status unavailable");
     need(value.abi==UKE_RGB_ABI && value.mode<=UKE_RGB_TEST && value.rgb<=0xffffff &&
@@ -68,7 +84,9 @@ int request(sd_bus_message* message,void* userdata,sd_bus_error* error) {
             if(method=="SetBrightness")need(sd_bus_message_read(message,"u",&percent)>0 && percent<=100,"Invalid torch percentage");
             else need(method=="SetEnabled" && sd_bus_message_read(message,"b",&enabled)>0,"Invalid torch request");
             if(!authorized(message,uke::torch::action))return sd_bus_error_set_const(error,SD_BUS_ERROR_ACCESS_DENIED,"Only an active local user may request torch changes");
+            expire_torch(state);
             if(method=="SetBrightness")state.torch->set(percent);else state.torch->enable(enabled);
+            state.lease.applied(method=="SetBrightness"?percent!=0:enabled!=0,boottime());
             return sd_bus_reply_method_return(message,"s",status(state).c_str());
         }
         uke_rgb_color value{};unsigned command=UKE_RGB_AUTOMATIC;
@@ -140,7 +158,7 @@ int main(int argc,char** argv) {
         need(sd_bus_request_name(raw,torch?uke::torch::bus_name:uke::rgb::bus_name,0)>=0,"Another LED broker owns the interface");
         signal(SIGTERM,stop);signal(SIGINT,stop);
         while(!stopping) {
-            int r;do{r=sd_bus_process(raw,nullptr);need(r>=0,"RGB bus disconnected");}while(r>0);
+            int r;do{expire_torch(state);r=sd_bus_process(raw,nullptr);need(r>=0,"RGB bus disconnected");}while(r>0 && !stopping);
             const int waiting=sd_bus_wait(raw,1000000);
             need(waiting>=0 || waiting==-EINTR,"Cannot wait for RGB requests");
         }

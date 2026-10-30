@@ -21,8 +21,8 @@ jq -e '.applied==false and .effective==null and .requested=="charge80"' "$stage/
 "$app" charge plan charge80 --json | cmp "$stage/json" -
 "$app" charge modes > "$stage/modes"
 grep -q 'Charging modes' "$stage/modes"
-"$app" charge modes --json | jq -e '.qualification_checked==false and (.modes|length)==5' >/dev/null
-for args in 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resize system --json' 'sensors -- --json' 'channel status -- --json' 'test -- --help' 'singleboot status -- --json' 'multiboot -- --help'; do
+"$app" charge modes --json | jq -e '.qualification_checked==false and (.modes|map(.id)|sort)==["automatic","charge80","firmware","hold70-80","hold80-90","slow","temporary-full"]' >/dev/null
+for args in 'chroot enter /dev/sda1' 'storage format /dev/sda1' 'chroot plan /dev/sda1 extra' 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resize system --json' 'sensors -- --json' 'channel status -- --json' 'test -- --help' 'singleboot status -- --json' 'multiboot -- --help'; do
     read -r -a words <<< "$args"
     set +e
     "$app" "${words[@]}" > "$stage/out" 2> "$stage/error"

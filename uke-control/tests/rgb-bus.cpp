@@ -95,5 +95,18 @@ int main() {
     sd_bus_unref(bus);running=false;auth.join();service.join();
     assert(changes==4); // Set, test, refused duplicate test, automatic; no unauthorized ioctl.
     assert((torch_fixture::writes==std::vector<unsigned>{0,1,1,2,0,0}));
+    {
+        State timed;timed.torch=std::make_unique<uke::torch::Actuator>();
+        timed.torch->enable(true);timed.lease.applied(true,100);
+        expire_torch(timed,60000099);assert(torch_fixture::brightness==2);
+        expire_torch(timed,60000100);assert(torch_fixture::brightness==0);
+        assert(timed.lease.remaining(60000100)==0);
+        timed.torch->enable(true);timed.lease.applied(true,100);
+        torch_fixture::fail_level=0;
+        bool failed=false;try{expire_torch(timed,60000100);}catch(...){failed=true;}
+        assert(failed && timed.lease.expired(60000100)); // failed off is not reported as cleared
+        torch_fixture::fail_level=9;expire_torch(timed,60000101);
+        assert(torch_fixture::brightness==0);
+    }
     std::cout<<"Actual LED brokers: private-bus caller authorization, no-interaction Polkit, HEX/torch bounds and denied-request isolation passed; simulated hardware only\n";
 }

@@ -7,6 +7,7 @@ function command(action, values) {
         return "/usr/bin/uke-control --json flashlight set " + values.join(" ")
     }
     const commands = {
+        storage: "/usr/bin/uke-control --json storage status",
         plasma: "/usr/bin/uke-control --json desktop plasma",
         desktop: "/usr/bin/uke-control --json desktop status",
         usb: "/usr/bin/uke-control --json usb status",
@@ -30,6 +31,7 @@ function command(action, values) {
 function parse(kind, output) {
     const value = JSON.parse(output)
     const schemas = {
+        storage: "org.uke.control.storage.v1",
         plasma: "org.uke.control.plasma.v1",
         desktop: "org.uke.control.desktop.v1",
         usb: "org.uke.control.usb.v1",
@@ -44,6 +46,13 @@ function parse(kind, output) {
             return item !== null && typeof item !== "boolean"
         })))
         throw new Error("Malformed uke-control state")
+    if (kind === "storage" && (value.mode !== "inventory_only" || value.mutation_supported !== false ||
+        value.chroot_execution_supported !== false || !Array.isArray(value.devices) || value.devices.some(function(device) {
+            return !device || typeof device.path !== "string" || !/^\/dev\/[a-zA-Z0-9_.-]+$/.test(device.path) ||
+                typeof device.major_minor !== "string" || !/^\d+:\d+$/.test(device.major_minor) ||
+                typeof device.identity_verified !== "boolean" || typeof device.reason !== "string" ||
+                device.chroot_ready !== false || !Array.isArray(device.mounts)
+        }))) throw new Error("Malformed storage inventory")
     if (kind === "lights") {
         for (const name of ["flashlight", "rgb"]) {
             const light = value[name]
