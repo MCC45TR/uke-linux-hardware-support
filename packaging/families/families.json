@@ -278,7 +278,7 @@
   },
   "release_overrides": {
     "iio-sensor-proxy": "24.fc46",
-    "uke-boot-integration": "2.fc46",
+    "uke-boot-integration": "3.fc46",
     "uke-plymonth": "5.fc46",
     "uke-orangefox-recovery": "6.fc46",
     "upower": "20.fc46",

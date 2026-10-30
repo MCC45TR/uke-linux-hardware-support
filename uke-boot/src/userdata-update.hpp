@@ -417,7 +417,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         need((good_flags&slot::successful) && !(good_flags&slot::unbootable) &&
              (next_flags&slot::priority) && (next_flags&slot::retries) && !(next_flags&(slot::successful|slot::unbootable)),
              "Pending trial or accepted fallback flags differ");
-        if(action!="accept" && action!="fallback") {
+        if(action!="accept" && action!="check-accept" && action!="fallback") {
             const auto raw=file(bundle/"manifest");
             need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==prior->policy.candidate,
                  "A different candidate cannot replace the pending trial");

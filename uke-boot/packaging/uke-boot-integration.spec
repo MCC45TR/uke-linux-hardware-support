@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 1.9.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -362,6 +362,8 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.9.0-3
+- Allow read-only acceptance checks of the retained slot before the trial reboot.
 * Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.9.0-2
 - Verify an active Gunyah and PID1 watchdog before accepting a reset-capable trial.
 * Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.9.0-1
