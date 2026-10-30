@@ -158,7 +158,7 @@ fi
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md TUI.md
+%doc README.md CHANGELOG.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md TUI.md
 %{_bindir}/uke-control
 %{_datadir}/bash-completion/completions/uke-control
 %{_libexecdir}/uke-control/rgb-led
