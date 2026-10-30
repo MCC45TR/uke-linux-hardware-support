@@ -12,62 +12,51 @@ import "Control.js" as Control
 
 PlasmoidItem {
     id: root
-    property var panel: ({})
-    property var desktop: ({})
-    property var usb: ({})
-    property var lights: ({})
-    property var rgb: ({})
-    property var requests: ({})
-    property string errorText: ""
-    property int serial: 0
-    property int pending: 0
+    readonly property var panel: requestState.snapshots.plasma || ({})
+    readonly property var desktop: requestState.snapshots.desktop || ({})
+    readonly property var usb: requestState.snapshots.usb || ({})
+    readonly property var lights: requestState.snapshots.lights || ({})
+    readonly property var rgb: requestState.snapshots.rgb || ({})
+    readonly property string errorText: requestState.errorText
+    readonly property int pending: requestState.pending
+    property bool fixtureMode: false
     property string requestedAction: ""
 
     function execute(action, values) {
-        const command = Control.command(action, values)
-        if (!command) return
-        const source = "UKE_TRAY_REQUEST=" + (++serial) + " " + command
-        requests[source] = action
-        ++pending
-        executable.connectSource(source)
+        requestState.execute(action, values)
     }
     function refresh() {
-        if (pending > 0) return
-        execute("plasma")
-        execute("desktop")
-        execute("usb")
-        execute("lights")
-        execute("rgb")
+        requestState.refresh()
     }
     function change(action, values) {
-        if (pending > 0) return
-        errorText = ""
         execute(action, values)
     }
     function finish(source, data) {
-        const action = requests[source]
-        if (!action) return
-        delete requests[source]
-        --pending
-        const query = action === "plasma" || action === "desktop" || action === "usb" || action === "lights" || action === "rgb"
-        if (query) {
-            let value = {}
-            try {
-                if (data["exit code"] !== 0) throw new Error("uke-control failed")
-                value = Control.parse(action, String(data.stdout || ""))
-            } catch (error) {
-                errorText = i18n("Could not read tablet state. Refresh to try again.")
-            }
-            if (action === "plasma") panel = value
-            else if (action === "desktop") desktop = value
-            else if (action === "usb") usb = value
-            else if (action === "lights") lights = value
-            else rgb = value
-        } else {
-            if (data["exit code"] !== 0)
-                errorText = i18n("The change failed or authorization was cancelled.")
-            refresh()
-        }
+        requestState.finish(source, data, false)
+    }
+    function busy(domain) { return requestState.busy(domain) }
+    function availability(action, supported) { return requestState.availability(action, supported) }
+    function coverState() {
+        const upower = Control.property(desktop, "org.freedesktop.UPower", "LidIsClosed")
+        const logind = Control.property(desktop, "org.freedesktop.login1", "LidClosed")
+        if (typeof upower === "boolean" && typeof logind === "boolean" && upower !== logind) return i18n("Conflicting cover readings")
+        const value = typeof upower === "boolean" ? upower : logind
+        return value === true ? i18n("Closed") : value === false ? i18n("Open") : i18n("Cover position unknown")
+    }
+    RequestState {
+        id: requestState
+        readFailureText: i18n("Could not read tablet state. Refresh to try again.")
+        writeFailureText: i18n("The change failed or authorization was cancelled.")
+        timeoutText: i18n("The state query timed out. Refresh to try again.")
+        onDispatch: function(source) { if (!root.fixtureMode) executable.connectSource(source) }
+        onRelease: function(source) { if (!root.fixtureMode) executable.disconnectSource(source) }
+        onRefreshRequested: root.refresh()
+    }
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.pending > 0
+        onTriggered: requestState.expire(Date.now())
     }
     function role() {
         const ports = usb.typec || []
@@ -97,10 +86,8 @@ PlasmoidItem {
         repeat: true
         running: root.expanded && (root.lights.flashlight?.on === true || root.rgb.mode === "test")
         onTriggered: {
-            if (root.pending === 0) {
-                if (root.lights.flashlight?.on === true) root.execute("lights")
-                if (root.rgb.mode === "test") root.execute("rgb")
-            }
+            if (root.lights.flashlight?.on === true) root.execute("lights")
+            if (root.rgb.mode === "test") root.execute("rgb")
         }
     }
 
@@ -140,9 +127,15 @@ PlasmoidItem {
                     text: i18n("Refresh")
                     display: PC.AbstractButton.IconOnly
                     Accessible.name: text
-                    enabled: root.pending === 0
                     onClicked: root.refresh()
                 }
+            }
+            Kirigami.InlineMessage {
+                Layout.fillWidth: true
+                Layout.margins: Kirigami.Units.largeSpacing
+                visible: root.fixtureMode
+                text: i18n("Simulation: hardware commands are disabled.")
+                type: Kirigami.MessageType.Information
             }
             Kirigami.InlineMessage {
                 Layout.fillWidth: true
@@ -153,10 +146,11 @@ PlasmoidItem {
             }
             ControlRow {
                 title: i18n("Automatic rotation")
-                description: root.panel.rotation === true ? i18n("Always") : i18n("Off or tablet mode only")
+                description: root.panel.rotation === true ? i18n("Always") : root.panel.rotation === false ? i18n("Off or tablet mode only") : i18n("State unknown")
                 iconName: "object-rotate-right"
                 available: typeof root.panel.rotation === "boolean"
-                busy: root.pending > 0
+                availabilityState: root.availability("plasma", available)
+                busy: root.busy("display")
                 action: Component {
                     PC.Switch {
                         checked: root.panel.rotation === true
@@ -167,10 +161,11 @@ PlasmoidItem {
             }
             ControlRow {
                 title: i18n("Automatic brightness")
-                description: root.panel.automatic_brightness === true ? i18n("On") : i18n("Off")
+                description: root.panel.automatic_brightness === true ? i18n("On") : root.panel.automatic_brightness === false ? i18n("Off") : i18n("State unknown")
                 iconName: "brightness-high"
                 available: typeof root.panel.automatic_brightness === "boolean"
-                busy: root.pending > 0
+                availabilityState: root.availability("plasma", available)
+                busy: root.busy("display")
                 action: Component {
                     PC.Switch {
                         checked: root.panel.automatic_brightness === true
@@ -183,15 +178,17 @@ PlasmoidItem {
                 title: i18n("Cover")
                 iconName: "computer-laptop"
                 available: Control.property(root.desktop, "org.freedesktop.UPower", "LidIsPresent") === true
-                description: Control.property(root.desktop, "org.freedesktop.UPower", "LidIsClosed") === true
-                    ? i18n("Closed") : i18n("Open")
+                description: root.coverState()
+                availabilityState: root.availability("desktop", available)
+                busy: root.busy("desktop")
             }
             ControlRow {
                 title: i18n("USB data role")
                 iconName: "usb-creator"
                 description: root.role()
                 available: root.canRequestRole()
-                busy: root.pending > 0
+                availabilityState: root.availability("usb", available)
+                busy: root.busy("usb")
                 action: Component {
                     RowLayout {
                         PC.Button { text: i18n("Host"); onClicked: root.confirm("host") }
@@ -204,7 +201,8 @@ PlasmoidItem {
                 iconName: "network-wired"
                 description: typeof root.usb.cdc_saved_policy === "string" ? root.usb.cdc_saved_policy : i18n("State unavailable")
                 available: root.usb.schema === "org.uke.control.usb.v1"
-                busy: root.pending > 0
+                availabilityState: root.availability("usb", available)
+                busy: root.busy("usb")
                 action: Component {
                     RowLayout {
                         PC.Button { text: i18n("Enable"); onClicked: root.confirm("cdcOn") }
@@ -217,7 +215,8 @@ PlasmoidItem {
                 iconName: "flashlight-off"
                 description: i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight?.brightness_percent ?? 0)
                 available: root.lights.flashlight?.available === true
-                busy: root.pending > 0
+                availabilityState: root.availability("lights", available)
+                busy: root.busy("lights")
                 action: Component {
                     RowLayout {
                         PC.Switch {
@@ -239,7 +238,8 @@ PlasmoidItem {
                 description: root.rgb.mode === "test" ? i18n("Running the 10-second color transition")
                     : i18n("A 10-second transition through the color wheel")
                 available: root.rgb.available === true && root.rgb.kernel_io_error === 0
-                busy: root.pending > 0 || root.rgb.mode === "test" || root.rgb.mode === "front-camera"
+                availabilityState: root.availability("rgb", available)
+                busy: root.busy("rgb") || root.rgb.mode === "test" || root.rgb.mode === "front-camera"
                 action: Component {
                     PC.Button { text: i18n("Test colors"); onClicked: root.change("rgbTest") }
                 }
@@ -254,7 +254,7 @@ PlasmoidItem {
         QQC2.Dialog {
             id: lightSettings
             function configure() {
-                lightBrightness.value = root.lights.flashlight.requested_percent
+                lightBrightness.value = root.lights.flashlight?.requested_percent ?? 100
                 open()
             }
             anchors.centerIn: parent

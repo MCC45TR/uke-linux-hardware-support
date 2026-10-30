@@ -9,9 +9,10 @@ Item {
     property string title
     property string description
     property string iconName
-    property bool capabilityKnown: true
+    property string availabilityState: "available"
+    property bool capabilityKnown: availabilityState !== "loading"
     property bool available: true
-    property bool controlEnabled: available
+    property bool controlEnabled: available && availabilityState === "available"
     property bool busy: false
     property Component action
     property Component details
@@ -19,6 +20,8 @@ Item {
     Layout.fillWidth: true
     implicitHeight: content.implicitHeight + Kirigami.Units.largeSpacing * 2
     opacity: capabilityKnown && !available ? 0.58 : 1
+    Accessible.name: title
+    Accessible.description: descriptionLabel.text
 
     ColumnLayout {
         id: content
@@ -57,10 +60,19 @@ Item {
                 }
 
                 PlasmaComponents.Label {
+                    id: descriptionLabel
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     text: !control.capabilityKnown
                         ? i18n("Checking hardware support…")
+                        : control.availabilityState === "stale"
+                            ? i18n("Last reading is stale. Refresh to try again.")
+                        : control.availabilityState === "error"
+                            ? i18n("State could not be read. Refresh to try again.")
+                        : control.availabilityState === "denied"
+                            ? i18n("Permission to read this state was denied.")
+                        : control.availabilityState === "not_qualified"
+                            ? i18n("This control has not been qualified.")
                         : control.available
                             ? control.description
                             : i18n("Unavailable through uke-control")

@@ -1,4 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+function isQuery(action) {
+    return ["plasma", "desktop", "usb", "lights", "rgb"].indexOf(action) >= 0
+}
+function domain(action) {
+    if (["plasma", "rotationOn", "rotationOff", "brightnessOn", "brightnessOff"].indexOf(action) >= 0) return "display"
+    if (["usb", "cdcOn", "cdcOff", "host", "device"].indexOf(action) >= 0) return "usb"
+    if (["lights", "flashlightOn", "flashlightOff", "flashlightSet"].indexOf(action) >= 0) return "lights"
+    if (["rgb", "rgbTest"].indexOf(action) >= 0) return "rgb"
+    return action === "desktop" ? "desktop" : null
+}
 function command(action, values) {
     if (action === "flashlightSet") {
         if (!Array.isArray(values) || values.length !== 1 || values.some(function(value) {

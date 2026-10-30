@@ -1,14 +1,14 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 23%{?dist}
+Release: 24%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz bash jq diffutils firewalld-filesystem firewalld libxml2
-BuildRequires: make gcc-c++ pkgconf-pkg-config pkgconfig(Qt6Gui) pkgconfig(Qt6Qml)
+BuildRequires: make gcc-c++ gettext pkgconf-pkg-config pkgconfig(Qt6Gui) pkgconfig(Qt6Qml)
 BuildRequires: libplasma plasma5support kf6-kirigami
 Requires: uke-core-meta >= 1.0.0-3
 %description
@@ -128,6 +128,7 @@ without removing the KDE meta package. No GNOME integration is included.
 %prep
 %setup -q
 %build
+%make_build translations
 %install
 install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/desktops/profile.json
 install -Dm644 src/cutefish.json %{buildroot}%{_datadir}/senemos/uke/desktops/cutefish.json
@@ -135,6 +136,7 @@ install -Dm644 src/plasma.json %{buildroot}%{_datadir}/senemos/uke/desktops/plas
 install -Dm644 src/uke-kdeconnect.xml %{buildroot}%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 install -d %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls
 cp -a src/plasma-applet/. %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
+install -Dm644 build/locale/tr/LC_MESSAGES/plasma_applet_org.senemos.uke.controls.mo %{buildroot}%{_datadir}/locale/tr/LC_MESSAGES/plasma_applet_org.senemos.uke.controls.mo
 %check
 xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
@@ -167,9 +169,14 @@ fi
 %files -n uke-plasma-controls
 %license src/plasma-applet/LICENSE
 %doc src/plasma-applet/SOURCE.md
+%{_datadir}/locale/tr/LC_MESSAGES/plasma_applet_org.senemos.uke.controls.mo
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
 
 %changelog
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-24
+- Keep independent request domains and preserve failed or stale observations.
+- Correct unknown cover readings and add actual QML lifecycle checks.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-23
 - Request explicit JSON from Control 2.0 and use canonical CDC/USB-role commands.
 
