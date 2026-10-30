@@ -3,7 +3,9 @@
 30 October 2026. Version `1.8.6` adds vendor defaults that restrict kernel
 pointers and kernel logs. Installation applies these two keys using the
 effective sysctl.d configuration, including administrative overrides.
-COPR package checks and installed validation remain pending.
+COPR checks and the signed DNF update passed on POCO Pad X1 with Fedora 46
+Rawhide AArch64 and kernel `7.3.0-49`. New-kernel boot and recovery remain
+separate validation gates.
 
 23 October 2026. Version `1.8.2` recognizes an enabled internal DSI output
 without assuming connector index 1. A POCO Pad X1 repeat boot exposed DSI-2;
