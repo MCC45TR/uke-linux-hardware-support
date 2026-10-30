@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.4.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -185,6 +185,9 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-2
+- Apply the existing motion stabilization interval before timed captures.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-1
 - Add bounded native motion, CCT-stream and IMU-temperature capture with timing reports.
 - Report original KWin tablet mode, discover the current touch-wake provider and keep disabled moisture detection unknown.

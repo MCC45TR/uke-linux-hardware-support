@@ -13,7 +13,8 @@ sudo uke-control test sample gyro 30 --json
 sudo uke-control test sample cct_front_strm 10 --json
 ```
 
-Durations are 1–60 seconds. Acceleration and gyro request 26 Hz, temperature
+Durations are 1–60 seconds after the existing three-second motion stabilization
+interval. Acceleration and gyro request 26 Hz, temperature
 1 Hz and the OEM CCT stream 5 Hz. Admission requires the exact datatype/API,
 availability and streaming attributes. Unexpected vectors, source changes,
 non-finite values and timestamp discontinuities fail the observation.

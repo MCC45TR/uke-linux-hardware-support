@@ -173,7 +173,8 @@ int main(int argc, char **argv) {
         };
         if (seconds) {
             Capture capture;
-            rpc(fd,client_request(found[0],513,rate),1025,false,nullptr,[&](View event) {
+            // Keep the existing motion stabilization interval before measuring drift.
+            rpc(fd,client_request(found[0],513,rate),1025,xyz,nullptr,[&](View event) {
                 const auto received=receipt_time();
                 for (const auto &s:samples(event,found[0],xyz?3:temperature?1:0)) { capture.accept(s,received); emit(s,received); }
                 return capture.last_ns-capture.first_ns < std::uint64_t(seconds)*1'000'000'000ULL;
