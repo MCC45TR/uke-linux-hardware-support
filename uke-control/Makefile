@@ -17,7 +17,7 @@ client_flags := $(shell pkg-config --cflags jsoncpp)
 client_libs := $(shell pkg-config --libs jsoncpp) -pthread
 build/libuke-control-client.so.1: $(client_sources) src/client.hpp src/sysfs.hpp src/version.hpp | build
 	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -shared -Wl,-soname,libuke-control-client.so.1 -o $@ $(client_sources) $(client_libs)
-build/uke-control-tui: src/tui.cpp src/tui-text.hpp src/client.hpp src/version.hpp build/libuke-control-client.so.1
+build/uke-control-tui: src/tui.cpp src/tui-text.hpp src/tui-menu.hpp src/client.hpp src/version.hpp build/libuke-control-client.so.1
 	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -o $@ src/tui.cpp -Lbuild -l:libuke-control-client.so.1 $(shell pkg-config --cflags --libs ncursesw jsoncpp)
 libdir ?= /usr/lib64
 includedir ?= /usr/include
@@ -32,11 +32,11 @@ check-client: build/test-client build/uke-control
 	ulimit -c 0
 	timeout 45s build/test-client
 	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} bash tests/client-cli.sh
-build/test-tui: tests/tui.cpp | build
-	$(CXX) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -o $@ $< -lutil $(shell pkg-config --cflags --libs vterm)
+build/test-tui: tests/tui.cpp src/tui-menu.hpp src/client.hpp build/libuke-control-client.so.1 | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -o $@ $< -Lbuild -l:libuke-control-client.so.1 -lutil $(shell pkg-config --cflags --libs vterm)
 check-tui: build/uke-control-tui build/test-tui
 	ulimit -c 0
-	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} timeout 45s build/test-tui
+	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} timeout 90s build/test-tui
 build/libuke-control.so.0: src/battery.cpp src/battery.hpp src/nfc.cpp src/nfc.hpp
 build/test-battery: tests/battery.cpp src/battery.cpp src/battery.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/battery.cpp src/battery.cpp $(shell pkg-config --libs libsystemd) -o $@

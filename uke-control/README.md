@@ -1,9 +1,10 @@
 # Uke Control
 
-30 October 2026: **2.5.1** adds a C++ terminal interface with Turkish/English
-guides, 16 categories and 124 actions. Start the optional `uke-control-tui`
-package with `uke-control`. See [the TUI guide](TUI.md) for usage and the
-shared GTK/QML client API. Interface checks do not establish device acceptance.
+30 October 2026: **2.6.0** organizes the C++ terminal interface into ten task
+categories with explicit Back/Continue buttons, keyboard navigation and terminal
+touch input. All 124 actions retain their shared GTK/QML client API. Start the
+optional `uke-control-tui` package with `uke-control`. See [the guide](TUI.md) and
+[change history](CHANGELOG.md). Physical touch acceptance remains separate.
 
 30 October 2026: source version **2.4.0** adds bounded read-only component
 snapshots, comparisons, private exports and mounted-root inspection. Maintenance

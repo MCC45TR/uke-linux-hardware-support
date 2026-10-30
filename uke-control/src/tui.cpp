@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "client.hpp"
 #include "tui-text.hpp"
+#include "tui-menu.hpp"
 #include "version.hpp"
 #include <json/json.h>
 #include <algorithm>
@@ -38,7 +39,7 @@ public:
     SignalHandler(int signal,void(*handler)(int)):signal_(signal){struct sigaction next{};next.sa_handler=handler;sigemptyset(&next.sa_mask);sigaction(signal_,&next,&original_);}
     ~SignalHandler(){sigaction(signal_,&original_,nullptr);}
 };
-struct Options {client::Language language=client::Language::turkish;bool readonly=false,color=true;std::string fixture,start="overview";};
+struct Options {client::Language language=client::Language::turkish;bool readonly=false,color=true;std::string fixture,start="home";};
 struct FixtureValue {std::string output,error;int status=0;unsigned delay=0;};
 std::map<std::string,FixtureValue> load_fixture(const std::string& path) {
     const int fd=open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC);
@@ -77,441 +78,507 @@ public:
         if(tcgetattr(0,&original_))throw std::runtime_error("Cannot save terminal mode");
         screen_=newterm(nullptr,stdout,stdin);if(!screen_)throw std::runtime_error("Cannot initialize terminal");
         cbreak();noecho();keypad(stdscr,true);curs_set(0);set_escdelay(30);
-        if(colors&&has_colors()){start_color();use_default_colors();init_pair(1,COLOR_CYAN,-1);init_pair(2,COLOR_YELLOW,-1);init_pair(3,COLOR_RED,-1);color=true;}
-        mousemask(BUTTON1_CLICKED|BUTTON1_DOUBLE_CLICKED|BUTTON4_PRESSED|BUTTON5_PRESSED,nullptr);mouseinterval(160);
+        if(colors&&has_colors()){start_color();use_default_colors();init_pair(1,COLOR_CYAN,-1);init_pair(2,COLOR_YELLOW,-1);init_pair(3,COLOR_RED,-1);init_pair(4,COLOR_WHITE,COLORS>=256?24:COLOR_BLUE);color=true;}
+        mousemask(BUTTON1_PRESSED|BUTTON1_RELEASED|BUTTON4_PRESSED|BUTTON5_PRESSED|REPORT_MOUSE_POSITION,nullptr);mouseinterval(0);
+        pointer(true);
         for(int signal:{SIGINT,SIGTERM,SIGHUP})signals_.push_back(std::make_unique<SignalHandler>(signal,stop));
     }
-    void pause(){def_prog_mode();endwin();tcsetattr(0,TCSANOW,&original_);}
-    void resume(){reset_prog_mode();winsize size{};if(!ioctl(0,TIOCGWINSZ,&size)&&size.ws_row&&size.ws_col)resize_term(size.ws_row,size.ws_col);clearok(stdscr,true);curs_set(0);}
-    ~Terminal(){if(screen_){endwin();delscreen(screen_);tcsetattr(0,TCSANOW,&original_);}}
+    void pointer(bool enabled){if(has_mouse()){fputs(enabled?"\033[?1003l\033[?1002h\033[?1006h":"\033[?1002l\033[?1003l\033[?1006l",stdout);fflush(stdout);}}
+    void pause(){pointer(false);def_prog_mode();endwin();tcsetattr(0,TCSANOW,&original_);}
+    void resume(){reset_prog_mode();pointer(true);winsize size{};if(!ioctl(0,TIOCGWINSZ,&size)&&size.ws_row&&size.ws_col)resize_term(size.ws_row,size.ws_col);clearok(stdscr,true);curs_set(0);}
+    ~Terminal(){if(screen_){pointer(false);endwin();delscreen(screen_);tcsetattr(0,TCSANOW,&original_);}}
 };
 struct Entry {client::Result result;client::Values values;unsigned sequence=0;};
-enum class View { browse,form,choices,review,result,help,history,edit,search,find,save };
+enum class View {menu,guide,form,choices,choice_info,review,result,help,history,edit,search,find,save,confirm};
+enum class Command {back,next,home,search,history,help,active,up,down,item,field,choice,keyboard,insert,shift,symbols,space,erase,clear,left,right,step,inspect,preview,details,favorite,raw,find,save,cancel};
+struct Hit {
+    int y,x,h,w;Command command;size_t index=0;std::string value={};
+    bool contains(int py,int px)const{return py>=y&&py<y+h&&px>=x&&px<x+w;}
+    bool same(const Hit& other)const{return command==other.command&&index==other.index&&value==other.value;}
+};
+struct Page {
+    View view=View::menu;
+    std::string menu="home",id,filter,phrase;
+    size_t selected=0,top=0,field=0,choice=0,caret=0;
+    int scroll=0;
+    bool keyboard=false,shift=false,symbols=false,details=false,raw=false;
+    std::wstring input;
+    std::optional<client::Plan> plan;
+    std::shared_ptr<Entry> entry;
+};
 class App {
     Options options_;
     Terminal& terminal_;
     std::map<std::string,FixtureValue> fixture_;
-    bool simulation_=false,global_=false,favorites_only_=false,raw_=false;
-    size_t category_=0,selected_=0,field_=0,choice_=0,history_selected_=0;
-    int focus_=1,info_scroll_=0,output_scroll_=0,choice_scroll_=0;
-    std::string filter_,notice_,current_id_,find_;
-    std::vector<std::string> visible_;
-    std::set<std::string> favorites_;
+    bool simulation_=false,running_=true;
+    Page page_;
+    std::vector<Page> back_;
     std::map<std::string,client::Values> drafts_;
-    View view_=View::browse,return_view_=View::browse;
-    std::wstring input_;
-    std::string prior_filter_;
-    bool prior_global_=false,prior_favorites_=false;
-    size_t prior_selected_=0;
-    size_t caret_=0;
-    std::optional<client::Plan> pending_;
+    std::set<std::string> favorites_;
+    std::vector<std::shared_ptr<Entry>> history_;
+    std::shared_ptr<Entry> active_;
     std::unique_ptr<client::Query> query_;
     std::optional<FixtureValue> fake_;
     Clock::time_point fake_end_{};
-    std::string running_id_;
-    client::Values running_values_;
-    std::vector<std::shared_ptr<Entry>> history_;
-    std::shared_ptr<Entry> result_;
-    bool follow_query_=true;
-    unsigned sequence_=0;
-    int rows_=24,cols_=80,body_=18,nav_width_=24,action_x_=25,action_width_=35;
-    int action_y_=3,action_height_=16,detail_x_=61,detail_y_=3,detail_width_=50,detail_height_=16;
-    std::string tr(const char* english,const char* turkish)const{return options_.language==client::Language::turkish?turkish:english;}
-    const client::Action& current()const{return client::action(current_id_);}
+    unsigned sequence_=0,generation_=0;
+    int rows_=24,cols_=80,body_y_=5,body_h_=13,row_h_=2,max_scroll_=0;
+    std::string notice_,find_;
+    std::vector<Hit> hits_;
+    std::optional<Hit> pressed_;
+    bool dragging_=false;
+    int press_y_=0,press_x_=0,drag_y_=0;
+    unsigned press_generation_=0;
+    Clock::time_point touch_ready_{};
+    std::string tr(const char* en,const char* turkish)const{return options_.language==client::Language::turkish?turkish:en;}
+    const client::Action& current()const{return client::action(page_.id);}
     bool busy()const{return query_||fake_;}
     bool writable()const{return !options_.readonly&&!simulation_;}
-    void line(int y,int x,int width,const std::string& value,int attributes=0)const {
-        if(y<0||y>=rows_||x<0||x>=cols_||width<=0)return;
-        const auto text_value=text::clipped(text::wide(value),std::min(width,cols_-x));
-        attron(attributes);mvaddnwstr(y,x,text_value.data(),int(text_value.size()));attroff(attributes);
-    }
-    void wide_line(int y,int x,int width,const std::wstring& value,int attributes=0)const{line(y,x,width,text::utf8(value),attributes);}
     int accent()const{return A_BOLD|(terminal_.color?COLOR_PAIR(1):0);}
     int warning()const{return A_BOLD|(terminal_.color?COLOR_PAIR(2):0);}
-    void panel(int y,int x,int height,int width,const std::string& title,bool active=false)const {
-        if(height<2||width<3)return;
-        const int attributes=active?accent():A_NORMAL;
-        attron(attributes);mvhline(y,x,ACS_HLINE,width);mvhline(y+height-1,x,ACS_HLINE,width);mvvline(y,x,ACS_VLINE,height);mvvline(y,x+width-1,ACS_VLINE,height);
-        mvaddch(y,x,ACS_ULCORNER);mvaddch(y,x+width-1,ACS_URCORNER);mvaddch(y+height-1,x,ACS_LLCORNER);mvaddch(y+height-1,x+width-1,ACS_LRCORNER);attroff(attributes);
-        line(y,x+2,width-4," "+title+" ",attributes);
+    void line(int y,int x,int width,const std::string& value,int attributes=0)const {
+        if(y<0||y>=rows_||x<0||x>=cols_||width<=0)return;
+        const auto safe=text::clipped(text::wide(value),std::min(width,cols_-x));
+        attron(attributes);mvaddnwstr(y,x,safe.data(),int(safe.size()));attroff(attributes);
     }
-    int paragraph(int y,int x,int width,int height,const std::string& value,int offset=0)const {
-        const auto lines=text::wrap(value,width);
-        offset=std::clamp(offset,0,std::max(0,int(lines.size())-height));
-        for(int i=0;i<height&&i+offset<int(lines.size());++i)wide_line(y+i,x,width,lines[size_t(i+offset)]);
-        return offset;
+    void fill(int y,int x,int height,int width,int attributes)const {
+        attron(attributes);for(int row=0;row<height&&y+row<rows_;++row)if(y+row>=0)mvhline(y+row,x,' ',std::min(width,cols_-x));attroff(attributes);
     }
-    void rebuild() {
-        const auto selected_id=visible_.empty()?std::string{}:visible_[std::min(selected_,visible_.size()-1)];
-        visible_=client::search(filter_,global_||favorites_only_?"":client::categories()[category_].id,options_.language);
-        if(favorites_only_)std::erase_if(visible_,[&](const auto& id){return !favorites_.contains(id);});
-        const auto found=std::find(visible_.begin(),visible_.end(),selected_id);
-        selected_=found==visible_.end()?0:size_t(found-visible_.begin());
-        sync_selected();
+    void button(int y,int x,int h,int w,const std::string& label,Command command,size_t index=0,const std::string& value={},bool primary=false) {
+        if(h<=0||w<2)return;
+        const int attr=primary?A_REVERSE|A_BOLD:terminal_.color?COLOR_PAIR(4):A_REVERSE;
+        fill(y,x,h,w,attr);
+        const auto clipped=text::clipped(text::wide(label),w-2);
+        line(y+(h-1)/2,x+std::max(1,(w-text::cells(clipped))/2),w-2,text::utf8(clipped),attr);
+        hits_.push_back({y,x,h,w,command,index,value});
     }
-    void sync_selected(){if(!visible_.empty())current_id_=visible_[std::min(selected_,visible_.size()-1)];else current_id_.clear();info_scroll_=0;}
-    void browse(){view_=View::browse;sync_selected();}
-    void select_delta(int amount) {
-        if(visible_.empty())return;
-        selected_=size_t(std::clamp(int(selected_)+amount,0,int(visible_.size())-1));sync_selected();
+    void invalidate(){++generation_;pressed_.reset();dragging_=false;}
+    void push(Page next) {
+        if(back_.size()>=64)throw std::runtime_error("Navigation limit reached; go back first");
+        back_.push_back(page_);page_=std::move(next);invalidate();notice_.clear();
+    }
+    void back() {
+        if(back_.empty()){notice_=tr("At Categories. Use Quit or q to exit.","Kategorilerdesiniz. Çıkmak için Çıkış veya q kullanın.");return;}
+        page_=std::move(back_.back());back_.pop_back();invalidate();notice_.clear();
+    }
+    client::Values& draft(const std::string& id){if(!drafts_.contains(id))drafts_[id]=client::defaults(client::action(id));return drafts_.at(id);}
+    std::vector<uke::tui_menu::Item> items()const {
+        if(page_.menu=="search"||page_.menu=="favorites") {
+            std::vector<uke::tui_menu::Item> result;
+            for(const auto& id:client::search(page_.filter,{},options_.language))if(page_.menu!="favorites"||favorites_.contains(id))result.push_back({id,true});
+            return result;
+        }
+        return uke::tui_menu::items(page_.menu);
+    }
+    std::string menu_title()const {
+        if(page_.menu=="search")return tr("Search results: ","Arama sonuçları: ")+page_.filter;
+        if(page_.menu=="favorites")return tr("Session favorites","Oturum favorileri");
+        return uke::tui_menu::menu(page_.menu).title.get(options_.language);
+    }
+    std::string breadcrumb()const {
+        std::string result=tr("Categories","Kategoriler");
+        if(page_.menu!="home"&&page_.menu!="search"&&page_.menu!="favorites") {
+            std::vector<std::string> trail;auto id=page_.menu;
+            while(id!="home"){const auto& node=uke::tui_menu::menu(id);trail.push_back(node.title.get(options_.language));id=node.parent;}
+            for(auto it=trail.rbegin();it!=trail.rend();++it)result+=" / "+*it;
+        } else if(page_.menu!="home")result+=" / "+menu_title();
+        if(page_.view!=View::menu&&!page_.id.empty())result+=" / "+client::action(page_.id).title.get(options_.language);
+        return result;
+    }
+    void panel(const std::string& title) {
+        attron(accent());mvhline(4,0,ACS_HLINE,cols_);mvhline(rows_-6,0,ACS_HLINE,cols_);
+        mvvline(4,0,ACS_VLINE,rows_-9);mvvline(4,cols_-1,ACS_VLINE,rows_-9);
+        mvaddch(4,0,ACS_ULCORNER);mvaddch(4,cols_-1,ACS_URCORNER);mvaddch(rows_-6,0,ACS_LLCORNER);mvaddch(rows_-6,cols_-1,ACS_LRCORNER);attroff(accent());
+        line(4,2,cols_-4," "+title+" ",accent());
+    }
+    void paragraph(int y,int h,const std::string& value) {
+        const auto lines=text::wrap(value,cols_-6);max_scroll_=std::max(0,int(lines.size())-h);page_.scroll=std::clamp(page_.scroll,0,max_scroll_);
+        for(int row=0;row<h&&row+page_.scroll<int(lines.size());++row)line(y+row,3,cols_-6,text::utf8(lines[size_t(row+page_.scroll)]));
+        if(max_scroll_)line(rows_-6,cols_-19,16,std::to_string(page_.scroll+1)+" / "+std::to_string(lines.size()),accent());
     }
     std::string access(const client::Action& a)const {
-        if(a.access==client::Access::root)return geteuid()==0?tr("Root (current process)","Root (mevcut süreç)"):tr("Root; sudo only for this action","Root; yalnız bu eylem için sudo");
-        if(a.access==client::Access::active_session)return tr("Active local session broker","Etkin yerel oturum broker'ı");
-        return tr("Current user / session","Mevcut kullanıcı / oturum");
+        if(a.access==client::Access::root)return geteuid()==0?tr("Root (current process)","Root (mevcut süreç)"):tr("Root; sudo authorizes only this action","Root; sudo yalnız bu işlemi yetkilendirir");
+        if(a.access==client::Access::active_session)return tr("Active local session","Etkin yerel oturum");
+        return tr("Current user","Mevcut kullanıcı");
     }
-    client::Values& draft(const std::string& id){if(!drafts_.contains(id))drafts_[id]=client::defaults(client::action(id));return drafts_[id];}
     std::string details(const client::Action& a)const {
-        std::string value=a.title.get(options_.language)+"\n\n"+a.description.get(options_.language)+"\n\n"+
-            tr("Effect: ","Etki: ")+client::effect_description(a.effect).get(options_.language)+"\n\n"+tr("Access: ","Yetki: ")+access(a)+"\n";
-        if(a.tests_package)value+="\n"+tr("Requires the optional uke-control-tests package.","İsteğe bağlı uke-control-tests paketi gerekir.")+"\n";
-        if(!a.preview.empty())value+="\nF7: "+tr("Open the safe preview first.","Önce güvenli önizlemeyi açın.")+"\n";
-        if(!a.inspect.empty())value+="F5: "+tr("Inspect the related current state.","İlgili mevcut durumu okuyun.")+"\n";
-        if(!writable()&&a.effect!=client::Effect::read)value+="\n"+tr("Changes are disabled by simulation/read-only mode.","Değişiklikler simülasyon/salt okunur kipte devre dışı.")+"\n";
-        value+="\n"+tr("Form defaults are requests, not current device readings. Unknown data is not zero or false.","Form varsayılanları istektir; mevcut cihaz okuması değildir. Bilinmeyen veri sıfır veya yanlış değildir.")+"\n\nID: "+a.id;
+        std::string value=a.description.get(options_.language)+"\n\n"+tr("What it does\n","İşlemin etkisi\n")+client::effect_description(a.effect).get(options_.language);
+        if(a.tests_package)value+="\n\n"+tr("Requires the optional uke-control-tests package.","İsteğe bağlı uke-control-tests paketi gerekir.");
+        if(!a.parameters.empty())value+="\n\n"+tr("Continue to choose parameters. Form defaults are requests, not current device readings.","Parametreleri seçmek için devam edin. Form varsayılanları istektir; cihazın mevcut okuması değildir.");
+        if(!writable()&&a.effect!=client::Effect::read)value+="\n\n"+tr("Changes are disabled. You can still inspect the form and request.","Değişiklikler kapalı. Formu ve isteği inceleyebilirsiniz.");
+        if(page_.details)value+="\n\n"+tr("Access: ","Yetki: ")+access(a)+"\nID: "+a.id;
         return value;
     }
-    void retain(client::Result result,const client::Values& values) {
-        auto entry=std::make_shared<Entry>(Entry{std::move(result),values,++sequence_});history_.push_back(entry);
-        if(follow_query_){result_=entry;output_scroll_=0;}
-        const auto bytes=[&]{size_t n=0;for(const auto& e:history_)n+=e->result.output.size()+e->result.error.size();return n;};
-        while(history_.size()>32||(history_.size()>1&&bytes()>8*1024*1024))history_.erase(history_.begin());
-        notice_=tr("Command finished; exit status ","Komut tamamlandı; çıkış kodu ")+std::to_string(entry->result.exit_status)+tr(". Physical acceptance is separate.",". Fiziksel kabul ayrıdır.");
+    std::string choice_label(const client::Parameter& p,const std::string& value)const {
+        for(const auto& c:p.choices)if(c.value==value)return c.title.get(options_.language);
+        return value.empty()?tr("Required — select a value","Gerekli — bir değer seçin"):value;
     }
-    void tick() {
-        if(query_) {
-            query_->poll();
-            if(!query_->result().running){const auto result=query_->result();query_.reset();retain(result,running_values_);}
+    void header() {
+        const auto mode=simulation_?tr("SIMULATION","SİMÜLASYON"):options_.readonly?tr("READ ONLY","SALT OKUNUR"):"";
+        line(0,2,cols_-4,"UKE CONTROL "+std::string(uke::application_version)+(mode.empty()?"":"   ·   "+mode),accent());
+        if(busy())button(0,cols_-25,1,23,tr("Reading… [F9]","Okunuyor… [F9]"),Command::active);
+        const std::array<std::string,4> labels{cols_<100?tr("Categories","Kategoriler"):tr("Categories [Home]","Kategoriler [Home]"),tr("Search [/]","Ara [/]"),tr("History [H]","Geçmiş [H]"),tr("Help [F1]","Yardım [F1]")};
+        const std::array<Command,4> commands{Command::home,Command::search,Command::history,Command::help};
+        for(int i=0;i<4;++i){const int x=1+i*(cols_-2)/4,end=1+(i+1)*(cols_-2)/4;button(1,x,2,end-x-1,labels[size_t(i)],commands[size_t(i)]);}
+        line(3,2,cols_-4,breadcrumb());
+    }
+    std::string next_label()const {
+        switch(page_.view) {
+        case View::menu:case View::history:return tr("Open [Enter]","Aç [Enter]");
+        case View::guide:return current().parameters.empty()&&current().effect==client::Effect::read?tr("Read [Enter]","Oku [Enter]"):tr("Continue [Enter]","Devam [Enter]");
+        case View::form:return tr("Review [F8]","İncele [F8]");
+        case View::choices:return tr("Details [Enter]","Açıklama [Enter]");
+        case View::choice_info:return tr("Choose [Enter]","Seç [Enter]");
+        case View::review:return tr("Run [Enter]","Çalıştır [Enter]");
+        case View::result:case View::help:return tr("Back [Enter]","Geri [Enter]");
+        case View::search:return tr("Show results [Enter]","Sonuçlar [Enter]");
+        default:return tr("Accept [Enter]","Kabul et [Enter]");
         }
-        if(fake_&&Clock::now()>=fake_end_) {
-            client::Result result;result.action_id=running_id_;result.output=fake_->output;result.error=fake_->error;result.exit_status=fake_->status;result.elapsed_ms=fake_->delay;
-            fake_.reset();retain(result,running_values_);
+    }
+    void footer() {
+        const std::string message=!notice_.empty()?notice_:busy()?tr("Reading in background — Stop is available on the result page.","Arka planda okunuyor — Durdur düğmesi sonuç ekranında."):"";
+        line(rows_-5,2,cols_-4,message,warning());
+        const int back_width=std::max(15,(cols_-4)/4),arrow_width=7;
+        button(rows_-4,1,3,back_width,back_.empty()?tr("Quit [q]","Çıkış [q]"):tr("< Back [Esc]","< Geri [Esc]"),Command::back);
+        button(rows_-4,back_width+2,3,arrow_width,"↑",Command::up);
+        button(rows_-4,back_width+arrow_width+3,3,arrow_width,"↓",Command::down);
+        const int next_x=back_width+2*arrow_width+4;
+        button(rows_-4,next_x,3,cols_-next_x-1,next_label(),Command::next,0,{},true);
+        line(rows_-1,2,cols_-4,tr("↑↓ select/scroll · Enter forward · Esc back · Tap buttons · F4 TR/EN","↑↓ seç/kaydır · Enter ileri · Esc geri · Düğmelere dokunun · F4 TR/EN"));
+    }
+    void list_position(size_t count,int capacity) {
+        if(!count){page_.selected=page_.top=0;return;}
+        page_.selected=std::min(page_.selected,count-1);page_.top=std::min(page_.top,count-1);
+        if(page_.selected<page_.top)page_.top=page_.selected;
+        if(page_.selected>=page_.top+size_t(capacity))page_.top=page_.selected-size_t(capacity)+1;
+        page_.top=std::min(page_.top,count>size_t(capacity)?count-size_t(capacity):0);
+        line(rows_-6,std::max(2,cols_-20),17,std::to_string(page_.selected+1)+" / "+std::to_string(count),accent());
+    }
+    void list_row(int y,const std::string& title,const std::string& subtitle,bool selected,Command command,size_t index) {
+        const int attributes=selected?A_REVERSE|A_BOLD:0;
+        fill(y,2,row_h_,cols_-4,attributes);
+        line(y,3,cols_-7,(selected?"> ":"  ")+title,attributes);
+        if(row_h_>1)line(y+1,5,cols_-9,subtitle,selected?A_REVERSE:A_DIM);
+        hits_.push_back({y,2,row_h_,cols_-4,command,index,{}});
+    }
+    void draw_menu() {
+        panel(menu_title());const auto list=items();const int capacity=std::max(1,body_h_/row_h_);list_position(list.size(),capacity);
+        if(list.empty()){paragraph(body_y_,body_h_,tr("No matching action. Go back to change the search.","Eşleşen işlem yok. Aramayı değiştirmek için geri dönün."));return;}
+        for(int row=0;row<capacity&&page_.top+size_t(row)<list.size();++row) {
+            const auto index=page_.top+size_t(row);const auto& item=list[index];
+            if(item.action) {
+                const auto& a=client::action(item.id);const auto prefix=a.effect==client::Effect::read?tr("Read · ","Oku · "):tr("Request · ","İstek · ");
+                list_row(body_y_+row*row_h_,a.title.get(options_.language)+(favorites_.contains(a.id)?" *":""),prefix+a.description.get(options_.language),index==page_.selected,Command::item,index);
+            } else {const auto& m=uke::tui_menu::menu(item.id);list_row(body_y_+row*row_h_,m.title.get(options_.language)+"  ›",m.description.get(options_.language),index==page_.selected,Command::item,index);}
         }
     }
-    void cancel_query() {
-        if(query_){query_->cancel();notice_=tr("Stopping the read-only query; waiting for actual child exit.","Salt okunur sorgu durduruluyor; gerçek alt süreç çıkışı bekleniyor.");}
-        if(fake_){client::Result result;result.action_id=running_id_;result.cancelled=true;result.exit_status=130;fake_.reset();retain(result,running_values_);}
+    void action_tools() {
+        const int width=(cols_-6)/3;
+        button(body_y_,2,2,width,tr("Details [D]","Ayrıntı [D]"),Command::details);
+        button(body_y_,width+3,2,width,tr("Current [F5]","Mevcut [F5]"),Command::inspect);
+        button(body_y_,2*width+4,2,cols_-2*width-6,tr("Preview [F7]","Önizle [F7]"),Command::preview);
     }
-    void open_action(const std::string& id,bool force_form=false) {
-        if(id.empty())return;
-        current_id_=id;notice_.clear();field_=0;pending_.reset();
-        const auto& a=current();
-        if(!writable()&&a.effect!=client::Effect::read)notice_=tr("Changes are disabled. You may inspect parameters and plans.","Değişiklikler kapalı. Parametreleri ve planları inceleyebilirsiniz.");
-        if(force_form||!a.parameters.empty()){draft(a.id);view_=View::form;return;}
-        if(a.effect==client::Effect::read&&a.presentation==client::Presentation::capture){start(a.id,{});return;}
-        pending_=client::plan(a.id,{});input_.clear();view_=View::review;
-    }
-    void related(bool preview) {
-        if(current_id_.empty())return;
-        const auto id=preview?current().preview:current().inspect;
-        if(id.empty()) {
-            if(!preview&&current().effect==client::Effect::read)open_action(current_id_);
-            else notice_=tr("No separate preview/current-state action is defined; inspect this guide.","Ayrı önizleme/mevcut durum eylemi tanımlanmamış; bu rehberi inceleyin.");
-            return;
-        }
-        const auto prior=draft(current_id_);auto& next=draft(id);
-        for(auto& [key,value]:next)if(prior.contains(key))value=prior.at(key);
-        open_action(id);
-    }
-    void start(const std::string& id,const client::Values& values) {
-        if(busy()){notice_=tr("A read query is still owned. Press Esc to stop it before another action.","Bir okuma sorgusu hâlâ sahiplenilmiş. Başka eylemden önce Esc ile durdurun.");return;}
-        const auto request=client::plan(id,values);
-        if(!writable()&&request.effect!=client::Effect::read)throw std::runtime_error("Changes are disabled");
-        running_id_=id;running_values_=request.values;view_=View::result;raw_=false;output_scroll_=0;result_.reset();follow_query_=true;
-        if(simulation_) {
-            const auto it=fixture_.find(id);
-            fake_=it==fixture_.end()?FixtureValue{"{\"available\":false,\"reason\":\"no_fixture_result\"}",tr("No synthetic result is provided for this action.","Bu eylem için örnek sonuç sağlanmamış."),69,100}:it->second;
-            fake_end_=Clock::now()+std::chrono::milliseconds(fake_->delay);return;
-        }
-        if(request.presentation==client::Presentation::capture){query_=std::make_unique<client::Query>(id,values);return;}
-        terminal_.pause();
-        SignalHandler ignore_int(SIGINT,SIG_IGN),ignore_quit(SIGQUIT,SIG_IGN);
-        std::cout<<"\n"<<client::action(id).title.get(options_.language)<<"\n"<<client::display_command(request.argv)<<"\n"<<tr("Returning to the TUI after the actual command exits.\n","Gerçek komut çıktıktan sonra TUI'ye dönülecek.\n")<<std::flush;
-        client::Result result;
-        try{result=client::run_terminal(id,values,request.confirmation_required);}
-        catch(const std::exception& failure){result.action_id=id;result.exit_status=127;result.error=failure.what();}
-        terminal_.resume();retain(result,request.values);
-    }
-    void review() {
-        pending_=client::plan(current_id_,draft(current_id_));input_.clear();view_=View::review;
-    }
-    std::string confirmation()const {
-        if(!pending_||!pending_->confirmation_required)return {};
-        if(pending_->effect==client::Effect::maintenance)return pending_->action_id;
-        if(pending_->effect==client::Effect::publish)return pending_->values.at("repository");
-        if(pending_->effect==client::Effect::packages)return tr("APPLY","UYGULA");
-        return {};
-    }
-    void metrics() {
-        getmaxyx(stdscr,rows_,cols_);body_=rows_-7;nav_width_=24;action_x_=25;action_y_=3;
-        if(cols_>=112){action_width_=36;action_height_=body_;detail_x_=62;detail_y_=3;detail_width_=cols_-63;detail_height_=body_;}
-        else {action_width_=cols_-26;action_height_=std::max(5,body_/2);detail_x_=25;detail_y_=3+action_height_;detail_width_=cols_-26;detail_height_=body_-action_height_;}
-    }
-    void header()const {
-        const auto mode=simulation_?tr("SIMULATION: no commands execute","SİMÜLASYON: komut çalıştırılmaz"):options_.readonly?tr("READ ONLY","SALT OKUNUR"):tr("REVIEW BEFORE CHANGES","DEĞİŞİKLİKTEN ÖNCE İNCELE");
-        line(0,1,cols_-2,"Uke Control "+std::string(uke::application_version)+" | "+mode,accent());
-        line(1,1,cols_-2,busy()?tr("Reading: ","Okunuyor: ")+running_id_+" | Esc: "+tr("stop this read","bu okumayı durdur"):tr("Local user interface. Hardware qualification and backend guards remain independent.","Yerel kullanıcı arayüzü. Donanım doğrulaması ve backend denetimleri ayrıdır."),busy()?warning():A_NORMAL);
-    }
-    void footer(const std::string& keys)const {
-        line(rows_-4,1,cols_-2,notice_,warning());
-        line(rows_-3,1,cols_-2,keys);
-        line(rows_-2,1,cols_-2,tr("F1 help | F2 favorites | F3 search | F4 TR/EN | H history | q quit","F1 yardım | F2 favoriler | F3 ara | F4 TR/EN | H geçmiş | q çıkış"));
-        line(rows_-1,1,cols_-2,tr("F5 current read | F6 parameters | F7 preview | F8 review | Space favorite","F5 mevcut okuma | F6 parametreler | F7 önizleme | F8 incele | Boşluk favori"));
-    }
-    void draw_browse() {
-        panel(3,0,body_,nav_width_,tr("Categories","Kategoriler"),focus_==0);
-        const int catrows=body_-2;const auto top=std::max(0,int(category_)-catrows+1);
-        for(int row=0;row<catrows&&row+top<int(client::categories().size());++row)line(4+row,1,nav_width_-2,client::categories()[size_t(row+top)].title.get(options_.language),size_t(row+top)==category_?A_REVERSE:0);
-        panel(action_y_,action_x_,action_height_,action_width_,favorites_only_?tr("Favorites","Favoriler"):global_?tr("Search: all","Arama: tümü"):tr("Actions","Eylemler"),focus_==1);
-        const int height=action_height_-2;const auto first=std::max(0,int(selected_)-height+1);
-        if(visible_.empty())line(action_y_+1,action_x_+1,action_width_-2,tr("No matching action","Eşleşen eylem yok"));
-        for(int row=0;row<height&&row+first<int(visible_.size());++row) {
-            const auto& a=client::action(visible_[size_t(row+first)]);
-            const auto prefix=favorites_.contains(a.id)?"* ":a.effect==client::Effect::read?"  ":"! ";
-            line(action_y_+1+row,action_x_+1,action_width_-2,prefix+a.title.get(options_.language),size_t(row+first)==selected_?A_REVERSE:0);
-        }
-        panel(detail_y_,detail_x_,detail_height_,detail_width_,tr("Guide / PgUp PgDn","Rehber / PgUp PgDn"),focus_==2);
-        if(!current_id_.empty())info_scroll_=paragraph(detail_y_+1,detail_x_+1,detail_width_-2,detail_height_-2,details(current()),info_scroll_);
-        footer(tr("Tab: pane | arrows: select | Enter: read / form | /: global search | Esc: stop / back","Tab: alan | oklar: seç | Enter: oku / form | /: genel arama | Esc: durdur / geri"));
-        if(!filter_.empty())line(2,1,cols_-2,tr("Filter: ","Filtre: ")+filter_,warning());
-        else if(!current_id_.empty())line(2,1,cols_-2,"ID: "+current_id_+tr(" | ! change  * favorite"," | ! değişiklik  * favori"));
+    void draw_guide() {
+        panel(current().title.get(options_.language));action_tools();
+        paragraph(body_y_+3,body_h_-3,details(current()));
     }
     void draw_form() {
-        const auto& a=current();panel(3,0,body_,cols_,a.title.get(options_.language));
-        const int split=std::clamp(cols_/2,30,58);const int height=body_-3;const int first=std::max(0,int(field_)-height+1);
-        const auto& values=drafts_.at(a.id);
-        for(int i=0;i<height&&i+first<=int(a.parameters.size());++i) {
-            const int index=i+first;
-            std::string label=index==int(a.parameters.size())?tr("[ Review this plan ]","[ Bu planı incele ]"):a.parameters[size_t(index)].title.get(options_.language)+": "+values.at(a.parameters[size_t(index)].id);
-            line(4+i,2,split-4,label,size_t(index)==field_?A_REVERSE:0);
+        panel(tr("Parameters — ","Parametreler — ")+current().title.get(options_.language));
+        const auto& a=current();const size_t count=a.parameters.size();page_.selected=page_.field;
+        const int capacity=std::max(1,(body_h_-3)/row_h_);list_position(count+1,capacity);page_.field=page_.selected;
+        for(int row=0;row<capacity&&page_.top+size_t(row)<=count;++row) {
+            const auto at=page_.top+size_t(row);const bool review=at==count;
+            const auto title=review?tr("Review this request →","Bu isteği incele →"):a.parameters[at].title.get(options_.language);
+            const auto value=review?tr("Check values and effect before running","Çalıştırmadan önce değerleri ve etkiyi denetleyin"):choice_label(a.parameters[at],draft(a.id).at(a.parameters[at].id));
+            list_row(body_y_+row*row_h_,title,value,at==page_.field,Command::field,at);
         }
-        mvvline(4,split,ACS_VLINE,body_-2);
-        std::string explanation;
-        if(field_<a.parameters.size()) {
-            const auto& p=a.parameters[field_];explanation=p.title.get(options_.language)+"\n\n"+p.description.get(options_.language)+"\n";
-            if(p.kind==client::Kind::integer)explanation+="\n"+tr("Allowed range: ","Geçerli aralık: ")+std::to_string(p.minimum)+".."+std::to_string(p.maximum);
-            explanation+="\n"+tr("Form default: ","Form varsayılanı: ")+(p.initial.empty()?tr("(required)","(gerekli)"):p.initial);
-            if(p.kind==client::Kind::choice) {
-                explanation+="\n\n"+tr("Left/right changes the choice; Enter opens every option and its explanation.","Sol/sağ seçeneği değiştirir; Enter tüm seçenekleri ve açıklamalarını açar.");
-                const auto it=std::find_if(p.choices.begin(),p.choices.end(),[&](const auto& value){return value.value==values.at(p.id);});
-                if(it!=p.choices.end())explanation+="\n\n"+it->title.get(options_.language)+"\n"+it->description.get(options_.language);
-            } else explanation+="\n\n"+tr("Enter edits this value. Paths may contain spaces and UTF-8. Ctrl-U clears. Nothing runs while editing.","Enter bu değeri düzenler. Yollar boşluk ve UTF-8 içerebilir. Ctrl-U temizler. Düzenlerken işlem çalışmaz.");
-        } else explanation=a.description.get(options_.language)+"\n\n"+client::effect_description(a.effect).get(options_.language);
-        info_scroll_=paragraph(4,split+2,cols_-split-4,body_-2,explanation,info_scroll_);
-        footer(tr("Up/down/Tab: field | Enter: edit/choose | PgUp/PgDn: guide | F8: review | Esc: back","Oklar/Tab: alan | Enter: düzenle/seç | PgUp/PgDn: rehber | F8: incele | Esc: geri"));
+        if(page_.field<count) {
+            const auto& p=a.parameters[page_.field];line(rows_-9,3,cols_-6,p.description.get(options_.language));
+            line(rows_-8,3,cols_-6,p.kind==client::Kind::integer?tr("Allowed range: ","Geçerli aralık: ")+std::to_string(p.minimum)+"–"+std::to_string(p.maximum):tr("Tap a field or press Enter to edit. Defaults are requests.","Düzenlemek için alana dokunun veya Enter'a basın. Varsayılanlar istektir."),A_DIM);
+        }
     }
-    void draw_choices()const {
-        const auto& p=current().parameters[field_];panel(3,0,body_,cols_,p.title.get(options_.language));
-        const int left=std::clamp(cols_/2,25,48),height=body_-2;
-        for(int row=0;row<height&&row+choice_scroll_<int(p.choices.size());++row){const auto index=size_t(row+choice_scroll_);line(4+row,2,left-3,p.choices[index].title.get(options_.language),index==choice_?A_REVERSE:0);}
-        mvvline(4,left,ACS_VLINE,height);
-        if(choice_<p.choices.size())paragraph(4,left+2,cols_-left-4,height,p.choices[choice_].title.get(options_.language)+"\n\n"+p.choices[choice_].description.get(options_.language)+"\n\n"+tr("Value: ","Değer: ")+p.choices[choice_].value);
-        footer(tr("Up/down/PgUp/PgDn: option | Enter: choose | Esc: keep previous value","Yukarı/aşağı/PgUp/PgDn: seçenek | Enter: seç | Esc: önceki değeri koru"));
+    void draw_choices() {
+        const auto& p=current().parameters[page_.field];panel(p.title.get(options_.language));
+        page_.selected=page_.choice;const int capacity=std::max(1,body_h_/row_h_);list_position(p.choices.size(),capacity);page_.choice=page_.selected;
+        for(int row=0;row<capacity&&page_.top+size_t(row)<p.choices.size();++row) {
+            const auto at=page_.top+size_t(row);const auto& c=p.choices[at];list_row(body_y_+row*row_h_,c.title.get(options_.language),c.description.get(options_.language),at==page_.choice,Command::choice,at);
+        }
+    }
+    std::string confirmation()const {
+        if(!page_.plan||!page_.plan->confirmation_required)return {};
+        const auto& p=*page_.plan;
+        if(p.effect==client::Effect::maintenance)return p.action_id;
+        if(p.effect==client::Effect::publish)return p.values.at("repository");
+        if(p.effect==client::Effect::packages)return tr("APPLY","UYGULA");
+        return {};
     }
     void draw_review() {
-        panel(3,0,body_,cols_,tr("Review the exact request","Tam isteği incele"),true);
-        const auto& a=client::action(pending_->action_id);
-        std::string review=a.title.get(options_.language)+"\n\n"+a.description.get(options_.language)+"\n\n"+
-            client::effect_description(a.effect).get(options_.language)+"\n\n"+tr("Access: ","Yetki: ")+access(a)+"\n\n";
-        for(const auto& [key,value]:pending_->values)review+=key+": "+value+"\n";
-        review+="\n"+tr("Exact argument vector (display only; no shell):\n","Tam argüman dizisi (gösterim; kabuk kullanılmaz):\n")+client::display_command(pending_->argv);
-        if(a.presentation==client::Presentation::terminal)review+="\n\n"+tr("The TUI will restore the terminal. Existing interactive backend approvals remain required. Writes have no application timeout.","TUI terminali geri yükleyecek. Mevcut etkileşimli backend onayları gereklidir. Yazmalara uygulama süre aşımı uygulanmaz.");
-        info_scroll_=paragraph(4,2,cols_-4,body_-5,review,info_scroll_);
-        const auto phrase=confirmation();
-        line(rows_-8,2,cols_-4,!writable()&&pending_->confirmation_required?tr("Changes disabled; this plan cannot execute.","Değişiklikler kapalı; bu plan çalıştırılamaz."):phrase.empty()?tr("Enter: run this request  |  Esc: cancel","Enter: bu isteği çalıştır  |  Esc: iptal"):tr("Type to confirm: ","Onay için yazın: ")+phrase,warning());
-        if(!phrase.empty())line(rows_-7,2,cols_-4,"> "+text::utf8(input_),A_REVERSE);
-        footer(tr("PgUp/PgDn: review details | F7: safe preview | Enter: explicit approval | Esc: no action","PgUp/PgDn: ayrıntılar | F7: güvenli önizleme | Enter: açık onay | Esc: işlem yapmadan dön"));
+        panel(tr("Review the request","İsteği incele"));action_tools();const auto& a=current();
+        std::string value=a.title.get(options_.language)+"\n\n"+client::effect_description(a.effect).get(options_.language)+"\n\n";
+        for(const auto& p:a.parameters)value+=p.title.get(options_.language)+": "+choice_label(p,page_.plan->values.at(p.id))+"\n";
+        if(a.presentation==client::Presentation::terminal)value+="\n"+tr("The command continues in the normal terminal. Existing system authentication and backend questions still apply.","Komut normal terminalde sürer. Mevcut sistem yetkilendirmesi ve backend soruları geçerlidir.");
+        if(page_.details)value+="\n\n"+tr("Access: ","Yetki: ")+access(a)+"\n\n"+tr("Exact arguments (no shell):\n","Tam argümanlar (kabuk yok):\n")+client::display_command(page_.plan->argv);
+        if(!writable()&&a.effect!=client::Effect::read)value+="\n\n"+tr("Changes are disabled in this mode.","Bu kipte değişiklikler kapalı.");
+        const auto phrase=confirmation();paragraph(body_y_+3,std::max(1,body_h_-3-(phrase.empty()?0:3)),value);
+        if(!phrase.empty())button(rows_-9,2,2,cols_-4,tr("Confirmation: ","Onay: ")+(page_.phrase.empty()?tr("[C] type ","[C] yazın ")+phrase:page_.phrase),Command::item);
     }
     std::string result_text()const {
-        const client::Result* r=query_&&follow_query_?&query_->result():result_?&result_->result:nullptr;
-        if(!r&&fake_&&follow_query_)return tr("Synthetic read is pending. No command or hardware query was started.","Örnek okuma bekleniyor. Komut veya donanım sorgusu başlatılmadı.");
-        if(!r)return tr("No result yet. Select an action to begin.","Henüz sonuç yok. Başlamak için bir eylem seçin.");
-        std::string value=tr("Action: ","Eylem: ")+r->action_id+"\n"+tr("Exit status: ","Çıkış kodu: ")+(r->running?tr("running","çalışıyor"):std::to_string(r->exit_status))+" | "+std::to_string(r->elapsed_ms)+" ms\n";
-        if(r->cancelled)value+=tr("Cancellation requested; this is not successful completion.\n","İptal istendi; bu başarılı tamamlama değildir.\n");
-        if(r->timed_out)value+=tr("Read deadline exceeded.\n","Okuma süresi aşıldı.\n");
-        if(r->truncated)value+=tr("Output bound exceeded; retained output is partial.\n","Çıktı sınırı aşıldı; tutulan çıktı kısmidir.\n");
-        value+=tr("Physical acceptance: not established\n\n","Fiziksel kabul: bu sonuçla kurulmadı\n\n");
-        if(!r->output.empty())value+=client::format_output(r->output,options_.language,raw_);
-        else if(client::action(r->action_id).presentation==client::Presentation::terminal)value+=tr("Interactive output was shown in the normal terminal. This receipt records only the actual exit status. Use F5 for a fresh related observation.\n","Etkileşimli çıktı normal terminalde gösterildi. Bu makbuz yalnız gerçek çıkış kodunu kaydeder. Yeni ilgili okuma için F5 kullanın.\n");
-        if(!r->error.empty())value+="\n"+tr("Error stream:\n","Hata çıktısı:\n")+r->error;
+        if(!page_.entry)return tr("No result yet.","Henüz sonuç yok.");
+        const auto& r=page_.entry->result;
+        std::string value=client::action(r.action_id).title.get(options_.language)+"\n";
+        value+=r.running?tr("Reading…","Okunuyor…"):r.cancelled?tr("Cancelled","İptal edildi"):r.timed_out?tr("Read timed out","Okuma süresi aşıldı"):r.exit_status==0?tr("Completed","Tamamlandı"):tr("Not completed","Tamamlanmadı");
+        if(!r.running)value+=" · "+tr("Exit status: ","Çıkış kodu: ")+std::to_string(r.exit_status)+" · "+std::to_string(r.elapsed_ms)+" ms";
+        value+="\n\n";
+        if(r.truncated)value+=tr("Output is partial: the output limit was reached.\n\n","Çıktı kısmidir: çıktı sınırına ulaşıldı.\n\n");
+        if(!r.output.empty())value+=client::format_output(r.output,options_.language,page_.raw);
+        else if(r.running)value+=simulation_?tr("Synthetic read is pending; no command was started.","Örnek okuma bekleniyor; komut başlatılmadı."):tr("Waiting for the read query. You can go back while it runs.","Okuma sorgusu bekleniyor. Çalışırken geri dönebilirsiniz.");
+        else if(client::action(r.action_id).presentation==client::Presentation::terminal)value+=tr("Output was displayed in the normal terminal. This receipt records the actual command exit.","Çıktı normal terminalde gösterildi. Bu makbuz gerçek komut çıkışını kaydeder.");
+        if(!r.error.empty())value+="\n\n"+tr("Details:\n","Ayrıntılar:\n")+r.error;
         return value;
     }
     void draw_result() {
-        panel(3,0,body_,cols_,raw_?tr("Raw JSON / output","Ham JSON / çıktı"):tr("Readable result","Okunabilir sonuç"),true);
-        output_scroll_=paragraph(4,2,cols_-4,body_-2,result_text(),output_scroll_);
-        footer(tr("Arrows/PgUp/PgDn: scroll | J: JSON | /: find | S: save | Tab: browse | Esc: stop/back","Oklar/PgUp/PgDn: kaydır | J: JSON | /: bul | S: kaydet | Tab: gezin | Esc: durdur/geri"));
+        panel(page_.raw?tr("Raw JSON / output","Ham JSON / çıktı"):tr("Result","Sonuç"));const int w=(cols_-7)/4;
+        button(body_y_,2,2,w,page_.raw?tr("Readable [J]","Okunabilir [J]"):"JSON [J]",Command::raw);
+        button(body_y_,w+3,2,w,tr("Find [/]","Bul [/]"),Command::find);
+        button(body_y_,2*w+4,2,w,tr("Save [S]","Kaydet [S]"),Command::save);
+        button(body_y_,3*w+5,2,cols_-3*w-7,page_.entry&&page_.entry->result.running?tr("Stop","Durdur"):tr("Current [F5]","Mevcut [F5]"),page_.entry&&page_.entry->result.running?Command::cancel:Command::inspect);
+        paragraph(body_y_+3,body_h_-3,result_text());
     }
     std::string help()const {
-        return tr("NAVIGATION\nTab moves between categories, actions and the guide. Arrow keys or j/k select. Enter reads or opens a parameter form. Mouse clicks select; wheel scrolls the focused pane. F3 or / searches every category. F2 filters session favorites; Space marks an action.\n\nPARAMETERS\nEach field has its own purpose, accepted range and choice descriptions. Left/right cycles an enum; Enter opens its full option guide. Enter edits a text/number; Ctrl-U clears; Esc discards the edit. F8 validates the common plan. Editing never executes a command.\n\nSAFE EXECUTION\nF5 reads related current state; F7 opens a separate preview when defined. The review screen shows the exact validated argument vector, access and effect. Normal changes require an explicit Enter; package, publication and storage workflows have visible confirmation text and keep backend approvals. Root actions authorize only their command with sudo. Run the TUI as your regular session user.\n\nRESULTS\nRead queries run without blocking navigation. Esc cancels only a read; writes run in the restored terminal and remain owned until actual exit. J toggles JSON. / searches the result and n finds the next match. S saves a new private 0600 receipt without overwrite. H opens bounded in-memory session history; viewing history never replays a write. No history is saved automatically.\n\nLIMITS\n--fixture visibly disables commands and mutations. --read-only disables changes and result-file writes. Missing data is not zero/false; driver readback is not physical acceptance. No automatic package cleanup, firmware qualification, active chroot, audio recording or device testing is introduced.\n\nGTK / QML\nlibuke-control-client owns the same bilingual catalog, validation, plans, read-query ownership and receipts. 'uke-control actions --json' exposes that metadata without a GUI or device access. No frontend may replace the existing backend admission checks.",
-        "GEZİNME\nTab kategoriler, eylemler ve rehber arasında geçer. Oklar veya j/k seçim yapar. Enter okur veya parametre formunu açar. Fare tıklaması seçer; tekerlek odaklanan alanı kaydırır. F3 veya / tüm kategorilerde arar. F2 oturum favorilerini süzer; Boşluk eylemi işaretler.\n\nPARAMETRELER\nHer alanın amacı, geçerli aralığı ve seçenek açıklamaları vardır. Sol/sağ enum değerini değiştirir; Enter tüm seçenek rehberini açar. Enter metin/sayıyı düzenler; Ctrl-U temizler; Esc düzenlemeyi atar. F8 ortak planı doğrular. Düzenlerken komut çalıştırılmaz.\n\nGÜVENLİ ÇALIŞTIRMA\nF5 ilgili mevcut durumu okur; F7 varsa ayrı önizlemeyi açar. İnceleme ekranı tam doğrulanmış argümanları, yetkiyi ve etkiyi gösterir. Normal değişiklikler açık Enter ister; paket, yayımlama ve depolama akışları görünür onay metni kullanır ve backend onaylarını korur. Root eylemleri yalnız kendi komutunu sudo ile yetkilendirir. TUI'yi normal oturum kullanıcısı olarak çalıştırın.\n\nSONUÇLAR\nOkuma sorguları gezinmeyi engellemeden çalışır. Esc yalnız okumayı iptal eder; yazmalar geri yüklenmiş terminalde çalışır ve gerçek çıkışa kadar sahiplenilir. J JSON'u açar/kapatır. / sonuçta arar; n sonraki eşleşmeye gider. S üzerine yazmadan yeni özel 0600 makbuz kaydeder. H sınırlı bellek içi oturum geçmişini açar; geçmişe bakmak yazmayı tekrarlamaz. Geçmiş otomatik kaydedilmez.\n\nSINIRLAR\n--fixture komutları ve değişiklikleri görünür biçimde devre dışı bırakır. --read-only değişiklikleri ve sonuç dosyası yazmasını kapatır. Eksik veri sıfır/yanlış değildir; sürücü geri okuması fiziksel kabul değildir. Otomatik paket temizliği, firmware doğrulaması, etkin chroot, ses kaydı veya cihaz testi eklenmez.\n\nGTK / QML\nlibuke-control-client aynı iki dilli kataloğa, doğrulamaya, planlara, okuma sorgusu sahipliğine ve makbuzlara sahiptir. 'uke-control actions --json' bu metaveriyi GUI veya cihaz erişimi olmadan sunar. Hiçbir ön yüz mevcut backend kabul denetimlerinin yerini alamaz.");
+        return tr("NAVIGATION\nChoose a category, an action, then Continue. Every action has a guide. The bottom Back and forward buttons always name the next step. Esc goes back without cancelling a background read. Home opens Categories; H opens session history; / searches all 124 actions. Up/down or j/k select; Page Up/Down scroll; Enter advances. F4 switches Turkish/English. Space marks a favorite on an action guide; F2 opens favorites. q quits outside text entry.\n\nTOUCH\nTap once to open a row or button. Drag vertically or use the large arrow buttons to scroll. A release after dragging does not open a row. Fields, options, previews, results and confirmation are tappable. Text fields have a built-in keyboard; numeric fields also have bounded step buttons. Physical keyboard editing remains available. Terminal mouse reporting must be enabled (Konsole/xterm compatible). Font size determines the physical target size. Use at least 80×24 for comfortable touch input. System passwords and existing backend terminal questions use the terminal/system input method.\n\nREQUESTS\nParameter defaults are requests, not device readings. Every option explains its effect. F5 opens related current state; F7 opens a separate preview when defined. F8 reviews a form. Details shows access and the exact argument vector; no shell is used. Changes require a separate Run action. Storage maintenance, packages and publishing also require typed confirmation. Existing backend checks and confirmations remain authoritative. Run the application as your normal session user.\n\nRESULTS & PRIVACY\nReads stay owned until actual process exit; Stop cancels only a read. Going back never cancels it. Writes restore the normal terminal and have no application timeout. J toggles JSON; / searches output; n finds the next match. S saves a new private 0600 receipt without overwriting. History is bounded and stays in memory; opening history never replays commands. Reports can contain private data: review before sharing. Unknown data is not zero or false. A command exit does not establish physical hardware support.\n\nSHARED CLIENT\nThe C++ client catalog, validation, plans, query ownership and receipts are shared with future GTK/QML frontends. Action IDs and API v1 remain stable. Simulation executes no commands and saves no files; read-only mode disables changes.",
+        "GEZİNME\nKategori, işlem ve Devam sırasını izleyin. Her işlemin açıklaması vardır. Alttaki Geri ve ileri düğmeleri sonraki adımı yazar. Esc arka plan okumasını iptal etmeden geri döner. Home kategorileri, H oturum geçmişini açar; / tüm 124 işlemde arar. Yukarı/aşağı veya j/k seçer; Page Up/Down kaydırır; Enter ilerler. F4 Türkçe/İngilizce değiştirir. İşlem açıklamasında Boşluk favoriye ekler; F2 favorileri açar. Metin girişi dışında q çıkar.\n\nDOKUNMATİK\nSatıra veya düğmeye bir kez dokunun. Kaydırmak için dikey sürükleyin veya büyük ok düğmelerini kullanın. Sürükleme sonunda satır açılmaz. Alanlar, seçenekler, önizlemeler, sonuçlar ve onay dokunulabilirdir. Metin alanında yerleşik klavye; sayı alanında ayrıca sınırlı artır/azalt düğmeleri bulunur. Fiziksel klavye kullanılabilir. Terminalde fare raporlaması açık olmalıdır (Konsole/xterm uyumlu). Fiziksel hedef boyutunu yazı boyutu belirler. Rahat dokunmatik giriş için en az 80×24 kullanın. Sistem parolaları ve mevcut backend terminal soruları terminalin/sistemin giriş yöntemini kullanır.\n\nİSTEKLER\nParametre varsayılanları cihaz okuması değil, istektir. Her seçeneğin etkisi açıklanır. F5 ilgili mevcut durumu, F7 varsa ayrı önizlemeyi açar. F8 formu incelemeye götürür. Ayrıntı yetkiyi ve tam argümanları gösterir; kabuk kullanılmaz. Değişiklikler ayrı Çalıştır işlemi gerektirir. Depolama bakımı, paketler ve yayımlama ayrıca yazılı onay ister. Mevcut backend denetimleri ve onayları yetkilidir. Uygulamayı normal oturum kullanıcısı olarak çalıştırın.\n\nSONUÇLAR VE GİZLİLİK\nOkumalar gerçek süreç çıkışına kadar sahiplenilir; Durdur yalnız okumayı iptal eder. Geri dönmek iptal etmez. Yazmalar normal terminali geri yükler ve uygulama süre aşımı kullanmaz. J JSON'u açar/kapatır; / çıktıda arar; n sonraki eşleşmeyi bulur. S üzerine yazmadan yeni özel 0600 makbuz kaydeder. Geçmiş sınırlıdır ve bellekte kalır; geçmişi açmak komut tekrarlamaz. Raporlar özel veri içerebilir; paylaşmadan önce inceleyin. Bilinmeyen veri sıfır veya yanlış değildir. Komut çıkışı fiziksel donanım desteğini kanıtlamaz.\n\nORTAK İSTEMCİ\nC++ istemci kataloğu, doğrulama, planlar, sorgu sahipliği ve makbuzlar gelecekteki GTK/QML ön yüzleriyle ortaktır. İşlem kimlikleri ve API v1 sabittir. Simülasyon komut çalıştırmaz ve dosya kaydetmez; salt okunur kip değişiklikleri kapatır.");
     }
-    void draw_history()const {
-        panel(3,0,body_,cols_,tr("Session history (never replays)","Oturum geçmişi (işlem tekrarlamaz)"),true);
-        if(history_.empty())line(5,2,cols_-4,tr("No completed query/action yet.","Henüz tamamlanmış sorgu/eylem yok."));
-        const int height=body_-2,first=std::max(0,int(history_selected_)-height+1);
-        for(int row=0;row<height&&row+first<int(history_.size());++row) {
-            const auto index=size_t(row+first);const auto& e=*history_[index];
-            line(4+row,2,cols_-4,"#"+std::to_string(e.sequence)+" ["+std::to_string(e.result.exit_status)+"] "+client::action(e.result.action_id).title.get(options_.language)+" ("+std::to_string(e.result.elapsed_ms)+" ms)",index==history_selected_?A_REVERSE:0);
+    void draw_history() {
+        panel(tr("Session history — view only","Oturum geçmişi — yalnız görüntüle"));const int capacity=std::max(1,body_h_/row_h_);list_position(history_.size(),capacity);
+        if(history_.empty()){paragraph(body_y_,body_h_,tr("No completed action yet. History stays in memory.","Henüz tamamlanmış işlem yok. Geçmiş bellekte kalır."));return;}
+        for(int row=0;row<capacity&&page_.top+size_t(row)<history_.size();++row) {
+            const auto index=page_.top+size_t(row);const auto& e=*history_[index];list_row(body_y_+row*row_h_,"#"+std::to_string(e.sequence)+" "+client::action(e.result.action_id).title.get(options_.language),tr("Exit status: ","Çıkış kodu: ")+std::to_string(e.result.exit_status)+" · "+std::to_string(e.result.elapsed_ms)+" ms",index==page_.selected,Command::item,index);
         }
-        footer(tr("Up/down: result | Enter: view only | Esc: back | History stays in memory","Yukarı/aşağı: sonuç | Enter: yalnız görüntüle | Esc: geri | Geçmiş bellekte kalır"));
+    }
+    bool input_view()const{return page_.view==View::edit||page_.view==View::search||page_.view==View::find||page_.view==View::save||page_.view==View::confirm;}
+    bool numeric()const{return page_.view==View::edit&&current().parameters[page_.field].kind==client::Kind::integer;}
+    void keyboard(int top,int h) {
+        const int kh=std::clamp(h/5,1,3);
+        if(numeric()) {
+            for(int row=0;row<3;++row)for(int col=0;col<3;++col){const auto digit=std::to_string(row*3+col+1);const int x=2+col*(cols_-4)/3,end=2+(col+1)*(cols_-4)/3;button(top+row*kh,x,kh,end-x-1,digit,Command::insert,0,digit);}
+            const std::array<std::string,5> labels{"−10","−1","0","+1","+10"};
+            for(int col=0;col<5;++col){const int x=2+col*(cols_-4)/5,end=2+(col+1)*(cols_-4)/5;button(top+3*kh,x,kh,end-x-1,labels[size_t(col)],col==2?Command::insert:Command::step,0,col==2?"0":std::to_string(col==0?-10:col==1?-1:col==3?1:10));}
+        } else {
+            const std::array<std::wstring,4> letters=options_.language==client::Language::turkish?std::array<std::wstring,4>{L"1234567890",L"qwertyuıopğü",L"asdfghjklşi",L"zxcvbnmöç"}:std::array<std::wstring,4>{L"1234567890",L"qwertyuiop",L"asdfghjkl",L"zxcvbnm"};
+            const std::array<std::wstring,4> symbols{L"1234567890",L"!@#$%&*()_+",L"-=/\\:;\"'[]",L".,?<>|{}~"};
+            for(int row=0;row<4;++row){auto keys=page_.symbols?symbols[size_t(row)]:letters[size_t(row)];for(size_t col=0;col<keys.size();++col){auto key=keys[col];if(page_.shift&&!page_.symbols)key=options_.language==client::Language::turkish&&key==L'i'?L'İ':towupper(key);const auto label=text::utf8(std::wstring(1,key));const int x=2+int(col)*(cols_-4)/int(keys.size()),end=2+int(col+1)*(cols_-4)/int(keys.size());button(top+row*kh,x,kh,end-x-1,label,Command::insert,0,label);}}
+        }
+        const std::array<std::string,7> controls{numeric()?"":page_.shift?"abc":"ABC",numeric()?"":"#+=",tr("Space","Boşluk"),"←","→","⌫",tr("Clear","Temizle")};
+        const std::array<Command,7> commands{Command::shift,Command::symbols,Command::space,Command::left,Command::right,Command::erase,Command::clear};
+        for(int i=0;i<7;++i){if(numeric()&&i<3)continue;const int x=2+i*(cols_-4)/7,end=2+(i+1)*(cols_-4)/7;button(top+4*kh,x,kh,end-x-1,controls[size_t(i)],commands[size_t(i)]);}
+        if(kh>1)for(int row=0;row<5;++row)fill(top+(row+1)*kh-1,2,1,cols_-4,0);
     }
     void draw_input() {
-        if(view_==View::search){draw_browse();line(2,1,cols_-2,tr("Search all: ","Tümünde ara: ")+text::utf8(input_),A_REVERSE);}
+        const std::string title=page_.view==View::edit?current().parameters[page_.field].title.get(options_.language):page_.view==View::search?tr("Search all actions","Tüm işlemlerde ara"):page_.view==View::find?tr("Find in result","Sonuçta bul"):page_.view==View::confirm?tr("Type the confirmation","Onayı yazın"):tr("Save a private receipt","Özel makbuz kaydet");panel(title);
+        std::string description=page_.view==View::edit?current().parameters[page_.field].description.get(options_.language):page_.view==View::confirm?tr("Type exactly: ","Aynen yazın: ")+confirmation():page_.view==View::save?tr("New file only; contains private observations.","Yalnız yeni dosya; özel gözlemler içerir."):tr("Type a word. Enter shows matches; Esc discards.","Bir sözcük yazın. Enter eşleşmeleri gösterir; Esc vazgeçer.");
+        line(body_y_,3,cols_-21,description);button(body_y_,cols_-19,1,16,page_.keyboard?tr("Hide keyboard","Klavyeyi gizle"):tr("Keyboard","Klavye"),Command::keyboard);
+        size_t left=0;const int width=cols_-8;
+        while(left<page_.caret&&text::cells(std::wstring_view(page_.input).substr(left,page_.caret-left))>=width-1)++left;
+        fill(body_y_+1,2,1,cols_-4,A_REVERSE);line(body_y_+1,3,cols_-6,"> "+text::utf8(page_.input.substr(left)),A_REVERSE);
+        if(!page_.keyboard){curs_set(1);move(body_y_+1,5+text::cells(std::wstring_view(page_.input).substr(left,page_.caret-left)));}
+        const int gap=body_h_<10?2:3;
+        if(page_.keyboard)keyboard(body_y_+gap,body_h_-gap);
         else {
-            panel(3,0,body_,cols_,view_==View::edit?current().parameters[field_].title.get(options_.language):view_==View::save?tr("Save a new private receipt","Yeni özel makbuz kaydet"):tr("Find in output","Çıktıda bul"),true);
-            const auto explanation=view_==View::edit?current().parameters[field_].description.get(options_.language):view_==View::save?tr("Existing files are preserved. Receipts contain private observations and paths; review them before sharing.","Mevcut dosyalar korunur. Makbuzlar özel okumalar ve yollar içerir; paylaşmadan önce inceleyin."):tr("Search the currently displayed result. Enter finds the next matching line.","Gösterilen sonuçta arar. Enter sonraki eşleşen satırı bulur.");
-            paragraph(5,2,cols_-4,5,explanation);
-            const auto columns=std::max(1,cols_-6);auto value=input_;size_t left=0;
-            while(left<caret_&&text::cells(std::wstring_view(value).substr(left,caret_-left))>=columns-1)++left;
-            wide_line(12,2,cols_-4,L"> "+value.substr(left),A_REVERSE);
-            if(12<rows_-6){curs_set(1);move(12,4+text::cells(std::wstring_view(value).substr(left,caret_-left)));}
+            if(page_.view==View::search){const auto found=client::search(text::utf8(page_.input),{},options_.language);line(body_y_+3,3,cols_-6,std::to_string(found.size())+tr(" matches — Enter to show"," eşleşme — göstermek için Enter"),accent());for(size_t i=0;i<found.size()&&int(i)<body_h_-5;++i)line(body_y_+5+int(i),3,cols_-6,client::action(found[i]).title.get(options_.language));}
+            else {auto guide=description+"\n\n"+tr("Enter accepts · Esc discards · Ctrl-U clears","Enter kabul eder · Esc vazgeçer · Ctrl-U temizler");if(numeric()){const auto& p=current().parameters[page_.field];guide+="\n\n"+tr("Allowed range: ","Geçerli aralık: ")+std::to_string(p.minimum)+"–"+std::to_string(p.maximum);}paragraph(body_y_+3,body_h_-3,guide);}
         }
-        footer(tr("Enter: accept | Esc: discard | Ctrl-U: clear | Left/right/Home/End: cursor","Enter: kabul | Esc: vazgeç | Ctrl-U: temizle | Sol/sağ/Home/End: imleç"));
     }
     void render() {
-        metrics();erase();curs_set(0);header();
-        if(rows_<18||cols_<64) {
-            paragraph(4,1,std::max(1,cols_-2),std::max(1,rows_-6),tr("Terminal too small. Resize to at least 64 columns and 18 rows. q exits safely.","Terminal çok küçük. En az 64 sütun ve 18 satıra büyütün. q güvenle çıkar."));
-            refresh();return;
+        int old_rows=rows_,old_cols=cols_;getmaxyx(stdscr,rows_,cols_);if(old_rows!=rows_||old_cols!=cols_)invalidate();
+        body_h_=rows_-11;row_h_=rows_>=28?3:2;max_scroll_=0;hits_.clear();erase();curs_set(0);
+        if(rows_<18||cols_<64){line(1,1,cols_-2,tr("Terminal too small. Minimum: 64×18. q exits.","Terminal çok küçük. En az 64×18 gerekli. q çıkar."));refresh();return;}
+        header();
+        switch(page_.view) {
+        case View::menu:draw_menu();break;case View::guide:draw_guide();break;case View::form:draw_form();break;case View::choices:draw_choices();break;case View::review:draw_review();break;case View::result:draw_result();break;case View::history:draw_history();break;
+        case View::choice_info:{const auto& p=current().parameters[page_.field];const auto& c=p.choices[page_.choice];panel(c.title.get(options_.language));paragraph(body_y_,body_h_,c.description.get(options_.language)+"\n\n"+tr("Value: ","Değer: ")+c.value);break;}
+        case View::help:panel(tr("Help","Yardım"));paragraph(body_y_,body_h_,help());break;
+        default:draw_input();break;
         }
-        switch(view_) {
-        case View::browse:draw_browse();break;case View::form:draw_form();break;case View::choices:draw_choices();break;case View::review:draw_review();break;
-        case View::result:draw_result();break;case View::history:draw_history();break;
-        case View::help:panel(3,0,body_,cols_,tr("Full help and boundaries","Tam yardım ve sınırlar"),true);paragraph(4,2,cols_-4,body_-2,help(),info_scroll_);footer(tr("Up/down/PgUp/PgDn: scroll | Esc: return","Yukarı/aşağı/PgUp/PgDn: kaydır | Esc: dön"));break;
-        case View::edit:case View::search:case View::find:case View::save:draw_input();break;
-        }
-        refresh();
+        footer();refresh();
     }
-    void begin_input(View mode,const std::string& value={}){
-        return_view_=view_;view_=mode;input_=text::wide(value);caret_=input_.size();
-        if(mode==View::search){prior_filter_=filter_;prior_global_=global_;prior_favorites_=favorites_only_;prior_selected_=selected_;}
+    void complete() {
+        active_->result.running=false;history_.push_back(active_);
+        const auto bytes=[&]{size_t n=0;for(const auto& e:history_)n+=e->result.output.size()+e->result.error.size();return n;};
+        while(history_.size()>32||(history_.size()>1&&bytes()>8*1024*1024))history_.erase(history_.begin());
+        notice_=tr("Finished: ","Tamamlandı: ")+client::action(active_->result.action_id).title.get(options_.language)+" · "+std::to_string(active_->result.exit_status);
+    }
+    void tick() {
+        if(query_){query_->poll();active_->result=query_->result();if(!active_->result.running){query_.reset();complete();}}
+        if(fake_&&Clock::now()>=fake_end_){active_->result.output=fake_->output;active_->result.error=fake_->error;active_->result.exit_status=fake_->status;active_->result.elapsed_ms=fake_->delay;fake_.reset();complete();}
+    }
+    void cancel_query() {
+        if(query_){query_->cancel();notice_=tr("Stopping the read; waiting for actual process exit.","Okuma durduruluyor; gerçek süreç çıkışı bekleniyor.");}
+        if(fake_){fake_.reset();active_->result.cancelled=true;active_->result.exit_status=130;complete();}
+    }
+    void start(client::Plan request) {
+        if(busy())throw std::runtime_error(tr("A read is still running. Open its result and use Stop before starting another action.","Bir okuma hâlâ çalışıyor. Başka işlemden önce sonucunu açıp Durdur kullanın."));
+        if(!writable()&&request.effect!=client::Effect::read)throw std::runtime_error(tr("Changes are disabled in this mode.","Bu kipte değişiklikler kapalı."));
+        auto next=page_;next.view=View::result;next.scroll=0;next.raw=false;next.entry=std::make_shared<Entry>();next.entry->sequence=++sequence_;next.entry->values=request.values;next.entry->result.action_id=request.action_id;next.entry->result.running=true;push(next);active_=page_.entry;
+        if(simulation_){const auto found=fixture_.find(request.action_id);fake_=found==fixture_.end()?FixtureValue{"{\"available\":false,\"reason\":\"no_fixture_result\"}",tr("No synthetic result for this action.","Bu işlem için örnek sonuç yok."),69,100}:found->second;fake_end_=Clock::now()+std::chrono::milliseconds(fake_->delay);return;}
+        if(request.presentation==client::Presentation::capture){try{query_=std::make_unique<client::Query>(request.action_id,request.values);}catch(...){active_->result.running=false;back();throw;}return;}
+        terminal_.pause();SignalHandler ignore_int(SIGINT,SIG_IGN),ignore_quit(SIGQUIT,SIG_IGN);
+        std::cout<<"\n"<<client::action(request.action_id).title.get(options_.language)<<"\n"<<client::display_command(request.argv)<<"\n"<<tr("Returning after the command exits.\n","Komut çıktıktan sonra geri dönülecek.\n")<<std::flush;
+        try{active_->result=client::run_terminal(request.action_id,request.values,request.confirmation_required);}catch(const std::exception& failure){active_->result.running=false;active_->result.exit_status=127;active_->result.error=failure.what();}
+        terminal_.resume();complete();
+    }
+    void guide(const std::string& id) {
+        auto next=page_;next.view=View::guide;next.id=id;next.scroll=0;next.details=false;next.plan.reset();next.phrase.clear();push(next);
+    }
+    void related(bool preview) {
+        if(page_.id.empty())return;
+        const auto& a=current();const auto id=preview?a.preview:a.inspect;
+        if(id.empty()){notice_=tr("No separate observation/preview is defined. Read this action's explanation.","Ayrı gözlem/önizleme tanımlı değil. Bu işlemin açıklamasını okuyun.");return;}
+        const auto values=draft(a.id);auto& next=draft(id);for(auto& [key,value]:next)if(values.contains(key))value=values.at(key);guide(id);
+    }
+    void review() {auto request=client::plan(page_.id,draft(page_.id));auto next=page_;next.view=View::review;next.plan=request;next.phrase.clear();next.scroll=0;next.details=false;push(next);}
+    void begin_input(View view,const std::string& value,bool touch) {auto next=page_;next.view=view;next.input=text::wide(value);next.caret=next.input.size();next.keyboard=touch;next.shift=next.symbols=false;next.scroll=0;push(next);}
+    void open_field(bool touch) {
+        if(page_.field==current().parameters.size()){review();return;}
+        const auto& p=current().parameters[page_.field];const auto value=draft(page_.id).at(p.id);
+        if(p.kind==client::Kind::choice){auto next=page_;next.view=View::choices;next.top=0;next.choice=0;for(size_t i=0;i<p.choices.size();++i)if(p.choices[i].value==value)next.choice=i;push(next);}
+        else begin_input(View::edit,value,touch);
+    }
+    void accept_input() {
+        const auto value=text::utf8(page_.input);const auto view=page_.view;
+        if(view==View::search){Page next;next.view=View::menu;next.menu="search";next.filter=value;page_=next;invalidate();return;}
+        if(view==View::edit){client::validate_value(current().parameters[page_.field],value);draft(page_.id)[current().parameters[page_.field].id]=value;back();}
+        else if(view==View::confirm){back();page_.phrase=value;}
+        else if(view==View::save){if(!writable()||!page_.entry||page_.entry->result.running)throw std::runtime_error("Saving is disabled");client::save_receipt(value,page_.entry->result,page_.entry->values);back();notice_=tr("Private receipt saved: ","Özel makbuz kaydedildi: ")+value;}
+        else if(view==View::find){back();find_=value;find_next(true);}
+    }
+    void next(bool touch=false) {
+        if(input_view()){accept_input();return;}
+        switch(page_.view) {
+        case View::menu:{const auto list=items();if(list.empty())return;const auto item=list.at(page_.selected);if(item.action)guide(item.id);else {const auto& m=uke::tui_menu::menu(item.id);if(!m.action.empty()){draft(m.action)["topic"]=m.topic;guide(m.action);}else {Page next;next.menu=item.id;push(next);}}break;}
+        case View::guide:if(!current().parameters.empty()){draft(page_.id);auto next=page_;next.view=View::form;next.top=next.field=next.selected=0;push(next);}else if(current().effect==client::Effect::read&&current().presentation==client::Presentation::capture)start(client::plan(page_.id,{}));else review();break;
+        case View::form:review();break;
+        case View::choices:{auto next=page_;next.view=View::choice_info;next.scroll=0;push(next);break;}
+        case View::choice_info:{const auto& p=current().parameters[page_.field];draft(page_.id)[p.id]=p.choices.at(page_.choice).value;back();back();break;}
+        case View::review:if(page_.phrase!=confirmation()){notice_=tr("Confirmation does not match. Nothing ran.","Onay eşleşmiyor. İşlem çalışmadı.");if(touch)begin_input(View::confirm,page_.phrase,true);}else start(*page_.plan);break;
+        case View::history:if(!history_.empty()){auto entry=history_.at(page_.selected);auto next=page_;next.view=View::result;next.id=entry->result.action_id;next.menu=uke::tui_menu::owner(client::action(next.id));next.entry=entry;next.scroll=0;next.raw=false;push(next);}break;
+        default:back();break;
+        }
+    }
+    void select_delta(int delta) {
+        size_t count=0;
+        if(page_.view==View::menu)count=items().size();else if(page_.view==View::form)count=current().parameters.size()+1;else if(page_.view==View::choices)count=current().parameters[page_.field].choices.size();else if(page_.view==View::history)count=history_.size();
+        if(count){auto& at=page_.view==View::form?page_.field:page_.view==View::choices?page_.choice:page_.selected;at=size_t(std::clamp(int(at)+delta,0,int(count)-1));}else page_.scroll=std::clamp(page_.scroll+delta,0,max_scroll_);
+    }
+    void drag_delta(int delta) {
+        size_t count=0;int height=body_h_;
+        if(page_.view==View::menu)count=items().size();else if(page_.view==View::form){count=current().parameters.size()+1;height-=3;}else if(page_.view==View::choices)count=current().parameters[page_.field].choices.size();else if(page_.view==View::history)count=history_.size();
+        if(!count){select_delta(delta);drag_y_-=delta;return;}
+        const int steps=delta/row_h_,capacity=std::max(1,height/row_h_);if(!steps)return;
+        drag_y_-=steps*row_h_;
+        page_.top=size_t(std::clamp(int(page_.top)+steps,0,std::max(0,int(count)-capacity)));
+        auto& at=page_.view==View::form?page_.field:page_.view==View::choices?page_.choice:page_.selected;
+        at=std::clamp(at,page_.top,std::min(count-1,page_.top+size_t(capacity)-1));
     }
     void find_next(bool first=false) {
-        const auto lines=text::wrap(result_text(),std::max(1,cols_-4));const auto needle=text::wide(find_);
-        if(needle.empty())return;
-        for(size_t offset=first?0:1;offset<=lines.size();++offset) {
-            const auto at=(size_t(std::max(0,output_scroll_))+offset)%lines.size();
-            if(lines[at].find(needle)!=std::wstring::npos){output_scroll_=int(at);return;}
-        }
+        if(find_.empty())return;
+        const auto lines=text::wrap(result_text(),cols_-6);if(lines.empty())return;
+        for(size_t offset=first?0:1;offset<=lines.size();++offset){const auto at=(size_t(page_.scroll)+offset)%lines.size();if(lines[at].find(text::wide(find_))!=std::wstring::npos){page_.scroll=int(at);return;}}
         notice_=tr("No matching result line.","Eşleşen sonuç satırı yok.");
     }
-    void input_key(wint_t key,bool special) {
-        if(key==27){
-            if(view_==View::search){filter_=prior_filter_;global_=prior_global_;favorites_only_=prior_favorites_;rebuild();selected_=visible_.empty()?0:std::min(prior_selected_,visible_.size()-1);sync_selected();}
-            view_=return_view_;return;
-        }
-        if(key==L'\n'||key==KEY_ENTER||key==L'\r') {
-            const auto value=text::utf8(input_);
-            if(view_==View::edit){client::validate_value(current().parameters[field_],value);draft(current_id_)[current().parameters[field_].id]=value;view_=View::form;}
-            else if(view_==View::search){filter_=value;view_=View::browse;focus_=1;}
-            else if(view_==View::find){find_=value;view_=View::result;find_next(true);}
-            else if(view_==View::save){if(!result_||!writable())throw std::runtime_error("Result saving is disabled");client::save_receipt(value,result_->result,result_->values);view_=View::result;notice_=tr("Private receipt saved: ","Özel makbuz kaydedildi: ")+value;}
-            return;
-        }
-        if(key==21){input_.clear();caret_=0;}
-        else if(key==KEY_BACKSPACE||key==127||key==8){if(caret_){input_.erase(--caret_,1);}}
-        else if(key==KEY_DC){if(caret_<input_.size())input_.erase(caret_,1);}
-        else if(key==KEY_LEFT){if(caret_)--caret_;}
-        else if(key==KEY_RIGHT){if(caret_<input_.size())++caret_;}
-        else if(key==KEY_HOME)caret_=0;
-        else if(key==KEY_END)caret_=input_.size();
-        else if(!special&&iswprint(wchar_t(key))&&text::utf8(input_).size()<4092){input_.insert(caret_,1,wchar_t(key));++caret_;}
-        if(view_==View::search){filter_=text::utf8(input_);global_=true;favorites_only_=false;selected_=0;rebuild();}
+    void edit_key(wint_t key,bool special) {
+        if(key==27){back();return;}if(key==L'\n'||key==L'\r'||key==KEY_ENTER){accept_input();return;}
+        if(key==21){page_.input.clear();page_.caret=0;}
+        else if(key==KEY_BACKSPACE||key==127||key==8){if(page_.caret)page_.input.erase(--page_.caret,1);}
+        else if(key==KEY_DC){if(page_.caret<page_.input.size())page_.input.erase(page_.caret,1);}
+        else if(key==KEY_LEFT){if(page_.caret)--page_.caret;}
+        else if(key==KEY_RIGHT){if(page_.caret<page_.input.size())++page_.caret;}
+        else if(key==KEY_HOME)page_.caret=0;else if(key==KEY_END)page_.caret=page_.input.size();
+        else if(!special&&iswprint(wchar_t(key))&&text::utf8(page_.input).size()<4092){page_.input.insert(page_.caret,1,wchar_t(key));++page_.caret;}
     }
-    bool key(wint_t key,bool special) {
+    void quit(){if(busy()){cancel_query();notice_=tr("Read stopping. Press q again after it exits.","Okuma durduruluyor. Çıktıktan sonra yeniden q basın.");}else running_=false;}
+    void command(const Hit& target,bool touch) {
+        switch(target.command) {
+        case Command::back:if(back_.empty())quit();else back();break;
+        case Command::next:next(touch);break;
+        case Command::home:page_=Page{};back_.clear();invalidate();break;
+        case Command::search:begin_input(View::search,"",touch);break;
+        case Command::history:{auto next=page_;next.view=View::history;next.selected=history_.empty()?0:history_.size()-1;next.top=0;push(next);break;}
+        case Command::active:if(active_){auto next=page_;next.view=View::result;next.entry=active_;next.id=active_->result.action_id;next.menu=uke::tui_menu::owner(client::action(next.id));next.scroll=0;next.raw=false;push(next);}break;
+        case Command::help:{auto next=page_;next.view=View::help;next.scroll=0;push(next);break;}
+        case Command::up:select_delta(-1);break;case Command::down:select_delta(1);break;
+        case Command::item:if(page_.view==View::review)begin_input(View::confirm,page_.phrase,touch);else {page_.selected=target.index;next(touch);}break;
+        case Command::field:page_.field=target.index;open_field(touch);break;
+        case Command::choice:page_.choice=target.index;next(touch);break;
+        case Command::keyboard:page_.keyboard=!page_.keyboard;invalidate();break;
+        case Command::insert:for(const auto c:text::wide(target.value))edit_key(wint_t(c),false);break;
+        case Command::shift:page_.shift=!page_.shift;break;case Command::symbols:page_.symbols=!page_.symbols;break;
+        case Command::space:edit_key(L' ',false);break;case Command::erase:edit_key(KEY_BACKSPACE,true);break;case Command::clear:edit_key(21,false);break;case Command::left:edit_key(KEY_LEFT,true);break;case Command::right:edit_key(KEY_RIGHT,true);break;
+        case Command::step:{const auto& p=current().parameters[page_.field];const auto raw=text::utf8(page_.input);std::uint64_t value=p.minimum;if(!raw.empty()){client::validate_value(p,raw);value=std::stoull(raw);}const int amount=std::stoi(target.value);if(amount<0)value-=std::min(value-p.minimum,std::uint64_t(-amount));else value+=std::min(p.maximum-value,std::uint64_t(amount));page_.input=text::wide(std::to_string(value));page_.caret=page_.input.size();break;}
+        case Command::inspect:related(false);break;case Command::preview:related(true);break;
+        case Command::details:page_.details=!page_.details;page_.scroll=0;break;
+        case Command::favorite:if(!favorites_.erase(page_.id))favorites_.insert(page_.id);break;
+        case Command::raw:page_.raw=!page_.raw;page_.scroll=0;break;
+        case Command::find:begin_input(View::find,find_,touch);break;
+        case Command::save:if(!writable())notice_=tr("Saving is disabled in this mode.","Bu kipte kaydetme devre dışı.");else if(page_.entry&&!page_.entry->result.running)begin_input(View::save,"uke-tui-result-"+std::to_string(page_.entry->sequence)+".json",touch);break;
+        case Command::cancel:cancel_query();break;
+        }
+    }
+    std::optional<Hit> hit(int y,int x)const {for(auto it=hits_.rbegin();it!=hits_.rend();++it)if(it->contains(y,x))return *it;return {};}
+    void mouse_event(const MEVENT& e) {
+        if(e.bstate&(BUTTON4_PRESSED|BUTTON5_PRESSED)){pressed_.reset();select_delta(e.bstate&BUTTON4_PRESSED?-3:3);return;}
+        if(e.bstate&BUTTON1_RELEASED) {
+            const auto target=hit(e.y,e.x);const auto press=pressed_;pressed_.reset();
+            if(!press||dragging_||press_generation_!=generation_||Clock::now()<touch_ready_||!target||!target->same(*press)||std::abs(e.y-press_y_)>1||std::abs(e.x-press_x_)>2)return;
+            const auto before=generation_;command(*target,true);if(before!=generation_)touch_ready_=Clock::now()+std::chrono::milliseconds(250);return;
+        }
+        if(e.bstate&(BUTTON1_PRESSED|REPORT_MOUSE_POSITION)) {
+            if(!pressed_){if(!(e.bstate&BUTTON1_PRESSED)||Clock::now()<touch_ready_)return;pressed_=hit(e.y,e.x);press_y_=drag_y_=e.y;press_x_=e.x;press_generation_=generation_;return;}
+            if(std::abs(e.y-press_y_)>1||std::abs(e.x-press_x_)>2)dragging_=true;
+            if(dragging_&&e.y!=drag_y_)drag_delta(drag_y_-e.y);
+        }
+    }
+    void mouse() {
+        // Consume the whole run: one KEY_MOUSE can contain both press and release.
+        MEVENT event{};while(getmouse(&event)==OK)mouse_event(event);
+    }
+    void key(wint_t key,bool special) {
+        if(key==KEY_RESIZE){invalidate();return;}
+        if(key==KEY_MOUSE){mouse();return;}
         notice_.clear();
-        if(view_==View::edit||view_==View::search||view_==View::find||view_==View::save){input_key(key,special);return true;}
-        if(key==KEY_RESIZE)return true;
-        if(key==KEY_F(4)){options_.language=options_.language==client::Language::turkish?client::Language::english:client::Language::turkish;if(view_==View::review)input_.clear();return true;}
-        if(key==KEY_F(1)||key==L'?'){if(view_!=View::help){return_view_=view_;view_=View::help;info_scroll_=0;}return true;}
-        if(view_!=View::review&&(key==L'q'||key==L'Q')){if(busy()){cancel_query();return true;}return false;}
-        if(view_!=View::review&&(key==L'h'||key==L'H')){history_selected_=history_.empty()?0:history_.size()-1;view_=View::history;return true;}
-        if(key==27){if(busy()){cancel_query();return true;}if(view_==View::help)view_=return_view_;else if(view_==View::choices)view_=View::form;else if(view_!=View::browse)browse();else if(!filter_.empty()||favorites_only_){filter_.clear();global_=false;favorites_only_=false;rebuild();}else if(focus_!=0)focus_=0;else return false;return true;}
-        const bool down=key==KEY_DOWN||key==L'j',up=key==KEY_UP||key==L'k',enter=key==L'\n'||key==L'\r'||key==KEY_ENTER;
-        if(view_==View::help){info_scroll_=std::clamp(info_scroll_+(down?1:up?-1:key==KEY_NPAGE?body_-3:key==KEY_PPAGE?-(body_-3):0),0,std::max(0,int(text::wrap(help(),cols_-4).size())-body_+2));return true;}
-        if(view_==View::history) {
-            if(!history_.empty())history_selected_=size_t(std::clamp(int(history_selected_)+(down?1:up?-1:0),0,int(history_.size())-1));
-            if(enter&&!history_.empty()){result_=history_[history_selected_];current_id_=result_->result.action_id;view_=View::result;output_scroll_=0;raw_=false;follow_query_=false;}
-            return true;
-        }
-        if(view_==View::result) {
-            if(key==L'\t'){browse();return true;}
-            const int count=int(text::wrap(result_text(),std::max(1,cols_-4)).size()),maximum=std::max(0,count-body_+2);
-            if(key==L'J'){raw_=!raw_;output_scroll_=0;}
-            else if(key==L'/'){begin_input(View::find,find_);}
-            else if(key==L'n')find_next();
-            else if(key==L's'||key==L'S'){if(!writable())notice_=tr("Saving is disabled in this mode.","Bu kipte kaydetme devre dışı.");else if(result_)begin_input(View::save,"uke-tui-result-"+std::to_string(result_->sequence)+".json");}
-            else if(key==KEY_F(5)){if(!current_id_.empty())related(false);}
-            else output_scroll_=std::clamp(key==KEY_HOME?0:key==KEY_END?maximum:output_scroll_+(down?1:up?-1:key==KEY_NPAGE?body_-3:key==KEY_PPAGE?-(body_-3):0),0,maximum);
-            return true;
-        }
-        if(view_==View::choices) {
-            const auto& p=current().parameters[field_];const int delta=down?1:up?-1:key==KEY_NPAGE?body_-3:key==KEY_PPAGE?-(body_-3):0;
-            choice_=size_t(std::clamp(int(choice_)+delta,0,int(p.choices.size())-1));choice_scroll_=std::max(0,int(choice_)-body_+3);
-            if(enter){draft(current_id_)[p.id]=p.choices[choice_].value;view_=View::form;}return true;
-        }
-        if(view_==View::review) {
-            if(key==KEY_F(7)){related(true);return true;}
-            if(key==KEY_NPAGE)info_scroll_+=std::max(1,body_-6);else if(key==KEY_PPAGE)info_scroll_=std::max(0,info_scroll_-body_+6);
-            else if(enter){if(text::utf8(input_)!=confirmation())notice_=tr("Confirmation does not match; nothing ran.","Onay eşleşmiyor; işlem çalışmadı.");else {const auto request=*pending_;start(request.action_id,request.values);}}
-            else if(key==KEY_BACKSPACE||key==127||key==8){if(!input_.empty())input_.pop_back();}
-            else if(!special&&iswprint(wchar_t(key))&&input_.size()<160)input_+=wchar_t(key);
-            return true;
-        }
-        if(view_==View::form) {
-            if(key==KEY_F(5)||key==KEY_F(7)){related(key==KEY_F(7));return true;}
-            if(key==KEY_NPAGE||key==KEY_PPAGE){info_scroll_=std::max(0,info_scroll_+(key==KEY_NPAGE?1:-1)*(body_-3));return true;}
-            const auto& a=current();if(down||up||key==L'\t'){field_=size_t(std::clamp(int(field_)+(up?-1:1),0,int(a.parameters.size())));info_scroll_=0;}
-            if(key==KEY_F(8)||(enter&&field_==a.parameters.size())){info_scroll_=0;review();}
-            else if(field_<a.parameters.size()) {
-                const auto& p=a.parameters[field_];auto& value=draft(current_id_)[p.id];
-                if(p.kind==client::Kind::choice) {
-                    auto it=std::find_if(p.choices.begin(),p.choices.end(),[&](const auto& c){return c.value==value;});const int at=it==p.choices.end()?0:int(it-p.choices.begin());
-                    if(key==KEY_LEFT||key==KEY_RIGHT){const int index=(at+(key==KEY_LEFT?-1:1)+int(p.choices.size()))%int(p.choices.size());value=p.choices[size_t(index)].value;}
-                    if(enter||key==L' '){choice_=size_t(at);choice_scroll_=std::max(0,at-body_+3);view_=View::choices;}
-                } else if(enter)begin_input(View::edit,value);
-            }
-            return true;
-        }
-        if(key==KEY_F(2)){favorites_only_=!favorites_only_;global_=favorites_only_;selected_=0;rebuild();return true;}
-        if(key==KEY_F(3)||key==L'/'){begin_input(View::search,filter_);return true;}
-        if(key==KEY_F(5)){related(false);return true;}
-        if(key==KEY_F(7)){related(true);return true;}
-        if(key==KEY_F(6)||key==KEY_F(8)){if(!current_id_.empty())open_action(current_id_,key==KEY_F(6));return true;}
-        if(key==L'\t'){focus_=(focus_+1)%3;return true;}
-        if(key==KEY_BTAB){focus_=(focus_+2)%3;return true;}
-        if(key==KEY_LEFT){focus_=std::max(0,focus_-1);return true;}
-        if(key==KEY_RIGHT){focus_=std::min(2,focus_+1);return true;}
-        if(key==KEY_MOUSE) {
-            MEVENT event{};if(getmouse(&event)==OK) {
-                if(event.bstate&(BUTTON4_PRESSED|BUTTON5_PRESSED)){if(focus_==2)info_scroll_=std::max(0,info_scroll_+((event.bstate&BUTTON4_PRESSED)?-3:3));else select_delta((event.bstate&BUTTON4_PRESSED)?-1:1);}
-                else if(event.x<nav_width_&&event.y>3&&event.y<3+body_-1){const int top=std::max(0,int(category_)-(body_-2)+1);category_=size_t(std::clamp(top+event.y-4,0,int(client::categories().size())-1));global_=false;selected_=0;focus_=0;rebuild();}
-                else if(event.x>=action_x_&&event.x<action_x_+action_width_&&event.y>action_y_&&event.y<action_y_+action_height_-1&&!visible_.empty()){const int first=std::max(0,int(selected_)-action_height_+3);selected_=size_t(std::clamp(first+event.y-action_y_-1,0,int(visible_.size())-1));focus_=1;sync_selected();if(event.bstate&BUTTON1_DOUBLE_CLICKED)open_action(current_id_);}
-                else focus_=2;
-            }return true;
-        }
-        if(focus_==0&&(down||up)){category_=size_t(std::clamp(int(category_)+(down?1:-1),0,int(client::categories().size())-1));global_=false;selected_=0;rebuild();}
-        else if(focus_==1&&(down||up||key==KEY_NPAGE||key==KEY_PPAGE))select_delta(down?1:up?-1:key==KEY_NPAGE?action_height_-3:-(action_height_-3));
-        else if(focus_==2&&(down||up||key==KEY_NPAGE||key==KEY_PPAGE))info_scroll_=std::max(0,info_scroll_+(down?1:up?-1:key==KEY_NPAGE?detail_height_-3:-(detail_height_-3)));
-        if(key==L' '&&!current_id_.empty()){if(!favorites_.erase(current_id_))favorites_.insert(current_id_);if(favorites_only_)rebuild();}
-        if(enter){if(focus_==0)focus_=1;else if(!current_id_.empty())open_action(current_id_);}
-        return true;
+        if(input_view()){edit_key(key,special);return;}
+        if(key==27||key==KEY_LEFT){back();return;}
+        if(key==KEY_F(4)){options_.language=options_.language==client::Language::turkish?client::Language::english:client::Language::turkish;page_.phrase.clear();invalidate();return;}
+        if(key==KEY_F(1)||key==L'?'){if(page_.view==View::help)back();else command({0,0,0,0,Command::help},false);return;}
+        if(key==L'q'||key==L'Q'){quit();return;}
+        if(key==KEY_HOME){command({0,0,0,0,Command::home},false);return;}
+        if(key==L'h'||key==L'H'){command({0,0,0,0,Command::history},false);return;}
+        if(key==KEY_F(3)||(key==L'/'&&page_.view!=View::review)){command({0,0,0,0,page_.view==View::result?Command::find:Command::search},false);return;}
+        if(key==KEY_F(2)){Page next;next.menu="favorites";push(next);return;}
+        if(key==KEY_F(5)||key==KEY_F(7)){related(key==KEY_F(7));return;}
+        if(key==KEY_F(8)&&page_.view==View::form){review();return;}
+        if(key==KEY_F(9)){command({0,0,0,0,Command::active},false);return;}
+        if(key==L'\n'||key==L'\r'||key==KEY_ENTER||key==KEY_RIGHT){if(page_.view==View::form)open_field(false);else next();return;}
+        const int delta=key==KEY_DOWN||key==L'j'||key==L'\t'?1:key==KEY_UP||key==L'k'||key==KEY_BTAB?-1:key==KEY_NPAGE?std::max(1,body_h_/row_h_-1):key==KEY_PPAGE?-std::max(1,body_h_/row_h_-1):0;
+        if(delta){select_delta(delta);return;}
+        if(page_.view==View::result){if(key==L'J')command({0,0,0,0,Command::raw},false);else if(key==L's'||key==L'S')command({0,0,0,0,Command::save},false);else if(key==L'n')find_next();else if(key==L'x')cancel_query();}
+        if(page_.view==View::guide&&(key==L'd'||key==L'D'))command({0,0,0,0,Command::details},false);
+        if(page_.view==View::guide&&key==L' ')command({0,0,0,0,Command::favorite},false);
+        if(page_.view==View::review){if(key==L'd'||key==L'D'){page_.details=!page_.details;page_.scroll=0;}else if(key==L'c'||key==L'C')begin_input(View::confirm,page_.phrase,false);}
     }
 public:
     App(Options options,Terminal& terminal):options_(std::move(options)),terminal_(terminal) {
         simulation_=!options_.fixture.empty();if(simulation_)fixture_=load_fixture(options_.fixture);
-        const auto& categories=client::categories();const auto it=std::find_if(categories.begin(),categories.end(),[&](const auto& c){return c.id==options_.start;});
-        if(it!=categories.end())category_=size_t(it-categories.begin());
-        else {const auto& a=client::action(options_.start);const auto parent=std::find_if(categories.begin(),categories.end(),[&](const auto& c){return c.id==a.category;});category_=size_t(parent-categories.begin());}
-        rebuild();if(it==categories.end()){const auto a=std::find(visible_.begin(),visible_.end(),options_.start);if(a!=visible_.end()){selected_=size_t(a-visible_.begin());sync_selected();}}
+        const auto start=uke::tui_menu::legacy(options_.start);
+        const auto menu=std::find_if(uke::tui_menu::menus().begin(),uke::tui_menu::menus().end(),[&](const auto& m){return m.id==start;});
+        const auto target=menu!=uke::tui_menu::menus().end()?start:uke::tui_menu::owner(client::action(options_.start));
+        std::vector<std::string> trail;for(auto id=target;id!="home";id=uke::tui_menu::menu(id).parent)trail.push_back(id);
+        for(auto it=trail.rbegin();it!=trail.rend();++it){Page next;next.menu=*it;push(next);}
+        if(menu==uke::tui_menu::menus().end())guide(options_.start);
+        else if(!menu->action.empty()){draft(menu->action)["topic"]=menu->topic;guide(menu->action);}
     }
     int run() {
-        for(bool running=true;running&&!interrupted;) {
-            tick();render();timeout(busy()?100:-1);
-            wint_t input{};const int type=get_wch(&input);
-            if(type==ERR){if(feof(stdin)||ferror(stdin))break;continue;}
-            if(rows_<18||cols_<64){if(input==L'q'||input==27)break;continue;}
-            try{running=key(input,type==KEY_CODE_YES);}catch(const std::exception& failure){notice_=tr("Request refused: ","İstek reddedildi: ")+std::string(failure.what());}
+        while(running_&&!interrupted){tick();render();timeout(busy()?80:-1);wint_t input{};const int type=get_wch(&input);if(type==ERR){if(feof(stdin)||ferror(stdin))break;continue;}
+            if(rows_<18||cols_<64){if(input==L'q')quit();continue;}
+            try{key(input,type==KEY_CODE_YES);}catch(const std::exception& failure){notice_=tr("Request refused: ","İstek reddedildi: ")+std::string(failure.what());}
         }
         return interrupted?128+interrupted:0;
     }

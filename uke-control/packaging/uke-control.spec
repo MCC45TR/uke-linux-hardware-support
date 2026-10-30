@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 2.5.1
-Release: 2%{?dist}
+Version: 2.6.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -208,6 +208,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.6.0-1
+- Replace the three-pane TUI with task menus, explicit navigation and touch input.
+- Keep API v1 plans and backend approval boundaries unchanged.
+
 * Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.1-2
 - Validate private-record rejection when layout fixtures run as an unprivileged builder.
 - Keep the production root ownership requirement and complete policy coverage.

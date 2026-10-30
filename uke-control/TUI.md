@@ -1,8 +1,8 @@
 # Uke Control terminal interface and shared client
 
-Date: 2026-10-30. Software: Uke Control 2.5.1, native C++20 with ncursesw.
+Date: 2026-10-30. Software: Uke Control 2.6.0, native C++20 with ncursesw.
 
-Start the optional `uke-control-tui` package as your normal session user:
+Install the optional `uke-control-tui` package and run as a normal session user:
 
 ```sh
 uke-control
@@ -11,112 +11,126 @@ uke-control tui --read-only --start battery
 uke-control tui --start charge.mode
 ```
 
-With no operands, `uke-control` opens this interface when both input and output
-are terminals. Redirected invocations show CLI help; `--json` requires a command.
-`uke-control --help` always shows help without starting an observation.
+With no operands, `uke-control` opens the TUI when both input and output are
+terminals. Redirected invocations show CLI help; `--json` requires a command.
+`uke-control --help` shows help without starting observations. Turkish is the
+default; F4 switches language. A UTF-8 terminal is required. The minimum is
+64×18; use at least 80×24 for comfortable touch input. Larger windows use taller
+rows. `--no-color` preserves selection through text attributes.
 
-Turkish is the default; F4 switches language in the running interface. A UTF-8
-locale and interactive terminal are required. Minimum size: 64×18; 112 columns
-opens the three-pane layout. Smaller windows show a resize prompt. `--no-color`
-retains selection and warnings through text attributes.
+## Categories and navigation
 
-## Navigation and option guides
+The interface uses one task list, a small command bar and separate action guides.
+The layout is inspired by [bluetuith's menus](https://github.com/bluetuith-org/bluetuith);
+no Go code, BlueZ client or other application is embedded. The C++ client retains
+all 124 existing action IDs and API v1. UI menus are independent of API categories.
+
+| Category | Contents |
+| --- | --- |
+| Device overview | General status, workload, chipset and firmware information |
+| Power & battery | Battery, common charging settings, advanced charging, sleep |
+| Display & desktop | Display links, brightness, rotation, flashlight and LED |
+| Connections | USB, Ethernet, NFC and focused Wi-Fi/Bluetooth report shortcuts |
+| Sensors & touch | Sensor capabilities/readings and attended input diagnostics |
+| Audio & camera | Existing audio and camera observations |
+| Storage & recovery | Inventory, roots, swap and guarded maintenance |
+| Updates | Repository channel, previews, synchronization and updates |
+| Diagnostics & support | Snapshots, focused reports, export and publication |
+| Developer tools | API information and optional development tests |
+
+Wi-Fi/Bluetooth shortcuts preselect the existing diagnostic topic. They do not
+scan, discover, pair, connect or introduce new radio controls. Reports retain their
+current-directory file contract and a separate review before creation.
+
+Select a category, select an action and read its guide. Continue opens parameters
+or a separate request review; Read starts an explicitly selected observation.
+Back restores the previous screen, selection and scroll position. Categories/Home
+returns to the root menu. Back at the root does not exit; the visible Quit button
+or q exits. No device observation starts from highlighting or opening a guide.
 
 | Key | Meaning |
 | --- | --- |
-| Tab / Shift-Tab | Move between categories, actions and guide |
-| Arrows / j / k | Select an item or scroll the guide |
-| Enter | Read an observation, open parameters, or choose an option |
-| F1 / ? | Full help, execution behavior and limits |
-| F2 | Show session favorites |
-| F3 / slash | Search IDs, descriptions and parameter labels across categories |
+| Up/down, j/k, Tab/Shift-Tab | Select a row or scroll text |
+| Enter / right arrow | Open, edit, choose or advance as the visible button indicates |
+| Esc / left arrow | Return without executing or cancelling a read |
+| Home | Return to Categories |
+| Page Up/Down | Move through long lists or explanations |
+| F1 / ? | Help |
+| F2 / Space | Open session favorites / mark the action guide |
+| F3 / slash | Search all actions; slash finds text when viewing a result |
 | F4 | Switch Turkish / English |
-| F5 | Open the related current-state observation |
-| F6 | Open parameter form |
-| F7 | Open the related preview, when defined |
-| F8 | Validate parameters and review the request |
-| Space | Mark a favorite; in an enum form open option descriptions |
-| H | Bounded session history; Enter only views a past result |
-| Esc | Cancel a pending read or return without executing a plan |
-| q | Exit; an owned read is cancelled before exit |
+| F5 / F7 | Open related current-state / preview guide, when defined |
+| F8 | Validate a form and review its request |
+| F9 | Reopen the running read |
+| D / C in review | Show exact arguments / edit required confirmation |
+| H | View bounded session history |
+| q | Quit outside text entry; stop an owned read first |
 
-Each category and action has an explanation. Parameter forms show purpose,
-accepted numeric ranges, defaults, and descriptions for every enum option.
-Defaults are requests, not current hardware readings. Left/right cycles enum
-values; Enter opens the option guide. PgUp/PgDn scrolls a field's guide. Text/path
-editing supports UTF-8, spaces, cursor movement, Home/End, Delete/Backspace and
-Ctrl-U. Esc discards edits. Search matches Turkish case and common ASCII spellings.
-Mouse clicks select panes/items, double clicks open an action, and the wheel
-scrolls the focused pane.
+## Touch and parameter input
 
-| Category | Workflows |
-| --- | --- |
-| Overview | General status, capabilities, all components, hardware and workload |
-| Battery | Health/provenance, status, cell topology and reported protocol |
-| Charging | Admission, protections, protocols, policies, previews and review evidence |
-| Display | Depth, lanes/profiles, DSC, current/saved VRR floor and color sensor |
-| USB | Topology, finite watch, role, per-device power, CDC and transition recovery |
-| Network | Exact Ethernet interface capabilities/profiles and network diagnostics |
-| Desktop | Original desktop/KDE state, brightness and rotation policies |
-| Lights | Flashlight and kernel LED auto/test/RGB requests |
-| Sensors | Capabilities, single/finite samples and attended input diagnostics |
-| Media | Audio/camera/NFC inventories and NFC permission |
-| Sleep | Sleep observations and saved wake permissions |
-| Storage | Inventory, exact root inspection, swap, resize and layout wizards |
-| Packages | Channel selection/sync, signed previews, update and finalization |
-| Recovery | Private package/USB pending state and original recovery routes |
-| Diagnostics | All 19 topics, snapshots, comparison, safe export and report publication |
-| Developer | Shared metadata, help/version and optional development tools |
+Every visible button and list row accepts a single tap. Touch uses the terminal's
+mouse protocol, without reading input devices. Konsole/xterm-compatible SGR mouse
+reporting is required; a terminal that consumes touch gestures must forward them
+as application mouse events. Font size determines the physical target size.
 
-Optional tools require `uke-control-tests`. Missing packages/providers remain
-explicit errors. Enumeration, polling time and driver readback do not establish
-physical acceptance, acquisition time or calibration.
+Vertical dragging or the large up/down buttons scroll lists and explanations;
+the wheel also works. A drag release does not activate a row. Press/release must
+refer to the same target and screen. Navigation invalidates pending presses and
+briefly rejects a second tap, preventing click-through into the next screen.
+Resize also invalidates a pending gesture. Keyboard input remains independent.
+
+Tap a parameter to edit it. Choice rows open their full, scrollable explanation;
+Choose accepts, and Back preserves the earlier value. Forms show numeric ranges
+and current draft values. Defaults are requests, not current device readings.
+All values use shared client validation before planning or execution.
+
+Text/path fields accept UTF-8, spaces, cursor movement, Home/End, Delete/Backspace
+and Ctrl-U. Esc discards the edit. Touch entry opens a built-in Turkish/English
+keyboard with case, symbols, space, cursor, erase and clear buttons. Numeric entry
+adds a keypad and bounded ±1/±10 controls. Hide Keyboard reveals the full field
+explanation; Keyboard restores touch entry. This also works for search, receipt
+paths and typed confirmations. Search matches Turkish case and common ASCII
+spellings. Accepting confirmation text returns to review; Run is a separate step.
+
+System passwords and the existing foreground backend questions use the terminal
+or system input method. The built-in keyboard is limited to TUI forms; it does not
+intercept credentials or replace those backend dialogs.
 
 ## Results and execution
 
-Read queries run asynchronously; Tab returns to browsing while a query remains
-owned. One captured read runs at a time. Esc requests read cancellation; the
-process group is terminated and reaped. Reads have per-action deadlines, 1 MiB
-stdout and 256 KiB stderr limits. Truncation, timeout, cancellation and actual
-exit status remain separate. stdout and stderr are never merged into JSON.
+Captured reads run asynchronously and remain owned until actual process exit.
+Back leaves the read running. The Reading/F9 button reopens its result; Stop or x
+on that result requests cancellation. Only one read runs at a time. Writes restore
+the normal terminal and have no TUI timeout. No periodic device polling is added.
 
-In a result, arrows/PgUp/PgDn/Home/End scroll, uppercase J toggles readable/raw
-JSON, slash searches, and n finds the next match. Null stays unknown; zero,
-negative readings and false remain distinct. Control, escape and directional
-override characters are displayed visibly rather than interpreted by the terminal.
+Results distinguish completion, nonzero exit, cancellation, timeout and partial
+output. J toggles readable/raw JSON; slash searches output and n finds the next
+match. Unknown/null is distinct from zero, negative numbers and false. Control,
+escape and directional override characters are rendered visibly.
 
-S saves a new private JSON receipt, mode 0600, without overwrite or following a
-symlink. Receipts contain parameters, separate output/error, exit status and timing.
-They can contain private paths and identifiers. Nothing is saved automatically.
-History is limited to 32 entries / approximately 8 MiB retained payload and lasts
-only for this process. It cannot replay a mutation.
+Reads retain per-action deadlines, 1 MiB stdout and 256 KiB stderr limits. Streams
+are kept separate. S saves a new private 0600 JSON receipt without overwrite or
+symlink following. Receipts may contain private observations and paths; review
+before sharing. History stays in memory, bounded to 32 entries / 8 MiB of retained
+history output. Opening history never replays a command.
 
-Every mutation opens a separate review with the exact validated argument vector,
-effect, parameters and access. Enter gives approval; package operations additionally
-require APPLY/UYGULA, storage maintenance its action ID, and publication the exact
-repository. These frontend confirmations retain the backend's admission and
-interactive approvals. Previews are observations, not transaction reservations.
+Every mutation requires a separate review and Run action. Details/D shows access
+and the exact validated argument vector, without a shell. Packages additionally
+require APPLY/UYGULA, maintenance its action ID, and publication the exact repository.
+The confirmation field is editable by tap or C; accepting text does not run a plan.
+Existing backend admission, freshness and interactive confirmations remain required.
+Previews are observations, not reservations. Root actions hand over only their
+validated command to `sudo --`. No root TUI, daemon, broad policy or alternate
+storage writer is introduced. Failed package operations are never retried silently.
 
-For foreground work the TUI restores the terminal and launches the fixed backend
-command, without a shell. Root actions prepend `sudo --` to that command. Existing
-active-session brokers retain their Polkit checks. The TUI adds no daemon, root
-shell, broad policy rule or alternate storage writer. Foreground actions remain
-owned until actual exit and have no TUI timeout. Ctrl-C is handled by the existing
-command. Failed package outcomes require pending-receipt inspection; the TUI
-never retries them automatically.
-
-Diagnostics retain the current-directory output contract. Root-created logs and
-reports remain root-private. Inspect the destination before approval. Publication
-is a separate action with no default repository.
-
-`--read-only` allows observations, parameter guides and plans but disables
-mutations and receipt saves. Some observations contact providers, fetch package
-metadata or request root access for protected state; none starts automatically on
-selection. There is no background refresh while idle.
+`--read-only` permits guides and observations but disables changes and receipt
+saves. Some observations contact providers, fetch metadata or need protected-state
+access. Missing packages/providers remain explicit errors. Driver readback and a
+command's exit status do not establish physical hardware support.
 
 ## Simulation and verification
 
-From the source directory:
+From the component source directory:
 
 ```sh
 make -j4
@@ -126,15 +140,15 @@ make check-client check-tui
 
 Fixture schema: `org.uke.control.tui-fixture.v1`. `results` maps known action IDs
 to `data` or `stdout`, optional `stderr`, exit `status` and bounded `delay_ms`.
-Fixture mode visibly disables **all** process launches, sudo, hardware queries,
-mutations and receipt saves. Missing results are explicitly unavailable. The
-fixture is a bounded regular file and cannot define executable callbacks.
+Fixture mode disables every command, sudo, device query, mutation and receipt
+save. Missing results are unavailable. A fixture must be a bounded regular file;
+it cannot supply executable callbacks.
 
-Client tests exercise catalog integrity, rejected inputs, literal argv, Unicode,
-control handling, split streams, output limits, cancellation, descendants, real
-read deadlines and private receipts. PTY tests drive the actual TUI through forms,
-search, previews, results/history, resize and terminal restoration. These isolated
-source/interface checks do not qualify physical hardware.
+Native PTY/libvterm checks cover action placement, keyboard navigation, SGR taps,
+dragging, resize invalidation, forms, numeric bounds, typed confirmation, Unicode,
+search, history, cancellation and terminal restoration. Xvfb/xterm screenshots are
+synthetic visual evidence. Neither establishes physical finger-touch acceptance,
+backend control success or hardware qualification on POCO Pad X1.
 
 ## Shared API for GTK and QML
 
