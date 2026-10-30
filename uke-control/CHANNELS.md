@@ -168,12 +168,15 @@ A candidate with a different RPM identity cannot
 reuse an installed `kernel-uname-r` module directory. This is a deliberate
 exception to ordinary-package replacement: the running and recovery modules
 must survive channel changes. The selected core, modules, DTBs and boot bundle
-must match exactly. Installing a different bundle with `automatic=0` leaves boot
-selection unchanged and reports pending activation. Selecting a different default requires the already reviewed
-`uke-kernel-update` `automatic=1` gate. The command never enables that gate.
-When that gate is enabled and RPM succeeds, it calls the existing guarded updater for the selected
-bundle; a post-transaction RPM hook may already have applied it. Its idempotent
-readback covers both paths. Updater failure keeps the channel pending and
+must match exactly. On 30 October 2026, Control 2.3.2 routes successful package
+transactions through updater 1.8.7's `transaction` interface. The updater reads
+both automatic policies and the trusted selected userdata profile, retains a
+pending trial and verifies an idempotent match with any RPM hook. Installing a
+newer kernel leaves an older selected userdata profile in force. The command
+does not enable automatic updates or select another default. The
+`kernel_activation_pending` field remains true while the package-selected
+kernel differs from the running kernel, including after staging. It does not
+establish that the selected boot profile changed. Updater failure keeps the channel pending and
 reports that the tablet must not reboot. Stock firmware, Android A, storage
 layout, persist policy and the updater's battery/backup checks are not bypassed.
 
