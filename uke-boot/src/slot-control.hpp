@@ -131,8 +131,7 @@ public:
     void backup(const fs::path &path) const {
         Bytes data=observed.mbr;
         for(const auto *part:{&observed.primary,&observed.backup,&observed.entries})data.insert(data.end(),part->begin(),part->end());
-        if(!fs::exists(path))save_new(path,data);
-        need(file(path)==data,"Durable GPT backup differs from current metadata");
+        durable_backup(path,data);
     }
     bool needs_backup_crc_repair() const {return before.backup!=observed.backup;}
     void require_selected(unsigned selected) const {

@@ -256,3 +256,12 @@ publish the requested state. This is process/error handling evidence, not a
 power-cut simulation. Filesystem/device flush guarantees, multiple GPTs, UFS
 selection, bootloader retries and shared userspace rollback remain separate
 qualification gates. No automatic policy or slot-selection behavior is changed.
+
+Follow-up review found that byte readback alone admitted an existing backup
+after an interrupted or failed file/directory sync. Boot replacement, GPT backup
+and accepted-boot preservation now share a checked backup helper: validate the
+same opened file's size/content, sync that descriptor, then sync its containing
+directory before proceeding. A mismatch is refused, never overwritten. The
+regression leaves complete cached backups after each save sync failure, injects
+both retry sync failures, and verifies that the target writer is never entered.
+A subsequent successful retry is checked on ordinary files only.

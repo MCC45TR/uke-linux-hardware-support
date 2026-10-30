@@ -47,6 +47,10 @@ static bool synced(const fs::path &path) {
     struct stat st{};assert(!stat(path.c_str(),&st));
     return std::find(synced_directories.begin(),synced_directories.end(),std::pair(st.st_dev,st.st_ino))!=synced_directories.end();
 }
+static unsigned target_writes=0;
+static void forbidden_writer(int,const Bytes&) {
+    ++target_writes;throw std::runtime_error("Unexpected target write before durable backup");
+}
 int main() {
     char pattern[]="/tmp/uke-update-durability.XXXXXX";assert(mkdtemp(pattern));const fs::path root=pattern;
     start();{auto fd=directory(root/"baseline/transaction",true);}recording=false;
@@ -90,6 +94,23 @@ int main() {
     save_update(state,old);start(2);short_write=true;injected_errno=ENOSPC;
     refused([&]{save_update(state,next);});assert(encode(decode(file(state)))==encode(old));
     save_update(state,next);assert(encode(decode(file(state)))==encode(next));
+    // A complete cached backup left by a failed save is not durable evidence.
+    const Bytes original(capacity,'a'),replacement(capacity,'b');
+    const auto target_path=root/"target.img";save_new(target_path,original);
+    auto target=regular(target_path,O_RDWR);
+    for(unsigned initial_failure:{2U,3U}) {
+        const auto backup=root/("retry-"+std::to_string(initial_failure)+".img");
+        start(initial_failure);refused([&]{save_new(backup,original);});
+        assert(file(backup)==original); // Readback alone succeeds despite failed sync.
+        for(unsigned retry_failure:{1U,2U}) {
+            target_writes=0;start(retry_failure);
+            refused([&]{replace_verified(target.value,replacement,backup,forbidden_writer);});
+            assert(target_writes==0 && read_fd(target.value,capacity)==original);
+        }
+        assert(replace_verified(target.value,replacement,backup));
+        assert(read_fd(target.value,capacity)==replacement);
+        write_fd(target.value,original);
+    }
     fs::remove_all(root);
-    std::cout<<"Directory-link sync/refusal/retry, process interruption, four state-write error/crash boundaries and partial ENOSPC recovery passed; regular files only, not power-loss qualification\n";
+    std::cout<<"Directory-link sync/refusal/retry, process interruption, four state-write error/crash boundaries, partial ENOSPC recovery and backup reuse flush barriers passed; regular files only, not power-loss qualification\n";
 }

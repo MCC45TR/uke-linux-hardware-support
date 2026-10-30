@@ -433,8 +433,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     auto inhibitor=inhibit_shutdown();CriticalSignals signals;
     const auto transaction=state/(next+"-"+saved.candidate_image);auto transaction_dir=directory(transaction,true);
     for(auto *disk:changed)disk->gpt->backup(transaction/(disk->name+".gpt"));
-    if(!fs::exists(transaction/"accepted-boot.img"))save_new(transaction/"accepted-boot.img",images[running]);
-    need(file(transaction/"accepted-boot.img")==images[running],"Accepted boot backup differs");save_update(statefile,saved);
+    durable_backup(transaction/"accepted-boot.img",images[running]);save_update(statefile,saved);
     auto destination=physical_boot(target?b:a,true);
     replace_verified(destination.value,bytes,transaction/"inactive-previous.img");
     uke_install::verified(saved.policy);save_update(statefile,saved);

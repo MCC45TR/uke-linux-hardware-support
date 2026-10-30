@@ -139,6 +139,18 @@ static void save_new(const fs::path &path,const Bytes &data) {
     write_fd(fd.value,data);
     need(fsync(dir.value)==0,"State directory sync failed");
 }
+static void durable_backup(const fs::path &path,const Bytes &data) {
+    if(!fs::exists(path))save_new(path,data);
+    Fd dir=directory(path.parent_path());
+    Fd fd(openat(dir.value,path.filename().c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK));
+    trusted_fd(fd.value);struct stat st{};
+    need(!fstat(fd.value,&st) && st.st_size>=0 && uint64_t(st.st_size)==data.size(),"Backup size differs");
+    need(read_fd(fd.value,data.size())==data,"Backup readback differs");
+    // A previous save may have left complete cached bytes but failed either
+    // sync. Re-establish both barriers before trusting an existing backup.
+    need(!fsync(fd.value),"Backup file sync failed");
+    need(!fsync(dir.value),"Backup directory sync failed");
+}
 static uint32_t le32(const Bytes &b,size_t i) {return uint32_t(b.at(i))|uint32_t(b.at(i+1))<<8|uint32_t(b.at(i+2))<<16|uint32_t(b.at(i+3))<<24;}
 static uint64_t le64(const Bytes &b,size_t i) {return uint64_t(le32(b,i))|uint64_t(le32(b,i+4))<<32;}
 static Bytes boot_kernel(const Bytes &b) {
@@ -382,8 +394,7 @@ static bool replace_verified(int target,const Bytes &next,const fs::path &backup
     CriticalSignals signals;
     const auto original=read_fd(target,capacity);
     if(original==next)return false;
-    if(!fs::exists(backup))save_new(backup,original);
-    need(file(backup)==original,"Backup readback failed");
+    durable_backup(backup,original);
     try {writer(target,next);need(read_fd(target,capacity)==next,"Boot partition readback mismatch");}
     catch(...) {
         try {writer(target,original);need(read_fd(target,capacity)==original,"Rollback readback mismatch");}
