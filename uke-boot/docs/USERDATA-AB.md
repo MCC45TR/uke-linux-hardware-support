@@ -1,5 +1,24 @@
 # Userdata boot A/B updates
 
+30 October 2026. Version 1.8.7 adds `transaction BUNDLE` for kernel RPM hooks.
+On userdata it resolves the installed singleboot profile after the transaction,
+so a hook from a retained kernel cannot select its own older bundle. Both
+automatic policies apply. On the Linux-root profile it retains the explicitly
+enabled, matched boot B writer. Disabled activation is reported explicitly.
+An outstanding trial cannot be silently replaced by another selected candidate.
+
+`uke-kernel-update check-auto` validates the selected userdata bundle, running
+package and boot, software health, firmware cohort, GPT and UFS selection without
+writing boot images, slot metadata or acceptance state. It reports disabled
+policy but continues read-only admission, so enabling can be reviewed first.
+For a different candidate it also checks inactive-slot staging admission.
+After a successful check on a qualified installation, an administrator can set
+`automatic=1` in both configuration files and run `uke-kernel-update auto`.
+The configuration files retain administrator edits across RPM upgrades.
+Normal DNF kernel updates then stage the selected image for the next reboot.
+Neither command requests a normal update reboot. Source and COPR results do
+not qualify power-loss recovery or physical bootloader retry exhaustion.
+
 23 October 2026. Version 1.8.1 corrects repeated DNF hooks while a verified
 trial awaits reboot. The recorded boot ID, accepted running Image, candidate
 digest, GPT selection and UFS boot LUN must agree; another candidate is refused.

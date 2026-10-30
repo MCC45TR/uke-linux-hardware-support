@@ -1,5 +1,12 @@
 # Stock-ABL kernel updates
 
+30 October 2026. Updater 1.8.7 supplies `transaction BUNDLE` for kernel RPM
+post-transaction hooks. It honors the selected root profile and administrator
+policy. Userdata transactions use the final installed singleboot profile and
+the A/B writer. Disabled automatic activation now prints an explicit message;
+an installed kernel alone does not change the next boot. See the
+[userdata admission check](USERDATA-AB.md) before enabling an installation.
+
 22 October 2026 source update: updater 1.6.0 adds a guarded return from a booted,
 unaccepted userdata current-slot trial to its recorded accepted B image. See
 [userdata restoration](USERDATA-AB.md#restore-an-unaccepted-current-slot-trial).
