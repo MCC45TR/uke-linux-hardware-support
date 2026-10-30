@@ -7,15 +7,16 @@ CXXFLAGS += -std=c++20 -Wall -Wextra -Werror -fPIC
 CPPFLAGS += -Isrc -Ibuild $(shell pkg-config --cflags libdrm libsystemd wayland-client libselinux)
 LDLIBS = $(shell pkg-config --libs libdrm libsystemd wayland-client)
 outdir ?= $(CURDIR)/build/srpm
+version := $(shell awk -F '"' '/application_version=/ {print $$2}' src/version.hpp)
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
-.PHONY: all check check-rgb-policy check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
+.PHONY: all check check-native check-bus check-rgb-policy check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
 build/libuke-control.so.0: src/battery.cpp src/battery.hpp src/nfc.cpp src/nfc.hpp
 build/test-battery: tests/battery.cpp src/battery.cpp src/battery.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/battery.cpp src/battery.cpp $(shell pkg-config --libs libsystemd) -o $@
 build/test-nfc: tests/nfc.cpp src/nfc.cpp src/nfc.hpp | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/nfc.cpp src/nfc.cpp -o $@
-check: build/test-battery build/test-nfc
+check-native: build/test-battery build/test-nfc
 build:
 	mkdir -p build
 build/uke-control-rgb: src/rgb-service.cpp src/rgb.hpp shared/uke-rgb.h build/libuke-control.so.0
@@ -28,12 +29,20 @@ build/selinux/uke_control_rgb.pp: packaging/selinux/uke_control_rgb.te packaging
 	$(MAKE) -C build/selinux -f /usr/share/selinux/devel/Makefile uke_control_rgb.pp
 build/libuke-control.so.0: src/cli.cpp src/cli.hpp src/backend.cpp src/backend.hpp src/lights.cpp src/lights.hpp src/rgb.cpp src/rgb.hpp src/torch.cpp src/torch.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/link-policy.cpp src/link-policy.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/plasma.cpp src/plasma.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/cli.cpp src/backend.cpp src/battery.cpp src/nfc.cpp src/lights.cpp src/rgb.cpp src/torch.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/link-policy.cpp src/front-color.cpp src/desktop.cpp src/plasma.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
-build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
+build/uke-control: src/main.cpp src/overview.cpp src/overview.hpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp src/usb-request.hpp build/libuke-control.so.0
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/overview.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --cflags --libs libsystemd jsoncpp)
 build/uke-control-packages: src/packages.cpp src/cli.cpp src/cli.hpp src/fedora-target.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< src/cli.cpp -Isrc $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd)
-build/resize-system: src/resize-system.cpp shared/userdata-grow.hpp | build
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $<
+build/uke-control-packages build/test-package-repos: src/package-operation.hpp src/maintenance.hpp
+build/libuke-control.so.0: src/report-budget.hpp src/report-context.hpp
+build/libuke-control.so.0: src/usb-transition.hpp
+build/libuke-control.so.0: src/charge-intent.hpp
+build/libuke-control.so.0: src/version.hpp
+build/libuke-control.so.0 build/uke-control build/uke-control-packages build/uke-control-tests build/layout-manager: src/version.hpp src/error.hpp
+build/layout-manager build/test-layout build/test-layout-safety: src/maintenance.hpp
+build/uke-control-tests: src/contact.hpp
+build/resize-system: src/resize-system.cpp shared/userdata-grow.hpp src/maintenance.hpp | build
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ src/resize-system.cpp
 build/xdg-shell-client.h: | build
 	wayland-scanner client-header $(protocols)/stable/xdg-shell/xdg-shell.xml $@
 build/presentation-time-client.h: | build
@@ -60,24 +69,44 @@ check-rgb-policy: build/selinux/uke_control_rgb.pp
 	bash tests/rgb-policy.sh
 build/test-cli: tests/cli.cpp src/cli.cpp src/cli.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cli.cpp src/cli.cpp $(shell pkg-config --libs libsystemd) -o $@
-check: all check-fedora-target check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli
+build/test-contact: tests/contact.cpp src/contact.hpp | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -o $@
+build/test-maintenance: tests/maintenance.cpp src/maintenance.hpp | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -o $@
+build/test-report-budget: tests/report-budget.cpp src/report-budget.hpp src/report-context.hpp | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< $(shell pkg-config --cflags --libs libsystemd) -o $@
+build/test-package-operation: tests/package-operation.cpp src/package-operation.hpp | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -o $@
+build/test-usb-transition: tests/usb-transition.cpp src/usb-transition.hpp | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/usb-transition.cpp -o $@
+build/test-charge-intent: tests/charge-intent.cpp src/charge-intent.hpp | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) $< -o $@
+build/test-roots: tests/roots.cpp src/overview.cpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG -ffunction-sections -fdata-sections $(LDFLAGS) tests/roots.cpp $(shell pkg-config --cflags --libs jsoncpp) -Wl,--gc-sections -o $@
+build/test-cadence-handshake: tests/cadence-handshake.cpp src/cadence.cpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cadence-handshake.cpp build/*-protocol.o $(shell pkg-config --libs wayland-client) -o $@
+check: check-native check-bus
+check-native check-bus check-repositories check-sensor-proxy: CXXFLAGS += -UNDEBUG
+check-native: build/test-contact build/test-maintenance build/test-report-budget build/test-package-operation build/test-usb-transition build/test-charge-intent build/test-roots build/test-cadence-handshake
+check-native: all check-fedora-target check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli
 	build/test-battery
 	build/test-nfc
+	build/test-contact
+	build/test-maintenance
+	build/test-report-budget
+	build/test-package-operation
+	if test "$$(id -u)" = 0; then build/test-usb-transition; fi
+	build/test-charge-intent
+	build/test-roots
+	build/test-cadence-handshake
 	bash tests/cli.sh
+	bash tests/overview.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/rgb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-rgb
 	LD_LIBRARY_PATH=build build/test-rgb
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/rgb-bus.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux) -o build/test-rgb-bus
-	if test "$$(id -u)" = 0; then
-		bus_fixture=$$(mktemp -d)
-		trap 'rm -rf -- "$$bus_fixture"' EXIT
-		chmod 755 "$$bus_fixture"
-		install -m755 build/test-rgb-bus build/libuke-control.so.0 "$$bus_fixture/"
-		LD_LIBRARY_PATH="$$bus_fixture" timeout 20s setpriv --reuid=65534 --regid=65534 --clear-groups dbus-run-session -- "$$bus_fixture/test-rgb-bus"
-	else LD_LIBRARY_PATH=build timeout 20s dbus-run-session -- build/test-rgb-bus; fi
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/lights.cpp -Lbuild -l:libuke-control.so.0 -o build/test-lights
 	LD_LIBRARY_PATH=build build/test-lights
 	bash tests/light-worker.sh
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp -o build/test-plasma
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/plasma.cpp src/plasma.cpp $(shell pkg-config --libs libsystemd) -o build/test-plasma
 	build/test-plasma
 	LD_LIBRARY_PATH=build build/test-execute
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/resize-system.cpp -o build/test-resize-system
@@ -102,15 +131,12 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	bash tests/swap-discovery.sh
 	bash tests/swap-allocation.sh
 	bash tests/report.sh
+	bash tests/startup.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-client.cpp src/charge-client.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-client
 	build/test-charge-client
 	bash tests/charge-review.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/charge-notify.cpp src/charge-notify.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify
 	build/test-charge-notify
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -pthread tests/charge-notify-bus.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify-bus
-	dbus-run-session -- build/test-charge-notify-bus
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -pthread tests/desktop-bus.cpp src/desktop.cpp $(shell pkg-config --libs libsystemd) -o build/test-desktop-bus
-	dbus-run-session -- build/test-desktop-bus
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/usb.cpp -Lbuild -l:libuke-control.so.0 -o build/test-usb
 	LD_LIBRARY_PATH=build build/test-usb
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/link-policy.cpp -Lbuild -l:libuke-control.so.0 -o build/test-link-policy
@@ -125,10 +151,23 @@ check: all check-fedora-target check-rgb-policy check-layout build/test-front-co
 	build/test-sensors
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/packages.cpp src/cli.cpp -Isrc $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd) -o build/test-packages
 	build/test-packages
+check-bus: build/libuke-control.so.0
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/rgb-bus.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd libselinux) -o build/test-rgb-bus
+	if test "$$(id -u)" = 0; then
+		bus_fixture=$$(mktemp -d)
+		trap 'rm -rf -- "$$bus_fixture"' EXIT
+		chmod 755 "$$bus_fixture"
+		install -m755 build/test-rgb-bus build/libuke-control.so.0 "$$bus_fixture/"
+		LD_LIBRARY_PATH="$$bus_fixture" timeout 20s setpriv --reuid=65534 --regid=65534 --clear-groups dbus-run-session -- "$$bus_fixture/test-rgb-bus"
+	else LD_LIBRARY_PATH=build timeout 20s dbus-run-session -- build/test-rgb-bus; fi
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/charge-notify-bus.cpp $(shell pkg-config --libs libsystemd) -o build/test-charge-notify-bus
+	dbus-run-session -- build/test-charge-notify-bus
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread tests/desktop-bus.cpp src/desktop.cpp $(shell pkg-config --libs libsystemd) -o build/test-desktop-bus
+	dbus-run-session -- build/test-desktop-bus
 check-repositories: build/test-package-repos
 	bash tests/package-repos.sh
 build/test-package-repos: tests/package-repos.cpp src/packages.cpp src/cli.cpp src/cli.hpp src/fedora-target.hpp | build
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $< $(shell pkg-config --cflags --libs libdnf5 rpm) -o $@
+	$(CXX) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/package-repos.cpp src/cli.cpp $(shell pkg-config --cflags --libs libdnf5 rpm libsystemd) -o $@
 check-sensor-proxy: build/test-sensor-proxy
 	bash tests/sensor-proxy.sh
 check-copr-trigger:
@@ -137,14 +176,15 @@ build/test-sensor-proxy: tests/sensor-proxy.cpp src/sensors.cpp src/front-color.
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) $< src/front-color.cpp $(shell pkg-config --libs libsystemd) -o $@
 validate:
 	test -s src/backend.cpp -a -s src/diagnostics.cpp -a -s packaging/uke-control.spec
+	test '$(version)' = "$$(awk '/^Version:/ {print $$2}' packaging/uke-control.spec)"
 	cmp shared/ssc-discovery.cpp ../uke-sensors/src/ssc-discovery.cpp
 	cmp shared/ssc-sample.cpp ../uke-sensors/src/ssc-sample.cpp
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.3.0/#' -czf "$$top/SOURCES/uke-control-2.3.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-$(version)/#' -czf "$$top/SOURCES/uke-control-$(version).tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
-	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
+	rpmbuild -bs --nodeps --target aarch64 --define '_buildhost uke-builder' --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'
 clean:
 	rm -rf build

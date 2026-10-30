@@ -1,5 +1,18 @@
 # Uke Control
 
+30 October 2026: source version **2.4.0** adds bounded read-only component
+snapshots, comparisons, private exports and mounted-root inspection. Maintenance
+reservations, USB transition receipts, package phase recovery and independent
+startup tasks address the expanded source review. The Plasma applet keeps state
+and failures per control domain; the new original-KDE KCM presents read-only cards.
+See [the implementation decisions](REVIEW-2026-10-30.md) and
+[snapshot API](OVERVIEW.md) for implemented scope and remaining acceptance gates.
+Isolated builds and fixtures do not establish installed-session or physical
+charging, display, USB, storage or boot acceptance.
+
+The dated entries below preserve earlier results and limitations; their versions
+are historical. The current application version comes from `src/version.hpp`.
+
 29 October 2026: version 1.18.0 adds a qualified 70/80 preset and a duration-only
 temporary-full preview. Temporary full activation remains unavailable without
 a reviewed device-side return path. See [CHARGING.md](CHARGING.md) for limits;

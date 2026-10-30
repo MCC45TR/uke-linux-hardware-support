@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Only transports authorized requests. The kernel owns policy and animation.
 #include "rgb.hpp"
+#include "cli.hpp"
 #include "torch.hpp"
 #include "../shared/uke-rgb.h"
 #include <cerrno>
@@ -20,6 +21,8 @@
 namespace {
 void need(bool ok,const std::string& error){if(!ok)throw std::runtime_error(error);}
 struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;};
+volatile sig_atomic_t stopping=0;
+void stop(int){stopping=1;}
 const char* mode_name(unsigned n) {
     static const char* names[]={"off","manual","low-battery","critical-battery","front-camera","test"};
     need(n<=UKE_RGB_TEST,"Invalid kernel RGB mode");return names[n];
@@ -35,7 +38,7 @@ std::string status(State& state) {
          value.camera_active<=1 && value.camera_source_seen<=1 && value.last_io_error<=0 && value.last_io_error>=-4095 && !value.reserved,
          "Kernel RGB status failed ABI validation");
     const auto c=uke::rgb::hex({value.rgb>>16,(value.rgb>>8)&255,value.rgb&255});
-    return "{\"schema\":\"org.uke.control.rgb.v1\",\"available\":true,\"physical_acceptance\":null,\"mode\":\""+
+    return "{\"schema\":\"org.uke.control.rgb.v1\",\"broker_version\":\""+std::string(uke::cli::version)+"\",\"available\":true,\"physical_acceptance\":null,\"mode\":\""+
         std::string(mode_name(value.mode))+"\",\"color\":\""+c+"\",\"brightness_percent\":"+
         std::to_string((value.brightness*100+4)/8)+",\"test_remaining_ms\":"+std::to_string(value.test_remaining_ms)+
         ",\"battery_valid\":"+(value.battery_valid?"true":"false")+",\"camera_integration_available\":"+
@@ -63,11 +66,13 @@ int request(sd_bus_message* message,void* userdata,sd_bus_error* error) {
     try {
         const std::string method=sd_bus_message_get_member(message);
         if(method=="Status")return sd_bus_reply_method_return(message,"s",status(state).c_str());
+        need(!stopping,"LED broker is stopping");
         if(state.torch) {
             unsigned percent=0;int enabled=0;
             if(method=="SetBrightness")need(sd_bus_message_read(message,"u",&percent)>0 && percent<=100,"Invalid torch percentage");
             else need(method=="SetEnabled" && sd_bus_message_read(message,"b",&enabled)>0,"Invalid torch request");
             if(!authorized(message,uke::torch::action))return sd_bus_error_set_const(error,SD_BUS_ERROR_ACCESS_DENIED,"Only an active local user may request torch changes");
+            need(!stopping,"LED broker is stopping");
             if(method=="SetBrightness")state.torch->set(percent);else state.torch->enable(enabled);
             return sd_bus_reply_method_return(message,"s",status(state).c_str());
         }
@@ -80,6 +85,7 @@ int request(sd_bus_message* message,void* userdata,sd_bus_error* error) {
         } else if(method=="TestColors")command=UKE_RGB_TEST_COLORS;
         else need(method=="Automatic","Unknown RGB method");
         if(!authorized(message,"org.senemos.uke.rgb.control"))return sd_bus_error_set_const(error,SD_BUS_ERROR_ACCESS_DENIED,"Only an active local user may request RGB changes");
+        need(!stopping,"LED broker is stopping");
         if(::ioctl(state.fd,command,&value)<0)throw std::runtime_error("Kernel RGB request refused: "+std::string(std::strerror(errno)));
         return sd_bus_reply_method_return(message,"s",status(state).c_str());
     } catch(const std::exception& e){return sd_bus_error_set(error,"org.senemos.Uke.Rgb.Error",e.what());}
@@ -112,8 +118,6 @@ void require_confinement() {
     const bool ok=r>=0 && label && type_matches(label,"uke_rgb_t");if(label)freecon(label);
     need(ok,"RGB broker is outside its confined domain");
 }
-volatile sig_atomic_t stopping=0;
-void stop(int){stopping=1;}
 }
 int main(int argc,char** argv) {
     State state;
@@ -140,7 +144,11 @@ int main(int argc,char** argv) {
         need(sd_bus_request_name(raw,torch?uke::torch::bus_name:uke::rgb::bus_name,0)>=0,"Another LED broker owns the interface");
         signal(SIGTERM,stop);signal(SIGINT,stop);
         while(!stopping) {
-            int r;do{r=sd_bus_process(raw,nullptr);need(r>=0,"RGB bus disconnected");}while(r>0);
+            for(unsigned handled=0;handled<32&&!stopping;++handled) {
+                const int r=sd_bus_process(raw,nullptr);need(r>=0,"RGB bus disconnected");
+                if(!r)break;
+            }
+            if(stopping)break;
             const int waiting=sd_bus_wait(raw,1000000);
             need(waiting>=0 || waiting==-EINTR,"Cannot wait for RGB requests");
         }

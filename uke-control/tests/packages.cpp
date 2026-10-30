@@ -25,6 +25,8 @@ int main() {
     assert(project("unstable")=="uke-linux-test"&&project("stable")=="uke-linux");
     assert(private_package("uke-local-touch-data"));
     assert(!private_package("uke-local-sensor-data")&&!private_package("uke-local-touch-data-extra"));
+    assert(kernel_userspace("kernel-headers")&&kernel_userspace("kernel-tools"));
+    assert(!kernel_userspace("kernel-core")&&!kernel_userspace("kernel-modules"));
     assert(managed_repo(prefix+"uke-linux-test:custom:experiment"));assert(!managed_repo(prefix+"unrelated"));
     assert(infer_channel({prefix+"uke-linux-test"})=="test");
     assert(infer_channel({"uke-linux"})=="stable");
@@ -43,6 +45,12 @@ int main() {
     if(geteuid()==0) {
         char dir[]="/tmp/uke-channel-state-XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
         auto rejected=[](auto&& fn){bool caught=false;try{fn();}catch(const std::exception&){caught=true;}assert(caught);};
+        const auto helper=root/"updater";
+        assert(!boot_helper_ready(helper));
+        std::ofstream(helper)<<"#!/bin/sh\nexit 0\n";assert(!chmod(helper.c_str(),0755));assert(boot_helper_ready(helper));
+        assert(!chmod(helper.c_str(),0775));assert(!boot_helper_ready(helper));assert(!chmod(helper.c_str(),0755));
+        fs::create_symlink(helper,root/"updater-link");assert(!boot_helper_ready(root/"updater-link"));
+        fs::create_hard_link(helper,root/"updater-hardlink");assert(!boot_helper_ready(helper));fs::remove(root/"updater-hardlink");
         const auto previous_mask=umask(0077);
         atomic_write(root/"channel","test\n");assert(saved(root/"channel")=="test");
         struct stat mode{};assert(stat((root/"channel").c_str(),&mode)==0&&(mode.st_mode&0777)==0644);

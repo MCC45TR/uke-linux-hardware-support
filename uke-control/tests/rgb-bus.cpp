@@ -92,6 +92,10 @@ int main() {
     allowed=false;torch_call("SetEnabled",1,false);torch_call("SetBrightness",50,false);
     allowed=true;torch_call("SetBrightness",101,false);torch_call("SetBrightness",1,true);
     torch_call("SetBrightness",99,true);torch_call("SetBrightness",100,true);torch_call("SetEnabled",0,true);
+    stopping=1;
+    call("SetColor","#ffff00",100,false);call("TestColors",nullptr,0,false);
+    torch_call("SetEnabled",1,false);torch_call("SetBrightness",50,false);
+    call("Status",nullptr,0,true);
     sd_bus_unref(bus);running=false;auth.join();service.join();
     assert(changes==4); // Set, test, refused duplicate test, automatic; no unauthorized ioctl.
     assert((torch_fixture::writes==std::vector<unsigned>{0,1,1,2,0,0}));

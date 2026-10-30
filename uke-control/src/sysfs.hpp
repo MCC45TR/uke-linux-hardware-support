@@ -12,9 +12,26 @@ namespace fs=std::filesystem;
 inline std::string quote(const std::string& value) {
     constexpr char hex[]="0123456789abcdef";
     std::string out="\"";
-    for(unsigned char c:value) {
+    for(size_t i=0;i<value.size();++i) {
+        const auto c=static_cast<unsigned char>(value[i]);
         if(c=='"'||c=='\\'){out+='\\';out+=char(c);}
-        else if(c<32||c>=127){out+="\\u00";out+=hex[c>>4];out+=hex[c&15];}
+        else if(c<32||c==127){out+="\\u00";out+=hex[c>>4];out+=hex[c&15];}
+        else if(c>=128) {
+            const size_t length=c>=0xc2&&c<=0xdf?2:c>=0xe0&&c<=0xef?3:c>=0xf0&&c<=0xf4?4:0;
+            bool valid=length && length<=value.size()-i;
+            for(size_t j=1;valid&&j<length;++j) {
+                const auto next=static_cast<unsigned char>(value[i+j]);
+                valid=next>=0x80&&next<=0xbf;
+            }
+            if(valid) {
+                const auto next=static_cast<unsigned char>(value[i+1]);
+                valid=!(c==0xe0&&next<0xa0) && !(c==0xed&&next>=0xa0) &&
+                      !(c==0xf0&&next<0x90) && !(c==0xf4&&next>=0x90);
+            }
+            // Kernel attributes can contain arbitrary bytes; replace each invalid byte.
+            if(valid){out.append(value,i,length);i+=length-1;}
+            else out+="\\ufffd";
+        }
         else out+=char(c);
     }
     return out+'"';

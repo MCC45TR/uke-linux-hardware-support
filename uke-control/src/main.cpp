@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "overview.hpp"
 #include "cli.hpp"
 #include "charge-policy.hpp"
 #include "front-color.hpp"
@@ -25,6 +26,8 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(const int result=uke::charge::policy_command(argc,argv,as_json);result>=0)return result;
         std::string command=argv[1];
+        if(command=="overview"||command=="capabilities"||command=="complete"||command=="compare"||command=="support"||command=="roots")
+            return uke::overview::command(argc-1,argv+1,as_json);
         if(command=="singleboot"||command=="multiboot") {
             execv("/usr/libexec/uke-control/layout-manager",argv);
             throw std::runtime_error("The native boot layout manager is unavailable");
@@ -77,10 +80,10 @@ static int run(int argc,char** argv,bool as_json) {
             const auto result=uke::display_lane_limit(argv[3]);uke::cli::print(result.output,as_json);return result.status;
         }
         if(command=="display"&&argc==3&&std::string_view(argv[2])=="compression") {
-            std::cout<<uke::links::compression_status("/");return 0;
+            uke::cli::print(uke::links::compression_status("/"),as_json);return 0;
         }
         if(command=="display"&&argc==4&&std::string_view(argv[2])=="compression") {
-            const auto result=uke::display_compression(argv[3]);std::cout<<result.output;return result.status;
+            const auto result=uke::display_compression(argv[3]);uke::cli::print(result.output,as_json);return result.status;
         }
         if(command=="ethernet"&&argc==4&&std::string_view(argv[2])=="status") {
             uke::cli::print(uke::links::ethernet_status(argv[3]),as_json);return 0;
@@ -126,7 +129,7 @@ static int run(int argc,char** argv,bool as_json) {
         if(command=="status"&&argc==2){uke::cli::print(uke::status(),as_json);return 0;}
         if(command=="firmware"&&argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::firmware_status(),as_json);return 0;}
         if(command=="hardware"&&argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::hardware_status(),as_json);return 0;}
-        if(command=="boot"&&argc==2){uke::boot();uke::cli::print("{\"startup_policies_applied\":true}",as_json);return 0;}
+        if(command=="boot"&&argc==2){uke::boot();uke::cli::print("{\"startup_tasks_completed\":true,\"receipt\":\"/var/lib/uke-control/startup.json\"}",as_json);return 0;}
         if(command=="inventory"&&(argc==2||(argc==3&&std::string_view(argv[2])=="--refresh"))){uke::cli::print(uke::inventory(argc==3),as_json);return 0;}
         if(command=="swap") {
             if(argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::swap_status(),as_json);return 0;}
@@ -162,6 +165,10 @@ static int run(int argc,char** argv,bool as_json) {
             }
         }
         if(command=="usb") {
+            if(argc==4&&std::string_view(argv[2])=="transition") {
+                if(std::string_view(argv[3])=="status"){uke::cli::print(uke::usb::transition_status(),as_json);return 0;}
+                if(std::string_view(argv[3])=="recover"){const auto result=uke::usb_transition_recover();uke::cli::print(result.output,as_json);return result.status;}
+            }
             if(argc==5&&std::string_view(argv[2])=="power") {
                 const auto result=uke::usb_power_set(argv[3],argv[4]);uke::cli::print(result.output,as_json);return result.status;
             }
@@ -183,8 +190,8 @@ static int run(int argc,char** argv,bool as_json) {
             }
         }
         throw uke::cli::UsageError("unknown command or arguments; see 'uke-control "+command+" --help'");
-    } catch(const uke::cli::UsageError& e){std::cerr<<"uke-control: "<<e.what()<<'\n';return 64;}
-    catch(const std::exception& e){std::cerr<<"uke-control: "<<uke::cli::human(e.what());return 1;}
+    } catch(const uke::cli::UsageError& e){return uke::cli::error(e.what(),as_json,64);}
+    catch(const std::exception& e){return uke::cli::error(e.what(),as_json,1);}
 }
 int main(int argc,char** argv) {
     try {
@@ -204,6 +211,6 @@ int main(int argc,char** argv) {
         if(args.json && (command=="channel" || command=="update" || command=="test" || command=="resize" || command=="singleboot" || command=="multiboot"))args.words.push_back("--json");
         std::vector<char*> words;for(auto& word:args.words)words.push_back(word.data());words.push_back(nullptr);
         return run(int(words.size()-1),words.data(),args.json);
-    } catch(const uke::cli::UsageError& error){std::cerr<<"uke-control: "<<error.what()<<'\n';return 64;}
-    catch(const std::exception& error){std::cerr<<"uke-control: "<<error.what()<<'\n';return 1;}
+    } catch(const uke::cli::UsageError& error){return uke::cli::error(error.what(),uke::cli::json_requested(argc,argv),64);}
+    catch(const std::exception& error){return uke::cli::error(error.what(),uke::cli::json_requested(argc,argv),1);}
 }

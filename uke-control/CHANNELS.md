@@ -108,8 +108,9 @@ must come from Fedora's `rawhide` repository, including a necessary downgrade.
 No other project package is handed to an arbitrary outside repository. If the
 original replacement is unavailable, the whole transaction is refused.
 
-`sync` repairs the saved selection; without a saved selection the default is
-stable. `update` performs the same synchronization and upgrades the other
+`sync` repairs the saved selection; without a saved selection it infers exactly
+one enabled stable/test COPR and refuses missing or ambiguous selections.
+`update` performs the same synchronization and upgrades the other
 distribution packages in the same dependency transaction. Dependency failures,
 version locks, missing candidates, duplicate repository definitions and
 unintended package removal are errors. There is no `nodeps`, signature bypass,
@@ -149,12 +150,15 @@ reports that the tablet must not reboot. Stock firmware, Android A, storage
 layout, persist policy and the updater's battery/backup checks are not bypassed.
 
 Downloads and signatures precede persistent channel changes. Root-private
-`channel-pending`, `channel-transaction.json` and
+`channel-pending`, versioned `channel-operation`, `channel-transaction.json` and
 `channel-repositories.before` records under `/var/lib/uke-control` describe
 interrupted work. The saved successful channel is committed only after the RPM
 transaction and required boot selection succeed. If an operation is interrupted,
-`channel sync` resumes the pending selection against current signed metadata;
-it does not promise the old exact transaction or an automatic package rollback.
+`channel sync` can replan only before RPM starts. Once RPM is durably complete,
+it resumes the recorded original kernel's boot/selection finalization without
+replaying RPM or resolving a new transaction. An unknown RPM outcome refuses
+automatic retry and requires DNF history/boot-state inspection. Root channel
+status reports operation IDs and phases; no userspace rollback is promised.
 An interrupted `.new` file is refused for inspection. RPM/scriptlet failure can
 leave some packages installed; read DNF history and the retained record. Do not
 reboot an incomplete kernel transition.
@@ -165,3 +169,11 @@ DNF4/Python backend, donor installer or project Python payload is invoked.
 root in a disposable host container with rpm-sign, GnuPG and createrepo_c,
 exercises signed local repositories and an isolated RPM database. None of these
 checks establishes a tablet channel switch, kernel boot or rollback result.
+
+30 October 2026: preview includes download/RPM payload totals and filesystem
+bytes/inodes. Staging peak remains unknown; native RPM space checks remain
+required. No kernel cleanup occurs without complete running/selected/recovery,
+module, firmware and boot reference ownership. The boot helper must be trusted
+before mutation or supplied by the planned helper package. A common maintenance
+reservation excludes prepared layout/resize. Catchable termination is deferred
+during mutation; SIGKILL/power loss can still leave uncertain RPM completion.

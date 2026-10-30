@@ -5,9 +5,11 @@
 #include <vector>
 static std::vector<std::vector<std::string>> calls;
 static uke::Result response{0, ""};
+static uke::Result structured{1,"unsupported"};
 namespace uke {
 Result execute(const std::vector<std::string>& args, unsigned seconds, size_t limit) {
     assert(seconds == 5 && limit == 65536);
+    if(args.back()=="--json")return structured;
     calls.push_back(args);
     return response;
 }
@@ -41,4 +43,10 @@ int main() {
     const auto count = calls.size();
     try { uke::desktop::plasma_set("rotation", "on;touch /tmp/unsafe"); assert(false); } catch (const std::runtime_error&) {}
     assert(calls.size() == count);
+    response={0,panel};
+    structured={0,R"({"outputs":[{"name":"DP-1","connected":true,"autoRotatePolicy":0},{"name":"DSI-1","connected":true,"autoRotatePolicy":1}]})"};
+    auto status=uke::desktop::plasma_status();assert(status.find("\"rotation_policy\":\"inTabletMode\"")!=status.npos&&status.find("\"rotation\":false")!=status.npos);
+    for(const auto* text:{R"({"outputs":[{"name":"DSI-1","connected":true,"autoRotatePolicy":99}]})",R"({"outputs":[{"name":"DSI-1","connected":true,"autoRotatePolicy":"always"}]})","{}","not JSON",R"({"outputs":[{"name":"DSI-1","connected":true},{"name":"DSI-2","connected":true}]})"}) {
+        structured.output=text;assert(uke::desktop::plasma_status().find("\"rotation\":null")!=std::string::npos);
+    }
 }

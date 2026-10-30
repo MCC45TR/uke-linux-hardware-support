@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.3.0
+Version: 2.4.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -58,6 +58,7 @@ package selections. Numeric readings alone do not establish physical acceptance.
 
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
+install -Dm644 packaging/uke-control.bash %{buildroot}%{_datadir}/bash-completion/completions/uke-control
 install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
 install -Dm755 build/torch-access %{buildroot}%{_libexecdir}/uke-control/torch-access
 install -Dm644 packaging/91-uke-control-torch.rules %{buildroot}%{_udevrulesdir}/91-uke-control-torch.rules
@@ -126,7 +127,7 @@ fi
 if [ "$1" = 0 ]; then %{_libexecdir}/uke-control/torch-access --remove || exit 1; fi
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
-%systemd_postun uke-control-rgb.service
+%systemd_postun_with_restart uke-control-rgb.service
 if [ "$1" = 0 ]; then
     if [ -c /dev/uke-rgb ] && [ ! -L /dev/uke-rgb ]; then chown root:root /dev/uke-rgb; chmod 0600 /dev/uke-rgb; fi
     %{_sbindir}/semodule -r uke_control_rgb >/dev/null 2>&1 || :
@@ -134,12 +135,13 @@ if [ "$1" = 0 ]; then
 fi
 %systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
-%systemd_user_postun uke-control-moisture-notify.service
+%systemd_user_postun_with_restart uke-control-moisture-notify.service
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md
 %{_bindir}/uke-control
+%{_datadir}/bash-completion/completions/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
 %{_udevrulesdir}/91-uke-control-torch.rules
@@ -181,6 +183,20 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-1
+- Add read-only component snapshots, root inspection, comparison and safe export.
+- Correct CLI contracts, bounded execution, persistence and maintenance ownership.
+- Journal package phases and block blind replay of an unknown RPM outcome.
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
+- Deliver the diagnostic correction with its matching Core family dependency.
+- Advance the rebuilt children beyond the earlier standalone test identity.
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
+- Record independent lid consumers and the current session's screensaver state.
+- Include active display depth and cached DSC state in diagnostic reports.
+- Correct the CLI version banner; retain read-only, no-activation queries.
+
 * Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.0-1
 - Add expiring identity review and the qualified positive-current restore command.
 - Report the coherent UCSI PDO/RDO cache and correct battery topology decoding.
@@ -212,15 +228,6 @@ fi
 - Broker active-local torch requests without root, sudo or interactive authorization.
 - Limit the confined service to the admitted brightness attribute and retain the 20 mA ceiling.
 - Preserve manual shutdown, sleep cleanup and independent kernel RGB operation.
-* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
-- Deliver the diagnostic correction with its matching Core family dependency.
-- Advance the rebuilt children beyond the earlier standalone test identity.
-
-* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
-- Record independent lid consumers and the current session's screensaver state.
-- Include active display depth and cached DSC state in diagnostic reports.
-- Correct the CLI version banner; retain read-only, no-activation queries.
-
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-1
 - Add an explicit disconnected DSC request and cached compression-status query.
 - Preserve provider, root, board and driver readback checks; activation remains unqualified.
