@@ -226,7 +226,7 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 
 %post
 %systemd_post uke-touchscreen.service
-%sysctl_apply --prefix=/kernel/kptr_restrict --prefix=/kernel/dmesg_restrict
+%sysctl_apply -- --prefix=/kernel/kptr_restrict --prefix=/kernel/dmesg_restrict
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %preun
