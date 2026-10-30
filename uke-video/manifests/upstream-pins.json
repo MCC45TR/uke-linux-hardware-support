@@ -67,11 +67,67 @@
       "release": 10,
       "service_package": "uke-video-session",
       "service_minimum": "1.1.0",
-      "native_build_pending": true,
+      "native_build_pending": false,
       "tablet_acceptance": false,
       "failed_native_build": {
         "id": 11230050,
         "reason": "Diagnostic template requires a literal-format argument under Fedora format-security flags"
+      },
+      "source_commit": "1076bc33049f1e0a8985cd5d6efbd13aead2b478",
+      "copr_build": 11230057,
+      "service_source_commit": "4ca77097a14bcbbfdd0c59ed6f2b086641f3c66a",
+      "service_copr_build": 11230049,
+      "service_nevra": "uke-video-session-1.1.0-1.fc46.aarch64",
+      "backend_nevra": "uke-vaapi-v4l2-1.0.0-10.fc46.aarch64",
+      "installed_with_signed_dnf": true,
+      "rpm_verification_clean": true,
+      "ordinary_chrome_activity_policy_tested": true,
+      "pause_resume_tested": true,
+      "manual_profile_priority_tested": true,
+      "forced_crash_recovery_tested": true,
+      "independent_uid_activation_tested": true,
+      "second_uid_physical_chrome_tested": false,
+      "remaining_acceptance": [
+        "optical cadence and reported drops",
+        "HDR output",
+        "long endurance"
+      ],
+      "normal_chrome_trial": {
+        "seconds": 300.0041,
+        "dimensions": [
+          3840,
+          2160
+        ],
+        "dimension_polls": 601,
+        "bad_dimension_polls": 0,
+        "compositor_submissions_per_second": 59.93251425563821,
+        "reported_drops": 41,
+        "waiting_seconds": 0,
+        "errors": 0
+      },
+      "tablet_acceptance_scope": "Bounded normal-Chrome and lifecycle controls passed; full optical cadence and HDR remain open",
+      "idle_exit_tested": true,
+      "default_copy_pixels": {
+        "nv12_matching_frames": 60,
+        "p010_matching_frames": 60,
+        "override_unset": true,
+        "persistent_storage_verified": true
+      },
+      "headroom_trial": {
+        "seconds": 180.0064,
+        "dimensions": [
+          3840,
+          2160
+        ],
+        "playback_rate": 1.25,
+        "dimension_polls": 361,
+        "bad_dimension_polls": 0,
+        "compositor_submissions_per_second": 70.71970774372525,
+        "reported_drops": 895,
+        "waiting_seconds": 0,
+        "errors": 0,
+        "optical_frame_rate": false,
+        "frame_generation": false
       }
     }
   },

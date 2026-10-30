@@ -19,11 +19,16 @@ the session user, with no root daemon, login-time polling or browser extension.
 The native protocol contains a context counter, dimensions and activity state;
 it carries no media, website, account or profile data.
 
-The earlier launcher 1.0.0-3 measured 70.48 compositor submissions/s in a
-180-second accelerated 4K60 trial and 59.94/s in a 300-second normal trial.
-Those results do not qualify this automatic implementation. COPR, installed
-normal-Chrome behavior, per-user activation, recovery, optical cadence and HDR
-remain separate validation gates.
+COPR 11230049 builds service 1.1.0-1; 11230057 builds the matching backend.
+Signed DNF delivery on POCO Pad X1 passes ordinary-Chrome activation,
+pause/resume, manual-profile priority and forced-crash recovery controls.
+Separate-UID activation and caller rejection pass independently of playback.
+A 300-second ordinary-Chrome trial retains 3840x2160 in all 601 polls,
+measures 59.93 compositor submissions/s and reports 41 drops, with no waiting,
+error or resolution fallback. A separate 180-second trial at 1.25x speed
+measures 70.72 submissions/s and 895 reported drops at the 75 fps target,
+without waiting or quality fallback. This is processing headroom, not frame
+generation. Optical cadence and HDR remain unqualified.
 
 The implementation uses the standard
 [D-Bus activation contract](https://dbus.freedesktop.org/doc/dbus-specification.html),

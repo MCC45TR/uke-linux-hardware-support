@@ -17,8 +17,11 @@ standard power-profile hints without selecting a website, profile or launcher.
 The dependent `uke-video-session` package supplies per-user activation and
 recovery. Policy unavailability must not turn a valid decode into an error.
 
-Native pixel controls on kernel 7.3.0-54 with the previous backend match 60
-NV12 and 60 P010 references through CPU copying. They do not qualify the new
-integration, HDR output or sustained browser presentation. Remote build,
-installed ordinary-Chrome playback and lifecycle acceptance remain separate
-checks. Historical package and hardware records are in [CHANGELOG.md](CHANGELOG.md).
+COPR 11230057 builds backend 1.0.0-10; signed DNF delivery on kernel 7.3.0-54
+matches all 60 NV12 and 60 P010 references with the copy override unset and
+persistent exports retained. A separate 300-second ordinary-Chrome trial
+keeps 3840x2160, measures 59.93 compositor submissions/s and reports 41 drops,
+without waiting, errors or quality fallback. Automatic activation, pause,
+manual-profile priority, crash recovery and idle cleanup pass. These controls
+do not qualify optical cadence or HDR. Historical package and hardware records
+are in [CHANGELOG.md](CHANGELOG.md).

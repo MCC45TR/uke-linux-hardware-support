@@ -1,5 +1,21 @@
 # Uke stateful video integration
 
+## 30 October 2026: automatic per-user policy
+
+The independent `uke-vaapi-v4l2` and `uke-video-session` producers target only
+Fedora Rawhide AArch64 in `mcc45tr/uke-linux-unstable`. They supersede the older
+source-family publication instructions below. Original Chrome is unchanged.
+
+Backend 1.0.0-10 uses the existing CPU-copy path by default for decoder exports
+and reports native UHD activity asynchronously. Session policy 1.1.0-1 replaces
+the special launcher with authenticated user D-Bus activation, reversible CPU
+hints and standard Power Profiles holds. COPR 11230049 and 11230057 pass and the
+signed packages are installed through DNF on POCO Pad X1. Pause/resume, manual
+profile priority, crash recovery and separate-account activation controls pass.
+Browser counters, optical presentation and HDR retain separate acceptance gates.
+
+## Historical source-family records
+
 COPR publication belongs to the existing `uke-additional` source family.
 The backend remains the separately installable `uke-vaapi-v4l2` child RPM.
 Its local source RPM is an intermediate family input; do not register a
