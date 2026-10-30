@@ -218,7 +218,7 @@ int main() {
     auto truncated=boots[1];capability(truncated,page+460);reject([&]{userdata_vrr(truncated,true,manifest);});
     {
         const auto path=root/"metadata-lock";
-        text(path,"fixture");
+        std::ofstream(path)<<"fixture";
         Fd held(open(path.c_str(),O_RDWR|O_CLOEXEC));
         Fd contender(open(path.c_str(),O_RDWR|O_CLOEXEC));
         assert(lock_metadata_fd(held.value));

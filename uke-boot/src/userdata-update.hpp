@@ -241,7 +241,8 @@ struct SlotMetadata {
         need(!fstat(fd.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==expected &&
              !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector),
              "Physical UFS GPT descriptor identity/capacity unavailable");
-        need(lock_metadata_fd(fd.value),std::string("Cannot lock the physical UFS GPT descriptor: ")+std::strerror(errno));
+        if(!lock_metadata_fd(fd.value))
+            throw std::runtime_error(std::string("Cannot lock the physical UFS GPT descriptor: ")+std::strerror(errno));
         gpt=std::make_unique<slot::Disk>(fd.value,bytes,sector,allow_backup_crc);
     }
 };
