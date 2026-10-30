@@ -1,5 +1,10 @@
 # Stock-ABL kernel updates
 
+30 October 2026. Updater 1.8.9 retains active `transaction BUNDLE` calls from
+Uke Control and direct callers. The final RPM trigger also covers profile-only
+updates and verifies an already prepared candidate without another image write.
+Version 1.8.8's unconditional transaction deferral is superseded.
+
 30 October 2026. Updater 1.8.8 finalizes userdata updates after all RPM package
 scripts, including a transaction that changes only the singleboot profile link.
 The terminal reports the candidate release, verified target slot and retained

@@ -425,10 +425,6 @@ int main(int argc,char **argv) {
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
         const auto label=root_label(read_text("/proc/cmdline"));
-        if(action=="transaction" && label=="userdata") {
-            std::cout<<"Uke kernel installed; final transaction trigger will prepare the selected singleboot profile\n";
-            return 0;
-        }
         if(action=="auto" && label!="userdata")return 0;
         need(!preflight || label=="userdata","Automatic preflight is specific to the userdata profile");
         if(automatic || preflight) {

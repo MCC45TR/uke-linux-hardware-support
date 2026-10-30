@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.8
+Version: 1.8.9
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -357,6 +357,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.9-1
+- Preserve direct transaction calls from Control while final RPM triggers cover profile-only updates.
+
 * Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.8-1
 - Finalize singleboot profile changes in the RPM transaction and report failures.
 - Preserve the accepted slot when replacing an unbooted trial in the same boot.

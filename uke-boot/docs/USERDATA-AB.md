@@ -1,5 +1,11 @@
 # Userdata boot A/B updates
 
+30 October 2026. Version 1.8.9 preserves direct selected-profile transaction
+calls, including Uke Control calls after package installation. RPM kernel hooks
+and final file triggers use the same guarded writer. A repeated call verifies
+the pending candidate without rewriting its image. The final trigger still
+catches an update that changes only the singleboot profile link.
+
 30 October 2026. Version 1.8.8 watches the selected singleboot link as well as
 installed boot bundles in the final RPM transaction trigger. Kernel posttrans
 hooks defer userdata staging to that final trigger. A separate profile-only
