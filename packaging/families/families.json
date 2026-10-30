@@ -4,10 +4,10 @@
   "families": [
     {
       "name": "uke-core",
-      "version": "2.3.0",
+      "version": "2.4.0",
       "release": 1,
       "requires": [
-        "uke-control = 2.3.0-1%{?dist}"
+        "uke-control = 2.4.0-1%{?dist}"
       ],
       "suggests": [
         "uke-control-tests"
@@ -193,7 +193,7 @@
     {
       "name": "uke-metas",
       "version": "1.4.0",
-      "release": 4,
+      "release": 5,
       "requires": [
         "uke-core-meta >= 1.0.6-7"
       ],
@@ -208,6 +208,7 @@
         "uke-core-meta/Makefile",
         "uke-desktop-metas/packaging",
         "uke-desktop-metas/src",
+        "uke-desktop-metas/po",
         "uke-desktop-metas/Makefile"
       ]
     },

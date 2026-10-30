@@ -15,5 +15,5 @@ test-native:
 	$(MAKE) -C uke-boot test-usb
 	$(MAKE) -C uke-desktop-integration test-native
 	$(MAKE) -C uke-platform-runtime test-native
-	$(MAKE) -C uke-control check
+	$(MAKE) -C uke-control check-native
 	$(MAKE) -C xiaomi-uke-firmware test-admission
