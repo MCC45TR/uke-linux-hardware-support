@@ -128,7 +128,7 @@ int authorize(sd_bus_message* message,State& state,std::unique_ptr<Pending> pend
         "Cannot prepare system authorization");
     std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> outgoing(call,sd_bus_message_unref);
     need(sd_bus_message_append(call,"(sa{sv})sa{ss}us","system-bus-name",1,"name","s",sender,
-        action,1,"polkit.message",(description+". Allow this application connection to control this light for two minutes.").c_str(),
+        action,1,"polkit.message",(description+". Allow this application to adjust this light for two minutes.").c_str(),
         1U,pending->cancellation.c_str())>=0,"Cannot encode system authorization");
     state.pending=std::move(pending);
     const int r=sd_bus_call_async(bus,&state.pending->slot,call,authorization_reply,&state,120000000);

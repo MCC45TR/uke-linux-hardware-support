@@ -5,7 +5,7 @@ SHELL := /bin/bash
 all: build/qml/org/senemos/uke/controls/libukelightclient.so
 build/light-client.moc: src/light-client.cpp
 	mkdir -p build
-	$$(pkg-config --variable=libexecdir Qt6Core)/moc $< -o $@
+	$$(pkg-config --variable=libexecdir Qt6Core)/moc $$(pkg-config --cflags Qt6Qml Qt6DBus) $< -o $@
 build/qml/org/senemos/uke/controls/libukelightclient.so: src/light-client.cpp src/light-client.qmldir build/light-client.moc
 	mkdir -p $(@D)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -fPIC -shared -Ibuild $(LDFLAGS) src/light-client.cpp $$(pkg-config --cflags --libs Qt6Qml Qt6DBus) -o $@
@@ -33,7 +33,7 @@ test-applet-load: all
 	QML_IMPORT_PATH="$(CURDIR)/build/qml" bash tests/applet-cache.sh
 build/light-client-test.moc: tests/light-client.cpp
 	mkdir -p build
-	$$(pkg-config --variable=libexecdir Qt6Core)/moc $< -o $@
+	$$(pkg-config --variable=libexecdir Qt6Core)/moc $$(pkg-config --cflags Qt6Qml Qt6DBus) $< -o $@
 test-light-client: all build/light-client-test.moc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -UNDEBUG -Ibuild $(LDFLAGS) tests/light-client.cpp $$(pkg-config --cflags --libs Qt6Qml Qt6DBus) -o build/test-light-client
 	dbus-run-session -- bash -c 'DBUS_SYSTEM_BUS_ADDRESS="$$DBUS_SESSION_BUS_ADDRESS" build/test-light-client'
