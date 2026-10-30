@@ -144,7 +144,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.4.0/#' -czf "$$top/SOURCES/uke-control-2.4.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md OWNERSHIP.md CLI.md BOOT-LAYOUT.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-2.4.0/#' -czf "$$top/SOURCES/uke-control-2.4.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md DISPLAY-EYE-CARE.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md LIGHT-INTERFACES.md OWNERSHIP.md CLI.md BOOT-LAYOUT.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

@@ -8,7 +8,7 @@ for (const action of ["plasma", "desktop", "usb", "rotationOn", "rotationOff", "
     assert.match(context.command(action), /^(\/usr\/bin\/pkexec )?\/usr\/bin\/uke-control --json /);
 for (const action of ["__proto__", "constructor", "usb; touch /tmp/unsafe", ""])
     assert.equal(context.command(action), null);
-for (const action of ["lights", "rgb", "rgbTest", "flashlightOn", "flashlightOff", "flashlightSet"]) {
+for (const action of ["lights", "rgb", "rgbTest", "rgbSet", "rgbAuto", "flashlightOn", "flashlightOff", "flashlightSet"]) {
     assert.equal(context.isLightAction(action), true);
     assert.equal(context.command(action, [50]), null);
 }
@@ -18,7 +18,8 @@ for (const action of ["ledSet", "ledOff"])
     assert.equal(context.command(action, [255, 0, 128, 75]), null);
 for (const values of [[], [0], [101], [-1], [1.5], ["50"], ["0;reboot"], [0, 1], null])
     assert.equal(context.command("flashlightSet", values), null);
-const validRgb = {schema:"org.uke.control.rgb.v1", available:true, mode:"test", test_remaining_ms:10000, kernel_io_error:0};
+const validRgb = {schema:"org.uke.control.rgb.v1", available:true, mode:"test", test_remaining_ms:10000, kernel_io_error:0,
+    color_rgb:[255,0,128], requested_color_rgb:[255,255,255], requested_percent:52};
 assert.equal(context.parse("rgb", JSON.stringify(validRgb)).mode, "test");
 assert.equal(context.parse("rgb", '{"schema":"org.uke.control.rgb.v1","available":false}').available, false);
 for (const [key, value] of [["available", "true"], ["mode", "camera"], ["test_remaining_ms", -1], ["test_remaining_ms", 10001], ["test_remaining_ms", "100"], ["kernel_io_error", 1], ["kernel_io_error", -4096]]) {
@@ -27,7 +28,13 @@ for (const [key, value] of [["available", "true"], ["mode", "camera"], ["test_re
 }
 const qml = fs.readFileSync(`${__dirname}/../src/plasma-applet/contents/ui/main.qml`, "utf8");
 assert.match(qml, /root\.change\("rgbTest"\)/);
-assert.doesNotMatch(qml, /ledSet|ledOff|redValue|greenValue|blueValue/);
+assert.doesNotMatch(qml, /ledSet|ledOff/);
+assert.match(qml, /root\.change\("rgbSet", \[redValue\.value, greenValue\.value, blueValue\.value, rgbBrightness\.value\]\)/);
+assert.match(qml, /root\.change\("rgbAuto"\)/);
+assert.match(qml, /QQC2\.SpinBox\s*\{\s*id: lightBrightness/);
+for (const [key,value] of [["color_rgb",[256,0,0]],["requested_color_rgb",[255,255]],["requested_color_rgb",["255",0,0]],
+        ["requested_percent",101],["requested_percent",-1],["requested_percent",1.5]])
+    assert.throws(() => context.parse("rgb",JSON.stringify({...validRgb,[key]:value})));
 assert.equal(context.parse("lights", '{"schema":"org.uke.control.lights.v1","flashlight":{"available":false,"on":null,"brightness_percent":null},"rgb":{"available":false,"on":null,"brightness_percent":null}}').rgb.available, false);
 const validLights = {schema:"org.uke.control.lights.v1", flashlight:{available:true,on:true,brightness_percent:50,requested_percent:50}, rgb:{available:true,on:true,brightness_percent:100,color:[255,0,128]}};
 assert.equal(context.parse("lights", JSON.stringify(validLights)).rgb.color[2], 128);

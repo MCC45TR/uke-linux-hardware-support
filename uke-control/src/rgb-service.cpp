@@ -63,9 +63,14 @@ std::string status(State& state) {
          value.camera_active<=1 && value.camera_source_seen<=1 && value.last_io_error<=0 && value.last_io_error>=-4095 && !value.reserved,
          "Kernel RGB status failed ABI validation");
     const auto c=uke::rgb::hex({value.rgb>>16,(value.rgb>>8)&255,value.rgb&255});
+    const auto channels=[](unsigned color){return "["+std::to_string(color>>16)+","+
+        std::to_string((color>>8)&255)+","+std::to_string(color&255)+"]";};
     return "{\"schema\":\"org.uke.control.rgb.v1\",\"available\":true,\"physical_acceptance\":null,\"mode\":\""+
         std::string(mode_name(value.mode))+"\",\"color\":\""+c+"\",\"brightness_percent\":"+
-        std::to_string((value.brightness*100+4)/8)+",\"test_remaining_ms\":"+std::to_string(value.test_remaining_ms)+
+        std::to_string((value.brightness*100+4)/8)+",\"color_rgb\":"+channels(value.rgb)+
+        ",\"requested_color_rgb\":"+channels(value.requested_rgb)+",\"requested_percent\":"+std::to_string(value.requested_percent)+
+        ",\"native_brightness\":"+std::to_string(value.brightness)+",\"native_brightness_limit\":"+std::to_string(value.brightness_limit)+
+        ",\"policy_owner\":\"kernel\",\"test_remaining_ms\":"+std::to_string(value.test_remaining_ms)+
         ",\"battery_valid\":"+(value.battery_valid?"true":"false")+",\"camera_integration_available\":"+
         (value.camera_source_seen?"true":"false")+",\"kernel_io_error\":"+std::to_string(value.last_io_error)+",\"reason\":null"+session+"}";
 }
@@ -173,10 +178,15 @@ int request(sd_bus_message* message,void* userdata,sd_bus_error* error) {
             need(sd_bus_message_read(message,"su",&text,&percent)>0 && text && percent<=100,"Invalid RGB request");
             const auto color=uke::rgb::parse_hex(text);
             value={UKE_RGB_ABI,(color[0]<<16)|(color[1]<<8)|color[2],percent,0};command=UKE_RGB_SET;
+        } else if(method=="SetRgb") {
+            unsigned r=0,g=0,b=0,percent=0;
+            need(sd_bus_message_read(message,"uuuu",&r,&g,&b,&percent)>0 &&
+                r<=255 && g<=255 && b<=255 && percent<=100,"Invalid RGB channels or percentage");
+            value={UKE_RGB_ABI,(r<<16)|(g<<8)|b,percent,0};command=UKE_RGB_SET;
         } else if(method=="TestColors")command=UKE_RGB_TEST_COLORS;
         else need(method=="Automatic","Unknown RGB method");
         pending->command=command;pending->color=value;
-        const std::string description=method=="SetColor"?"Set the Uke notification LED to "+
+        const std::string description=command==UKE_RGB_SET?"Set the Uke notification LED to "+
             uke::rgb::hex({value.rgb>>16,(value.rgb>>8)&255,value.rgb&255})+" at "+std::to_string(value.brightness_percent)+" percent":
             method=="TestColors"?"Run the Uke notification LED color test":"Restore automatic Uke notification LED policy";
         return authorize(message,state,std::move(pending),"org.senemos.uke.rgb.control",description,error);
@@ -186,6 +196,7 @@ const sd_bus_vtable methods[]={
     SD_BUS_VTABLE_START(0),
     SD_BUS_METHOD("Status","","s",request,SD_BUS_VTABLE_UNPRIVILEGED),
     SD_BUS_METHOD("SetColor","su","s",request,SD_BUS_VTABLE_UNPRIVILEGED),
+    SD_BUS_METHOD("SetRgb","uuuu","s",request,SD_BUS_VTABLE_UNPRIVILEGED),
     SD_BUS_METHOD("TestColors","","s",request,SD_BUS_VTABLE_UNPRIVILEGED),
     SD_BUS_METHOD("Automatic","","s",request,SD_BUS_VTABLE_UNPRIVILEGED),
     SD_BUS_VTABLE_END

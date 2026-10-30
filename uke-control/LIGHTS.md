@@ -16,10 +16,14 @@ battery warnings, camera behavior, suspend or supplier-removal acceptance.
 ```sh
 uke-control flashlight status
 uke-control flashlight set 50
+uke-control flashlight set 47
+uke-control flashlight set 51
+uke-control flashlight set 52
 uke-control flashlight set 100
 uke-control flashlight off
 uke-control led status
 uke-control led set '#ffff00' 50
+uke-control led set 255 255 255 52
 uke-control led test
 uke-control led auto
 ```
@@ -68,18 +72,23 @@ ampere measurement. The original QCOM LPG driver retains electrical control;
 no voltage, peak-current or regulator setting is increased. Status reports
 kernel state and an I/O error separately; `physical_acceptance` stays null.
 
-The widget keeps only the **Test colors** RGB button. It sends one fixed
-`uke-control led test` request and displays the kernel's remaining time.
-Repeating a running test is refused; it does not extend the deadline. Widget
-testing uses a separate original Fedora `plasmoidviewer` without restarting
-Plasma.
+The widget provides decimal RGB components 0–255, an integer brightness request
+0–100, an automatic-policy action and the existing **Test colors** button.
+All light actions use the persistent native Qt client. The broker exposes
+`SetRgb(uuuu)` alongside the compatible HEX method and transports the existing
+`UKE_RGB_SET` ioctl. Zero brightness clears manual control while retaining
+automatic warnings. Status includes requested channels/percentage and applied
+kernel channels/brightness separately. See [the public interface contract](LIGHT-INTERFACES.md).
 
 The torch request range is **1–100** without running the client as root, sudo or
 pkexec. Changes require the original system authorization window; a persistent
 client connection reuses its own fixed two-minute grant. The retained **20,000 microampere total**
-ceiling and 5 mA per-channel resolution provide two nonzero steps: 50% requests
-10 mA total and 100% requests 20 mA total. Zero turns it off. Positive
-intermediate requests round down to the minimum nonzero step. CLI zero is a
+ceiling and 5 mA per-channel resolution provide two nonzero steps. Requests
+1–50 apply 10 mA total; requests 51–100 apply 20 mA total. Every integer, including
+47, 51 and 52, is accepted and retained before rounding up to the provider step.
+This follows the Nabu percentage conversion without importing its 200 mA ceiling
+or claiming 100 distinct physical levels. The settings dialog permits direct
+integer entry. Zero turns it off. CLI zero is a
 compatibility alias for off; `on` restores the last request in this service
 lifetime (default 100). Status and the widget distinguish the requested
 percentage from the applied 50/100 step. The reviewed provider has

@@ -37,8 +37,10 @@ There is one writer; independent read-only status descriptors do not acquire
 control. Closing the last reference to the writer requests off, including after
 SIGKILL. A reader closing cannot turn off another writer's request.
 
-Percentages are transported unchanged. The kernel maps 1–99 to the existing
-10 mA total step and 100 to 20 mA total. Zero/disable requests off without
+Percentages are transported unchanged. Like the Nabu client, the kernel rounds
+up to the provider's admitted scale: 1–50 maps to 10 mA total and 51–100 maps
+to 20 mA total. Every integer request is retained; there are two physical steps,
+not 100 independently programmable currents. Zero/disable requests off without
 forgetting the last positive successful request. A fresh writer starts off with
 100 as its remembered request. No deadline or persistent-on policy is added.
 
@@ -108,3 +110,8 @@ connection for light actions and closes it with the popup. Its fixed-method
 adapter contains no device access. Native private-bus and QML-load checks cover
 this integration; actual system-window and visual/session results are recorded
 separately. This supersedes the earlier source-integration gate above.
+
+The source candidate now also exposes bounded decimal RGB channels and
+brightness through this connection. This supersedes the earlier test-only RGB
+widget scope; kernel camera/battery priority and electrical limits are retained.
+See [desktop compatibility and the Nabu comparison](LIGHT-INTERFACES.md).

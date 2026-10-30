@@ -27,6 +27,7 @@ static int test_ioctl(int fd,unsigned long command,uke_rgb_color* arg) {
     if(command==UKE_RGB_SET) {
         auto c=*arg;assert(c.abi==1 && c.rgb<=0xffffff && c.brightness_percent<=100 && !c.reserved);
         fake_status.mode=UKE_RGB_MANUAL;fake_status.rgb=c.rgb;fake_status.requested_rgb=c.rgb;
+        fake_status.requested_percent=c.brightness_percent;
         fake_status.brightness=c.brightness_percent*8/100;
     } else if(command==UKE_RGB_TEST_COLORS) {
         if(fake_status.mode==UKE_RGB_TEST){errno=EBUSY;return -1;}
@@ -168,9 +169,32 @@ int main() {
     boottime_ms+=119999;clock_error=true;call("SetColor","#ffffff",50,false);clock_error=false;
     call("Automatic",nullptr,0,true);assert(authorizations==checks && changes==6);
     boottime_ms+=2;allowed=false;call("Automatic",nullptr,0,false);assert(authorizations==checks+1 && changes==6);
-    sd_bus_unref(bus);running=false;auth.join();service.join();
     assert(changes==6); // Original calls, an authorized held test and a bounded lease request.
+    auto tuple=[&](sd_bus* peer,unsigned r,unsigned g,unsigned b,unsigned percent,bool accept) {
+        sd_bus_message* reply=nullptr;sd_bus_error error=SD_BUS_ERROR_NULL;
+        const int result=sd_bus_call_method(peer,uke::rgb::bus_name,uke::rgb::object_path,uke::rgb::interface,"SetRgb",&error,&reply,"uuuu",r,g,b,percent);
+        assert((result>=0)==accept);
+        if(accept) {
+            const char* text=nullptr;assert(sd_bus_message_read(reply,"s",&text)>0);
+            const auto color="["+std::to_string(r)+","+std::to_string(g)+","+std::to_string(b)+"]";
+            assert(std::string(text).find("\"requested_color_rgb\":"+color)!=std::string::npos);
+            assert(std::string(text).find("\"requested_percent\":"+std::to_string(percent))!=std::string::npos);
+        }
+        sd_bus_error_free(&error);sd_bus_message_unref(reply);
+    };
+    const auto beforeTuple=changes,checksBeforeTuple=authorizations.load();
+    for(const auto color: {uke::rgb::Color{256,0,0},uke::rgb::Color{0,256,0},uke::rgb::Color{0,0,256}})
+        tuple(bus,color[0],color[1],color[2],100,false);
+    tuple(bus,255,255,255,101,false);
+    assert(changes==beforeTuple && authorizations==checksBeforeTuple);
+    allowed=false;tuple(bus,255,255,255,47,false);assert(changes==beforeTuple);
+    allowed=true;
+    for(unsigned r=0;r<256;++r)tuple(bus,r,255-r,128,47,true);
+    assert(changes==beforeTuple+256);
+    assert(sd_bus_open_user(&stranger)>=0);tuple(stranger,255,255,255,100,false);sd_bus_unref(stranger);
+    assert(changes==beforeTuple+256);
+    sd_bus_unref(bus);running=false;auth.join();service.join();
     assert((torch_fixture::requests==std::vector<std::pair<unsigned long,unsigned>>{
         {UKE_TORCH_SET,1},{UKE_TORCH_SET,99},{UKE_TORCH_SET,100},{UKE_TORCH_ENABLE,0}}));
-    std::cout<<"Actual LED brokers: connection-bound expiring authorization, same-UID peer isolation, denied/missing-agent handling, responsive status, caller cancellation and rejected late replies passed; simulated hardware only\n";
+    std::cout<<"Actual LED brokers: typed decimal RGB, bounds, connection-bound expiring authorization, same-UID peer isolation, denied/missing-agent handling, responsive status, caller cancellation and rejected late replies passed; simulated hardware only\n";
 }

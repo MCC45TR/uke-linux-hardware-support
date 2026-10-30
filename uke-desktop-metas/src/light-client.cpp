@@ -30,23 +30,28 @@ public:
     }
     Q_INVOKABLE bool request(const QString& action,const QVariantList& values={}) {
         if(pending.size()>=8)return false;
-        const bool rgb=action=="rgb" || action=="rgbTest";
+        const bool rgb=action=="rgb" || action=="rgbTest" || action=="rgbSet" || action=="rgbAuto";
         const bool query=action=="rgb" || action=="lights";
         QString method;
         QList<QVariant> arguments;
         if(query)method="Status";
         else if(action=="rgbTest")method="TestColors";
+        else if(action=="rgbAuto")method="Automatic";
         else if(action=="flashlightOn" || action=="flashlightOff") {
             method="SetEnabled";arguments.append(action=="flashlightOn");
-        } else if(action=="flashlightSet") {
-            if(values.size()!=1)return false;
-            const int type=values.front().metaType().id();
-            if(type!=QMetaType::Double && type!=QMetaType::Int && type!=QMetaType::UInt)return false;
-            bool ok=false;const double value=values.front().toDouble(&ok);
-            if(!ok || !std::isfinite(value) || value<1 || value>100 || double(unsigned(value))!=value)return false;
-            method="SetBrightness";arguments.append(QVariant::fromValue(unsigned(value)));
+        } else if(action=="flashlightSet" || action=="rgbSet") {
+            if(values.size()!=(rgb?4:1))return false;
+            for(qsizetype i=0;i<values.size();++i) {
+                const int type=values[i].metaType().id();
+                if(type!=QMetaType::Double && type!=QMetaType::Int && type!=QMetaType::UInt)return false;
+                bool ok=false;const double value=values[i].toDouble(&ok);
+                const unsigned maximum=rgb && i<3?255:100;
+                if(!ok || !std::isfinite(value) || value<(rgb?0:1) || value>maximum || double(unsigned(value))!=value)return false;
+                arguments.append(QVariant::fromValue(unsigned(value)));
+            }
+            method=rgb?"SetRgb":"SetBrightness";
         } else return false;
-        if(action!="flashlightSet" && !values.isEmpty())return false;
+        if(action!="flashlightSet" && action!="rgbSet" && !values.isEmpty())return false;
         if(!bus) {
             connectionName="uke-lights-"+QUuid::createUuid().toString(QUuid::WithoutBraces);
             bus=std::make_unique<QDBusConnection>(QDBusConnection::connectToBus(QDBusConnection::SystemBus,connectionName));

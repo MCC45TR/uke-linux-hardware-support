@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 function isLightAction(action) {
-    return ["lights", "rgb", "rgbTest", "flashlightOn", "flashlightOff", "flashlightSet"].indexOf(action) >= 0
+    return ["lights", "rgb", "rgbTest", "rgbSet", "rgbAuto", "flashlightOn", "flashlightOff", "flashlightSet"].indexOf(action) >= 0
 }
 function command(action, values) {
     const commands = {
@@ -59,6 +59,14 @@ function parse(kind, output) {
          !Number.isInteger(value.test_remaining_ms) || value.test_remaining_ms < 0 || value.test_remaining_ms > 10000 ||
          !Number.isInteger(value.kernel_io_error) || value.kernel_io_error > 0 || value.kernel_io_error < -4095))))
         throw new Error("Malformed kernel RGB state")
+    if (kind === "rgb" && value.available) {
+        for (const key of ["color_rgb", "requested_color_rgb"])
+            if (!Array.isArray(value[key]) || value[key].length !== 3 || value[key].some(function(c) {
+                return !Number.isInteger(c) || c < 0 || c > 255
+            })) throw new Error("Malformed RGB channels")
+        if (!Number.isInteger(value.requested_percent) || value.requested_percent < 0 || value.requested_percent > 100)
+            throw new Error("Malformed RGB brightness request")
+    }
     return value
 }
 

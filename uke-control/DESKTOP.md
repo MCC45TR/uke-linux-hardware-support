@@ -1,5 +1,13 @@
 # Desktop interface and engineering contract
 
+30 October 2026 source candidate: `desktop status` also reads the existing
+session's `org.gnome.Mutter.DisplayConfig.NightLightSupported` and
+`org.gnome.SettingsDaemon.Color` properties `NightLightActive`, `Temperature`
+(Kelvin) and `DisabledUntilTomorrow`. Missing services and unsupported/wrong-type
+values remain unavailable. These bounded reads never activate GNOME services,
+change a setting or claim physical low-blue-light or flicker certification.
+See [the eye-care source review](DISPLAY-EYE-CARE.md).
+
 27 October 2026: `desktop status` and `test desktop` also query logind's
 `LidClosed`, `Docked` and `PreparingForSleep` independently of UPower's lid
 properties. Conflicting reported states remain separate. The current session's

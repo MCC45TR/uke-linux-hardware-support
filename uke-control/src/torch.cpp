@@ -68,7 +68,8 @@ std::string Actuator::status() {
         std::string(value.brightness_valid?(value.brightness?"true":"false"):"null")+
         ",\"brightness_percent\":"+(value.brightness_valid?std::to_string(value.brightness*50):"null")+
         ",\"requested_percent\":"+std::to_string(value.requested_percent)+
-        ",\"max_microamp\":"+std::to_string(value.max_microamp)+",\"brightness_step_percent\":50,\"max_seconds\":null,\"suspended\":"+
+        ",\"max_microamp\":"+std::to_string(value.max_microamp)+",\"request_min_percent\":1,\"request_max_percent\":100,\"request_step_percent\":1"+
+        ",\"brightness_rounding\":\"up_to_provider_step\",\"native_max_brightness\":2,\"brightness_step_percent\":50,\"max_seconds\":null,\"suspended\":"+
         (value.suspended?"true":"false")+",\"kernel_io_error\":"+std::to_string(value.last_io_error)+
         ",\"reason\":null},\"rgb\":{\"available\":false,\"on\":null,\"brightness_percent\":null}}\n";
 }

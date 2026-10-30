@@ -38,6 +38,11 @@ or widget instance has a different peer identity. Brightness is applied once
 when the settings dialog is accepted. An unknown kernel output state is shown
 as unavailable, rather than as an assumed zero brightness.
 
+Release 26 supersedes the earlier test-only RGB scope: decimal R/G/B (0–255)
+and brightness (0–100) are fixed typed requests through the same connection.
+Torch accepts direct integer entry from 1 to 100. Kernel quantization and
+camera/battery priority are preserved; no LED sysfs permission is granted.
+
 The QML module is part of the removable Uke applet package and uses original
 Fedora Qt/Plasma. No KDE application is forked. Native private-bus and QML-load
 checks are separate from a live authentication-window or physical light trial.

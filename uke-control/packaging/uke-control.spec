@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.4.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0 AND (GPL-2.0-only WITH Linux-syscall-note)
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -143,7 +143,7 @@ fi
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md OWNERSHIP.md CLI.md BOOT-LAYOUT.md
+%doc README.md CHARGING.md DISPLAY.md DISPLAY-EYE-CARE.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md LIGHT-INTERFACES.md OWNERSHIP.md CLI.md BOOT-LAYOUT.md
 %{_bindir}/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_udevrulesdir}/91-uke-control-torch.rules

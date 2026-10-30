@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 25%{?dist}
+Release: 26%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -116,7 +116,7 @@ Graphical login, first-account setup and tablet integration remain unqualified.
 %package -n uke-plasma-controls
 Summary: Removable Plasma system tray controls using uke-control
 License: GPL-3.0-or-later
-Requires: uke-control >= 2.4.0
+Requires: uke-control >= 2.4.0-2
 Requires: plasma-workspace plasma5support polkit
 
 %description -n uke-plasma-controls

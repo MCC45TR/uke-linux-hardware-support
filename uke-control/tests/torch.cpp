@@ -14,6 +14,8 @@ int main() {
         a.enable(true);assert(requests.back()==std::make_pair(static_cast<unsigned long>(UKE_TORCH_ENABLE),1U));
         fail_request=true;refuses([&]{a.set(50);});assert(requests.size()==n+3);fail_request=false;
         assert(a.status().find("\"policy_owner\":\"kernel\"")!=std::string::npos);
+        assert(a.status().find("\"request_step_percent\":1")!=std::string::npos);
+        assert(a.status().find("\"brightness_rounding\":\"up_to_provider_step\"")!=std::string::npos);
         response.requested_percent=17;response.brightness=1;
         const auto s=a.status();assert(s.find("\"requested_percent\":17")!=std::string::npos && s.find("\"brightness_percent\":50")!=std::string::npos);
         response.brightness_valid=0;response.last_io_error=-EIO;

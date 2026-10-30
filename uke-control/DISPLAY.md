@@ -1,5 +1,8 @@
 # Display controls and raw front-color data
 
+For DC dimming, optical flicker, hardware low blue light and original GNOME
+Night Light integration, see [the eye-care source review](DISPLAY-EYE-CARE.md).
+
 ## DisplayPort compression policy, 30 October 2026
 
 `uke-control display compression` reports the driver interface version, policy,
