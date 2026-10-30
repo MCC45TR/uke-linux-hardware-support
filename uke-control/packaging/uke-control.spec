@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 2.3.1
-Release: 4%{?dist}
+Version: 2.3.2
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -26,6 +26,8 @@ Requires: polkit selinux-policy-targeted
 Requires: kmod
 Requires: dialog e2fsprogs device-mapper dosfstools
 Requires: libdnf5 >= 5.4.6.0
+Requires: uke-kernel-update >= 1.8.7
+Requires: uke-kernel-update(transaction-v1) >= 1
 Recommends: uke-battery-observer
 Provides: uke-control(channel-api) = 1
 Conflicts: uke-plasma-controls < 1.0.0-23
@@ -181,6 +183,14 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.2-1
+- Respect updater transaction policy and the selected userdata boot profile during channel synchronization.
+- Keep activation pending until the package-selected kernel is running.
+
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-5
+- Recognize automatic DSC policy and versioned live DRM control.
+- Separate requested, forced and cached active compression state.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-4
 - Report native RPM transaction problems and check system-repository lock admission.
 

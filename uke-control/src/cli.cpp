@@ -45,7 +45,7 @@ constexpr Group groups[]={
     {"usb","USB topology, roles and per-device power policy", "usb status\nusb watch [SECONDS]\nusb role host|device\nusb power DEVICE performance|auto"},
     {"cdc","Manual USB serial export", "cdc on|off [--persistent]"},
     {"ethernet","Ethernet capabilities and link profiles", "ethernet status IFACE\nethernet profile IFACE auto|1000-full|100-full|10-full"},
-    {"display","Display stream, lane profiles and VRR minimum", "display bits\ndisplay profiles\ndisplay profile usb3-display|display4\ndisplay lane-limit 1|2|4\ndisplay vrr-min [status|configured]\ndisplay vrr-min set HZ\ndisplay sensor"},
+    {"display","Display stream, lane profiles and VRR minimum", "display bits\ndisplay profiles\ndisplay profile usb3-display|display4\ndisplay lane-limit 1|2|4\ndisplay compression [auto|on|off]\ndisplay vrr-min [status|configured]\ndisplay vrr-min set HZ\ndisplay sensor\n\nCompression auto requires driver interface 2. Live requests are handled by DRM; policy readback is not physical validation."},
     {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off"},
     {"hardware","Cached chipset, audio, media and input paths", "hardware status"},
     {"firmware","Cached remote processors and SCMI discovery", "firmware status"},

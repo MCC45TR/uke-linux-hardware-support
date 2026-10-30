@@ -397,12 +397,17 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     }
     return tx;
 }
-void boot_kernel(const std::string& release,bool json=false) {
-    const fs::path helper="/usr/bin/uke-kernel-update";struct stat s{};
-    need(lstat(helper.c_str(),&s)==0&&S_ISREG(s.st_mode)&&s.st_uid==0&&!(s.st_mode&0022),"Install the reviewed uke-kernel-update helper");
+void boot_kernel(const std::string& release,bool json=false,const fs::path& helper="/usr/bin/uke-kernel-update") {
+    struct stat s{};
+#ifdef UKE_PACKAGES_TEST
+    const uid_t helper_owner=geteuid(); // Disposable COPR fixture helper; production requires root ownership.
+#else
+    const uid_t helper_owner=0;
+#endif
+    need(lstat(helper.c_str(),&s)==0&&S_ISREG(s.st_mode)&&s.st_uid==helper_owner&&!(s.st_mode&0022),"Install the reviewed uke-kernel-update helper");
     const auto bundle="/usr/lib/senemos/kernel-updates/"+release;
     const auto pid=fork();need(pid>=0,"Cannot launch guarded kernel updater");
-    if(pid==0){if(json && dup2(STDERR_FILENO,STDOUT_FILENO)<0)_exit(127);execl(helper.c_str(),helper.c_str(),"apply",bundle.c_str(),static_cast<char*>(nullptr));_exit(127);}
+    if(pid==0){if(json && dup2(STDERR_FILENO,STDOUT_FILENO)<0)_exit(127);execl(helper.c_str(),helper.c_str(),"transaction",bundle.c_str(),static_cast<char*>(nullptr));_exit(127);}
     int status=0;while(waitpid(pid,&status,0)<0)need(errno==EINTR,"Cannot wait for kernel updater");
     need(WIFEXITED(status)&&WEXITSTATUS(status)==0,"Packages are installed but kernel boot selection failed. Pending channel retained; inspect updater output before channel sync. Do not reboot");
 }
@@ -446,11 +451,9 @@ void run(Options o) {
     base.get_repo_sack()->load_repos();
     const auto p=plan(base,o.selected,repos.ids,dist);auto tx=resolve(base,p,o.selected,o.update);
     utsname current{};need(uname(&current)==0,"Cannot read running kernel identity");
-    const auto gate=read_file("/etc/senemos/kernel-update.conf");std::istringstream gates(gate);std::string line;bool automatic=false;
-    while(std::getline(gates,line))if(line=="automatic=1")automatic=true;
     std::string plan="{\"schema\":\"org.uke.control.packages.v1\",\"channel\":"+sysfs::quote(o.selected)+",\"copr\":"+sysfs::quote(project(o.selected))+
         ",\"selected_kernels\":"+sysfs::quote(p.kernel_nevra)+",\"test_kernel_fallback\":"+(p.fallback?"true":"false")+
-        ",\"kernel_activation_pending\":"+(!p.krel.empty()&&p.krel!=current.release&&!automatic?"true":"false")+",\"packages\":[";
+        ",\"kernel_activation_pending\":"+(!p.krel.empty()&&p.krel!=current.release?"true":"false")+",\"packages\":[";
     for(const auto& item:tx.get_transaction_packages()) {
         if(plan.back()!='[')plan+=',';
         plan+="{\"action\":"+sysfs::quote(libdnf5::transaction::transaction_item_action_to_string(item.get_action()))+
@@ -482,8 +485,8 @@ void run(Options o) {
         for(const auto& error:tx.get_rpm_messages())errors+='\n'+error;
         throw std::runtime_error("RPM transaction incomplete: "+errors+"\nKeep the pending record and run channel sync after correcting these problems");
     }
-    // The RPM hook may already have written this bundle. The updater verifies an idempotent match.
-    if(!p.krel.empty()&&automatic)boot_kernel(p.krel,o.json);
+    // The updater owns both automatic policies, the selected userdata profile and staged-trial checks.
+    if(!p.krel.empty())boot_kernel(p.krel,o.json);
     atomic_write(config/"channel",o.selected+'\n');
     need(unlink((state/"channel-pending").c_str())==0,"Cannot clear completed channel journal");
     Fd dir(open(state.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC));need(dir.n>=0&&fsync(dir.n)==0,"Cannot sync channel journal");

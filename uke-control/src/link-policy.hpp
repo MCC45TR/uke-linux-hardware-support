@@ -9,6 +9,7 @@ std::string display_bits_status(const std::filesystem::path& root);
 std::vector<std::filesystem::path> lane_controls(const std::filesystem::path& root);
 std::vector<std::filesystem::path> compression_controls(const std::filesystem::path& root);
 std::string compression_status(const std::filesystem::path& root);
+std::string compression_value(const std::string& policy, unsigned interface_version);
 std::filesystem::path usb_device(const std::filesystem::path& root,const std::string& name);
 std::filesystem::path ethernet_device(const std::filesystem::path& root,const std::string& name);
 std::vector<std::string> ethernet_arguments(const std::string& name,const std::string& profile,const std::string& capabilities);
