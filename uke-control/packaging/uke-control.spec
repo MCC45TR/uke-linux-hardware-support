@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.3.4
+Version: 2.3.5
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -11,6 +11,7 @@ BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon jq
+BuildRequires: valgrind
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 BuildRequires: xfsprogs-devel
@@ -103,6 +104,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %check
 %make_build check
+%make_build check-memory
 
 %pre
 # Stop the previous root worker while its matching cleanup executable still exists.
@@ -183,6 +185,11 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.5-1
+- Reuse desktop parser expressions without changing the caller's locale.
+- Replace notification wake polling with an interruptible monotonic wait.
+- Check native memory ownership and repeated private-bus resource lifetimes.
+
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.4-1
 - Verify exact KDE panel policy readback and avoid redundant configuration writes.
 - Preserve recovery wake paths on rollback failure and validate bounded private records.

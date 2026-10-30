@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "plasma.hpp"
 #include <cassert>
+#include <cstdlib>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -18,11 +19,13 @@ Result execute(const std::vector<std::string>& args, unsigned seconds, size_t li
 }
 }
 int main() {
+    assert(setenv("LC_ALL","C.UTF-8",1)==0);
     const std::string panel = "Output: 1 DSI-1 enabled connected\n"
         "\tAuto Rotate Policy: always\n\tAutomatic brightness: supported, disabled\n";
     response.output = "\033[01;31m" + panel + "\033[0mOutput: 2 DP-1 enabled\n"
         "\tAuto Rotate Policy: never\n\tAutomatic brightness: supported, enabled\n";
     assert(uke::desktop::plasma_status().find("\"rotation\":true,\"automatic_brightness\":false") != std::string::npos);
+    assert(std::string(std::getenv("LC_ALL"))=="C.UTF-8");
     const std::string never="Output: 1 DSI-1\nAuto Rotate Policy: never\nAutomatic brightness: supported, disabled\n";
     after=uke::Result{0,never};auto count=calls.size();
     assert(uke::desktop::plasma_set("rotation", "off").output.find("\"policy_readback_matched\":true")!=std::string::npos);

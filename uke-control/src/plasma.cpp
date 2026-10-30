@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 #include "plasma.hpp"
-#include <cstdlib>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -9,11 +8,12 @@ namespace uke::desktop {
 namespace {
 struct State { std::string rotation = "null", brightness = "null", output, rotation_policy; };
 State inspect() {
-    // kscreen-doctor's human-readable capability names are English.
-    setenv("LC_ALL", "C", 1);
+    // execute() selects the child's locale without changing the caller's environment.
+    static const std::regex ansi("\x1b\\[[0-9;]*m");
+    static const std::regex internal("^Output: +[0-9]+ +(DSI-[0-9]{1,3})( |$)");
     const auto result = execute({"/usr/bin/kscreen-doctor", "-o"}, 5, 65536);
     if (result.status) return {};
-    const auto plain = std::regex_replace(result.output, std::regex("\x1b\\[[0-9;]*m"), "");
+    const auto plain = std::regex_replace(result.output, ansi, "");
     std::istringstream lines(plain);
     State state;
     bool panel = false;
@@ -21,7 +21,7 @@ State inspect() {
     for (std::string line; std::getline(lines, line);) {
         if (line.starts_with("Output:")) {
             std::smatch match;
-            panel = std::regex_search(line, match, std::regex("^Output: +[0-9]+ +(DSI-[0-9]{1,3})( |$)"));
+            panel = std::regex_search(line, match, internal);
             if (panel) { ++panels; state.output = match[1]; }
         }
         if (!panel) continue;
