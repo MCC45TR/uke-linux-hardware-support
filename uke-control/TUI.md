@@ -1,15 +1,19 @@
 # Uke Control terminal interface and shared client
 
-Date: 2026-10-30. Software: Uke Control 2.5.0, native C++20 with ncursesw.
+Date: 2026-10-30. Software: Uke Control 2.5.1, native C++20 with ncursesw.
 
 Start the optional `uke-control-tui` package as your normal session user:
 
 ```sh
-uke-control tui
+uke-control
 uke-control tui --language en
 uke-control tui --read-only --start battery
 uke-control tui --start charge.mode
 ```
+
+With no operands, `uke-control` opens this interface when both input and output
+are terminals. Redirected invocations show CLI help; `--json` requires a command.
+`uke-control --help` always shows help without starting an observation.
 
 Turkish is the default; F4 switches language in the running interface. A UTF-8
 locale and interactive terminal are required. Minimum size: 64×18; 112 columns

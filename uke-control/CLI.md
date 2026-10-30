@@ -1,5 +1,9 @@
 # Command-line interface
 
+30 October 2026, Control 2.5.1: an interactive `uke-control` invocation without
+operands opens the TUI. Redirection retains help output; `--json` requires a
+command. `uke-control --help` always shows the command reference.
+
 30 October 2026, Control 2.5: `uke-control tui` opens the optional guided C++
 terminal interface. `actions [describe ID|plan ID KEY=VALUE...] --json` exposes
 the same versioned bilingual catalog and validated plans without device access

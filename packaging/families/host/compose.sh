@@ -8,7 +8,7 @@ fedora_target=${FEDORA_TARGET:-$fedora_number}
 if [[ -z ${FEDORA_TARGET:-} && $fedora_number != 44 && $fedora_number != 45 ]]; then fedora_target=rawhide; fi
 case $fedora_target in
     44|45) [[ $fedora_number == "$fedora_target" ]] || { echo 'Use a matching Fedora source worker' >&2; exit 1; };;
-    rawhide) grep -Eq '^VERSION="?Rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; };;
+    rawhide) bash "$(dirname -- "$0")/is-rawhide.sh" /etc/os-release "$fedora_number" || { echo 'Use a Rawhide source worker' >&2; exit 1; };;
     *) echo 'Fedora target must be 44, 45 or rawhide' >&2; exit 1;;
 esac
 dist=.fc$fedora_number
@@ -239,4 +239,4 @@ bash packaging/families/host/check-cohort.sh "$spec" "$target"
 (cd "$bundle"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum >SOURCE-SHA256SUMS)
 tar --sort=name --mtime='2026-10-20 00:00:00Z' --owner=0 --group=0 --numeric-owner -cJf "$output/SOURCES/$family-$version.tar.xz" -C "$stage" "$family-$version"
 rpmspec --parse --target "$target" "${rpm_target[@]}" "$spec" >"$output/parsed.spec"
-rpmbuild -bs --nodeps --target "$target" "${rpm_target[@]}" --define "_topdir $output" "$spec"
+rpmbuild -bs --nodeps --target "$target" "${rpm_target[@]}" --define '_buildhost uke-builder' --define "_topdir $output" "$spec"

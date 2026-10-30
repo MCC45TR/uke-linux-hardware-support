@@ -1,8 +1,8 @@
 # Uke Control
 
-30 October 2026: **2.5.0** adds a C++ terminal interface with Turkish/English
+30 October 2026: **2.5.1** adds a C++ terminal interface with Turkish/English
 guides, 16 categories and 124 actions. Start the optional `uke-control-tui`
-package with `uke-control tui`. See [the TUI guide](TUI.md) for usage and the
+package with `uke-control`. See [the TUI guide](TUI.md) for usage and the
 shared GTK/QML client API. Interface checks do not establish device acceptance.
 
 30 October 2026: source version **2.4.0** adds bounded read-only component

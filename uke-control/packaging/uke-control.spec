@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.5.0
+Version: 2.5.1
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -207,6 +207,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.1-1
+- Open the native TUI when invoked without operands in an interactive terminal.
+- Recognize explicitly identified Fedora Rawhide prerelease workers and hosts.
+
 * Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.0-1
 - Add a guided bilingual native terminal interface as an optional subpackage.
 - Share frontend action metadata, typed plans, read ownership and receipts in C++.

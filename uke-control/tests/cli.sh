@@ -7,6 +7,9 @@ stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
+"$app" </dev/null > "$stage/no-terminal"
+grep -F 'Usage: uke-control' "$stage/no-terminal" >/dev/null
+if "$app" --json </dev/null > "$stage/empty-json" 2> "$stage/empty-error"; then exit 1; else test "$?" = 64; fi
 "$app" --version > "$stage/version"
 version=$(awk -F '"' '/application_version=/ {print $2}' src/version.hpp)
 grep -Fx "uke-control $version" "$stage/version"

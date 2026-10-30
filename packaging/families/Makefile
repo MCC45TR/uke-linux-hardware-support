@@ -7,6 +7,7 @@ outdir ?= $(CURDIR)/build/$(FAMILY)
 srpm:
 	bash host/compose.sh '$(FAMILY)' '$(outdir)'
 check:
+	bash tests/worker-identity.sh
 	bash tests/split-spec.sh
 	bash tests/filelists.sh
 	bash tests/cohort.sh

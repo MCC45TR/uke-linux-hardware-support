@@ -226,7 +226,12 @@ int main(int argc,char** argv) {
             else std::cout<<"uke-control "<<uke::cli::version<<"\nLicense: MIT\n";
             return 0;
         }
-        if(args.help || args.words.size()==1){std::cout<<uke::cli::help(args.words.size()>1?args.words[1]:"");return 0;}
+        if(args.help){std::cout<<uke::cli::help(args.words.size()>1?args.words[1]:"");return 0;}
+        if(args.words.size()==1) {
+            if(args.json)throw uke::cli::UsageError("select a command for JSON output; use actions --json for frontend metadata");
+            if(!isatty(STDIN_FILENO)||!isatty(STDOUT_FILENO)){std::cout<<uke::cli::help();return 0;}
+            args.words.push_back("tui");
+        }
         const auto& command=args.words[1];
         if(command=="channel" || command=="update" || command=="sensors" || command=="test" || command=="singleboot" || command=="multiboot") {
             for(size_t i=2;i<args.words.size();++i)
