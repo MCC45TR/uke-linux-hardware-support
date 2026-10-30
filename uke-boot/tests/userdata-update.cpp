@@ -22,6 +22,14 @@ static Bytes image(const std::string &release) {
     memcpy(bytes.data()+page+128,banner.data(),banner.size());return bytes;
 }
 int main() {
+    assert(userdata_bundle("kernel-updates/7.3.0-54/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-54");
+    assert(userdata_bundle("kernel-updates/7.3.0-14-unstable/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-14-unstable");
+    for(const auto target:{"/kernel-updates/7.3.0-54/userdata.img","kernel-updates/../userdata.img",
+                           "kernel-updates/7.3.0-54/linux.img","other/7.3.0-54/userdata.img",
+                           "kernel-updates/7.3.0-54/../7.3.0-49/userdata.img"})
+        reject([&]{userdata_bundle(target);});
+    assert(global_automatic_updates("# Administrator policy\nautomatic=1\n"));
+    assert(!global_automatic_updates("automatic=0\n"));
     {
         std::ifstream fixture("tests/fixtures/early-firmware-20261023.txt");assert(fixture);
         std::ostringstream contents;contents<<fixture.rdbuf();assert(!fixture.bad());
