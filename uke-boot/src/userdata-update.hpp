@@ -112,13 +112,31 @@ static std::map<std::string,std::string> userdata_policy(const std::string &text
          (config.at("vrr_min_hz")=="0"||config.at("vrr_min_hz")=="30"),"Invalid userdata update policy");
     return config;
 }
-static bool automatic_updates(const std::string &global,const std::string &userdata) {
+static bool global_automatic_updates(const std::string &global) {
     std::istringstream input(global);std::string row,settings;
     while(std::getline(input,row))if(!row.empty() && row.front()!='#')settings+=row+'\n';
-    const auto config=properties(settings),profile=userdata_policy(userdata);
+    const auto config=properties(settings);
     need(config.size()==1 && config.contains("automatic") &&
          (config.at("automatic")=="0"||config.at("automatic")=="1"),"Invalid global automatic update policy");
-    return config.at("automatic")=="1" && profile.at("automatic")=="1";
+    return config.at("automatic")=="1";
+}
+static bool automatic_updates(const std::string &global,const std::string &userdata) {
+    const auto enabled=global_automatic_updates(global);const auto profile=userdata_policy(userdata);
+    return enabled && profile.at("automatic")=="1";
+}
+static fs::path userdata_bundle(const fs::path &target) {
+    need(target.is_relative() && target.lexically_normal()==target && target.parent_path().parent_path()=="kernel-updates" &&
+         target.filename()=="userdata.img" && token(target.parent_path().filename()),"Exact userdata profile link required");
+    return fs::path("/usr/lib/senemos")/target.parent_path();
+}
+static void pending_bundle(const std::string &action,const fs::path &bundle,const std::string &candidate) {
+    // Baseline acceptance/preflight receives the running bundle. The caller
+    // separately compares the selected update with the recorded candidate.
+    if(action!="accept" && action!="check-accept" && action!="fallback") {
+        const auto raw=file(bundle/"manifest");
+        need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==candidate,
+             "A different candidate cannot replace the pending trial");
+    }
 }
 static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest,const std::string &filesystem="f2fs") {
     const auto kernel=boot_kernel(bytes);
@@ -322,11 +340,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         need((good_flags&slot::successful) && !(good_flags&slot::unbootable) &&
              (next_flags&slot::priority) && (next_flags&slot::retries) && !(next_flags&(slot::successful|slot::unbootable)),
              "Pending trial or accepted fallback flags differ");
-        if(action!="accept" && action!="fallback") {
-            const auto raw=file(bundle/"manifest");
-            need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==prior->policy.candidate,
-                 "A different candidate cannot replace the pending trial");
-        }
+        pending_bundle(action,bundle,prior->policy.candidate);
         std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";return;
     }
     if(action=="fallback") {
@@ -377,7 +391,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     }
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
     for(auto &disk:disks)disk->gpt->require_selected(running);
-    if(action=="accept") {
+    if(action=="accept" || action=="check-accept") {
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
@@ -406,6 +420,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         const bool mark_success=!(boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::successful);
         std::vector<SlotMetadata*> changed;
         for(auto &disk:disks)if(disk->gpt->needs_backup_crc_repair() || (disk->gpt.get()==boot_table && mark_success))changed.push_back(disk.get());
+        if(action=="check-accept") {
+            std::cout<<"Running userdata boot, package, metadata and health checks passed; no hardware or acceptance-state writes\n";return;
+        }
         if(!changed.empty()) {
             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
             for(auto *disk:changed)disk->gpt->backup(state/("accept-"+digest(disk->gpt->before.entries)+"-"+disk->name+".gpt"));

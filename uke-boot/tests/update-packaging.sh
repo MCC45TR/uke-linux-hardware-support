@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+version=$(awk '$1=="Version:" {print $2; exit}' packaging/uke-boot-integration.spec)
+grep -Fxq "version := $version" Makefile
+jq -e --arg version "$version" '
+  .native_versions["uke-boot-integration"]==$version and
+  .native_versions["uke-installation-profile"]==$version and
+  any(.families[]; .name=="uke-hw" and .version==$version and
+    (.requires|index("uke-kernel-update = " + $version + "-1%{?dist}"))!=null)
+' ../packaging/families/families.json >/dev/null
 diff -u <(cat <<'HOOKS'
 %pre
 %post
@@ -26,17 +34,18 @@ grep -Fxq 'StartLimitBurst=5' src/units/uke-userdata-accept.service
 grep -Fxq 'RestartMode=direct' src/units/uke-userdata-accept.service
 grep -Fxq 'ConditionKernelCommandLine=root=PARTLABEL=userdata' src/units/uke-userdata-fallback.service
 grep -Fxq 'ExecStart=/usr/bin/uke-kernel-update fallback' src/units/uke-userdata-fallback.service
-! grep -Eq '^(Restart|FailureAction|SuccessAction)=' src/units/uke-userdata-fallback.service
+if grep -Eq '^(Restart|FailureAction|SuccessAction)=' src/units/uke-userdata-fallback.service; then exit 1; fi
 diff -u <(printf 'ExecStart=/usr/bin/uke-kernel-update accept\nExecStart=/usr/bin/uke-kernel-update auto\n') \
     <(grep '^ExecStart=' src/units/uke-userdata-accept.service)
 grep -Fxq 'ConditionPathExists=!/var/lib/senemos/installation/online-grow-complete' src/units/uke-root-grow.service
 grep -Fxq 'TimeoutStartSec=infinity' src/units/uke-root-grow.service
 grep -Fxq 'ExecStart=/usr/libexec/senemos-uke/uke-install-profile grow' src/units/uke-root-grow.service
 grep -Fxq 'After=local-fs.target uke-install-profile.service' src/units/uke-root-grow.service
-! grep -Eq '^After=.*graphical.target|^ProtectSystem=strict|^ExecStart=.*(bash|sh -c)' src/units/uke-userdata-accept.service
+if grep -Eq '^After=.*graphical.target|^ProtectSystem=strict|^ExecStart=.*(bash|sh -c)' src/units/uke-userdata-accept.service; then exit 1; fi
 grep -Fq 'docs/USERDATA-AB.md' Makefile
 grep -Fq 'Provides: uke-kernel-update(userdata-ab) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(guarded-automatic) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'Provides: uke-kernel-update(transaction-v1) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(root-filesystem-v2) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(current-slot-restore) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(kernel-touch-client-v1) = 1' packaging/uke-boot-integration.spec

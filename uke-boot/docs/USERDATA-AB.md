@@ -1,5 +1,21 @@
 # Userdata boot A/B updates
 
+30 October 2026, TEST 1.8.8: `transaction BUNDLE` integrates the reviewed
+profile-aware RPM hook interface from upstream commit 048b3f9. On userdata it
+uses the final installed default profile and both automatic policies; on Linux
+root it uses the supplied bundle only when global automatic activation permits
+it. Existing disabled defaults are retained. A pending candidate cannot be
+replaced by another selected bundle.
+
+`check-auto` performs admission without boot-image, slot-selection or acceptance
+state writes. It is **not a wholly read-only inventory**: common setup may
+create/chmod the state directory and create its lock, and metadata descriptors
+can be write-capable. It requires an already recorded accepted baseline to
+complete candidate admission. Do not use it as an unapproved read-only tablet
+probe or interpret success as permission to enable activation. Its running
+baseline check now correctly permits an unchanged candidate awaiting reboot;
+the separate selected-candidate check remains enforced.
+
 23 October 2026. Version 1.8.1 corrects repeated DNF hooks while a verified
 trial awaits reboot. The recorded boot ID, accepted running Image, candidate
 digest, GPT selection and UFS boot LUN must agree; another candidate is refused.

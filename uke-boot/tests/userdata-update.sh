@@ -14,8 +14,9 @@ done
     -o build/tests/uke-kernel-update $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
 if [[ $(id -u) == 0 && ! -e /sys/firmware/devicetree/base/compatible ]]; then
     build/tests/uke-kernel-update auto
-    for action in check-restore-current restore-current fallback; do
-        args=("$action"); [[ $action == fallback ]] || args+=(/usr/lib/senemos/kernel-updates/fixture)
+    build/tests/uke-kernel-update transaction /usr/lib/senemos/kernel-updates/fixture
+    for action in check-restore-current restore-current fallback check-auto; do
+        args=("$action"); [[ $action == fallback || $action == check-auto ]] || args+=(/usr/lib/senemos/kernel-updates/fixture)
         if build/tests/uke-kernel-update "${args[@]}" >build/tests/restore-refusal.log 2>&1; then exit 1; fi
         if grep -q 'Usage:' build/tests/restore-refusal.log; then exit 1; fi
         grep -Fxq 'uke-kernel-update: Exact Uke/SM7675 identity required' build/tests/restore-refusal.log

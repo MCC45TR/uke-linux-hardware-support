@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.5
+Version: 1.8.8
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -89,6 +89,7 @@ Requires: systemd >= 254
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
+Provides: uke-kernel-update(transaction-v1) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
@@ -350,6 +351,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 30 2026 Uke Linux project <75160848+MCC45TR@users.noreply.github.com> - 1.8.8-1
+- Integrate profile-aware transaction policy and pending-trial admission checks.
+- Require durable directory links and validated recovery-backup flush barriers.
 * Wed Oct 28 2026 Uke Linux project <75160848+MCC45TR@users.noreply.github.com> - 1.8.5-1
 - Accept a connected enabled DisplayPort or HDMI output during closed-lid boot health.
 - Retain strict native touch binding and verified internal-panel standby checks.

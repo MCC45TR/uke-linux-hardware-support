@@ -22,6 +22,14 @@ static Bytes image(const std::string &release) {
     memcpy(bytes.data()+page+128,banner.data(),banner.size());return bytes;
 }
 int main() {
+    assert(userdata_bundle("kernel-updates/7.3.0-54/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-54");
+    assert(userdata_bundle("kernel-updates/7.3.0-14-unstable/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-14-unstable");
+    for(const auto target:{"/kernel-updates/7.3.0-54/userdata.img","kernel-updates/../userdata.img",
+                           "kernel-updates/7.3.0-54/linux.img","other/7.3.0-54/userdata.img",
+                           "kernel-updates/7.3.0-54/../7.3.0-49/userdata.img"})
+        reject([&]{userdata_bundle(target);});
+    assert(global_automatic_updates("# Administrator policy\nautomatic=1\n"));
+    assert(!global_automatic_updates("automatic=0\n"));
     {
         std::ifstream fixture("tests/fixtures/early-firmware-20261023.txt");assert(fixture);
         std::ostringstream contents;contents<<fixture.rdbuf();assert(!fixture.bad());
@@ -47,6 +55,18 @@ int main() {
     for(const std::string profile:{"","automatic=2\nvrr_min_hz=30\n","automatic=1\n","automatic=1\nvrr_min_hz=31\n","automatic=1\nautomatic=1\nvrr_min_hz=30\n"})
         reject([&]{automatic_updates("automatic=0\n",profile);});
     char temporary[]="/tmp/uke-userdata-state.XXXXXX";assert(mkdtemp(temporary));const fs::path root=temporary;
+    {
+        auto baseline=directory(root/"baseline",true),candidate=directory(root/"candidate",true);
+        const std::string old_manifest="kernel_release=7.3.0-54\n",next_manifest="kernel_release=7.3.0-55\n";
+        save_new(root/"baseline/manifest",Bytes(old_manifest.begin(),old_manifest.end()));
+        save_new(root/"candidate/manifest",Bytes(next_manifest.begin(),next_manifest.end()));
+        // check-auto first validates the running baseline, not the selected candidate.
+        for(const auto action:{"accept","fallback","check-accept"})pending_bundle(action,root/"baseline","7.3.0-55");
+        for(const auto action:{"check","apply"}) {
+            pending_bundle(action,root/"candidate","7.3.0-55");
+            reject([&]{pending_bundle(action,root/"baseline","7.3.0-55");});
+        }
+    }
     {
         const auto drm=root/"drm";fs::create_directory(drm);
         auto connector=[&](const std::string &name,const std::string &status,const std::string &enabled) {
