@@ -174,6 +174,13 @@ static bool awaiting_ab_reboot(const UserdataUpdate &saved,unsigned running,cons
     need(release==saved.policy.good_release && image_hash==saved.good_image,"Pending-trial baseline identity differs");
     return true;
 }
+static UserdataUpdate superseded_trial(UserdataUpdate saved,unsigned running,const std::string &release,
+                                      const std::string &image_hash,const std::string &boot_id,const std::string &next) {
+    need(awaiting_ab_reboot(saved,running,release,image_hash,boot_id),"Only an unbooted trial in this boot can be superseded");
+    need(token(next) && next!=release && next!=saved.policy.candidate && next!=saved.policy.failed,"Invalid replacement trial release");
+    saved.policy.phase=uke_install::Phase::stable;saved.policy.candidate.clear();
+    saved.candidate_image.clear();saved.staged_boot_id.clear();(void)encode(saved);return saved;
+}
 static constexpr const char *firmware_names[]={"xbl","xbl_config","xbl_config_nof","multiimgqti","multiimgoem","uefi","aop","aop_config","tz","hyp","abl","devcfg","qupfw","uefisecapp","imagefv","shrm","cpucp","keymaster","featenabler","cpucp_dtb","pvmfw"};
 static bool admitted_early_firmware(const std::map<std::string,std::string> &hashes) {
     need(hashes.size()==2*std::size(firmware_names),"Incomplete early firmware inventory");
@@ -331,12 +338,43 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         need((good_flags&slot::successful) && !(good_flags&slot::unbootable) &&
              (next_flags&slot::priority) && (next_flags&slot::retries) && !(next_flags&(slot::successful|slot::unbootable)),
              "Pending trial or accepted fallback flags differ");
-        if(action!="accept" && action!="fallback") {
+        if(action!="accept" && action!="check-accept" && action!="fallback") {
             const auto raw=file(bundle/"manifest");
-            need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==prior->policy.candidate,
-                 "A different candidate cannot replace the pending trial");
+            const auto manifest=properties(std::string(raw.begin(),raw.end()));
+            const auto next=manifest.at("kernel_release");
+            if(next!=prior->policy.candidate) {
+                auto stable=superseded_trial(*prior,running,release,good_hash,current_boot_id,next);
+                (void)userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);verify_early_firmware();
+                need(action=="apply" || action=="check","Only a checked update can supersede an unbooted trial");
+                if(action=="check") {
+                    std::cout<<"Unbooted trial can be superseded; accepted rollback verified; no hardware writes\n";return;
+                }
+                need(charging(),"Replacing an unbooted trial requires at least 50% battery, or 30% with external power");
+                auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+                const auto transaction=state/(next+"-supersede-"+prior->policy.candidate);
+                auto transaction_dir=directory(transaction,true);
+                for(auto &disk:disks) {
+                    disk->gpt->backup(transaction/(disk->name+".gpt"));
+                    (void)disk->gpt->fallback(target,running);
+                }
+                try {
+                    for(auto &disk:disks)disk->gpt->commit();
+                    (void)slot::boot_lun(bsg.value,running+1);
+                    save_update(statefile,stable);
+                } catch(...) {
+                    try {
+                        for(auto &disk:disks)disk->gpt->restore();
+                        (void)slot::boot_lun(bsg.value,target+1);save_update(statefile,*prior);
+                    } catch(...) {throw std::runtime_error("Trial replacement restoration failed; use recovery before rebooting");}
+                    throw std::runtime_error("Trial replacement refused; previous trial selection restored and verified");
+                }
+                std::cout<<"Superseded unbooted trial "<<prior->policy.candidate<<"; accepted slot retained\n";
+                userdata_update(action,bundle,package_bytes,state,release,filesystem);return;
+            }
         }
-        std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";return;
+        if(action=="apply")std::cout<<"Uke kernel update complete: "<<prior->policy.candidate<<" is selected for next boot; rollback "<<prior->policy.good_release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
+        else std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";
+        return;
     }
     if(action=="fallback") {
         const auto saved=decode(file(statefile));auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
@@ -386,6 +424,13 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     }
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
     for(auto &disk:disks)disk->gpt->require_selected(running);
+    if(action=="check-stable") {
+        need(prior && prior->policy.phase==uke_install::Phase::stable && unsigned(prior->policy.good)==running &&
+             prior->policy.good_release==release && prior->good_image==good_hash,"Accepted stable baseline identity differs");
+        const auto flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
+        need((flags&slot::successful) && !(flags&slot::unbootable),"Accepted stable slot flags differ");
+        std::cout<<"Previously accepted running baseline verified; no new boot-health acceptance\n";return;
+    }
     if(action=="accept" || action=="check-accept") {
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
@@ -463,6 +508,6 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         }catch(...){throw std::runtime_error("Slot selection and restoration failed; retain transaction backups and use recovery before rebooting");}
         throw std::runtime_error("Slot selection failed; accepted metadata and UFS boot LUN restored and verified");
     }
-    std::cout<<"Inactive boot slot "<<(target?'b':'a')<<" written, synced and read back; selected for next reboot. Accepted slot retained; boot health will accept or record fallback.\n";
+    std::cout<<"Uke kernel update complete: "<<next<<" written to slot "<<(target?'b':'a')<<", synced, read back and selected for next boot; rollback "<<release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
 }
 #endif

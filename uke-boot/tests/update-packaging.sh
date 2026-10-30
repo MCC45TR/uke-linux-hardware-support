@@ -14,7 +14,7 @@ diff -u <(cat <<'HOOKS'
 %preun -n uke-installation-profile
 %postun -n uke-installation-profile
 %posttrans -n uke-installation-profile
-%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates
+%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates /usr/lib/senemos/default-boot.img
 HOOKS
 ) <(grep -E '^%(pre|preun|pretrans|post|postun|posttrans|trigger[a-z]*|transfiletrigger[a-z]*)([[:space:]]|$)' packaging/uke-boot-integration.spec)
 grep -Fxq 'automatic=0' src/profiles/kernel-update.conf

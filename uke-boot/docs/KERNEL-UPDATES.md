@@ -1,5 +1,18 @@
 # Stock-ABL kernel updates
 
+30 October 2026. Updater 1.8.8 finalizes userdata updates after all RPM package
+scripts, including a transaction that changes only the singleboot profile link.
+The terminal reports the candidate release, verified target slot and retained
+rollback release. A refusal returns a failed scriptlet and says to resolve it
+before rebooting; RPM payloads may already be installed.
+
+Normal `sudo dnf update` stages the selected kernel before returning. For an
+offline transaction, use `sudo dnf upgrade --offline`, then
+`sudo dnf offline reboot`. Boot preparation runs when that stored transaction
+executes. An already accepted running baseline is verified without requiring
+desktop services in the offline environment. A new trial still requires normal
+boot-health acceptance. Physical online/offline reboot validation remains open.
+
 30 October 2026. Updater 1.8.7 supplies `transaction BUNDLE` for kernel RPM
 post-transaction hooks. It honors the selected root profile and administrator
 policy. Userdata transactions use the final installed singleboot profile and

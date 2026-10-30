@@ -425,6 +425,10 @@ int main(int argc,char **argv) {
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
         const auto label=root_label(read_text("/proc/cmdline"));
+        if(action=="transaction" && label=="userdata") {
+            std::cout<<"Uke kernel installed; final transaction trigger will prepare the selected singleboot profile\n";
+            return 0;
+        }
         if(action=="auto" && label!="userdata")return 0;
         need(!preflight || label=="userdata","Automatic preflight is specific to the userdata profile");
         if(automatic || preflight) {
@@ -464,12 +468,8 @@ int main(int argc,char **argv) {
                 verify_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
-                userdata_update(preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem);
-                const auto saved=decode(file(state/"userdata.state"));
-                if(saved.policy.phase!=uke_install::Phase::stable) {
-                    need(saved.policy.candidate==bundle.filename().string(),"Another kernel is already staged; boot and accept that trial before staging the selected update");
-                    std::cout<<"Selected candidate is awaiting boot acceptance; accepted rollback retained\n";return 0;
-                }
+                const bool stable=fs::exists(state/"userdata.state") && decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::stable;
+                userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem);
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
             }
             userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem);return 0;

@@ -1,11 +1,31 @@
 # Userdata boot A/B updates
 
+30 October 2026. Version 1.8.8 watches the selected singleboot link as well as
+installed boot bundles in the final RPM transaction trigger. Kernel posttrans
+hooks defer userdata staging to that final trigger. A separate profile-only
+update therefore stages its kernel before DNF completes.
+
+A verified trial staged in the current boot may be superseded while its
+accepted slot is still running. The writer verifies both slot images and
+GPT/UFS selection, backs up metadata, reselects the accepted slot and records
+the stable baseline before writing the replacement to the inactive slot.
+An already booted trial, changed baseline, unknown firmware or inconsistent
+selection is refused. The accepted image and its installed modules remain.
+Both trial directions have native fixtures; abrupt power-loss recovery and
+physical replacement/reboot behavior require separate device validation.
+
+Offline DNF staging verifies the already accepted stable baseline without
+starting desktop services or accepting a new trial. The final completion line
+names the next kernel and preserved rollback. Disabled policy and failed
+scriptlets are reported separately from successful boot preparation.
+
 30 October 2026. Version 1.8.7 adds `transaction BUNDLE` for kernel RPM hooks.
 On userdata it resolves the installed singleboot profile after the transaction,
 so a hook from a retained kernel cannot select its own older bundle. Both
 automatic policies apply. On the Linux-root profile it retains the explicitly
 enabled, matched boot B writer. Disabled activation is reported explicitly.
-An outstanding trial cannot be silently replaced by another selected candidate.
+Version 1.8.7 refuses a different candidate while a trial is outstanding;
+the bounded current-boot replacement above supersedes that restriction.
 
 `uke-kernel-update check-auto` validates the selected userdata bundle, running
 package and boot, software health, firmware cohort, GPT and UFS selection without
