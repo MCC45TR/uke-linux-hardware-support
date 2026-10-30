@@ -37,6 +37,14 @@ current limit, root helper and direct sysfs writes are not imported. No software
 PWM or unsupported current resolution is introduced. A genuinely finer optical
 range needs a separately evidenced hardware mode and electrical qualification.
 
+The later [exact Uke OSS PWM/current review](https://github.com/MCC45TR/senemos-uke-kernel-mainline/blob/29a747dcce7c9a639bd542e6b8a90682b3df40ed/docs/TORCH-PWM-RESEARCH-20261030.md)
+establishes that two steps are the current native policy result, not a proven
+intrinsic hardware ceiling. The Uke OEM camera overlay specifies 250 mA/channel
+with 5 mA current resolution (50 positive targets per channel). It programs
+current; the proven PWM path belongs to RGB. Torch hardware-strobe GPIO inputs
+exist, but a Uke PWM route and pulse timing remain unqualified. This finding
+does not raise the native current limit or claim 256 distinct optical levels.
+
 ## RGB channel and brightness API
 
 The existing kernel ABI `/dev/uke-rgb`, `UKE_RGB_SET`, accepts
