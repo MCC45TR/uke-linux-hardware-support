@@ -303,7 +303,7 @@
     "uke-displayport-audio": "8.fc46",
     "uke-vaapi-v4l2": "8.fc46",
     "uke-mesa-libclc22-spirv": "7.fc46",
-    "uke-control": "4.fc46",
+    "uke-control": "5.fc46",
     "pipewire": "2.fc46",
     "uke-speaker-orientation": "5.fc46",
     "uke-speaker-firmware": "2.fc46"
