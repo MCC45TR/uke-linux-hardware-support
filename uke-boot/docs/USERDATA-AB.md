@@ -26,6 +26,11 @@ The matching kernel arms the Gunyah watchdog at driver probe, gives userspace
 180 seconds to take ownership, enables the original systemd watchdog at 30
 seconds, and bounds incomplete initramfs startup at 180 seconds. The Gunyah
 hardware maximum is 32 seconds. The initramfs guard is canceled on switch-root.
+Version 1.9.0-2 also requires the expected Gunyah identity, active driver state,
+a 30-second device timeout and PID 1's matching watchdog setting before a
+reset-capable trial can be marked successful. The installed startup guard must
+be enabled before automatic staging. These checks read sysfs and D-Bus; they do
+not open or reprogram the watchdog device.
 This does not prove reset coverage before the Gunyah probe, the stock ABL retry
 countdown, hard-hang reset, suspend or physical fallback. Those require an
 attended recoverable device test. Accepted runtime kernels are not automatically

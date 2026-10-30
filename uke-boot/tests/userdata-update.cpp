@@ -22,6 +22,11 @@ static Bytes image(const std::string &release) {
     memcpy(bytes.data()+page+128,banner.data(),banner.size());return bytes;
 }
 int main() {
+    assert(reset_runtime_healthy("Gunyah Watchdog\n","active\n","30\n",30000000));
+    assert(!reset_runtime_healthy("Other Watchdog\n","active\n","30\n",30000000));
+    assert(!reset_runtime_healthy("Gunyah Watchdog\n","inactive\n","30\n",30000000));
+    assert(!reset_runtime_healthy("Gunyah Watchdog\n","active\n","32\n",30000000));
+    assert(!reset_runtime_healthy("Gunyah Watchdog\n","active\n","30\n",0));
     {
         const std::string staged="00000000-1234-5678-aaaa-ffffffffffff",booted="11111111-1234-5678-aaaa-ffffffffffff";
         for(const auto good:{uke_install::Slot::a,uke_install::Slot::b}) {
@@ -45,6 +50,10 @@ int main() {
             assert(!trial_watch_required(trial,"7.3.0-61",booted));
             trial.policy.phase=uke_install::Phase::verified;
             assert(!trial_watch_required(trial,"7.3.0-61",booted));
+            if(good==uke_install::Slot::b) {
+                trial.policy.phase=uke_install::Phase::current_slot_trial;
+                assert(!trial_watch_required(trial,"7.3.0-61",booted));
+            }
         }
         auto bytes=image("7.3.0-61");put32(bytes,8,1024);put32(bytes,page+16,1024);
         capability(bytes,page+256,true);

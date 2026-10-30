@@ -175,6 +175,10 @@ static bool trial_watch_required(const UserdataUpdate &saved,const std::string &
     return saved.policy.phase==uke_install::Phase::trial && saved.policy.candidate==release && saved.staged_boot_id!=boot_id;
 }
 enum class TrialWatch { wait,accepted,expired };
+static bool reset_runtime_healthy(const std::string &identity,const std::string &state,
+                                  const std::string &timeout,uint64_t manager_timeout) {
+    return identity=="Gunyah Watchdog\n" && state=="active\n" && timeout=="30\n" && manager_timeout==30000000;
+}
 static TrialWatch trial_watch_state(const UserdataUpdate &started,const UserdataUpdate &observed,
                                     const std::string &release,const std::string &boot_id,double seconds) {
     need(trial_watch_required(started,release,boot_id),"Boot deadline requires a booted alternating trial");
@@ -241,6 +245,18 @@ static void require_boot_reset_guard() {
     std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(response,sd_bus_message_unref);const char *state=nullptr;
     need(sd_bus_message_read(reply.get(),"s",&state)>0 && state && std::string(state)=="enabled",
          "Enable the packaged A/B startup guard before automatic staging");
+}
+static void require_running_boot_reset() {
+    require_boot_reset_guard();
+    sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Running watchdog verification requires the system bus");
+    std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);
+    need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound runtime watchdog verification");
+    uint64_t timeout=0;
+    need(sd_bus_get_property_trivial(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1",
+                                    "org.freedesktop.systemd1.Manager","RuntimeWatchdogUSec",nullptr,'t',&timeout)>=0 &&
+         reset_runtime_healthy(read_text("/sys/class/watchdog/watchdog0/identity"),read_text("/sys/class/watchdog/watchdog0/state"),
+                               read_text("/sys/class/watchdog/watchdog0/timeout"),timeout),
+         "Unaccepted trial lacks an active 30-second Gunyah/PID1 watchdog");
 }
 static int guard_userdata_trial(bool check_only=false) {
     bool armed=false;
@@ -457,6 +473,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
     for(auto &disk:disks)disk->gpt->require_selected(running);
     if(action=="accept" || action=="check-accept") {
+        const std::string selector(reinterpret_cast<const char*>(images[running].data()+44));
+        if(prior && prior->policy.phase==uke_install::Phase::trial && prior->policy.candidate==release &&
+           selector.ends_with(" senemos.boot_reset=1"))require_running_boot_reset();
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
