@@ -379,6 +379,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
                     throw std::runtime_error("Trial replacement refused; previous trial selection restored and verified");
                 }
                 std::cout<<"Superseded unbooted trial "<<prior->policy.candidate<<"; accepted slot retained\n";
+                disks.clear();
                 userdata_update(action,bundle,package_bytes,state,release,filesystem);return;
             }
         }

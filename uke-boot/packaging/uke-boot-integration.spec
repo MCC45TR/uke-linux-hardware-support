@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.10
+Version: 1.8.11
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -357,6 +357,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.11-1
+- Release old metadata descriptors before reacquiring the accepted baseline for a replacement trial.
+
 * Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.10-1
 - Wait briefly for transient UFS metadata lock contention without bypassing exclusive locking.
 - Distinguish descriptor admission failures from lock failures and test real lock recovery/refusal.

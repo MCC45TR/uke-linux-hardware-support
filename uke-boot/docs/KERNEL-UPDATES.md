@@ -1,5 +1,9 @@
 # Stock-ABL kernel updates
 
+31 October 2026. Updater 1.8.11 releases the old GPT descriptors after a verified
+reselection of the accepted slot, before reacquiring fresh metadata to stage a
+replacement trial. The global updater lock remains held across both phases.
+
 30 October 2026. Updater 1.8.10 waits up to five seconds for a busy UFS metadata
 lock, then refuses the update if exclusivity is still unavailable. Descriptor
 identity/capacity failures are reported separately. Native regular-file checks
