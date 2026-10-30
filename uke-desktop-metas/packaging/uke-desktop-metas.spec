@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 23%{?dist}
+Release: 25%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -9,6 +9,7 @@ Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz bash jq diffutils firewalld-filesystem firewalld libxml2
 BuildRequires: make gcc-c++ pkgconf-pkg-config pkgconfig(Qt6Gui) pkgconfig(Qt6Qml)
+BuildRequires: pkgconfig(Qt6DBus) dbus-daemon
 BuildRequires: libplasma plasma5support kf6-kirigami
 Requires: uke-core-meta >= 1.0.0-3
 %description
@@ -115,8 +116,7 @@ Graphical login, first-account setup and tablet integration remain unqualified.
 %package -n uke-plasma-controls
 Summary: Removable Plasma system tray controls using uke-control
 License: GPL-3.0-or-later
-BuildArch: noarch
-Requires: uke-control >= 2.0.0
+Requires: uke-control >= 2.4.0
 Requires: plasma-workspace plasma5support polkit
 
 %description -n uke-plasma-controls
@@ -128,6 +128,8 @@ without removing the KDE meta package. No GNOME integration is included.
 %prep
 %setup -q
 %build
+%set_build_flags
+%make_build all
 %install
 install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/desktops/profile.json
 install -Dm644 src/cutefish.json %{buildroot}%{_datadir}/senemos/uke/desktops/cutefish.json
@@ -135,11 +137,14 @@ install -Dm644 src/plasma.json %{buildroot}%{_datadir}/senemos/uke/desktops/plas
 install -Dm644 src/uke-kdeconnect.xml %{buildroot}%{_prefix}/lib/firewalld/policies/uke-kdeconnect.xml
 install -d %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls
 cp -a src/plasma-applet/. %{buildroot}%{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
+install -Dm755 build/qml/org/senemos/uke/controls/libukelightclient.so %{buildroot}%{_libdir}/qt6/qml/org/senemos/uke/controls/libukelightclient.so
+install -m644 src/light-client.qmldir %{buildroot}%{_libdir}/qt6/qml/org/senemos/uke/controls/qmldir
 %check
 xmllint --nonet --noout --schema /usr/lib/firewalld/xmlschema/policy.xsd src/uke-kdeconnect.xml
 bash tests/plasma-profile.sh
 bash tests/cutefish-profile.sh
 %make_build test-applet-load
+%make_build test-light-client
 
 %posttrans -n uke-kde-plasma-meta
 %firewalld_reload
@@ -168,8 +173,13 @@ fi
 %license src/plasma-applet/LICENSE
 %doc src/plasma-applet/SOURCE.md
 %{_datadir}/plasma/plasmoids/org.senemos.uke.controls/
+%{_libdir}/qt6/qml/org/senemos/uke/controls/
 
 %changelog
+* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-25
+- Keep light requests on one native D-Bus connection for bounded system authorization.
+- End the light-control connection when the popup closes and report unknown applied state.
+
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-23
 - Request explicit JSON from Control 2.0 and use canonical CDC/USB-role commands.
 

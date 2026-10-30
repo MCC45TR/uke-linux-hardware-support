@@ -1,7 +1,15 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate test-native test-applet test-applet-load srpm
+.PHONY: all validate test-native test-applet test-applet-load test-light-client srpm
+all: build/qml/org/senemos/uke/controls/libukelightclient.so
+build/light-client.moc: src/light-client.cpp
+	mkdir -p build
+	$$(pkg-config --variable=libexecdir Qt6Core)/moc $< -o $@
+build/qml/org/senemos/uke/controls/libukelightclient.so: src/light-client.cpp src/light-client.qmldir build/light-client.moc
+	mkdir -p $(@D)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -fPIC -shared -Ibuild $(LDFLAGS) src/light-client.cpp $$(pkg-config --cflags --libs Qt6Qml Qt6DBus) -o $@
+	cp src/light-client.qmldir $(@D)/qmldir
 version := 1.0.0
 package := $(notdir $(CURDIR))
 outdir ?= $(CURDIR)/build/srpm
@@ -16,13 +24,19 @@ validate:
 test-native: validate
 test-applet:
 	node tests/applet.cjs
-test-applet-load:
+test-applet-load: all
 	mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror $(LDFLAGS) tests/applet-load.cpp $$(pkg-config --cflags --libs Qt6Gui Qt6Qml) -o build/applet-load
 	runtime=$$(mktemp -d)
 	trap 'rm -rf -- "$$runtime"' EXIT
-	XDG_RUNTIME_DIR="$$runtime" QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=generic QT_QUICK_BACKEND=software build/applet-load "$(CURDIR)/src/plasma-applet/contents/ui/main.qml"
-	bash tests/applet-cache.sh
+	QML_IMPORT_PATH="$(CURDIR)/build/qml" XDG_RUNTIME_DIR="$$runtime" QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=generic QT_QUICK_BACKEND=software build/applet-load "$(CURDIR)/src/plasma-applet/contents/ui/main.qml"
+	QML_IMPORT_PATH="$(CURDIR)/build/qml" bash tests/applet-cache.sh
+build/light-client-test.moc: tests/light-client.cpp
+	mkdir -p build
+	$$(pkg-config --variable=libexecdir Qt6Core)/moc $< -o $@
+test-light-client: all build/light-client-test.moc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -UNDEBUG -Ibuild $(LDFLAGS) tests/light-client.cpp $$(pkg-config --cflags --libs Qt6Qml Qt6DBus) -o build/test-light-client
+	dbus-run-session -- bash -c 'DBUS_SYSTEM_BUS_ADDRESS="$$DBUS_SESSION_BUS_ADDRESS" build/test-light-client'
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}

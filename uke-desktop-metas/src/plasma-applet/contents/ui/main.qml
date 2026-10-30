@@ -8,6 +8,7 @@ import org.kde.plasma.components as PC
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.plasma.plasma5support as Plasma5Support
+import org.senemos.uke.controls 1.0 as Uke
 import "Control.js" as Control
 
 PlasmoidItem {
@@ -24,6 +25,11 @@ PlasmoidItem {
     property string requestedAction: ""
 
     function execute(action, values) {
+        if (Control.isLightAction(action)) {
+            if (lightClient.request(action, values || [])) ++pending
+            else errorText = i18n("Could not contact the tablet controls service.")
+            return
+        }
         const command = Control.command(action, values)
         if (!command) return
         const source = "UKE_TRAY_REQUEST=" + (++serial) + " " + command
@@ -90,7 +96,30 @@ PlasmoidItem {
     Plasmoid.status: PlasmaCore.Types.ActiveStatus
     toolTipMainText: i18n("Uke Tablet Controls")
     toolTipSubText: i18n("Display, cover and USB")
-    onExpandedChanged: { if (expanded) refresh() }
+    onExpandedChanged: { if (expanded) refresh(); else lightClient.close() }
+
+    Uke.LightClient {
+        id: lightClient
+        onCompleted: function(action, output, error) {
+            --root.pending
+            if (error.length > 0) {
+                if (action === "lights") root.lights = ({})
+                else if (action === "rgb") root.rgb = ({})
+                if (root.expanded) root.errorText = i18n("The change failed or authorization was cancelled.")
+            } else if (action === "lights" || action === "rgb") {
+                try {
+                    const value = Control.parse(action, output)
+                    if (action === "lights") root.lights = value
+                    else root.rgb = value
+                } catch (error) {
+                    if (action === "lights") root.lights = ({})
+                    else root.rgb = ({})
+                    root.errorText = i18n("Could not read tablet state. Refresh to try again.")
+                }
+            }
+            if (action !== "lights" && action !== "rgb" && root.expanded) root.refresh()
+        }
+    }
 
     Timer {
         interval: 2000
@@ -215,8 +244,10 @@ PlasmoidItem {
             ControlRow {
                 title: i18n("Flashlight")
                 iconName: "flashlight-off"
-                description: i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight?.brightness_percent ?? 0)
-                available: root.lights.flashlight?.available === true
+                description: Number.isInteger(root.lights.flashlight?.brightness_percent)
+                    ? i18n("Requested: %1%; applied step: %2%", root.lights.flashlight?.requested_percent ?? 100, root.lights.flashlight.brightness_percent)
+                    : i18n("Applied state unavailable")
+                available: root.lights.flashlight?.available === true && typeof root.lights.flashlight?.on === "boolean"
                 busy: root.pending > 0
                 action: Component {
                     RowLayout {

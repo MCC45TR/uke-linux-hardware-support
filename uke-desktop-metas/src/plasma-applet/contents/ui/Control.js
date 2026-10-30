@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+function isLightAction(action) {
+    return ["lights", "rgb", "rgbTest", "flashlightOn", "flashlightOff", "flashlightSet"].indexOf(action) >= 0
+}
 function command(action, values) {
-    if (action === "flashlightSet") {
-        if (!Array.isArray(values) || values.length !== 1 || values.some(function(value) {
-            return !Number.isInteger(value) || value < 1 || value > 100
-        })) return null
-        return "/usr/bin/uke-control --json flashlight set " + values.join(" ")
-    }
     const commands = {
         plasma: "/usr/bin/uke-control --json desktop plasma",
         desktop: "/usr/bin/uke-control --json desktop status",
         usb: "/usr/bin/uke-control --json usb status",
-        lights: "/usr/bin/uke-control --json flashlight status",
-        rgb: "/usr/bin/uke-control --json led status",
-        rgbTest: "/usr/bin/uke-control --json led test",
-        flashlightOn: "/usr/bin/uke-control --json flashlight on",
-        flashlightOff: "/usr/bin/uke-control --json flashlight off",
         rotationOn: "/usr/bin/uke-control --json desktop rotation on",
         rotationOff: "/usr/bin/uke-control --json desktop rotation off",
         brightnessOn: "/usr/bin/uke-control --json desktop brightness on",
@@ -47,9 +39,11 @@ function parse(kind, output) {
     if (kind === "lights") {
         for (const name of ["flashlight", "rgb"]) {
             const light = value[name]
+            const unknown = light && light.available === true && light.on === null && light.brightness_percent === null &&
+                Number.isInteger(light.kernel_io_error) && light.kernel_io_error < 0 && light.kernel_io_error >= -4095
             if (!light || typeof light.available !== "boolean" ||
-                (light.available ? typeof light.on !== "boolean" || !Number.isInteger(light.brightness_percent) ||
-                    light.brightness_percent < 0 || light.brightness_percent > 100 :
+                (light.available ? !unknown && (typeof light.on !== "boolean" || !Number.isInteger(light.brightness_percent) ||
+                    light.brightness_percent < 0 || light.brightness_percent > 100) :
                     light.on !== null || light.brightness_percent !== null))
                 throw new Error("Malformed light state")
         }

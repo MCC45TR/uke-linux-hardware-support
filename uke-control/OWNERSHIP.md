@@ -102,3 +102,9 @@ The actual authentication window and persistent GUI caller require separate
 session validation. These source changes do not claim that an existing widget
 which launches one CLI process per operation has been converted to a persistent
 client.
+
+The companion Plasma applet source now uses a dedicated native Qt D-Bus
+connection for light actions and closes it with the popup. Its fixed-method
+adapter contains no device access. Native private-bus and QML-load checks cover
+this integration; actual system-window and visual/session results are recorded
+separately. This supersedes the earlier source-integration gate above.
