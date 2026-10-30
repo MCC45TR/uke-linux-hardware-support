@@ -216,6 +216,24 @@ int main() {
     auto duplicate=capable;capability(duplicate,page+336);reject([&]{userdata_vrr(duplicate,true,manifest);});
     auto unaligned=boots[1];capability(unaligned,page+257);reject([&]{userdata_vrr(unaligned,true,manifest);});
     auto truncated=boots[1];capability(truncated,page+460);reject([&]{userdata_vrr(truncated,true,manifest);});
+    {
+        const auto path=root/"metadata-lock";
+        text(path,"fixture");
+        Fd held(open(path.c_str(),O_RDWR|O_CLOEXEC));
+        Fd contender(open(path.c_str(),O_RDWR|O_CLOEXEC));
+        assert(lock_metadata_fd(held.value));
+        const auto child=fork();assert(child>=0);
+        if(!child){usleep(150000);assert(!flock(held.value,LOCK_UN));_exit(0);}
+        assert(lock_metadata_fd(contender.value));
+        int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+        assert(!flock(contender.value,LOCK_UN));
+        assert(lock_metadata_fd(held.value));
+        assert(!lock_metadata_fd(contender.value) && (errno==EWOULDBLOCK || errno==EAGAIN));
+        assert(!flock(held.value,LOCK_UN));
+        assert(lock_metadata_fd(contender.value));
+        assert(!lock_metadata_fd(-1) && errno==EBADF);
+        std::cout<<"Actual metadata flock: transient contention recovers, held locks time out, invalid descriptors refuse\n";
+    }
     fs::remove_all(root);
     std::cout<<"Userdata durable states, alternating and current-slot trials, healthy acceptance/fallback, stale/symlink/hardlink refusals, unique running Image identity and bounded VRR derivation passed; regular files only\n";
 }

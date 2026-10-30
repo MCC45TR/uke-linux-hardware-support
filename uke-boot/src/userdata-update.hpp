@@ -205,6 +205,14 @@ static bool display_enabled(const fs::path &directory) {
     }
     return display;
 }
+static bool lock_metadata_fd(int fd) {
+    for(unsigned attempt=0;;++attempt) {
+        if(!flock(fd,LOCK_EX|LOCK_NB))return true;
+        if((errno!=EWOULDBLOCK && errno!=EAGAIN && errno!=EINTR) || attempt==50)return false;
+        if(!attempt)std::cerr<<"UFS slot metadata is busy; waiting up to five seconds before refusing the update\n";
+        usleep(100000);
+    }
+}
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
     Fd fd(open(("/dev/"+part.first).c_str(),(write?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));
@@ -231,8 +239,9 @@ struct SlotMetadata {
     SlotMetadata(const std::string &name,dev_t expected,bool allow_backup_crc):name(name),fd(open(("/dev/"+name).c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK)) {
         struct stat st{};uint64_t bytes=0;unsigned sector=0;
         need(!fstat(fd.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==expected &&
-             !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector) &&
-             !flock(fd.value,LOCK_EX|LOCK_NB),"Cannot lock the physical UFS GPT descriptor");
+             !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector),
+             "Physical UFS GPT descriptor identity/capacity unavailable");
+        need(lock_metadata_fd(fd.value),std::string("Cannot lock the physical UFS GPT descriptor: ")+std::strerror(errno));
         gpt=std::make_unique<slot::Disk>(fd.value,bytes,sector,allow_backup_crc);
     }
 };

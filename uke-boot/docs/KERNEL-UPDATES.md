@@ -1,5 +1,10 @@
 # Stock-ABL kernel updates
 
+30 October 2026. Updater 1.8.10 waits up to five seconds for a busy UFS metadata
+lock, then refuses the update if exclusivity is still unavailable. Descriptor
+identity/capacity failures are reported separately. Native regular-file checks
+cover contention that clears, a held lock that times out and invalid descriptors.
+
 30 October 2026. Updater 1.8.9 retains active `transaction BUNDLE` calls from
 Uke Control and direct callers. The final RPM trigger also covers profile-only
 updates and verifies an already prepared candidate without another image write.
