@@ -13,7 +13,7 @@ displayport-audio-srpm:
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
 	bash tests/audio-policy.sh
-	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-displayport-audio-0.1.0/,' -cf - LICENSE src/ucm2 src/wireplumber tests/audio-policy.sh tests/audio-policy.cpp | gzip -n > "$$top/SOURCES/uke-displayport-audio-0.1.0.tar.gz"
+	tar --sort=name --mtime=@1793059200 --owner=0 --group=0 --numeric-owner --transform='s,^,uke-displayport-audio-0.1.0/,' -cf - LICENSE src/ucm2 src/wireplumber src/audio/microphone-layout.json tests/audio-policy.sh tests/audio-policy.cpp | gzip -n > "$$top/SOURCES/uke-displayport-audio-0.1.0.tar.gz"
 	cp packaging/uke-displayport-audio.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --define "_topdir $$top" "$$top/SPECS/uke-displayport-audio.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

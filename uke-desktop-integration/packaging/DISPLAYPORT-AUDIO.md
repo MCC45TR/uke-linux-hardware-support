@@ -1,5 +1,18 @@
 # DisplayPort audio package
 
+## Physical microphone labels, 31 October 2026
+
+Release 0.1.0-11 labels Microphone1 as top right, Microphone2 as left edge,
+Microphone3 as camera side and Microphone4 as top left. The reference view is
+landscape, screen facing the user, USB-C at right. These qualitative locations
+were reported after identification in KDE. Raw channels0-3 independently match
+AMIC1/3/4/5 on POCO Pad X1 with Linux7.3.1-102, using per-decimator attenuation.
+
+The installed `senemos/uke/audio/microphone-layout.json` records stable IDs,
+transport indices and these positions for audio applications. Metric spacing,
+orientation vectors and front/rear camera association remain unknown. No stock
+response curve, calibration, DSP processing or Android geometry is installed.
+
 ## Raw capture channel gate, 31 October 2026
 
 Release 0.1.0-10 requires `mic:uke-4ch-v3`. Release101's corrected close still
