@@ -1,6 +1,6 @@
 Name: uke-oem-resources
 Version: 1.0.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Optional read-only Uke OEM resource access
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -48,6 +48,9 @@ install -Dm644 packaging/oem-sources.conf %{buildroot}%{_unitdir}/uke-ssc-cache.
 %{_unitdir}/uke-ssc-cache.service.d/oem-sources.conf
 
 %changelog
+* Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-2
+- Run ownership-checked cleanup after interrupted or failed service startup.
+
 * Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-1
 - Add optional read-only OEM references with checksum and extent validation.
 - Retain package fallback and separate A/B banks without applying DT overlays.

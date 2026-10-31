@@ -9,6 +9,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/libexec/uke-oem-resources/resources.sh start
 ExecStop=/usr/libexec/uke-oem-resources/resources.sh stop
+ExecStopPost=/usr/libexec/uke-oem-resources/resources.sh stop
 TimeoutStartSec=30
 TimeoutStopSec=30
 RuntimeDirectory=uke-oem-resources
