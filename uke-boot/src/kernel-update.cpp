@@ -215,7 +215,20 @@ static std::pair<std::string,dev_t> partition(const std::string &label,const fs:
     }
     need(!result.first.empty(),"Physical "+label+" partition unavailable"); return result;
 }
-[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo"),const std::string &label="linux") {
+static std::string read_mountinfo(const fs::path &path="/proc/self/mountinfo") {
+    Fd fd(open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW));
+    std::string value;
+    std::array<char,4096> chunk{};
+    for(;;) {
+        const auto count=read(fd.value,chunk.data(),chunk.size());
+        if(count<0 && errno==EINTR)continue;
+        need(count>=0,"Mount information read failed");
+        need(value.size()+static_cast<size_t>(count)<=1024*1024,"Mount information exceeds the read limit");
+        if(!count)return value;
+        value.append(chunk.data(),static_cast<size_t>(count));
+    }
+}
+[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_mountinfo(),const std::string &label="linux") {
     need(label=="linux"||label=="userdata","Unsupported root profile");
     const auto root=uke_install::root_mount(mounts);
     need(root.writable && makedev(root.major,root.minor)==expected &&
@@ -441,7 +454,7 @@ int main(int argc,char **argv) {
         }
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
         need(label=="userdata"||(action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
-        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_text("/proc/self/mountinfo"),label);
+        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_mountinfo(),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
         fs::path bundle=(action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if((automatic || preflight) && label=="userdata") {

@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.11
+Version: 1.8.12
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -357,6 +357,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.12-1
+- Read complete mount information with a 1 MiB bound before native update admission.
+- Preserve strict root, partition, power, backup and readback checks.
+
 * Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.11-1
 - Release old metadata descriptors before reacquiring the accepted baseline for a replacement trial.
 

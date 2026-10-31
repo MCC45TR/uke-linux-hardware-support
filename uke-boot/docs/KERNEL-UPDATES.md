@@ -1,5 +1,12 @@
 # Stock-ABL kernel updates
 
+31 October 2026. Updater 1.8.12 reads the complete mount listing with a 1 MiB
+bound. A native 4614-byte listing was previously cut at 4096 bytes and refused
+as an incomplete row. Strict row/root validation remains; unreadable, oversized
+or ambiguous input is refused. COPR tests and native device admission are
+separate validation steps. No caller may shorten or filter the mount namespace
+to bypass an admission refusal.
+
 31 October 2026, POCO Pad X1, Fedora Rawhide AArch64. Normal DNF update with
 updater 1.8.11 replaced an unbooted 7.3.0-60 trial with 7.3.1-3 in slot A.
 DNF reported completion before reboot. A normal reboot started 7.3.1-3 and

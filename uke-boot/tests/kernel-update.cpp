@@ -106,6 +106,28 @@ int main() {
     fs::create_directory_symlink(root/"virtual/sdc1",root/"sys/sdc1");reject([&]{partition("linux",root/"sys");});
     root_mount(makedev(8,1),"1 2 8:1 / / rw - ext4 /dev/sda1 rw\n");
     root_mount(makedev(8,1),"1 2 8:1 / / rw,noatime - f2fs /dev/sda1 rw\n","userdata");
+    const std::string root_row="1 2 8:1 / / rw - f2fs /dev/sda1 rw\n";
+    std::string extra_mounts;
+    for(unsigned n=0;n<160;++n)
+        extra_mounts+="2 1 0:17 / /run/fixture/"+std::to_string(n)+" rw - tmpfs none rw\n";
+    assert(extra_mounts.size()>4096);
+    const auto mountinfo=root/"mountinfo";
+    for(const auto &listing:{root_row+extra_mounts,extra_mounts+root_row}) {
+        text(mountinfo,listing);
+        assert(read_mountinfo(mountinfo)==listing);
+        assert(root_mount(makedev(8,1),read_mountinfo(mountinfo),"userdata")=="f2fs");
+    }
+    text(mountinfo,root_row+extra_mounts+root_row);
+    reject([&]{root_mount(makedev(8,1),read_mountinfo(mountinfo),"userdata");});
+    text(mountinfo,root_row+extra_mounts+"incomplete\n");
+    reject([&]{root_mount(makedev(8,1),read_mountinfo(mountinfo),"userdata");});
+    text(mountinfo,std::string(1024*1024,'x'));
+    assert(read_mountinfo(mountinfo).size()==1024*1024);
+    text(mountinfo,std::string(1024*1024+1,'x'));
+    reject([&]{read_mountinfo(mountinfo);});
+    reject([&]{read_mountinfo(root/"missing-mountinfo");});
+    reject([&]{read_mountinfo(root);});
+    std::cout<<"Complete bounded mountinfo: long listings, late duplicate/malformed roots, read errors and size limits passed; no device access\n";
     for (const auto *type : {"ext4", "xfs"}) {
         const auto mount = std::string("1 2 8:1 / / rw - ") + type + " /dev/sda1 rw\n";
         assert(root_mount(makedev(8,1),mount,"userdata") == type);
