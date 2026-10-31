@@ -216,6 +216,9 @@ clean:
 	rm -rf build
 
 .PHONY: check-microphone
+check-microphone-session:
+	bash tests/microphone-session.sh
+
 check-microphone: | build
 	test ! -e /etc/senemos/kernel-update.conf
 	lua tests/microphone-policy.lua src/uke-microphone-policy.lua

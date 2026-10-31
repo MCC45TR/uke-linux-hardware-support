@@ -100,7 +100,8 @@ Json::Value snapshot() {
                 result["components"] = props["alsa.components"];
                 result["capture_state"] = object["info"]["state"];
             }
-            if (props.get("uke.microphone.internal", "") == "true") internal.append(props);
+            const auto internal_flag = props.get("uke.microphone.internal", false);
+            if ((internal_flag.isBool() && internal_flag.asBool()) || internal_flag == "true") internal.append(props);
         }
         if (type != "PipeWire:Interface:Metadata") continue;
         const auto name = object["props"].get("metadata.name", "").asString();
@@ -142,7 +143,9 @@ int command(int argc, char **argv, bool as_json) {
             throw std::runtime_error("Microphone selection unavailable: " + status["reason"].asString());
         const auto applied = execute({"/usr/bin/wpctl", "settings", "--save", setting, encode(selection)}, 5, 65536);
         if (applied.status) throw std::runtime_error("WirePlumber refused the microphone preference");
-        status = snapshot(); status["requested_selection"] = selection;
+        status = snapshot();
+        if (status["selection"] != selection) throw std::runtime_error("Microphone preference readback did not match the request");
+        status["requested_selection"] = selection;
         status["applies_to"] = "new_streams_existing_recordings_are_preserved";
         cli::print(encode(status), as_json); return 0;
     }
