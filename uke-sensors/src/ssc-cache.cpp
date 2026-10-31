@@ -38,6 +38,22 @@ static bool same_input(const fs::path &source,const fs::path &cached) {
     std::ifstream original(source,std::ios::binary),copy(cached,std::ios::binary);
     return original && copy && std::equal(std::istreambuf_iterator<char>(original),{},std::istreambuf_iterator<char>(copy),{});
 }
+struct DefaultInputs { fs::path config, plugin; bool oem; };
+static DefaultInputs default_inputs(const fs::path &root) {
+    DefaultInputs packaged{root/"usr/share/uke-sensors/odm",root/"usr/lib/firmware/qcom/uke/sensors/sns_tppe.so",false};
+    const auto base=root/"run/uke-oem-resources", selected=base/"selected";
+    try {
+        for(const auto &path:{base,selected}) {
+            struct stat st{};
+            if(lstat(path.c_str(),&st) || !S_ISDIR(st.st_mode) || st.st_uid!=geteuid() || (st.st_mode&0022))return packaged;
+        }
+        if(same_input(packaged.config,selected/"odm") && same_input(packaged.plugin,selected/"sns_tppe.so"))
+            return {selected/"odm",selected/"sns_tppe.so",true};
+    } catch(const fs::filesystem_error &) {
+        // Optional OEM references never displace the package fallback on error.
+    }
+    return packaged;
+}
 static void copy_input(const fs::path &source, const fs::path &destination) {
     auto type = fs::symlink_status(source);
     if (fs::is_directory(type)) {
@@ -65,6 +81,8 @@ static void seed(const fs::path &root, const fs::path &base) {
     if(lstat(base.c_str(),&directory) || !S_ISDIR(directory.st_mode) || directory.st_uid!=geteuid() || (directory.st_mode&0022))
         throw std::runtime_error("SSC cache base must be an owned directory without shared write access");
     CacheLock lock(base);
+    const auto inputs=default_inputs(root);
+    std::cerr << "SSC default inputs: " << (inputs.oem ? "verified OEM reference" : "packaged fallback") << '\n';
     for(const auto &entry:fs::directory_iterator(base)) {
         const auto name=entry.path().filename().string();
         if(name.starts_with(".seed.") && name.size()==12)fs::remove_all(entry.path());
@@ -75,9 +93,9 @@ static void seed(const fs::path &root, const fs::path &base) {
         if (!fs::is_directory(fs::symlink_status(state)) || !fs::is_regular_file(state / "sensors/persist/sns_reg_version") ||
             !fs::is_regular_file(state / "sensors/config/json.lst") || !fs::is_regular_file(state / "dsp/adsp/sns_tppe.so"))
             throw std::runtime_error("Incomplete existing SSC state");
-        if(same_input(root/"usr/share/uke-sensors/odm",state/"sensors/config") &&
+        if(same_input(inputs.config,state/"sensors/config") &&
            same_input(root/"usr/share/uke-sensors/sns_reg.conf",state/"sensors/sns_reg.conf") &&
-           same_input(root/"usr/lib/firmware/qcom/uke/sensors/sns_tppe.so",state/"dsp/adsp/sns_tppe.so"))return;
+           same_input(inputs.plugin,state/"dsp/adsp/sns_tppe.so"))return;
     }
     auto pattern = (base / ".seed.XXXXXX").string();
     if (!mkdtemp(pattern.data())) throw std::runtime_error("Cannot create private SSC cache staging directory");
@@ -92,9 +110,9 @@ static void seed(const fs::path &root, const fs::path &base) {
             fs::create_directory(staging / "socinfo");
             copy_input(root / "mnt/vendor/persist/sensors/registry", staging / "sensors/persist");
         }
-        copy_input(root / "usr/share/uke-sensors/odm", staging / "sensors/config");
+        copy_input(inputs.config, staging / "sensors/config");
         copy_input(root / "usr/share/uke-sensors/sns_reg.conf", staging / "sensors/sns_reg.conf");
-        copy_input(root / "usr/lib/firmware/qcom/uke/sensors/sns_tppe.so", staging / "dsp/adsp/sns_tppe.so");
+        copy_input(inputs.plugin, staging / "dsp/adsp/sns_tppe.so");
         for (const char *name : {"hw_platform", "platform_subtype", "platform_subtype_id", "platform_version", "soc_id", "revision"})
             copy_input(root / "sys/devices/soc0" / name, staging / "socinfo" / name);
         if (!fs::is_regular_file(staging / "sensors/config/json.lst") ||

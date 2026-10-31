@@ -1,0 +1,23 @@
+[Unit]
+Description=Read-only Uke OEM resource references
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+After=local-fs.target
+Before=uke-ssc-cache.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/uke-oem-resources/resources.sh start
+ExecStop=/usr/libexec/uke-oem-resources/resources.sh stop
+ExecStopPost=/usr/libexec/uke-oem-resources/resources.sh stop
+TimeoutStartSec=30
+TimeoutStopSec=30
+RuntimeDirectory=uke-oem-resources
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+UMask=0077
+NoNewPrivileges=yes
+# Mounts must remain visible in the system namespace; no private mount sandbox.
+
+[Install]
+WantedBy=multi-user.target
