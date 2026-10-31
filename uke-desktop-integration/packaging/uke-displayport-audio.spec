@@ -1,6 +1,6 @@
 Name:           uke-displayport-audio
 Version:        0.1.0
-Release:        11%{?dist}
+Release:        12%{?dist}
 Summary:        Internal microphone, speaker and DisplayPort policy for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -58,6 +58,10 @@ cmp src/audio/microphone-layout.json %{buildroot}%{_datadir}/senemos/uke/audio/m
 %{_datadir}/senemos/uke/audio/microphone-layout.json
 
 %changelog
+* Sat Oct 31 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-12
+- Use the reviewed Uke ADC baseline and bounded TX digital gain for four inputs.
+- Describe both capture and playback in the supported HiFi profile.
+
 * Sat Oct 31 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-11
 - Label four raw inputs with the confirmed physical aperture positions.
 - Install stable input identities and qualitative layout metadata without invented geometry.
