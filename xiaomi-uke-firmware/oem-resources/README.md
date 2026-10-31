@@ -23,6 +23,8 @@ consumer rechecks the entire profile against the current package on every use;
 a changed package, missing reference or mismatched file selects the package
 fallback. Persist remains on its existing read-only calibration path. No kernel
 firmware search path, RPM-owned file, regulator, radio or panel setting changes.
+The package requires the native OEM-defaults capability so a future update
+cannot replace the consumer with a producer that lacks this integration.
 
 Compilation and RPM checks run in COPR. The package contains only source-owned
 helpers, units and documentation; it never redistributes device captures.

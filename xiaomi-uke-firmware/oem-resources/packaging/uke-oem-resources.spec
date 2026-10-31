@@ -1,6 +1,6 @@
 Name: uke-oem-resources
 Version: 1.0.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Optional read-only Uke OEM resource access
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -8,6 +8,7 @@ Source0: %{name}-%{version}.tar.xz
 BuildArch: noarch
 BuildRequires: bash coreutils diffutils gawk jq util-linux-core systemd-rpm-macros
 Requires: bash coreutils diffutils gawk grep jq util-linux util-linux-core
+Requires: uke-ssc-fileservice(oem-defaults-v1) >= 1
 %{?systemd_requires}
 
 %description
@@ -48,6 +49,9 @@ install -Dm644 packaging/oem-sources.conf %{buildroot}%{_unitdir}/uke-ssc-cache.
 %{_unitdir}/uke-ssc-cache.service.d/oem-sources.conf
 
 %changelog
+* Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-5
+- Require the native OEM consumer capability so future updates preserve integration.
+
 * Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-4
 - Use compatible findmnt options for the live status report.
 
