@@ -216,7 +216,9 @@ clean:
 	rm -rf build
 
 .PHONY: check-microphone
-check-microphone-session:
+build/test-microphone-source: tests/microphone-source.cpp | build
+	$(CXX) $(CXXFLAGS) $(shell pkg-config --cflags libpipewire-0.3) $< $(shell pkg-config --libs libpipewire-0.3) -o $@
+check-microphone-session: build/test-microphone-source
 	bash tests/microphone-session.sh
 
 check-microphone: | build

@@ -8,17 +8,20 @@ package.preload["linking-utils"] = function() return {
   canLink = function() return true end,
 } end
 local callbacks, objects, hooks, settings_callback = {}, {}, {}, nil
+local link_callbacks, link_objects = {}, {}
 local selection, allocations, unloads, arguments = "auto", 0, 0, nil
 function Interest(value) return value end
 function EventInterest(value) return value end
 function Constraint(value) return value end
-function ObjectManager()
+function ObjectManager(interests)
+  local is_link = interests[1].type == "link"
   return {
-    connect = function(_, name, callback) callbacks[name] = callback end,
+    connect = function(_, name, callback) (is_link and link_callbacks or callbacks)[name] = callback end,
     activate = function() end,
-    iterate = function() local i=0; return function() i=i+1; return objects[i] end end,
+    iterate = function() local i=0; return function() i=i+1; return (is_link and link_objects or objects)[i] end end,
   }
 end
+Core = { sync = function(callback) callback() end }
 Json = {
   Raw = function() return { parse = function() return {"AUX0","AUX1","AUX2","AUX3"} end } end,
   Array = function(value) return value end,
@@ -54,6 +57,7 @@ assert(allocations == 1 and arguments["capture.props"]["audio.position"][1] == "
 settings_callback(); assert(allocations == 1)
 local state, changed = "running", nil
 local internal = {
+  ["bound-id"] = 99,
   properties={["uke.microphone.internal"]="true",["uke.microphone.id"]="uke-amic4"},
   get_state=function() return state end,
   connect=function(_,_,cb) changed=cb end,
@@ -72,8 +76,10 @@ hook.execute(event); assert(event.target==replacement)
 event.target=nil; current_event[5]={has_defined_target=true}
 hook.execute(event); assert(event.target==nil)
 current_event[5]={was_handled=true}; hook.execute(event); assert(event.target==nil)
+link_objects={{properties={["link.output.node"]="99"}}}
 selection="auto"; settings_callback(); assert(unloads==0) -- Running recording survives rollback.
-state="idle"; changed(); assert(unloads==1)
+state="idle"; changed(); assert(unloads==0) -- Paused but linked recording also survives.
+link_objects={}; link_callbacks["object-removed"](); assert(unloads==1)
 selection="invalid"; settings_callback(); assert(allocations==1)
 objects={}; callbacks["object-removed"](nil,raw)
 print("Zero-auto allocation, passive routing, explicit/raw precedence and deferred teardown passed")

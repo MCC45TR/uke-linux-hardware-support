@@ -6,6 +6,7 @@ local log = Log.open_topic("s-uke-microphone")
 local modules = {}
 local selection = "auto"
 local nodes = ObjectManager { Interest { type = "node" } }
+local links = ObjectManager { Interest { type = "link" } }
 
 local function positions(p)
   if not p["audio.position"] then return nil end
@@ -32,6 +33,14 @@ local function internal_node(id)
     end
   end
 end
+local function in_use(node)
+  if not node then return false end
+  if node:get_state() == "running" then return true end
+  for link in links:iterate() do
+    if tonumber(link.properties["link.output.node"]) == node["bound-id"] then return true end
+  end
+  return false
+end
 local function reconcile()
   selection = Settings.get_string("uke.microphone.selection") or "auto"
   local array = array_node()
@@ -39,7 +48,7 @@ local function reconcile()
     local node = internal_node(id)
     -- Never tear down a path used by an existing recording.
     if not array or ((id ~= selection or entry.serial ~= array.properties["object.serial"])
-        and (not node or node:get_state() ~= "running")) then
+        and not in_use(node)) then
       entry.module:unload()
       modules[id] = nil
     end
@@ -90,6 +99,8 @@ nodes:connect("object-removed", function(_, node)
   if qualified(node.properties) then reconcile() end
 end)
 Settings.subscribe("uke.microphone.selection", reconcile)
+links:connect("object-removed", function() Core.sync(reconcile) end)
+links:activate()
 nodes:activate()
 
 SimpleEventHook {
@@ -108,12 +119,15 @@ SimpleEventHook {
       if port:get_direction() == "input" then channels = channels + 1 end
     end
     local p = node.properties
+    local camera, purpose = policy.context(p)
     local chosen = policy.choose(selection, {
       channels = channels,
       role = p["media.role"],
       explicit_target = flags.has_defined_target,
       internal = p["uke.microphone.internal"] == "true",
       raw = p["uke.microphone.raw"] == "true",
+      camera = camera,
+      purpose = purpose,
     }, qualified(physical.properties))
     if not chosen or array_node() ~= physical then return end
     local entry = modules[chosen]

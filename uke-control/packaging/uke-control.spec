@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.7.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support

@@ -12,29 +12,16 @@ mkdir -p "$XDG_CONFIG_HOME"/wireplumber/wireplumber.conf.d "$XDG_DATA_HOME"/wire
 cp "$root/packaging/96-uke-microphone-policy.conf" "$XDG_CONFIG_HOME/wireplumber/wireplumber.conf.d/"
 cp "$root/src/uke-microphone.lua" "$XDG_DATA_HOME/wireplumber/scripts/"
 cp "$root/src/uke-microphone-policy.lua" "$XDG_DATA_HOME/wireplumber/scripts/lib/"
-cat > "$XDG_CONFIG_HOME/pipewire/pipewire.conf.d/90-fixture.conf" <<'CONFIG'
-context.objects = [
- { factory = adapter args = {
-   factory.name = audiotestsrc
-   node.name = uke.fixture.array
-   media.class = Audio/Source
-   device.api = alsa
-   alsa.card_name = POCO-Pad-X1
-   alsa.components = "mic:uke-4ch-v4 kernel:7.3.1-106"
-   audio.channels = 4
-   audio.position = [ AUX0 AUX1 AUX2 AUX3 ]
-   audio.rate = 48000
- } }
-]
-CONFIG
 export UKE_MIC_FIXTURE_STAGE=$stage
+export UKE_MIC_FIXTURE_SOURCE=$root/build/test-microphone-source
 dbus-run-session -- bash -Eeuo pipefail <<'SESSION'
 stage=$UKE_MIC_FIXTURE_STAGE
 pipewire >"$stage/pipewire.log" 2>&1 & pw_pid=$!
 wireplumber >"$stage/wireplumber.log" 2>&1 & wp_pid=$!
-rec_pid=
+rec_pid= source_pid=
 cleanup() {
  [[ -z $rec_pid ]] || kill "$rec_pid" 2>/dev/null || :
+ [[ -z $source_pid ]] || kill "$source_pid" 2>/dev/null || :
  kill "$wp_pid" "$pw_pid" 2>/dev/null || :
  wait "$wp_pid" "$pw_pid" 2>/dev/null || :
 }
@@ -50,6 +37,8 @@ await_json() {
  return 1
 }
 await_json 'any(.[]; .type=="PipeWire:Interface:Metadata" and .props["metadata.name"]=="schema-sm-settings" and any(.metadata[]; .key=="uke.microphone.selection"))'
+"$UKE_MIC_FIXTURE_SOURCE" > "$stage/source.log" 2>&1 & source_pid=$!
+await_json 'any(.[]; .type=="PipeWire:Interface:Node" and .info.props["node.name"]=="uke.fixture.array")'
 jq -e 'all(.[]; .info.props["uke.microphone.internal"]!=true and .info.props["uke.microphone.internal"]!="true")' "$stage/graph.json"
 source_id=$(jq -r '.[]|select(.type=="PipeWire:Interface:Node" and .info.props["node.name"]=="uke.fixture.array")|.id' "$stage/graph.json")
 wpctl set-default "$source_id"
