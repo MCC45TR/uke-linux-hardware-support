@@ -156,6 +156,6 @@ case ${1:-} in
   cat "$base/compatibility.tsv"
   ;;
  stop) stop;;
- status) test -f "$base/ready"; cat "$base/compatibility.tsv"; findmnt --list --raw --noheadings --output TARGET,FSTYPE,OPTIONS | awk -v prefix="$base/mounts/" 'index($1,prefix)==1';;
+ status) test -f "$base/ready"; cat "$base/compatibility.tsv"; findmnt --raw --noheadings --output TARGET,FSTYPE,OPTIONS | awk -v prefix="$base/mounts/" 'index($1,prefix)==1';;
  *) fail 'Usage: resources {start|stop|status}';;
 esac

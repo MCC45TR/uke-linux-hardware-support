@@ -1,6 +1,6 @@
 Name: uke-oem-resources
 Version: 1.0.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Optional read-only Uke OEM resource access
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -48,6 +48,9 @@ install -Dm644 packaging/oem-sources.conf %{buildroot}%{_unitdir}/uke-ssc-cache.
 %{_unitdir}/uke-ssc-cache.service.d/oem-sources.conf
 
 %changelog
+* Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-4
+- Use compatible findmnt options for the live status report.
+
 * Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-3
 - Use the existing base-system grep without an additional search-tool dependency.
 
