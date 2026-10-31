@@ -1,5 +1,14 @@
 # DisplayPort audio package
 
+## Raw capture channel gate, 31 October 2026
+
+Release 0.1.0-10 requires `mic:uke-4ch-v3`. Release101's corrected close still
+uses a quad-speaker map in the frontend converter: individual attenuation
+shows one input mixed into the first pair, another moved to the third output
+and a silent fourth output. The new kernel candidate preserves raw codec-DMA
+IDs through the frontend. Desktop configuration must require that correction;
+four selectable sources alone do not establish four independent microphones.
+
 ## Four microphone sources, 31 October 2026
 
 Release 0.1.0-9 defines Microphone 1 through Microphone 4 as separate mono

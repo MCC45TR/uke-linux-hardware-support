@@ -1,6 +1,6 @@
 Name:           uke-displayport-audio
 Version:        0.1.0
-Release:        9%{?dist}
+Release:        10%{?dist}
 Summary:        Internal microphone, speaker and DisplayPort policy for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -53,6 +53,9 @@ bash tests/audio-policy.sh
 %{_datadir}/wireplumber/wireplumber.conf.d/75-uke-thp-not-camera.conf
 
 %changelog
+* Sat Oct 31 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-10
+- Require the corrected raw microphone channel map before desktop exposure.
+
 * Sat Oct 31 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-9
 - Expose four selectable mono microphones using the shared native capture PCM.
 - Require the corrected multichannel lifecycle marker and preserve separate playback devices.

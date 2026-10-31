@@ -57,6 +57,6 @@ while IFS= read -r control; do
     grep -Fq "\"iface=mixer,name='$control'\" \"iface=mixer,name='$control'\"" "$conf/Microphone-Controls.conf"
 done < <(sed -n "s/.*cset \"name='\([^']*\)'.*/\1/p" "$conf/Microphone-HiFi.conf" | sort -u | grep -v 'Speaker Switch\|Audio Mixer MultiMedia')
 for file in POCO-Pad-X1.conf Speaker-HiFi.conf; do
-    grep -Fq 'mic:uke-4ch-v2' "$conf/$file"
+    grep -Fq 'mic:uke-4ch-v3' "$conf/$file"
 done
 printf 'ALSA syntax, shared mono capture metadata, control namespace and independent playback samples passed; host files only\n'
