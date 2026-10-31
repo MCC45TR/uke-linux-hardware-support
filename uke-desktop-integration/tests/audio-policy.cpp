@@ -3,6 +3,48 @@
 #include <alsa/asoundlib.h>
 #include <cassert>
 #include <cstdio>
+#include <cstring>
+#include <string>
+
+static snd_config_t *lookup(snd_config_t *root, const std::string &key)
+{
+    snd_config_t *value = nullptr;
+    assert(snd_config_search(root, key.c_str(), &value) == 0);
+    return value;
+}
+
+static void integer(snd_config_t *root, const std::string &key, long expected)
+{
+    long actual = -1;
+    assert(snd_config_get_integer(lookup(root, key), &actual) == 0);
+    assert(actual == expected);
+}
+
+static void text(snd_config_t *root, const std::string &key, const char *expected)
+{
+    const char *actual = nullptr;
+    assert(snd_config_get_string(lookup(root, key), &actual) == 0);
+    assert(std::strcmp(actual, expected) == 0);
+}
+
+static void microphones(snd_config_t *config)
+{
+    for (int channel = 0; channel < 4; ++channel) {
+        const auto device = "SectionDevice.Mic" + std::to_string(channel + 1);
+        const auto value = device + ".Value.";
+        integer(config, value + "CaptureChannels", 4);
+        integer(config, value + "CaptureRate", 48000);
+        integer(config, value + "CaptureChannel0", channel);
+        text(config, value + "CaptureChannelPos0", "MONO");
+        text(config, value + "CapturePCM", "hw:${CardId},2");
+        snd_config_t *unused = nullptr;
+        assert(snd_config_search(config, (value + "CaptureChannel1").c_str(), &unused) < 0);
+        for (const char *sequence : {"EnableSequence", "DisableSequence"}) {
+            auto *node = lookup(config, device + "." + sequence);
+            assert(snd_config_iterator_first(node) == snd_config_iterator_end(node));
+        }
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -16,6 +58,8 @@ int main(int argc, char **argv)
         if (result < 0)
             std::fprintf(stderr, "%s: %s\n", argv[i], snd_strerror(result));
         assert(result == 0);
+        if (std::strstr(argv[i], "/Microphone-HiFi.conf"))
+            microphones(config);
         snd_input_close(input);
         snd_config_delete(config);
     }

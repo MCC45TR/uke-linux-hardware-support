@@ -1,5 +1,25 @@
 # DisplayPort audio package
 
+## Four microphone sources, 31 October 2026
+
+Release 0.1.0-9 defines Microphone 1 through Microphone 4 as separate mono
+capture devices. PipeWire's native UCM split metadata shares one four-channel,
+48 kHz capture PCM and selects indices 0 through 3. Closing one logical source
+does not disable the shared hardware routes. Gains and mute remain independent
+software controls. Source data requires `mic:uke-4ch-v2` from the corrected
+native capture driver; earlier cards retain the existing playback profile.
+
+The proposed stream order is AMIC1, AMIC3, AMIC4, AMIC5. Physical aperture
+associations remain unknown until independently checked on POCO Pad X1.
+No speaker-position labels or Android geometry/calibration are assigned.
+Four speaker channels and stereo DisplayPort remain separate output devices.
+COPR parser/sample checks and installed tablet acceptance are distinct results.
+
+Native UCM split fields follow PipeWire source
+`4cfc471123a0e041fcd6fec5887c40dbddd40325`,
+`spa/plugins/alsa/acp/alsa-ucm.c`. The conditional card capability follows
+ALSA-lib `f44e0abd5382f519cc6fa69850c34e6e9c09d5f5` UCM conditions.
+
 ## Separate four-channel speakers and stereo DisplayPort, 27 October 2026
 
 Release 0.1.0-7 exposes four channels on the existing MultiMedia2 internal

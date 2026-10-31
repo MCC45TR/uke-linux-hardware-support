@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Parse actual ALSA data and preserve four distinct channels through regular files.
 set -Eeuo pipefail
+test ! -e /etc/senemos/kernel-update.conf
 root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 conf=$root/src/ucm2/Qualcomm/sm7675
 work=$(mktemp -d)
@@ -10,7 +11,7 @@ read -r -a libs <<< "${ALSA_LIBS:-$(pkg-config --libs alsa)}"
 "${CXX:-c++}" -std=c++17 -Wall -Wextra -Werror "${cflags[@]}" \
     "$root/tests/audio-policy.cpp" "${libs[@]}" -o "$work/parser"
 "$work/parser" "$conf/"*.conf
-cat "$conf/DP-ELD.conf" "$conf/Speaker-ELD.conf" > "$work/controls.conf"
+cat "$conf/DP-ELD.conf" "$conf/Speaker-ELD.conf" "$conf/Microphone-Controls.conf" > "$work/controls.conf"
 "$work/parser" "$work/controls.conf"
 cat > "$work/alsa.conf" <<EOF
 </usr/share/alsa/alsa.conf>
@@ -52,4 +53,10 @@ test "$(grep -c 'PlaybackChannels 2' "$conf/Speaker-HiFi.conf")" -eq 1
 if grep -E 'CapturePCM|CaptureChannels|Digital Volume|force_unmute|max_volume' "$conf/Speaker-"*.conf; then
     echo 'Unqualified capture or gain policy was added' >&2; exit 1
 fi
-printf 'ALSA syntax, ELD controls, distinct four-channel speaker samples and separate stereo DisplayPort passed; host files only\n'
+while IFS= read -r control; do
+    grep -Fq "\"iface=mixer,name='$control'\" \"iface=mixer,name='$control'\"" "$conf/Microphone-Controls.conf"
+done < <(sed -n "s/.*cset \"name='\([^']*\)'.*/\1/p" "$conf/Microphone-HiFi.conf" | sort -u | grep -v 'Speaker Switch\|Audio Mixer MultiMedia')
+for file in POCO-Pad-X1.conf Speaker-HiFi.conf; do
+    grep -Fq 'mic:uke-4ch-v2' "$conf/$file"
+done
+printf 'ALSA syntax, shared mono capture metadata, control namespace and independent playback samples passed; host files only\n'
