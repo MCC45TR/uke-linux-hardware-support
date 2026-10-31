@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "device": "uke",
+  "source_release": "OS3.0.304.0.WOZMIXM",
+  "evidence_class": [
+    "source notice mapping",
+    "installed payload identity"
+  ],
+  "package_inspected": "uke-firmware-3.0.304.0-14.fc46.noarch",
+  "payload_files": 217,
+  "installed_hashes_verified": 217,
+  "exact_notice_matches": 7,
+  "missing_original_notice_paths": 74,
+  "unmatched_named_notice_paths": 136,
+  "redistribution_review_complete": false,
+  "firmware_blob_package_ready": false,
+  "hardware_tested": false,
+  "input_manifests": [
+    {
+      "path": "manifests/local-firmware-candidates.json",
+      "sha256": "65449894c0ad3a98b37d725834b1922d602a8a88f8feb2ef25c6e37da7620609"
+    },
+    {
+      "path": "manifests/oem-runtime-source.json",
+      "sha256": "142c0e89e4773efc1f6da386a3e0620bc492cffe55f0f23a546e55c2682c5733"
+    }
+  ],
+  "notices": {
+    "odm_gzip_sha256": "71aef2c9cb076992714858bd3861590e7329c82098501c19a7075b00c9540727",
+    "vendor_gzip_sha256": "ce8281d6fed48c89db41fc6ba79d6a2502e1c4406e14cbf0e4e9f2c739a52c05"
+  },
+  "license_evidence": {
+    "declared_license": "Apache-2.0",
+    "content_id": "3b83ef96387f14655fc854ddc3c6bd57",
+    "xml_content_text_sha256": "8fbec1594de278da46f55f92d5de3e210c1648068e763e8346ecfb8263fbe908",
+    "decoded_text_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "comparison": "Parse the XML content once more to decode the numeric character references stored inside CDATA; append one LF. The entire result matches the reviewed license file byte for byte.",
+    "license_path": "packaging/speaker-firmware/LICENSE.Apache-2.0",
+    "license_sha256": "8c6db340475136df3c1201d458fa5755698eace76e510471ecc9d857d6083dac",
+    "remaining_scope": "The seven exact file mappings do not establish redistribution terms for the other 210 files or qualify their hardware use."
+  },
+  "notice_mapped_files": [
+    {
+      "source_partition": "odm",
+      "partition_path": "etc/sensors/config/lanai_qsh_ble_0.json",
+      "notice_path": "/odm/etc/sensors/config/lanai_qsh_ble_0.json",
+      "target_root": "sensors",
+      "target_path": "odm/lanai_qsh_ble_0.json",
+      "bytes": 398,
+      "sha256": "7ad1243faa2c12e54dabdb133aac073f992eb481ed2dc77da90587fdefffdb7a",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    },
+    {
+      "source_partition": "odm",
+      "partition_path": "etc/sensors/config/palawan_qsh_ble_0.json",
+      "notice_path": "/odm/etc/sensors/config/palawan_qsh_ble_0.json",
+      "target_root": "sensors",
+      "target_path": "odm/palawan_qsh_ble_0.json",
+      "bytes": 398,
+      "sha256": "1b3fa1ea44c4b35d7f466b612f7f11cdea9883f1251ae5e440643a18e06f3124",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    },
+    {
+      "source_partition": "odm",
+      "partition_path": "etc/sensors/config/qsh_ble.json",
+      "notice_path": "/odm/etc/sensors/config/qsh_ble.json",
+      "target_root": "sensors",
+      "target_path": "odm/qsh_ble.json",
+      "bytes": 1076,
+      "sha256": "5a4e1729b06df36b6c27339a270012b3f088df292113ca9fe6d749c7f6c17cc1",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    },
+    {
+      "source_partition": "odm",
+      "partition_path": "firmware/o82_nova_thp_config.ini",
+      "notice_path": "/odm/firmware/o82_nova_thp_config.ini",
+      "target_root": "touch-inputs",
+      "target_path": "csot/config.ini",
+      "bytes": 36228,
+      "sha256": "c02d1956da3714bbd9a19f14ca814731cffd4e2442677a83d5e071ea547a0616",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    },
+    {
+      "source_partition": "odm",
+      "partition_path": "firmware/novatek_nt36532_o82_fw_csot.bin",
+      "notice_path": "/odm/firmware/novatek_nt36532_o82_fw_csot.bin",
+      "target_root": "touch-inputs",
+      "target_path": "csot/normal.bin",
+      "bytes": 245760,
+      "sha256": "a4f949fb89c7eaad9da85a5885cd2dcc1fffbf08bc1e7ffe9f0bb97c1769b310",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    },
+    {
+      "source_partition": "odm",
+      "partition_path": "firmware/o82_nova_tm_thp_config.ini",
+      "notice_path": "/odm/firmware/o82_nova_tm_thp_config.ini",
+      "target_root": "touch-inputs",
+      "target_path": "tm/config.ini",
+      "bytes": 36226,
+      "sha256": "4de42f9c27844695f1b789e59f049550d283a51bb0a8a1d9319f8a2ba5666a33",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    },
+    {
+      "source_partition": "odm",
+      "partition_path": "firmware/novatek_nt36532_o82_fw_tm.bin",
+      "notice_path": "/odm/firmware/novatek_nt36532_o82_fw_tm.bin",
+      "target_root": "touch-inputs",
+      "target_path": "tm/normal.bin",
+      "bytes": 245760,
+      "sha256": "12ce2693b965a35e3469984fd95afebb4c0a740ca908159b0a5e6bdad5968619",
+      "content_ids": [
+        "3b83ef96387f14655fc854ddc3c6bd57"
+      ]
+    }
+  ]
+}

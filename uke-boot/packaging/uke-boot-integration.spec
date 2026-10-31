@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.5
+Version: 1.8.6
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -23,6 +23,7 @@ Requires: bluez
 Requires: uke-firmware >= 3.0.304.0
 Requires: senemos-uke-linux-kernel-mainline-modules >= 7.2.9-1.53.native53
 Requires(pre): rpm systemd coreutils sed
+Requires(post): systemd
 Requires(posttrans): systemd coreutils sed
 Provides: uke-usb-gadget-ownership-api = 2
 Provides: uke-usb-manual-cdc-api = 2
@@ -132,6 +133,7 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/touch-launcher.cpp -o uke-touchscreen %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
 %check
+cmp src/profiles/60-uke-security.conf %{buildroot}%{_prefix}/lib/sysctl.d/60-uke-security.conf
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
 bash tests/userdata-update.sh
@@ -163,6 +165,7 @@ timeout --signal=KILL 25 umockdev-wrapper ./native-profile-udev-contract "$PWD/t
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror touch-runtime/legacy/tests/touch-assignment.cpp -o touch-assignment-contract
 timeout 15 bash -c 'ulimit -v 262144; exec ./touch-assignment-contract'
 %install
+install -Dm644 src/profiles/60-uke-security.conf %{buildroot}%{_prefix}/lib/sysctl.d/60-uke-security.conf
 install -Dm755 uke-touchscreen %{buildroot}%{_libexecdir}/senemos-uke/uke-touchscreen
 install -Dm755 uke-touch-thp %{buildroot}%{_libexecdir}/senemos-uke/uke-touch-thp
 install -d %{buildroot}%{_unitdir}
@@ -223,6 +226,7 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 
 %post
 %systemd_post uke-touchscreen.service
+%sysctl_apply -- --prefix=/kernel/kptr_restrict --prefix=/kernel/dmesg_restrict
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %preun
@@ -310,6 +314,7 @@ fi
 %{_unitdir}/uke-usb-network.service
 %{_unitdir}/uke-usb-network-shell.service
 %{_prefix}/lib/modprobe.d/uke-coresight-bringup.conf
+%{_prefix}/lib/sysctl.d/60-uke-security.conf
 
 %files -n uke-esp32-cdc
 %license LICENSE
@@ -349,6 +354,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Fri Oct 30 2026 Uke Linux project <75160848+MCC45TR@users.noreply.github.com> - 1.8.6-1
+- Restrict kernel pointer and log access through vendor sysctl defaults.
+- Apply only those keys while retaining administrative configuration precedence.
+
 * Wed Oct 28 2026 Uke Linux project <75160848+MCC45TR@users.noreply.github.com> - 1.8.5-1
 - Accept a connected enabled DisplayPort or HDMI output during closed-lid boot health.
 - Retain strict native touch binding and verified internal-panel standby checks.

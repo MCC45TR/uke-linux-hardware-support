@@ -19,9 +19,6 @@ jobs:
         run: |
           make -C uke-desktop-packaging track-stable
           make validate
-          if ! git diff --quiet -- uke-desktop-packaging/manifests/material-decoration.json; then
-            make -C uke-desktop-packaging srpm PACKAGE=material-decoration
-          fi
       - name: Publish changed source pins and request their COPR builds
         env:
           COPR_SUPPORT_BUILD_HOOK_BASE: ${{ secrets.COPR_SUPPORT_BUILD_HOOK_BASE }}

@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-core-meta
-Version: 1.0.6
+Version: 1.0.7
 Release: 1%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
@@ -9,9 +9,11 @@ Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: tar xz
 Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)
-Requires: uke-core >= 1.15.1-3 uke-hw >= 1.8.5-1 uke-power >= 1.3.3-4 uke-sensors >= 1.0.9-5
-Requires: uke-control uke-kernel-update uke-installation-profile
-Requires: uke-sound >= 1.0.5
+Requires: uke-control >= 2.3.1 uke-kernel-update uke-installation-profile
+Requires: bluez libinput uke-libwacom uke-libssc uke-iio-sensor-proxy
+Requires: uke-pipewire uke-pipewire-alsa wireplumber alsa-utils
+Requires: uke-displayport-audio >= 0.1.0-8 uke-speaker-orientation >= 0.1.0-5 uke-speaker-firmware >= 3.0.304.0-2
+Requires: (uke-speaker-controls >= 0.1.0-4 if plasma-workspace)
 Requires: uke-touchscreen
 Requires: uke-boot-integration(factory-bluetooth-v1) >= 1
 Requires: uke-boot-integration(factory-wlan-v1) >= 1
@@ -38,6 +40,9 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-1
+- Select individual runtime packages without source-family dependencies.
+
 * Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.6-1
 - Pull the matched speaker kernel and desktop policy through normal DNF updates.
 

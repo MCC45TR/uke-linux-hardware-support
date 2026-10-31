@@ -91,5 +91,11 @@
   ],
   "permanent_activation": false,
   "package_ready": false,
-  "physical_calibration_accepted": false
+  "physical_calibration_accepted": false,
+  "candidate_copr_build_host": {
+    "date": "2026-10-29",
+    "python": "3.15.2-1.fc46",
+    "scope": "Pinned upstream Meson build tool on the remote worker only; no tablet payload",
+    "evidence": "Original Fedora Rawhide repository query; native COPR validation pending"
+  }
 }

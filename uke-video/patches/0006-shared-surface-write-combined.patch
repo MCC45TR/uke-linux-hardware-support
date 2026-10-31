@@ -1,0 +1,77 @@
+Subject: [PATCH] Allocate exported video surfaces with write-combined storage
+
+On Uke kernel19/Mesa26.2.5, cached-coherent persistent surfaces pass VA CPU
+readback but corrupt GL copies and some CPU-to-Vulkan reads. Rejecting only
+the VA backend's coherent allocation makes its existing WC path preserve
+reference pixels in NV12 and P010 interop controls. Use that storage policy
+for shareable VA surfaces, retaining the private encoder's coherent probe and
+staging policy for their separately ordered qualification.
+
+Keep allocation/export/handle cleanup shared, preserve permission and resource
+errors, and avoid retrying an already-WC allocation on EINVAL. No GPU-wide
+capability, device identity, blocklist, fence or codec-profile policy changes.
+
+Base: libva-v4l2 6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41 plus patches0001-0005.
+License: MIT, matching the modified upstream files.
+
+--- a/src/internal.hpp
++++ b/src/internal.hpp
+@@ -24,6 +24,7 @@
+ #include <type_traits>
+ 
+ extern "C" int irisva_msm_allocate(int drm_fd, uint64_t size, int *coherent);
++extern "C" int irisva_msm_allocate_wc(int drm_fd, uint64_t size);
+ 
+ namespace irisva {
+ struct Error : std::runtime_error {
+--- a/src/msm.c
++++ b/src/msm.c
+@@ -12,13 +12,13 @@
+ #define MSM_BO_CACHED_COHERENT 0x080000
+ #endif
+ 
+-int irisva_msm_allocate(int drm_fd, uint64_t size, int *coherent) {
++static int allocate(int drm_fd, uint64_t size, int *coherent, uint32_t flags) {
+     *coherent = 0;
+-    struct drm_msm_gem_new allocation = {.size = size, .flags = MSM_BO_CACHED_COHERENT};
++    struct drm_msm_gem_new allocation = {.size = size, .flags = flags};
+     if (drmIoctl(drm_fd, DRM_IOCTL_MSM_GEM_NEW, &allocation) < 0) {
+         // Unsupported cache modes return EINVAL. Do not hide allocation or
+         // permission failures by retrying with different memory attributes.
+-        if (errno != EINVAL && errno != EOPNOTSUPP)
++        if (flags != MSM_BO_CACHED_COHERENT || (errno != EINVAL && errno != EOPNOTSUPP))
+             return -1;
+         allocation.flags = MSM_BO_WC;
+         if (drmIoctl(drm_fd, DRM_IOCTL_MSM_GEM_NEW, &allocation) < 0)
+@@ -40,3 +40,12 @@
+     *coherent = allocation.flags == MSM_BO_CACHED_COHERENT;
+     return prime_fd;
+ }
++
++int irisva_msm_allocate(int drm_fd, uint64_t size, int *coherent) {
++    return allocate(drm_fd, size, coherent, MSM_BO_CACHED_COHERENT);
++}
++
++int irisva_msm_allocate_wc(int drm_fd, uint64_t size) {
++    int coherent;
++    return allocate(drm_fd, size, &coherent, MSM_BO_WC);
++}
+--- a/src/surface-copy.cpp
++++ b/src/surface-copy.cpp
+@@ -78,12 +78,12 @@
+     check(page_size > 0, "cannot determine page size");
+     size_t size = size_t(m->stride) * m->storage_height * 3 / 2;
+     m->size = (size + size_t(page_size) - 1) / size_t(page_size) * size_t(page_size);
+-    int coherent = 0;
+-    m->fd = irisva_msm_allocate(render_fd, m->size, &coherent);
+-    m->origin = coherent ? MemoryOrigin::MsmCoherent : MemoryOrigin::MsmWriteCombined;
++    // Shared surfaces cross CPU, EGL and Vulkan cache domains.
++    m->fd = irisva_msm_allocate_wc(render_fd, m->size);
++    m->origin = MemoryOrigin::MsmWriteCombined;
+     check(m->fd >= 0, "allocate/export MSM surface", VA_STATUS_ERROR_ALLOCATION_FAILED);
+     trace("allocated surface %ux%u fourcc=%#x pitch=%u size=%zu coherent=%d", width, height, fourcc,
+-          m->stride, m->size, coherent);
++          m->stride, m->size, 0);
+     return m;
+ }
+ void fill_neutral_surface(Memory &memory, unsigned width, unsigned height) {
