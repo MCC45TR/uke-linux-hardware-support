@@ -300,7 +300,7 @@
     "uke-core-meta": "8.fc46",
     "uke-proximity-capture": "6.fc46",
     "uke-speaker-controls": "4.fc46",
-    "uke-displayport-audio": "11.fc46",
+    "uke-displayport-audio": "12.fc46",
     "uke-vaapi-v4l2": "8.fc46",
     "uke-mesa-libclc22-spirv": "7.fc46",
     "uke-control": "4.fc46",
