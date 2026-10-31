@@ -1,5 +1,14 @@
 # Stock-ABL kernel updates
 
+31 October 2026, POCO Pad X1, Fedora Rawhide AArch64. Normal DNF update with
+updater 1.8.11 replaced an unbooted 7.3.0-60 trial with 7.3.1-3 in slot A.
+DNF reported completion before reboot. A normal reboot started 7.3.1-3 and
+the packaged health service accepted A. The running Image notes/build ID,
+signed package identities, all 821 module digests and native GPT/UFS admission
+passed; the complete B/7.3.0-54 image hash remained unchanged. Existing SPMI
+and initial-console warnings remain; an automatic suspend attempt failed.
+This result does not qualify offline reboot, forced fallback or power loss.
+
 31 October 2026. Updater 1.8.11 releases the old GPT descriptors after a verified
 reselection of the accepted slot, before reacquiring fresh metadata to stage a
 replacement trial. The global updater lock remains held across both phases.
@@ -25,7 +34,7 @@ offline transaction, use `sudo dnf upgrade --offline`, then
 `sudo dnf offline reboot`. Boot preparation runs when that stored transaction
 executes. An already accepted running baseline is verified without requiring
 desktop services in the offline environment. A new trial still requires normal
-boot-health acceptance. Physical online/offline reboot validation remains open.
+boot-health acceptance. Physical offline reboot validation remains open.
 
 30 October 2026. Updater 1.8.7 supplies `transaction BUNDLE` for kernel RPM
 post-transaction hooks. It honors the selected root profile and administrator
