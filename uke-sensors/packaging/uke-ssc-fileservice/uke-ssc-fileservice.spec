@@ -1,6 +1,6 @@
 Name: uke-ssc-fileservice
 Version: 2026.09.21
-Release: 12%{?dist}
+Release: 25%{?dist}
 Summary: Native Uke SSC file service with a disposable registry
 License: GPL-3.0-or-later
 URL: https://github.com/linux-msm/hexagonrpc
@@ -113,6 +113,10 @@ fi
 %{_udevrulesdir}/70-uke-ssc.rules
 
 %changelog
+* Sat Oct 31 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-25
+- Use optional OEM-derived SSC defaults only when the complete inputs match the current package.
+- Retain package fallback, reader locks and the existing read-only persist calibration path.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2026.09.21-12
 - Refresh immutable packaged inputs atomically while preserving the RAM registry.
 - Exclude active readers with shared lifetime locks and restart in dependency order.
