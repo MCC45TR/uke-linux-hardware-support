@@ -8,10 +8,15 @@
   "geometry_measured": false,
   "coordinates_m": null,
   "spacing_m": null,
+  "logical_input": {
+    "ucm_device": "Mic",
+    "channels": 4,
+    "channel_positions": ["AUX0", "AUX1", "AUX2", "AUX3"]
+  },
   "microphones": [
     {
       "id": "uke-amic1",
-      "ucm_device": "Mic1",
+      "ucm_device": "Mic",
       "pcm_index": 0,
       "amic": 1,
       "adc": 1,
@@ -21,7 +26,7 @@
     },
     {
       "id": "uke-amic3",
-      "ucm_device": "Mic2",
+      "ucm_device": "Mic",
       "pcm_index": 1,
       "amic": 3,
       "adc": 3,
@@ -31,7 +36,7 @@
     },
     {
       "id": "uke-amic4",
-      "ucm_device": "Mic3",
+      "ucm_device": "Mic",
       "pcm_index": 2,
       "amic": 4,
       "adc": 4,
@@ -41,7 +46,7 @@
     },
     {
       "id": "uke-amic5",
-      "ucm_device": "Mic4",
+      "ucm_device": "Mic",
       "pcm_index": 3,
       "amic": 5,
       "adc": 2,

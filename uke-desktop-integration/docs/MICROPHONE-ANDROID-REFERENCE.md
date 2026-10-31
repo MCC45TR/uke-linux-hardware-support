@@ -31,9 +31,10 @@ seeing fewer input-device names does not establish that physical microphones
 are absent or inactive. The actual app, audio source and vendor route must be
 observed to determine the active set.
 
-Linux currently preserves one raw four-channel capture PCM and exposes four
-independent mono views for physical identification. The packaged layout links
-those views to AMIC1/3/4/5 and qualitative aperture locations. Android-inspired
+Linux preserves one raw four-channel capture PCM. The earlier mono views
+provided physical identification; the requested final presentation is one
+four-channel input named for the device. The packaged layout links its four
+indices to AMIC1/3/4/5 and qualitative aperture locations. Android-inspired
 processing remains a later step; metric geometry, effect ABI/licensing and
 actual processing behavior require separate qualification.
 
@@ -50,17 +51,28 @@ register fields. Their TLV metadata advertises0.25dB per ADC index. That
 metadata is not an independent measurement of the analog response. The
 separate TX control is digital, with1dB steps from-84 to+40dB.
 
-Policy12 selects the Uke ADC baseline6 and TX index96(+12dB), retaining the
+Policy12 introduced the Uke ADC baseline6 and TX index96(+12dB), retaining the
 native ADC_NORMAL mode, channel order and electrical settings. It does not
 request desktop software amplification. This is a gain-policy candidate;
 package parsing and source comparison do not establish speech level, clipping
 margin or SNR improvement. Those require separate device acceptance.
 
-The supported HiFi profile exposes four named mono inputs and both outputs.
-The distribution's Pro Audio profile bypasses that UCM layout and presents
-one four-channel hardware input with generic names. Profile changes reapply
+Policy13 retains that gain candidate and exposes one four-channel input with
+AUX0-3 transport positions. These are raw channel identities, not measured
+body geometry or speaker positions. Original WirePlumber rules supply the
+device-specific microphone name. Device naming beyond the tested POCO model
+requires correct model identity; a matching Xiaomi card long name is handled.
+The distribution's Pro Audio profile bypasses UCM and uses generic names.
+Profile changes reapply
 the packaged verb's gain values; transient mixer changes are not an installed
 policy update. No profile override service or KDE modification is required.
+
+This standalone policy is a temporary qualification vehicle. The requested
+delivery moves the validated hardware defaults into the kernel and supplies
+the necessary desktop definition with the kernel package. That migration is
+pending gain/array acceptance. Parallel kernel installation, selection of the
+running kernel's policy, file ownership and rollback must be resolved before
+retiring the separate audio package.
 
 Sources:
 

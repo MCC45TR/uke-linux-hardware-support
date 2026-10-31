@@ -1,5 +1,19 @@
 # DisplayPort audio package
 
+## One microphone array, 31 October 2026
+
+Policy0.1.0-13 is the qualification candidate for one four-channel input.
+It replaces the four mono views with a direct48kHz capture PCM. Original
+WirePlumber rules identify the tested model as POCO Pad X1 Mikrofon and retain
+AUX0-3 channel identities. The layout JSON keeps all four physical positions;
+these transport labels do not define measured geometry or speaker positions.
+
+The ADC6/TX96 gain candidate is retained. Source/package checks, device gain
+acceptance and thirty sequential hardware capture cycles remain distinct.
+After gain and array acceptance, the requested delivery integrates hardware
+defaults and desktop policy with the kernel package. That migration and the
+retirement of this separate qualification package remain pending.
+
 ## Physical microphone labels, 31 October 2026
 
 Release 0.1.0-11 labels Microphone1 as top right, Microphone2 as left edge,

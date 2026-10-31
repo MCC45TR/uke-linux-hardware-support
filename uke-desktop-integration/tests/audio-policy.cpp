@@ -29,20 +29,25 @@ static void text(snd_config_t *root, const std::string &key, const char *expecte
 
 static void microphones(snd_config_t *config)
 {
+    auto *devices = lookup(config, "SectionDevice");
+    int count = 0;
+    snd_config_iterator_t it, end;
+    snd_config_for_each(it, end, devices) { ++count; }
+    assert(count == 1);
+    const std::string device = "SectionDevice.Mic";
+    const auto value = device + ".Value.";
+    integer(config, value + "CaptureChannels", 4);
+    integer(config, value + "CaptureRate", 48000);
+    text(config, value + "CapturePCM", "hw:${CardId},2");
     for (int channel = 0; channel < 4; ++channel) {
-        const auto device = "SectionDevice.Mic" + std::to_string(channel + 1);
-        const auto value = device + ".Value.";
-        integer(config, value + "CaptureChannels", 4);
-        integer(config, value + "CaptureRate", 48000);
-        integer(config, value + "CaptureChannel0", channel);
-        text(config, value + "CaptureChannelPos0", "MONO");
-        text(config, value + "CapturePCM", "hw:${CardId},2");
         snd_config_t *unused = nullptr;
-        assert(snd_config_search(config, (value + "CaptureChannel1").c_str(), &unused) < 0);
-        for (const char *sequence : {"EnableSequence", "DisableSequence"}) {
-            auto *node = lookup(config, device + "." + sequence);
-            assert(snd_config_iterator_first(node) == snd_config_iterator_end(node));
-        }
+        const auto index = std::to_string(channel);
+        assert(snd_config_search(config, (value + "CaptureChannel" + index).c_str(), &unused) < 0);
+        assert(snd_config_search(config, (value + "CaptureChannelPos" + index).c_str(), &unused) < 0);
+    }
+    for (const char *sequence : {"EnableSequence", "DisableSequence"}) {
+        auto *node = lookup(config, device + "." + sequence);
+        assert(snd_config_iterator_first(node) == snd_config_iterator_end(node));
     }
 }
 

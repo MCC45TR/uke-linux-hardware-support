@@ -59,4 +59,5 @@ done < <(sed -n "s/.*cset \"name='\([^']*\)'.*/\1/p" "$conf/Microphone-HiFi.conf
 for file in POCO-Pad-X1.conf Speaker-HiFi.conf; do
     grep -Fq 'mic:uke-4ch-v3' "$conf/$file"
 done
-printf 'ALSA syntax, shared mono capture metadata, control namespace and independent playback samples passed; host files only\n'
+jq -e '."monitor.alsa.rules"[0].actions."update-props"."audio.position" == ["AUX0","AUX1","AUX2","AUX3"]' "$root/src/wireplumber/80-uke-microphone-array.conf"
+printf 'ALSA syntax, one four-channel microphone, control namespace and independent playback samples passed; host files only\n'
