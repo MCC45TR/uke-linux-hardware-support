@@ -49,7 +49,7 @@ stop() {
      umount "$base/mounts/$name"
     fi
     losetup --detach "$loop"
-   elif test -e "$loop" && losetup --list --noheadings "$loop" | rg -q .; then
+   elif test -e "$loop" && losetup --list --noheadings "$loop" | grep -q .; then
     fail mapping_ownership_changed
    fi
    rmdir "$base/mounts/$name"
@@ -137,7 +137,7 @@ exec 9>/run/lock/uke-oem-resources.lock
 flock -x 9
 case ${1:-} in
  start)
-  tr '\0' '\n' < /proc/device-tree/compatible | rg -xq xiaomi,uke || fail unsupported_device
+  tr '\0' '\n' < /proc/device-tree/compatible | grep -Fxq xiaomi,uke || fail unsupported_device
   test ! -e "$base/loops.tsv" || fail already_prepared_or_cleanup_required
   mkdir -p "$base" "$base/mounts" "$base/meta" "$base/dtbo"
   test ! -L "$base" && test "$(stat -c %u "$base")" = 0 && test "$(stat -c %a "$base")" = 700 || fail unsafe_runtime_directory
