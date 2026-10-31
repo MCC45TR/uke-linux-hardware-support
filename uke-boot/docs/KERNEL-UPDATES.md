@@ -1,5 +1,12 @@
 # Stock-ABL kernel updates
 
+31 October 2026. Version1.8.13 enables the guarded kernel transaction by
+default. On singleboot userdata installations, DNF writes and verifies the
+inactive Linux boot slot, selects it for the next reboot and retains the
+accepted running slot and modules for rollback. Existing firmware, power,
+identity and transaction checks remain. No automatic reboot is introduced.
+Administrator configuration remains preserved by RPM upgrades.
+
 31 October 2026. Updater 1.8.12 reads the complete mount listing with a 1 MiB
 bound. A native 4614-byte listing was previously cut at 4096 bytes and refused
 as an incomplete row. Strict row/root validation remains; unreadable, oversized

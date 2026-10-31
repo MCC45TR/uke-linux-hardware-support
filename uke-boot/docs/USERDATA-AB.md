@@ -1,5 +1,13 @@
 # Userdata boot A/B updates
 
+31 October 2026. Version1.8.13 enables both automatic update policies by
+default. A singleboot installation uses both boot slots for Linux; its
+inactive-slot writer retains the previous accepted image and matched modules.
+Existing global opt-outs are preserved during RPM upgrades. An administrator
+re-enabling an older installation sets automatic=1 in both policy files after
+the read-only check-auto admission succeeds. DNF stages the selected kernel;
+the administrator chooses when to reboot.
+
 30 October 2026. Version 1.8.9 preserves direct selected-profile transaction
 calls, including Uke Control calls after package installation. RPM kernel hooks
 and final file triggers use the same guarded writer. A repeated call verifies
