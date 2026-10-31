@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "cli.hpp"
+#include "sysfs.hpp"
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -14,6 +15,22 @@ static std::string output(const std::string& data,bool json) {
     return result.str();
 }
 int main() {
+    assert(uke::sysfs::quote(std::string("a\0b",3))=="\"a\\u0000b\"");
+    for(const auto& value:{std::string("Türkçe 😀 中文 e\xcc\x81"),std::string("a\nb\t\"\\")}) {
+        const auto quoted=uke::sysfs::quote(value);
+        sd_json_variant* parsed=nullptr;
+        assert(sd_json_parse(quoted.c_str(),sd_json_parse_flags_t(0),&parsed,nullptr,nullptr)>=0);
+        assert(value==sd_json_variant_string(parsed));
+        sd_json_variant_unref(parsed);
+    }
+    for(const auto& invalid:{std::string("\x80"),std::string("\xc0\xaf"),std::string("\xed\xa0\x80"),
+                            std::string("\xf4\x90\x80\x80"),std::string("\xe2\x82")}) {
+        const auto quoted=uke::sysfs::quote(invalid);
+        assert(quoted.find("\\ufffd")!=std::string::npos);
+        sd_json_variant* parsed=nullptr;
+        assert(sd_json_parse(quoted.c_str(),sd_json_parse_flags_t(0),&parsed,nullptr,nullptr)>=0);
+        sd_json_variant_unref(parsed);
+    }
     const auto renamed=args({"ignored","--json","brunch","test"});
     assert(renamed.json && (renamed.words==std::vector<std::string>{"uke-control","channel","set","test"}));
     assert(args({"app","branch","status","--json"}).json);

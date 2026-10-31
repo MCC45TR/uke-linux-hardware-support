@@ -9,7 +9,7 @@ static void session(const fs::path& root,const fs::path& repo,const std::string&
     libdnf5::Base base;auto& c=base.get_config();
     c.get_installroot_option().set(root.string());c.get_use_host_config_option().set(false);c.get_plugins_option().set(false);
     c.get_config_file_path_option().set((root/"empty.conf").string());
-    retain_kernels(base);c.get_best_option().set(true);c.get_pkg_gpgcheck_option().set(true);
+    c.get_installonly_limit_option().set(0);c.get_best_option().set(true);c.get_pkg_gpgcheck_option().set(true);
     c.get_allow_vendor_change_option().set(false);
     c.get_reposdir_option().set(std::vector<std::string>{});base.get_vars()->set("releasever","46");base.setup();
     auto r=base.get_repo_sack()->create_repo(prefix+project(selected));r->get_config().get_baseurl_option().set(std::vector<std::string>{"file://"+repo.string()});r->get_config().get_pkg_gpgcheck_option().set(true);r->get_config().get_metadata_expire_option().set(0);
@@ -25,7 +25,7 @@ int main(int argc,char** argv) {
     const auto selected=phase=="test-preference"?"test":phase=="upgrade"||phase=="rc"||phase=="fallback"?"unstable":"stable";
     const fs::path repo=std::string(selected)=="stable"?stable:test;
     session(root,repo,selected,[&](libdnf5::Base& base) {
-        const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test",prefix+"uke-linux-unstable"};
+        const std::set<std::string> ids{prefix+"uke-linux",prefix+"uke-linux-test"};
         if(phase=="foreign-release") {
             bool refused=false;try{plan(base,selected,ids,".fc44");}catch(const std::exception&){refused=true;}assert(refused);return;
         }

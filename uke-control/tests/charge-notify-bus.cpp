@@ -3,6 +3,7 @@
 #include "../src/charge-notify.cpp"
 #include <atomic>
 #include <cassert>
+#include <thread>
 #include <cstring>
 namespace uke::charge { Result control_query(const std::string &) { throw std::runtime_error("Unexpected helper execution"); } }
 static unsigned calls;

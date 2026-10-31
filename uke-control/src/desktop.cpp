@@ -117,7 +117,7 @@ public:
             properties(bus,"org.freedesktop.UPower",path,"org.freedesktop.UPower.Device",
                 {{"Type","u","UPower device enum"},{"PowerSupply","b",""},{"Percentage","d","percent"},
                  {"Temperature","d","C"},{"Voltage","d","V"},{"Capacity","d","reported retention percent",true},
-                 {"ChargeCycles","i","reported hardware cycles",true},{"ChargeThresholdSupported","b","interface capability"},
+                 {"ChargeCycles","i","reported hardware cycles"},{"ChargeThresholdSupported","b","interface capability"},
                  {"ChargeThresholdEnabled","b","reported setting; physical effect unverified"},
                  {"ChargeStartThreshold","u","configured percent; not effective cutoff"},
                  {"ChargeEndThreshold","u","configured percent; not effective cutoff"}});

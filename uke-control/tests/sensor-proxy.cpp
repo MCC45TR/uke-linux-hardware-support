@@ -67,6 +67,10 @@ int main() {
         assert(replacement.collected().empty());
         {Proxy reopened(true);rows.clear();reopened.append(rows,false);}
         assert(replacement.collected()=="CCCCRRRR");
+        original.reconnect();rows.clear();original.append(rows,false);
+        assert(replacement.collected()=="CCCC");
+        bool recovered=false;for(const auto& row:rows)if(row.label=="LightLevel"&&row.value==123.5)recovered=true;
+        assert(recovered);
     }
-    std::cout<<"PASS: SensorProxy claims, units, releases, no activation, capability list and unique-owner restart refusal\n";
+    std::cout<<"PASS: SensorProxy claims, units, releases, no activation, owner pinning and explicit fresh-owner reconnection\n";
 }

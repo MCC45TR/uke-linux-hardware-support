@@ -43,9 +43,7 @@ EOF
 kernel() {
     local version=$1 repo=$2 uname=$3 suffix extra
     for suffix in '' -core -modules -dtbs -boot; do
-        extra=''
-        # Match the real recipe: only the payload subpackages provide installonly.
-        if [[ -n $suffix ]]; then extra='Provides: installonlypkg(kernel)'; fi
+        extra='Provides: installonlypkg(kernel)'
         if [[ $suffix == -core ]]; then extra+=$'\n'"Provides: kernel-uname-r($uname)"; fi
         build "senemos-uke-linux-kernel-mainline$suffix" "$version" "$repo" "$extra"
     done
@@ -174,3 +172,16 @@ printf '%s\n' 'PASS: signed downgrade, same-NEVRA replacement, bounded vendor tr
 # A signed repository cannot authorize a candidate from a different Fedora release.
 root foreignrelease
 build/test-package-repos "$fixture/foreignrelease" "$fixture/stable" "$fixture/test" foreign-release
+for name in kernel-headers kernel-tools kernel-tools-libs kernel-tools-libs-devel; do
+    build "$name" 1 test
+    build "$name" 2 test
+done
+createrepo_c --quiet --update "$fixture/test"
+root kerneluserspace
+for name in kernel-headers kernel-tools kernel-tools-libs kernel-tools-libs-devel; do
+    rpm --root "$fixture/kerneluserspace" -i "$fixture/test/$name-1-1.noarch.rpm"
+done
+build/test-package-repos "$fixture/kerneluserspace" "$fixture/stable" "$fixture/test" upgrade
+for name in kernel-headers kernel-tools kernel-tools-libs kernel-tools-libs-devel; do
+    rpm --root "$fixture/kerneluserspace" -q "$name" | grep -Fx "$name-2-1.noarch"
+done

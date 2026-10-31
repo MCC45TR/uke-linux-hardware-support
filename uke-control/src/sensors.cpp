@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "sensors.hpp"
+#include "sysfs.hpp"
 #include "cli.hpp"
 #include "front-color.hpp"
 #include <algorithm>
@@ -90,9 +91,7 @@ std::vector<Reading> sysfs_snapshot(const fs::path& sys) {
     return rows;
 }
 static std::string quote(const std::string& s) {
-    std::ostringstream out;out<<'"';
-    for(unsigned char c:s){if(c=='"'||c=='\\')out<<'\\'<<c;else if(c<32)out<<"\\u"<<std::hex<<std::setw(4)<<std::setfill('0')<<unsigned(c)<<std::dec;else out<<c;}
-    out<<'"';return out.str();
+    return sysfs::quote(s);
 }
 std::string json(const std::vector<Reading>& rows) {
     std::ostringstream out;out<<"{\"schema\":\"org.uke.control.sensors.v1\",\"observed_monotonic_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()<<",\"readings\":[";
@@ -102,6 +101,8 @@ std::string json(const std::vector<Reading>& rows) {
 class Proxy {
     sd_bus* bus=nullptr;
     std::string owner;
+    bool claim_requested=false;
+    std::chrono::steady_clock::time_point retry_after{};
     struct Claim {const char* path;const char* iface;const char* name;bool held=false;};
     std::array<Claim,4> claims{{{"/net/hadess/SensorProxy","net.hadess.SensorProxy","Accelerometer",false},
         {"/net/hadess/SensorProxy","net.hadess.SensorProxy","Light",false},{"/net/hadess/SensorProxy","net.hadess.SensorProxy","Proximity",false},
@@ -127,7 +128,7 @@ class Proxy {
         return row;
     }
 public:
-    explicit Proxy(bool claim) {
+    explicit Proxy(bool claim):claim_requested(claim) {
         if(sd_bus_open_system(&bus)<0)return;
         sd_bus_message* response=nullptr;sd_bus_set_method_call_timeout(bus,500000);
         if(sd_bus_call_method(bus,"org.freedesktop.DBus","/org/freedesktop/DBus","org.freedesktop.DBus","GetNameOwner",nullptr,&response,"s","net.hadess.SensorProxy")>=0) {
@@ -141,6 +142,29 @@ public:
         }
     }
     ~Proxy(){for(const auto& c:claims)if(c.held)call(c,"Release"+std::string(c.name));sd_bus_flush_close_unref(bus);}
+    void reconnect() {
+        const auto current=std::chrono::steady_clock::now();if(current<retry_after)return;
+        retry_after=current+std::chrono::seconds(1);
+        if(!bus||sd_bus_is_open(bus)<=0) {
+            for(auto& claim:claims)claim.held=false;
+            owner.clear();bus=sd_bus_flush_close_unref(bus);
+            if(sd_bus_open_system(&bus)<0)return;
+            sd_bus_set_method_call_timeout(bus,500000);
+        }
+        sd_bus_message* response=nullptr;std::string next;
+        if(sd_bus_call_method(bus,"org.freedesktop.DBus","/org/freedesktop/DBus","org.freedesktop.DBus","GetNameOwner",nullptr,&response,"s","net.hadess.SensorProxy")>=0) {
+            Message reply(response,sd_bus_message_unref);const char* name=nullptr;
+            if(sd_bus_message_read(reply.get(),"s",&name)>0&&name&&name[0]==':')next=name;
+        }
+        if(next==owner)return;
+        // Never route an old claim or reply to the replacement's well-known name.
+        for(auto& c:claims){if(c.held)call(c,"Release"+std::string(c.name));c.held=false;}
+        owner=next;if(owner.empty()||!claim_requested)return;
+        for(auto& c:claims) {
+            const auto capability=std::string("Has")+(std::string(c.name)=="Light"?"AmbientLight":c.name);
+            if(get(c,capability.c_str(),"").text=="true")c.held=bool(call(c,"Claim"+std::string(c.name)));
+        }
+    }
     void append(std::vector<Reading>& rows,bool list) {
         for(const auto& c:claims) {
             const auto capability=std::string("Has")+(std::string(c.name)=="Light"?"AmbientLight":c.name);
@@ -209,7 +233,7 @@ int command(int argc,char** argv,bool as_json) {
     struct Restore {decltype(old_int) a,b;~Restore(){std::signal(SIGINT,a);std::signal(SIGTERM,b);}} restore{old_int,old_term};
     auto next=std::chrono::steady_clock::now();unsigned samples=0;
     while(!stopped) {
-        auto rows=sysfs_snapshot();proxy.append(rows,list);color(rows);switches(rows);
+        proxy.reconnect();auto rows=sysfs_snapshot();proxy.append(rows,list);color(rows);switches(rows);
         if(as_json)std::cout<<json(rows);
         else {
             if(interval&&isatty(STDOUT_FILENO))std::cout<<"\033[H\033[2J";

@@ -117,6 +117,17 @@ if jq -e --arg version "$version" '
 fi
 hook=${COPR_SUPPORT_BUILD_HOOK_BASE:?Missing project build hook}
 [[ $hook == https://copr.fedorainfracloud.org/webhooks/custom/* ]]
+# Custom SCM webhooks use the remote package's configured ref, not POST data.
+curl --fail --silent --show-error --proto '=https' --max-time 30 \
+    "https://copr.fedorainfracloud.org/api_3/package?ownername=mcc45tr&projectname=$project&packagename=$family" >"$stage/source.json"
+jq -e --arg commit "$commit" '
+    .source_type=="scm" and .source_dict.type=="git" and
+    .source_dict.clone_url=="https://github.com/MCC45TR/uke-linux-hardware-support.git" and
+    .source_dict.committish==$commit
+' "$stage/source.json" >/dev/null || {
+    printf '%s\n' 'COPR SCM is not pinned to the validated commit; no build requested. Configure the exact reviewed source before retrying.' >&2
+    exit 1
+}
 # A failed POST may already have allocated a build. Never retry it automatically.
 if ! response=$(curl --fail --silent --show-error --proto '=https' --max-time 45 -X POST "${hook%/}/$family/"); then
     printf '%s\n' 'Build request outcome is unknown; inspect COPR before retrying validation.' >&2; exit 1

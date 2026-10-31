@@ -1,5 +1,18 @@
 # Expand the installed F2FS userdata filesystem
 
+30 October 2026 source correction: layout, resize and package mutation share an
+inherited maintenance reservation. Staging requires at least 512 MiB available
+RAM and runtime space; unpublished stages are removed on ordinary failure, and
+publication cannot replace another environment. This is admission headroom,
+not a measured aggregate peak guarantee.
+
+The offline helper checks power and watchdog state again before writing. Exit 1
+means refusal before a filesystem writer; exit 2 means checking or expansion may
+have written metadata. The RAM shutdown hook halts/powers off on exit 2 rather
+than proceeding to a normal reboot. Preserve console evidence and use external
+recovery; do not retry automatically. Abrupt power-loss recovery and a persistent
+external receipt remain separate acceptance gates.
+
 23 October 2026. Uke Control 1.5.1 provides an explicit capacity-repair command for
 the provisioned Fedora F2FS root on the existing `userdata` partition:
 

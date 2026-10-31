@@ -9,37 +9,6 @@ static Options options(std::initializer_list<const char*> input) {
     return parse(int(args.size()),args.data());
 }
 int main() {
-    {
-        libdnf5::Base base;auto& c=base.get_config();
-        c.get_installonlypkgs_option().set(std::vector<std::string>{"","custom-kernel","installonlypkg(kernel)"});
-        c.get_installonly_limit_option().set(2);c.get_protect_running_kernel_option().set(false);
-        retain_kernels(base);retain_kernels(base);
-        assert((c.get_installonlypkgs_option().get_value()==std::vector<std::string>{"custom-kernel","installonlypkg(kernel)",kernel}));
-        assert(c.get_installonly_limit_option().get_value()==0&&c.get_protect_running_kernel_option().get_value());
-    }
-    if(fedora_target(read_file("/etc/os-release"))=="rawhide") {
-        char pattern[]="/tmp/uke-channel-repository-XXXXXX";assert(mkdtemp(pattern));const fs::path root=pattern;
-        {
-            libdnf5::Base base;base.get_config().get_installroot_option().set((root/"root").string());
-            base.get_config().get_cachedir_option().set((root/"cache").string());base.get_config().get_plugins_option().set(false);base.setup();
-            auto repo=base.get_repo_sack()->create_repo(prefix+project("unstable"));
-            repo->get_config().get_excludepkgs_option().set(std::vector<std::string>{"custom-block",prerelease_excludes[0]});
-            const auto configured=configure(base,"unstable");
-            assert(infer_channel(enabled_managed_repos(base))=="unstable");
-            const auto& exclusions=repo->get_config().get_excludepkgs_option().get_value();
-            assert(std::find(exclusions.begin(),exclusions.end(),"custom-block")!=exclusions.end());
-            assert(std::find(exclusions.begin(),exclusions.end(),prerelease_excludes[0])==exclusions.end());
-            // Read the persisted value through the real append-option parser too.
-            libdnf5::OptionStringAppendList persisted(std::vector<std::string>{"custom-block",prerelease_excludes[0]});
-            std::istringstream text(configured.overrides);std::string line;bool selected=false,checked=false;
-            while(std::getline(text,line)) {
-                if(line.starts_with('['))selected=line=='['+prefix+project("unstable")+']';
-                if(selected&&line.starts_with("excludepkgs=")){persisted.set(priority,line.substr(12));checked=true;}
-            }
-            assert(checked&&persisted.get_value()==std::vector<std::string>{"custom-block"});
-        }
-        fs::remove_all(root);
-    }
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
     assert(options({"update"}).update);assert(options({"update","--check"}).dry);
@@ -53,22 +22,14 @@ int main() {
     for(auto args:{std::initializer_list<const char*>{"brunch"},{"brunch","bad"},{"brunch","stable","--nodeps"},{"brunch","sync","--yes","--yes"},{"brunch","status","--yes"},{"update","--allowerasing"}}) {
         bool rejected=false;try{options(args);}catch(const std::exception&){rejected=true;}assert(rejected);
     }
-    assert(project("unstable")=="uke-linux-unstable"&&project("stable")=="uke-linux"&&project("test")=="uke-linux-test");
-    assert(signing_key(project("unstable"))=="2204A661EA630A5303500085538797E72A3E4ECA");
-    assert(signing_key(project("unstable"))!=signing_key(project("test")));
-    bool unknown_key=false;try{signing_key("unrelated");}catch(const std::exception&){unknown_key=true;}assert(unknown_key);
+    assert(project("unstable")=="uke-linux-test"&&project("stable")=="uke-linux");
     assert(private_package("uke-local-touch-data"));
-    assert(private_package("uke-video-firmware-local"));
-    assert(!private_package("uke-video-firmware-local-extra"));
     assert(!private_package("uke-local-sensor-data")&&!private_package("uke-local-touch-data-extra"));
+    assert(kernel_userspace("kernel-headers")&&kernel_userspace("kernel-tools"));
+    assert(!kernel_userspace("kernel-core")&&!kernel_userspace("kernel-modules"));
     assert(managed_repo(prefix+"uke-linux-test:custom:experiment"));assert(!managed_repo(prefix+"unrelated"));
     assert(infer_channel({prefix+"uke-linux-test"})=="test");
     assert(infer_channel({"uke-linux"})=="stable");
-    assert(infer_channel({prefix+"uke-linux-unstable"})=="unstable");
-    assert(infer_channel({prefix+"uke-linux-test",prefix+"uke-linux-unstable"}).empty());
-    assert(managed_repo(prefix+"uke-linux-unstable:custom:experiment"));
-    assert(managed_source("unstable-alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/"}));
-    assert(!managed_source("unrelated",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable-fake/"}));
     assert(infer_channel({}).empty());
     assert(infer_channel({prefix+"uke-linux",prefix+"uke-linux-test"}).empty());
     assert(infer_channel({prefix+"uke-linux-test:custom:experiment"}).empty());
@@ -84,6 +45,12 @@ int main() {
     if(geteuid()==0) {
         char dir[]="/tmp/uke-channel-state-XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
         auto rejected=[](auto&& fn){bool caught=false;try{fn();}catch(const std::exception&){caught=true;}assert(caught);};
+        const auto helper=root/"updater";
+        assert(!boot_helper_ready(helper));
+        std::ofstream(helper)<<"#!/bin/sh\nexit 0\n";assert(!chmod(helper.c_str(),0755));assert(boot_helper_ready(helper));
+        assert(!chmod(helper.c_str(),0775));assert(!boot_helper_ready(helper));assert(!chmod(helper.c_str(),0755));
+        fs::create_symlink(helper,root/"updater-link");assert(!boot_helper_ready(root/"updater-link"));
+        fs::create_hard_link(helper,root/"updater-hardlink");assert(!boot_helper_ready(helper));fs::remove(root/"updater-hardlink");
         const auto previous_mask=umask(0077);
         atomic_write(root/"channel","test\n");assert(saved(root/"channel")=="test");
         struct stat mode{};assert(stat((root/"channel").c_str(),&mode)==0&&(mode.st_mode&0777)==0644);

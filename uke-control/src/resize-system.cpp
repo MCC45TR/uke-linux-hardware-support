@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Uses the existing kernel recipe's F2FS geometry contract and Fedora's offline tools.
 #include "../shared/userdata-grow.hpp"
+#include "maintenance.hpp"
+#include "error.hpp"
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -163,8 +165,9 @@ static void audit(const fs::path& root) {
 static void build_environment(const fs::path& stage,const Request& request) {
     fs::create_directory(stage/"empty");fs::create_directory(stage/"tree");
     save(stage/"request",encode(request));
-    save(stage/"hook","#!/bin/sh\n# One attempt only, after original dracut has unmounted oldroot.\n/usr/libexec/uke-control/resize-system --offline || warn 'Uke filesystem resize failed; no automatic retry'\ntrue\n",0755);
+    save(stage/"hook","#!/bin/sh\n# One attempt only, after original dracut has unmounted oldroot.\n/usr/libexec/uke-control/resize-system --offline\nresult=$?\nif [ \"$result\" -eq 2 ]; then\n    warn 'Uke resize needs recovery after a possible write; normal boot is blocked'\n    poweroff -f\n    while :; do read -r _ </dev/console; done\nelif [ \"$result\" -ne 0 ]; then\n    warn 'Uke resize refused before writing; no automatic retry'\nfi\n",0755);
     run({"/usr/bin/dracut","--conf","/dev/null","--confdir",(stage/"empty").string(),"--tmpdir",stage.string(),"--no-kernel","--no-hostonly","--no-hostonly-cmdline","--no-hostonly-default-device","--no-early-microcode","--no-compress","--modules","base shutdown","--install","/usr/libexec/uke-control/resize-system /usr/sbin/fsck.f2fs /usr/sbin/resize.f2fs","--include",(stage/"request").string(),"/etc/uke-resize-system.request","--include",(stage/"hook").string(),"/var/lib/dracut/hooks/shutdown/20-uke-resize-system.sh",(stage/"resize.cpio").string()});
+    need(fs::file_size(stage/"resize.cpio")<=128*1024*1024,"Resize archive exceeds its RAM budget");
     run({"/usr/bin/lsinitrd","--unpack",(stage/"resize.cpio").string()},stage/"tree");
     audit(stage/"tree");
 }
@@ -178,17 +181,20 @@ static void label_environment(const fs::path& root) {
     need(!type.empty()&&type.size()<64&&type.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")==std::string::npos,"Unknown SELinux policy type");
     run({"/usr/sbin/setfiles","-F","-r",root.string(),"/etc/selinux/"+type+"/contexts/files/file_contexts",root.string()});
 }
-static void activate(const fs::path& stage,const fs::path& target) {
+static void activate(const fs::path& stage,const fs::path& target,Scratch* scratch=nullptr) {
     need(!present(target/"shutdown")&&!present(target/"bin/sh")&&!present(target/".need_shutdown"),"An existing shutdown RAM environment is preserved; manual review is required");
-    fs::rename(target,stage/"previous");
-    try {fs::rename(stage/"tree",target);}
-    catch(...){fs::rename(stage/"previous",target);throw;}
+    publish_noreplace(target,stage/"previous");
+    if(scratch)scratch->published=true;
+    try {publish_noreplace(stage/"tree",target);}
+    catch(...){publish_noreplace(stage/"previous",target);if(scratch)scratch->published=false;throw;}
 }
+struct PostWriteError:std::runtime_error {using std::runtime_error::runtime_error;};
 static void expand(int fd,const std::string& device,std::uint64_t bytes) {
     const auto first=header(fd,1024),second=header(fd,5120);
     const auto before=userdata::filesystem_bytes(first,second,bytes);
     need(userdata::needs_growth(first,second,bytes),"Filesystem already fills the partition");
     std::cout<<"UKE_RESIZE_SYSTEM: offline F2FS expansion starting; keep power connected\n"<<std::flush;
+    try {
     run({"/usr/sbin/fsck.f2fs","-f",device});
     need(header(fd,1024)==first&&header(fd,5120)==first,"Superblock changed during preflight; resize stopped");
     run({"/usr/sbin/resize.f2fs",device});
@@ -198,6 +204,9 @@ static void expand(int fd,const std::string& device,std::uint64_t bytes) {
     need(std::equal(first.begin()+108,first.end(),after.begin()+108),"Filesystem identity changed");
     need(fsync(fd)==0,"Cannot synchronize expansion");
     std::cout<<"UKE_RESIZE_SYSTEM: verified expansion from "<<before<<" to "<<userdata::filesystem_bytes(after,copy,bytes)<<" bytes; partition table unchanged\n";
+    } catch(const std::exception& error) {
+        throw PostWriteError(std::string("Filesystem check or growth may have written data: ")+error.what());
+    }
 }
 static bool confirm_reboot(std::istream& input,bool terminal) {
     need(terminal,"Interactive terminal required; run sudo uke-control resize system in a terminal. Nothing was prepared");
@@ -223,9 +232,13 @@ int command(const std::string& action,bool as_json=false) {
     const auto before=userdata::filesystem_bytes(first,second,bytes);
     Request actual{number,identity(first),boot_id(),bytes,before,uptime()};
     if(action=="--offline") {
+        Maintenance maintenance;
         struct statfs ram{};need(statfs("/",&ram)==0&&ram.f_type==TMPFS_MAGIC&&fs::exists("/usr/lib/initrd-release"),"Offline resize requires the shutdown RAM environment");
         const auto request=decode(private_request("/etc/uke-resize-system.request"));request_matches(request,actual,uptime());
         unmounted(read("/proc/self/mountinfo",1024*1024),number);
+        power();
+        if(fs::exists("/sys/class/watchdog"))for(const auto& watchdog:fs::directory_iterator("/sys/class/watchdog"))
+            need(read(watchdog.path()/"state")=="inactive\n","Watchdog is active or its state is unknown; offline resize refused");
         // f2fs-tools also probes O_EXCL; release our probe before invoking it.
         {Fd exclusive(open(device.c_str(),O_RDWR|O_EXCL|O_NOFOLLOW|O_CLOEXEC));}
         expand(fd.value,device.string(),bytes);return 0;
@@ -260,6 +273,7 @@ int command(const std::string& action,bool as_json=false) {
         return 0;
     }
     power();trusted_directory("/run");struct statfs runtime{};
+    Maintenance maintenance;
     need(statfs("/run",&runtime)==0&&runtime.f_type==TMPFS_MAGIC&&!(runtime.f_flags&ST_NOEXEC),"Executable tmpfs at /run is required for offline maintenance");
     Fd lock(open("/run/uke-control-resize.lock",O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC,0600));
     need(flock(lock.value,LOCK_EX|LOCK_NB)==0,"Another resize preparation is running");
@@ -272,13 +286,16 @@ int command(const std::string& action,bool as_json=false) {
         std::cout<<"Resize preparation renewed after the power check. Reboot normally within ten minutes.\n";return 0;
     }
     need(!present("/run/initramfs/shutdown")&&!present("/run/initramfs/bin/sh")&&!present("/run/initramfs/.need_shutdown"),"An existing shutdown RAM environment is preserved");
+    require_staging_budget();
     char pattern[]="/run/uke-control-resize-XXXXXX";const auto made=mkdtemp(pattern);need(made,"Cannot create private RAM staging directory");const fs::path stage=made;
+    Scratch scratch{stage};
     build_environment(stage,actual);
     power();actual.prepared=uptime();
     // Building may take time; the power check and ten-minute lease start at publication.
     fs::remove(stage/"tree/etc/uke-resize-system.request");save(stage/"tree/etc/uke-resize-system.request",encode(actual));
     label_environment(stage/"tree");
-    activate(stage,"/run/initramfs");
+    activate(stage,"/run/initramfs",&scratch);
+    scratch.published=true;
     std::cout<<"Offline resize prepared in RAM. No filesystem, GPT or boot partition was changed.\nA normal reboot within ten minutes will run checking and expansion before the next boot.\nDo not interrupt power during fsck/resize. After boot, verify with: sudo uke-control resize system --check\n";
     return 0;
 }
@@ -291,5 +308,6 @@ int main(int argc,char** argv) {
             throw std::runtime_error("Internal resize helper: expected --check [--json], --interactive, --prepare or --offline");
         return uke::resize::command(argv[1],json);
     }
-    catch(const std::exception& error){std::cerr<<"UKE_RESIZE_SYSTEM_REFUSED: "<<error.what()<<'\n';return 1;}
+    catch(const uke::resize::PostWriteError& error){std::cerr<<"UKE_RESIZE_SYSTEM_RECOVERY_REQUIRED: "<<error.what()<<"; do not retry or boot normally\n";return 2;}
+    catch(const std::exception& error){if(uke::cli::json_requested_inline(argc,argv))return uke::cli::json_failure(error.what(),1);std::cerr<<"UKE_RESIZE_SYSTEM_REFUSED: "<<error.what()<<'\n';return 1;}
 }

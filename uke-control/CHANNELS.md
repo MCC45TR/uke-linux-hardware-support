@@ -1,24 +1,5 @@
 # Package channels
 
-30 October 2026: a failed native transaction reports its RPM, signature and
-transaction diagnostics while retaining the pending channel. Correct the
-reported problem before running `channel sync`. Failure before RPM execution
-may have no DNF history entry.
-
-30 October 2026: Fedora 46 Rawhide reports `releasever=rawhide` to DNF.
-The RPM dist check uses the numeric `VERSION_ID` from os-release in this case.
-Numeric DNF and os-release versions must agree; an unresolved numeric version
-still blocks the transaction.
-
-29 October 2026: unstable uses the separate `mcc45tr/uke-linux-unstable`
-repository, available only on Fedora Rawhide AArch64. Its signing key is pinned
-independently. With `automatic=0`, package synchronization installs the matched
-kernel bundle and reports `kernel_activation_pending` without writing a boot
-slot or rebooting. Activation remains a separate guarded operation.
-
-Switching to unstable clears earlier channel RC exclusions while retaining
-unrelated custom exclusions. Stable and test retain their non-prerelease policy.
-
 29 October 2026: source routing selects Fedora 44, Fedora 45 or Rawhide from the
 installed os-release data. Channel changes stay in that release's COPR chroot;
 a distribution upgrade is a separate operation. Candidate RPM dist tags must
@@ -51,15 +32,11 @@ excluded; any indirect transaction that replaces or removes it is refused.
 The exception does not cover other `uke-local-*` names or obsolete generic
 firmware providers. Calibration is never uploaded or substituted from COPR.
 
-29 October 2026: the exact `uke-video-firmware-local` package is also retained
-outside public synchronization. Its locally extracted VPU firmware has no
-reviewed redistribution license. Public candidates cannot replace or remove it;
-other similarly named packages receive no exemption.
-
 21 October 2026 correction: without a saved selection, status and implicit
-operations use exactly one enabled normal stable/test/unstable COPR. They do not silently
+operations use exactly one enabled normal stable/test COPR. They do not silently
 select stable over an enabled test repository. Missing, multiple or custom-only
-repositories require an explicit selection. Unreadable, empty, malformed,
+repositories require an explicit selection. Unstable preference must be saved
+explicitly because it shares the test repository. Unreadable, empty, malformed,
 symlink or hardlinked channel records are refused. Status reads no package
 metadata from the network; private pending state remains root-only.
 
@@ -90,7 +67,7 @@ containing updates; it is not DNF's check-upgrade exit-code interface.
 |---|---|---|
 | stable | mcc45tr/uke-linux | Latest non-prerelease Uke kernel in that repository |
 | test | mcc45tr/uke-linux-test | Latest non-prerelease Uke kernel in that repository |
-| unstable | mcc45tr/uke-linux-unstable | Rawhide AArch64 only; latest available Uke RC, otherwise its non-prerelease kernel |
+| unstable | mcc45tr/uke-linux-test | Latest available Uke RC; otherwise the test kernel |
 
 The requested unstable selection is retained when no RC exists. A later sync
 or update checks again. An RC older than or equal to the newest final package
@@ -131,8 +108,9 @@ must come from Fedora's `rawhide` repository, including a necessary downgrade.
 No other project package is handed to an arbitrary outside repository. If the
 original replacement is unavailable, the whole transaction is refused.
 
-`sync` repairs the saved selection; without a saved selection the default is
-stable. `update` performs the same synchronization and upgrades the other
+`sync` repairs the saved selection; without a saved selection it infers exactly
+one enabled stable/test COPR and refuses missing or ambiguous selections.
+`update` performs the same synchronization and upgrades the other
 distribution packages in the same dependency transaction. Dependency failures,
 version locks, missing candidates, duplicate repository definitions and
 unintended package removal are errors. There is no `nodeps`, signature bypass,
@@ -152,38 +130,35 @@ access. Synchronization checks the persisted repository policy before running RP
 New COPR key imports accept only these reviewed fingerprints:
 
 - stable: `30DFB81A724CE0762F9DF77F844A293E5068FAFE`
-- test: `DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E`
-- unstable: `2204A661EA630A5303500085538797E72A3E4ECA`
+- test/unstable: `DAFC3C5A881FB49C7167EE2D6F772E3D487BD13E`
 
 A changed key requires review and an updated application; it is not silently
 trusted. The selected repository's canonical HTTPS metadata/key URLs are used.
 Package signatures are checked before repository policy is changed.
 
 All installed kernel tuples are retained. Same-NEVRA kernels are not reinstalled
-to change their origin. The manager explicitly retains normal kernel selection
-RPMs as installonly packages as well as the payloads carrying that capability;
-other configured installonly selectors remain in force. This also preserves an
-older singleboot profile's exact dependency without replacing its selection RPM.
-A candidate with a different RPM identity cannot
+to change their origin, and a candidate with a different RPM identity cannot
 reuse an installed `kernel-uname-r` module directory. This is a deliberate
 exception to ordinary-package replacement: the running and recovery modules
 must survive channel changes. The selected core, modules, DTBs and boot bundle
-must match exactly. Installing a different bundle with `automatic=0` leaves boot
-selection unchanged and reports pending activation. Selecting a different default requires the already reviewed
+must match exactly. Selecting a different default requires the already reviewed
 `uke-kernel-update` `automatic=1` gate. The command never enables that gate.
-When that gate is enabled and RPM succeeds, it calls the existing guarded updater for the selected
+After RPM succeeds, it calls the existing guarded updater for the selected
 bundle; a post-transaction RPM hook may already have applied it. Its idempotent
 readback covers both paths. Updater failure keeps the channel pending and
 reports that the tablet must not reboot. Stock firmware, Android A, storage
 layout, persist policy and the updater's battery/backup checks are not bypassed.
 
 Downloads and signatures precede persistent channel changes. Root-private
-`channel-pending`, `channel-transaction.json` and
+`channel-pending`, versioned `channel-operation`, `channel-transaction.json` and
 `channel-repositories.before` records under `/var/lib/uke-control` describe
 interrupted work. The saved successful channel is committed only after the RPM
 transaction and required boot selection succeed. If an operation is interrupted,
-`channel sync` resumes the pending selection against current signed metadata;
-it does not promise the old exact transaction or an automatic package rollback.
+`channel sync` can replan only before RPM starts. Once RPM is durably complete,
+it resumes the recorded original kernel's boot/selection finalization without
+replaying RPM or resolving a new transaction. An unknown RPM outcome refuses
+automatic retry and requires DNF history/boot-state inspection. Root channel
+status reports operation IDs and phases; no userspace rollback is promised.
 An interrupted `.new` file is refused for inspection. RPM/scriptlet failure can
 leave some packages installed; read DNF history and the retained record. Do not
 reboot an incomplete kernel transition.
@@ -194,3 +169,11 @@ DNF4/Python backend, donor installer or project Python payload is invoked.
 root in a disposable host container with rpm-sign, GnuPG and createrepo_c,
 exercises signed local repositories and an isolated RPM database. None of these
 checks establishes a tablet channel switch, kernel boot or rollback result.
+
+30 October 2026: preview includes download/RPM payload totals and filesystem
+bytes/inodes. Staging peak remains unknown; native RPM space checks remain
+required. No kernel cleanup occurs without complete running/selected/recovery,
+module, firmware and boot reference ownership. The boot helper must be trusted
+before mutation or supplied by the planned helper package. A common maintenance
+reservation excludes prepared layout/resize. Catchable termination is deferred
+during mutation; SIGKILL/power loss can still leave uncertain RPM completion.

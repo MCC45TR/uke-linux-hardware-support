@@ -31,7 +31,11 @@ git push -q origin main
 cat >"$test_root/bin/curl" <<'STUB'
 #!/usr/bin/env bash
 set -Eeuo pipefail
-if [[ $* == *api_3/build/list* ]]; then
+if [[ $* == *api_3/package* ]]; then
+    commit=$UKE_CONTROL_COMMIT
+    [[ $FIXTURE_MODE != wrong-source ]] || commit=0000000000000000000000000000000000000000
+    printf '{"source_type":"scm","source_dict":{"type":"git","clone_url":"https://github.com/MCC45TR/uke-linux-hardware-support.git","committish":"%s"}}\n' "$commit"
+elif [[ $* == *api_3/build/list* ]]; then
     case $FIXTURE_MODE in
         active) printf '%s\n' '{"items":[{"state":"running","source_package":null}]}' ;;
         published) printf '%s\n' '{"items":[{"state":"succeeded","source_package":{"version":"0.1.0-2.fc46"}}]}' ;;
@@ -61,6 +65,8 @@ git add .;git commit -qm release2
 git push -q origin main
 export UKE_CONTROL_COMMIT=$(git rev-parse HEAD)
 for mode in active published; do FIXTURE_MODE=$mode bash "$script"; done
+test ! -e "$FIXTURE_REQUESTS"
+if FIXTURE_MODE=wrong-source bash "$script"; then exit 1; fi
 test ! -e "$FIXTURE_REQUESTS"
 bash "$script"
 test "$(wc -l <"$FIXTURE_REQUESTS")" = 1

@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 2.3.1
-Release: 4%{?dist}
+Version: 2.7.0
+Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -10,9 +10,11 @@ BuildRequires: gcc-c++ make pkgconfig(libdrm) pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
-BuildRequires: dbus-daemon jq
+BuildRequires: dbus-daemon jq lua
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
+BuildRequires: pkgconfig(ncursesw)
+BuildRequires: pkgconfig(vterm)
 BuildRequires: xfsprogs-devel
 BuildRequires: e2fsprogs dosfstools f2fs-tools
 Requires: util-linux-core util-linux systemd procps-ng
@@ -26,7 +28,9 @@ Requires: polkit selinux-policy-targeted
 Requires: kmod
 Requires: dialog e2fsprogs device-mapper dosfstools
 Requires: libdnf5 >= 5.4.6.0
+Requires: (wireplumber >= 0.5.16 if wireplumber)
 Recommends: uke-battery-observer
+Recommends: uke-control-tui%{?_isa} = %{version}-%{release}
 Provides: uke-control(channel-api) = 1
 Conflicts: uke-plasma-controls < 1.0.0-23
 %{?systemd_requires}
@@ -38,6 +42,16 @@ otherwise it creates a swap file using half RAM by default. Unattended policy
 never formats partitions. The explicit terminal boot-layout wizard is limited
 to proven original userdata, with two approvals for data loss. Charge and USB
 controls follow real driver capabilities.
+
+%package tui
+Summary: Guided bilingual C++ terminal interface for Uke Control
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description tui
+Native UTF-8 terminal interface with bilingual action and option guides,
+search, parameter validation, previews, explicit review, bounded read queries,
+private result receipts and a simulation mode that executes no commands.
+GTK and QML frontends can reuse the same UI-independent C++ client library.
 
 %package tests
 Summary: Development-only Uke display, touch and sensor diagnostics
@@ -58,6 +72,15 @@ package selections. Numeric readings alone do not establish physical acceptance.
 
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
+install -Dm644 src/uke-microphone.lua %{buildroot}%{_datadir}/wireplumber/scripts/uke-microphone.lua
+install -Dm644 src/uke-microphone-policy.lua %{buildroot}%{_datadir}/wireplumber/scripts/lib/uke-microphone-policy.lua
+install -Dm644 packaging/96-uke-microphone-policy.conf %{buildroot}%{_datadir}/wireplumber/wireplumber.conf.d/96-uke-microphone-policy.conf
+install -Dm755 build/uke-control-tui %{buildroot}%{_bindir}/uke-control-tui
+install -Dm755 build/libuke-control-client.so.1 %{buildroot}%{_libdir}/libuke-control-client.so.1
+ln -s libuke-control-client.so.1 %{buildroot}%{_libdir}/libuke-control-client.so
+install -Dm644 src/client.hpp %{buildroot}%{_includedir}/uke-control/client.hpp
+install -Dm644 build/uke-control-client.pc %{buildroot}%{_libdir}/pkgconfig/uke-control-client.pc
+install -Dm644 packaging/uke-control.bash %{buildroot}%{_datadir}/bash-completion/completions/uke-control
 install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
 install -Dm755 build/torch-access %{buildroot}%{_libexecdir}/uke-control/torch-access
 install -Dm644 packaging/91-uke-control-torch.rules %{buildroot}%{_udevrulesdir}/91-uke-control-torch.rules
@@ -100,6 +123,7 @@ install -Dm644 packaging/uke-control-tests.desktop %{buildroot}%{_datadir}/appli
 install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %check
+ulimit -c 0
 %make_build check
 
 %pre
@@ -126,7 +150,7 @@ fi
 if [ "$1" = 0 ]; then %{_libexecdir}/uke-control/torch-access --remove || exit 1; fi
 %systemd_user_preun uke-control-moisture-notify.service
 %postun
-%systemd_postun uke-control-rgb.service
+%systemd_postun_with_restart uke-control-rgb.service
 if [ "$1" = 0 ]; then
     if [ -c /dev/uke-rgb ] && [ ! -L /dev/uke-rgb ]; then chown root:root /dev/uke-rgb; chmod 0600 /dev/uke-rgb; fi
     %{_sbindir}/semodule -r uke_control_rgb >/dev/null 2>&1 || :
@@ -134,12 +158,16 @@ if [ "$1" = 0 ]; then
 fi
 %systemd_postun uke-control.service uke-control-wake.service uke-control-cdc.service uke-control-flashlight.service
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
-%systemd_user_postun uke-control-moisture-notify.service
+%systemd_user_postun_with_restart uke-control-moisture-notify.service
 
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
-%doc README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md
+%doc README.md CHANGELOG.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md TUI.md MICROPHONE.md
+%{_datadir}/wireplumber/scripts/uke-microphone.lua
+%{_datadir}/wireplumber/scripts/lib/uke-microphone-policy.lua
+%{_datadir}/wireplumber/wireplumber.conf.d/96-uke-microphone-policy.conf
 %{_bindir}/uke-control
+%{_datadir}/bash-completion/completions/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access
 %{_udevrulesdir}/91-uke-control-torch.rules
@@ -161,6 +189,9 @@ fi
 %{_libexecdir}/uke-control/vrr-min-load
 %{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf
 %{_libdir}/libuke-control.so.0
+%{_libdir}/libuke-control-client.so.1
+%{_libdir}/libuke-control-client.so
+%{_libdir}/pkgconfig/uke-control-client.pc
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
 %{_unitdir}/uke-control-wake.service
@@ -174,6 +205,9 @@ fi
 %{_userpresetdir}/80-uke-control-user.preset
 %dir %attr(0700,root,root) %{_localstatedir}/lib/uke-control
 
+%files tui
+%{_bindir}/uke-control-tui
+
 %files tests
 %{_libexecdir}/uke-control/tests
 %{_libexecdir}/uke-control/ssc-discovery
@@ -181,18 +215,36 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
-* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-4
-- Report native RPM transaction problems and check system-repository lock admission.
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.6.0-1
+- Replace the three-pane TUI with task menus, explicit navigation and touch input.
+- Keep API v1 plans and backend approval boundaries unchanged.
 
-* Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-3
-- Resolve the numbered RPM dist tag when DNF identifies the release as Rawhide.
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.1-2
+- Validate private-record rejection when layout fixtures run as an unprivileged builder.
+- Keep the production root ownership requirement and complete policy coverage.
 
-* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-2
-- Retain normal kernel selection RPMs alongside their matching installed payloads.
-- Reset inherited channel exclusions with the native append-list semantics.
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.1-1
+- Open the native TUI when invoked without operands in an interactive terminal.
+- Recognize explicitly identified Fedora Rawhide prerelease workers and hosts.
 
-* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-1
-- Select a separately signed Rawhide unstable repository and defer guarded kernel activation.
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.5.0-1
+- Add a guided bilingual native terminal interface as an optional subpackage.
+- Share frontend action metadata, typed plans, read ownership and receipts in C++.
+- Retain existing backend authorization and maintenance approval boundaries.
+
+* Fri Oct 30 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.4.0-1
+- Add read-only component snapshots, root inspection, comparison and safe export.
+- Correct CLI contracts, bounded execution, persistence and maintenance ownership.
+- Journal package phases and block blind replay of an unknown RPM outcome.
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
+- Deliver the diagnostic correction with its matching Core family dependency.
+- Advance the rebuilt children beyond the earlier standalone test identity.
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
+- Record independent lid consumers and the current session's screensaver state.
+- Include active display depth and cached DSC state in diagnostic reports.
+- Correct the CLI version banner; retain read-only, no-activation queries.
 
 * Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.0-1
 - Add expiring identity review and the qualified positive-current restore command.
@@ -225,15 +277,6 @@ fi
 - Broker active-local torch requests without root, sudo or interactive authorization.
 - Limit the confined service to the admitted brightness attribute and retain the 20 mA ceiling.
 - Preserve manual shutdown, sleep cleanup and independent kernel RGB operation.
-* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
-- Deliver the diagnostic correction with its matching Core family dependency.
-- Advance the rebuilt children beyond the earlier standalone test identity.
-
-* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
-- Record independent lid consumers and the current session's screensaver state.
-- Include active display depth and cached DSC state in diagnostic reports.
-- Correct the CLI version banner; retain read-only, no-activation queries.
-
 * Sun Oct 25 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.14.0-1
 - Add an explicit disconnected DSC request and cached compression-status query.
 - Preserve provider, root, board and driver readback checks; activation remains unqualified.

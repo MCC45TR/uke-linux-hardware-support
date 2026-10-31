@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "layout.hpp"
+#include "maintenance.hpp"
 #include <algorithm>
 #include <fcntl.h>
 #include <fstream>
@@ -59,10 +60,12 @@ void build_shutdown_payload(const fs::path& stage,const Value& request) {
     for(const auto& cap:native_capabilities())if(cap["available"]==true){tools+=" "+cap["formatter"].asString();tools+=" "+cap["checker"].asString();}
     for(const auto* name:{"resize2fs","resize.f2fs","xfs_growfs","blkid"}){try{tools+=" "+native_tool(name);}catch(const std::exception&){}}
     checked({"/usr/bin/dracut","--conf","/dev/null","--confdir",stage/"empty","--tmpdir",stage,"--no-kernel","--no-hostonly","--no-hostonly-cmdline","--no-hostonly-default-device","--no-early-microcode","--no-compress","--modules","base shutdown","--install",tools,"--include",stage/"request.json","/etc/uke-layout/request.json","--include",stage/"hook","/var/lib/dracut/hooks/shutdown/90-uke-layout.sh",stage/"layout.cpio"});
+    need(fs::file_size(stage/"layout.cpio")<=128*1024*1024,"Layout archive exceeds its RAM budget");
     checked({"/usr/bin/lsinitrd","--unpack",stage/"layout.cpio"},stage/"tree");
     need(!chmod((stage/"tree/etc/uke-layout").c_str(),0700),"Cannot protect RAM request directory");audit(stage/"tree");
 }
 void prepare_shutdown(const fs::path& job,const std::string& expected_consent) {
+    Maintenance maintenance;
     auto plan=load_private(job/"plan.json");auto consent=load_private(job/"consent.json");
     validate_authorization(plan,consent,expected_consent,ure::sha256(read("/proc/sys/kernel/random/boot_id")),boot_ms());
     need(plan["route"]=="shutdown"&&!fs::exists(job/"state.json"),"Shutdown plan is not executable or already started");
@@ -75,20 +78,25 @@ void prepare_shutdown(const fs::path& job,const std::string& expected_consent) {
     for(const auto* existing:{"shutdown","bin/sh",".need_shutdown","etc/uke-layout/request.json"})need(!fs::exists(destination/existing),"An existing shutdown environment is preserved; resolve it before layout maintenance");
     checked({native_tool("modprobe"),"dm_mod"});
     if(plan["preserve_userdata"]==true)checked({native_tool("modprobe"),plan["userdata_filesystem"].asString()});
+    require_staging_budget();
     char pattern[]="/run/uke-layout-stage-XXXXXX";const auto created=mkdtemp(pattern);need(created,"Cannot allocate private RAM staging");const fs::path stage=created;
+    Scratch scratch{stage};
     Value ram_request=shutdown_request(consent,stage);
     build_shutdown_payload(stage,ram_request);label(stage/"tree");power();
     validate_authorization(plan,consent,expected_consent,ure::sha256(read("/proc/sys/kernel/random/boot_id")),boot_ms());
     // Renew the one-shot lease only after the RAM payload has passed audit.
     consent["expires_ms"]=Json::UInt64(boot_ms()+10*60*1000);consent["sha256"]=seal(consent);save_private(job/"consent.json",consent,true);
     ram_request=shutdown_request(consent,stage);save_private(stage/"tree/etc/uke-layout/request.json",ram_request,true);
-    fs::rename(destination,stage/"previous");try{fs::rename(stage/"tree",destination);}catch(...){fs::rename(stage/"previous",destination);throw;}
+    publish_noreplace(destination,stage/"previous");scratch.published=true;
+    try{publish_noreplace(stage/"tree",destination);}
+    catch(...){publish_noreplace(stage/"previous",destination);scratch.published=false;throw;}
     std::cout<<"One shutdown task is ready in RAM. No disk data has been changed.\n";
 }
 void withdraw_shutdown(const std::string& expected_plan) {
+    Maintenance maintenance;
     const auto request=load_private("/run/initramfs/etc/uke-layout/request.json");need(request["plan_sha256"]==expected_plan&&request["sha256"]==seal(request),"A different shutdown task is preserved");
     const fs::path stage=request["stage"].asString();need(stage.parent_path()=="/run"&&stage.filename().string().starts_with("uke-layout-stage-"),"Invalid RAM staging locator");ure::private_directory(stage,false);
-    fs::rename("/run/initramfs",stage/"withdrawn");fs::rename(stage/"previous","/run/initramfs");
+    publish_noreplace("/run/initramfs",stage/"withdrawn");publish_noreplace(stage/"previous","/run/initramfs");
     std::cerr<<"The reboot request was refused. The layout task was withdrawn; no storage change ran.\n";
 }
 int offline() {

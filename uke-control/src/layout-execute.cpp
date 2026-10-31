@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "layout.hpp"
+#include "maintenance.hpp"
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -241,6 +242,7 @@ void execute(Inspection& current,const Proposal& proposal,const fs::path& job,bo
     }
 }
 Value run_worker(const fs::path& request,bool shutdown,const std::string& expected_consent,const Progress& progress) {
+    Maintenance maintenance;
     ure::Fd lock(open("/run/uke-control-layout.lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));need(lock.get()>=0&&!flock(lock.get(),LOCK_EX|LOCK_NB),"Another layout operation is active");
     const auto job=fs::canonical(request.parent_path());auto plan=load_private(job/"plan.json");auto consent=load_private(request);
     validate_authorization(plan,consent,expected_consent,ure::sha256(read("/proc/sys/kernel/random/boot_id")),boot_ms());
