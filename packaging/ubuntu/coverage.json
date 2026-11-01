@@ -36,8 +36,9 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
-    "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_stage_reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
   },
   {
     "name": "uke-mesa-libclc22-spirv",
@@ -51,9 +52,10 @@
     "name": "uke-front-color",
     "source_type": "custom",
     "superseded": true,
-    "status": "source-tested",
-    "reason": "Wrapper 1.0.2 contains application 0.1.0; five released source files match baseline; native ARM64 and runtime checks pending",
-    "source_revision": null
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_revision": null,
+    "source_stage_reason": "Wrapper 1.0.2 contains application 0.1.0; five released source files match baseline; native ARM64 and runtime checks pending"
   },
   {
     "name": "uke-adaptive-display",
@@ -75,9 +77,10 @@
     "name": "uke-battery-observer",
     "source_type": "custom",
     "superseded": true,
-    "status": "source-tested",
-    "reason": "Shared released 1.4.1 source and mandatory integrated protection inventory proofs reconciled; source checks pass; native ARM64 and runtime validation pending",
-    "source_revision": null
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_revision": null,
+    "source_stage_reason": "Shared released 1.4.1 source and mandatory integrated protection inventory proofs reconciled; source checks pass; native ARM64 and runtime validation pending"
   },
   {
     "name": "uke-pipewire",
@@ -115,9 +118,10 @@
     "name": "uke-proximity-capture",
     "source_type": "custom",
     "superseded": true,
-    "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending",
-    "source_revision": null
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_revision": null,
+    "source_stage_reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
   },
   {
     "name": "uke-displayport-audio",
@@ -155,25 +159,28 @@
     "name": "uke-vaapi-v4l2",
     "source_type": "custom",
     "superseded": true,
-    "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending",
-    "source_revision": null
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_revision": null,
+    "source_stage_reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
   },
   {
     "name": "uke-ssc-fileservice",
     "source_type": "custom",
     "superseded": true,
-    "status": "source-tested",
-    "reason": "Shared release 26 cache and OEM fallback source reconciled; six patches retained; native ARM64 and firmware qualification pending",
-    "source_revision": null
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_revision": null,
+    "source_stage_reason": "Shared release 26 cache and OEM fallback source reconciled; six patches retained; native ARM64 and firmware qualification pending"
   },
   {
     "name": "uke-speaker-orientation",
     "source_type": "custom",
     "superseded": true,
-    "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending",
-    "source_revision": null
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_revision": null,
+    "source_stage_reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
   },
   {
     "name": "uke-libwacom",
@@ -188,8 +195,9 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
-    "status": "source-tested",
-    "reason": "UPower 1.91.5 source and five shared patches prepared with Ubuntu binary names; native build/runtime and current release reconciliation pending"
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_stage_reason": "UPower 1.91.5 source and five shared patches prepared with Ubuntu binary names; native build/runtime and current release reconciliation pending"
   },
   {
     "name": "uke-at-spi2-core",
@@ -228,8 +236,9 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
-    "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_stage_reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending"
   },
   {
     "name": "uke-mesa",
@@ -268,8 +277,9 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "9e4d2153e116419c474d0c73eb2280447bf45243",
-    "status": "source-tested",
-    "reason": "Six shared native tools have Debian source packaging at exact COPR pin; no native compilation, execution or Ubuntu system image composition"
+    "status": "native-package-tested",
+    "reason": "Pinned shared source route passed native Tenacious ARM64 package construction; runtime and current integration-release alignment remain unqualified. See native-build-results.json.",
+    "source_stage_reason": "Six shared native tools have Debian source packaging at exact COPR pin; no native compilation, execution or Ubuntu system image composition"
   },
   {
     "name": "uke-video-session",
