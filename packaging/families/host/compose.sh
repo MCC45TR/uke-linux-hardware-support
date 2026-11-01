@@ -18,7 +18,7 @@ cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
 standalone=${SOURCE_PACKAGE:-}
 integration=false
-if [[ $family =~ ^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$ ]]; then integration=true; fi
+if [[ $family == uke-control || $family =~ ^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$ ]]; then integration=true; fi
 [[ $integration == true || $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
 [[ $integration == false || -z $standalone ]]
 [[ $target == aarch64 || $target == x86_64 ]]
@@ -30,6 +30,10 @@ if [[ $family =~ ^uke-(meta|power|sensor|audio|video|desktop-extras)-integration
 catalog=packaging/families/families.json
 if [[ $integration == true ]]; then catalog=packaging/families/integrations.json; fi
 profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' "$catalog")
+if [[ $integration == true && $family == uke-control ]];then
+    standalone=uke-control
+    [[ $(jq -r '.sources[0].name' <<<"$profile") == "$standalone" ]]
+fi
 debug_owner=$(jq -r '.debug_owner // ""' <<<"$profile")
 if [[ $integration == true ]]; then
     [[ $fedora_target == rawhide && $(jq -er .fedora "$catalog") == "$fedora_number" ]]
@@ -192,7 +196,9 @@ while IFS=$'\t' read -r key input; do
     if [[ $integration == true ]]; then native_version=;release_override=;preserve_identity=1; fi
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc[0-9]+$ ]]
     [[ -z $release_override ]] || release_override=${release_override%%.fc*}$dist
-    awk -v release_increment="$release" -v preserve_identity="$preserve_identity" -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    part_standalone=$standalone
+    if [[ $integration == true && $key != "$standalone" ]];then part_standalone=;fi
+    awk -v release_increment="$release" -v preserve_identity="$preserve_identity" -v standalone="$part_standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
 group=$family
@@ -201,7 +207,7 @@ if [[ -n $standalone ]]; then
     IFS=$'\t' read -r family version release <"$stage/parts/$standalone/standalone-identity"
     if [[ $bundle != "$stage/$family-$version" ]]; then mv "$bundle" "$stage/$family-$version"; fi
     bundle="$stage/$family-$version"
-    printf '%s\n' '29 October 2026. Independent source package; device acceptance remains separate.' >"$bundle/README"
+    printf '%s\n' '1 November 2026. Reviewed source package; device acceptance remains separate.' >"$bundle/README"
 fi
 spec="$output/SPECS/$family.spec"
 {
@@ -209,6 +215,8 @@ spec="$output/SPECS/$family.spec"
         printf '%%global debug_package %%{nil}\nURL: https://github.com/MCC45TR/uke-linux-hardware-support\nSource0: %s-%s.tar.xz\nExclusiveArch: %s\n' "$family" "$version" "$target"
     else
     printf '%%global debug_package %%{nil}\nName: %s\nVersion: %s\nRelease: %s%%{?dist}\nSummary: Uke %s package selection and source family\nLicense: MIT\nURL: https://github.com/MCC45TR/uke-linux-hardware-support\nSource0: %s-%s.tar.xz\nExclusiveArch: %s\n' "$family" "$version" "$release" "${family#uke-}" "$family" "$version" "$target"
+    fi
+    if [[ -z $standalone || $integration == true ]];then
     printf 'SourceLicense: MIT'
     for part in "$stage/parts/"*; do [[ ! -f $part/preamble ]] || awk '/^License:/{sub(/^License:[[:space:]]*/, "");print}' "$part/preamble"; done | LC_ALL=C sort -u | while IFS= read -r license; do printf ' AND (%s)' "$license"; done
     printf '\n'
@@ -230,7 +238,7 @@ spec="$output/SPECS/$family.spec"
     for part in "$stage/parts/"*; do [[ ! -f $part/buildrequires ]] || cat "$part/buildrequires"; done | LC_ALL=C sort -u | if [[ $family == uke-sensors ]]; then sed '/^BuildRequires: libssc-devel /d;s/pkgconfig(libssc)//g'; else cat; fi
     if [[ -z $standalone && $integration == false ]]; then
         printf '\n%%description\nLogical installation selection. Child RPMs remain separately installable.\nThis package adds no process and does not enable hardware or prove support.\n'
-    elif [[ $integration == true ]]; then
+    elif [[ $integration == true && -z $standalone ]]; then
         printf '\n%%description\nReviewed component sources with independent binary package identities.\nThe source package adds no runtime selection RPM or service.\n'
     fi
     for part in "$stage/parts/"*; do

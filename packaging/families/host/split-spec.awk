@@ -126,6 +126,8 @@ END {
             sub(/^[0-9]+/, (releases[pkg]+0)+release_increment, next_releases[pkg])
         }
     }
+    if(preserve_identity)
+        print renamed(original) "\t" versions[original] "\t" next_releases[original] >out "/standalone-identity"
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0){split(headers[i],a,/[[:space:]]+/);pkg=a[2]=="-n"?a[3]:original "-" a[2]}
