@@ -48,12 +48,13 @@ metadata, Uke/SM7675 DT compatibility and enforced signing configuration. Its
 refusal fixtures pass; no real 1006 Ubuntu candidate has passed. Full DT/driver
 admission and cryptographic module trust remain separate requirements.
 
-The shared producer builds a systemd/dracut base and records Fedora RPM
-ownership/licenses. Ubuntu needs a native dpkg provenance adapter and the same
-root-selector, filesystem, timeout, offline-charge and recovery checks. Its
-release argument currently accepts numeric Fedora suffixes only; a reviewed
-portable extension is needed for the Debian `u1` identity. Do not suppress the
-shared checks or execute RPM scripts against Ubuntu.
+The immutable shared producer builds a systemd/dracut base and records Fedora
+RPM ownership/licenses. The [prepared host overlay](BOOT-ADAPTER.md) replaces
+that inventory with dpkg provenance and admits the bounded Debian `u1` suffix.
+Metadata fixtures and static staging pass; native dracut execution is pending.
+Root-selector, filesystem, timeout, offline-charge, kernel configuration and
+recovery code remain unchanged. Do not suppress those checks or run RPM scripts
+against Ubuntu. The overlay does not select or change any security setting.
 
 A complete boot cohort must be rebuilt in one job with its embedded initramfs,
 DT and signed modules. Preserve the private ephemeral module key until the
@@ -62,8 +63,9 @@ discard the private key before artifact export. The candidate-only action
 deletes that key after module packaging; its Image cannot be promoted later by
 appending an unrelated initramfs or regenerating a different trust key.
 
-The shared configuration selects SELinux and lacks AppArmor. Official Tenacious
-policycoreutils, selinux-utils and selinux-policy-default resolve without Python
-in the runtime plan, so preserving this security path is feasible. Policy labels,
-enforcing handoff and actual startup still require validation. Do not disable
-security to get a boot. See [TEST-IMAGE-GATES.md](TEST-IMAGE-GATES.md).
+The shared configuration selects SELinux and lacks Ubuntu's default AppArmor
+support. The optional SELinux compatibility package test passed without Python,
+but that does not select the final image security profile or qualify enforcing
+handoff. The final profile and any configuration change need explicit approval.
+Do not force Fedora assumptions or disable security to get a boot. See
+[TEST-IMAGE-GATES.md](TEST-IMAGE-GATES.md).

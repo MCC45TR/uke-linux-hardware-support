@@ -30,5 +30,6 @@ jobs:
           bash packaging/ubuntu/tests/kernel-payload.sh
           bash packaging/ubuntu/tests/native-payload.sh
           bash packaging/ubuntu/tests/recipe-sources.sh
+          bash packaging/ubuntu/tests/boot-provenance.sh
       - name: Record validation scope
         run: echo 'Source assembly, quilt application and static cohort tests only; no upstream compilation, device execution, signing or publication.' >> "$GITHUB_STEP_SUMMARY"

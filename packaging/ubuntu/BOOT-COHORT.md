@@ -26,8 +26,8 @@ contents of a kernel, a DTB, a module tree or an initramfs.
 
 Remaining implementation is explicit: extract each real package without
 executing scripts; bind its kernel release and module vermagic to the DTB and
-layout; validate required Uke DT properties and platform drivers; construct an
-initramfs-tools hook with the reviewed firmware/module allowlist; prove its
+layout; validate required Uke DT properties and platform drivers; natively qualify
+the prepared shared systemd/dracut dpkg adapter with the reviewed firmware/module allowlist; prove its
 mount and root-selector logic on fixtures; preserve the installed selector and
 previous cohort until separately admitted. Install-time kernel/boot triggers
 must stage candidates rather than select or flash them. Exact rollback and

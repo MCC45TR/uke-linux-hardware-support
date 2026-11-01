@@ -163,6 +163,20 @@
     "source_assembly": "passed",
     "native_execution": "not run; source-specific authorization pending",
     "boot_cohort": "not implemented",
+    "image_created": false,
+    "boot_adapter": {
+      "source_staging": "passed",
+      "metadata_fixtures": "passed",
+      "native_dracut": "not run; source approval pending",
+      "security_configuration_changed": false,
+      "root_handoff_code_changed": false
+    }
+  },
+  "userspace_qualification": {
+    "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41319778138",
+    "status": "success",
+    "scope": "Native ARM64 signed Ubuntu/PPA runtime package installation and payload qualification only",
     "image_created": false
-  }
+  },
+  "image_security_profile": "not selected; current source lacks Ubuntu stock AppArmor support; no configuration change authorized"
 }

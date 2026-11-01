@@ -272,3 +272,39 @@ exact published PPA preset, verifies the existing archive key, checks Python
 exclusion and records policy/payload evidence. It emits no tablet image or boot
 bundle. Policy labeling/enforcing handoff and real hardware boot remain separate
 unimplemented checks, not signing or credential blockers.
+
+### Host adapter and userspace qualification checkpoint
+
+Native ARM64 userspace run41319778138 passed authenticated official Ubuntu/PPA
+installation, preset identity and Python exclusion. First trials found dormant
+Apport hooks and libstdc++ GDB helpers, including files initially extracted by
+debootstrap before dpkg filters. The minimal target policy now records and
+omits only those identified optional diagnostic files, preserving distro ELF
+libraries and retaining a terminal audit for other scripts. No root image was
+exported, and no MAC/enforcement configuration was selected.
+
+The new host overlay stages against exact boot lock
+dc2f9a7f0ded526e191147402403b9f66998004831cdec85d7756070cb1d4df4.
+Original source assets are checked before copying. Three host-integration
+changes add the bounded Debian suffix, dpkg copyright/source inventory and a
+distro-neutral description; nostrip preserves package bytes for provenance.
+The original lock stays intact and an explicit overlay receipt records changed
+hashes. Kernel configuration, root guard, switch-root and userdata code compare
+byte for byte with the shared input. No new1006 script/helper executed.
+
+The dpkg backend resolves usrmerge/alternatives, Multi-Arch owners and relocated
+dracut content. It compares selected bytes and records generated metadata
+honestly. Real isolated-dpkg metadata fixtures pass and refuse changed owned
+bytes, unknown ELF, non-executable interpreter scripts and foreign architecture.
+The fixture initially omitted dpkg info/format1, making Multi-Arch list lookup
+use the legacy unqualified path; the corrected fixture explicitly initializes
+the database format. This was fixture setup, not a relaxed production check.
+Actual native dracut/provenance execution remains pending source approval.
+
+Ubuntu's documented default MAC is AppArmor; SELinux is an optional userspace
+stack and not equivalent integration. The current shared source lacks AppArmor.
+The optional SELinux package test was a compatibility probe, not authority to
+force a Fedora image policy. No security setting is changed by the overlay.
+The final profile requires a separately approved, validated decision before
+root/boot artifacts can be emitted. Refer to Ubuntu's privilege-restriction
+documentation and BOOT-ADAPTER.md for the concrete boundary.

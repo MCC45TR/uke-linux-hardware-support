@@ -39,6 +39,12 @@ while IFS=$'\t' read -r package component version; do
    jq -e '.source_commit=="fcbdae4b757732f0f0e3162c610f19abae290832" and .parent_copr_build==11240068 and .physical_acceptance==false and (.overlays|length)==4' "$stage/inputs/native-profile/source-composition.json" >/dev/null
    release=$(sed -n 's/^release=//p' "$debian/build-kernel")
    [[ $release == 7.3.1-1006u1 && $((${#release}+3+1)) -le 16 ]]
+   bash "$debian/boot-adapter/stage.sh" "$stage/inputs/boot-recipe" "$work/ubuntu-boot-recipe" > "$work/adapter-stage.log"
+   jq -e '.native_executed==false and .security_configuration_changed==false and .boot_qualified==false' "$work/ubuntu-boot-recipe/ubuntu-adapter.json" >/dev/null
+   cp -a "$stage/inputs/boot-recipe" "$work/corrupt-boot-recipe"
+   printf '\nchanged source fixture\n' >> "$work/corrupt-boot-recipe/src/boot/dracut/root-guard.sh"
+   if bash "$debian/boot-adapter/stage.sh" "$work/corrupt-boot-recipe" "$work/refused-adapter" > "$work/adapter-rejected.log" 2>&1; then echo 'Changed shared boot source admitted' >&2; exit 1; fi
+   [[ ! -e $work/refused-adapter ]]
    ! grep -q '^Provides:' "$debian/control"
    status=0
    (cd "$stage"; bash debian/build-kernel boot) 2> "$work/unsupported-boot" || status=$?

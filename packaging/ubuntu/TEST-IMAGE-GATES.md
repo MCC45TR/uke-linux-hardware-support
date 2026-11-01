@@ -22,6 +22,9 @@ Fedora DE release work stays independent and retains its existing cohort.
   PPA package in a disposable server container. It checks Python exclusion,
   systemd, SELinux policy presence and the preset hash. Its artifacts contain
   evidence only; no root image, kernel, initramfs or boot bundle is emitted.
+- [Userspace retry 41319778138](https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41319778138)
+  passed. The [host boot adapter](BOOT-ADAPTER.md) now stages and passes metadata
+  refusal fixtures, but its native dracut/root-handoff execution remains untested.
 
 ## Required work before emitting a test image
 
@@ -30,16 +33,19 @@ Fedora DE release work stays independent and retains its existing cohort.
    normal disposable kernel module-signing key. No tablet execution is involved.
 2. Pass native kernel compilation and real DT/module inspection. The successful
    Fedora test-channel build is not an Ubuntu build or boot result.
-3. Port the common systemd/dracut base's package provenance to dpkg and admit
-   the Debian release identity without weakening filesystem/root-selector,
-   timeout, recovery, privacy or target-payload tests. Keep the base free of
-   firmware, host identity, Python and stale root-specific command lines.
+3. Natively qualify the prepared systemd/dracut dpkg provenance and release
+   adapter without weakening filesystem/root-selector, timeout, recovery,
+   privacy or target-payload tests. Keep the base free of firmware, host
+   identity, Python and stale root-specific command lines.
 4. Validate a complete same-job Image/DT/modules/embedded-initramfs cohort,
    preserving module-key identity through both Image passes. Candidate-only
    Image packaging is not a substitute for this step.
-5. Validate the selected existing Uke root layout, SELinux policy labeling and
-   enforcing switch-root using Ubuntu packages. The current source has no
-   AppArmor support; do not silently disable SELinux or claim AppArmor works.
+5. Validate the selected existing Uke root layout and explicitly resolve the
+   security profile. Ubuntu stock uses AppArmor, which the current shared
+   configuration does not support. Retaining SELinux instead needs policy,
+   labeling and enforcing handoff qualification; adding AppArmor support needs
+   reviewed configuration and authorization. The adapter makes neither choice
+   and changes no security setting. Do not disable checks to obtain a boot.
 6. Prove the offline image manifests, root-selector capability, module and
    source identities before exporting a test bundle. Firmware redistribution
    review remains incomplete; do not include unqualified OEM/private payloads.
