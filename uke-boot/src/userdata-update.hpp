@@ -112,13 +112,22 @@ static std::map<std::string,std::string> userdata_policy(const std::string &text
          (config.at("vrr_min_hz")=="0"||config.at("vrr_min_hz")=="30"),"Invalid userdata update policy");
     return config;
 }
-static bool automatic_updates(const std::string &global,const std::string &userdata) {
+static bool global_automatic_updates(const std::string &global) {
     std::istringstream input(global);std::string row,settings;
     while(std::getline(input,row))if(!row.empty() && row.front()!='#')settings+=row+'\n';
-    const auto config=properties(settings),profile=userdata_policy(userdata);
+    const auto config=properties(settings);
     need(config.size()==1 && config.contains("automatic") &&
          (config.at("automatic")=="0"||config.at("automatic")=="1"),"Invalid global automatic update policy");
-    return config.at("automatic")=="1" && profile.at("automatic")=="1";
+    return config.at("automatic")=="1";
+}
+static bool automatic_updates(const std::string &global,const std::string &userdata) {
+    const auto enabled=global_automatic_updates(global);const auto profile=userdata_policy(userdata);
+    return enabled && profile.at("automatic")=="1";
+}
+static fs::path userdata_bundle(const fs::path &target) {
+    need(target.is_relative() && target.lexically_normal()==target && target.parent_path().parent_path()=="kernel-updates" &&
+         target.filename()=="userdata.img" && token(target.parent_path().filename()),"Exact userdata profile link required");
+    return fs::path("/usr/lib/senemos")/target.parent_path();
 }
 static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest,const std::string &filesystem="f2fs") {
     const auto kernel=boot_kernel(bytes);
@@ -165,6 +174,13 @@ static bool awaiting_ab_reboot(const UserdataUpdate &saved,unsigned running,cons
     need(release==saved.policy.good_release && image_hash==saved.good_image,"Pending-trial baseline identity differs");
     return true;
 }
+static UserdataUpdate superseded_trial(UserdataUpdate saved,unsigned running,const std::string &release,
+                                      const std::string &image_hash,const std::string &boot_id,const std::string &next) {
+    need(awaiting_ab_reboot(saved,running,release,image_hash,boot_id),"Only an unbooted trial in this boot can be superseded");
+    need(token(next) && next!=release && next!=saved.policy.candidate && next!=saved.policy.failed,"Invalid replacement trial release");
+    saved.policy.phase=uke_install::Phase::stable;saved.policy.candidate.clear();
+    saved.candidate_image.clear();saved.staged_boot_id.clear();(void)encode(saved);return saved;
+}
 static constexpr const char *firmware_names[]={"xbl","xbl_config","xbl_config_nof","multiimgqti","multiimgoem","uefi","aop","aop_config","tz","hyp","abl","devcfg","qupfw","uefisecapp","imagefv","shrm","cpucp","keymaster","featenabler","cpucp_dtb","pvmfw"};
 static bool admitted_early_firmware(const std::map<std::string,std::string> &hashes) {
     need(hashes.size()==2*std::size(firmware_names),"Incomplete early firmware inventory");
@@ -188,6 +204,14 @@ static bool display_enabled(const fs::path &directory) {
         display|=read_text(entry.path()/"status")=="connected\n" && read_text(entry.path()/"enabled")=="enabled\n";
     }
     return display;
+}
+static bool lock_metadata_fd(int fd) {
+    for(unsigned attempt=0;;++attempt) {
+        if(!flock(fd,LOCK_EX|LOCK_NB))return true;
+        if((errno!=EWOULDBLOCK && errno!=EAGAIN && errno!=EINTR) || attempt==50)return false;
+        if(!attempt)std::cerr<<"UFS slot metadata is busy; waiting up to five seconds before refusing the update\n";
+        usleep(100000);
+    }
 }
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
@@ -215,8 +239,10 @@ struct SlotMetadata {
     SlotMetadata(const std::string &name,dev_t expected,bool allow_backup_crc):name(name),fd(open(("/dev/"+name).c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK)) {
         struct stat st{};uint64_t bytes=0;unsigned sector=0;
         need(!fstat(fd.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==expected &&
-             !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector) &&
-             !flock(fd.value,LOCK_EX|LOCK_NB),"Cannot lock the physical UFS GPT descriptor");
+             !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector),
+             "Physical UFS GPT descriptor identity/capacity unavailable");
+        if(!lock_metadata_fd(fd.value))
+            throw std::runtime_error(std::string("Cannot lock the physical UFS GPT descriptor: ")+std::strerror(errno));
         gpt=std::make_unique<slot::Disk>(fd.value,bytes,sector,allow_backup_crc);
     }
 };
@@ -322,12 +348,44 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         need((good_flags&slot::successful) && !(good_flags&slot::unbootable) &&
              (next_flags&slot::priority) && (next_flags&slot::retries) && !(next_flags&(slot::successful|slot::unbootable)),
              "Pending trial or accepted fallback flags differ");
-        if(action!="accept" && action!="fallback") {
+        if(action!="accept" && action!="check-accept" && action!="fallback") {
             const auto raw=file(bundle/"manifest");
-            need(properties(std::string(raw.begin(),raw.end())).at("kernel_release")==prior->policy.candidate,
-                 "A different candidate cannot replace the pending trial");
+            const auto manifest=properties(std::string(raw.begin(),raw.end()));
+            const auto next=manifest.at("kernel_release");
+            if(next!=prior->policy.candidate) {
+                auto stable=superseded_trial(*prior,running,release,good_hash,current_boot_id,next);
+                (void)userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);verify_early_firmware();
+                need(action=="apply" || action=="check","Only a checked update can supersede an unbooted trial");
+                if(action=="check") {
+                    std::cout<<"Unbooted trial can be superseded; accepted rollback verified; no hardware writes\n";return;
+                }
+                need(charging(),"Replacing an unbooted trial requires at least 50% battery, or 30% with external power");
+                auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+                const auto transaction=state/(next+"-supersede-"+prior->policy.candidate);
+                auto transaction_dir=directory(transaction,true);
+                for(auto &disk:disks) {
+                    disk->gpt->backup(transaction/(disk->name+".gpt"));
+                    (void)disk->gpt->fallback(target,running);
+                }
+                try {
+                    for(auto &disk:disks)disk->gpt->commit();
+                    (void)slot::boot_lun(bsg.value,running+1);
+                    save_update(statefile,stable);
+                } catch(...) {
+                    try {
+                        for(auto &disk:disks)disk->gpt->restore();
+                        (void)slot::boot_lun(bsg.value,target+1);save_update(statefile,*prior);
+                    } catch(...) {throw std::runtime_error("Trial replacement restoration failed; use recovery before rebooting");}
+                    throw std::runtime_error("Trial replacement refused; previous trial selection restored and verified");
+                }
+                std::cout<<"Superseded unbooted trial "<<prior->policy.candidate<<"; accepted slot retained\n";
+                disks.clear();
+                userdata_update(action,bundle,package_bytes,state,release,filesystem);return;
+            }
         }
-        std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";return;
+        if(action=="apply")std::cout<<"Uke kernel update complete: "<<prior->policy.candidate<<" is selected for next boot; rollback "<<prior->policy.good_release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
+        else std::cout<<"Verified userdata trial is awaiting a reboot; accepted slot retained\n";
+        return;
     }
     if(action=="fallback") {
         const auto saved=decode(file(statefile));auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
@@ -377,7 +435,14 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     }
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
     for(auto &disk:disks)disk->gpt->require_selected(running);
-    if(action=="accept") {
+    if(action=="check-stable") {
+        need(prior && prior->policy.phase==uke_install::Phase::stable && unsigned(prior->policy.good)==running &&
+             prior->policy.good_release==release && prior->good_image==good_hash,"Accepted stable baseline identity differs");
+        const auto flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
+        need((flags&slot::successful) && !(flags&slot::unbootable),"Accepted stable slot flags differ");
+        std::cout<<"Previously accepted running baseline verified; no new boot-health acceptance\n";return;
+    }
+    if(action=="accept" || action=="check-accept") {
         health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
@@ -406,6 +471,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         const bool mark_success=!(boot_table->parts.at(running?"boot_b":"boot_a").attrs&slot::successful);
         std::vector<SlotMetadata*> changed;
         for(auto &disk:disks)if(disk->gpt->needs_backup_crc_repair() || (disk->gpt.get()==boot_table && mark_success))changed.push_back(disk.get());
+        if(action=="check-accept") {
+            std::cout<<"Running userdata boot, package, metadata and health checks passed; no hardware or acceptance-state writes\n";return;
+        }
         if(!changed.empty()) {
             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
             for(auto *disk:changed)disk->gpt->backup(state/("accept-"+digest(disk->gpt->before.entries)+"-"+disk->name+".gpt"));
@@ -451,6 +519,6 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         }catch(...){throw std::runtime_error("Slot selection and restoration failed; retain transaction backups and use recovery before rebooting");}
         throw std::runtime_error("Slot selection failed; accepted metadata and UFS boot LUN restored and verified");
     }
-    std::cout<<"Inactive boot slot "<<(target?'b':'a')<<" written, synced and read back; selected for next reboot. Accepted slot retained; boot health will accept or record fallback.\n";
+    std::cout<<"Uke kernel update complete: "<<next<<" written to slot "<<(target?'b':'a')<<", synced, read back and selected for next boot; rollback "<<release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
 }
 #endif

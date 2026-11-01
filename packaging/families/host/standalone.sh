@@ -54,5 +54,11 @@ mapfile -t results < <(find "$stage/output/SRPMS" -maxdepth 1 -type f -name '*.s
 [[ ${#results[@]} == 1 ]]
 name=$(rpm -qp --qf '%{NAME}' "${results[0]}")
 [[ $name != "$group" ]]
+if [[ $key == uke-boot-integration ]]; then
+    expected=$(awk '$1=="Version:" {print $2; exit}' uke-boot/packaging/uke-boot-integration.spec)
+    [[ $(rpm -qp --qf '%{VERSION}' "${results[0]}") == "$expected" ]] || {
+        echo 'Boot source version differs from the owning component; update native_versions' >&2; exit 1;
+    }
+fi
 mkdir -p "$output"
 install -m644 "${results[0]}" "$output/"

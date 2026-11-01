@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.6
+Version: 1.8.11
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -90,6 +90,8 @@ Requires: systemd >= 254
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
+Provides: uke-kernel-update(transaction-v1) = 1
+Provides: uke-kernel-update(final-transaction-v2) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
@@ -267,10 +269,11 @@ if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]
     %{_libexecdir}/senemos-uke/uke-install-profile reconcile || :
 fi
 
-%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates
+%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates /usr/lib/senemos/default-boot.img
 if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
     if ! %{_bindir}/uke-kernel-update auto; then
         echo 'Uke automatic boot update refused; inspect the reported cause before rebooting.' >&2
+        exit 1
     fi
 fi
 %files
@@ -354,6 +357,25 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.11-1
+- Release old metadata descriptors before reacquiring the accepted baseline for a replacement trial.
+
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.10-1
+- Wait briefly for transient UFS metadata lock contention without bypassing exclusive locking.
+- Distinguish descriptor admission failures from lock failures and test real lock recovery/refusal.
+
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.9-1
+- Preserve direct transaction calls from Control while final RPM triggers cover profile-only updates.
+
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.8-1
+- Finalize singleboot profile changes in the RPM transaction and report failures.
+- Preserve the accepted slot when replacing an unbooted trial in the same boot.
+- Permit offline staging from an already accepted baseline without desktop services.
+
+* Fri Oct 30 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.7-1
+- Route kernel transaction hooks through the selected profile and both policies.
+- Report disabled activation and validate automatic A/B admission without writes.
+- Report an outstanding candidate before a different update can be staged.
 * Fri Oct 30 2026 Uke Linux project <75160848+MCC45TR@users.noreply.github.com> - 1.8.6-1
 - Restrict kernel pointer and log access through vendor sysctl defaults.
 - Apply only those keys while retaining administrative configuration precedence.

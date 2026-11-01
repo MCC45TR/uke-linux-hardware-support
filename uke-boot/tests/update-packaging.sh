@@ -14,7 +14,7 @@ diff -u <(cat <<'HOOKS'
 %preun -n uke-installation-profile
 %postun -n uke-installation-profile
 %posttrans -n uke-installation-profile
-%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates
+%transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates /usr/lib/senemos/default-boot.img
 HOOKS
 ) <(grep -E '^%(pre|preun|pretrans|post|postun|posttrans|trigger[a-z]*|transfiletrigger[a-z]*)([[:space:]]|$)' packaging/uke-boot-integration.spec)
 grep -Fxq 'automatic=0' src/profiles/kernel-update.conf
@@ -37,6 +37,7 @@ grep -Fxq 'After=local-fs.target uke-install-profile.service' src/units/uke-root
 grep -Fq 'docs/USERDATA-AB.md' Makefile
 grep -Fq 'Provides: uke-kernel-update(userdata-ab) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(guarded-automatic) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'Provides: uke-kernel-update(transaction-v1) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(root-filesystem-v2) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(current-slot-restore) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(kernel-touch-client-v1) = 1' packaging/uke-boot-integration.spec
