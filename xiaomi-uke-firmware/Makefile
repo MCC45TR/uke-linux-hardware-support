@@ -2,15 +2,15 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .DEFAULT_GOAL := validate
+SPEAKER_PRESET ?= $(CURDIR)/referances/speaker-preset-3.0.304.0/fs19xx.fsm
+SPEAKER_NOTICE ?= $(CURDIR)/referances/speaker-preset-3.0.304.0/odm-NOTICE.xml.gz
 .PHONY: validate srpm
 .PHONY: speaker-srpm
 speaker-srpm:
 	input='$(SPEAKER_PRESET)'; notice='$(SPEAKER_NOTICE)'
 	[[ -f $$input && ! -L $$input && -f $$notice && ! -L $$notice ]]
 	data=packaging/speaker-firmware
-	[[ $$(sha256sum "$$input" | cut -d' ' -f1) == $$(jq -er .sha256 "$$data/provenance.json") ]]
-	[[ $$(sha256sum "$$notice" | cut -d' ' -f1) == $$(jq -er .notice_gzip_sha256 "$$data/provenance.json") ]]
-	[[ $$(sha256sum "$$data/LICENSE.Apache-2.0" | cut -d' ' -f1) == $$(jq -er .license_text_sha256 "$$data/provenance.json") ]]
+	bash src/audit-speaker-source.sh "$$input" "$$notice" "$$data"
 	top="$$(realpath -m '$(outdir)/speaker-rpmbuild')"
 	stage="$$top/stage/uke-speaker-firmware-3.0.304.0"
 	[[ ! -e $$top ]]

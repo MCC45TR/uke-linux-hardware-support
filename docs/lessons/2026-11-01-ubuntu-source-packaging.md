@@ -1,5 +1,23 @@
 # UKE-UBUNTU-20261101: separate source packaging from device admission
 
+## Main source convergence checkpoint
+
+1 November 2026. The local integration merges current Fedora hardware history
+and Ubuntu packaging without discarding either parent. The first replacement
+recipe selects canonical firmware inputs and common metadata from main using
+the existing docs-only ancestor as its fixed base. The raw preset and original
+notice retain their already published hashes. A shared host auditor now serves
+both the Fedora source target and Debian source construction; no runtime or
+hardware policy changes are introduced. Generated snapshot metadata is checked
+against the common release overlay, and mixed main revisions or changed preset
+bytes are refused. Native replacement and publication qualification remain
+pending. Keep the existing Launchpad recipe until that transition is verified.
+
+The snapshot 3.0 native version encodes the Ubuntu integration revision in the
+upstream portion, so it outranks conventional Debian revisions at the same
+vendor version. Stable promotion must preserve monotonic version ordering.
+This is source/metadata preparation, not device acceptance or image readiness.
+
 Date: 1 November 2026. Environment: Debian 13 x86_64; dpkg-source 1.22.22.
 
 Evidence: the public mcc45tr/uke-linux-unstable COPR listing contains 43 source

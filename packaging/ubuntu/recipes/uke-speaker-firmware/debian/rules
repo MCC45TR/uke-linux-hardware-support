@@ -1,15 +1,19 @@
 #!/usr/bin/make -f
+src := $(if $(wildcard source/fs19xx.fsm),source,.)
+meta := $(if $(wildcard metadata/provenance.json),metadata,.)
 %:
 	dh $@
 override_dh_auto_configure:
+	bash debian/verify-main-inputs
 override_dh_auto_build:
 override_dh_auto_clean:
+	bash debian/verify-main-inputs
 override_dh_auto_test:
-	printf '%s  %s\n' f319e71d60ed19d539296665fa06cc07fbcf93bf82f773c787bed65289129e7b fs19xx.fsm | sha256sum -c -
+	bash debian/audit-speaker-source $(src)/fs19xx.fsm $(src)/odm-NOTICE.xml.gz $(meta)
 override_dh_auto_install:
-	install -Dm644 fs19xx.fsm debian/uke-speaker-firmware/usr/lib/firmware/qcom/uke/audio/fs19xx.fsm
+	install -Dm644 $(src)/fs19xx.fsm debian/uke-speaker-firmware/usr/lib/firmware/qcom/uke/audio/fs19xx.fsm
 	install -d debian/uke-speaker-firmware/usr/share/doc/uke-speaker-firmware
-	install -m644 provenance.json odm-NOTICE.xml.gz LICENSE.Apache-2.0 README.md debian/uke-speaker-firmware/usr/share/doc/uke-speaker-firmware/
+	install -m644 $(src)/odm-NOTICE.xml.gz $(addprefix $(meta)/,provenance.json LICENSE.Apache-2.0 README.md) debian/uke-speaker-firmware/usr/share/doc/uke-speaker-firmware/
 override_dh_strip_nondeterminism:
 override_dh_compress:
 	dh_compress -Xodm-NOTICE.xml.gz -Xprovenance.json -XLICENSE.Apache-2.0

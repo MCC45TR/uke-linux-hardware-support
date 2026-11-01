@@ -43,6 +43,9 @@ printf '%s\n' "Repository: $source_repository" "Revision: $revision" "Component:
 epoch=$(git -C "$root" show -s --format=%ct cbecc441059ebffa97497e736edd2e0b0b0546a5)
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$out/${pkg}_${version}.orig.tar.xz" -C "$out" "$pkg-$version"
 cp -a "$root/packaging/ubuntu/recipes/$pkg/debian" "$stage/debian"
+if [[ $pkg == uke-speaker-firmware ]]; then
+ cp "$root/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$stage/debian/audit-speaker-source"
+fi
 find "$stage/debian" -type d -exec chmod 0755 {} +
 find "$stage/debian" -type f -perm /111 -exec chmod 0755 {} +
 find "$stage/debian" -type f ! -perm /111 -exec chmod 0644 {} +

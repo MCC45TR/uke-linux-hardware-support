@@ -1,3 +1,10 @@
+uke-speaker-firmware (3.0.304.0-0ubuntu2~tenacious1) tenacious; urgency=medium
+
+  * Use the same canonical preset inputs for release and main snapshot sources.
+  * Verify the original notice and license bytes during package construction.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 17:00:00 +0000
+
 uke-speaker-firmware (3.0.304.0-0ubuntu1~tenacious1) tenacious; urgency=medium
 
   * Preserve the exact shared preset, OEM notice and file-level provenance.

@@ -1,0 +1,2 @@
+source	canonical_inputs	canonical_metadata	snapshot_overlay	qualification
+uke-speaker-firmware	xiaomi-uke-firmware/referances/speaker-preset-3.0.304.0	xiaomi-uke-firmware/packaging/speaker-firmware	packaging/ubuntu/main-recipes/uke-speaker-firmware/debian	native-validation-pending
