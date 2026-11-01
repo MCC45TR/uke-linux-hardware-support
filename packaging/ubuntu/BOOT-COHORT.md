@@ -1,7 +1,9 @@
 # Debian boot cohort admission boundary
 
-The new [kernel source recipe](KERNEL-SOURCE.md) preserves release-115 source
-composition and produces only future qualification candidates. The separate
+The [kernel source recipe](KERNEL-SOURCE.md) now stages the exact experimental
+test-channel release-1006 composition after the resumed test-image request.
+Its native source execution still needs separate approval. It produces only
+future qualification candidates. The separate
 `inspect-kernel-candidate.sh` checks actual Image/DT/module content; its refusal
 fixtures pass, but no real candidate payload has been built or admitted.
 These additions do not turn the four-package boot metadata check below into

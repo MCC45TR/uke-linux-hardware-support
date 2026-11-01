@@ -5,8 +5,11 @@ export LC_ALL=C ARCH=arm64 LLVM=1 LLVM_IAS=1
 root=$PWD
 kernel=$root/build/linux-7.3.1
 output=$root/build/output
-release=7.3.1-115-uke-ubuntu1
-localversion=-115-uke-ubuntu1
+release=7.3.1-1006u1
+localversion=-1006u1
+# Shared ALSA driver IDs contain "uke" plus UTS_RELEASE and a terminating NUL.
+# Keep that existing 16-byte bound; reject an oversized package identity early.
+(( ${#release} + 3 + 1 <= 16 ))
 export KBUILD_BUILD_USER=uke KBUILD_BUILD_HOST=ubuntu-builder KBUILD_BUILD_VERSION=1
 export SOURCE_DATE_EPOCH=1793362198
 export KBUILD_BUILD_TIMESTAMP="$(date -u -d "@$SOURCE_DATE_EPOCH" '+%Y-%m-%d %H:%M:%S UTC')"
@@ -19,8 +22,11 @@ case ${1:-} in
   [[ ! -e $kernel ]]
   mkdir -p build/keyring
   gpg --batch --dearmor < inputs/linux-stable.asc > build/keyring/linux.gpg
-  xz -dc inputs/linux-7.3.1.tar.xz | gpgv --homedir build/keyring --keyring "$root/build/keyring/linux.gpg" inputs/linux-7.3.1.tar.sign -
-  tar -xf inputs/linux-7.3.1.tar.xz -C build
+  [[ ! -e inputs/linux-7.3.1.tar.xz ]]
+  (cd inputs; sha256sum --check --strict linux-source-parts.sha256)
+  [[ $(cat inputs/linux-7.3.1.tar.xz.part-* | sha256sum | cut -d ' ' -f1) == $(jq -er .source_sha256 manifests/linux-7.3.1.json) ]]
+  cat inputs/linux-7.3.1.tar.xz.part-* | xz -dc | gpgv --homedir build/keyring --keyring "$root/build/keyring/linux.gpg" inputs/linux-7.3.1.tar.sign -
+  cat inputs/linux-7.3.1.tar.xz.part-* | tar -xJf - -C build
   cp -a inputs/senemos-adaptation "$kernel/"
   cp -a inputs/native-profile "$kernel/"
   cp -a inputs/boot-recipe "$kernel/"

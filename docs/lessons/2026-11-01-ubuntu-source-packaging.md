@@ -234,3 +234,41 @@ providers; two resolved development closures include host Python and remain
 server-only. Launchpad recipebuild 4108742 is currently building source; it is
 not evidence of an ARM64 binary publication. New Ubuntu work is paused and
 existing remote builds are monitored read-only.
+
+### Resumed experimental kernel and minimal userspace preparation
+
+The new user request authorizes preparing an Ubuntu test image, with no tablet
+writes. Main unstable still publishes 115. Release1006 was found in the separate
+uke-linux-test:custom:power-20261031 channel, successful COPR build 11240463,
+source commit fcbdae4b757732f0f0e3162c610f19abae290832. Preserve its exact emitted
+retained1003-plus-LMH composition rather than treating the current main Git
+checkout or a numerically newer failed trial as equivalent. The source RPM
+SHA256 is 70f151855f727c9d83c3bedc35ff52dd60cb222b2d741818472dced458bcd60c.
+Its profile differs from the previously approved 115 in 28 files, including
+LMH, SCMI/CPU observation and O82 VRR behavior. No new source helper executed.
+
+The Debian recipe now stages that exact source, preserves original inventories
+without recomputing away mismatches, and uses 7.3.1-1006u1. Its shared ALSA
+identifier including prefix and NUL is exactly16 bytes. The recipe, candidate
+inspector and fixtures agree; source checks reject oversized identities early.
+Signed Linux source is represented as80MiB bounded chunks for Git service
+compatibility. Their joined bytes retain the exact upstream digest and detached
+signature. Source assembly, emitted inventories, full source checksums, signer
+identity and candidate refusal fixtures passed. No source build or boot passed.
+
+Boot inspection found two concrete port tasks: the shared producer accepts
+numeric Fedora release arguments only, and its userspace SBOM uses RPM ownership
+and licenses. Preserve root-selector, module, recovery and privacy checks while
+adding reviewed Debian integration. Do not promote the empty-initramfs candidate
+Image. The full cohort must retain one module key across both Image passes,
+then remove its private key before export; the existing candidate-only action
+deletes it after module packaging and cannot safely be promoted later.
+
+The shared kernel selects SELinux and lacks AppArmor. Official Tenacious
+dracut-core112-7 and SELinux packages3.11 exist. APT simulation of policycoreutils,
+selinux-utils and selinux-policy-default resolves without Python. A disposable
+native ARM64 userspace workflow installs only official runtime packages and the
+exact published PPA preset, verifies the existing archive key, checks Python
+exclusion and records policy/payload evidence. It emits no tablet image or boot
+bundle. Policy labeling/enforcing handoff and real hardware boot remain separate
+unimplemented checks, not signing or credential blockers.

@@ -29,12 +29,16 @@ while IFS=$'\t' read -r package component version; do
   uke-linux-kernel)
    mkdir -m700 "$work/kernel-keyring"
    gpg --batch --dearmor < "$stage/inputs/linux-stable.asc" > "$work/kernel-keyring/linux.gpg"
-   xz -dc "$stage/inputs/linux-7.3.1.tar.xz" | gpgv --homedir "$work/kernel-keyring" --keyring "$work/kernel-keyring/linux.gpg" --status-fd=1 "$stage/inputs/linux-7.3.1.tar.sign" - > "$work/kernel-signature"
+   [[ ! -e $stage/inputs/linux-7.3.1.tar.xz ]]
+   (cd "$stage/inputs"; sha256sum --check --strict --quiet linux-source-parts.sha256)
+   cat "$stage/inputs/"linux-7.3.1.tar.xz.part-* | xz -dc | gpgv --homedir "$work/kernel-keyring" --keyring "$work/kernel-keyring/linux.gpg" --status-fd=1 "$stage/inputs/linux-7.3.1.tar.sign" - > "$work/kernel-signature"
    grep -F "[GNUPG:] VALIDSIG $(jq -er .signer "$stage/manifests/linux-7.3.1.json") " "$work/kernel-signature"
-   grep -qx 'Revision: 8983163763f708ec940b349ebb81ab43cc3725c3' "$stage/SOURCE-ORIGIN"
+   grep -qx 'Revision: fcbdae4b757732f0f0e3162c610f19abae290832' "$stage/SOURCE-ORIGIN"
    (cd "$stage/inputs/native-profile"; sha256sum --check --strict --quiet SHA256SUMS)
    (cd "$stage/inputs/boot-recipe"; jq -r '.source_assets[]|.sha256+"  "+.path' lock.json | sha256sum --check --strict --quiet)
-   jq -e '.source_commit=="8983163763f708ec940b349ebb81ab43cc3725c3" and .parent_copr_build==11239296 and .physical_acceptance==false and (.overlays|length)==9' "$stage/inputs/native-profile/source-composition.json" >/dev/null
+   jq -e '.source_commit=="fcbdae4b757732f0f0e3162c610f19abae290832" and .parent_copr_build==11240068 and .physical_acceptance==false and (.overlays|length)==4' "$stage/inputs/native-profile/source-composition.json" >/dev/null
+   release=$(sed -n 's/^release=//p' "$debian/build-kernel")
+   [[ $release == 7.3.1-1006u1 && $((${#release}+3+1)) -le 16 ]]
    ! grep -q '^Provides:' "$debian/control"
    status=0
    (cd "$stage"; bash debian/build-kernel boot) 2> "$work/unsupported-boot" || status=$?

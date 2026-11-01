@@ -5,7 +5,7 @@ set -euo pipefail
 export LC_ALL=C
 payload=$(realpath "${1:?Extracted merged candidate payload directory required}")
 release=${2:?Exact expected kernel release required}
-[[ $release == 7.3.1-115-uke-ubuntu1 ]]
+[[ $release == 7.3.1-1006u1 ]]
 tree=$payload/usr/lib/uke-kernel-candidates/$release
 [[ -d $tree && ! -L $tree ]]
 [[ ! -e $payload/boot && ! -e $payload/usr/lib/modules && ! -e $payload/etc ]]
@@ -28,7 +28,7 @@ awk '{print $2}' "$tree/core.sha256" "$tree/dtbs.sha256" "$tree/modules.sha256" 
 cmp "$work/all-actual" "$work/all-declared"
 [[ $(cat "$tree/kernel-release") == "$release" ]]
 cmp <(printf '%s\n' candidate_only=true bootable=false stable_admitted=false) "$tree/admission"
-grep -qx 'Fedora source composition: 7.3.1-115' "$tree/KERNEL-SOURCE-ORIGIN"
+grep -qx 'Fedora source composition: 7.3.1-1006' "$tree/KERNEL-SOURCE-ORIGIN"
 [[ $(od -An -tx1 -j56 -N4 "$tree/Image" | tr -d ' \n') == 41524d64 ]] || { echo 'Invalid ARM64 Image magic' >&2; exit 1; }
 size=$(stat -c %s "$tree/Image")
 ((size>=64 && size<=1073741824))

@@ -20,6 +20,12 @@ SensorProxy first builds and installs the exact patched libssc in its own
 disposable server environment. No tablet execution is involved.
 No key, credential, upload or Ubuntu image was created here.
 
+Test-image work has now resumed on explicit user request. The experimental
+test-channel 1006 source is staged and the coordinated kernel suffix is fixed;
+its new native source execution and complete boot cohort remain unqualified.
+The official Ubuntu/PPA userspace qualification runs independently and exports
+evidence only. See [TEST-IMAGE-GATES.md](TEST-IMAGE-GATES.md).
+
 ## Implemented source routes
 
 The [APT/dpkg backend policy](APT-BACKEND.md) now has read-only native tests for
@@ -50,7 +56,7 @@ binary packages. Candidate packages are not deployable kernel packages.
 | uke-core-meta | Ubuntu dependency graph and unqualified profile | Data-only DEB/payload checked |
 | uke-orangefox-recovery | Existing Android v003 artifacts, exact checksums and source/license records; no install hooks | Data-only delivery, not recovery compilation |
 | uke-image-tools | Six original native image/payload tools from the shared builder source | Source only; no system image composition |
-| uke-linux-kernel | Exact release-115 source composition; separate candidate Image, DT and modules | Source/signature checked; native build and boot integration pending |
+| uke-linux-kernel | Exact experimental release-1006 source composition; coordinated candidate Image, DT and modules | Source/signature/chunk identities checked; new native execution and full boot integration pending |
 | uke-speaker-firmware | Exact separately attributed FS19xx preset, OEM notice and conffile preservation | Data-only DEB/payload checked |
 
 Native server results are recorded in [NATIVE-BUILDS.md](NATIVE-BUILDS.md) and

@@ -4,7 +4,7 @@ set -euo pipefail
 root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-release=7.3.1-115-uke-ubuntu1
+release=7.3.1-1006u1
 tree=$work/root/usr/lib/uke-kernel-candidates/$release
 mkdir -p "$tree/modules/kernel"
 truncate -s 2048 "$tree/Image"
@@ -12,7 +12,7 @@ printf '\101\122\115\144' | dd of="$tree/Image" bs=1 seek=56 conv=notrunc status
 printf '\000\010\000\000\000\000\000\000' | dd of="$tree/Image" bs=1 seek=16 conv=notrunc status=none
 printf 'Linux version %s fixture\000' "$release" | dd of="$tree/Image" bs=1 seek=64 conv=notrunc status=none
 printf '%s\n' "$release" > "$tree/kernel-release"
-printf '%s\n' 'Fedora source composition: 7.3.1-115' > "$tree/KERNEL-SOURCE-ORIGIN"
+printf '%s\n' 'Fedora source composition: 7.3.1-1006' > "$tree/KERNEL-SOURCE-ORIGIN"
 printf '%s\n' candidate_only=true bootable=false stable_admitted=false > "$tree/admission"
 printf '%s\n' CONFIG_ARM64=y CONFIG_QCOM_UKE_ABL_DT=y CONFIG_INITRAMFS_FORCE=y CONFIG_MODULE_SIG=y CONFIG_MODULE_SIG_FORCE=y 'CONFIG_INITRAMFS_SOURCE=""' > "$tree/config"
 # Reuse a public system CA certificate only as an X.509 parsing fixture.

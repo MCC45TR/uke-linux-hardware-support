@@ -1,54 +1,69 @@
 # Shared kernel source and Ubuntu candidate boundary
 
-Recorded 1 November 2026. The COPR producer is pinned to kernel repository
-`8983163763f708ec940b349ebb81ab43cc3725c3`, release 7.3.1-115. It composes
-the retained release-110 source RPM (build 11239296, SHA-256
-`84a612c12c4b99ce29077273cdca6dce704fd94c364f4c7c50bcdeb9313af69c`)
-with nine explicit source overlays. Git checkout alone is not that composition.
+Recorded 1 November 2026. The resumed Ubuntu test-image request identifies
+7.3.1-1006 in **uke-linux-test:custom:power-20261031**, not main unstable.
+COPR build 11240463 succeeded for Rawhide AArch64. Its source commit is
+`fcbdae4b757732f0f0e3162c610f19abae290832`; emitted source RPM SHA-256 is
+`70f151855f727c9d83c3bedc35ff52dd60cb222b2d741818472dced458bcd60c`.
+The Fedora DE release remains on main unstable 115. Numeric release ordering
+does not promote an experimental channel or replace its source composition.
 
-`prepare-kernel.sh` extracts source members only, verifies the Linux source hash,
-retained profile manifest and every unchanged parent file, applies those exact
-nine overlays by copying source files, and verifies the boot recipe's complete
-source-asset manifest. It does not execute the COPR worker, native preparer,
-compiler tests or boot producer. Source tests independently verify Linux's
-detached signature against the retained public key and expected signer.
+`prepare-kernel.sh` extracts that emitted source RPM, verifies the unchanged
+Linux source, adaptation/profile/boot archive identities, native profile
+inventory and complete boot source manifest. The retained profile describes
+release1003 plus four bounded LMH overlays, with physical acceptance false.
+Git checkout alone is not this composition. No COPR worker, native preparer,
+compiler fixture, boot producer or new kernel was executed during assembly.
 
-The `uke-linux-kernel` recipe defines three **candidate-only** ARM64 packages:
-core Image/configuration, DTB and modules. All payloads live beneath
-`/usr/lib/uke-kernel-candidates/7.3.1-115-uke-ubuntu1/`; exact Debian dependency
-versions bind the packages. The distinct kernel release prevents confusion with
-Fedora modules. No `/boot`, live `/usr/lib/modules`, service, maintainer hook,
-boot selection, firmware blob or boot-capability provider is installed.
+The signed Linux archive is retained byte for byte as two source chunks of at
+most 80 MiB, allowing a future Git recipe without an oversized blob or LFS.
+Assembly compares the joined bytes to the original. Native preparation checks
+the parts, whole-archive digest and detached Linux signature before extraction.
+Source tests independently verify the expected signer.
 
-The future approved native build retains the shared preparer's tests and
-configuration. It makes the first kernel Image pass with an empty embedded
-initramfs while retaining `CONFIG_INITRAMFS_FORCE=y`. **That Image is not
-bootable.** `debian/build-kernel boot` exits 78 before creating output. It must
-not be used as an intermediate workaround for deployment.
+Candidate release **7.3.1-1006u1** makes `sizeof("uke" UTS_RELEASE)` exactly
+16, satisfying the unchanged shared ALSA assertion that rejected the old
+115 Ubuntu suffix. The driver, inspector and fixtures use the same identity;
+oversized future identifiers fail before upstream compilation. The Debian
+version is `7.3.1-1006ubuntu1~tenacious1`.
 
-Shared configuration enforces module signatures. A future kernel build normally
-generates a disposable module-signing key, retains its public certificate and
-removes the private build key after module installation. This is separate from
-the user's Launchpad OpenPGP upload key. No kernel build or key generation has
-been run here; the pending build approval must cover this standard build effect.
+The recipe still defines three candidate-only ARM64 packages: Image/config,
+DT and modules, beneath `/usr/lib/uke-kernel-candidates/7.3.1-1006u1/`.
+Exact Debian dependencies bind them. It installs no live boot/module tree,
+hook, firmware, boot selection or boot ABI provider. The first-pass Image
+retains INITRAMFS_FORCE with an empty embedded initramfs and is **not bootable**.
+The boot action still exits 78. Do not deploy this intermediate Image.
 
-`inspect-kernel-candidate.sh` reads actual extracted content: complete digest
-inventories, ARM64 Image header/release, Uke/SM7675 DT compatibility, required
-configuration, module ELF architecture, vermagic and signature metadata. It
-rejects links, extra unlisted files, live boot/module locations and an empty
-module tree. It does not cryptographically verify module signatures or claim
-full DT binding/driver qualification. Its synthetic refusal tests cover corrupt
-Image bytes, foreign DT, missing modules, symlinks and traversal. No real
-candidate module or kernel has yet passed this inspector.
+The earlier server execution approval covered the prepared release-115 source
+set. The new 1006 profile differs in 28 files, including LMH policy lifecycle,
+SCMI negotiation, CPU observation and O82 VRR behavior. Its server-native build
+requires source-specific approval, including its shared C/C++ sanitizer fixtures,
+host build tools and disposable module-signing key. The user's private upload
+key remains on the tablet and is unrelated.
 
-## Remaining boot integration
+## Full boot cohort
 
-The retained `make-initramfs-base.sh` builds a systemd/dracut base and records
-Fedora RPM ownership/licenses. Ubuntu needs an explicitly reviewed package
-provenance backend and equivalent root-selector, filesystem, timeout, offline
-charge and recovery behavior. Do not remove those checks to make a build pass.
-The full Fedora boot-payload test suite is not replaced by candidate packaging.
-Embedded initramfs generation, complete DT/driver admission, module trust,
-Android boot-v4 coherence, updater transactions and physical rollback remain
-unfinished. `uke-kernel-boot` is explicitly blocked, and no recipe provides
-`uke-boot-cohort-v1`.
+The inspector validates actual content inventories, ARM64 Image and module
+metadata, Uke/SM7675 DT compatibility and enforced signing configuration. Its
+refusal fixtures pass; no real 1006 Ubuntu candidate has passed. Full DT/driver
+admission and cryptographic module trust remain separate requirements.
+
+The shared producer builds a systemd/dracut base and records Fedora RPM
+ownership/licenses. Ubuntu needs a native dpkg provenance adapter and the same
+root-selector, filesystem, timeout, offline-charge and recovery checks. Its
+release argument currently accepts numeric Fedora suffixes only; a reviewed
+portable extension is needed for the Debian `u1` identity. Do not suppress the
+shared checks or execute RPM scripts against Ubuntu.
+
+A complete boot cohort must be rebuilt in one job with its embedded initramfs,
+DT and signed modules. Preserve the private ephemeral module key until the
+final Image pass, bind its public certificate and module signatures, then
+discard the private key before artifact export. The candidate-only action
+deletes that key after module packaging; its Image cannot be promoted later by
+appending an unrelated initramfs or regenerating a different trust key.
+
+The shared configuration selects SELinux and lacks AppArmor. Official Tenacious
+policycoreutils, selinux-utils and selinux-policy-default resolve without Python
+in the runtime plan, so preserving this security path is feasible. Policy labels,
+enforcing handoff and actual startup still require validation. Do not disable
+security to get a boot. See [TEST-IMAGE-GATES.md](TEST-IMAGE-GATES.md).

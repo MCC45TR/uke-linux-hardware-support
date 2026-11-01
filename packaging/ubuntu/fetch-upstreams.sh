@@ -7,7 +7,7 @@ if [[ $selected != all ]]; then
  awk -F '\t' -v p="$selected" '$1==p {found=1} END {exit !found}' "$root/packaging/ubuntu/components.tsv"
 fi
 selected_source() {
- [[ $selected == all || $selected == "$1" || ($selected == uke-linux-kernel && $1 == kernel-parent110) ]]
+ [[ $selected == all || $selected == "$1" || ($selected == uke-linux-kernel && $1 == kernel-copr1006) ]]
 }
 while IFS=$'\t' read -r package archive url hash patchset; do
  selected_source "$package" || continue

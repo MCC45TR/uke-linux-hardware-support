@@ -1,3 +1,20 @@
+uke-linux-kernel (7.3.1-1006ubuntu1~tenacious1) tenacious; urgency=medium
+
+  * Stage the exact successful test-channel O82/LMH release-1006 source RPM.
+  * Retain its source inventories, four bounded overlays and physical gates.
+  * Coordinate candidate release 7.3.1-1006u1 within the shared ALSA ID bound.
+  * Source assembly only; new native source execution and boot remain gated.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 15:00:00 +0000
+
+uke-linux-kernel (7.3.1-115ubuntu1~tenacious2) tenacious; urgency=medium
+
+  * Shorten the coordinated candidate kernel release to fit the shared ALSA
+    driver identifier bound; retain its compile-time assertion unchanged.
+  * Reject oversized release identities before invoking upstream build tools.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 14:00:00 +0000
+
 uke-linux-kernel (7.3.1-115ubuntu1~tenacious1) tenacious; urgency=medium
 
   * Preserve release 115 shared source composition from its pinned parent.

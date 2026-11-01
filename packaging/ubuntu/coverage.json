@@ -11,9 +11,9 @@
     "name": "senemos-uke-linux-kernel-mainline",
     "source_type": "custom",
     "superseded": false,
-    "source_revision": "8983163763f708ec940b349ebb81ab43cc3725c3",
+    "source_revision": "fcbdae4b757732f0f0e3162c610f19abae290832",
     "status": "partial",
-    "reason": "Release-115 exact retained-source composition and candidate-only Debian core/DT/module recipes implemented; source/signature checks pass; no native build, usable initramfs, full boot suite or boot capability"
+    "reason": "Exact experimental test-channel release1006 source staged; signed Linux source/chunks and emitted inventories verified. Coordinated suffix fixed; new native execution and Ubuntu embedded initramfs/full cohort remain unqualified."
   },
   {
     "name": "uke-control",
