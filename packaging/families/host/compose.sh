@@ -170,9 +170,7 @@ while IFS=$'\t' read -r key input; do
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
-    debug_options=(--define 'debug_package %{nil}')
-    if [[ $key == "$debug_owner" ]]; then debug_options=(); fi
-    rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" "${debug_options[@]}" "$part/input.spec" >"$part/expanded.spec"
+    rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
     preserve_identity=0
@@ -238,14 +236,17 @@ spec="$output/SPECS/$family.spec"
           {print}
         ' "$stage/retired-selections" "$part/preamble"
     done
+    if [[ -n $debug_owner ]]; then
+        for suffix in debuginfo debugsource; do
+            printf '\n%%package -n %s-%s\n' "$debug_owner" "$suffix"
+            awk '/^(Version|Release|Epoch|License):/{print}' "$stage/parts/$debug_owner/preamble"
+            printf 'Summary: Optional debug %s for Uke sensor integration\nAutoReq: 0\nAutoProv: 1\n%%description -n %s-%s\nDebug data from the matched sensor source build; no hardware service.\n' "$suffix" "$debug_owner" "$suffix"
+        done
+    fi
     printf '\n%%prep\n%%setup -q\n'
     for phase in prep generate_buildrequires build install check; do
         if [[ $phase == generate_buildrequires ]] && ! find "$stage/parts" -name generate_buildrequires -print -quit | grep -q .; then continue; fi
         [[ $phase == prep ]] || printf '\n%%%s\n' "$phase"
-        if [[ $phase == check && -n $debug_owner ]]; then
-            IFS=$'\t' read -r _ _ _ cwd _ _ <"$stage/parts/$debug_owner/identity"
-            printf 'cp debugfiles.list debugsourcefiles.list "%%{_builddir}/%s-%s/work/%s/%s/"\n' "$family" "$version" "$debug_owner" "$cwd"
-        fi
         if [[ $group == uke-hw && ( -z $standalone || $standalone == uke-firmware ) && $phase == check ]]; then
             printf 'mv "%%{_builddir}/%s-%s/firmware-unprocessed" "%%{buildroot}/usr/lib/firmware"\n' "$family" "$version"
         fi
@@ -288,6 +289,9 @@ spec="$output/SPECS/$family.spec"
           {if(!files)gsub(/%/,"%%");print replace($0,source,base "/inputs/" key)}
         ' "$part/tail"
     done <"$stage/inputs"
+    if [[ -n $debug_owner ]]; then
+        printf '\n%%files -n %s-debuginfo -f debugfiles.list\n%%files -n %s-debugsource -f debugsourcefiles.list\n' "$debug_owner" "$debug_owner"
+    fi
     while IFS=$'\t' read -r old new unit; do
         printf '\n%%pre -n %s\n' "$new"
         printf 'old=%s; new=%s; unit=%s; phase=save\n' "$old" "$new" "$unit"
