@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-25",
+  "scope": "Supplied Chrome report, guarded VA queries and source/package repair; no codec or rendering acceptance",
+  "browser": {
+    "version": "156.0.8078.47",
+    "revision": "1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775",
+    "package": "google-chrome-stable-156.0.8078.47-1.aarch64",
+    "url": "https://chromium.googlesource.com/chromium/src",
+    "source_files": [
+      {
+        "sha256": "6484df28cc337258695fdcb99b44f4c28e741e2bb229adde75fefc6fd5612f05",
+        "local_path": "referances/chromium-gpu-20261025/content_common_gpu_pre_sandbox_hook_linux.cc",
+        "upstream_path": "content/common/gpu_pre_sandbox_hook_linux.cc"
+      },
+      {
+        "sha256": "027692154cf0480c49bedae0f89110b711c82ffbf7ae966e2d5028e37f963da3",
+        "local_path": "referances/chromium-gpu-20261025/content_gpu_gpu_main.cc",
+        "upstream_path": "content/gpu/gpu_main.cc"
+      },
+      {
+        "sha256": "eef13b1c4bb30db66de9235c0941e5487d51ac86adad537724f15c9ed395c496",
+        "local_path": "referances/chromium-gpu-20261025/gpu_config_gpu_finch_features.cc",
+        "upstream_path": "gpu/config/gpu_finch_features.cc"
+      },
+      {
+        "sha256": "6a6e9c2e7a4428e23227e4e7cac34283ddac50b505434e9e3d56492fbd28a779",
+        "local_path": "referances/chromium-gpu-20261025/gpu_ipc_service_gpu_init.cc",
+        "upstream_path": "gpu/ipc/service/gpu_init.cc"
+      },
+      {
+        "sha256": "b1e51dbd3a611e5b50163861487e2f95884e92fe1b12c9e11ff3060f4e45cecc",
+        "local_path": "referances/chromium-gpu-20261025/media_base_media_switches.cc",
+        "upstream_path": "media/base/media_switches.cc"
+      },
+      {
+        "sha256": "aca4e45b5db81b5a66e0c7a5f3c8b8c36aeca9ca3e405d12420c56f066291e45",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_vaapi_vaapi_wrapper.cc",
+        "upstream_path": "media/gpu/vaapi/vaapi_wrapper.cc"
+      },
+      {
+        "sha256": "99170df4712990922dde39fd3fd641818dae9679c27a1c9a96dfcd225435ebfc",
+        "local_path": "referances/chromium-gpu-20261025/sandbox_policy_linux_bpf_gpu_policy_linux.cc",
+        "upstream_path": "sandbox/policy/linux/bpf_gpu_policy_linux.cc"
+      },
+      {
+        "sha256": "35c62d065e2f2f8eab5cfe9d75c83c6285581ffac9d3f23be710652eb7736567",
+        "local_path": "referances/chromium-gpu-20261025/sandbox_policy_linux_sandbox_linux.cc",
+        "upstream_path": "sandbox/policy/linux/sandbox_linux.cc"
+      },
+      {
+        "sha256": "05aa43e5714f4d9943c59aea0abc9df284acdbc41d0e9e902f0acff646b03ba1",
+        "local_path": "referances/chromium-gpu-20261025/ui_gfx_linux_drm_util_linux.cc",
+        "upstream_path": "ui/gfx/linux/drm_util_linux.cc"
+      },
+      {
+        "sha256": "4c46e40f55d9d77a096e6cf21adc90c73cd9a2feac032f2b05c7070e05740380",
+        "local_path": "referances/chromium-gpu-20261025/ui_ozone_platform_wayland_host_wayland_connection.cc",
+        "upstream_path": "ui/ozone/platform/wayland/host/wayland_connection.cc"
+      },
+      {
+        "sha256": "fad164f830723c85facbf8b741b97dbbabf3dd8321af6ca11b1bc672e57e3eb8",
+        "local_path": "referances/chromium-gpu-20261025/ui_ozone_platform_wayland_host_wayland_drm.cc",
+        "upstream_path": "ui/ozone/platform/wayland/host/wayland_drm.cc"
+      },
+      {
+        "sha256": "37095b3421195cee76d6e3d2eb378bfd2b243b798df6dd766f8bea837baccff0",
+        "local_path": "referances/chromium-gpu-20261025/ui_ozone_platform_wayland_host_wayland_zwp_linux_dmabuf.cc",
+        "upstream_path": "ui/ozone/platform/wayland/host/wayland_zwp_linux_dmabuf.cc"
+      },
+      {
+        "sha256": "5c0fe87e9143cb3d34b1e46f8584e8dc0c12804218b92670eac4e42169617ea7",
+        "local_path": "referances/chromium-gpu-20261025/gpu_config_gpu_driver_bug_list.json",
+        "upstream_path": "gpu/config/gpu_driver_bug_list.json"
+      },
+      {
+        "sha256": "eb2c88cc8c4d8e1039f96e8d6435cd7002b6b5192a0ff6ea43b547dcc17bb7b0",
+        "local_path": "referances/chromium-gpu-20261025/gpu_config_software_rendering_list.json",
+        "upstream_path": "gpu/config/software_rendering_list.json"
+      },
+      {
+        "sha256": "dc086fa0014f9b7bbdf1cd2b6371998e04b3c333b5df55dc7264a48596aff591",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_vaapi_vaapi_video_decoder.cc",
+        "upstream_path": "media/gpu/vaapi/vaapi_video_decoder.cc"
+      },
+      {
+        "sha256": "3cd2c610e2531f47efef9105cc5f2b5e6ced7e598b04ed31d58ee2e8b01c3235",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_chromeos_video_decoder_pipeline.cc",
+        "upstream_path": "media/gpu/chromeos/video_decoder_pipeline.cc"
+      },
+      {
+        "sha256": "a3487445016152a8a52784fc89c4dd7e625ea40bed71fb1a0edd9ddeb1c5216e",
+        "local_path": "referances/chromium-gpu-20261025/media_gpu_gpu_video_decode_accelerator_factory.cc",
+        "upstream_path": "media/gpu/gpu_video_decode_accelerator_factory.cc"
+      }
+    ]
+  },
+  "libva_source": {
+    "version": "2.24.1",
+    "commit": "710eb465c6277ee2cac3e6948767b01eebe7e77a",
+    "url": "https://github.com/intel/libva",
+    "files": [
+      {
+        "component_path": "uke-video/referances/libva-2.24.1-source/va.c",
+        "sha256": "606e3ef011fec333c88c81239fdc123db4db73a4961ba6b12944d63c7fdff201"
+      },
+      {
+        "component_path": "uke-video/referances/libva-2.24.1-source/va_drm_utils.c",
+        "sha256": "167dbf62cfb05612923bcfd3cfc976f00311590f0634d4f6b93d5f27e5f84cf3"
+      }
+    ]
+  },
+  "before_report": {
+    "sha256": "539485ce3097f487d8226ebf1066774b0bdd7fe889c579f5954e68f29e369869",
+    "exported_utc": "2026-10-25T16:29:19.426Z",
+    "kernel": "7.3.0-10",
+    "gl_path": "ANGLE OpenGL / GaneshGL / FD732 Mesa 26.2.5",
+    "gpu_sandboxed": false,
+    "decode_profile_count": 0,
+    "encode_profile_count": 0
+  },
+  "post_boot_metadata_observation": {
+    "utc": "2026-10-25T19:22:15Z",
+    "kernel": "7.3.0-12",
+    "kernel_source": "5d3360aad8f7892622212e82e4657f17ce96e37b",
+    "scope": "Metadata only; no device node opened or VA/browser test run",
+    "receipt_sha256": "6734f006f687af3436bf731a3fbe8672d2ff06fa9670a5f6d196c5c4bf1042cb",
+    "backend": "uke-vaapi-v4l2-1.0.0-0.2.20261025git6d03c3f.fc46.aarch64",
+    "backend_sha256": "23bb02a933d2c67c0fce4a24badf762c7608a913d28d9269f0c64e7a7ba06aa6",
+    "rpm_verify_clean": true,
+    "default_msm_alias_present": false,
+    "iris_loaded": false,
+    "videocc_loaded": false,
+    "controlled_load_blacklist_retained": true,
+    "only_video_node": "NT36532 THP; not an Iris codec node",
+    "render_node": "renderD128",
+    "render_node_platform": "3d00000.qcom,kgsl-3d0",
+    "render_node_stable_alias": "platform-3d00000.qcom_kgsl-3d0-render",
+    "render_user_read_write": true,
+    "browser_process_present": false,
+    "chrome_render_override_retested": false,
+    "device_window_returned": true
+  },
+  "read_only_tablet_observation": {
+    "utc": "2026-10-25T17:33:49Z",
+    "kernel": "7.3.0-10",
+    "backend": "uke-vaapi-v4l2-1.0.0-0.2.20261025git6d03c3f.fc46.aarch64",
+    "backend_sha256": "23bb02a933d2c67c0fce4a24badf762c7608a913d28d9269f0c64e7a7ba06aa6",
+    "default_msm_alias_present": false,
+    "iris_user_read_write": true,
+    "active_wayland_seat": true,
+    "gpu_seccomp": 0,
+    "gpu_seccomp_filters": 0,
+    "render_node": "renderD128",
+    "render_node_stable_alias": "platform-3d00000.qcom_kgsl-3d0-render",
+    "render_selection": "Automatic Wayland compositor device; no installed launcher override",
+    "linker_check_utc": "2026-10-25T17:44:22Z",
+    "backend_dependencies_resolved": true
+  },
+  "preserved": {
+    "mesa_angleisbroken": true,
+    "no_forced_linux_drdc": true,
+    "no_global_blocklist_bypass": true,
+    "no_sandbox_disabling": true
+  },
+  "acceptance": {
+    "standalone_vainfo": true,
+    "gpu_sandbox_repaired": false,
+    "hardware_decode_sessions": false,
+    "hardware_encode_sessions": false,
+    "hdr_sdr_display_moves": false,
+    "webgpu_video_buffer_interop": false,
+    "post_boot_render_mapping": false,
+    "default_vainfo": true
+  },
+  "test_preparation": {
+    "local_date": "2026-10-26",
+    "coverage_document": "docs/BROWSER-VIDEO-TESTS.md",
+    "gpu_page": "tests/browser-gpu.html",
+    "gpu_page_sha256": "5b8434ed586f28c674e76c93f6cf730c7912e473330e0de82b0de59afe4e2b14",
+    "host_controller": "tests/capture-browser.mjs",
+    "host_controller_sha256": "c1e3ddf6e5528f24bd5c939a1b06ed891adfdcbadd0cd4f7f151d253bb876497",
+    "video_page": "tests/browser-video.html",
+    "video_page_sha256": "561e358029187b49685709bb66e89e5a4fedbe52d221624fbd18429245ef8d59",
+    "video_script": "tests/browser-video.js",
+    "video_script_sha256": "4f69f52d1df68b1c59c51cb864ebb0bfb8bea807d5fdfb8800688d068f67a0f2",
+    "host_api_fixtures_passed": true,
+    "host_packet_fixtures_passed": true,
+    "host_pixel_validator_fixtures_passed": true,
+    "real_software_packet_corpora": 7,
+    "software_frames_per_profile": 30,
+    "native_format_reference_sets": 14,
+    "reference_index_sha256": "54051197ffe4631bd3f2ef75f61f48d8a1b25f32e1e690ac4883abd35a368acd",
+    "source_corpus_transfer": "Eight SHA-guarded regular files from kernel 7.3.0-13; no device-node, codec or browser API access",
+    "host_reference_sdk_image": "5b8d09371cb043901718453edf84ee20d467e816328e6db5b6a9d0664d5e5ebe",
+    "host_reference_ffmpeg": "9.0.2-1.fc46.x86_64",
+    "actual_browser_workload_tested": true,
+    "encode_size": [
+      640,
+      360
+    ],
+    "decode_corpus_size": [
+      320,
+      240
+    ],
+    "chrome_va_encode_performance_floor": [
+      321,
+      241
+    ],
+    "performance_floor_policy_overridden": false,
+    "main10_source": "Little-endian I420P10; independent decoded precision not accepted",
+    "webrtc_codecs": [
+      "H264",
+      "H265 if exposed by the browser"
+    ],
+    "interop": "Opt-in decoded-frame external texture versus RGBA reference; native DMA-BUF/modifier/fence and zero-copy acceptance remain separate",
+    "node_target_runtime_required": false,
+    "python_target_runtime_required": false,
+    "encode_extractor": "tests/unpack-webcodecs-encode.mjs",
+    "encode_extractor_sha256": "cdaca195640e70ae9f6d3fe88a86ae90f9de4655abc004866364fbccc6b250e6",
+    "host_encode_extraction_fixtures_passed": true,
+    "real_host_software_encode_packet_fixtures": 2,
+    "host_extracted_software_frames_per_fixture": 30,
+    "actual_browser_encoder_tested": false,
+    "actual_gpu_baseline_tested": true,
+    "actual_video_workload_tested": false
+  },
+  "runtime_changes": [
+    {
+      "utc": "2026-10-25T19:36:49Z",
+      "scope": "Package-only DNF upgrade on kernel 7.3.0-12; no device open, VA query, module load or browser restart",
+      "package": "uke-vaapi-v4l2-1.0.0-0.4.20261025git6d03c3f.fc46.aarch64",
+      "copr_build": 11206106,
+      "replaced_revision": "0.2",
+      "dnf_upgraded_package_count": 1,
+      "local_signature_check_required": true,
+      "rpm_verify_clean": true,
+      "backend_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
+      "installed_alias": "msm_drv_video.so -> v4l2_drv_video.so",
+      "video_modules_unloaded": true,
+      "verification_receipt_sha256": "03795f4ac371f87e58cec17f77f6e05b0fc1f1f59175c5e1dc6979267493cfe8",
+      "default_vainfo_retested": false,
+      "gpu_report_after": false,
+      "render_regression_tested": false
+    }
+  ],
+  "donor_code_executed": false,
+  "kernel_build_lock_changed": false,
+  "standalone_va_trials": {
+    "kernel": "7.3.0-10",
+    "backend_revision": "0.2",
+    "default": {
+      "utc": "2026-10-25T17:52:49Z",
+      "exit": 3,
+      "error": "Missing msm_drv_video.so; vaInitialize -1 unknown libva error",
+      "log_sha256": "3ed313e33583084e0ce5d0d025df5623fab20929f7a7b18ce96420d569c1edf4"
+    },
+    "explicit_v4l2": {
+      "utc": "2026-10-25T17:53:36Z",
+      "exit": 0,
+      "api_version": "1.24",
+      "init_entrypoint": "__vaDriverInit_1_0",
+      "decode_profile_count": 7,
+      "encode_profile_count": 4,
+      "log_sha256": "f6fbfd7fd9a9f8adaa396d390ddc4bfb9a14409fc077b9c67c8ca038cbebef76"
+    },
+    "new_non_audit_kernel_messages": 0,
+    "stream_started": false,
+    "frames_produced": false,
+    "persistent_config_changed": false
+  },
+  "saved_kernel14_display_observation": {
+    "local_date": "2026-10-26",
+    "kernel_release": "7.3.0-14",
+    "provenance": "Coordinator-saved tablet kernel-active-stream and original KScreen receipts; no new target command from this investigation",
+    "root_receipt_sha256": "113e61ba25491b3eac60448c5c238d124371e46012fa2e7ed36af1d39d14a95d",
+    "desktop_receipt_sha256": "f0139c999ee5758776e73b4c02fcda5bda57d3fbba23ece68bafc0532dfd550a",
+    "outputs": [
+      {
+        "connector": "DP-1",
+        "kernel_active": true,
+        "bits_per_component": 10,
+        "bits_per_pixel": 30,
+        "dsc_bits_per_pixel_x16": 0,
+        "kwin_enabled": true,
+        "kwin_hdr": false,
+        "kscreen_max_bpc": 10
+      },
+      {
+        "connector": "DSI-1",
+        "kernel_active": true,
+        "bits_per_component": 10,
+        "bits_per_pixel": 30,
+        "dsc_bits_per_pixel_x16": 128,
+        "kwin_enabled": true,
+        "kwin_hdr": null,
+        "kscreen_max_bpc": 0
+      }
+    ],
+    "dp": {
+      "lanes": 2,
+      "rate_khz": 540000,
+      "hdr_requested": false,
+      "dsc_requested": false,
+      "dsc_active": false
+    },
+    "limitation": "Active kernel pipeline state, not measured sink precision/HDR. DSI KScreen HDR is absent and maxBpc=0 must not replace observed 10 bpc. No HDR/SDR window/video move or new Chrome report.",
+    "epoch": "Earlier kernel14 boot before recovery-timer reboot; later active-output state is recorded in default_va_kernel14_observation"
+  },
+  "default_va_kernel14_observation": {
+    "utc": "2026-10-26T04:23:02Z",
+    "kernel_release": "7.3.0-14",
+    "backend_revision": "0.4",
+    "actor": "Coordinator-owned normal-UID1000 query",
+    "exit": 0,
+    "api_version": "1.24",
+    "init_entrypoint": "__vaDriverInit_1_0",
+    "driver": "Iris V4L2 stateful VA-API backend",
+    "driver_path": "/usr/lib64/dri/msm_drv_video.so",
+    "alias_target": "v4l2_drv_video.so",
+    "backend_sha256": "45c5996e7a79f5f71ed1ef68a384795605bbf4ee1265212784a9e25b6b1d8c55",
+    "decode_profile_count": 7,
+    "encode_profile_count": 4,
+    "query_attempts": 1,
+    "four_driver_path_device_overrides_unset": true,
+    "log_sha256": "fa4bdab79812dd543d8be16dabca5e3138529a7225103cdc6fb66fecd362302e",
+    "procedure_sha256": "ecd9af2feb9f96d3a37fe5af81a4e54ea49ff9dbfab2f78cf3c5c8e4780a8189",
+    "post_query_receipt_sha256": "ddbead612238b0f14330df99a4b6dd8b845ce7e60cf496d6d88e15d79dbbf971",
+    "recovery_timer_inactive_at_completion": true,
+    "dp_active_bpc": 10,
+    "dp_active_bpp": 30,
+    "dsi_active": false,
+    "stream_started": false,
+    "frames_produced": false,
+    "browser_started": false,
+    "limitation": "Default initialization/profile query only; saved post-query kernel excerpt is audit-only. No codec, GPU sandbox, new Chrome report or pixel regression acceptance.",
+    "module_activation": "Explicit coordinator-owned load in a controlled window; cold-boot activation and permanent browser integration are not qualified",
+    "cold_boot_module_activation_accepted": false
+  },
+  "normal_gl_kernel14_trial": {
+    "utc": "2026-10-26T06:27:04.471Z",
+    "kernel_release": "7.3.0-14",
+    "backend_revision": "0.4",
+    "browser": "Chrome156.0.8078.47",
+    "mode": "Normal isolated Wayland/ANGLE OpenGL baseline; no early switch or codec workload",
+    "browser_build_revision": "1d17a2e2ee147bb7d6ae2ab6abdb3a2510c17775",
+    "modules_loaded_at_runtime": [
+      "qcom_iris",
+      "videocc_sm8550"
+    ],
+    "persistent_module_policy_changed": false,
+    "renderer": "ANGLE (angleisbroken, FD732, OpenGL ES 3.2 Mesa 26.2.5)",
+    "angleisbroken_preserved": true,
+    "canvas_pixels_passed": true,
+    "webgl_shader_pixels_passed": true,
+    "webgl_context_restore_passed": true,
+    "gpu_report_sandboxed": false,
+    "multiple_threads_warning": true,
+    "gpu_proc_seccomp_observed": false,
+    "missing_proc_snapshot_reason": "Explicit PID snapshot was attempted after the ninety-second browser lifetime; no current Seccomp value is inferred",
+    "initial_systeminfo_decode_rows": 0,
+    "initialized_systeminfo_decode_profiles": [
+      "h264 baseline",
+      "h264 main",
+      "h264 high",
+      "vp9 profile0",
+      "vp9 profile2",
+      "hevc main",
+      "hevc main 10",
+      "hevc main still-picture"
+    ],
+    "initialized_systeminfo_encode_rows": 0,
+    "early_empty_list_is_final_result": false,
+    "observed_chrome_backend_library_map": null,
+    "webgpu_status_label": "enabled",
+    "webgpu_adapter_obtained": false,
+    "webgpu_error": "Error: No WebGPU adapter",
+    "webgpu_compute_rounds": 0,
+    "automatic_render_node_override": "/dev/dri/renderD128",
+    "render_override_supplied_by_trial": false,
+    "render_by_path": "platform-3d00000.qcom_kgsl-3d0-render",
+    "before_report_sha256": "27260eb1ec3f12237b9dae415913b00b1251d86287464d32c2b400d2479830a5",
+    "after_report_sha256": "de1bfd821dc4d0603a4ea22499b476e91e0e2984eb7f7a1600f3bce0e5e126a2",
+    "capture_sha256": "d7d62d299976c9c360b232dd0ef7c52ab5a0ce72b4503f0737af6c4f4d3dba5f",
+    "startup_cleanup_receipt_sha256": "3ea61f4b40602313292df833a567f8776b8ab9a19dc7481ab5b31d674e6efd9c",
+    "handback_receipt_sha256": "160700b26b1a7b4aff444f70c9b3edb1391f9fceb327a63c8510d93009945277",
+    "gpu_process_crash_count": 0,
+    "browser_lifetime_seconds": 90,
+    "browser_supervisor_exit": 124,
+    "ssh_forward_supervisor_exit": 124,
+    "owned_chrome_processes_at_handback": 0,
+    "owned_forward_listener_at_handback": false,
+    "new_non_audit_kernel_messages_in_saved_interval": 0,
+    "chrome_reported_display_bpc": 8,
+    "chrome_reported_display_bpp": 24,
+    "kernel_dp_active_bpc": 10,
+    "kernel_dp_active_bpp": 30,
+    "kernel_dsi_active": false,
+    "black_monitor_preexisting": true,
+    "optical_presentation_accepted": false,
+    "stream_started": false,
+    "frames_produced": false,
+    "hardware_codec_accepted": false,
+    "early_sandbox_trial_started": false,
+    "scope_returned": "Coordinator requested target back for the user-prioritized DSC/FEC work; no additional test started"
+  }
+}
