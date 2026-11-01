@@ -57,7 +57,13 @@ Bluetooth and speaker orientation have source-only main adapters with guarded
 input revisions and prefixed shared source paths. Source construction and
 dry build plans pass; no helper compilation or execution occurred in this
 adapter qualification. These five routes remain unenrolled in Launchpad.
-The other thirteen historical non-kernel routes still need main adapters.
+Three further adapters now cover core dependency selection, front-color and
+proximity capture. They preserve the unqualified core profile, the opt-in front
+service and the root-only diagnostic mode. Clean Tenacious ARM64 source/package
+builds and payload audits passed at94f3f26; downloaded artifact manifests and
+matching input revisions verify. The core profile bytes retain false boot,
+hardware and stable flags. These routes remain unenrolled, with runtime gates
+unchanged. Ten historical non-kernel routes still need main adapters.
 
 Superseding qualification: all five additional adapters subsequently passed
 clean native Tenacious ARM64 source/package construction and payload audits

@@ -459,3 +459,12 @@ through the shared component Makefile in its nested source directory, while
 the root-only proximity diagnostic keeps its original permission mode. All
 generated-overlay, dependency and upgrade-order fixtures pass. Source-package
 construction and native qualification remain separate checks before enrollment.
+
+These three further adapters subsequently passed native Tenacious ARM64
+qualification at94f3f26. All artifact and source/input hashes verify. The core
+profile is byte-identical to the canonical unqualified profile, and proximity
+capture retains0750 mode. Front-color compiles through the unchanged shared
+Makefile; no target helper is executed. They remain unenrolled and do not admit
+the missing runtime ABI or a system image. Eight additional main routes now
+pass native builds, in addition to the first speaker preset; ten historical
+non-kernel adapters remain unfinished.
