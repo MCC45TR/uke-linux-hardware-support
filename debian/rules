@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+include /usr/share/dpkg/buildflags.mk
+%:
+	dh $@
+override_dh_auto_configure:
+override_dh_auto_build:
+	mkdir -p build-tools
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/boot/boot-image.cpp -o build-tools/boot-image $(LDFLAGS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/boot-pair/android-sparse.cpp -o build-tools/android-sparse $(LDFLAGS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/image/ext4-labels.cpp -o build-tools/ext4-labels $(LDFLAGS) -lext2fs -lcom_err -lselinux
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/image/check-userdata-payload.cpp -o build-tools/check-userdata-payload $(LDFLAGS) -lcrypto -lzstd
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/image/audit-languages.cpp -o build-tools/audit-languages $(LDFLAGS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/image/compare-root-metadata.cpp -o build-tools/compare-root-metadata $(LDFLAGS)
+override_dh_auto_test:
+	# Native source execution is pending; do not run Fedora guest-image tests.
+override_dh_auto_clean:
+	rm -rf build-tools
+override_dh_auto_install:
+	install -d debian/uke-image-tools/usr/libexec/uke-image-tools
+	install -m755 build-tools/* debian/uke-image-tools/usr/libexec/uke-image-tools/
+	install -Dm644 SOURCE-ORIGIN debian/uke-image-tools/usr/share/uke-image-tools/SOURCE-ORIGIN
