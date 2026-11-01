@@ -41,6 +41,7 @@ for selection in core kde all; do
         target="$fixture/roots/$selection-$mode"
         mkdir -p "$target/usr/lib/sysimage/rpm"
         rpm --dbpath "$target/usr/lib/sysimage/rpm" --initdb
+        rpmkeys --dbpath "$target/usr/lib/sysimage/rpm" --import "$fixture/copr-pubkey.gpg"
         case $mode in
             upgrade) seed=("$fixture/baseline/"*.rpm);;
             rollback) seed=("$fixture/candidate/"*.rpm);;
@@ -53,6 +54,8 @@ for selection in core kde all; do
                 done < "$fixture/runtime-names";;
             *) seed=();;
         esac
+        # The separate Cutefish repository is not admitted by this Rawhide fixture.
+        for i in "${!seed[@]}"; do [[ ${seed[$i]##*/} != uke-cutefish-meta-* ]] || unset 'seed[i]'; done
         if ((${#seed[@]})); then rpm --dbpath "$target/usr/lib/sysimage/rpm" -i --justdb --nodeps --noscripts --notriggers "${seed[@]}"; fi
         "$fixture/solver" "$fixture" "$target" "$mode" "$selection"
     done
@@ -67,6 +70,7 @@ while IFS= read -r name; do
     sandbox="$fixture/roots/config-$name"
     mkdir -p "$sandbox/db" "$sandbox/payload"
     rpm --dbpath "$sandbox/db" --initdb
+    rpmkeys --dbpath "$sandbox/db" --import "$fixture/copr-pubkey.gpg"
     args=(--dbpath "$sandbox/db" --nodeps --noscripts --notriggers --badreloc --relocate "/=$sandbox/payload")
     rpm "${args[@]}" -i "$old"
     for config in "${configs[@]}"; do
