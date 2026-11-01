@@ -10,7 +10,7 @@ the build feature.
 
 The manual source recipe retains the complete signed-source-verified Fedora
 input and unchanged Qt sources, enables the existing feature, and adds matching
-Qt development dependencies. Release `1.1` permits a later Fedora Release `2`
+Qt development dependencies. Release `1.2` permits a later Fedora Release `2`
 to replace this build. Original KDE applications and the existing automatic
 runtime catalog are unchanged. The source lock is
 [`qt-virtualkeyboard-sound.json`](../../manifests/qt-virtualkeyboard-sound.json).

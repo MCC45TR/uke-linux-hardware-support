@@ -3,7 +3,7 @@
   "package": "qt6-qtvirtualkeyboard",
   "version": "6.12.0",
   "fedora_release": "1.fc46",
-  "release": "1.1",
+  "release": "1.2",
   "target": "fedora-rawhide-aarch64",
   "upstream_commit": "934b432b13cae5c64357a5e98547280bd191f806",
   "source_rpm_url": "https://kojipkgs.fedoraproject.org/packages/qt6-qtvirtualkeyboard/6.12.0/1.fc46/src/qt6-qtvirtualkeyboard-6.12.0-1.fc46.src.rpm",
