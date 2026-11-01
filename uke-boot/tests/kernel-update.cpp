@@ -53,7 +53,55 @@ static void fail_first_write(int fd,const Bytes &data) {
 static void terminate_during_write(int fd,const Bytes &data) {
     assert(kill(getpid(),SIGTERM)==0);write_fd(fd,data);
 }
+static void boot_transaction_contract() {
+    const fs::path running="/installed/running",next="/installed/next";
+    const std::vector<std::string> same{"validate-running","accept","policy","select","inspect"};
+    const std::vector<std::string> different{"validate-running","accept","policy","select","validate-next","inspect","apply"};
+    const auto exercise=[&](bool enabled,bool changed,const std::string &failure) {
+        std::vector<std::string> calls;bool accepted=false,applied=false,refused=false;
+        const unsigned char *accepted_data=nullptr;
+        const auto step=[&](const std::string &name) {
+            calls.push_back(name);
+            if(name==failure)throw std::runtime_error("injected boot transaction failure");
+        };
+        try {
+            boot_userdata(running,
+                [&](const fs::path &path) {
+                    assert(path==running||path==next);
+                    step(path==running?"validate-running":"validate-next");
+                    return Bytes{static_cast<unsigned char>(path==running?1:2)};
+                },
+                [&](const fs::path &path,const Bytes &bytes) {
+                    assert(path==running && bytes==Bytes{1});step("accept");
+                    accepted=true;accepted_data=bytes.data();
+                },
+                [&]{step("policy");assert(accepted);return enabled;},
+                [&]{step("select");return changed?next:running;},
+                [&](const fs::path &path,const Bytes &bytes) {
+                    step("inspect");assert(path==(changed?next:running));
+                    assert(bytes==Bytes{static_cast<unsigned char>(changed?2:1)});
+                    if(!changed)assert(bytes.data()==accepted_data);
+                },
+                [&](const fs::path &path,const Bytes &bytes) {
+                    step("apply");assert(accepted && changed && path==next && bytes==Bytes{2});applied=true;
+                });
+        }catch(const std::runtime_error &){refused=true;}
+        auto expected=enabled?(changed?different:same):std::vector<std::string>{"validate-running","accept","policy"};
+        if(!failure.empty()) {
+            const auto end=std::find(expected.begin(),expected.end(),failure);
+            assert(end!=expected.end());expected.erase(end+1,expected.end());
+        }
+        assert(calls==expected && refused==!failure.empty());
+        assert(accepted==(failure!="validate-running" && failure!="accept"));
+        assert(applied==(enabled && changed && failure.empty()));
+    };
+    exercise(true,false,"");exercise(true,true,"");
+    exercise(false,false,"");exercise(false,true,"");
+    for(const auto &failure:different)exercise(true,true,failure);
+    std::cout<<"Single-process boot: acceptance before policy, disabled-policy health, same-buffer reuse, candidate validation and every failure boundary passed; no device I/O\n";
+}
 int main() {
+    boot_transaction_contract();
     char dir[]="/tmp/uke-kernel-update.XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
     assert(root_label("console=tty0 root=PARTLABEL=linux rw")=="linux");
     assert(root_label("root=PARTLABEL=userdata rw")=="userdata");reject([]{root_label("root=UUID=123");});

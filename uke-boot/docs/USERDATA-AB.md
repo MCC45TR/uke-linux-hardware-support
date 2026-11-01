@@ -112,10 +112,13 @@ required. Replacing the running module directory is refused.
 `/etc/senemos/userdata-update.conf` is an administrator-preserving RPM config.
 It defaults to `automatic=1` and the bounded userdata VRR argument at 30 Hz.
 Automatic staging requires the exact value `automatic=1` in both
-this file and `/etc/senemos/kernel-update.conf`. The global default is
-`automatic=0`. Missing, duplicate or malformed settings fail closed before any
-state directory, slot, GPT or boot-LUN operation. A valid disabled policy returns
-from the `auto` command without accepting a boot or staging a kernel. VRR arguments alter only the
+this file and `/etc/senemos/kernel-update.conf`. Both shipped policies default
+to `automatic=1`; existing administrator configuration remains preserved.
+For `auto` and `transaction`, missing, duplicate or malformed settings fail
+closed before any state directory, slot, GPT or boot-LUN operation. A valid
+disabled policy returns from `auto` without accepting a boot or staging a kernel.
+The startup `boot` action performs independent health acceptance first, as
+described below. VRR arguments alter only the
 checked Android v4 wrapper; the package Image remains byte-identical. This
 argument does not establish physical VRR quality or cadence.
 
@@ -131,12 +134,14 @@ Old executable string literals do not satisfy the note contract. The RPM exposes
 A transaction file trigger runs after all package post-transaction scripts.
 It acts only on an exact Uke userdata installation. An ordinary Linux root or
 an offline composition does not enter the slot writer. At graphical startup,
-the packaged service first runs explicit software-health acceptance, then runs
-the separately gated automatic command. A disabled automatic policy therefore
-does not skip marking a proven healthy running slot successful. Acceptance
+the packaged service uses `uke-kernel-update boot` to perform software-health
+acceptance before policy-gated automatic staging under one updater lock. A
+matching default reuses this operation's verified running bundle. A disabled
+automatic policy therefore does not skip marking a proven healthy running slot
+successful. Acceptance
 retains the physical root, running Image, signed package/module, UFS boot-LUN,
 GPT identity and software-health checks. It does not select the other slot or
-enable automatic staging. A failed acceptance prevents the subsequent command.
+enable automatic staging. A failed acceptance prevents subsequent staging.
 Normal acceptance and staging do not reboot the device.
 
 Before a write, the updater requires a unique physical UFS root and 96 MiB boot

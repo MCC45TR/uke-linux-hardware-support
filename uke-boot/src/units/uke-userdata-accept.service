@@ -10,8 +10,7 @@ StartLimitBurst=5
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/uke-kernel-update accept
-ExecStart=/usr/bin/uke-kernel-update auto
+ExecStart=/usr/bin/uke-kernel-update boot
 TimeoutStartSec=120
 Restart=on-failure
 RestartMode=direct

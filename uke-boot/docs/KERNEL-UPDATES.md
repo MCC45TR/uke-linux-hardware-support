@@ -1,5 +1,11 @@
 # Stock-ABL kernel updates
 
+1 November 2026. Source 1.8.22 runs startup acceptance and policy-gated staging
+through one `boot` command under the updater lock. An identical default reuses
+the running bundle's verified bytes. Disabled staging still performs health
+acceptance; malformed policy and candidate failures retain the existing refusal
+behavior. Native checks and physical startup timing remain separate gates.
+
 1 November 2026. Version1.8.21 reads owning RPM metadata and its complete file
 inventory in one query per package. Cohort, ownership, module/file digests and
 rollback checks remain; malformed or multiple-owner records are refused. Native
