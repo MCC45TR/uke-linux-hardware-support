@@ -1,0 +1,2067 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-01T04:19:16Z",
+  "owner": "mcc45tr",
+  "project": "uke-linux-unstable",
+  "api_meta": {
+    "limit": null,
+    "offset": 0,
+    "order": "id",
+    "order_type": "ASC"
+  },
+  "source_definition_count": 36,
+  "items": [
+    {
+      "id": 3266596,
+      "name": "uke-speaker-firmware",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\ncurl --fail --location --retry 3 https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/uke-speaker-firmware-3.0.304.0-1.fc46.src.rpm -o input.src.rpm\nprintf '%s\\n' 'ddded730ac0a182f3006009ab9524768c0899a219ef532d90bee6e5807eab9b3  input.src.rpm' | sha256sum -c -\nrpm2cpio input.src.rpm > input.cpio\ncpio -t --quiet < input.cpio | awk '/^\\/|(^|\\/)\\.\\.($|\\/)/{bad=1}END{exit bad}'\ncpio -idm --quiet --no-absolute-filenames < input.cpio\nrm input.src.rpm input.cpio\nspecs=(*.spec); test ${#specs[@]} = 1\ntest \"$(awk '/^Name:/{print $2;exit}' \"${specs[0]}\")\" = uke-speaker-firmware\nsed -i 's/^Release:.*/Release: 2%{?dist}/' \"${specs[0]}\"\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "bash curl coreutils rpm-build cpio gawk",
+        "resultdir": ".",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793303653,
+          "id": 11228080,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793303597,
+          "state": "succeeded",
+          "submitted_on": 1793303523,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-speaker-firmware",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228080/uke-speaker-firmware-3.0.304.0-2.src.rpm",
+            "version": "3.0.304.0-2"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793303653,
+          "id": 11228080,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793303597,
+          "state": "succeeded",
+          "submitted_on": 1793303523,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-speaker-firmware",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228080/uke-speaker-firmware-3.0.304.0-2.src.rpm",
+            "version": "3.0.304.0-2"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266602,
+      "name": "senemos-uke-linux-kernel-mainline",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=d86aea3e8cc2f90ac101d03b81560d8e1eab38cc\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/senemos-uke-kernel-mainline.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/native/copr-microphone-array731.sh \"$PWD/result\"\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git bash curl coreutils rpm-build cpio gawk tar xz findutils jq make clang gcc gcc-c++ binutils libfdt-devel dtc compiler-rt libasan libubsan ripgrep alsa-lib-devel alsa-utils pkgconf-pkg-config dt-schema",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": null,
+          "id": 11239296,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793505287,
+          "state": "running",
+          "submitted_on": 1793505146,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "senemos-uke-linux-kernel-mainline",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239296/senemos-uke-linux-kernel-mainline-7.3.1-110.src.rpm",
+            "version": "7.3.1-110"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793481749,
+          "id": 11238292,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793480294,
+          "state": "succeeded",
+          "submitted_on": 1793480183,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "senemos-uke-linux-kernel-mainline",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11238292/senemos-uke-linux-kernel-mainline-7.3.1-109.src.rpm",
+            "version": "7.3.1-109"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266603,
+      "name": "uke-control",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=116b05cc663692910da29afcd7f233c0ddd84e8b\nkey=uke-control\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nmake -C source validate\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793477607,
+          "id": 11238187,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793477211,
+          "state": "succeeded",
+          "submitted_on": 1793477130,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-control",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11238187/uke-control-2.7.0-1.src.rpm",
+            "version": "2.7.0-1"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793477607,
+          "id": 11238187,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793477211,
+          "state": "succeeded",
+          "submitted_on": 1793477130,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-control",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11238187/uke-control-2.7.0-1.src.rpm",
+            "version": "2.7.0-1"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266604,
+      "name": "uke-core-meta",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=2d9991c10deaa337678ec3855836dd0178a6c4e6\nkey=uke-core-meta\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305187,
+          "id": 11228199,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305140,
+          "state": "succeeded",
+          "submitted_on": 1793305072,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-core-meta",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228199/uke-core-meta-1.0.7-8.fc46.src.rpm",
+            "version": "1.0.7-8.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305187,
+          "id": 11228199,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305140,
+          "state": "succeeded",
+          "submitted_on": 1793305072,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-core-meta",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228199/uke-core-meta-1.0.7-8.fc46.src.rpm",
+            "version": "1.0.7-8.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266605,
+      "name": "uke-libssc",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402\nkey=libssc\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305136,
+          "id": 11228188,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305059,
+          "state": "succeeded",
+          "submitted_on": 1793304936,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libssc",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228188/uke-libssc-0.4.4-20.fc46.src.rpm",
+            "version": "0.4.4-20.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305136,
+          "id": 11228188,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305059,
+          "state": "succeeded",
+          "submitted_on": 1793304936,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libssc",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228188/uke-libssc-0.4.4-20.fc46.src.rpm",
+            "version": "0.4.4-20.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266606,
+      "name": "uke-mesa-libclc22-spirv",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=99fbc01ac89eb651b789367cf9af702860378831\nkey=uke-mesa-libclc22-spirv\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793310415,
+          "id": 11228543,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793310336,
+          "state": "succeeded",
+          "submitted_on": 1793310247,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-mesa-libclc22-spirv",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228543/uke-mesa-libclc22-spirv-0.2.0-7.fc46.src.rpm",
+            "version": "0.2.0-7.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793310415,
+          "id": 11228543,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793310336,
+          "state": "succeeded",
+          "submitted_on": 1793310247,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-mesa-libclc22-spirv",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228543/uke-mesa-libclc22-spirv-0.2.0-7.fc46.src.rpm",
+            "version": "0.2.0-7.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266607,
+      "name": "uke-front-color",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-front-color\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304542,
+          "id": 11228130,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304430,
+          "state": "succeeded",
+          "submitted_on": 1793304344,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-front-color",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228130/uke-front-color-1.0.2-14.fc46.src.rpm",
+            "version": "1.0.2-14.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304542,
+          "id": 11228130,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304430,
+          "state": "succeeded",
+          "submitted_on": 1793304344,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-front-color",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228130/uke-front-color-1.0.2-14.fc46.src.rpm",
+            "version": "1.0.2-14.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266608,
+      "name": "uke-adaptive-display",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-adaptive-display\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304554,
+          "id": 11228123,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304430,
+          "state": "succeeded",
+          "submitted_on": 1793304341,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-adaptive-display",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228123/uke-adaptive-display-1.0.16-12.fc46.src.rpm",
+            "version": "1.0.16-12.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304554,
+          "id": 11228123,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304430,
+          "state": "succeeded",
+          "submitted_on": 1793304341,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-adaptive-display",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228123/uke-adaptive-display-1.0.16-12.fc46.src.rpm",
+            "version": "1.0.16-12.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266609,
+      "name": "uke-desktop-metas",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-desktop-metas\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304569,
+          "id": 11228126,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304452,
+          "state": "succeeded",
+          "submitted_on": 1793304343,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-desktop-metas",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228126/uke-desktop-metas-1.0.0-24.fc46.src.rpm",
+            "version": "1.0.0-24.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304569,
+          "id": 11228126,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304452,
+          "state": "succeeded",
+          "submitted_on": 1793304343,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-desktop-metas",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228126/uke-desktop-metas-1.0.0-24.fc46.src.rpm",
+            "version": "1.0.0-24.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266610,
+      "name": "uke-battery-observer",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nrevision=b37f97ecbbb54641d449e8808cfebeb0d0f17305\n[[ $(rpm --eval '%{_host_cpu}') == aarch64 ]]\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$revision\"\ngit -C source checkout --detach FETCH_HEAD\n[[ $(git -C source rev-parse HEAD) == \"$revision\" ]]\nfedora_version=$(rpm --eval '%{fedora}')\n[[ $fedora_version =~ ^[0-9]+$ ]]\nprintf '%%dist .fc%s\\n' \"$fedora_version\" > \"$HOME/.rpmmacros\"\nmake -C source/uke-platform-runtime srpm outdir=\"$PWD/stage\"\nmapfile -t archives < <(find stage/rpmbuild/SRPMS -maxdepth 1 -type f -name '*.src.rpm')\n[[ ${#archives[@]} == 1 ]]\nsource_rpm=$(realpath \"${archives[0]}\")\n[[ $(rpm -qp --qf '%{NAME} %{VERSION}\\n' \"$source_rpm\") == 'uke-battery-observer 1.4.1' ]]\nrpm2cpio \"$source_rpm\" | cpio -t > members\n! grep -Eq '^/|(^|/)\\.\\.(/|$)' members\nmkdir result\ncd result\nrpm2cpio \"$source_rpm\" | cpio -idm --no-absolute-filenames\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make rpm-build redhat-rpm-config systemd-rpm-macros tar xz cpio coreutils grep findutils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305937,
+          "id": 11228237,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305788,
+          "state": "succeeded",
+          "submitted_on": 1793305694,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-battery-observer",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228237/uke-battery-observer-1.4.1-1.src.rpm",
+            "version": "1.4.1-1"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305937,
+          "id": 11228237,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305788,
+          "state": "succeeded",
+          "submitted_on": 1793305694,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-battery-observer",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228237/uke-battery-observer-1.4.1-1.src.rpm",
+            "version": "1.4.1-1"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266611,
+      "name": "uke-pipewire",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=pipewire\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304832,
+          "id": 11228122,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304491,
+          "state": "succeeded",
+          "submitted_on": 1793304341,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-pipewire",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228122/uke-pipewire-1.6.10-2.fc46.src.rpm",
+            "version": "1.6.10-2.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304832,
+          "id": 11228122,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304491,
+          "state": "succeeded",
+          "submitted_on": 1793304341,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-pipewire",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228122/uke-pipewire-1.6.10-2.fc46.src.rpm",
+            "version": "1.6.10-2.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266612,
+      "name": "uke-plymonth",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-plymonth\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304569,
+          "id": 11228133,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304511,
+          "state": "succeeded",
+          "submitted_on": 1793304346,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-plymonth",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228133/uke-plymonth-1.0.2-5.fc46.src.rpm",
+            "version": "1.0.2-5.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304569,
+          "id": 11228133,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304511,
+          "state": "succeeded",
+          "submitted_on": 1793304346,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-plymonth",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228133/uke-plymonth-1.0.2-5.fc46.src.rpm",
+            "version": "1.0.2-5.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266613,
+      "name": "uke-material-decoration",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=material-decoration\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304625,
+          "id": 11228120,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304491,
+          "state": "succeeded",
+          "submitted_on": 1793304339,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-material-decoration",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228120/uke-material-decoration-20261006.094154-7.fc46.src.rpm",
+            "version": "20261006.094154-7.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304625,
+          "id": 11228120,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304491,
+          "state": "succeeded",
+          "submitted_on": 1793304339,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-material-decoration",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228120/uke-material-decoration-20261006.094154-7.fc46.src.rpm",
+            "version": "20261006.094154-7.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266614,
+      "name": "uke-boot-integration",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=c7dbcf491348a93eb4abbfcdbbdbfcabceec5c01\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/uke-boot/host/copr-automatic-default.sh \"$PWD/result\"\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git bash curl coreutils rpm-build cpio gawk tar xz findutils jq make",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793472027,
+          "id": 11238010,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793471818,
+          "state": "succeeded",
+          "submitted_on": 1793471723,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-boot-integration",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11238010/uke-boot-integration-1.8.13-1.fc46.src.rpm",
+            "version": "1.8.13-1.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793472027,
+          "id": 11238010,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793471818,
+          "state": "succeeded",
+          "submitted_on": 1793471723,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-boot-integration",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11238010/uke-boot-integration-1.8.13-1.fc46.src.rpm",
+            "version": "1.8.13-1.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266615,
+      "name": "uke-proximity-capture",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-proximity-capture\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228134,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304512,
+          "state": "succeeded",
+          "submitted_on": 1793304347,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-proximity-capture",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228134/uke-proximity-capture-0.1.0-6.fc46.src.rpm",
+            "version": "0.1.0-6.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228134,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304512,
+          "state": "succeeded",
+          "submitted_on": 1793304347,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-proximity-capture",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228134/uke-proximity-capture-0.1.0-6.fc46.src.rpm",
+            "version": "0.1.0-6.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266616,
+      "name": "uke-displayport-audio",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-displayport-audio\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228128,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304512,
+          "state": "succeeded",
+          "submitted_on": 1793304343,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-displayport-audio",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228128/uke-displayport-audio-0.1.0-8.fc46.src.rpm",
+            "version": "0.1.0-8.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228128,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304512,
+          "state": "succeeded",
+          "submitted_on": 1793304343,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-displayport-audio",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228128/uke-displayport-audio-0.1.0-8.fc46.src.rpm",
+            "version": "0.1.0-8.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266617,
+      "name": "uke-firmware",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-firmware\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228129,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304512,
+          "state": "succeeded",
+          "submitted_on": 1793304344,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-firmware",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228129/uke-firmware-3.0.304.0-14.fc46.src.rpm",
+            "version": "3.0.304.0-14.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228129,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304512,
+          "state": "succeeded",
+          "submitted_on": 1793304344,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-firmware",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228129/uke-firmware-3.0.304.0-14.fc46.src.rpm",
+            "version": "3.0.304.0-14.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266618,
+      "name": "uke-orangefox-recovery",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-orangefox-recovery\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304638,
+          "id": 11228132,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304532,
+          "state": "succeeded",
+          "submitted_on": 1793304345,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-orangefox-recovery",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228132/uke-orangefox-recovery-12.0~preview3.20261010-6.fc46.src.rpm",
+            "version": "12.0~preview3.20261010-6.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304638,
+          "id": 11228132,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304532,
+          "state": "succeeded",
+          "submitted_on": 1793304345,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-orangefox-recovery",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228132/uke-orangefox-recovery-12.0~preview3.20261010-6.fc46.src.rpm",
+            "version": "12.0~preview3.20261010-6.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266619,
+      "name": "uke-speaker-controls",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-speaker-controls\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228136,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304532,
+          "state": "succeeded",
+          "submitted_on": 1793304347,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-speaker-controls",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228136/uke-speaker-controls-0.1.0-4.fc46.src.rpm",
+            "version": "0.1.0-4.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304582,
+          "id": 11228136,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304532,
+          "state": "succeeded",
+          "submitted_on": 1793304347,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-speaker-controls",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228136/uke-speaker-controls-0.1.0-4.fc46.src.rpm",
+            "version": "0.1.0-4.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266620,
+      "name": "uke-vaapi-v4l2",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C GIT_LFS_SKIP_SMUDGE=1\ncommit=1076bc33049f1e0a8985cd5d6efbd13aead2b478\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\n[[ $(git -C source rev-parse HEAD) == \"$commit\" ]]\nbash source/uke-video/packaging/source.sh \"$PWD/stage\"\nmapfile -t srpms < <(find stage/SRPMS -maxdepth 1 -name '*.src.rpm')\n[[ ${#srpms[@]} == 1 ]]\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/{bad=1}END{exit bad}' source-files\nmkdir result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git gzip curl jq rpm-build redhat-rpm-config meson pkgconf-pkg-config cpio",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793352890,
+          "id": 11230057,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793352813,
+          "state": "succeeded",
+          "submitted_on": 1793352729,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-vaapi-v4l2",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230057/uke-vaapi-v4l2-1.0.0-10.src.rpm",
+            "version": "1.0.0-10"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793352890,
+          "id": 11230057,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793352813,
+          "state": "succeeded",
+          "submitted_on": 1793352729,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-vaapi-v4l2",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230057/uke-vaapi-v4l2-1.0.0-10.src.rpm",
+            "version": "1.0.0-10"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266621,
+      "name": "uke-ssc-fileservice",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-ssc-fileservice\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793423791,
+          "id": 11234247,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793423714,
+          "state": "succeeded",
+          "submitted_on": 1793423639,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-ssc-fileservice",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234247/uke-ssc-fileservice-2026.09.21-26.src.rpm",
+            "version": "2026.09.21-26"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793423791,
+          "id": 11234247,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793423714,
+          "state": "succeeded",
+          "submitted_on": 1793423639,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-ssc-fileservice",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234247/uke-ssc-fileservice-2026.09.21-26.src.rpm",
+            "version": "2026.09.21-26"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266622,
+      "name": "uke-speaker-orientation",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=9d4421a145540fbeb82d685c1e99e971b65d8abf\nkey=uke-speaker-orientation\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304609,
+          "id": 11228137,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304553,
+          "state": "succeeded",
+          "submitted_on": 1793304348,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-speaker-orientation",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228137/uke-speaker-orientation-0.1.0-5.fc46.src.rpm",
+            "version": "0.1.0-5.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793304609,
+          "id": 11228137,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793304553,
+          "state": "succeeded",
+          "submitted_on": 1793304348,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-speaker-orientation",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228137/uke-speaker-orientation-0.1.0-5.fc46.src.rpm",
+            "version": "0.1.0-5.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266623,
+      "name": "uke-libwacom",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4a6f5430004ce9e11837862eb6add987130655a3\nkey=libwacom\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305923,
+          "id": 11228251,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305849,
+          "state": "succeeded",
+          "submitted_on": 1793305731,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libwacom",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228251/uke-libwacom-2.20.0-18.fc46.src.rpm",
+            "version": "2.20.0-18.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305923,
+          "id": 11228251,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305849,
+          "state": "succeeded",
+          "submitted_on": 1793305731,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libwacom",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228251/uke-libwacom-2.20.0-18.fc46.src.rpm",
+            "version": "2.20.0-18.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266624,
+      "name": "uke-upower",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402\nkey=upower\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305245,
+          "id": 11228197,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305079,
+          "state": "succeeded",
+          "submitted_on": 1793304941,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-upower",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228197/uke-upower-1.91.5-20.fc46.src.rpm",
+            "version": "1.91.5-20.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305245,
+          "id": 11228197,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305079,
+          "state": "succeeded",
+          "submitted_on": 1793304941,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-upower",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228197/uke-upower-1.91.5-20.fc46.src.rpm",
+            "version": "1.91.5-20.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266625,
+      "name": "uke-at-spi2-core",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4a6f5430004ce9e11837862eb6add987130655a3\nkey=at-spi2-core\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305937,
+          "id": 11228248,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305829,
+          "state": "succeeded",
+          "submitted_on": 1793305730,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-at-spi2-core",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228248/uke-at-spi2-core-2.62.1-17.fc46.src.rpm",
+            "version": "2.62.1-17.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305937,
+          "id": 11228248,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305829,
+          "state": "succeeded",
+          "submitted_on": 1793305730,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-at-spi2-core",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228248/uke-at-spi2-core-2.62.1-17.fc46.src.rpm",
+            "version": "2.62.1-17.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266626,
+      "name": "uke-gstreamer1",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4a6f5430004ce9e11837862eb6add987130655a3\nkey=gstreamer1\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793306006,
+          "id": 11228249,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305850,
+          "state": "succeeded",
+          "submitted_on": 1793305730,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-gstreamer1",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228249/uke-gstreamer1-1.28.8-17.fc46.src.rpm",
+            "version": "1.28.8-17.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793306006,
+          "id": 11228249,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305850,
+          "state": "succeeded",
+          "submitted_on": 1793305730,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-gstreamer1",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228249/uke-gstreamer1-1.28.8-17.fc46.src.rpm",
+            "version": "1.28.8-17.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266627,
+      "name": "uke-libaccounts-glib",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4a6f5430004ce9e11837862eb6add987130655a3\nkey=libaccounts-glib\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305911,
+          "id": 11228250,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305829,
+          "state": "succeeded",
+          "submitted_on": 1793305731,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libaccounts-glib",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228250/uke-libaccounts-glib-1.25-45.fc46.src.rpm",
+            "version": "1.25-45.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305911,
+          "id": 11228250,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305829,
+          "state": "succeeded",
+          "submitted_on": 1793305731,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libaccounts-glib",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228250/uke-libaccounts-glib-1.25-45.fc46.src.rpm",
+            "version": "1.25-45.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266628,
+      "name": "uke-accountsservice",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4a6f5430004ce9e11837862eb6add987130655a3\nkey=accountsservice\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305937,
+          "id": 11228252,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305850,
+          "state": "succeeded",
+          "submitted_on": 1793305732,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-accountsservice",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228252/uke-accountsservice-26.27.3-16.fc46.src.rpm",
+            "version": "26.27.3-16.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305937,
+          "id": 11228252,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305850,
+          "state": "succeeded",
+          "submitted_on": 1793305732,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-accountsservice",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228252/uke-accountsservice-26.27.3-16.fc46.src.rpm",
+            "version": "26.27.3-16.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266629,
+      "name": "uke-iio-sensor-proxy",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402\nkey=iio-sensor-proxy\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305172,
+          "id": 11228192,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305079,
+          "state": "succeeded",
+          "submitted_on": 1793304938,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-iio-sensor-proxy",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228192/uke-iio-sensor-proxy-3.9-24.fc46.src.rpm",
+            "version": "3.9-24.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305172,
+          "id": 11228192,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305079,
+          "state": "succeeded",
+          "submitted_on": 1793304938,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-iio-sensor-proxy",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228192/uke-iio-sensor-proxy-3.9-24.fc46.src.rpm",
+            "version": "3.9-24.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266630,
+      "name": "uke-mesa",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=b5cdd136cc932ae8a2bedaa36560d57c2d54b7d4\nkey=mesa\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793307534,
+          "id": 11228217,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305524,
+          "state": "succeeded",
+          "submitted_on": 1793305395,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-mesa",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228217/uke-mesa-26.2.6-17.fc46.src.rpm",
+            "version": "26.2.6-17.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793307534,
+          "id": 11228217,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305524,
+          "state": "succeeded",
+          "submitted_on": 1793305395,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-mesa",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228217/uke-mesa-26.2.6-17.fc46.src.rpm",
+            "version": "26.2.6-17.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266631,
+      "name": "uke-libstdcxx-runtime",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4a6f5430004ce9e11837862eb6add987130655a3\nkey=libstdcxx-uke-runtime\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\n# The converter must expand Rawhide RPM macros in this native source worker.\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/packaging/families/host/standalone.sh \"$key\" \"$PWD/stage\"\nmapfile -t srpms < <(find stage -maxdepth 1 -type f -name '*.src.rpm')\ntest \"${#srpms[@]}\" = 1\nrpm2cpio \"${srpms[0]}\" > source.cpio\ncpio -t --quiet < source.cpio > source-files\nawk '/^\\/|(^|\\/)\\.\\.($|\\/)/ {bad=1} END {exit bad}' source-files\nmkdir -p result\n(cd result; cpio -idm --quiet --no-absolute-filenames < ../source.cpio)\ntest \"$(find result -maxdepth 1 -name '*.spec' | wc -l)\" = 1\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make bash coreutils rpm-build tar gzip xz curl jq cpio gawk pkgconf-pkg-config kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2 cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++ alsa-lib-devel alsa-utils",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793306102,
+          "id": 11228253,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305930,
+          "state": "succeeded",
+          "submitted_on": 1793305732,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libstdcxx-runtime",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228253/uke-libstdcxx-runtime-16.2.1-19.fc46.src.rpm",
+            "version": "16.2.1-19.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793306102,
+          "id": 11228253,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305930,
+          "state": "succeeded",
+          "submitted_on": 1793305732,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-libstdcxx-runtime",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228253/uke-libstdcxx-runtime-16.2.1-19.fc46.src.rpm",
+            "version": "16.2.1-19.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266634,
+      "name": "uke-fidelityfx",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/usr/bin/bash\nset -Eeuo pipefail\nrevision=0982197bac4c32391c752cc800a5ebaaa9335df6\ngit -c core.hooksPath=/dev/null init -q source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source -c core.hooksPath=/dev/null fetch -q --depth=1 origin \"$revision\"\ngit -C source -c core.hooksPath=/dev/null checkout -q --detach FETCH_HEAD\n[[ $(git -C source rev-parse HEAD) == \"$revision\" ]]\nprintf '%%dist .fc%s\\n' \"$(rpm --eval '%{fedora}')\" > \"$HOME/.rpmmacros\"\nbash source/uke-desktop-integration/packaging/fidelityfx/source.sh \"$PWD/result\"\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "bash git-core rpm-build coreutils findutils tar gzip",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793306164,
+          "id": 11228276,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793306031,
+          "state": "succeeded",
+          "submitted_on": 1793305936,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-fidelityfx",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228276/uke-fidelityfx-1.1.4-3.fc46.src.rpm",
+            "version": "1.1.4-3.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793306164,
+          "id": 11228276,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793306031,
+          "state": "succeeded",
+          "submitted_on": 1793305936,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-fidelityfx",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228276/uke-fidelityfx-1.1.4-3.fc46.src.rpm",
+            "version": "1.1.4-3.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266635,
+      "name": "ddcutil",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C\ncommit=4335808aa1bafe9c2adf23326db621f75539f599\ngit init --quiet source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\ngit -C source checkout --detach FETCH_HEAD\ntest \"$(git -C source rev-parse HEAD)\" = \"$commit\"\nbash source/uke-desktop-packaging/packaging/ddcutil/prepare-source.sh \"$COPR_RESULTDIR\"\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git bash curl coreutils rpm-build cpio gawk jq systemd-rpm-macros",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305831,
+          "id": 11228224,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305707,
+          "state": "succeeded",
+          "submitted_on": 1793305629,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "ddcutil",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228224/ddcutil-3.0.2-2.uke1.fc46.src.rpm",
+            "version": "3.0.2-2.uke1.fc46"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793305831,
+          "id": 11228224,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793305707,
+          "state": "succeeded",
+          "submitted_on": 1793305629,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "ddcutil",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228224/ddcutil-3.0.2-2.uke1.fc46.src.rpm",
+            "version": "3.0.2-2.uke1.fc46"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266696,
+      "name": "uke-image-tools",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\ncommit=9e4d2153e116419c474d0c73eb2280447bf45243\nexport COPR_RESULTDIR=\"$PWD/result\"\nmkdir -p \"$COPR_RESULTDIR\"\ncurl --proto '=https' --tlsv1.2 --fail --location --retry 3 \\\n    \"https://raw.githubusercontent.com/MCC45TR/uke-fedora-builder/$commit/packaging/copr-image-tools.sh\" -o worker.sh\nbash worker.sh \"$commit\"\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "curl jq tar xz gzip coreutils findutils rpm gnupg2 dnf5 dnf5-plugins createrepo_c",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793447264,
+          "id": 11234899,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793443417,
+          "state": "succeeded",
+          "submitted_on": 1793442869,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-image-tools",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234899/uke-image-tools-1.0.0-26.src.rpm",
+            "version": "1.0.0-26"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793447264,
+          "id": 11234899,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793443417,
+          "state": "succeeded",
+          "submitted_on": 1793442869,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-image-tools",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234899/uke-image-tools-1.0.0-26.src.rpm",
+            "version": "1.0.0-26"
+          }
+        }
+      }
+    },
+    {
+      "id": 3266792,
+      "name": "uke-video-session",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\nexport LC_ALL=C GIT_LFS_SKIP_SMUDGE=1\ncommit=4ca77097a14bcbbfdd0c59ed6f2b086641f3c66a\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin \"$commit\"\n[[ $(git -C source rev-parse FETCH_HEAD) == \"$commit\" ]]\nmkdir result\ngit -C source archive --format=tar --prefix=uke-video-session-1.1.0/ \"$commit:uke-video-session\" | gzip -n > result/uke-video-session-1.1.0.tar.gz\ngit -C source show \"$commit:uke-video-session/packaging/uke-video-session.spec\" > result/uke-video-session.spec\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git gzip",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793352557,
+          "id": 11230049,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793352489,
+          "state": "succeeded",
+          "submitted_on": 1793352423,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-video-session",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230049/uke-video-session-1.1.0-1.src.rpm",
+            "version": "1.1.0-1"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793352557,
+          "id": 11230049,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793352489,
+          "state": "succeeded",
+          "submitted_on": 1793352423,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-video-session",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230049/uke-video-session-1.1.0-1.src.rpm",
+            "version": "1.1.0-1"
+          }
+        }
+      }
+    },
+    {
+      "id": 3267473,
+      "name": "uke-oem-resources",
+      "source_type": "custom",
+      "source_dict": {
+        "script": "#!/bin/bash\nset -Eeuo pipefail\ngit init source\ngit -C source remote add origin https://github.com/MCC45TR/uke-linux-hardware-support.git\ngit -C source fetch --depth=1 origin 53ae6371b12758e01fe0af4690e6fb54d2e1b436\ngit -C source checkout --detach FETCH_HEAD\nmake -C source/xiaomi-uke-firmware/oem-resources srpm outdir=\"$PWD/build\"\nmapfile -t packages < <(find \"$PWD/build\" -type f -path '*/SRPMS/*.src.rpm')\n[[ ${#packages[@]} == 1 ]]\nmkdir result\n(cd result; rpm2cpio \"${packages[0]}\" | cpio -idm --quiet)\n",
+        "chroot": "fedora-rawhide-aarch64",
+        "builddeps": "git make curl jq xz tar gzip rpm-build coreutils cpio bash",
+        "resultdir": "result",
+        "repos": ""
+      },
+      "auto_rebuild": false,
+      "builds": {
+        "latest": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793423840,
+          "id": 11234246,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793423714,
+          "state": "succeeded",
+          "submitted_on": 1793423634,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-oem-resources",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234246/uke-oem-resources-1.0.0-5.src.rpm",
+            "version": "1.0.0-5"
+          }
+        },
+        "latest_succeeded": {
+          "chroots": [
+            "fedora-rawhide-aarch64"
+          ],
+          "ended_on": 1793423840,
+          "id": 11234246,
+          "is_background": false,
+          "ownername": "mcc45tr",
+          "project_dirname": "uke-linux-unstable",
+          "projectname": "uke-linux-unstable",
+          "repo_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable",
+          "started_on": 1793423714,
+          "state": "succeeded",
+          "submitted_on": 1793423634,
+          "submitter": "mcc45tr",
+          "source_package": {
+            "name": "uke-oem-resources",
+            "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234246/uke-oem-resources-1.0.0-5.src.rpm",
+            "version": "1.0.0-5"
+          }
+        }
+      }
+    }
+  ]
+}

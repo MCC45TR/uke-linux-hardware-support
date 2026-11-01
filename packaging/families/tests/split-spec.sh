@@ -21,6 +21,45 @@ Fixture.
 SPEC
     awk -v out="$stage/$version" -v mapping="$stage/rename" -v native_version=1.0.19 -f host/split-spec.awk "$stage/input"
 done
+
+# Previously composed sources already contain explicit child versions and licenses.
+mkdir "$stage/integration"
+cat >"$stage/integration-input" <<'SPEC'
+Name: uke-fixture
+Version: 2.0
+Release: 7.fc46
+Epoch: 1
+Summary: Integration fixture
+License: MIT
+Obsoletes: uke-legacy < 2.0-7.fc46
+%description
+Fixture.
+%package -n uke-fixture-child
+Version: 1.4
+Release: 3.fc46
+License: GPL-3.0-or-later
+Summary: Independent child
+Requires: uke-fixture(aarch-64) = 2.0-7.fc46
+%description -n uke-fixture-child
+Child.
+%build
+: __UKE_CWD__=fixture
+: __UKE_BUILDROOT__=/buildroot
+: __UKE_BUILDDIR__=/builddir
+%files
+%files -n uke-fixture-child
+SPEC
+awk -v preserve_identity=1 -v out="$stage/integration" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/integration-input"
+[[ $(grep -c '^Version:' "$stage/integration/preamble") == 2 ]]
+grep -Fx 'Version: 2.0' "$stage/integration/preamble"
+grep -Fx 'Version: 1.4' "$stage/integration/preamble"
+grep -Fx 'Release: 8.fc46' "$stage/integration/preamble"
+grep -Fx 'Release: 4.fc46' "$stage/integration/preamble"
+grep -Fx 'Requires: uke-fixture(aarch-64) = 2.0-8.fc46' "$stage/integration/preamble"
+grep -Fx 'Obsoletes: uke-legacy < 2.0-7.fc46' "$stage/integration/preamble"
+[[ $(grep -c '^Epoch: 1$' "$stage/integration/preamble") == 2 ]]
+[[ $(grep -c '^License:' "$stage/integration/preamble") == 2 ]]
+printf '%s\n' 'PASS: integration identities, per-child EVRs, licenses, exact dependencies and compatibility bounds are preserved.'
 grep -Fx 'Release: 2.fc46' "$stage/1.0.19/preamble"
 grep -Fx 'Release: 1.fc46' "$stage/0.1.0/preamble"
 mkdir "$stage/material"

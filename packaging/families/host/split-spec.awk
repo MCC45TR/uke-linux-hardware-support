@@ -2,6 +2,7 @@
 # Called by compose.sh; not installed on the target.
 function fail(message) {print message >"/dev/stderr"; exit 1}
 function renamed(name) {
+    if(preserve_identity)return name
     if(name in rename)return rename[name]
     if(name ~ /^uke-/)return name
     if(name ~ /-uke-/){sub(/-uke-/,"-",name);return "uke-" name}
@@ -60,6 +61,9 @@ BEGIN {
 /^Version:/ && phase=="header" {version=$2;next}
 /^Release:/ && phase=="header" {release=$2;next}
 /^Epoch:/ && phase=="header" {epoch=$2;next}
+/^Version:/ && phase=="package" && preserve_identity {child_versions[package]=$2;next}
+/^Release:/ && phase=="package" && preserve_identity {child_releases[package]=$2;next}
+/^Epoch:/ && phase=="package" && preserve_identity {child_epochs[package]=$2;next}
 /^License:/ && phase=="header" {license=substr($0,index($0,":")+1);next}
 /^License:/ && phase=="package" {licenses[package]=substr($0,index($0,":")+1);next}
 /^BuildArch:/ && phase=="header" {arch=$2;next}
@@ -111,16 +115,46 @@ END {
             pkg=a[2]=="-n"?a[3]:original "-" a[2]
         }
         package_new[pkg]=renamed(pkg)
+        if(preserve_identity) {
+            versions[pkg]=(i in child_versions?child_versions[i]:version)
+            releases[pkg]=(i in child_releases?child_releases[i]:release)
+            epochs[pkg]=(i in child_epochs?child_epochs[i]:epoch)
+            if(releases[pkg] !~ /^[0-9]+([.]|$)/)fail("Unreviewed child release: " releases[pkg])
+            next_releases[pkg]=releases[pkg]
+            sub(/^[0-9]+/, (releases[pkg]+0)+1, next_releases[pkg])
+        }
     }
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0){split(headers[i],a,/[[:space:]]+/);pkg=a[2]=="-n"?a[3]:original "-" a[2]}
+        if(preserve_identity) {
+            newversion=versions[pkg];newrelease=next_releases[pkg]
+            epoch=epochs[pkg]
+        }
         output("preamble",standalone && i==0?"Name: " renamed(pkg):"%package -n " renamed(pkg))
         output("preamble","Version: " newversion "\nRelease: " newrelease "\nLicense:" (i in licenses?licenses[i]:license))
         if(epoch!="")output("preamble","Epoch: " epoch)
         if(arch!="")output("preamble","BuildArch: " arch)
         h=mapped_dependency(header[i]);oldevr=version "-" release;newevr=newversion "-" newrelease
-        if(oldevr!=newevr)while((pos=index(h,oldevr)))h=substr(h,1,pos-1) newevr substr(h,pos+length(oldevr))
+        if(!preserve_identity && oldevr!=newevr)while((pos=index(h,oldevr)))h=substr(h,1,pos-1) newevr substr(h,pos+length(oldevr))
+        if(preserve_identity) {
+            # Keep compatibility bounds; only exact dependencies on generated siblings advance.
+            n=split(h,dependency_lines,"\n");h=""
+            for(k=1;k<=n;k++) {
+                line=dependency_lines[k]
+                if(line ~ /^Requires[^:]*:/) {
+                    count=split(line,fields,/[[:space:]]+/)
+                    for(j=2;j<count-1;j++) {
+                        dependency=fields[j];sub(/\((aarch|x86)-64\)$/, "", dependency)
+                        if(dependency in versions && fields[j+1]=="=" && fields[j+2]==versions[dependency] "-" releases[dependency]) {
+                            fields[j+2]=versions[dependency] "-" next_releases[dependency]
+                            line=fields[1];for(f=2;f<=count;f++)line=line " " fields[f]
+                        }
+                    }
+                }
+                h=h line (k<n?"\n":"")
+            }
+        }
         output("preamble",h)
         # External consumers retain the original feature-capability names.
         count=split(header[i],original_lines,"\n")

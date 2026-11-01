@@ -17,14 +17,22 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
 standalone=${SOURCE_PACKAGE:-}
-[[ $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
+integration=false
+if [[ $family =~ ^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$ ]]; then integration=true; fi
+[[ $integration == true || $family =~ ^uke-(core|hw|power|sensors|extras|additional|metas|camera|sound)$ ]]
+[[ $integration == false || -z $standalone ]]
 [[ $target == aarch64 || $target == x86_64 ]]
 # Sound contains metadata and desktop data; other families compile native payloads.
 [[ $family == uke-sound || $(rpm --eval '%{_host_cpu}') == "$target" ]] || {
     printf '%s\n' 'Generate a family source on its native architecture; --target alone does not retarget RPM build/host triplets.' >&2
     exit 1
 }
-profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' packaging/families/families.json)
+catalog=packaging/families/families.json
+if [[ $integration == true ]]; then catalog=packaging/families/integrations.json; fi
+profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' "$catalog")
+if [[ $integration == true ]]; then
+    [[ $fedora_target == rawhide && $(jq -er .fedora "$catalog") == "$fedora_number" ]]
+fi
 version=$(jq -er .version <<<"$profile")
 release=$(jq -er '.release // 1' <<<"$profile")
 [[ $release =~ ^[1-9][0-9]*$ ]]
@@ -39,7 +47,22 @@ cp LICENSE "$bundle/LICENSE"
 cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
-if [[ -n $standalone ]]; then
+if [[ $integration == true ]]; then
+    while IFS=$'\t' read -r key url hash; do
+        [[ $key =~ ^uke-[a-zA-Z0-9+_.-]+$ ]]
+        [[ $url == https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/*.src.rpm ]]
+        [[ $hash =~ ^[a-f0-9]{64}$ ]]
+        input="$root/packaging/families/referances/integrations/$key.src.rpm"
+        mkdir -p "$(dirname "$input")"
+        if [[ ! -s $input ]]; then
+            curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' --max-time 240 "$url" -o "$input.part"
+            mv "$input.part" "$input"
+        fi
+        printf '%s  %s\n' "$hash" "$input" | sha256sum -c - >&2
+        printf '%s\t%s\n' "$key" "$input" >>"$stage/inputs"
+    done < <(jq -r '.sources[]|[.name,.url,.sha256]|@tsv' <<<"$profile")
+    cp "$catalog" "$bundle/"
+elif [[ -n $standalone ]]; then
     [[ $standalone =~ ^[a-zA-Z0-9+_.-]+$ && -f ${SOURCE_RPM:?independent source RPM} ]]
     printf '%s\t%s\n' "$standalone" "$(realpath "$SOURCE_RPM")" >"$stage/inputs"
 else
@@ -130,13 +153,13 @@ while IFS=$'\t' read -r key input; do
     cpio -t --quiet <"$part/source.cpio" >"$part/source-files"
     awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}' "$part/source-files"
     (cd "$source"; cpio -idm --quiet --no-absolute-filenames <"$part/source.cpio")
-    if [[ $key == uke-front-color ]]; then
+    if [[ $key == uke-front-color && $integration == false ]]; then
         for path in src/front-color.cpp src/front-color-state.hpp src/front-color-file.hpp src/ssc-discovery.cpp src/ssc-sample.cpp tests/front-color.cpp; do
             cmp "$root/uke-sensors/$path" <(tar -xOf "$source/uke-front-color-0.1.0.tar.gz" "uke-front-color-0.1.0/$path")
         done
     fi
     specs=("$source/"*.spec); [[ ${#specs[@]} == 1 ]]
-    if [[ $key == uke-firmware ]]; then
+    if [[ $key == uke-firmware && $integration == false ]]; then
         cp "${specs[0]}" "$source/uke-firmware.spec.original"
         # Mandatory paths must resolve without DNF's optional filelists metadata.
         sed -i '/^AutoReqProv: no/aProvides: /usr/lib/firmware/qcom/uke/sensors/sns_tppe.so\nProvides: /usr/share/uke-sensors/odm/json.lst\nProvides: /usr/share/uke-sensors/sns_reg.conf' "${specs[0]}"
@@ -149,9 +172,11 @@ while IFS=$'\t' read -r key input; do
     rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
+    preserve_identity=0
+    if [[ $integration == true ]]; then native_version=;release_override=;preserve_identity=1; fi
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc[0-9]+$ ]]
     [[ -z $release_override ]] || release_override=${release_override%%.fc*}$dist
-    awk -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    awk -v preserve_identity="$preserve_identity" -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
 group=$family
@@ -181,13 +206,15 @@ spec="$output/SPECS/$family.spec"
         printf 'Obsoletes: uke-power-profile-backend < 1.3.2\nConflicts: uke-power-profile-backend\n'
         printf 'Requires(pre): rpm systemd coreutils sed\nRequires(posttrans): systemd coreutils sed\n'
     fi
-    if [[ -z $standalone ]]; then
+    if [[ -z $standalone && $integration == false ]]; then
         jq -r '.requires[]|"Requires: "+.' <<<"$profile"
         jq -r '.suggests[]|"Suggests: "+.' <<<"$profile"
     fi
     for part in "$stage/parts/"*; do [[ ! -f $part/buildrequires ]] || cat "$part/buildrequires"; done | LC_ALL=C sort -u | if [[ $family == uke-sensors ]]; then sed '/^BuildRequires: libssc-devel /d;s/pkgconfig(libssc)//g'; else cat; fi
-    if [[ -z $standalone ]]; then
+    if [[ -z $standalone && $integration == false ]]; then
         printf '\n%%description\nLogical installation selection. Child RPMs remain separately installable.\nThis package adds no process and does not enable hardware or prove support.\n'
+    elif [[ $integration == true ]]; then
+        printf '\n%%description\nReviewed component sources with independent binary package identities.\nThe source package adds no runtime selection RPM or service.\n'
     fi
     for part in "$stage/parts/"*; do
         [[ -f $part/preamble ]] || continue
@@ -240,7 +267,7 @@ spec="$output/SPECS/$family.spec"
             printf 'mv "%%{buildroot}/usr/lib/firmware" "%%{_builddir}/%s-%s/firmware-unprocessed"\n' "$family" "$version"
         fi
     done
-    if [[ -z $standalone ]]; then printf '\n%%files\n%%license LICENSE\n%%doc README\n'; fi
+    if [[ -z $standalone && $integration == false ]]; then printf '\n%%files\n%%license LICENSE\n%%doc README\n'; fi
     while IFS=$'\t' read -r key input; do
         part="$stage/parts/$key"; [[ -f $part/tail ]] || continue
         IFS=$'\t' read -r _ _ _ cwd builddir buildroot <"$part/identity"

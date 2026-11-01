@@ -1,5 +1,10 @@
 # Independent Rawhide packages
 
+1 November 2026: the [consolidation plan](consolidation/consolidation-plan.md)
+defines six candidate source integrations which preserve the existing binary
+package identities. Their native builds and migration checks are separate
+gates; retained producer definitions are not deleted by source preparation.
+
 29 October 2026: `mcc45tr/uke-linux-unstable` targets only
 `fedora-rawhide-aarch64`. Each component has its own source package and build.
 Conventional upstream subpackages, such as a library and its development files,
