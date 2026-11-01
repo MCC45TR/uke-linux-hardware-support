@@ -2,11 +2,17 @@
 #pragma once
 #include "boot-common.hpp"
 #include <algorithm>
+#include <chrono>
+#include <iostream>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 namespace uke_touch {
 namespace fs=std::filesystem;
+struct ReadinessPending:std::runtime_error {
+    ReadinessPending():std::runtime_error("Native touchscreen input or firmware is not ready"){}
+};
 static inline bool compatible(const std::string &value,const std::string &expected) {
     bool found=false;
     for(std::size_t start=0;start<value.size();) {
@@ -48,24 +54,42 @@ static inline bool native_healthy(const fs::path &root) {
         throw std::runtime_error("Native touchscreen input is ambiguous");
     const auto stats=read_text(node/"input_stats");
     if(stats.ends_with(" ready=1\n"))return true;
-    unsigned panels=0;bool disabled=false;
+    unsigned panels=0;bool disabled=false,enabled=false;
     // Disabling the internal panel intentionally quiesces native touch firmware.
     if(stats.ends_with(" ready=0\n") && fs::is_directory(root/"sys/class/drm")) {
         for(const auto &entry:fs::directory_iterator(root/"sys/class/drm")) {
             if(!entry.path().filename().string().ends_with("-DSI-1"))continue;
             ++panels;
-            disabled=read_text(entry.path()/"status")=="connected\n" &&
-                     read_text(entry.path()/"enabled")=="disabled\n";
+            const bool connected=read_text(entry.path()/"status")=="connected\n";
+            const auto state=read_text(entry.path()/"enabled");
+            disabled=connected && state=="disabled\n";
+            enabled=connected && state=="enabled\n";
         }
     }
+    if(panels==1 && enabled)throw ReadinessPending();
     if(panels!=1 || !disabled)
         throw std::runtime_error("Native touchscreen input or firmware is not ready");
     return true;
 }
-static inline std::vector<std::string> health_units(const fs::path &root) {
+static inline std::vector<std::string> health_units(const fs::path &root,bool wait_for_touch=false) {
     std::vector<std::string> units{"display-manager.service","uke-touchscreen.service",
         "uke-adaptive-display.target","iio-sensor-proxy.service","NetworkManager.service"};
-    if(native_healthy(root))std::erase(units,"uke-touchscreen.service");
-    return units;
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+    bool waiting=false;
+    for(;;) {
+        try {
+            const bool native=native_healthy(root);
+            if(waiting && !native)throw std::runtime_error("Native touchscreen disappeared during startup polling");
+            if(native)std::erase(units,"uke-touchscreen.service");
+            if(waiting)std::clog<<"Native touchscreen readiness recovered during startup polling\n";
+            return units;
+        } catch(const ReadinessPending &) {
+            if(!wait_for_touch || std::chrono::steady_clock::now()>=deadline)throw;
+            // Panel handoff can restart the native driver's 32-frame calibration.
+            if(!waiting)std::clog<<"Waiting up to two seconds for native touchscreen readiness\n";
+            waiting=true;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
 }
 }

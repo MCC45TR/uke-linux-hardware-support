@@ -207,3 +207,14 @@ coldplug work continues independently. The reviewed original service is
 `plasma-login-manager-6.8.2-1.fc46`; recheck the drop-in if upstream adds other
 pre-start commands. This configuration requires a separate measured reboot
 and does not establish physical display or shutdown acceptance.
+
+The packaged `boot` action alone allows a two-second polling window for native
+touch calibration during panel handoff. It retries the complete native predicate
+every100ms only while an exactly identified, bound input and a uniquely
+connected/enabled internal panel remain valid. Ready input or the existing
+verified panel-off standby condition is still required; invalid metadata fails
+immediately. Explicit acceptance, preflight, legacy touch and transaction paths
+keep their immediate checks. The120-second service timeout, five starts and
+30-second external restart delay remain. Persistent pending may add two seconds
+per attempt; blocked sysfs reads remain subject to the enclosing service timeout.
+Native fixture results and actual startup time are separate validation gates.

@@ -496,7 +496,7 @@ int main(int argc,char **argv) {
         if(action=="boot") {
             boot_userdata(bundle,
                 [&](const fs::path &selected){return validate_bundle(selected,"/usr/lib/modules",label,current.release);},
-                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem);},
+                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true);},
                 [&]{return activation_enabled(label);},
                 []{return selected_userdata_bundle();},inspect_userdata,
                 [&](const fs::path &selected,const Bytes &bytes){userdata_update("apply",selected,bytes,state,current.release,filesystem);});
