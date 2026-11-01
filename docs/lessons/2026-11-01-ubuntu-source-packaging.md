@@ -408,3 +408,21 @@ source pin, upstream execution, Launchpad mutation or branch deletion is used.
 Generated-overlay and upgrade-order metadata fixtures pass. Real source recipe
 assembly and package payload qualification are separate next checks; these
 local adapters are not native Tenacious or Launchpad qualifications.
+
+Subsequent local checks use official Ubuntu24 x86_64 host tools with network
+disabled for recipe/package assembly. All three source recipes construct, and
+data-only ARM64-tagged DEBs build with dependency checks enabled. Make is now
+explicitly a build-host dependency (`make:native`), as cross-build metadata
+correctly refused the previously unqualified tool dependency. No dependency
+check was skipped. Every installed policy, desktop/XML file and both UCM links
+read back unchanged. This is data assembly on x86_64, not native Tenacious or
+runtime qualification; all existing hardware ABI dependencies remain required.
+
+Historical source views can now be materialized from the exact saved archive
+tags with `prepare-archived-recipe.sh`. It checks the source commit and pristine
+metadata ancestry against the publication manifest, then creates only disposable
+local compatibility branches for the official recipe tool. The published
+repository does not need long-lived export or pristine branches for this recovery
+path. The speaker-controls trial reconstructs the original archive byte for byte;
+the complete nineteen-route reconstruction is being checked separately. These
+historical views are not new main-based daily recipes or publication admission.
