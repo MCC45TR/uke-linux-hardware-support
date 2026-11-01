@@ -297,7 +297,10 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
     for(const auto &[suffix,files]:groups) {
         need(!files.empty(),"Missing package file set");
         const auto expected=base+suffix;
-        const auto p=package(query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n","--",files.begin()->first.string()}),expected);
+        const auto record=query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",files.begin()->first.string()});
+        const auto header_end=record.find('\n');
+        need(header_end!=std::string::npos,"Missing owning RPM header");
+        const auto p=package(record.substr(0,header_end),expected);
         need(!have_first||same_tuple(first,p),"Boot, core and modules RPM versions differ");first=p;have_first=true;
         const auto nevra=p.name+"-"+p.epoch+":"+p.version+"-"+p.release+"."+p.arch;
         if(suffix=="-core" && base!="senemos-uke-linux-kernel-mainline") {
@@ -306,10 +309,11 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
             while(std::getline(input,name))matches+=name=="kernel-uname-r("+release+")";
             need(matches==1,"Kernel variant RPM does not provide the exact Image ABI");
         }
-        const auto rows=query({"-q","--qf","[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",nevra});
-        std::map<fs::path,std::string> owned;std::istringstream input(rows);std::string row;
+        std::map<fs::path,std::string> owned;std::istringstream input(record.substr(header_end+1));std::string row;
         while(std::getline(input,row)) {
-            const auto tab=row.find('\t');need(tab!=std::string::npos,"Malformed installed RPM file inventory");
+            const auto tab=row.find('\t');
+            need(row.starts_with('/') && tab!=std::string::npos && row.find('\t',tab+1)==std::string::npos,
+                 "Malformed or multiple-owner installed RPM inventory");
             need(owned.emplace(row.substr(0,tab),row.substr(tab+1)).second,"Ambiguous installed RPM file inventory");
         }
         for(const auto &[path,hash]:files)need(owned.contains(path) && hex(owned.at(path)) && owned.at(path)==hash,

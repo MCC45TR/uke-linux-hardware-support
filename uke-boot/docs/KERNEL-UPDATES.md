@@ -1,5 +1,10 @@
 # Stock-ABL kernel updates
 
+1 November 2026. Source1.8.21 reads owning RPM metadata and its complete file
+inventory in one query per package. Cohort, ownership, module/file digests and
+rollback checks remain; malformed or multiple-owner records are refused. Native
+checks and an installed timing comparison are required before a speed claim.
+
 31 October 2026. Version1.8.13 enables the guarded kernel transaction by
 default. On singleboot userdata installations, DNF writes and verifies the
 inactive Linux boot slot, selects it for the next reboot and retains the

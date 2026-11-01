@@ -20,17 +20,19 @@ static Bytes synthetic_boot(const std::string &release,const std::string &label)
     const auto words="Linux version "+release+" test root=PARTLABEL="+label+" rw";
     memcpy(b.data()+page+128,words.data(),words.size());return b;
 }
-static std::map<std::string,std::string> owners,dumps,capabilities;
+static std::map<std::string,std::string> owners,dumps,capabilities,file_packages;
+static unsigned rpm_queries=0;
 static std::string fake_rpm(const std::vector<std::string> &args) {
+    ++rpm_queries;
     assert(args.size()==5 && args[3]=="--");
-    if(args[0]=="-qf")return owners.at(args[4]);
-    assert(args[0]=="-q");return args[2]=="[%{PROVIDENAME}\n]"?capabilities.at(args[4]):dumps.at(args[4]);
+    if(args[0]=="-qf")return owners.at(args[4])+dumps.at(file_packages.at(args[4]));
+    assert(args[0]=="-q" && args[2]=="[%{PROVIDENAME}\n]");return capabilities.at(args[4]);
 }
 static void record_package(const std::string &suffix,const std::vector<fs::path> &files) {
     const auto name="senemos-uke-linux-kernel-mainline"+suffix;
     const auto identity=name+"\t0\t7.2.9\t1.40.fc46\taarch64\t8\n";
     const auto nevra=name+"-0:7.2.9-1.40.fc46.aarch64";
-    for(const auto &path:files) {owners[path.string()]=identity;dumps[nevra]+=path.string()+"\t"+digest(file(path))+"\n";}
+    for(const auto &path:files) {owners[path.string()]=identity;file_packages[path.string()]=nevra;dumps[nevra]+=path.string()+"\t"+digest(file(path))+"\n";}
 }
 static unsigned attempts=0;
 static std::string variant_module_nevra,variant_module_identity;
@@ -69,10 +71,23 @@ int main() {
             const auto path=root/(variant+suffix);
             const auto name=family+suffix,nevra=name+"-0:"+version+"-2.fc46.aarch64";
             owners[path.string()]=name+"\t0\t"+version+"\t2.fc46\taarch64\t8\n";
+            file_packages[path.string()]=nevra;
             dumps[nevra]=path.string()+"\t"+hash+"\n";groups[suffix][path]=hash;
             if(suffix=="-core")capabilities[nevra]="kernel-uname-r("+abi+")\n";
         }
-        installed_files(groups,abi,fake_rpm);
+        rpm_queries=0;installed_files(groups,abi,fake_rpm);assert(rpm_queries==5);
+        const auto sample=groups.begin()->second.begin()->first.string();
+        const auto sample_owner=owners.at(sample),sample_package=file_packages.at(sample),sample_dump=dumps.at(sample_package);
+        owners[sample]=sample_owner+sample_owner;
+        reject([&]{installed_files(groups,abi,fake_rpm);});owners[sample]=sample_owner;
+        owners[sample]="truncated header";
+        reject([&]{installed_files(groups,abi,fake_rpm);});
+        dumps[sample_package].clear();reject([&]{installed_files(groups,abi,fake_rpm);});
+        owners[sample]=sample_owner;dumps[sample_package]=sample_dump;
+        for(const auto &bad:{sample_dump+sample_dump,std::string("relative\t")+hash+"\n",sample+"\textra\t"+hash+"\n",std::string()}) {
+            dumps[sample_package]=bad;reject([&]{installed_files(groups,abi,fake_rpm);});
+        }
+        dumps[sample_package]=sample_dump;
         const auto core_nevra=family+"-core-0:"+version+"-2.fc46.aarch64";
         capabilities[core_nevra]="kernel-uname-r(unmatched)\n";
         reject([&]{installed_files(groups,abi,fake_rpm);});
@@ -86,7 +101,8 @@ int main() {
         variant_module_identity=owners[mixed.string()];rollback_modules(core,fake_variant_rollback);
     }
     reject([]{rollback_modules(Package{"other-core","0","7.3.0","2.fc46","aarch64","8"},fake_variant_rollback);});
-    owners.clear();dumps.clear();capabilities.clear();
+    std::cout<<"Combined RPM ownership/inventory: four cohort queries plus variant ABI checks, malformed/multiple-owner/duplicate/missing inventory refusal passed\n";
+    owners.clear();dumps.clear();capabilities.clear();file_packages.clear();
     reject([&]{module_inventory(hash+"  ../wrong.ko.zst\n");});
     reject([&]{module_inventory(hash+"  kernel/../wrong.ko.zst\n");});
     reject([&]{module_inventory(hash+"  kernel/right.ko\n"+hash+"  kernel/right.ko\n");});
@@ -154,7 +170,7 @@ int main() {
     record_package("-core",{modules/release/"vmlinuz"});record_package("-modules",{module});record_package("-dtbs",{dtb});
     const auto core_package=package(owners.at((modules/release/"vmlinuz").string()),"senemos-uke-linux-kernel-mainline-core");
     rollback_modules(core_package,fake_rollback_rpm);attempts=1;reject([&]{rollback_modules(core_package,fake_rollback_rpm);});attempts=0;
-    assert(validate_bundle(bundle,modules,"linux",running,fake_rpm)==lp);
+    rpm_queries=0;assert(validate_bundle(bundle,modules,"linux",running,fake_rpm)==lp);assert(rpm_queries==4);
     assert(validate_bundle(bundle,modules,"linux",release,fake_rpm)==lp);
     assert(validate_bundle(bundle,modules,"userdata",running,fake_rpm)==up);
     const auto boot_package="senemos-uke-linux-kernel-mainline-boot-0:7.2.9-1.40.fc46.aarch64";
@@ -169,7 +185,7 @@ int main() {
     reject([&]{validate_bundle(bundle,modules,"userdata",running,fake_rpm);});
     text(bundle/"manifest",manifest);dumps[boot_package]=boot_dump;
     {
-        const auto base_owners=owners,base_dumps=dumps;
+        const auto base_owners=owners,base_dumps=dumps,base_file_packages=file_packages;
         const auto transport=modules/release/"kernel/drivers/media/spi/nt36532-uke/nt36532-uke-thp.ko.zst";
         const auto client=modules/release/"uke/uke-touch-capture";
         text(transport,"synthetic THP transport");
@@ -186,7 +202,7 @@ int main() {
             auto next=manifest;const auto old=digest(Bytes(inventory.begin(),inventory.end()));
             next.replace(next.find(old),old.size(),digest(file(bundle/"modules.sha256")));
             text(bundle/"manifest",next+extra);
-            owners=base_owners;dumps=base_dumps;dumps[boot_package].clear();
+            owners=base_owners;dumps=base_dumps;file_packages=base_file_packages;dumps[boot_package].clear();
             record_package("-boot",{bundle/"manifest",bundle/"modules.sha256",bundle/"linux.img",bundle/"userdata.img"});
             record_package("-modules",{transport});
             if(fs::exists(client))record_package("-modules",{client});
@@ -213,11 +229,11 @@ int main() {
         sync_manifest("touch_client_sha256=invalid\n");
         reject([&]{validate_bundle(bundle,modules,"userdata",running,fake_rpm);});
         fs::remove(transport);text(bundle/"modules.sha256",inventory);text(bundle/"manifest",manifest+field);
-        owners=base_owners;dumps=base_dumps;dumps[boot_package].clear();
+        owners=base_owners;dumps=base_dumps;file_packages=base_file_packages;dumps[boot_package].clear();
         record_package("-boot",{bundle/"manifest",bundle/"modules.sha256",bundle/"linux.img",bundle/"userdata.img"});
         reject([&]{validate_bundle(bundle,modules,"userdata",running,fake_rpm);});
         fs::remove(client);text(bundle/"modules.sha256",inventory);text(bundle/"manifest",manifest);
-        owners=base_owners;dumps=base_dumps;
+        owners=base_owners;dumps=base_dumps;file_packages=base_file_packages;
         std::cout<<"Matched kernel THP client: optional legacy compatibility, required pairing, digest, executable AArch64 ELF and RPM cohort refusal passed\n";
     }
     const auto good_owner=owners.at(module.string());owners[module.string()]="other\t0\t7.2.9\t1.40.fc46\taarch64\t8\n";

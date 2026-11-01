@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.20
+Version: 1.8.21
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -378,6 +378,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.21-1
+- Read owning RPM metadata and file inventory with one query per package.
+- Preserve cohort and digest checks; refuse malformed or multiple-owner output.
+
 * Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.20-1
 - Keep the temporary USB trace through user shutdown without a target-order cycle.
 - Verify the actual systemd ordering graph and a cyclic negative control.
