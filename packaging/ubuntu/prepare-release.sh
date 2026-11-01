@@ -15,3 +15,14 @@ if [[ -n $release ]]; then
  tar -xf "$out/released-source.tar.xz" -C "$stage" --strip-components=1
  printf '%s\n' "Source-RPM: $url" "Source-RPM-SHA256: $hash" "Source-member: $member" "Source-SHA256: $source_hash" > "$stage/RELEASE-ORIGIN"
 fi
+while IFS=$'\t' read -r package archive url hash member destination source_hash; do
+ [[ $package == "$pkg" ]] || continue
+ printf '%s  %s\n' "$hash" "$root/$archive" | sha256sum -c -
+ [[ $destination != /* && $destination != *..* && $member != */* ]]
+ command -v bsdtar >/dev/null || { echo 'Install official libarchive-tools' >&2; exit 2; }
+ bsdtar -xOf "$root/$archive" "$member" > "$out/released-member"
+ printf '%s  %s\n' "$source_hash" "$out/released-member" | sha256sum -c -
+ [[ -d $(dirname "$stage/$destination") ]]
+ cp "$out/released-member" "$stage/$destination"
+ printf '%s\n' "Source-RPM: $url" "Source-RPM-SHA256: $hash" "Member: $member -> $destination" "SHA256: $source_hash" >> "$stage/RELEASE-ORIGIN"
+done < "$root/packaging/ubuntu/release-overrides.tsv"

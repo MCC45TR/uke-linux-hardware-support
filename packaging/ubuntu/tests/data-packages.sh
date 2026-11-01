@@ -6,7 +6,7 @@ umask 022
 root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-core-meta; do
+for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-core-meta uke-orangefox-recovery; do
  bash "$root/packaging/ubuntu/prepare-source.sh" "$package" "$work/$package" >/dev/null
  source=$(find "$work/$package" -mindepth 1 -maxdepth 1 -type d)
  (cd "$source"; DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -b -d -us -uc -a arm64 > "$work/$package.build.log" 2>&1) || { cat "$work/$package.build.log"; exit 1; }
@@ -18,6 +18,13 @@ for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-c
  # These packages must remain data-only, without executables or private state.
  [[ ! -d $payload/usr/bin && ! -d $payload/usr/sbin && ! -d $payload/usr/libexec && ! -d $payload/var ]]
  case "$package" in
+  uke-orangefox-recovery)
+   delivered=$payload/usr/share/senemos/recovery/uke/12.0~preview3.20261010
+   (cd "$delivered"; sha256sum -c PACKAGE-SHA256SUMS)
+   dpkg-deb -e "${deb[0]}" "$work/recovery-control"
+   for hook in preinst postinst prerm postrm triggers; do [[ ! -e $work/recovery-control/$hook ]]; done
+   [[ ! -d $payload/boot && ! -d $payload/etc && ! -d $payload/usr/lib ]]
+   cmp "$source/release/orangefox-r12-uke-modded-v003.img" "$delivered/orangefox-r12-uke-modded-v003.img" ;;
   uke-displayport-audio)
    [[ $(find "$payload/usr/share/alsa/ucm2/Qualcomm/sm7675" -type f | wc -l) == 7 ]]
    [[ $(find "$payload/usr/share/alsa/ucm2/conf.d/sm7675" -type l | wc -l) == 2 ]]

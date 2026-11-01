@@ -19,7 +19,7 @@ while IFS=$'\t' read -r package archive url hash member source_hash; do
   mv "$root/$archive.part" "$root/$archive"
  fi
  printf '%s  %s\n' "$hash" "$root/$archive" | sha256sum -c -
-done < "$root/packaging/ubuntu/release-sources.tsv"
+done < <(cat "$root/packaging/ubuntu/release-sources.tsv" "$root/packaging/ubuntu/release-overrides.tsv")
 touch_root=$root/uke-sensors/referances/nt36532-thp
 while IFS=$'\t' read -r path hash; do
  if [[ ! -s $touch_root/$path ]]; then

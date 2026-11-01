@@ -20,8 +20,8 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "a51a0b9fa9ec779907c67ec97ec3654662bebc18",
-    "status": "not-yet-ported",
-    "reason": "Port libdnf5/RPM channel and transaction APIs, dracut integration and SELinux assumptions to Ubuntu before packaging"
+    "status": "partial",
+    "reason": "Read-only native APT policy and fixture tests implemented; solver, authenticated origin, journal, boot finalizer and Debian Control recipe unfinished"
   },
   {
     "name": "uke-core-meta",
@@ -52,7 +52,7 @@
     "source_type": "custom",
     "superseded": true,
     "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending",
+    "reason": "Wrapper 1.0.2 contains application 0.1.0; five released source files match baseline; native ARM64 and runtime checks pending",
     "source_revision": null
   },
   {
@@ -76,7 +76,7 @@
     "source_type": "custom",
     "superseded": true,
     "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending",
+    "reason": "Shared released 1.4.1 source and mandatory integrated protection inventory proofs reconciled; source checks pass; native ARM64 and runtime validation pending",
     "source_revision": null
   },
   {
@@ -140,8 +140,8 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
-    "status": "not-yet-ported",
-    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+    "status": "data-package-tested",
+    "reason": "Existing Android v003 delivery source and data-only ARM64 DEB checked; all published payload hashes preserved, no install hooks; not a fresh recovery source build or physical qualification"
   },
   {
     "name": "uke-speaker-controls",
@@ -164,7 +164,7 @@
     "source_type": "custom",
     "superseded": true,
     "status": "source-tested",
-    "reason": "Debian source assembly and quilt/extraction checked; native build, runtime and current integration-release delta review pending",
+    "reason": "Shared release 26 cache and OEM fallback source reconciled; six patches retained; native ARM64 and firmware qualification pending",
     "source_revision": null
   },
   {

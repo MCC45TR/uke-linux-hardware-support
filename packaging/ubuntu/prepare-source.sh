@@ -18,13 +18,14 @@ stage=$out/$pkg-$version
 mkdir "$stage"
 # Include tracked sources and their licenses, never build outputs or private inputs.
 paths=()
-for item in Makefile LICENSE LICENSE.GPL-3.0 LICENSE.Apache-2.0 src packaging manifests docs tests patches; do
+for item in Makefile LICENSE LICENSE.GPL-3.0 LICENSE.Apache-2.0 licenses src packaging manifests docs tests patches; do
  if git -C "$root" cat-file -e "$revision:$component/$item" 2>/dev/null; then paths+=("$component/$item"); fi
 done
 git -C "$root" archive "$revision" "${paths[@]}" | tar -x -C "$stage" --strip-components=1
 source "$root/packaging/ubuntu/prepare-upstream.sh"
 source "$root/packaging/ubuntu/prepare-release.sh"
 if [[ $pkg == uke-touchscreen ]]; then source "$root/packaging/ubuntu/prepare-touch.sh"; fi
+if [[ $pkg == uke-orangefox-recovery ]]; then source "$root/packaging/ubuntu/prepare-recovery.sh"; fi
 printf '%s\n' "Repository: https://github.com/MCC45TR/uke-linux-hardware-support" "Revision: $revision" "Component: $component" > "$stage/SOURCE-ORIGIN"
 epoch=$(git -C "$root" show -s --format=%ct "$revision")
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$out/${pkg}_${version}.orig.tar.xz" -C "$out" "$pkg-$version"

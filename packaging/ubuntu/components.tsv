@@ -14,3 +14,4 @@ uke-gpu-defaults	uke-desktop-integration	0.1.0
 uke-vaapi-v4l2	uke-video	1.0.0
 uke-touchscreen	uke-sensors	0.1.0
 upower	uke-platform-runtime	1.91.5
+uke-orangefox-recovery	uke-orangefox-packaging	12.0~preview3.20261010

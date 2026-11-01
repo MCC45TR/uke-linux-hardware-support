@@ -16,8 +16,13 @@ while IFS=$'\t' read -r package component version; do
  grep -qx 'Architecture: arm64' "$debian/control"
  ! grep -Eq 'dnf|rpm|dracut|selinux|python' "$debian/control"
  find "$debian" -type f -name '*.postinst' -exec sh -n {} \;
- ! grep -ER 'efibootmgr|flashrom|fastboot|update-initramfs|systemctl (start|enable)' "$debian"
+ ! grep -ER --include=rules --include='*.postinst' --include='*.preinst' --include='*.postrm' --include='*.prerm' --include=postinst --include=preinst --include=postrm --include=prerm 'efibootmgr|flashrom|fastboot|update-initramfs|systemctl (start|enable)' "$debian"
  case "$package" in
+  uke-orangefox-recovery)
+   (cd "$stage/release"; sha256sum -c PACKAGE-SHA256SUMS)
+   [[ ! -e $debian/postinst && ! -e $debian/preinst && ! -e $debian/postrm && ! -e $debian/prerm ]]
+   [[ -s $stage/release/SOURCE-OFFER.md && -d $stage/release/licenses ]]
+   ! grep -q '^Provides:' "$debian/control" ;;
   uke-front-color) grep -q 'dh_installsystemd --no-enable --no-start' "$debian/rules" ;;
   iio-sensor-proxy)
    [[ $(wc -l < "$debian/patches/series") == 2 ]]
@@ -47,6 +52,8 @@ while IFS=$'\t' read -r package component version; do
    grep -q "get_option('tests')" "$stage/meson.build"
    dpkg --compare-versions "$(dpkg-parsechangelog -l"$debian/changelog" -S Version)" gt 0.4.4-2 ;;
   uke-ssc-fileservice)
+   [[ $(sha256sum "$stage/uke/src/ssc-cache.cpp" | cut -d ' ' -f1) == b135389fb30f54ea632db23f6bb1a0a5bd99cb399e19fd74725a791c68bf0afc ]]
+   [[ $(sha256sum "$stage/uke/tests/ssc-cache.cpp" | cut -d ' ' -f1) == 1f0a06bfa6d8b95dcf8c801d6922de1e74792d10e5001ace7402237ee0f7feb3 ]]
    [[ $(wc -l < "$debian/patches/series") == 6 ]]
    cmp "$debian/uke-ssc-fileservice.udev" "$stage/uke/packaging/systemd/70-uke-ssc.rules"
    grep -q 'uke-sensorproxy-dual-light-abi-1' "$debian/control"

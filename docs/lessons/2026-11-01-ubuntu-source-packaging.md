@@ -83,7 +83,8 @@ reproduced the missing `origin/ubuntu` reference. Fetching only the configured
 branch ref repairs validation without moving the pinned checkout. Root commit
 33e237d retains all existing tests; run 41301170081 passed the workspace job.
 This is branch-awareness, not a package or hardware qualification result.
-# Release source reconciliation: battery protection inventory
+
+## Release source reconciliation: battery protection inventory
 
 Recorded 1 November 2026 on Debian 13 x86_64. Lesson ID:
 `ubuntu-source-release-identity-20261101`. The current Control family reuses
@@ -99,3 +100,25 @@ pending. Front-color's 1.0.2 wrapper contains 0.1.0 source with five source
 files identical to the common baseline; wrapper and application versions
 must be reported separately.
 
+## SSC release, recovery delivery and APT policy
+
+Recorded 1 November 2026, Debian 13 x86_64. Lesson IDs:
+`ubuntu-ssc-release26`, `ubuntu-recovery-immutable-zip`, `ubuntu-apt-policy`.
+SSC release 26 adds verified OEM-reference selection with a packaged fallback
+in its cache source. The six FastRPC patches and five systemd/udev files match
+the common source, but the cache and its test must come from the pinned release
+RPM. Member hashes are recorded in `release-overrides.tsv`. No cache program
+or upstream test was executed.
+
+Recovery's existing Fedora package delivers Android v003 artifacts as data.
+The Debian equivalent preserves this scope and has no maintainer hooks. The
+first payload check failed because `dh_strip_nondeterminism` rewrote its ZIP.
+An explicit override preserves the published bytes; extracted payload checksum
+tests must cover all release files, not only the IMG. This is packaging work,
+not recovery recompilation, boot validation or a new Ubuntu image.
+
+New project-owned APT policy fixture tests pass using official g++ without
+running any package command. Managed source parsing, interrupted dpkg state,
+holds and boot/private exclusions are implemented. They deliberately provide
+no transaction authorization: authenticated metadata, solver, operation journal
+and boot finalization remain implementation work, documented in APT-BACKEND.md.
