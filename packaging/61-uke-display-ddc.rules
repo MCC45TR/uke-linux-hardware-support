@@ -1,0 +1,2 @@
+# DP AUX DDC only; sensor and touch I2C adapters have different driver ancestry.
+SUBSYSTEM=="i2c-dev", KERNEL=="i2c-[0-9]*", DRIVERS=="msm-dp-display", TAG+="uaccess"
