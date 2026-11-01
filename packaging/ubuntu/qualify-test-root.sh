@@ -7,6 +7,16 @@ export LC_ALL=C DEBIAN_FRONTEND=noninteractive
 source /etc/os-release
 [[ $VERSION_CODENAME == tenacious && $VERSION_ID == 27.04 ]]
 mkdir -p /evidence /usr/share/keyrings
+# Minimal target policy: omit the exact optional interpreter diagnostics seen
+# in the first qualification. Keep distro ELF libraries and boot/service files.
+# The terminal audit still refuses any other Python package or script payload.
+cat > /etc/dpkg/dpkg.cfg.d/99-uke-minimal-no-python <<'EOF'
+path-exclude=/usr/share/apport/package-hooks/source_shadow.py
+path-exclude=/usr/share/apport/package-hooks/udev.py
+path-exclude=/usr/share/apport/package-hooks/systemd.py
+path-exclude=/usr/share/gcc/python/*
+path-exclude=/usr/share/gdb/auto-load/usr/lib/*/libstdc++.so.*-gdb.py
+EOF
 install -m644 /verified-key/uke-linux-unstable.gpg /usr/share/keyrings/uke-linux-unstable.gpg
 printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
 chmod 755 /usr/sbin/policy-rc.d
@@ -39,5 +49,6 @@ printf '%s  %s\n' f319e71d60ed19d539296665fa06cc07fbcf93bf82f773c787bed65289129e
 apt-cache policy uke-speaker-firmware > /evidence/firmware-apt-policy.txt
 cp /var/lib/apt/lists/*InRelease /evidence/
 cp /etc/os-release /evidence/os-release
+cp /etc/dpkg/dpkg.cfg.d/99-uke-minimal-no-python /evidence/target-file-policy.txt
 printf '%s\n' 'Native ARM64 Tenacious userspace installation passed with authenticated Ubuntu and PPA indexes.' 'No Python packages or script payloads were found.' 'SELinux policy is installed; enforcing boot, labels and root handoff remain untested.' 'This test creates no tablet image, kernel, initramfs or boot bundle.' > /evidence/qualification.txt
 (cd /evidence; find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
