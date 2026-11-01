@@ -18,6 +18,8 @@ through user-process shutdown. It has no ordering after `multi-user.target`,
 which would create a cycle through logind. It runs from `/` and does not hold
 the external project volume. Offline checks inspect cycle warnings and deleted
 jobs as well as exit status; systemd can return zero after breaking a cycle.
+The package fixture projects these ordering edges into a private user-manager
+graph. Full installed-system ordering and physical shutdown are separate checks.
 
 The package does not enable the diagnostic at boot or request a reboot. This
 temporary diagnostic must be retired after the disconnect call path is known.
