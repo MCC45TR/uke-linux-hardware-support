@@ -24,9 +24,14 @@ fetch() {
 }
 if [[ -n ${UKE_COPR_CONTROL_FAMILY_BUILD:-} ]];then
     [[ $UKE_COPR_CONTROL_FAMILY_BUILD =~ ^[0-9]+$ ]]
-    fetch 11239677 uke-control baseline
-    fetch 11239896 uke-meta-integration baseline
-    fetch 11239842 uke-power-integration baseline
+    if [[ -n ${UKE_COPR_CONTROL_BASELINE_BUILD:-} ]];then
+        [[ $UKE_COPR_CONTROL_BASELINE_BUILD =~ ^[0-9]+$ ]]
+        fetch "$UKE_COPR_CONTROL_BASELINE_BUILD" uke-control baseline
+    else
+        fetch 11239677 uke-control baseline
+        fetch 11239896 uke-meta-integration baseline
+        fetch 11239842 uke-power-integration baseline
+    fi
     mkdir "$fixture/kernel"
     fetch 11238013 senemos-uke-linux-kernel-mainline kernel
     [[ $(find "$fixture/kernel" -maxdepth 1 -name '*.rpm' | wc -l) == 5 ]]

@@ -149,15 +149,15 @@
     },
     {
       "name": "uke-control",
-      "version": "2.8.0",
-      "release": 2,
+      "version": "2.8.1",
+      "release": 3,
       "sources": [
         {
           "name": "uke-control",
-          "build_id": 11239677,
-          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.8.0-2.fc46.src.rpm",
-          "sha256": "68e832bd37fc7d356bfb121a171d396b7e2018229d0acb096223013aed3c0405",
-          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239677/uke-control-2.8.0-2.fc46.src.rpm"
+          "build_id": 11240806,
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.8.1-2.fc46.src.rpm",
+          "sha256": "8bd512d180e904c22854a2372a86b1def04b6509b1c9edd76c4b5ea6401db426",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11240806/uke-control-2.8.1-2.fc46.src.rpm"
         },
         {
           "name": "uke-meta-integration",
