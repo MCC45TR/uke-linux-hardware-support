@@ -1,5 +1,5 @@
 #!/bin/bash
-# COPR-only: retain the verified boot family and add bounded shutdown tracing.
+# COPR-only: retain the verified boot family and complete the empty clock default.
 set -Eeuo pipefail
 export LC_ALL=C
 test ! -e /etc/senemos/kernel-update.conf
@@ -25,13 +25,13 @@ inner=$stage/inner/uke-boot-integration-1.8.15
 for relative in src/kernel-update.cpp src/userdata-update.hpp src/installation-policy.hpp src/units/uke-userdata-accept.service; do
  cmp "$inner/$relative" "$owner/$relative"
 done
-for relative in src/shutdown-trace.sh src/units/uke-shutdown-trace.service tests/shutdown-trace.sh docs/SHUTDOWN-TRACE.md; do
+for relative in src/shutdown-trace.sh src/units/uke-shutdown-trace.service tests/shutdown-trace.sh docs/SHUTDOWN-TRACE.md src/install-profile.cpp src/units/uke-install-profile.service tests/install-profile.cpp tests/installation-policy.sh docs/USERDATA-AB.md; do
  install -m644 "$owner/$relative" "$inner/$relative"
 done
 rewrite_spec() {
- awk '/^%changelog/ {print;print "* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.16-1";print "- Record isolated USB role and host teardown call paths during the current session.";print "- Preserve foreign tracing state and clean up failed setup and stopped traces.";print "";history=1;next}
+ awk '/^%changelog/ {print;print "* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.17-1";print "- Complete only the empty Fedora clock default with UTC without RTC access.";print "- Retain bounded USB tracing and existing updater/slot validation.";print "";history=1;next}
       !history {
-        gsub(/1[.]8[.]15/,"1.8.16")
+        gsub(/1[.]8[.]15/,"1.8.17")
         if(/^install -Dm644 src\/units\/30-uke-plasmalogin-ready.conf /) {
           print;print "install -Dm755 src/shutdown-trace.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-shutdown-trace";print "install -Dm644 src/units/uke-shutdown-trace.service %{buildroot}%{_unitdir}/uke-shutdown-trace.service";next
         }
@@ -60,11 +60,11 @@ install -m644 "$stage/input.spec" "$input/uke-boot-integration.spec"
 rewrite_spec "$stage/sources/uke-boot-integration.spec" "$output/uke-boot-integration.spec"
 commit=$(git -C "$owner" rev-parse HEAD)
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
-mv "$inner" "$stage/inner/uke-boot-integration-1.8.16"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.16.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.16
+mv "$inner" "$stage/inner/uke-boot-integration-1.8.17"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.17.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.17
 unlink -- "$input/uke-boot-integration-1.8.15.tar.xz"
-jq -n --arg commit "$commit" '{source_commit:$commit,parent_build:11239526,parent_srpm_sha256:"e27644494d77e6c8da367a33102b573ec0e672a23b8b8ce3e4e4c23545f67506",functional_changes:["src/shutdown-trace.sh","src/units/uke-shutdown-trace.service"],native_updater_unchanged:true,trace_instance:"uke_shutdown",stack_limit_per_probe:32,usb_control_writes:false,boot_enablement:false,physical_acceptance:false}' > "$outer/shutdown-trace-overlay.json"
+jq -n --arg commit "$commit" '{source_commit:$commit,parent_build:11239526,parent_srpm_sha256:"e27644494d77e6c8da367a33102b573ec0e672a23b8b8ce3e4e4c23545f67506",functional_changes:["src/shutdown-trace.sh","src/units/uke-shutdown-trace.service","src/install-profile.cpp","src/units/uke-install-profile.service"],native_updater_unchanged:true,trace_instance:"uke_shutdown",stack_limit_per_probe:32,usb_control_writes:false,boot_enablement:false,rtc_access:false,physical_acceptance:false}' > "$outer/shutdown-trace-overlay.json"
 (cd "$outer"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-mv "$outer" "$stage/unpacked/uke-boot-integration-1.8.16"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.16.tar.xz" -C "$stage/unpacked" uke-boot-integration-1.8.16
-test "$(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec")" = 1.8.16-1.fc46
+mv "$outer" "$stage/unpacked/uke-boot-integration-1.8.17"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.17.tar.xz" -C "$stage/unpacked" uke-boot-integration-1.8.17
+test "$(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec")" = 1.8.17-1.fc46

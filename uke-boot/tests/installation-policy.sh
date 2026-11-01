@@ -6,7 +6,7 @@ out=$root/build/tests/installation
 mkdir -p "$out"
 # Classification also installs the filesystem-specific journal policy.
 grep -Fxq 'ProtectSystem=strict' "$root/src/units/uke-install-profile.service"
-grep -Fxq 'ReadWritePaths=/etc/systemd/system /etc/tmpfiles.d' "$root/src/units/uke-install-profile.service"
+grep -Fxq 'ReadWritePaths=/etc/systemd/system /etc/tmpfiles.d -/etc/adjtime' "$root/src/units/uke-install-profile.service"
 cxx=${CXX:-c++}
 flags=(-std=c++20 -O2 -Wall -Wextra -Werror)
 if [[ ${SANITIZE:-0} == 1 ]]; then

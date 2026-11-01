@@ -1,5 +1,12 @@
 # Userdata boot A/B updates
 
+1 November 2026. Version 1.8.17 completes the unconfigured Fedora clock file
+`0.0 0 0.0\n0\n` with its missing `UTC` line during installation-profile
+reconciliation. Other contents, including `LOCAL` and drift calibration, are
+preserved. The helper retains the existing file inode and metadata, refuses
+unsafe paths and does not access the RTC. Native fixtures cover this migration;
+physical clock retention and reboot timing require separate device checks.
+
 31 October 2026. Version1.8.13 enables both automatic update policies by
 default. A singleboot installation uses both boot slots for Linux; its
 inactive-slot writer retains the previous accepted image and matched modules.

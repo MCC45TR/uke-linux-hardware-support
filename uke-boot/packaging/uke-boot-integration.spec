@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.16
+Version: 1.8.17
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -373,6 +373,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.17-1
+- Complete only the empty Fedora clock default with UTC without RTC access.
+- Preserve configured clock values, file metadata and unsafe path targets.
+
 * Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.13-1
 - Enable guarded DNF boot activation by default; retain inactive-slot verification and rollback.
 

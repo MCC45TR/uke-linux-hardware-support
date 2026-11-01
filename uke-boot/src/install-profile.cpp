@@ -87,6 +87,23 @@ static void write_all(int fd, const std::string &value) {
     }
     require(fsync(fd) == 0, "Cannot sync profile");
 }
+static bool repair_default_clock_config(int etc_fd) {
+    const int raw = openat(etc_fd, "adjtime", O_RDWR | O_APPEND | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    if (raw < 0 && errno == ENOENT) return false;
+    ProfileFd clock(raw);
+    trusted(clock.value, false);
+    require(flock(clock.value, LOCK_EX | LOCK_NB) == 0, "Clock configuration is busy");
+    struct stat before{}, named{};
+    require(fstat(clock.value, &before) == 0, "Cannot inspect clock configuration");
+    constexpr auto incomplete = "0.0 0 0.0\n0\n";
+    if (before.st_size != 12 || bounded_read(clock.value, 12) != incomplete) return false;
+    require(fstatat(etc_fd, "adjtime", &named, AT_SYMLINK_NOFOLLOW) == 0 &&
+            named.st_dev == before.st_dev && named.st_ino == before.st_ino && named.st_nlink == 1,
+            "Clock configuration changed during inspection");
+    // Complete only Fedora's empty default; retain the inode, label and any administrator settings.
+    write_all(clock.value, "UTC\n");
+    return true;
+}
 static void mask_unit(int directory_fd, const char *unit) {
     if (symlinkat("/dev/null", directory_fd, unit) < 0) {
         require(errno == EEXIST, "Cannot mask installation-specific unit");
@@ -233,6 +250,9 @@ int main(int argc, char **argv) {
         }
         require(inspect_root() == profile, "Installation profile differs from the observed root");
         reconcile_journal_policy();
+        auto etc = directory("/etc", false);
+        if (repair_default_clock_config(etc.value))
+            std::cout << "Completed the empty default clock configuration with UTC; no RTC access.\n";
         if (profile == uke_install::Profile::linux) {
             mask_unit(units.value, "uke-userdata-update.service");
             mask_unit(units.value, "uke-userdata-accept.service");
