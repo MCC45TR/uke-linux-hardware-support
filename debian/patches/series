@@ -1,0 +1,6 @@
+0001-runtime-capability-intersection.patch
+0002-main10-p010-encode.patch
+0003-runtime-encode-rate-limits.patch
+0004-runtime-frame-dimensions.patch
+0005-preserve-decode-error-status.patch
+0006-shared-surface-write-combined.patch

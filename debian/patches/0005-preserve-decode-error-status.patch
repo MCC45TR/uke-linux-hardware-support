@@ -1,0 +1,23 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] decoder: retain a damaged picture's error after neutral fill
+
+Both OUTPUT and CAPTURE error buffers call recover_picture. Replacing
+client-visible pixels with neutral gray protects retained/exported storage,
+but must not turn a reported decode error into VA_STATUS_SUCCESS.
+Keep the error so vaSyncSurface and persistent-output EndPicture report it.
+
+Upstream: Radxa libva-v4l2 6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41 (MIT).
+This changes error reporting only; it does not repair the separate native
+FFmpeg capture/startup sequencing problem or qualify any codec mode.
+
+--- a/src/decoder.cpp
++++ b/src/decoder.cpp
+@@ -249,7 +249,7 @@
+         check(bool(memory), "persistent surface lost its storage");
+         fill_neutral_surface(*memory, surface->width, surface->height);
+         surface->memory = memory;
+-        surface->status = VA_STATUS_SUCCESS;
++        // Sanitizing storage must not hide a reported hardware decode error.
+         std::fprintf(stderr, "iris-vaapi: replaced damaged picture token=%llu with neutral gray\n",
+                      (unsigned long long)token);
+     } catch (const Error &e) {
