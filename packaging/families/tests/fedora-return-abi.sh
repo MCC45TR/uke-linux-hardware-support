@@ -40,7 +40,12 @@ while IFS= read -r pair; do
         cpio -t --quiet < "$stage/$side.cpio" > "$stage/$side.members"
         awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{exit bad}' "$stage/$side.members"
         rpm -qp --qf '[%{FILENAMES}\t%{FILECOLORS}\t%{FILEMODES:perms}\t%{FILELINKTOS}\n]' "$file" > "$stage/$side.files"
+        rpm --dbpath "$stage/keys" -qp --scripts "$file" > "$stage/$side.scripts"
+        rpm --dbpath "$stage/keys" -qp --qf '[%{FILENAMES}\t%{FILEMODES}\t%{FILEUSERNAME}\t%{FILEGROUPNAME}\t%{FILEFLAGS}\t%{FILELINKTOS}\t%{FILEDIGESTS}\n]' "$file" |
+            awk -F '\t' '$1~/^\/etc\/|^\/usr\/lib\/systemd\/|^\/usr\/share\/dbus-1\//' > "$stage/$side.policy"
     done
+    cmp "$stage/fork.scripts" "$stage/original.scripts"
+    cmp "$stage/fork.policy" "$stage/original.policy"
     dsos=0; interfaces=0; datafiles=0
     while IFS=$'\t' read -r path color mode link; do
         if [[ $color == 2 && $path == /usr/lib64/*.so* && -z $link ]]; then
