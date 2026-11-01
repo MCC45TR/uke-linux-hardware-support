@@ -1,0 +1,15 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: uke-touchscreen
+Source: See SOURCE-ORIGIN and THP-ORIGIN.
+
+Files: *
+Copyright: 2026 Senemos Contributors
+License: GPL-3+
+ The full GNU General Public License version 3 is available in
+ /usr/share/common-licenses/GPL-3 on Debian systems.
+
+Files: src/upstream/nt36532-thp/*
+Copyright: See preserved upstream source notices
+License: Apache-2.0
+ The full Apache License version 2.0 is available in
+ /usr/share/common-licenses/Apache-2.0 on Debian systems.
