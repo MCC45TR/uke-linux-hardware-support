@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
 Version: 1.8.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-boot
@@ -19,6 +19,7 @@ Requires: senemos-native-runtime(libstdc++)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Requires: systemd-udev
+Requires: uke-firmware >= 3.0.304.0
 Requires: bluez
 Requires: senemos-uke-linux-kernel-mainline-modules >= 7.2.9-1.53.native53
 Requires(pre): rpm systemd coreutils sed
@@ -129,6 +130,7 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/touch-launcher.cpp -o uke-touchscreen %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
 %check
+bash tests/touch-firmware-provision.sh %{buildroot}
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
 bash tests/userdata-update.sh
@@ -161,13 +163,14 @@ timeout 15 bash -c 'ulimit -v 262144; exec ./touch-assignment-contract'
 install -Dm755 uke-touchscreen %{buildroot}%{_libexecdir}/senemos-uke/uke-touchscreen
 install -Dm755 uke-touch-thp %{buildroot}%{_libexecdir}/senemos-uke/uke-touch-thp
 install -d %{buildroot}%{_unitdir}
-sed 's@ExecStart=/usr/libexec/senemos-uke/uke-touch-thp --daemon@ExecStart=/usr/libexec/senemos-uke/uke-touchscreen --daemon@' touch-runtime/legacy/src/units/uke-touchscreen.service > %{buildroot}%{_unitdir}/uke-touchscreen.service
+sed -e 's@ExecStart=/usr/libexec/senemos-uke/uke-touch-thp --daemon@ExecStart=/usr/libexec/senemos-uke/uke-touchscreen --daemon@' -e '/^After=/s/$/ systemd-tmpfiles-setup.service/' touch-runtime/legacy/src/units/uke-touchscreen.service > %{buildroot}%{_unitdir}/uke-touchscreen.service
+install -Dm644 src/profiles/uke-touch-data.conf %{buildroot}%{_prefix}/lib/tmpfiles.d/uke-touch-data.conf
 install -Dm644 touch-runtime/legacy/src/units/80-uke-touchscreen.preset %{buildroot}%{_presetdir}/80-uke-touchscreen.preset
 install -Dm644 touch-runtime/legacy/src/udev/70-uke-touchscreen.rules %{buildroot}%{_udevrulesdir}/70-uke-touchscreen.rules
 install -Dm644 touch-runtime/legacy/src/modules-load.d/uke-touchscreen.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-touchscreen.conf
 install -Dm644 touch-runtime/legacy/src/modprobe.d/uke-touchscreen.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-touchscreen.conf
 install -d %{buildroot}%{_prefix}/lib/firmware/novatek/uke
-ln -s /var/lib/uke-touch/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
+ln -s /usr/lib/firmware/qcom/uke/touch/csot/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-native-power-profile-ready %{buildroot}%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
@@ -218,6 +221,7 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 
 %post
 %systemd_post uke-touchscreen.service
+%tmpfiles_create %{_prefix}/lib/tmpfiles.d/uke-touch-data.conf
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %preun
@@ -277,6 +281,7 @@ fi
 %{_libexecdir}/senemos-uke/uke-touchscreen
 %{_libexecdir}/senemos-uke/uke-touch-thp
 %{_unitdir}/uke-touchscreen.service
+%{_prefix}/lib/tmpfiles.d/uke-touch-data.conf
 %{_presetdir}/80-uke-touchscreen.preset
 %{_udevrulesdir}/70-uke-touchscreen.rules
 %{_prefix}/lib/modules-load.d/uke-touchscreen.conf
@@ -344,6 +349,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.2-2
+- Resolve qualified CSOT firmware before probe and provision absent runtime aliases.
+- Preserve existing local inputs and require the packaged OEM firmware assets.
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.2-1
 - Recognize an enabled internal DSI output independently of probe-order numbering.
 

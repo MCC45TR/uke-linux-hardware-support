@@ -19,6 +19,7 @@ validate:
 	bash -n tests/startup-native.sh src/dracut/93uke-boot-guard/module-setup.sh
 	bash -n tests/native-profile-ready.sh tests/native-profile-udev.sh
 	bash -n tests/bluetooth-packaging.sh
+	bash -n tests/touch-firmware-provision.sh
 test-native: validate
 	bash tests/boot-status.sh
 	bash tests/kernel-inputs.sh
