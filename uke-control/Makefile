@@ -12,9 +12,9 @@ protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system
 build:
 	mkdir -p build
-build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/front-color.cpp src/desktop.cpp src/hardware.cpp src/wake.cpp $(shell pkg-config --libs libselinux libsystemd)
-build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp build/libuke-control.so.0
+build/libuke-control.so.0: src/backend.cpp src/backend.hpp src/charge-policy.cpp src/charge-policy.hpp src/charge-client.cpp src/charge-client.hpp src/usb.cpp src/usb.hpp src/sysfs.hpp src/firmware.cpp src/firmware.hpp src/usb-request.cpp src/usb-request.hpp src/front-color.cpp src/front-color.hpp src/rpm-api.hpp src/desktop.cpp src/desktop.hpp src/hardware.cpp src/hardware.hpp src/wake.cpp src/wake.hpp src/vrr.cpp src/vrr.hpp src/display-device.hpp | build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -shared -Wl,-soname,libuke-control.so.0 -o $@ src/backend.cpp src/charge-policy.cpp src/charge-client.cpp src/usb.cpp src/firmware.cpp src/usb-request.cpp src/front-color.cpp src/desktop.cpp src/hardware.cpp src/wake.cpp src/vrr.cpp $(shell pkg-config --libs libselinux libsystemd libdrm)
+build/uke-control: src/main.cpp src/sensors.cpp src/sensors.hpp src/charge-notify.cpp src/charge-notify.hpp src/diagnostic.cpp src/diagnostic.hpp src/sysfs.hpp src/vrr.hpp build/libuke-control.so.0
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ src/main.cpp src/sensors.cpp src/charge-notify.cpp src/diagnostic.cpp -Lbuild -l:libuke-control.so.0 $(shell pkg-config --libs libsystemd)
 build/uke-control-packages: src/packages.cpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< $(shell pkg-config --cflags --libs libdnf5 rpm)
@@ -48,6 +48,9 @@ check: all build/test-front-color build/test-execute
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) tests/wake.cpp src/wake.cpp -o build/test-wake
 	build/test-wake
 	bash tests/wake-policy.sh
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/vrr.cpp src/wake.cpp $(shell pkg-config --libs libdrm) -o build/test-vrr
+	build/test-vrr
+	bash tests/vrr-load.sh
 	bash tests/cdc-policy.sh
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) tests/display-device.cpp -o build/test-display-device
 	build/test-display-device
@@ -97,7 +100,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
 	mkdir -p "$$top"/{SOURCES,SPECS,SRPMS}
-	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.5.2/#' -czf "$$top/SOURCES/uke-control-1.5.2.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md
+	tar --sort=name --mtime=@1792270800 --owner=0 --group=0 --numeric-owner --exclude=build --transform='s#^#uke-control-1.6.0/#' -czf "$$top/SOURCES/uke-control-1.6.0.tar.gz" src shared tests packaging host Makefile LICENSE README.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md
 	cp packaging/uke-control.spec "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/uke-control.spec"
 	install -m644 "$$top/SRPMS/"*.src.rpm '$(outdir)/'

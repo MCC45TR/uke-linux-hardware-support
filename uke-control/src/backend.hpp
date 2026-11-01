@@ -16,6 +16,7 @@ void boot();
 std::string wake_status();
 void wake_set(const std::string& source, bool enabled);
 void wake_apply();
+void display_vrr_set(unsigned hz);
 std::string charge_status();
 void charge_set(unsigned percent);
 Result charge_control_query(const std::string& operation);

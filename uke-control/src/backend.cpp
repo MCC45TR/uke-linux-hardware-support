@@ -5,6 +5,7 @@
 #include "usb-request.hpp"
 #include "wake.hpp"
 #include "sysfs.hpp"
+#include "vrr.hpp"
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -113,6 +114,12 @@ static uint64_t decimal(const std::string& value) {
     need(p.ec==std::errc{}&&p.ptr==value.data()+value.size(),"Expected an unsigned integer");return n;
 }
 std::string wake_status() { return wake::snapshot(); }
+void display_vrr_set(unsigned hz) {
+    root();board();Lock lock;
+    vrr::validate(hz,vrr::driver());
+    (void)vrr::configured();
+    atomic_file(state/vrr::policy_name,vrr::policy(hz));
+}
 static void wake_write(const wake::Source& source, bool enabled) {
     need(!source.path.empty(), "Wake control unavailable: " + source.name + ": " + source.reason);
     Fd fd{open(source.path.c_str(), O_WRONLY|O_CLOEXEC|O_NOFOLLOW)};
@@ -387,7 +394,7 @@ Result cdc_persistent(bool enabled) {
 }
 std::string status() {
     std::string selected=geteuid()==0?policy():"root-private (sudo to inspect)";
-    return "uke-control 1.5.2\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
+    return "uke-control 1.6.0\nswap_policy="+selected+"\n"+read("/proc/swaps")+charge_status()+usb_status();
 }
 void boot() {
     root();board();(void)inventory(true);swap_apply();
@@ -458,7 +465,7 @@ std::string report() {
     std::string release=kernel.status==0?kernel.output:"unavailable\n";
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
-    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.5.2\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control 1.6.0\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {

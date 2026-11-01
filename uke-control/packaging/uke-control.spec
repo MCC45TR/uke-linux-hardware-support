@@ -1,6 +1,6 @@
 Name: uke-control
-Version: 1.5.2
-Release: 1%{?dist}
+Version: 1.6.0
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -17,6 +17,7 @@ Requires: systemd-udev
 Requires: dracut >= 111
 Requires: f2fs-tools >= 1.16.0
 Requires: policycoreutils
+Requires: kmod
 Requires: libdnf5 >= 5.4.6.0
 Provides: uke-control(channel-api) = 1
 %{?systemd_requires}
@@ -48,11 +49,14 @@ package selections. Numeric readings alone do not establish physical acceptance.
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
 install -Dm755 build/uke-control-packages %{buildroot}%{_libexecdir}/uke-control/packages
 install -Dm755 build/resize-system %{buildroot}%{_libexecdir}/uke-control/resize-system
+install -Dm755 packaging/vrr-min-load %{buildroot}%{_libexecdir}/uke-control/vrr-min-load
+install -Dm644 packaging/60-uke-control-vrr.conf %{buildroot}%{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf
 install -Dm755 build/libuke-control.so.0 %{buildroot}%{_libdir}/libuke-control.so.0
 install -Dm644 src/backend.hpp %{buildroot}%{_includedir}/uke-control/backend.hpp
 install -Dm644 src/charge-policy.hpp %{buildroot}%{_includedir}/uke-control/charge-policy.hpp
 install -Dm644 src/front-color.hpp %{buildroot}%{_includedir}/uke-control/front-color.hpp
 install -Dm644 src/desktop.hpp %{buildroot}%{_includedir}/uke-control/desktop.hpp
+install -Dm644 src/vrr.hpp %{buildroot}%{_includedir}/uke-control/vrr.hpp
 install -Dm755 build/uke-control-tests %{buildroot}%{_libexecdir}/uke-control/tests
 install -Dm755 build/ssc-discovery %{buildroot}%{_libexecdir}/uke-control/ssc-discovery
 install -Dm755 build/ssc-sample %{buildroot}%{_libexecdir}/uke-control/ssc-sample
@@ -90,6 +94,8 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %dir %{_libexecdir}/uke-control
 %{_libexecdir}/uke-control/packages
 %{_libexecdir}/uke-control/resize-system
+%{_libexecdir}/uke-control/vrr-min-load
+%{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf
 %{_libdir}/libuke-control.so.0
 %{_includedir}/uke-control/*.hpp
 %{_unitdir}/uke-control.service
@@ -110,6 +116,13 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.6.0-2
+- Keep the saved floor outside modprobe options to preserve older rollback kernels
+
+* Sat Oct 24 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.6.0-1
+- Add a validated per-boot VRR minimum policy and loaded/pending status
+- Preserve normal module loading when the kernel lacks the floor policy API
+
 * Fri Oct 23 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.5.2-1
 - Wait without spinning when a child closes its output before exiting
 - Test the actual runner's EOF, exit status, timeout and output bounds
