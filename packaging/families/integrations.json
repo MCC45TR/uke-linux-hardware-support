@@ -13,14 +13,16 @@
         {
           "name": "uke-core-meta",
           "build_id": 11228199,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228199/uke-core-meta-1.0.7-8.fc46.src.rpm",
-          "sha256": "245b8aa766d21878d1bbab276abe4594cf099fcdd138f65edfce84b24d3e17d1"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-core-meta-1.0.7-8.fc46.src.rpm",
+          "sha256": "245b8aa766d21878d1bbab276abe4594cf099fcdd138f65edfce84b24d3e17d1",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228199/uke-core-meta-1.0.7-8.fc46.src.rpm"
         },
         {
           "name": "uke-desktop-metas",
           "build_id": 11228126,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228126/uke-desktop-metas-1.0.0-24.fc46.src.rpm",
-          "sha256": "e03d6c1e244e6c052401705f42082b52cfe9e9b5a13750ff663226fb84c899ff"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-desktop-metas-1.0.0-24.fc46.src.rpm",
+          "sha256": "e03d6c1e244e6c052401705f42082b52cfe9e9b5a13750ff663226fb84c899ff",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228126/uke-desktop-metas-1.0.0-24.fc46.src.rpm"
         }
       ]
     },
@@ -32,20 +34,23 @@
         {
           "name": "uke-displayport-audio",
           "build_id": 11228128,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228128/uke-displayport-audio-0.1.0-8.fc46.src.rpm",
-          "sha256": "98be741c36cef6d4800cdad60c63f068a57dd73e63b4b8d78abadfcc88d6cde0"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-displayport-audio-0.1.0-8.fc46.src.rpm",
+          "sha256": "98be741c36cef6d4800cdad60c63f068a57dd73e63b4b8d78abadfcc88d6cde0",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228128/uke-displayport-audio-0.1.0-8.fc46.src.rpm"
         },
         {
           "name": "uke-speaker-controls",
           "build_id": 11228136,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228136/uke-speaker-controls-0.1.0-4.fc46.src.rpm",
-          "sha256": "43ec77b284e641174522ba36192850d2594a51318080abaa6711a92fb0bc3120"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-speaker-controls-0.1.0-4.fc46.src.rpm",
+          "sha256": "43ec77b284e641174522ba36192850d2594a51318080abaa6711a92fb0bc3120",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228136/uke-speaker-controls-0.1.0-4.fc46.src.rpm"
         },
         {
           "name": "uke-speaker-orientation",
           "build_id": 11228137,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228137/uke-speaker-orientation-0.1.0-5.fc46.src.rpm",
-          "sha256": "6b382b01ee37aa68eee286367d580a76089a6b2161a12dce5988eb55c676f4e9"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-speaker-orientation-0.1.0-5.fc46.src.rpm",
+          "sha256": "6b382b01ee37aa68eee286367d580a76089a6b2161a12dce5988eb55c676f4e9",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228137/uke-speaker-orientation-0.1.0-5.fc46.src.rpm"
         }
       ]
     },
@@ -58,20 +63,23 @@
         {
           "name": "uke-ssc-fileservice",
           "build_id": 11234247,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234247/uke-ssc-fileservice-2026.09.21-26.src.rpm",
-          "sha256": "bac192c050ea2c6f9ec337359effa51cfa8c5c7e994a74bfebf7df28c5e13655"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-ssc-fileservice-2026.09.21-26.src.rpm",
+          "sha256": "bac192c050ea2c6f9ec337359effa51cfa8c5c7e994a74bfebf7df28c5e13655",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11234247/uke-ssc-fileservice-2026.09.21-26.src.rpm"
         },
         {
           "name": "uke-front-color",
           "build_id": 11228130,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228130/uke-front-color-1.0.2-14.fc46.src.rpm",
-          "sha256": "88b92873b81e3c9f8525aab126ed0acd43ffa05d7971442eda1ccfabba3a568c"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-front-color-1.0.2-14.fc46.src.rpm",
+          "sha256": "88b92873b81e3c9f8525aab126ed0acd43ffa05d7971442eda1ccfabba3a568c",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228130/uke-front-color-1.0.2-14.fc46.src.rpm"
         },
         {
           "name": "uke-proximity-capture",
           "build_id": 11228134,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228134/uke-proximity-capture-0.1.0-6.fc46.src.rpm",
-          "sha256": "bfb42666a97729bb8292984cbcc2ebba85ee72709e04314c02e4c948f9657d9c"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-proximity-capture-0.1.0-6.fc46.src.rpm",
+          "sha256": "bfb42666a97729bb8292984cbcc2ebba85ee72709e04314c02e4c948f9657d9c",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228134/uke-proximity-capture-0.1.0-6.fc46.src.rpm"
         }
       ]
     },
@@ -83,14 +91,16 @@
         {
           "name": "uke-battery-observer",
           "build_id": 11228237,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228237/uke-battery-observer-1.4.1-1.src.rpm",
-          "sha256": "1824c429567dc532830eaaa536fe13f98a85b27691553d75f8a72e05d5b4554e"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-battery-observer-1.4.1-1.src.rpm",
+          "sha256": "1824c429567dc532830eaaa536fe13f98a85b27691553d75f8a72e05d5b4554e",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228237/uke-battery-observer-1.4.1-1.src.rpm"
         },
         {
           "name": "uke-adaptive-display",
           "build_id": 11228123,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228123/uke-adaptive-display-1.0.16-12.fc46.src.rpm",
-          "sha256": "422cba6e4e322cebba2504b0aabccd43ed6142af6bacc37b867745e77c4e5c6f"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-adaptive-display-1.0.16-12.fc46.src.rpm",
+          "sha256": "422cba6e4e322cebba2504b0aabccd43ed6142af6bacc37b867745e77c4e5c6f",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228123/uke-adaptive-display-1.0.16-12.fc46.src.rpm"
         }
       ]
     },
@@ -102,14 +112,16 @@
         {
           "name": "uke-vaapi-v4l2",
           "build_id": 11230057,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230057/uke-vaapi-v4l2-1.0.0-10.src.rpm",
-          "sha256": "a4eb7471ef88e461ca64ff333fbf4e709f5c86f31a99dad585ad23bd4b30bc0a"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-vaapi-v4l2-1.0.0-10.src.rpm",
+          "sha256": "a4eb7471ef88e461ca64ff333fbf4e709f5c86f31a99dad585ad23bd4b30bc0a",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230057/uke-vaapi-v4l2-1.0.0-10.src.rpm"
         },
         {
           "name": "uke-video-session",
           "build_id": 11230049,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230049/uke-video-session-1.1.0-1.src.rpm",
-          "sha256": "c9c21ee1b29a32744de0bfbbefdb86582dc11fe2bc3ef8370ea80f15cf60b4c6"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-video-session-1.1.0-1.src.rpm",
+          "sha256": "c9c21ee1b29a32744de0bfbbefdb86582dc11fe2bc3ef8370ea80f15cf60b4c6",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11230049/uke-video-session-1.1.0-1.src.rpm"
         }
       ]
     },
@@ -121,14 +133,16 @@
         {
           "name": "uke-plymonth",
           "build_id": 11228133,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228133/uke-plymonth-1.0.2-5.fc46.src.rpm",
-          "sha256": "ee10f7233963ed320dcfe833ca641ab51b2e6ba2eb3fab103e451d57bc08e8fd"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-plymonth-1.0.2-5.fc46.src.rpm",
+          "sha256": "ee10f7233963ed320dcfe833ca641ab51b2e6ba2eb3fab103e451d57bc08e8fd",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228133/uke-plymonth-1.0.2-5.fc46.src.rpm"
         },
         {
           "name": "uke-material-decoration",
           "build_id": 11228120,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228120/uke-material-decoration-20261006.094154-7.fc46.src.rpm",
-          "sha256": "be79d6264e83c9e78b835488c8bf718c615404fa42b670db3f84ae246ec5dbf8"
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-material-decoration-20261006.094154-7.fc46.src.rpm",
+          "sha256": "be79d6264e83c9e78b835488c8bf718c615404fa42b670db3f84ae246ec5dbf8",
+          "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228120/uke-material-decoration-20261006.094154-7.fc46.src.rpm"
         }
       ]
     }

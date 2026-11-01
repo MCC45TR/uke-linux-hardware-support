@@ -51,7 +51,10 @@ jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json
 if [[ $integration == true ]]; then
     while IFS=$'\t' read -r key url hash; do
         [[ $key =~ ^uke-[a-zA-Z0-9+_.-]+$ ]]
-        [[ $url == https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/*.src.rpm ]]
+        case $url in
+            https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/*.src.rpm|https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/*.src.rpm) ;;
+            *) echo 'Unreviewed integration source URL' >&2; exit 1;;
+        esac
         [[ $hash =~ ^[a-f0-9]{64}$ ]]
         input="$root/packaging/families/referances/integrations/$key.src.rpm"
         mkdir -p "$(dirname "$input")"

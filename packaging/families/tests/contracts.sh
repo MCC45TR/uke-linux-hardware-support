@@ -3,7 +3,7 @@ set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 jq -e '.schema==1 and ([.families[].name]|(length==9) and (unique|length==9))' packaging/families/families.json >/dev/null
-jq -e '.schema==1 and .fedora==46 and (.families|length==6) and ([.families[].sources[].name]|length==14 and (unique|length)==14) and all(.families[]; (.name|test("^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$")) and all(.sources[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/"))))' packaging/families/integrations.json >/dev/null
+jq -e '.schema==1 and .fedora==46 and (.families|length==6) and ([.families[].sources[].name]|length==14 and (unique|length)==14) and all(.families[]; (.name|test("^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$")) and all(.sources[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|(startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/") or startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/")))))' packaging/families/integrations.json >/dev/null
 jq -e 'all(.families[]|select(has("debug_owner")); . as $family|any(.sources[];.name==$family.debug_owner))' packaging/families/integrations.json >/dev/null
 jq -e '.families[]|select(.name=="uke-additional")|(.suggests|index("uke-vaapi-v4l2")!=null) and (.watch_paths|index("uke-video/packaging")!=null)' packaging/families/families.json >/dev/null
 [[ $(rpmspec --target aarch64 -q --srpm --qf '%{NAME}' uke-video/packaging/uke-vaapi-v4l2.spec) == uke-vaapi-v4l2 ]]
