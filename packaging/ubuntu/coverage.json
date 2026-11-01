@@ -1,0 +1,346 @@
+[
+  {
+    "name": "uke-speaker-firmware",
+    "source_type": "custom",
+    "superseded": false,
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending",
+    "source_revision": null
+  },
+  {
+    "name": "senemos-uke-linux-kernel-mainline",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "8983163763f708ec940b349ebb81ab43cc3725c3",
+    "status": "blocked",
+    "reason": "Kernel/DTB/modules/initramfs cohort and recovery rollback contract must be ported together; no maintainer-script boot writes permitted"
+  },
+  {
+    "name": "uke-control",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "a51a0b9fa9ec779907c67ec97ec3654662bebc18",
+    "status": "blocked",
+    "reason": "Port libdnf5/RPM channel and transaction APIs, dracut integration and SELinux assumptions to Ubuntu before packaging"
+  },
+  {
+    "name": "uke-core-meta",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-libssc",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-mesa-libclc22-spirv",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "99fbc01ac89eb651b789367cf9af702860378831",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-front-color",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "source-tested",
+    "reason": "Unsigned Debian source assembly tested; ARM64 build and runtime pending",
+    "source_revision": null
+  },
+  {
+    "name": "uke-adaptive-display",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-desktop-metas",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "delegated",
+    "reason": "Separate desktop migration owns this payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-battery-observer",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "source-tested",
+    "reason": "Unsigned Debian source assembly tested; ARM64 build and runtime pending",
+    "source_revision": null
+  },
+  {
+    "name": "uke-pipewire",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-plymonth",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "delegated",
+    "reason": "Separate desktop migration owns this payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-material-decoration",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "delegated",
+    "reason": "Separate desktop migration owns this payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-boot-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "e934fac7a8cb2a5ed62dec28e159a5fe84c06f6e",
+    "status": "blocked",
+    "reason": "Kernel/DTB/modules/initramfs cohort and recovery rollback contract must be ported together; no maintainer-script boot writes permitted"
+  },
+  {
+    "name": "uke-proximity-capture",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-displayport-audio",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-firmware",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+    "status": "blocked",
+    "reason": "Review source provenance and redistribution rights, preserve per-device admission; firmware payload not converted"
+  },
+  {
+    "name": "uke-orangefox-recovery",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-speaker-controls",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-vaapi-v4l2",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-ssc-fileservice",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-speaker-orientation",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-libwacom",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "distro-candidate",
+    "reason": "Compare Ubuntu original version and Uke patch delta before dropping fork",
+    "source_revision": null
+  },
+  {
+    "name": "uke-upower",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-at-spi2-core",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "distro-candidate",
+    "reason": "Compare Ubuntu original version and Uke patch delta before dropping fork",
+    "source_revision": null
+  },
+  {
+    "name": "uke-gstreamer1",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "distro-candidate",
+    "reason": "Compare Ubuntu original version and Uke patch delta before dropping fork",
+    "source_revision": null
+  },
+  {
+    "name": "uke-libaccounts-glib",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "4a6f5430004ce9e11837862eb6add987130655a3",
+    "status": "distro-candidate",
+    "reason": "Compare Ubuntu original version and Uke patch delta before dropping fork"
+  },
+  {
+    "name": "uke-accountsservice",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "4a6f5430004ce9e11837862eb6add987130655a3",
+    "status": "distro-candidate",
+    "reason": "Compare Ubuntu original version and Uke patch delta before dropping fork"
+  },
+  {
+    "name": "uke-iio-sensor-proxy",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-mesa",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "b5cdd136cc932ae8a2bedaa36560d57c2d54b7d4",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-libstdcxx-runtime",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "unnecessary",
+    "reason": "Use Ubuntu libstdc++6 and dpkg-shlibdeps instead of Fedora runtime alias",
+    "source_revision": null
+  },
+  {
+    "name": "uke-fidelityfx",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "0982197bac4c32391c752cc800a5ebaaa9335df6",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "ddcutil",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "4335808aa1bafe9c2adf23326db621f75539f599",
+    "status": "distro-candidate",
+    "reason": "Compare Ubuntu original version and Uke patch delta before dropping fork"
+  },
+  {
+    "name": "uke-image-tools",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "9e4d2153e116419c474d0c73eb2280447bf45243",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-video-session",
+    "source_type": "custom",
+    "superseded": true,
+    "status": "superseded",
+    "reason": "Historical standalone COPR source; migrate current integration payload",
+    "source_revision": null
+  },
+  {
+    "name": "uke-oem-resources",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "53ae6371b12758e01fe0af4690e6fb54d2e1b436",
+    "status": "blocked",
+    "reason": "Review source provenance and redistribution rights, preserve per-device admission; firmware payload not converted"
+  },
+  {
+    "name": "uke-meta-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "6b40e07b0943424a61051e71cc3e7a29cab853a9",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-sensor-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "0d72558157de23e36c868f127e056dd9ad2ef345",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-power-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "22008576eaaa4ac14d3be22d39f1b8d1240e7556",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-video-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "0d72558157de23e36c868f127e056dd9ad2ef345",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-desktop-extras-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "0d72558157de23e36c868f127e056dd9ad2ef345",
+    "status": "delegated",
+    "reason": "Separate desktop migration owns this payload"
+  },
+  {
+    "name": "uke-audio-integration",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "0d72558157de23e36c868f127e056dd9ad2ef345",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  },
+  {
+    "name": "uke-o82-color-profile",
+    "source_type": "custom",
+    "superseded": false,
+    "source_revision": "dcc32eca7b67d092cf1d3da5f15ba7ce16e1d8cb",
+    "status": "blocked",
+    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+  }
+]

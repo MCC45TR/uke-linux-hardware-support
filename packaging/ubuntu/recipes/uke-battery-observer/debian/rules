@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@
+override_dh_auto_configure:
+override_dh_auto_test:
+	# Runtime tests require separate execution approval and an ARM64 worker.
+override_dh_auto_clean:
+	rm -rf build
+# Retain opt-in semantics; neither enable nor start during installation.
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
+override_dh_auto_build:
+	dh_auto_build -- $(CURDIR)/build/uke-battery
+override_dh_auto_install:
+	install -Dm755 build/uke-battery debian/uke-battery-observer/usr/bin/uke-battery
+	install -Dm644 packaging/systemd/uke-battery.service debian/uke-battery-observer/usr/lib/systemd/system/uke-battery.service
+	install -Dm644 packaging/sysusers/uke-battery.conf debian/uke-battery-observer/usr/lib/sysusers.d/uke-battery.conf
+	install -Dm644 packaging/dbus/org.senemos.Uke.Battery1.conf debian/uke-battery-observer/usr/share/dbus-1/system.d/org.senemos.Uke.Battery1.conf
+	install -Dm644 packaging/dbus/org.senemos.Uke.Battery1.service debian/uke-battery-observer/usr/share/dbus-1/system-services/org.senemos.Uke.Battery1.service
+	install -Dm644 manifests/battery-profile.json debian/uke-battery-observer/usr/share/uke-battery/battery-profile.json
+	install -Dm644 manifests/model-profile.json debian/uke-battery-observer/usr/share/uke-battery/model-profile.json

@@ -1,0 +1,15 @@
+Source: uke-battery-observer
+Section: admin
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), g++, make, pkg-config, libsystemd-dev (>= 257)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/MCC45TR/uke-linux-hardware-support
+
+Package: uke-battery-observer
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd, dbus
+Description: Uke read-only battery telemetry
+ Native device helper. Software packaging does not establish physical
+ qualification. Firmware calibration and charging controls are not included.

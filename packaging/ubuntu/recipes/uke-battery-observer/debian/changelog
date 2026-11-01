@@ -1,0 +1,5 @@
+uke-battery-observer (1.2.0-0ubuntu1~tenacious1) tenacious; urgency=medium
+
+  * Prepare native ARM64 packaging; device qualification remains pending.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 12:00:00 +0000
