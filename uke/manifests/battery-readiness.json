@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-18",
+  "tests_executed": false,
+  "build_executed": false,
+  "package_executed": false,
+  "tablet_commands_executed": false,
+  "handoff_implementation_complete": false,
+  "runtime_identity_resolver_implemented": true,
+  "automatic_transport_recovery_implemented": false,
+  "transport_fault_response": "quiesce_property_reads_verified_clean_boot_required",
+  "upower_fedora_overlay_source_integrated": true,
+  "new_battery_actuators_implemented": false,
+  "remaining_actuator_gate": "Exact active firmware ABI, ownership, effect/readback and autonomous protection evidence",
+  "features": [
+    {"id":"read_only_collector","source":"implemented","qualified":false},
+    {"id":"read_only_dbus","source":"implemented","qualified":false},
+    {"id":"runtime_identity","source":"per_boot_expiring_operator_attestation_models_only","qualified":false},
+    {"id":"upower_overlay","source":"fedora_1.91.5_source_recipe_and_isolated_fixtures","qualified":false},
+    {"id":"capacity_retention","source":"collector_session_connected_inputs_unqualified","qualified":false},
+    {"id":"observed_efc","source":"collector_session_connected_inputs_unqualified","qualified":false},
+    {"id":"atomic_checkpoint","source":"session_lifecycle_wired_inputs_unqualified","qualified":false},
+    {"id":"tte_with_reserve","source":"collector_session_connected_inputs_unqualified","qualified":false},
+    {"id":"time_to_target_curve","source":"collector_session_connected_inputs_unqualified","qualified":false},
+    {"id":"fixed_pdo_admission","source":"pure_arithmetic_no_port_control","qualified":false},
+    {"id":"threshold_hold_high_power","source":"disabled_pending_firmware_profile","qualified":false}
+  ],
+  "gates":{"G0":"PARTIAL","G1":"NOT_RUN","G2":"NOT_RUN","G3":"BLOCKED","G4":"NOT_RUN","G5":"NOT_RUN","G6":"NOT_RUN","G7":"NOT_RUN","G8":"NOT_READY"}
+}

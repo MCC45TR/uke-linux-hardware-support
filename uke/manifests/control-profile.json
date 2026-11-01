@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "kind": "control_qualification",
+  "device": "uke",
+  "qualification": "unqualified",
+  "enable_control": false,
+  "backend": "qti_uke_charge_control_v1",
+  "identities": null,
+  "evidence_id": null,
+  "proofs": null,
+  "limits": null,
+  "source_type": null,
+  "cap_resume_percent": null,
+  "may_change_feature": false,
+  "standard_clients": false,
+  "current_control": false,
+  "current_limits": null,
+  "external_thermal_limits": null,
+  "safety_backend": null
+}

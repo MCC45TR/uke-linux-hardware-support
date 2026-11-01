@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "kind": "model_qualification",
+  "device": "uke",
+  "profile_id": "uke-unqualified",
+  "qualification": "unqualified",
+  "enable_control": false,
+  "identities": null,
+  "measurements": {"current": false, "voltage": false, "energy": false, "learned_capacity": false, "capacity_basis": false, "target_effective": false},
+  "efc_reference_uah": null,
+  "reserve_uwh": null,
+  "evidence_id": null,
+  "electrical_basis": null,
+  "charge_curve": null
+}

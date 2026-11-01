@@ -1,0 +1,19 @@
+[Unit]
+Description=Uke minimal native charging interface
+DefaultDependencies=no
+After=sysinit.target systemd-udev-trigger.service
+Before=uke-offline-charge.target
+Conflicts=multi-user.target graphical.target shutdown.target
+Before=shutdown.target
+PartOf=uke-offline-charge.target
+ConditionPathExists=/run/uke-offline-charge
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/uke-offline-charge --run
+Restart=no
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+TimeoutStopSec=5
+UMask=0077
