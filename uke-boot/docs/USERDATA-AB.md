@@ -1,5 +1,11 @@
 # Userdata boot A/B updates
 
+1 November 2026. Version 1.8.18 gives the original Fedora Power Profiles daemon
+its existing state directory as `HOME`. GIO file monitoring can then determine
+the home path without an NSS passwd lookup. No daemon rebuild or SELinux grant
+is added. Native regular-file fixtures cover the monitor behavior; the next
+daemon start must separately confirm the absence of its previous startup AVC.
+
 1 November 2026. Version 1.8.17 completes the unconfigured Fedora clock file
 `0.0 0 0.0\n0\n` with its missing `UTC` line during installation-profile
 reconciliation. Other contents, including `LOCAL` and drift calibration, are
