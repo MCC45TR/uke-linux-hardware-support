@@ -1,6 +1,6 @@
 # Temporary USB shutdown trace
 
-1 November 2026: source 1.8.19 corrects the observer's stop ordering after a
+1 November 2026: source 1.8.20 corrects the observer's stop ordering after a
 physical reboot exposed early cleanup in 1.8.18. Offline ordering and negative
 controls pass; native packaging and the revised physical lifetime remain pending.
 
