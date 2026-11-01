@@ -113,15 +113,30 @@ static void inspect_normal(int fd) {
         std::cout<<name<<'='<<custom_read(fd,subcommand)<<'\n';
 }
 static unsigned custom_read(int fd,unsigned subcommand) {
-    normal_write(fd,0x11c450,Bytes{0xbf,std::uint8_t(subcommand),1});
-    for(unsigned attempt=0;attempt<10;attempt++) {
-        pause_ms(10);
+    // The Uke OEM command path waits 35 ms, then resends up to five times at 20 ms.
+    pause_ms(35);
+    unsigned last_status=0xff;
+    for(unsigned attempt=0;attempt<5;attempt++) {
+        normal_write(fd,0x11c450,Bytes{0xbf,std::uint8_t(subcommand),1});
+        pause_ms(20);
         const auto status=normal_read<5>(fd,0x11c450);
         if(status[0]==0) {
             return unsigned(status[3])|(unsigned(status[4])<<8);
         }
+        last_status=status[0];
     }
-    throw std::runtime_error("Coordinate-mode readback timed out");
+    throw std::runtime_error("Touch command "+std::to_string(subcommand)+
+        " timed out; status="+std::to_string(last_status));
+}
+static void normal_scan_ready(int fd) {
+    // Uke nvt_ts_resume waits for RESET_STATE_REK (0xa1), beyond loader INIT (0xa0).
+    unsigned state=0;
+    for(unsigned attempt=0;attempt<50;attempt++) {
+        state=normal_read<1>(fd,0x11c460)[0];
+        if(state>=0xa1 && state<=0xaf) return;
+        pause_ms(10);
+    }
+    throw std::runtime_error("Touch baseline not ready; reset state="+std::to_string(state));
 }
 static bool coordinate_mode_read(int fd) {
     const unsigned mode=custom_read(fd,0x15);
@@ -202,7 +217,7 @@ static void load_normal(int fd, std::span<const std::uint8_t> data) {
             auto count=std::min(1024U,b.size-offset);
             verify_bank(fd,b.address+offset,data.subspan(b.offset+offset,count)); offset+=count;
         }
-    std::cout<<"All four normal RAM banks match the pinned image before boot-ready\n";
+    std::cout<<"All four normal RAM banks match the pinned image before boot-ready"<<std::endl;
     normal_write(fd,0x11c460,Bytes(6,0)); normal_write(fd,0x11c450,Bytes{0xae,0});
     normal_write(fd,0x1fb50d,Bytes{1}); pause_ms(5);
     for(attempt=0;attempt<50;attempt++) {
@@ -213,7 +228,7 @@ static void load_normal(int fd, std::span<const std::uint8_t> data) {
     require(attempt<50,"Normal firmware reset state timed out");
     const auto ilm_crc=word(normal_read<4>(fd,0x1fb520),0);
     const auto dlm_crc=word(normal_read<4>(fd,0x1fb524),0);
-    std::cout<<"Hardware CRC: ILM="<<std::hex<<ilm_crc<<" DLM="<<dlm_crc<<std::dec<<'\n';
+    std::cout<<"Hardware CRC: ILM="<<std::hex<<ilm_crc<<" DLM="<<dlm_crc<<std::dec<<std::endl;
     /* Verify bytes before boot; the OEM accepts reset state, not post-boot CRC slots. */
     const auto info=read<16>(fd,firmware_address(0));
     firmware(info);
@@ -223,6 +238,7 @@ static void load_normal(int fd, std::span<const std::uint8_t> data) {
 }
 #ifndef UKE_TOUCH_NORMAL_TEST
 int main(int argc,char **argv) {
+    (void)&normal_scan_ready;
     int fd=-1;
     try {
         require(argc==2 && (std::string(argv[1])=="--validate" || std::string(argv[1])=="--load-normal" || std::string(argv[1])=="--inspect" || std::string(argv[1])=="--probe-coordinates"),

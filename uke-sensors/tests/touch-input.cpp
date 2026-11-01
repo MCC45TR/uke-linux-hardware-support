@@ -5,6 +5,45 @@
 #undef main
 #include <cassert>
 int main() {
+    char temporary[]="/tmp/uke-touch-gpio-XXXXXX";
+    const auto directory=mkdtemp(temporary); assert(directory);
+    const std::filesystem::path root=directory, device=root/"spi7.0", controllers=root/"gpio";
+    std::filesystem::create_directories(device/"of_node");
+    const std::array<unsigned char,12> irq_cells{0,0,0,9,0,0,0,54,0,0,0x20,1};
+    const std::array<unsigned char,12> id_cells{0,0,0,9,0,0,0,26,0,0,0,0};
+    const auto write_file=[](const auto &path,const auto &data) {
+        std::ofstream file(path,std::ios::binary);
+        file.write(reinterpret_cast<const char *>(data.data()),data.size()); assert(file);
+    };
+    for(const auto *size:{"4096", "5433", "bad", ""}) {
+        write_file(root/"bufsiz",std::string(size));
+        bool rejected=false;
+        try{touch_buffer_ready(root/"bufsiz");}catch(const std::exception&){rejected=true;}
+        assert(rejected);
+    }
+    for(const auto *size:{"5434", "8192"}) {
+        write_file(root/"bufsiz",std::string(size));
+        touch_buffer_ready(root/"bufsiz");
+    }
+    write_file(device/"of_node/novatek,irq-gpio",irq_cells);
+    write_file(device/"of_node/novatek,lcd_id-gpio",id_cells);
+    std::filesystem::create_directories(controllers/"gpiochip42/of_node");
+    const std::string controller_name("qcom,cliffs-pinctrl\0",20);
+    write_file(controllers/"gpiochip42/of_node/compatible",controller_name);
+    const std::array<unsigned char,4> handle{0,0,0,9};
+    write_file(controllers/"gpiochip42/of_node/phandle",handle);
+    assert(touch_gpio(device,controllers)=="/dev/gpiochip42");
+    std::filesystem::copy(controllers/"gpiochip42",controllers/"gpiochip43",std::filesystem::copy_options::recursive);
+    bool duplicate=false; try{touch_gpio(device,controllers);}catch(const std::exception&){duplicate=true;}
+    assert(duplicate); std::filesystem::remove_all(controllers/"gpiochip43");
+    auto wrong_irq=irq_cells; wrong_irq[7]=53;
+    write_file(device/"of_node/novatek,irq-gpio",wrong_irq);
+    bool refused=false; try{touch_gpio(device,controllers);}catch(const std::exception&){refused=true;}
+    assert(refused); write_file(device/"of_node/novatek,irq-gpio",irq_cells);
+    auto wrong_id=id_cells; wrong_id[7]=27;
+    write_file(device/"of_node/novatek,lcd_id-gpio",wrong_id);
+    refused=false; try{touch_gpio(device,controllers);}catch(const std::exception&){refused=true;}
+    assert(refused); std::filesystem::remove_all(root);
     int pipefd[2]; assert(pipe2(pipefd,O_NONBLOCK|O_CLOEXEC)==0);
     std::array<gpio_v2_line_event,16> edges{};
     assert(::write(pipefd[1],edges.data(),sizeof(edges))==sizeof(edges));

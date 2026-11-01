@@ -4,6 +4,8 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
 #include <fstream>
 #include <iostream>
@@ -63,7 +65,11 @@ static void transfer(int fd, const void *tx, void *rx, unsigned size,unsigned sp
     message.tx_buf = reinterpret_cast<std::uintptr_t>(tx);
     message.rx_buf = reinterpret_cast<std::uintptr_t>(rx);
     message.len = size; message.speed_hz = speed; message.bits_per_word = 8;
-    require(ioctl(fd, SPI_IOC_MESSAGE(1), &message) == int(size), "SPI identity transfer failed");
+    const int result=ioctl(fd, SPI_IOC_MESSAGE(1), &message);
+    if(result != int(size))
+        throw std::runtime_error("SPI transfer size="+std::to_string(size)+
+            " result="+std::to_string(result)+" errno="+
+            (result<0 ? std::string(std::strerror(errno)) : std::string("short transfer")));
 }
 template<std::size_t N> static std::array<std::uint8_t,N> read(int fd, std::uint32_t address) {
     auto select = page(address); transfer(fd, select.data(), nullptr, select.size());
