@@ -1,0 +1,16 @@
+Source: uke-touchscreen
+Section: admin
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), g++, make, libssl-dev, libsystemd-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/MCC45TR/uke-linux-hardware-support
+
+Package: uke-touchscreen
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, kmod, systemd, udev, uke-kernel-touch-thp-abi-1
+Description: native Uke Novatek NT36532 touch processing
+ Preserves exact device, panel, geometry and private-input admission guards.
+ Shared Apache-licensed processing is imported at its pinned revision with
+ Uke geometry and bounded tracking patches. No private calibration is shipped.

@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@ --buildsystem=meson
+override_dh_auto_configure:
+	cp uke/src/dual-light.h src/dual-light.h
+	dh_auto_configure -- --libexecdir=libexec -Dssc-support=enabled -Dtests=false -Dgtk-tests=false -Dgtk_doc=false -Dudevrulesdir=/usr/lib/udev/rules.d -Dsystemdsystemunitdir=/usr/lib/systemd/system
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f src/dual-light.h
+override_dh_auto_test:
+	# Native tests require execution approval; source patch checks run separately.
+override_dh_auto_install:
+	dh_auto_install
+	! find debian/iio-sensor-proxy -type f \( -name '*.py' -o -name '*python*' \) | grep .
+override_dh_installsystemd:
+	dh_installsystemd --no-start

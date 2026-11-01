@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@ --buildsystem=meson
+override_dh_auto_configure:
+	dh_auto_configure -- -Dtests=false
+override_dh_auto_test:
+	# Native tests require approval; Python mock tests are intentionally excluded.
+override_dh_auto_install:
+	dh_auto_install
+	! find debian/tmp -type f \( -name '*.py' -o -name '*python*' \) | grep .
+override_dh_makeshlibs:
+	dh_makeshlibs -V 'libssc2 (>= 0.4.4-2ubuntu1~uke1~tenacious1)'
+override_dh_gencontrol:
+	dh_girepository
+	dh_gencontrol

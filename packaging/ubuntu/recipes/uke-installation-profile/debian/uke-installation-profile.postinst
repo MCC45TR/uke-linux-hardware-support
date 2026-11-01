@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+# Preserve RPM reconciliation semantics only on an actual Uke root.
+# The helper validates its observed root and selector before changing records.
+if [ "$1" = configure ] && [ -r /proc/device-tree/compatible ] &&
+   ! systemd-detect-virt --quiet --chroot &&
+   ! systemd-detect-virt --quiet --container &&
+   tr '\000' '\n' </proc/device-tree/compatible | grep -Fxq xiaomi,uke; then
+    /usr/libexec/senemos-uke/uke-install-profile reconcile
+fi
+#DEBHELPER#

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "device": "uke",
+  "soc": "SM7675",
+  "profile": "device-runtime-selection",
+  "distribution": "ubuntu",
+  "series": "tenacious",
+  "architecture": "arm64",
+  "boot_cohort_dependency": "uke-boot-cohort-v1",
+  "boot_tested": false,
+  "hardware_tested": false,
+  "firmware_delivery": "admitted-generic-files-and-separate-per-device-calibration",
+  "boot_selection": "preserve-installed-linux-or-userdata-profile",
+  "runtime_policy": "project-native-code-with-original-Ubuntu-package-dependencies",
+  "native_runtime_capabilities": ["libstdc++6 via dpkg-shlibdeps"],
+  "python_dependency_closure": "not-yet-audited",
+  "stable_admitted": false
+}

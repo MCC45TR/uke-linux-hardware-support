@@ -1,0 +1,2 @@
+# git-build-recipe format 0.4 deb-version {debversion}+git{revtime}
+https://git.launchpad.net/~mcs45tr/uke-linux-hardware-support/+git/uke-linux-hardware-support launchpad/uke-gpu-defaults

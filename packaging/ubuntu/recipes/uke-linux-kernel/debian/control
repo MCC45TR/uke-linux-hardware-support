@@ -1,0 +1,30 @@
+Source: uke-linux-kernel
+Section: kernel
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), clang, llvm, lld, libclang-rt-dev, make, gcc, g++, flex, bison, bc, libelf-dev, libssl-dev, libncurses-dev, libfdt-dev, libsystemd-dev, libasound2-dev, device-tree-compiler, dt-schema, python3, alsa-utils, kmod, zstd, jq, git, xz-utils, gnupg, gpgv, openssl, rsync, ripgrep, pkg-config, libasan8, libubsan1, dracut-core, dracut-install, cpio, f2fs-tools, systemd, udev, binutils, util-linux, e2fsprogs
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/MCC45TR/senemos-uke-kernel-mainline
+
+Package: uke-kernel-candidate-core
+Architecture: arm64
+Depends: ${misc:Depends}, uke-kernel-candidate-modules (= ${binary:Version}), uke-kernel-candidate-dtbs (= ${binary:Version})
+Description: Uke kernel candidate for source and payload qualification
+ Non-bootable first-pass Image and configuration from the shared Fedora source
+ composition. Stored outside boot and live module directories. No initramfs,
+ boot bundle, activation hook or qualified kernel capability is provided.
+
+Package: uke-kernel-candidate-modules
+Architecture: arm64
+Depends: ${misc:Depends}, uke-kernel-candidate-dtbs (= ${binary:Version})
+Description: Exact Uke kernel candidate module set
+ Modules staged outside the live module tree for candidate inspection only.
+ No installation hook loads modules or selects a kernel.
+
+Package: uke-kernel-candidate-dtbs
+Architecture: arm64
+Depends: ${misc:Depends}
+Description: Exact Uke kernel candidate device tree
+ Device tree retained with the exact candidate source and kernel release.
+ Installing this package does not apply the device tree or select a boot entry.

@@ -1,0 +1,5 @@
+upower (1.91.5-1ubuntu1~uke1~tenacious1) tenacious; urgency=medium
+
+  * Preserve five shared battery and history patches with Ubuntu binary names.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 13:00:00 +0000

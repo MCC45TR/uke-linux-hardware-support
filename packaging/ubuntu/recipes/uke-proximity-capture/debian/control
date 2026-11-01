@@ -1,0 +1,15 @@
+Source: uke-proximity-capture
+Section: admin
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), g++, make
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/MCC45TR/uke-linux-hardware-support
+
+Package: uke-proximity-capture
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, uke-ssc-fileservice (>= 2026.09.21)
+Description: bounded native Uke proximity diagnostic
+ Shared Uke component source with native Debian integration.
+ Package installation does not establish physical device qualification.

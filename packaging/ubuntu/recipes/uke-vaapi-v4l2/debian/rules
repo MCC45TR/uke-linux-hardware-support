@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@ --buildsystem=meson
+override_dh_auto_configure:
+	dh_auto_configure -- -Dgpu_copy=enabled -Dfastcv=disabled
+override_dh_auto_test:
+	# Native codec contract execution requires separate approval.
+override_dh_auto_install:
+	dh_auto_install
+	rm -rf debian/uke-vaapi-v4l2/usr/share/licenses

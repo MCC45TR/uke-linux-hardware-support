@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+include /usr/share/dpkg/buildflags.mk
+%:
+	dh $@
+override_dh_auto_configure:
+override_dh_auto_test:
+	# No upstream execution is authorized by source preparation.
+override_dh_auto_clean:
+	rm -rf build
+override_dh_auto_install:
+# Device-event activation remains in the shipped units and udev rules.
+# Do not start hardware services during package configuration.
+override_dh_installsystemd:
+	dh_installsystemd --no-start
+override_dh_auto_build:
+override_dh_install:
+	install -Dm644 src/modules-load.d/uke-gpu-modules.conf debian/uke-gpu-defaults/usr/lib/modules-load.d/uke-gpu.conf
+	install -Dm644 src/modprobe.d/uke-gpu-options.conf debian/uke-gpu-defaults/usr/lib/modprobe.d/uke-gpu.conf

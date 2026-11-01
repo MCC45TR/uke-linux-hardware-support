@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+override_dh_auto_configure:
+	bash debian/build-kernel prepare
+override_dh_auto_build:
+	bash debian/build-kernel build
+override_dh_auto_test:
+	# Mandatory shared preparation tests run in prepare; no hardware execution.
+override_dh_auto_install:
+	bash debian/build-kernel install
+override_dh_auto_clean:
+	rm -rf build
+override_dh_strip:
+override_dh_strip_nondeterminism:
+override_dh_shlibdeps:
+override_dh_compress:
+	dh_compress -X/usr/lib/uke-kernel-candidates/

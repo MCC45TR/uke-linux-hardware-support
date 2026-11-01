@@ -1,0 +1,182 @@
+{
+  "recorded_date": "2026-11-01",
+  "target": "tenacious",
+  "architecture": "arm64",
+  "packaging_commit": "4642c7d3c76e496c4dfbcc3c630024144bdcd19c",
+  "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325",
+  "scope": "Native server compilation and package construction; no device acceptance",
+  "successful_source_routes_after_retries": 19,
+  "data_only_routes": 6,
+  "compiled_payload_routes": 13,
+  "firmware_recipe_validation": {
+    "status": "success",
+    "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308699685",
+    "packaging_commit": "99bf892",
+    "recipe_branch_commit": "482f7d1170eeb8d8ffce38e53ec5173bb6890e0f"
+  },
+  "retries": [
+    {
+      "source": "upower",
+      "conclusion": "success",
+      "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309136146",
+      "packaging_commit": "2a9da86"
+    },
+    {
+      "source": "uke-linux-kernel",
+      "status": "completed",
+      "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309327976",
+      "packaging_commit": "d840464",
+      "conclusion": "failure",
+      "failure": "sound/soc/qcom/uke-audio-card.c:411: sizeof(\"uke\" UTS_RELEASE) > 16; Debian kernel release suffix too long"
+    }
+  ],
+  "initial_packages": [
+    {
+      "source": "uke-speaker-orientation",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345015"
+    },
+    {
+      "source": "uke-installation-profile",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345024"
+    },
+    {
+      "source": "uke-displayport-audio",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345031"
+    },
+    {
+      "source": "uke-vaapi-v4l2",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345056"
+    },
+    {
+      "source": "uke-core-meta",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345059"
+    },
+    {
+      "source": "uke-ssc-fileservice",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345071"
+    },
+    {
+      "source": "uke-gpu-defaults",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345072"
+    },
+    {
+      "source": "uke-bluetooth",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345089"
+    },
+    {
+      "source": "libssc",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345092"
+    },
+    {
+      "source": "uke-battery-observer",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345100"
+    },
+    {
+      "source": "uke-proximity-capture",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345108"
+    },
+    {
+      "source": "uke-speaker-controls",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345109"
+    },
+    {
+      "source": "uke-front-color",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345125"
+    },
+    {
+      "source": "iio-sensor-proxy",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853345126"
+    },
+    {
+      "source": "uke-orangefox-recovery",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346157"
+    },
+    {
+      "source": "uke-touchscreen",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346160"
+    },
+    {
+      "source": "upower",
+      "status": "completed",
+      "conclusion": "failure",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346168"
+    },
+    {
+      "source": "uke-image-tools",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346233"
+    },
+    {
+      "source": "uke-linux-kernel",
+      "status": "completed",
+      "conclusion": "failure",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346238"
+    },
+    {
+      "source": "uke-speaker-firmware",
+      "status": "completed",
+      "conclusion": "success",
+      "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346336"
+    }
+  ],
+  "work_state": "resumed for explicitly requested Ubuntu test image; no tablet writes",
+  "next_kernel_candidate": {
+    "fedora_release": "7.3.1-1006",
+    "debian_release": "7.3.1-1006u1",
+    "debian_version": "7.3.1-1006ubuntu1~tenacious1",
+    "source_commit": "fcbdae4b757732f0f0e3162c610f19abae290832",
+    "copr_build": 11240463,
+    "source_rpm_sha256": "70f151855f727c9d83c3bedc35ff52dd60cb222b2d741818472dced458bcd60c",
+    "source_assembly": "passed",
+    "native_execution": "not run; source-specific authorization pending",
+    "boot_cohort": "not implemented",
+    "image_created": false,
+    "boot_adapter": {
+      "source_staging": "passed",
+      "metadata_fixtures": "passed",
+      "native_dracut": "not run; source approval pending",
+      "security_configuration_changed": false,
+      "root_handoff_code_changed": false
+    }
+  },
+  "userspace_qualification": {
+    "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41319778138",
+    "status": "success",
+    "scope": "Native ARM64 signed Ubuntu/PPA runtime package installation and payload qualification only",
+    "image_created": false
+  },
+  "image_security_profile": "not selected; current source lacks Ubuntu stock AppArmor support; no configuration change authorized"
+}

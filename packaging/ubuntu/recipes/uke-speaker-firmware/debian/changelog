@@ -1,0 +1,6 @@
+uke-speaker-firmware (3.0.304.0-0ubuntu1~tenacious1) tenacious; urgency=medium
+
+  * Preserve the exact shared preset, OEM notice and file-level provenance.
+    Keep unrelated firmware with incomplete rights review out of this package.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 12:00:00 +0000
