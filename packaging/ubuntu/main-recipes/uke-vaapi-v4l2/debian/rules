@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@ --buildsystem=meson --sourcedirectory=upstream
+override_dh_auto_configure:
+	 bash debian/verify-main-inputs
+	 bash debian/prepare-upstream uke-vaapi-v4l2
+	dh_auto_configure --sourcedirectory=upstream -- -Dgpu_copy=enabled -Dfastcv=disabled
+override_dh_auto_test:
+	# Native codec contract execution requires separate approval.
+override_dh_auto_install:
+	dh_auto_install
+	rm -rf debian/uke-vaapi-v4l2/usr/share/licenses
+
+override_dh_auto_clean:
+	bash debian/verify-main-inputs
+	if test -d upstream; then dh_auto_clean --sourcedirectory=upstream; fi
+	rm -rf upstream

@@ -1,0 +1,5 @@
+build/uke-hexagonrpcd usr/libexec
+build/uke-ssc-cache usr/libexec
+source/packaging/systemd/uke-ssc-root.service usr/lib/systemd/system
+source/packaging/systemd/uke-ssc-sensors.service usr/lib/systemd/system
+source/packaging/systemd/uke-ssc-cache.service usr/lib/systemd/system

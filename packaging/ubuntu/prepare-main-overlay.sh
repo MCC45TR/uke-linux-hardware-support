@@ -9,6 +9,8 @@ output=${2:?new output directory required}
 [[ ! -e $output ]]
 canonical=$root/packaging/ubuntu/recipes/$package/debian
 case $package in
+ uke-battery-observer|uke-touchscreen|uke-ssc-fileservice|iio-sensor-proxy|upower|uke-vaapi-v4l2|uke-orangefox-recovery|uke-image-tools)
+  exec bash "$root/packaging/ubuntu/prepare-main-extra-overlay.sh" "$package" "$output";;
  libssc)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
   [[ $version == 0.4.4-2ubuntu1~uke1~tenacious1 ]]
@@ -37,6 +39,7 @@ Files: AGENTS.md README.md LICENSE debian/*
 Copyright: 2026 MCC45TR
 License: MIT
 COPYRIGHT
+  bash "$root/packaging/ubuntu/append-main-reference-copyright.sh" "$package" "$output/copyright"
   exit 0;;
  uke-bluetooth|uke-speaker-orientation|uke-core-meta|uke-front-color|uke-proximity-capture|uke-installation-profile)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
@@ -65,6 +68,7 @@ Files: AGENTS.md README.md LICENSE debian/*
 Copyright: 2026 MCC45TR
 License: MIT
 COPYRIGHT
+  bash "$root/packaging/ubuntu/append-main-reference-copyright.sh" "$package" "$output/copyright"
   exit 0;;
  uke-displayport-audio|uke-speaker-controls|uke-gpu-defaults)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
@@ -90,6 +94,7 @@ Files: AGENTS.md README.md LICENSE debian/*
 Copyright: 2026 MCC45TR
 License: MIT
 COPYRIGHT
+  bash "$root/packaging/ubuntu/append-main-reference-copyright.sh" "$package" "$output/copyright"
   exit 0;;
  uke-speaker-firmware) ;;
  *) echo 'No main snapshot adapter for this package' >&2; exit 78;;

@@ -15,6 +15,23 @@ int main(int argc, char **argv) {
     write(root / "usr/share/uke-sensors/odm/json.lst", "config");
     write(root / "usr/share/uke-sensors/sns_reg.conf", "profile");
     write(root / "usr/lib/firmware/qcom/uke/sensors/sns_tppe.so", "DSP fixture");
+    assert(!default_inputs(root).oem);
+    const auto oem=root/"run/uke-oem-resources/selected";
+    write(oem/"odm/json.lst","config");
+    write(oem/"sns_tppe.so","DSP fixture");
+    fs::permissions(oem.parent_path(),fs::perms::owner_all);
+    fs::permissions(oem,fs::perms::owner_all);
+    assert(default_inputs(root).oem);
+    write(oem/"odm/json.lst","unexpected profile");
+    assert(!default_inputs(root).oem);
+    write(oem/"odm/json.lst","config");
+    fs::create_symlink("json.lst",oem/"odm/foreign");
+    assert(!default_inputs(root).oem);
+    fs::remove(oem/"odm/foreign");
+    fs::permissions(oem,fs::perms::group_write,fs::perm_options::add);
+    assert(!default_inputs(root).oem);
+    fs::permissions(oem,fs::perms::owner_all);
+    assert(default_inputs(root).oem);
     bool rejected = false;
     try { seed(root, base); } catch (...) { rejected = true; }
     assert(rejected && !fs::exists(base / "state") && std::distance(fs::directory_iterator(base),fs::directory_iterator{})==1);

@@ -1,0 +1,18 @@
+Source: uke-orangefox-recovery
+Section: misc
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), jq
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/MCC45TR/orangefox_device_xiaomi_uke
+
+Package: uke-orangefox-recovery
+Architecture: arm64
+Depends: ${misc:Depends}
+Description: Uke OrangeFox v003 preview delivery data
+ Delivers existing Android recovery artifacts with pinned source and license
+ records. This package does not compile recovery, flash a partition, change
+ boot selection, or run an installer. The IMG requires the installed Android
+ boot stack; temporary fastboot boot and ZIP installation are unavailable.
+ Physical compatibility and rollback remain unqualified.

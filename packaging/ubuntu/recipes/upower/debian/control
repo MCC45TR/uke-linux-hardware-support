@@ -2,7 +2,7 @@ Source: upower
 Section: admin
 Priority: optional
 Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
-Build-Depends: debhelper-compat (= 13), meson, ninja-build, pkgconf, gettext, libglib2.0-dev (>= 2.76), libgudev-1.0-dev (>= 238), libimobiledevice-dev, libplist-dev, libpolkit-gobject-1-dev, libsystemd-dev, libudev-dev, gobject-introspection, libgirepository1.0-dev, libgirepository1.0-doc, gtk-doc-tools, docbook-xsl, xsltproc
+Build-Depends: patch, debhelper-compat (= 13), meson, ninja-build, pkgconf, gettext, libglib2.0-dev (>= 2.76), libgudev-1.0-dev (>= 238), libimobiledevice-dev, libplist-dev, libpolkit-gobject-1-dev, libsystemd-dev, libudev-dev, gobject-introspection, libgirepository1.0-dev, libgirepository1.0-doc, gtk-doc-tools, docbook-xsl, xsltproc
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
 Homepage: https://upower.freedesktop.org/

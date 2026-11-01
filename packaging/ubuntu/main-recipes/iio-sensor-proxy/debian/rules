@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@ --buildsystem=meson --sourcedirectory=upstream
+override_dh_auto_configure:
+	 bash debian/verify-main-inputs
+	 bash debian/prepare-upstream iio-sensor-proxy
+	dh_auto_configure --sourcedirectory=upstream -- --libexecdir=libexec -Dssc-support=enabled -Dtests=false -Dgtk-tests=false -Dgtk_doc=false -Dudevrulesdir=/usr/lib/udev/rules.d -Dsystemdsystemunitdir=/usr/lib/systemd/system
+override_dh_auto_test:
+	# Native tests require execution approval; source patch checks run separately.
+override_dh_auto_install:
+	dh_auto_install
+	! find debian/iio-sensor-proxy -type f \( -name '*.py' -o -name '*python*' \) | grep .
+override_dh_installsystemd:
+	dh_installsystemd --no-start
+
+override_dh_auto_clean:
+	bash debian/verify-main-inputs
+	if test -d upstream; then dh_auto_clean --sourcedirectory=upstream; fi
+	rm -rf upstream

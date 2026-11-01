@@ -1,0 +1,8 @@
+usr/bin/uke-battery
+usr/lib/systemd/system/uke-battery.service
+usr/lib/systemd/system-preset/90-uke-battery.preset
+usr/lib/sysusers.d/uke-battery.conf
+usr/share/dbus-1/system.d/org.senemos.Uke.Battery1.conf
+usr/share/dbus-1/system-services/org.senemos.Uke.Battery1.service
+usr/share/uke-battery/battery-profile.json
+usr/share/uke-battery/model-profile.json

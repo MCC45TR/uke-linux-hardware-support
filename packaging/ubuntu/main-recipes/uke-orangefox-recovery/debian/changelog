@@ -1,0 +1,6 @@
+uke-orangefox-recovery (12.0~preview3.20261010+uke0ubuntu1~tenacious1) tenacious; urgency=medium
+
+  * Preserve the existing v003 data-delivery package and source attribution.
+    No flashing, installation hooks or fresh recovery build is performed.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 12:00:00 +0000

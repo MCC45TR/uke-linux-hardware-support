@@ -1,0 +1,4 @@
+build/uke-touch-thp usr/libexec/senemos-uke
+source/src/units/uke-touchscreen.service usr/lib/systemd/system
+source/src/modules-load.d/uke-touchscreen.conf usr/lib/modules-load.d
+source/src/modprobe.d/uke-touchscreen.conf usr/lib/modprobe.d

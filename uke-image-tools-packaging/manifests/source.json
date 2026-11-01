@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/MCC45TR/uke-fedora-builder",
+  "commit": "9e4d2153e116419c474d0c73eb2280447bf45243",
+  "archive_sha256": "6756b817205359fe2d8610ec3913345f4981d8115b028b490cd0806cc9d926c0",
+  "scope": "Six native format/payload inspection tools only; no guest image composition",
+  "python_target_payload": false,
+  "image_admitted": false
+}

@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+include /usr/share/dpkg/buildflags.mk
+%:
+	dh $@
+override_dh_auto_configure:
+	 bash debian/verify-main-inputs
+	 bash debian/prepare-upstream uke-touchscreen
+override_dh_auto_build:
+	mkdir -p build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror -Wno-unused-function source/src/touch-thp.cpp source/src/upstream/nt36532-thp/nvt_touch_core.cpp $(LDFLAGS) -lcrypto -lsystemd -o build/uke-touch-thp
+override_dh_auto_test:
+	# Native compilation and contract execution require separate approval.
+override_dh_auto_clean:
+	 bash debian/verify-main-inputs
+	rm -rf build source/src/upstream
+override_dh_auto_install:
+override_dh_installsystemd:
+	dh_installsystemd --no-start
+override_dh_installudev:
+	dh_installudev --priority=70

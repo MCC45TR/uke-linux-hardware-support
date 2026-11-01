@@ -1,0 +1,31 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: uke-touchscreen
+Source: https://github.com/MCC45TR/uke-linux-hardware-support
+
+Files: *
+Copyright: 2026 Senemos Contributors
+License: GPL-3+
+ The full GNU General Public License version 3 is available in
+ /usr/share/common-licenses/GPL-3 on Debian systems.
+
+Files: source/src/upstream/nt36532-thp/*
+Copyright: See preserved upstream source notices
+License: Apache-2.0
+ The full Apache License version 2.0 is available in
+ /usr/share/common-licenses/Apache-2.0 on Debian systems.
+
+Files: AGENTS.md README.md LICENSE debian/*
+Copyright: 2026 MCC45TR
+License: MIT
+
+Files: source/referances/libssc/* source/referances/iio-sensor-proxy/* source/referances/hexagonrpc-write/*
+Copyright: Respective upstream contributors; see retained archive notices
+License: GPL-3+
+ The full GNU General Public License version 3 is available in
+ /usr/share/common-licenses/GPL-3 on Debian systems.
+
+Files: source/referances/nt36532-thp/*
+Copyright: See preserved pinned upstream source notices
+License: Apache-2.0
+ The original license is retained in the reference input directory. The full
+ Apache License version 2.0 is available in /usr/share/common-licenses/Apache-2.0.

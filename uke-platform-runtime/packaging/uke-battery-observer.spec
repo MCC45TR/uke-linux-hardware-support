@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-battery-observer
-Version: 1.4.0
+Version: 1.4.1
 Release: 1%{?dist}
 Summary: Read-only native battery observation for Xiaomi Uke
 License: MIT
@@ -12,7 +12,7 @@ BuildRequires: gcc-c++ make systemd-rpm-macros jq dbus-daemon systemd
 BuildRequires: pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(libcrypto)
 BuildRequires: pkgconfig(libdrm)
-Requires: libstdc++%{?_isa} >= 16.2.1 systemd-libs
+Requires: senemos-native-runtime(libstdc++) systemd-libs
 Requires(pre): systemd
 
 %description
@@ -24,7 +24,7 @@ component reports software tests and physical qualification separately.
 
 %package -n uke-charge-control
 Summary: Evidence-gated native Uke charge-control backend
-Requires: libstdc++%{?_isa} >= 16.2.1 systemd-libs
+Requires: senemos-native-runtime(libstdc++) systemd-libs
 Requires: upower >= 1.91.5
 Requires(pre): systemd
 
@@ -41,7 +41,7 @@ firmware reply is reported as receipt only, with physical effect unknown.
 
 %package -n uke-offline-charge
 Summary: Minimal native charger-boot interface for Uke
-Requires: systemd libstdc++%{?_isa} >= 16.2.1
+Requires: systemd senemos-native-runtime(libstdc++)
 
 %description -n uke-offline-charge
 Native DRM battery screen for an explicitly detected charger boot. The matched
@@ -61,7 +61,7 @@ sha256sum -c SOURCE-SHA256SUMS
 
 %check
 # Host software checks; never tablet acceptance or automatic device access.
-%make_build test-native
+%make_build validate test-native
 
 %pre
 %sysusers_create_compat %{SOURCE1}
@@ -86,7 +86,8 @@ sha256sum -c SOURCE-SHA256SUMS
 
 %files -n uke-charge-control
 %license LICENSE
-%doc docs/CHARGE-CONTROL.md docs/CHARGING-PROTOCOLS.md docs/BATTERY-LONGEVITY.md
+%doc docs/CHARGE-CONTROL.md docs/CHARGING-PROTOCOLS.md docs/BATTERY-LONGEVITY.md docs/CHARGE-PUMP-PROTECTION.md docs/OSS-CHARGING-INVENTORY.tsv
+%doc docs/CHARGING-DOCUMENTS.tsv
 %{_libexecdir}/uke-charge-control
 %{_datadir}/uke-battery/protection-readiness.json
 %{_unitdir}/uke-charge-control.service
@@ -117,6 +118,12 @@ sha256sum -c SOURCE-SHA256SUMS
 %{_datadir}/uke-battery/model-profile.json
 
 %changelog
+* Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.1-1
+- Require a reviewed integrated-protection inventory before charge admission.
+- Record charge-pump, pack, PMIC and connector ownership and unresolved coverage.
+- Catalogue manufacturer documents and record diagnostic read side effects.
+- Check closed qualification metadata in the remote package build.
+
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
 - Reset current-increase dwell after faults and source identity changes
 - Bind forecasts and EFC continuity to accepted measurements and clock ordering

@@ -58,11 +58,11 @@ static Profile resolve_identity(const Context &c, const std::string &path,
         result.current_control = boolean(field(p.get(), "current_control"));
         auto *proof = field(p.get(), "proofs");
         keys(proof, {"firmware_abi", "ack_envelope", "threshold_readback", "enable_feature",
-            "autonomous_protection", "measurements", "source_lifecycle", "protocol_property_abi", "source_contract", "cable_contract",
+            "autonomous_protection", "integrated_protection_inventory", "measurements", "source_lifecycle", "protocol_property_abi", "source_contract", "cable_contract",
             "current_abi", "current_readback", "firmware_cv", "current_restore",
             "usb_moisture_abi", "usb_moisture_response", "external_thermal_path",
             "input_suspend_abi", "input_suspend_effect", "input_suspend_restore", "periodic_charge_guard"});
-        for (const char *key : {"firmware_abi", "ack_envelope", "threshold_readback", "autonomous_protection",
+        for (const char *key : {"firmware_abi", "ack_envelope", "threshold_readback", "autonomous_protection", "integrated_protection_inventory",
             "measurements", "source_lifecycle", "protocol_property_abi", "source_contract", "cable_contract",
             "usb_moisture_abi", "usb_moisture_response", "external_thermal_path",
             "input_suspend_abi", "input_suspend_effect", "input_suspend_restore", "periodic_charge_guard"}) (void)digest(field(proof, key));

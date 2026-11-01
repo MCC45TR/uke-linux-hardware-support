@@ -549,3 +549,29 @@ GitHub's documented push event also includes branch deletion; limiting retired
 head events avoids redundant jobs during archive-backed cleanup. All main
 safety checks remain in place. This changes trigger scope, not validation.
 Reference: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#push
+
+## Remaining canonical input reconciliation
+
+1 November 2026. All eight remaining main adapters now have draft native
+metadata. They retain the previously approved source archives and patch counts,
+not newer upstream branch tips. Exact archive hashes match the historical
+native source set. Touch retains the three pinned Apache inputs and the shared
+geometry/assignment preparation script. Recovery delivery retains existing
+v003 bytes, notices and source offer; it neither compiles nor installs recovery.
+Image tools remain at the approved builder source pin and build six native
+utilities, without composing a guest image.
+
+The common battery component now matches every file in the reviewed 1.4.1
+release manifest, including the mandatory integrated-protection evidence field.
+Both Fedora and Debian now consume that common code. SSC's cache and fixture
+match the two recorded release26 override hashes. The existing ownership,
+permissions, packaged fallback, read-only persist and missing firmware/ABI
+admission boundaries are retained. This restores already reviewed source
+behavior; it imports no new hardware implementation or operating limits.
+
+The shared donor policy, SM7675 survey/acquisition inventory, MiCode source
+survey and Uke battery protection review were consulted. They preserve OEM
+kernel5712080a/DT94c84aeb, upstream4056b3c9 and the distinct-board compatibility
+limits. No donor checkout/script was used as a new hardware fix. Native source
+and package qualification of these drafts is pending; live PPA enrollment stays
+separate. Existing Fedora/GUI changes and main-only architecture are preserved.

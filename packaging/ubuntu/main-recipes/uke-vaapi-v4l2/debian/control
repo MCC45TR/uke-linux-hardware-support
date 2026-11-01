@@ -1,0 +1,19 @@
+Source: uke-vaapi-v4l2
+Section: video
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: patch, debhelper-compat (= 13), meson (>= 0.61), ninja-build, pkgconf, g++, libva-dev (>= 2.10), libdrm-dev, libegl-dev, libgles-dev, libgbm-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/radxa-pkg/libva-v4l2
+
+Package: uke-vaapi-v4l2
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Provides: va-driver
+Conflicts: libva-v4l2
+Replaces: libva-v4l2
+Description: experimental stateful Iris VA-API backend
+ Intersect advertised codecs and formats with kernel capabilities. Retains
+ shared Main10, bounded-rate, frame-dimension, error and surface-cache patches.
+ FastCV remains disabled. Installation does not establish codec qualification.
