@@ -3,8 +3,8 @@
     "name": "uke-speaker-firmware",
     "source_type": "custom",
     "superseded": false,
-    "status": "not-yet-ported",
-    "reason": "Archive source requires provenance and redistribution review before a public Debian firmware port",
+    "status": "data-package-tested",
+    "reason": "Exact FS19xx preset, OEM notice/license attribution and conffile preservation verified in data-only ARM64 DEB; hardware protection/playback unqualified",
     "source_revision": null
   },
   {
@@ -12,8 +12,8 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "8983163763f708ec940b349ebb81ab43cc3725c3",
-    "status": "not-yet-ported",
-    "reason": "Kernel/DTB/modules/initramfs cohort and recovery rollback contract must be ported together; no maintainer-script boot writes permitted"
+    "status": "partial",
+    "reason": "Release-115 exact retained-source composition and candidate-only Debian core/DT/module recipes implemented; source/signature checks pass; no native build, usable initramfs, full boot suite or boot capability"
   },
   {
     "name": "uke-control",
@@ -133,7 +133,7 @@
     "superseded": false,
     "source_revision": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
     "status": "not-yet-ported",
-    "reason": "Review source provenance and redistribution rights, preserve per-device admission; firmware payload not converted"
+    "reason": "Explicit publication gate: 217 files, only 7 exact notice mappings, remaining 210 unresolved; no full firmware payload staged"
   },
   {
     "name": "uke-orangefox-recovery",
@@ -268,8 +268,8 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "9e4d2153e116419c474d0c73eb2280447bf45243",
-    "status": "not-yet-ported",
-    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+    "status": "source-tested",
+    "reason": "Six shared native tools have Debian source packaging at exact COPR pin; no native compilation, execution or Ubuntu system image composition"
   },
   {
     "name": "uke-video-session",
@@ -285,7 +285,7 @@
     "superseded": false,
     "source_revision": "53ae6371b12758e01fe0af4690e6fb54d2e1b436",
     "status": "not-yet-ported",
-    "reason": "Review source provenance and redistribution rights, preserve per-device admission; firmware payload not converted"
+    "reason": "Pinned MIT code inspected; no OEM bytes distributed. Unconditional SELinux mount context needs shared-source Ubuntu portability while retaining read-only/ownership/extent guards; explicit source gate"
   },
   {
     "name": "uke-meta-integration",

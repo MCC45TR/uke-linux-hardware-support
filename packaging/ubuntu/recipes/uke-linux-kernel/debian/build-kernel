@@ -1,0 +1,82 @@
+#!/bin/bash
+# Only invoked by an approved native build, never by source preparation.
+set -euo pipefail
+export LC_ALL=C ARCH=arm64 LLVM=1 LLVM_IAS=1
+root=$PWD
+kernel=$root/build/linux-7.3.1
+output=$root/build/output
+release=7.3.1-115-uke-ubuntu1
+localversion=-115-uke-ubuntu1
+export KBUILD_BUILD_USER=uke KBUILD_BUILD_HOST=ubuntu-builder KBUILD_BUILD_VERSION=1
+export SOURCE_DATE_EPOCH=1793362198
+export KBUILD_BUILD_TIMESTAMP="$(date -u -d "@$SOURCE_DATE_EPOCH" '+%Y-%m-%d %H:%M:%S UTC')"
+case ${1:-} in
+ boot)
+  echo 'Unsupported: Ubuntu root handoff and embedded initramfs are not implemented; no boot bundle may be emitted.' >&2
+  exit 78 ;;
+ prepare)
+  [[ $(dpkg-architecture -qDEB_HOST_ARCH) == arm64 ]]
+  [[ ! -e $kernel ]]
+  mkdir -p build/keyring
+  gpg --batch --dearmor < inputs/linux-stable.asc > build/keyring/linux.gpg
+  xz -dc inputs/linux-7.3.1.tar.xz | gpgv --homedir build/keyring --keyring "$root/build/keyring/linux.gpg" inputs/linux-7.3.1.tar.sign -
+  tar -xf inputs/linux-7.3.1.tar.xz -C build
+  cp -a inputs/senemos-adaptation "$kernel/"
+  cp -a inputs/native-profile "$kernel/"
+  cp -a inputs/boot-recipe "$kernel/"
+  git -C "$kernel" init -q
+  while IFS=$'\t' read -r path hash; do
+   case $path in patches/*) file=$kernel/senemos-adaptation/patches/${path##*/};; configs/*) file=$kernel/senemos-adaptation/configs/${path##*/};; *) exit 1;; esac
+   printf '%s  %s\n' "$hash" "$file" | sha256sum -c -
+  done < <(jq -r '.patches[],.configs[]|[.path,.sha256]|@tsv' "$kernel/senemos-adaptation/source-lock.json")
+  jq -r '.patches[].path|split("/")|last' "$kernel/senemos-adaptation/source-lock.json" > build/expected-series
+  cmp build/expected-series "$kernel/senemos-adaptation/patches/series"
+  while read -r patch; do
+   [[ -n $patch ]]
+   git -C "$kernel" apply --check "senemos-adaptation/patches/$patch"
+   git -C "$kernel" apply "senemos-adaptation/patches/$patch"
+  done < build/expected-series
+  # Preserve the shared preparer's tests and generated DT/config inputs.
+  bash "$kernel/native-profile/prepare.sh" "$kernel" ;;
+ build)
+  [[ $(dpkg-architecture -qDEB_HOST_ARCH) == arm64 ]]
+  mkdir -p "$output"
+  cp "$kernel/boot-recipe/packaging/native/native.config" "$output/.config"
+  bash "$kernel/scripts/config" --file "$output/.config" --set-str INITRAMFS_SOURCE ''
+  make -C "$kernel" O="$output" LOCALVERSION="$localversion" olddefconfig
+  [[ $(make -s -C "$kernel" O="$output" LOCALVERSION="$localversion" kernelrelease) == "$release" ]]
+  bash "$kernel/boot-recipe/tests/kernel-hardening-config-contract.sh" "$output/.config"
+  bash "$kernel/boot-recipe/tests/uke-build-scope-contract.sh" "$output/.config"
+  make -C "$kernel" O="$output" LOCALVERSION="$localversion" -j"$(nproc)" Image modules qcom/sm7675-xiaomi-uke.dtb
+  # INITRAMFS_FORCE is retained: this first-pass Image is not bootable.
+  grep -Fx CONFIG_INITRAMFS_FORCE=y "$output/.config"
+  make -C "$kernel" O="$output" LOCALVERSION="$localversion" modules_install INSTALL_MOD_PATH="$root/build/modules" INSTALL_MOD_STRIP=1 DEPMOD=true
+  find "build/modules/lib/modules/$release" -maxdepth 1 -type l \( -name source -o -name build \) -delete
+  find "build/modules/lib/modules/$release" -type f -name '*.ko' -exec zstd -q --rm -- {} \;
+  depmod -b "$root/build/modules" "$release"
+  install -m644 "$output/certs/signing_key.x509" build/module-signing.x509
+  # The shared configuration creates a disposable module-signing key; never
+  # package that private build key or confuse it with the user's upload key.
+  rm -- "$output/certs/signing_key.pem"
+  printf '%s\n' "$release" > build/kernel-release ;;
+ install)
+  [[ $(cat build/kernel-release) == "$release" ]]
+  destination=usr/lib/uke-kernel-candidates/$release
+  install -Dm644 "$output/arch/arm64/boot/Image" "debian/uke-kernel-candidate-core/$destination/Image"
+  install -m644 "$output/.config" "debian/uke-kernel-candidate-core/$destination/config"
+  install -m644 build/kernel-release KERNEL-SOURCE-ORIGIN "debian/uke-kernel-candidate-core/$destination/"
+  install -m644 build/module-signing.x509 "debian/uke-kernel-candidate-core/$destination/"
+  install -Dm644 "$output/arch/arm64/boot/dts/qcom/sm7675-xiaomi-uke.dtb" "debian/uke-kernel-candidate-dtbs/$destination/sm7675-xiaomi-uke.dtb"
+  install -d "debian/uke-kernel-candidate-modules/$destination/modules"
+  cp -a "build/modules/lib/modules/$release/." "debian/uke-kernel-candidate-modules/$destination/modules/"
+  printf '%s\n' 'candidate_only=true' 'bootable=false' 'stable_admitted=false' > "debian/uke-kernel-candidate-core/$destination/admission"
+  for package in uke-kernel-candidate-core uke-kernel-candidate-dtbs uke-kernel-candidate-modules; do
+   install -d "debian/$package/usr/share/doc/$package/licenses"
+   install -m644 "$kernel/LICENSES/preferred/GPL-2.0" "$kernel/LICENSES/preferred/MIT" "$kernel/LICENSES/preferred/BSD-3-Clause" "debian/$package/usr/share/doc/$package/licenses/"
+  done
+  (cd "debian/uke-kernel-candidate-core/$destination"; sha256sum Image config kernel-release KERNEL-SOURCE-ORIGIN admission module-signing.x509 > core.sha256)
+  (cd "debian/uke-kernel-candidate-dtbs/$destination"; sha256sum sm7675-xiaomi-uke.dtb > dtbs.sha256)
+  (cd "debian/uke-kernel-candidate-modules/$destination"; find modules -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > modules.sha256)
+  ;;
+ *) echo 'Usage: build-kernel prepare|build|install|boot' >&2; exit 2;;
+esac

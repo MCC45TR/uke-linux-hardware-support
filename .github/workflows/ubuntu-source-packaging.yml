@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install official source tools
-        run: sudo apt-get update && sudo apt-get install -y dpkg-dev jq xz-utils debhelper libarchive-tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev jq xz-utils debhelper libarchive-tools gnupg gpgv device-tree-compiler kmod zstd openssl g++
       - name: Verify pinned source downloads without execution
         run: |
           bash packaging/ubuntu/fetch-upstreams.sh
@@ -27,5 +27,6 @@ jobs:
           bash packaging/ubuntu/tests/cohort.sh
           bash packaging/ubuntu/tests/data-packages.sh
           bash packaging/ubuntu/tests/apt-policy.sh
+          bash packaging/ubuntu/tests/kernel-payload.sh
       - name: Record validation scope
         run: echo 'Source assembly, quilt application and static cohort tests only; no upstream compilation, device execution, signing or publication.' >> "$GITHUB_STEP_SUMMARY"

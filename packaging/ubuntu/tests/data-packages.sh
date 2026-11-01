@@ -6,9 +6,9 @@ umask 022
 root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-core-meta uke-orangefox-recovery; do
+for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-core-meta uke-orangefox-recovery uke-speaker-firmware; do
  bash "$root/packaging/ubuntu/prepare-source.sh" "$package" "$work/$package" >/dev/null
- source=$(find "$work/$package" -mindepth 1 -maxdepth 1 -type d)
+ source=$(find "$work/$package" -mindepth 1 -maxdepth 1 -type d -name "$package-*")
  (cd "$source"; DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -b -d -us -uc -a arm64 > "$work/$package.build.log" 2>&1) || { cat "$work/$package.build.log"; exit 1; }
  deb=("$work/$package/"*.deb)
  [[ ${#deb[@]} == 1 ]]
@@ -18,6 +18,13 @@ for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-c
  # These packages must remain data-only, without executables or private state.
  [[ ! -d $payload/usr/bin && ! -d $payload/usr/sbin && ! -d $payload/usr/libexec && ! -d $payload/var ]]
  case "$package" in
+  uke-speaker-firmware)
+   cmp "$source/fs19xx.fsm" "$payload/usr/lib/firmware/qcom/uke/audio/fs19xx.fsm"
+   cmp "$source/odm-NOTICE.xml.gz" "$payload/usr/share/doc/uke-speaker-firmware/odm-NOTICE.xml.gz"
+   dpkg-deb -e "${deb[0]}" "$work/speaker-control"
+   grep -qx '/usr/lib/firmware/qcom/uke/audio/fs19xx.fsm' "$work/speaker-control/conffiles"
+   [[ $(find "$payload/usr/lib/firmware" -type f | wc -l) == 1 ]]
+   for hook in preinst postinst prerm postrm triggers; do [[ ! -e $work/speaker-control/$hook ]]; done ;;
   uke-orangefox-recovery)
    delivered=$payload/usr/share/senemos/recovery/uke/12.0~preview3.20261010
    (cd "$delivered"; sha256sum -c PACKAGE-SHA256SUMS)

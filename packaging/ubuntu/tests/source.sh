@@ -14,10 +14,34 @@ while IFS=$'\t' read -r package component version; do
  debian=$stage/debian
  [[ $(dpkg-parsechangelog -l"$debian/changelog" -S Distribution) == tenacious ]]
  grep -qx 'Architecture: arm64' "$debian/control"
- ! grep -Eq 'dnf|rpm|dracut|selinux|python' "$debian/control"
+ ! grep -Eq 'dnf|rpm' "$debian/control"
+ ! grep -Eq '^Depends:.*python' "$debian/control"
  find "$debian" -type f -name '*.postinst' -exec sh -n {} \;
  ! grep -ER --include=rules --include='*.postinst' --include='*.preinst' --include='*.postrm' --include='*.prerm' --include=postinst --include=preinst --include=postrm --include=prerm 'efibootmgr|flashrom|fastboot|update-initramfs|systemctl (start|enable)' "$debian"
  case "$package" in
+  uke-speaker-firmware)
+   bash "$root/packaging/ubuntu/verify-speaker-provenance.sh" "$stage"
+   grep -qx '/usr/lib/firmware/qcom/uke/audio/fs19xx.fsm' "$debian/conffiles" ;;
+  uke-image-tools)
+   grep -qx 'Revision: 9e4d2153e116419c474d0c73eb2280447bf45243' "$stage/SOURCE-ORIGIN"
+   [[ $(grep -c '\$(CXX).*build-tools/' "$debian/rules") == 6 ]]
+   [[ ! -e $stage/guest-fedora-inputs.tar.xz ]] ;;
+  uke-linux-kernel)
+   mkdir -m700 "$work/kernel-keyring"
+   gpg --batch --dearmor < "$stage/inputs/linux-stable.asc" > "$work/kernel-keyring/linux.gpg"
+   xz -dc "$stage/inputs/linux-7.3.1.tar.xz" | gpgv --homedir "$work/kernel-keyring" --keyring "$work/kernel-keyring/linux.gpg" --status-fd=1 "$stage/inputs/linux-7.3.1.tar.sign" - > "$work/kernel-signature"
+   grep -F "[GNUPG:] VALIDSIG $(jq -er .signer "$stage/manifests/linux-7.3.1.json") " "$work/kernel-signature"
+   grep -qx 'Revision: 8983163763f708ec940b349ebb81ab43cc3725c3' "$stage/SOURCE-ORIGIN"
+   (cd "$stage/inputs/native-profile"; sha256sum --check --strict --quiet SHA256SUMS)
+   (cd "$stage/inputs/boot-recipe"; jq -r '.source_assets[]|.sha256+"  "+.path' lock.json | sha256sum --check --strict --quiet)
+   jq -e '.source_commit=="8983163763f708ec940b349ebb81ab43cc3725c3" and .parent_copr_build==11239296 and .physical_acceptance==false and (.overlays|length)==9' "$stage/inputs/native-profile/source-composition.json" >/dev/null
+   ! grep -q '^Provides:' "$debian/control"
+   status=0
+   (cd "$stage"; bash debian/build-kernel boot) 2> "$work/unsupported-boot" || status=$?
+   [[ $status == 78 ]]
+   grep -q 'Unsupported: Ubuntu root handoff' "$work/unsupported-boot"
+   [[ ! -d $stage/build ]]
+   bash -n "$debian/build-kernel" ;;
   uke-orangefox-recovery)
    (cd "$stage/release"; sha256sum -c PACKAGE-SHA256SUMS)
    [[ ! -e $debian/postinst && ! -e $debian/preinst && ! -e $debian/postrm && ! -e $debian/prerm ]]

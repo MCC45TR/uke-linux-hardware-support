@@ -1,5 +1,31 @@
 # Tenacious ARM64 dependency evidence
 
+The 1 November 2026 offline APT 3.0.3 simulation resolves the complete declared
+Build-Depends expressions of **19 of 20** recipes against the ARM64 main and
+universe indexes, starting with an empty status database. SensorProxy correctly
+fails on `libssc-dev (>= 0.4.4-2ubuntu1~uke1~tenacious1)`; publish the patched
+libssc build before building SensorProxy. No dependency gate was lowered.
+`build-dependency-results.tsv` records results and
+`tenacious-kernel-dependencies.tsv` records newly checked package versions.
+
+`check-build-dependencies.sh INDEX_DIRECTORY NEW_REPORT_DIRECTORY` uses official
+[APT simulation](https://manpages.debian.org/trixie/apt/apt-get.8.en.html) with
+isolated configuration, lists, cache and empty dpkg status. It does not download
+or install packages, execute package hooks, or use the host's APT configuration.
+This checks metadata solvability, not archive authentication, successful native
+compilation or runtime dependency closure. Native ELF dependencies remain unknown
+until compilation and `dpkg-shlibdeps`; no fake package indexes are injected.
+
+Kernel host dependencies include the original dt-schema Python tool because
+the shared preparer validates device-tree schemas. The pinned source is
+`8983163763f708ec940b349ebb81ab43cc3725c3`; Ubuntu supplies dt-schema
+2025.08-1.2. Replacing the upstream schema tool would discard validation or add
+an unrelated parser. Python remains a host Build-Depends only and is not copied
+into the candidate packages. Execution of the native preparer and its tests is
+still pending approval. Ubuntu's actual SELinux development package is now
+`libselinux-dev` (providing `libselinux1-dev`); the image tools retain the shared
+offline labeling implementation and native library dependency.
+
 Observed 1 November 2026 from the official Ubuntu ports indexes:
 
 - https://ports.ubuntu.com/ubuntu-ports/dists/tenacious/main/binary-arm64/Packages.xz

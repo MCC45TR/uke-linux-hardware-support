@@ -15,3 +15,6 @@ uke-vaapi-v4l2	uke-video	1.0.0
 uke-touchscreen	uke-sensors	0.1.0
 upower	uke-platform-runtime	1.91.5
 uke-orangefox-recovery	uke-orangefox-packaging	12.0~preview3.20261010
+uke-image-tools	uke-image-tools-packaging	1.0.0
+uke-linux-kernel	uke-kernel-packaging	7.3.1
+uke-speaker-firmware	xiaomi-uke-firmware	3.0.304.0

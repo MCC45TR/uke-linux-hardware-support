@@ -1,5 +1,12 @@
 # Debian boot cohort admission boundary
 
+The new [kernel source recipe](KERNEL-SOURCE.md) preserves release-115 source
+composition and produces only future qualification candidates. The separate
+`inspect-kernel-candidate.sh` checks actual Image/DT/module content; its refusal
+fixtures pass, but no real candidate payload has been built or admitted.
+These additions do not turn the four-package boot metadata check below into
+boot approval. `uke-kernel-boot` remains explicitly unsupported.
+
 `validate-cohort.sh` implements artifact identity checks only; it never writes
 partitions, regenerates initramfs, changes boot selection or installs packages.
 The JSON schema is validated in the script. Its four roles are kernel, DTB,

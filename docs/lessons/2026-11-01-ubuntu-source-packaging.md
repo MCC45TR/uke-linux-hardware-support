@@ -122,3 +122,48 @@ running any package command. Managed source parsing, interrupted dpkg state,
 holds and boot/private exclusions are implemented. They deliberately provide
 no transaction authorization: authenticated metadata, solver, operation journal
 and boot finalization remain implementation work, documented in APT-BACKEND.md.
+
+## Kernel composition, attributed preset and dependency closure
+
+Recorded 1 November 2026, Debian 13 x86_64. Lesson IDs:
+`ubuntu-kernel-retained-source`, `ubuntu-firmware-file-attribution`,
+`ubuntu-isolated-build-closure`.
+
+The current kernel producer at 8983163763f708ec940b349ebb81ab43cc3725c3 composes
+release 115 from source RPM build 11239296 plus nine exact overlays. A Git-only
+archive would lose retained release-110 sources. The Debian source preparation
+now verifies the parent RPM hash, Linux archive hash, retained-file inventory,
+overlay identities and boot source assets without running the producer. Linux
+signature verification initially stopped because this host lacked gpgv; the
+official Debian package was checksum-verified and extracted locally. All 20
+source routes then passed assembly/extraction checks, including the signature.
+No native kernel preparer or compiled source program ran.
+
+Kernel packaging is deliberately candidate-only. The first-pass Image retains
+INITRAMFS_FORCE but has no embedded userspace, so it cannot be deployed. Three
+packages use an isolated candidate path and distinct Ubuntu kernel release;
+boot production explicitly fails. Actual payload inspection checks Image/DT
+content, complete inventories and module ELF/vermagic/signature metadata, with
+synthetic refusal fixtures only. Module cryptographic trust and real payload
+qualification remain untested. Future native builds retain the shared enforced
+module-signing configuration and its disposable key-generation behavior; no
+key was generated during this work.
+
+The complete firmware review is incomplete for 210 of 217 files. The separate
+4,828-byte FS19xx preset has an exact original ODM notice mapping to Apache-2.0.
+Source and data-package tests verify preset, compressed notice, content ID,
+license identity and conffile preservation. No unrelated firmware or private
+calibration is included. Six data-only ARM64 package builds pass; this is not
+hardware playback or protection qualification. The optional OEM helper remains
+unported because its unconditional SELinux mount context needs shared-source
+Ubuntu portability without weakening read-only/ownership/extent guards.
+
+Official APT 3.0.3 with isolated configuration and empty status resolves 19 of
+20 Build-Depends expressions against the saved Tenacious ARM64 indexes.
+SensorProxy requires the unpublished patched libssc-dev version and correctly
+fails. An initial attempt combined --no-download with --simulate satisfy and
+failed on uncached archives before meaningful resolution; the corrected path
+uses explicit simulation in both configuration and arguments. It downloaded
+and installed nothing, and did not run hooks. This proves metadata solvability,
+not archive authentication, native compilation or runtime closure. Retain
+dependency-first libssc publication rather than weakening SensorProxy's gate.

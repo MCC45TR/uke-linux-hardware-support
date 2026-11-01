@@ -9,7 +9,9 @@ Launchpad's [series](https://api.launchpad.net/1.0/ubuntu/tenacious) and
 [ARM64 architecture](https://api.launchpad.net/1.0/ubuntu/tenacious/arm64) are
 available. Parent confirmed accepted PPA terms and public ARM64-only
 `mcs45tr/uke-linux-unstable` and `mcs45tr/uke-linux-stable`, both empty. Stable
-remains gated. OpenPGP signer enrollment and signed uploads are still pending.
+remains gated. Parent confirmed OpenPGP enrollment on 1 November; the private
+key remains on the user's tablet. Local signing and uploads await package
+qualification. Native upstream build approval is still pending.
 No key, credential, upload or Ubuntu image was created here.
 
 ## Implemented source routes
@@ -19,7 +21,8 @@ managed sources, interrupted package states and transaction exclusions. Its
 solver, authenticated metadata, journal and boot integration remain unfinished;
 the Fedora backend is still active and no Ubuntu Control capability is claimed.
 
-`components.tsv` lists **17** prepared Debian source recipes:
+`components.tsv` lists **20** prepared Debian source recipes, defining **30**
+binary packages. Candidate packages are not deployable kernel packages.
 
 | Source | Implemented scope | Validation |
 | --- | --- | --- |
@@ -40,8 +43,11 @@ the Fedora backend is still active and no Ubuntu Control capability is claimed.
 | uke-gpu-defaults | Root-stage MSM module/options with explicit kernel/firmware gates | Data-only DEB/payload checked |
 | uke-core-meta | Ubuntu dependency graph and unqualified profile | Data-only DEB/payload checked |
 | uke-orangefox-recovery | Existing Android v003 artifacts, exact checksums and source/license records; no install hooks | Data-only delivery, not recovery compilation |
+| uke-image-tools | Six original native image/payload tools from the shared builder source | Source only; no system image composition |
+| uke-linux-kernel | Exact release-115 source composition; separate candidate Image, DT and modules | Source/signature checked; native build and boot integration pending |
+| uke-speaker-firmware | Exact separately attributed FS19xx preset, OEM notice and conffile preservation | Data-only DEB/payload checked |
 
-Native sources have **not** been compiled or executed. These recipes use shared
+Package native payload sources have **not** been compiled or executed. These recipes use shared
 component baseline `cbecc441059ebffa97497e736edd2e0b0b0546a5`, except battery
 1.4.1, which uses the exact released source pinned in `release-sources.tsv`.
 Source RPM extraction retrieves only the named, checksum-verified source tar;
@@ -88,7 +94,8 @@ Source preparation emits original and Debian tarballs, unsigned `.dsc`, source
 The output directory must not exist. Debian quilt applies the same 26 shared
 quilt patches used in five external source routes, plus four touchscreen patches. No build commands, keys or
 uploads run in source preparation. Data-only tests build four configuration
-packages and recovery delivery; they do not compile or run upstream programs.
+packages, recovery delivery and the attributed speaker preset; they do not
+compile or run upstream programs.
 The recovery ZIP bypasses normalization so its published checksum remains exact.
 
 Host evidence: Debian 13 x86_64, dpkg 1.22.22 and official Ubuntu debhelper
@@ -111,9 +118,13 @@ Ubuntu libstdc++6 replaces the Fedora alias; stock library candidates still need
 patch comparison. Original KDE applications are not forked. Desktop repository
 migration is handled separately.
 
+See the [kernel candidate boundary](KERNEL-SOURCE.md),
+[firmware provenance decisions](FIRMWARE-PROVENANCE.md), and explicit
+`publication-gates.json`. The kernel recipe does not emit a usable boot bundle.
+
 Implementation still needed: Control's APT/dpkg transaction/channel backend;
 current source-family delta reconciliation and power-family release alignment;
-PipeWire/Mesa/firmware/OEM resources; fresh recovery source-build validation;
+PipeWire/Mesa/remaining firmware/OEM resources; fresh recovery source-build validation;
 remaining video/session and
 metapackage payloads. The absent generated THP directory was recovered from its recorded commit
 34046210932d654a4c0df0121ecc31c008f8148c with exact input and transformed-output
