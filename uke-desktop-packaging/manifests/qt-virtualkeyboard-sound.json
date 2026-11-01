@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "package": "qt6-qtvirtualkeyboard",
+  "version": "6.12.0",
+  "fedora_release": "1.fc46",
+  "release": "1.1",
+  "target": "fedora-rawhide-aarch64",
+  "upstream_commit": "934b432b13cae5c64357a5e98547280bd191f806",
+  "source_rpm_url": "https://kojipkgs.fedoraproject.org/packages/qt6-qtvirtualkeyboard/6.12.0/1.fc46/src/qt6-qtvirtualkeyboard-6.12.0-1.fc46.src.rpm",
+  "source_rpm_sha256": "70b5bec61b55ae7f34ce1a27558597f8fac0e316ecf849feb4e05c4614fa83e4",
+  "signed_source_url": "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/source/tree/Packages/q/qt6-qtvirtualkeyboard-6.12.0-1.fc46.src.rpm",
+  "signed_source_sha256": "3b49d1993010f6037e9e9851fdf3b1e4c9c216157dd689af8dd12e98f38119ee",
+  "fedora_key_fingerprint": "D924B10D3E810DABDD8B56B596E7E91491211FCE",
+  "source_payload_sha256": "21c869a52c3f5c1be2c23811f69fd26b87dfe67369e9f77fff3ce9276a27fa5f",
+  "upstream_tar_sha256": "2aae3628f4648f86959d7853e7e1f50ee96a7f1bb5497afb62b7deff6c350170",
+  "change": "Enable the existing upstream sound feature with matching Qt Multimedia development files; upstream source and KDE applications remain unchanged",
+  "automatic_build": false,
+  "physical_acceptance": false
+}
