@@ -10,6 +10,9 @@ pipewire-monitor-srpm:
 .PHONY: test-inxi-soc-thermal
 test-inxi-soc-thermal:
 	bash tests/inxi-soc-thermal.sh "$(INXI_SOURCE)"
+.PHONY: inxi-srpm
+inxi-srpm:
+	bash scripts/build-inxi-srpm.sh "$(outdir)"
 .PHONY: speaker-controls-srpm
 .PHONY: displayport-audio-srpm
 displayport-audio-srpm:

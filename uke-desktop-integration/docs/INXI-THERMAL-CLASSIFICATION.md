@@ -25,3 +25,9 @@ inxi source and run `make test-inxi-soc-thermal INXI_SOURCE=/path/to/inxi`.
 Keep the original package name, license, dependencies and Fedora update
 policy. A package rebuild and installation are separate from the observed
 execution of the patched source; no package takeover or DT rename is needed.
+
+1 November 2026. `make inxi-srpm` rebuilds the exact retained Fedora source
+with release 3 and the classifier patch. The original name, license, dependencies,
+documentation and Fedora self-update restriction remain. The binary RPM runs the
+thirteen classifier cases in `%check`. This candidate is restricted to the test
+repository; it does not change Fedora's normal source or update policy.
