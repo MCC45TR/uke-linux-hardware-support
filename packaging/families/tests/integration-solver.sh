@@ -57,3 +57,27 @@ for selection in core kde all; do
         "$fixture/solver" "$fixture" "$target" "$mode" "$selection"
     done
 done
+
+# Exercise RPM's real config handling without chroot privileges or running scriptlets.
+while IFS= read -r name; do
+    old=$(find "$fixture/baseline" -maxdepth 1 -name "$name-*.rpm" | while IFS= read -r file; do [[ $(rpm -qp --qf '%{NAME}' "$file") != "$name" ]] || printf '%s\n' "$file"; done)
+    new=$(find "$fixture/candidate" -maxdepth 1 -name "$name-*.rpm" | while IFS= read -r file; do [[ $(rpm -qp --qf '%{NAME}' "$file") != "$name" ]] || printf '%s\n' "$file"; done)
+    mapfile -t configs < <(rpm -qp --qf '[%{FILENAMES}\t%{FILEFLAGS:fflags}\n]' "$old" | awk -F '\t' '$2~/c/ && $2~/n/{print $1}')
+    ((${#configs[@]})) || continue
+    sandbox="$fixture/roots/config-$name"
+    mkdir -p "$sandbox/db" "$sandbox/payload"
+    rpm --dbpath "$sandbox/db" --initdb
+    args=(--dbpath "$sandbox/db" --nodeps --noscripts --notriggers --badreloc --relocate "/=$sandbox/payload")
+    rpm "${args[@]}" -i "$old"
+    for config in "${configs[@]}"; do
+        [[ $config == /* && $config != *..* && -f $sandbox/payload$config && ! -L $sandbox/payload$config ]]
+        printf 'Uke migration fixture modified configuration\n' > "$sandbox/payload$config"
+    done
+    rpm "${args[@]}" -U "$new"
+    for config in "${configs[@]}"; do grep -Fxq 'Uke migration fixture modified configuration' "$sandbox/payload$config"; done
+    rpm "${args[@]}" -U --oldpackage "$old"
+    for config in "${configs[@]}"; do grep -Fxq 'Uke migration fixture modified configuration' "$sandbox/payload$config"; done
+    rpm --dbpath "$sandbox/db" --nodeps --noscripts --notriggers -e "$name"
+    for config in "${configs[@]}"; do grep -Fxq 'Uke migration fixture modified configuration' "$sandbox/payload$config.rpmsave"; done
+    printf 'UKE_INTEGRATION_CONFIG package=%s configs=%s upgrade=true rollback=true rpmsave=true scriptlets_executed=false hardware_tested=false\n' "$name" "${#configs[@]}"
+done < "$fixture/runtime-names"
