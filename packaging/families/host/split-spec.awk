@@ -121,7 +121,9 @@ END {
             epochs[pkg]=(i in child_epochs?child_epochs[i]:epoch)
             if(releases[pkg] !~ /^[0-9]+([.]|$)/)fail("Unreviewed child release: " releases[pkg])
             next_releases[pkg]=releases[pkg]
-            sub(/^[0-9]+/, (releases[pkg]+0)+1, next_releases[pkg])
+            if(release_increment=="")release_increment=1
+            if(release_increment !~ /^[1-9][0-9]*$/)fail("Invalid child release increment")
+            sub(/^[0-9]+/, (releases[pkg]+0)+release_increment, next_releases[pkg])
         }
     }
     for(i=0;i<=package;i++) {

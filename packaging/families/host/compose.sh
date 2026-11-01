@@ -176,7 +176,7 @@ while IFS=$'\t' read -r key input; do
     if [[ $integration == true ]]; then native_version=;release_override=;preserve_identity=1; fi
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc[0-9]+$ ]]
     [[ -z $release_override ]] || release_override=${release_override%%.fc*}$dist
-    awk -v preserve_identity="$preserve_identity" -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    awk -v release_increment="$release" -v preserve_identity="$preserve_identity" -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
 group=$family
