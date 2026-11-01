@@ -11,8 +11,13 @@ cache=$root/uke-desktop-packaging/referances/fedora-returns-20261101
 bash "$root/packaging/families/tests/fedora-return-abi.sh"
 fixture=$(mktemp -d)
 trap 'rm -rf -- "$fixture"' EXIT
-mkdir -p "$fixture"/{forks,originals,candidate,legacy,unknown,top/SPECS,top/BUILD,top/BUILDROOT,top/RPMS,top/SRPMS,top/SOURCES}
+mkdir -p "$fixture"/{forks,originals,candidate,candidate-desktop,legacy,unknown,top/SPECS,top/BUILD,top/BUILDROOT,top/RPMS,top/SRPMS,top/SOURCES}
 touch "$fixture/empty.conf"
+mkdir "$fixture/key-home";chmod 0700 "$fixture/key-home"
+export GNUPGHOME=$fixture/key-home
+gpg --batch --passphrase '' --quick-generate-key 'Uke return fixture <fixture@example.invalid>' rsa2048 sign 1d > "$fixture/key.log" 2>&1
+fingerprint=$(gpg --batch --with-colons --list-keys | awk -F: '$1=="fpr"{print $10;exit}')
+gpg --batch --armor --export "$fingerprint" > "$fixture/fixture.asc"
 while IFS=$'\t' read -r old original; do
     cp "$cache/${old##*/}" "$fixture/forks/"
     cp "$cache/${old##*/}" "$fixture/candidate/"
@@ -38,22 +43,25 @@ echo fixture > %{buildroot}/usr/share/uke-return-fixture/$name/value
 /usr/share/uke-return-fixture/$name/value
 EOF
     rpmbuild -bb --define "_topdir $fixture/top" "$fixture/top/SPECS/fixture.spec" > "$fixture/build.log" 2>&1 || { cat "$fixture/build.log"; return 1; }
+    rpmsign --define "_openpgp_sign_id $fingerprint" --define '_openpgp_sign gpg' --addsign "$fixture/top/RPMS/aarch64/$name-$version-1.fc46.aarch64.rpm" > "$fixture/sign.log" 2>&1 || { cat "$fixture/sign.log"; return 1; }
     cp "$fixture/top/RPMS/aarch64/$name-$version-1.fc46.aarch64.rpm" "$fixture/$repo/"
 }
-build_fixture uke-core-meta 1 candidate 'Requires: libstdc++ >= 16.2.1' 'Provides: uke-core-meta(fedora-returns-v1) = 1'
+build_fixture uke-core-meta 1 candidate 'Requires: libstdc++ >= 16.2.1' $'Provides: uke-core-meta(fedora-returns-v1) = 1\nProvides: uke-core-meta(fedora-cxx-runtime-v1) = 1'
 build_fixture uke-return-caller 1 legacy 'Requires: senemos-native-runtime(libstdc++)'
 cp "$fixture/legacy/"*.rpm "$fixture/candidate/"
 build_fixture uke-libstdcxx 99 unknown
 build_fixture libstdc++ 99 candidate
-for repo in forks originals candidate; do createrepo_c --quiet "$fixture/$repo"; done
+cp "$fixture/forks/"*.rpm "$fixture/candidate-desktop/"
+build_fixture uke-core-meta 1 candidate-desktop 'Requires: senemos-native-runtime(libstdc++)' 'Provides: uke-core-meta(fedora-returns-v1) = 1'
+for repo in forks originals candidate candidate-desktop; do createrepo_c --quiet "$fixture/$repo"; done
 c++ -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(pkg-config --cflags libdnf5 rpm libsystemd) \
     "$project/tests/fedora-returns.cpp" "$project/src/cli.cpp" -I"$project/src" -o "$fixture/solver" $(pkg-config --libs libdnf5 rpm libsystemd)
 curl --fail --silent --show-error --max-time 60 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/pubkey.gpg -o "$fixture/copr.asc"
-for mode in fresh forward mixed weak-off update reverse missing unreviewed legacy-caller; do
+for mode in fresh forward mixed weak-off update reverse missing unreviewed legacy-caller desktop-only; do
     target=$fixture/root-$mode
     mkdir -p "$target/usr/lib/sysimage/rpm"
     rpm --dbpath "$target/usr/lib/sysimage/rpm" --initdb
-    rpmkeys --dbpath "$target/usr/lib/sysimage/rpm" --import "$root/packaging/families/keys/fedora-46.asc" "$fixture/copr.asc"
+    rpmkeys --dbpath "$target/usr/lib/sysimage/rpm" --import "$root/packaging/families/keys/fedora-46.asc" "$fixture/copr.asc" "$fixture/fixture.asc"
     seed=()
     for file in "$fixture/forks/"*.rpm; do
         if [[ $mode == reverse || $mode == mixed && ${#seed[@]} -ge 6 ]]; then

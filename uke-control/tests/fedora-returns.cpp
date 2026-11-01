@@ -20,7 +20,7 @@ int main(int argc,char** argv) {
     for(const auto& id:{prefix+project(selected),std::string("fedora"),std::string("rawhide")}) {
         auto repo=base.get_repo_sack()->create_repo(id);auto& c=repo->get_config();
         if(id=="rawhide")c.get_metalink_option().set("https://mirrors.fedoraproject.org/metalink?repo=rawhide&arch=aarch64");
-        else c.get_baseurl_option().set(std::vector<std::string>{"file://"+(fixture/(id=="fedora"?"originals":reverse?"forks":"candidate")).string()});
+        else c.get_baseurl_option().set(std::vector<std::string>{"file://"+(fixture/(id=="fedora"?"originals":reverse?"forks":mode=="desktop-only"?"candidate-desktop":"candidate")).string()});
         c.get_metadata_expire_option().set(3600);c.get_skip_if_unavailable_option().set(false);
         c.get_priority_option().set(id=="rawhide"?99:1);c.get_pkg_gpgcheck_option().set(true);
     }
@@ -37,21 +37,23 @@ int main(int argc,char** argv) {
     } else {
         auto p=plan(base,selected,ids,".fc46");
         assert(p.originals==!reverse);
+        assert(p.cxx==(!reverse&&mode!="desktop-only"));
         if(mode=="fresh") {
             libdnf5::rpm::PackageQuery cohort(base);cohort.filter_available();cohort.filter_repo_id(prefix+project(selected));cohort.filter_name("uke-core-meta");
             assert(cohort.size()==1);p.targets.emplace(key(*cohort.begin()),*cohort.begin());p.scope.insert(key(*cohort.begin()));
         }
         libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();
-        size_t old_forks=0;for(const auto& pkg:installed)if(fedora_return(pkg.get_name()))++old_forks;
+        size_t old_forks=0;for(const auto& pkg:installed)if(fedora_return(pkg.get_name(),p.cxx))++old_forks;
         if(!reverse)assert(p.returns.size()==old_forks);
         auto tx=resolve(base,p,selected,mode=="update");size_t inbound=0;
         for(const auto& item:tx.get_transaction_packages())if(libdnf5::transaction::transaction_item_action_is_inbound(item.get_action())) {
             const auto pkg=item.get_package();++inbound;
-            if(!reverse)assert(!fedora_return(pkg.get_name()));
-            for(const auto& entry:fedora_returns)if(pkg.get_name()==entry.original&&!reverse)assert(original_fedora(pkg,entry,pkg.get_arch()));
+            if(!reverse)assert(!fedora_return(pkg.get_name(),p.cxx));
+            for(const auto& entry:fedora_returns)if(pkg.get_name()==entry.original&&!reverse&&fedora_original(pkg.get_name(),p.cxx))assert(original_fedora(pkg,entry,pkg.get_arch()));
         }
         if(reverse)for(const auto& entry:fedora_returns)assert(p.targets.contains(std::string(entry.fork)+(std::string(entry.original)=="libwacom-data"?".noarch":".aarch64")));
         if(mode=="fresh")assert(inbound>0);
+        if(mode=="desktop-only")assert(p.returns.size()==12&&p.targets.contains("uke-libstdcxx.aarch64"));
         std::cout<<"Inbound packages: "<<inbound<<'\n';
     }
     std::cout<<"UKE_FEDORA_RETURN_SOLVER mode="<<mode<<" real_signed_pairs=13 weak_deps="<<weak<<" rpm_transaction_executed=false hardware_tested=false\n";

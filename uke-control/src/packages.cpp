@@ -315,12 +315,12 @@ const std::array<FedoraReturn,13> fedora_returns{{
     {"uke-libwacom-utils","libwacom-utils","libwacom","2.20.0","18.fc46"},
     {"uke-libstdcxx","libstdc++","gcc","16.2.1","19.fc46"}
 }};
-const FedoraReturn* fedora_return(const std::string& name) {
-    for(const auto& entry:fedora_returns)if(name==entry.fork)return &entry;
+const FedoraReturn* fedora_return(const std::string& name,bool cxx=true) {
+    for(const auto& entry:fedora_returns)if(name==entry.fork&&(cxx||std::string_view(entry.source)!="gcc"))return &entry;
     return nullptr;
 }
-const FedoraReturn* fedora_original(const std::string& name) {
-    for(const auto& entry:fedora_returns)if(name==entry.original)return &entry;
+const FedoraReturn* fedora_original(const std::string& name,bool cxx=true) {
+    for(const auto& entry:fedora_returns)if(name==entry.original&&(cxx||std::string_view(entry.source)!="gcc"))return &entry;
     return nullptr;
 }
 bool original_fedora(const Package& pkg,const FedoraReturn& entry,const std::string& arch) {
@@ -329,21 +329,25 @@ bool original_fedora(const Package& pkg,const FedoraReturn& entry,const std::str
         pkg.get_vendor()=="Fedora Project"&&pkg.get_source_name()==entry.source&&pkg.get_epoch()=="0"&&
         fedora_package_release(pkg.get_release(),".fc46")&&rpmvercmp(pkg.get_version().c_str(),entry.version)>=0;
 }
-struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope,returns;bool fallback=false,originals=false;std::string kernel_nevra,krel;};
+struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope,returns;bool fallback=false,originals=false,cxx=false;std::string kernel_nevra,krel;};
 Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids,const std::string& dist={}) {
     Plan p;const auto repo=prefix+project(selected);
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();
     libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(repo);
     for(const auto& pkg:available)if(selected=="unstable"&&pkg.get_name()=="uke-core-meta")
-        for(const auto& dep:pkg.get_provides())if(std::string_view(dep.get_name())=="uke-core-meta(fedora-returns-v1)"&&std::string_view(dep.get_version())=="1")p.originals=true;
+        for(const auto& dep:pkg.get_provides())if(std::string_view(dep.get_version())=="1") {
+            if(std::string_view(dep.get_name())=="uke-core-meta(fedora-returns-v1)")p.originals=true;
+            if(std::string_view(dep.get_name())=="uke-core-meta(fedora-cxx-runtime-v1)")p.cxx=true;
+        }
+    p.cxx=p.cxx&&p.originals;
     std::map<std::string,std::vector<Package>> candidates;
     for(const auto& pkg:available) {
-        if(p.originals&&(fedora_return(pkg.get_name())||fedora_original(pkg.get_name())))continue;
+        if(p.originals&&(fedora_return(pkg.get_name(),p.cxx)||fedora_original(pkg.get_name(),p.cxx)))continue;
         if(!dist.empty())need(fedora_package_release(pkg.get_release(),dist),"Foreign-release candidate: "+pkg.get_nevra());
         candidates[key(pkg)].push_back(pkg);
     }
     std::map<std::string,std::vector<Package>> replacements;
-    for(const auto& pkg:available)if(!protected_package(pkg)&&!(p.originals&&(fedora_return(pkg.get_name())||fedora_original(pkg.get_name())))) {
+    for(const auto& pkg:available)if(!protected_package(pkg)&&!(p.originals&&(fedora_return(pkg.get_name(),p.cxx)||fedora_original(pkg.get_name(),p.cxx)))) {
         std::set<std::string> provides;
         for(const auto& dep:pkg.get_provides())provides.insert(dep.get_name());
         for(const auto& dep:pkg.get_obsoletes()) {
@@ -358,7 +362,7 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         if(kernel_package(pkg.get_name())){if(pkg.get_name()==kernel||pkg.get_name()==kernel+"-core")has_kernel=true;continue;}
         if(protected_package(pkg))continue;
         const auto k=key(pkg);
-        if(const auto entry=fedora_return(pkg.get_name());p.originals&&entry) {
+        if(const auto entry=fedora_return(pkg.get_name(),p.cxx);p.originals&&entry) {
             need(pkg.get_epoch()=="0"&&pkg.get_version()==entry->version&&fedora_package_release(pkg.get_release(),".fc46")&&
                 rpmvercmp(pkg.get_release().c_str(),entry->last_fork_release)<=0,"Unreviewed installed fork: "+pkg.get_nevra());
             need(++counts[k]==1,"Duplicate installed fork requires repair: "+k);
@@ -426,9 +430,9 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     libdnf5::rpm::PackageQuery available(base);available.filter_available();
     for(const auto& pkg:available) {
         const auto k=key(pkg);auto chosen=p.targets.find(k);
-        const auto original=fedora_original(pkg.get_name());
+        const auto original=fedora_original(pkg.get_name(),p.cxx);
         // Factory calibration belongs to the device, including when a public repo advertises its name.
-        if((p.originals&&(fedora_return(pkg.get_name())||(original&&!original_fedora(pkg,*original,pkg.get_arch()))))||private_package(pkg.get_name())||
+        if((p.originals&&(fedora_return(pkg.get_name(),p.cxx)||(original&&!original_fedora(pkg,*original,pkg.get_arch()))))||private_package(pkg.get_name())||
            (kernel_package(pkg.get_name())&&(chosen==p.targets.end()||chosen->second.get_id()!=pkg.get_id()))||
            (p.scope.contains(k)&&pkg.get_repo_id()!=(chosen==p.targets.end()?prefix+project(selected):chosen->second.get_repo_id())))excluded.add(pkg);
     }
