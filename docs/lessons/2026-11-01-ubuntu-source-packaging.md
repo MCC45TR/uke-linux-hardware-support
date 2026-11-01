@@ -426,3 +426,27 @@ repository does not need long-lived export or pristine branches for this recover
 path. The speaker-controls trial reconstructs the original archive byte for byte;
 the complete nineteen-route reconstruction is being checked separately. These
 historical views are not new main-based daily recipes or publication admission.
+
+The complete nineteen-route historical reconstruction subsequently passed:
+every original archive equals its recorded SHA256, using only saved tags and
+disposable local compatibility refs. Five new main adapters also passed clean
+native Tenacious ARM64 source/package builds at dcbf828: three data policies,
+Bluetooth and speaker orientation. Artifact hashes, all three input commits,
+target architecture and payload audits pass; all installed data bytes match
+the common source. The shared component itself remains byte-identical to the
+previously approved cbecc44 baseline. These five routes remain unenrolled.
+
+The actual speaker replacement source recipe4108876 and ARM64 build33899943
+succeeded. Its source manifest records20c7d84 for every nested input and its
+payload preserves the pinned preset, notice, license and conffile declaration.
+An isolated Ubuntu24 dpkg lifecycle test registered arm64 as a foreign
+architecture, upgraded the actual old/new data DEBs with a synthetic local
+preset modification, preserved that modification through removal, and purged
+it only on explicit purge. No architecture or dependency bypass and no target
+program execution occurred. Signed APT publication remains a separate gate;
+source/build success alone does not authorize branch cleanup.
+
+The root Ubuntu integration was found still following hardware's ubuntu branch.
+Its .gitmodules now follows main and pins the checked shared source at dcbf828;
+root workspace-link CI passed at ed75a0a. No Fedora root, image release,
+security setting or device operation changed during this correction.

@@ -1,7 +1,7 @@
 source	canonical_inputs	canonical_metadata	snapshot_overlay	qualification
 uke-speaker-firmware	xiaomi-uke-firmware/referances/speaker-preset-3.0.304.0	xiaomi-uke-firmware/packaging/speaker-firmware	packaging/ubuntu/main-recipes/uke-speaker-firmware/debian	native-tenacious-arm64-passed-launchpad-pending
-uke-displayport-audio	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-displayport-audio/debian	local-x86_64-data-build-passed-native-pending
-uke-speaker-controls	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-controls/debian	local-x86_64-data-build-passed-native-pending
-uke-gpu-defaults	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-gpu-defaults/debian	local-x86_64-data-build-passed-native-pending
-uke-bluetooth	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-bluetooth/debian	local-source-build-passed-native-pending
-uke-speaker-orientation	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-orientation/debian	local-source-build-passed-native-pending
+uke-displayport-audio	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-displayport-audio/debian	native-tenacious-arm64-passed-not-enrolled
+uke-speaker-controls	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-controls/debian	native-tenacious-arm64-passed-not-enrolled
+uke-gpu-defaults	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-gpu-defaults/debian	native-tenacious-arm64-passed-not-enrolled
+uke-bluetooth	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-bluetooth/debian	native-tenacious-arm64-passed-not-enrolled
+uke-speaker-orientation	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-orientation/debian	native-tenacious-arm64-passed-not-enrolled

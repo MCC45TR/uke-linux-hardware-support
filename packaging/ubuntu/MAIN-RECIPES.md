@@ -58,3 +58,11 @@ input revisions and prefixed shared source paths. Source construction and
 dry build plans pass; no helper compilation or execution occurred in this
 adapter qualification. These five routes remain unenrolled in Launchpad.
 The other thirteen historical non-kernel routes still need main adapters.
+
+Superseding qualification: all five additional adapters subsequently passed
+clean native Tenacious ARM64 source/package construction and payload audits
+at exact commit dcbf8288afe4456f32a95d1fc3fca56342d54d2f. Downloaded artifact
+manifests and the three equal input revisions verify independently. The
+component source compares unchanged to the approved baseline. No extra
+Launchpad recipe is enrolled, runtime hardware ABI is fabricated or service
+operation claimed by these native builds.
