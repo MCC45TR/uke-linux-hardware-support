@@ -1,5 +1,16 @@
 # Uke Control changes
 
+## 2.8.1 — 2026-11-01
+
+Admit an independent single-device Btrfs maintenance journal with exact backing
+device and remount verification. Import completed recovery creation checkpoints
+only after checking their plan, both GPT copies, unit identity and exact current
+layout. Retain the original checkpoint with the imported ownership record.
+Report offline watchdog blockers in read-only layout status and require an
+explicit inactive state in both offline layout and resize workers. Unknown or
+unavailable state remains blocked. These preparation changes do not authorize
+partition writes or establish physical F2FS conversion acceptance.
+
 ## 2.8.0 — 2026-11-01
 
 Add a declared unstable package transition for the reviewed at-spi2-core,

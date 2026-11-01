@@ -71,7 +71,7 @@ int wizard(bool singleboot,bool dry_run) {
         need(isatty(STDIN_FILENO)&&isatty(STDOUT_FILENO),"An interactive terminal is required; no unattended erase option exists");
         auto current=inspect();ure::Root system("/");power();native_tool("dialog");native_tool("dmsetup");native_tool("wipefs");
         notice("Only userdata and proven project-created children inside its ORIGINAL extent may change. Other OEM records and payloads remain protected.\n\nBack up your files first. Metadata receipts are not file backups.\n\nExisting carved layouts require the original same-device GPT archive AND a completed creation receipt. Unknown ownership, corrupt GPT or wrong-device evidence cannot be overridden.");
-        const fs::path parent=input("Existing root-owned private directory on a separate ext4/XFS USB or other external disk. No part of the affected LUN may hold the journal.");trusted(parent);ure::private_directory(parent,false);journal_identity(parent,current.target);
+        const fs::path parent=input("Existing root-owned private directory on a separate ext4/XFS or single-device Btrfs external disk. No part of the affected LUN may hold the journal.");trusted(parent);ure::private_directory(parent,false);journal_identity(parent,current.target);
         const auto job=parent/("uke-layout-"+ure::operation_id());ure::private_directory(job,true);
         const fs::path original=input("Original same-device GPT backup directory. Leave blank ONLY if userdata still has its original uncarved GPT layout.");std::string firmware=profile();
         if(original.empty()) {ure::multiboot_inspect(current.target,{},firmware,&system);backup(current.target,job/"original-gpt",firmware);}
@@ -117,6 +117,12 @@ int wizard(bool singleboot,bool dry_run) {
 }
 int command(int argc,char** argv) {
     need(argc>=2,"Expected singleboot or multiboot");const std::string action=argv[1];
+    if(action=="--import-recovery") {
+        need(argc==4,"Expected a root-private final recovery transport.json and a new external destination");
+        const auto current=inspect();const fs::path destination=argv[3];trusted(destination.parent_path());journal_identity(destination.parent_path(),current.target);
+        ure::Root system("/");const auto receipt=import_recovery_checkpoint(system,current.target,load_private(argv[2]),destination);
+        std::cout<<"Verified recovery ownership imported. No target storage write or reboot.\n"<<receipt["recovery_plan_sha256"].asString()<<'\n';return 0;
+    }
     if(action=="--offline"){need(argc==2,"Unexpected offline argument");return offline();}
     if(action=="--worker"||action=="--prepare") {
         need(argc==4&&geteuid()==0,"A private root job request and the exact interactive consent digest are required");const fs::path request=argv[2];

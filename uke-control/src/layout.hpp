@@ -9,7 +9,7 @@ using ure::Value;
 using ure::StorageTarget;
 using ure::StorageRange;
 inline constexpr const char* recovery_source="8395560393f78bcbe2adeaedc44057c0aa7141de";
-inline constexpr const char* engine_version="2.1.1";
+inline constexpr const char* engine_version="2.1.2";
 struct Evidence {
     unsigned userdata_index=0,root_index=0;
     std::string userdata_node,userdata_mount,filesystem,filesystem_uuid;
@@ -29,6 +29,7 @@ Value backup(const StorageTarget& target,const std::filesystem::path& destinatio
 Value snapshot(const StorageTarget& target,const std::vector<StorageRange>& ranges,const std::filesystem::path& destination,const std::string& profile,const std::string& kind,const std::string& plan_hash);
 void validate_authorization(const Value& plan,const Value& consent,const std::string& expected_consent,const std::string& boot_hash,std::uint64_t now);
 void require_ownership(const Value& inspection,const Value& receipt,const Value& identity);
+Value import_recovery_checkpoint(const ure::Root& system,const StorageTarget& target,const Value& checkpoint,const std::filesystem::path& destination);
 Proposal propose(const ure::Root& system,const StorageTarget& target,const Value& request,
                  const std::filesystem::path& original_backup,const std::string& profile,
                  const Value& receipt,const Evidence& evidence,bool preserve_userdata,bool fastboot);

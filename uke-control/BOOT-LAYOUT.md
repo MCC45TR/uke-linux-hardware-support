@@ -10,6 +10,30 @@ selected external journal; it does not prepare target writes or reboot.
 `singleboot status` and `multiboot status` are read-only hardware admission queries.
 Use explicit `--json` for machine-readable status.
 
+1 November 2026, Control 2.8.1: status also lists `offline_blockers`.
+An empty list covers the observed watchdog requirement only; original GPT,
+ownership, external journal, backup and the exact plan remain separate checks.
+A missing watchdog state is blocked explicitly. Boot a kernel built with
+`CONFIG_WATCHDOG_SYSFS=y`; an active or unknown watchdog remains blocked.
+Reading status never opens a watchdog device, prepares shutdown or resizes F2FS.
+
+For retained recovery-created layouts, the native helper can import a completed
+`ure-adb-dualboot-checkpoint` into a new private external metadata directory:
+
+```sh
+sudo /usr/libexec/uke-control/layout-manager --import-recovery \
+  /external/private/transport.json /external/private/imported
+```
+
+The input must be a root-owned mode-0600 copy of the retained final checkpoint.
+The helper verifies its complete twelve-member snapshot, sealed plan and terminal
+state, unit/LUN/disk identity, healthy original GPT and byte-exact current GPT.
+It retains the checkpoint and creates `original-gpt/` plus `ownership.json` for
+the wizard. It does not infer ownership from labels, waive an unknown partition,
+write the target disk, format a filesystem or prepare a reboot. Keep the original
+recovery archive independently. Self-checksums bind bytes, not an OEM signature;
+the supplied checkpoint must come from trusted retained creation evidence.
+
 The wizard offers ESP, Linux boot, Linux root, swap, Windows, shared data and a
 second Linux root. Sizes accept MB, MiB, GB, GiB and percentages of the original
 userdata pool. Advanced mode permits custom labels and role order. Userdata must
@@ -22,7 +46,7 @@ ZFS has no admitted pool adapter and is unavailable.
 singleboot / multiboot
 ├─ Identify exact Uke / SM7675 and the unique writable 4 KiB UFS userdata LUN
 │  └─ Missing identity, ambiguous devices or unhealthy GPT → refuse
-├─ Verify durable private journal on a separate direct ext4/XFS device
+├─ Verify durable private journal on a separate direct ext4/XFS or single-device Btrfs device
 ├─ Establish original same-unit/LUN/disk GPT and original userdata extent
 │  ├─ Uncarved layout → capture, synchronize and verify both GPT copies
 │  └─ Existing children → require original GPT and completed exact ownership receipt
@@ -90,7 +114,11 @@ internal-log/no-realtime boundary are checked. A live XFS primary superblock
 observation can lag the mounted geometry and is not used as the sole size proof.
 The distribution xfsprogs-devel UAPI headers are a build dependency.
 
-An external root-private directory on an independent ext4/XFS disk is mandatory.
+An external root-private directory on an independent ext4/XFS or single-device
+Btrfs disk is mandatory. Btrfs journals must use the top-level filesystem root;
+subvolume/bind mounts, multiple devices and virtual backing remain blocked.
+Backing-device identity and filesystem UUID are verified before and after the
+shutdown remount. Btrfs remount explicitly selects subvolid=5.
 It holds original GPT proof, the sealed plan, approvals, verified before/after
 GPT archives, operation phases and the
 completed child-ownership receipt. Keep that directory for future conversion.

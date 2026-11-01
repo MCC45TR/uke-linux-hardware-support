@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "layout.hpp"
 #include "maintenance.hpp"
+#include "watchdog-state.hpp"
 #include <algorithm>
 #include <fcntl.h>
 #include <fstream>
@@ -37,8 +38,7 @@ void audit(const fs::path& root) {
     need(!fs::exists(root/"etc/shadow")&&fs::exists(root/"usr/lib/initrd-release")&&access((root/"shutdown").c_str(),X_OK)==0&&access((root/"usr/libexec/uke-control/layout-manager").c_str(),X_OK)==0,"Incomplete or private-account-bearing RAM environment");
 }
 void watchdogs() {
-    if(!fs::exists("/sys/class/watchdog"))return;
-    for(const auto& item:fs::directory_iterator("/sys/class/watchdog"))need(read(item.path()/"state",64)!="active\n","An active hardware watchdog has no admitted RAM keeper; offline maintenance is blocked");
+    require_inactive_watchdogs();
 }
 void label(const fs::path& root) {
     if(!fs::exists("/sys/fs/selinux/enforce"))return;
@@ -109,12 +109,14 @@ int offline() {
         for(const auto& item:fs::directory_iterator("/sys/class/block")) {
             const auto sys=fs::canonical(item.path());if(sys.string()!=locator["device_sysfs"].asString())continue;
             const auto path="/dev/"+item.path().filename().string();ure::Fd fd(open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC));need(fd.get()>=0,"External journal device disappeared");const auto probe=filesystem_probe(fd.get(),0,ure::storage_bytes(fd.get()));
-            if(probe["uuid"]==locator["uuid"]&&probe["type"]==locator["filesystem"]){need(probe["external_journal"]!=true&&(probe["type"]=="ext4"||probe["type"]=="xfs"),"External journal devices are forbidden before mounting the maintenance journal");external=path;++found;}
+            if(probe["uuid"]==locator["uuid"]&&probe["type"]==locator["filesystem"]){need(probe["external_journal"]!=true&&probe["single_device"]!=false&&probe["ambiguous"]!=true&&(probe["type"]=="ext4"||probe["type"]=="xfs"||probe["type"]=="btrfs"),"External journal dependencies or filesystem are not admitted");external=path;++found;}
         }
         need(found==1,"Exactly one unchanged external journal device is required");
         const fs::path mountpoint="/run/uke-layout-journal";ure::private_directory(mountpoint,!fs::exists(mountpoint));
-        need(!mount(external.c_str(),mountpoint.c_str(),locator["filesystem"].asCString(),MS_NODEV|MS_NOSUID|MS_NOEXEC,nullptr),"Cannot mount durable journal after oldroot unmount");mounted=true;
+        const char* options=locator["filesystem"]=="btrfs"?"subvolid=5":nullptr;
+        need(!mount(external.c_str(),mountpoint.c_str(),locator["filesystem"].asCString(),MS_NODEV|MS_NOSUID|MS_NOEXEC,options),"Cannot mount durable journal after oldroot unmount");mounted=true;
         const auto relative=locator["relative"].asString();ure::components(relative);const auto job=mountpoint/relative;auto consent=load_private(job/"consent.json");
+        need(ure::json(journal_identity(job,current.target))==ure::json(locator),"Remounted external journal identity differs");
         need(consent["plan_sha256"]==request["plan_sha256"]&&consent["sha256"]==seal(consent),"Durable and RAM confirmations differ");
         run_worker(job/"consent.json",true,request["consent_sha256"].asString(),[](const auto& phase){std::cout<<"Uke layout: "<<phase<<std::endl;});
         sync();need(!umount(mountpoint.c_str()),"Cannot release durable journal");mounted=false;

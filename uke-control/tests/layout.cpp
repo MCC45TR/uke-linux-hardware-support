@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: MIT
 #include "layout-fixture.hpp"
+#include "../src/watchdog-state.hpp"
+#include <fstream>
 #include <iostream>
 int main(int argc,char** argv) {
     using namespace fixture;namespace fs=std::filesystem;
     if(argc==3&&std::string(argv[1])=="--create"){image(argv[2]);return 0;}
     char pattern[]="/tmp/uke-layout-policy-XXXXXX";const auto directory=mkdtemp(pattern);assert(directory);const fs::path work=directory;
     try {
+        const auto watchdog=work/"watchdogs";fs::create_directory(watchdog);uke::require_inactive_watchdogs(watchdog);
+        fs::create_directory(watchdog/"watchdog0");refuse([&]{uke::require_inactive_watchdogs(watchdog);});
+        for(const auto* state:{"active\n","unknown\n","inactive extra\n"}){std::ofstream(watchdog/"watchdog0/state")<<state;refuse([&]{uke::require_inactive_watchdogs(watchdog);});}
+        std::ofstream(watchdog/"watchdog0/state")<<"inactive\n";uke::require_inactive_watchdogs(watchdog);
         if(fs::exists("/sys/class/dmi/id/sys_vendor"))assert(!read("/sys/class/dmi/id/sys_vendor").empty());
         assert(!read("/proc/self/mountinfo",4*1024*1024).empty());
         const auto fsimage=work/"ext4";ure::Fd fsfd(open(fsimage.c_str(),O_RDWR|O_CREAT|O_EXCL|O_CLOEXEC,0600));assert(fsfd.get()>=0&&!ftruncate(fsfd.get(),64*mib));
@@ -52,6 +58,24 @@ int main(int argc,char** argv) {
         online.filesystem="xfs";changed["userdata_filesystem"]="xfs";assert(propose(system,disk,changed,work/"original","fixture",{},online,true,true).document["route"]=="blocked");online.filesystem_bytes=100*gib;assert(propose(system,disk,changed,work/"original","fixture",{},online,true,false).document["route"]=="direct");
         auto erased=propose(system,disk,r,work/"original","fixture",{},ev,false,true);assert(erased.document["confirmations_required"]==2&&erased.document["root_partition_removed"]==true&&erased.document["route"]=="shutdown");assert(propose(system,disk,r,work/"original","fixture",{},ev,false,false).document["route"]=="blocked");
         ure::Fd output(open(path.c_str(),O_RDWR|O_CLOEXEC));for(const auto& range:p.after)write(output.get(),range.bytes,range.offset);assert(!fsync(output.get()));disk=ure::storage_image(path,4096);
+        StorageTarget imported_disk{ure::Fd(dup(disk.descriptor.get())),disk.identity};
+        imported_disk.identity["unit_identity_available"]=true;imported_disk.identity["unit_identity_sha256"]=ure::sha256("fixture-unit");imported_disk.identity["lun_address"]=0;
+        imported_disk.identity["disk_guid"]=ure::gpt_inspect(disk.descriptor.get(),4096)["disk_guid"];
+        Value legacy;legacy["schema"]=1;legacy["operation"]="dualboot.setup";legacy["firmware_profile"]="fixture";legacy["target_identity"]=imported_disk.identity;
+        legacy["gpt"]["target_identity"]=imported_disk.identity;legacy["gpt"]["before"]=p.document["before"];legacy["gpt"]["after"]=p.document["after"];
+        legacy["gpt"]["plan_sha256"]=seal(legacy["gpt"],"plan_sha256");legacy["plan_sha256"]=seal(legacy,"plan_sha256");
+        Value terminal;terminal["schema"]=1;terminal["format"]="ure-live-dualboot-journal";terminal["phase"]="COMMITTED_REBOOT_REQUIRED";terminal["plan_sha256"]=legacy["plan_sha256"];
+        Value checkpoint;checkpoint["schema"]=1;checkpoint["format"]="ure-adb-dualboot-checkpoint";checkpoint["phase"]=terminal["phase"];checkpoint["plan_sha256"]=legacy["plan_sha256"];checkpoint["session"]="fixture-session";checkpoint["sequence"]=Json::UInt64(13);checkpoint["files"]=Value(Json::arrayValue);
+        auto member=[&](const std::string& name,const std::string& bytes){Value row;row["name"]=name;row["sha256"]=ure::sha256(bytes);std::string hex;static constexpr char digits[]="0123456789abcdef";for(unsigned char c:bytes){hex+=digits[c>>4];hex+=digits[c&15];}row["hex"]=hex;checkpoint["files"].append(row);};
+        member("plan.json",ure::json(legacy));member("state.json",ure::json(terminal));
+        for(const auto& range:p.before)member("before-"+range.name+".bin",range.bytes);
+        for(const auto& range:p.after)member("after-"+range.name+".bin",range.bytes);
+        auto invalid=checkpoint;invalid["phase"]="PREPARED";refuse([&]{import_recovery_checkpoint(system,imported_disk,invalid,work/"invalid-import");});
+        invalid=checkpoint;invalid["files"][2]["sha256"]=ure::sha256("changed");refuse([&]{import_recovery_checkpoint(system,imported_disk,invalid,work/"invalid-import");});
+        auto foreign=imported_disk.identity;imported_disk.identity["unit_identity_sha256"]=ure::sha256("another-unit");refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"invalid-import");});imported_disk.identity=foreign;
+        const auto imported=import_recovery_checkpoint(system,imported_disk,checkpoint,work/"imported");assert(imported["completed"]==true&&imported["owned_rows"].size()==3);
+        refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"imported");});
+        for(const auto& range:p.after)assert(ure::storage_read(disk.descriptor.get(),range.offset,range.bytes.size())==range.bytes);
         auto proof=receipt(p.document,disk.identity);require_ownership(ure::multiboot_inspect(disk,work/"original","fixture",&system),proof,disk.identity);
         auto broken=proof;broken["owned_rows"][0]["end_lba"]=Json::UInt64(1);broken["sha256"]=seal(broken);refuse([&]{require_ownership(ure::multiboot_inspect(disk,work/"original","fixture",&system),broken,disk.identity);});
         auto single=request(true);ev.partition_bytes=p.document["new_rows"][0]["bytes"].asUInt64();ev.filesystem_bytes=ev.partition_bytes;ev.root_index=p.document["new_rows"][3]["index"].asUInt();ev.mounted.clear();ev.mounted.insert(ev.root_index);ev.userdata_mount="";

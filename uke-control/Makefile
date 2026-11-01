@@ -65,7 +65,9 @@ build/libuke-control.so.0: src/usb-transition.hpp
 build/libuke-control.so.0: src/charge-intent.hpp
 build/libuke-control.so.0: src/version.hpp
 build/libuke-control.so.0 build/uke-control build/uke-control-packages build/uke-control-tests build/layout-manager: src/version.hpp src/error.hpp
-build/layout-manager build/test-layout build/test-layout-safety: src/maintenance.hpp
+build/layout-manager build/test-layout build/test-layout-safety: src/maintenance.hpp src/watchdog-state.hpp
+build/resize-system: src/watchdog-state.hpp
+build/test-layout-vm build/test-layout-payload build/test-layout-shutdown-vm: src/watchdog-state.hpp
 build/uke-control-tests: src/contact.hpp
 build/resize-system: src/resize-system.cpp shared/userdata-grow.hpp src/maintenance.hpp | build
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ src/resize-system.cpp
@@ -225,7 +227,7 @@ check-microphone: | build
 	build/test-microphone
 
 layout_recovery := $(addprefix shared/recovery/,core.cpp storage.cpp block.cpp gpt.cpp multiboot.cpp layout.cpp)
-layout_sources := src/layout-policy.cpp src/layout-runtime.cpp src/layout-execute.cpp src/layout-shutdown.cpp
+layout_sources := src/layout-policy.cpp src/layout-runtime.cpp src/layout-execute.cpp src/layout-shutdown.cpp src/layout-import.cpp
 layout_flags := -ffunction-sections -fdata-sections $(shell pkg-config --cflags jsoncpp blkid openssl)
 layout_libs := -Wl,--gc-sections $(shell pkg-config --libs jsoncpp blkid openssl libsystemd)
 build/layout-manager: src/layout-ui.cpp src/layout.hpp $(layout_sources) $(layout_recovery) src/cli.cpp | build

@@ -2,6 +2,7 @@
 // Uses the existing kernel recipe's F2FS geometry contract and Fedora's offline tools.
 #include "../shared/userdata-grow.hpp"
 #include "maintenance.hpp"
+#include "watchdog-state.hpp"
 #include "error.hpp"
 #include <algorithm>
 #include <array>
@@ -237,8 +238,7 @@ int command(const std::string& action,bool as_json=false) {
         const auto request=decode(private_request("/etc/uke-resize-system.request"));request_matches(request,actual,uptime());
         unmounted(read("/proc/self/mountinfo",1024*1024),number);
         power();
-        if(fs::exists("/sys/class/watchdog"))for(const auto& watchdog:fs::directory_iterator("/sys/class/watchdog"))
-            need(read(watchdog.path()/"state")=="inactive\n","Watchdog is active or its state is unknown; offline resize refused");
+        require_inactive_watchdogs();
         // f2fs-tools also probes O_EXCL; release our probe before invoking it.
         {Fd exclusive(open(device.c_str(),O_RDWR|O_EXCL|O_NOFOLLOW|O_CLOEXEC));}
         expand(fd.value,device.string(),bytes);return 0;

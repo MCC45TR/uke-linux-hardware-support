@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "layout.hpp"
+#include "watchdog-state.hpp"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -179,14 +180,19 @@ Inspection inspect_storage(StorageTarget target,const Value& graph,const Value& 
     }
     ev.require_shutdown=fs::exists("/run/uke-control-layout-require-shutdown");
     out.summary["device"]="Uke";out.summary["userdata_filesystem"]=ev.filesystem;out.summary["userdata_bytes"]=Json::UInt64(ev.partition_bytes);out.summary["filesystem_bytes"]=Json::UInt64(ev.filesystem_bytes);out.summary["filesystem_size_verified"]=ev.filesystem_size_verified;out.summary["single_device"]=ev.single_device;out.summary["fastboot_available"]=fastboot_available();out.summary["filesystems"]=native_capabilities();out.summary["physical_test_record"]=false;
+    out.summary["offline_blockers"]=Value(Json::arrayValue);
+    try{require_inactive_watchdogs();}catch(const std::exception& error){out.summary["offline_blockers"].append(error.what());}
     return out;
 }
 Value journal_identity(const fs::path& path,const StorageTarget& target) {
     ure::private_directory(path,false);struct stat st{};need(!stat(path.c_str(),&st),"Cannot inspect journal volume");const auto number=std::to_string(major(st.st_dev))+":"+std::to_string(minor(st.st_dev));
-    auto sys=fs::canonical("/sys/dev/block/"+number);const auto target_sys=fs::path("/"+target.identity["sysfs_path"].asString());
+    ure::Fd directory(open(path.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW));need(directory.get()>=0,"Cannot retain journal directory");
+    auto backing=btrfs_number(directory.get());if(backing.empty())backing=number;
+    auto sys=fs::canonical("/sys/dev/block/"+backing);const auto target_sys=fs::path("/"+target.identity["sysfs_path"].asString());
     need(sys!=target_sys&&sys.parent_path()!=target_sys&&sys.string().find("/virtual/")==std::string::npos&&fs::is_empty(sys/"holders")&&(!fs::exists(sys/"slaves")||fs::is_empty(sys/"slaves")),"The durable journal must be on a separate direct block device");
     const auto name=sys.filename().string();ure::Fd fd(open(("/dev/"+name).c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC));need(fd.get()>=0,"Cannot inspect external journal filesystem");auto probe=filesystem_probe(fd.get(),0,ure::storage_bytes(fd.get()));
-    const auto type=probe["type"].asString();need((type=="ext4"||type=="xfs")&&!probe["uuid"].asString().empty()&&probe["external_journal"]!=true,"Journal requires an external native ext4 or XFS filesystem with a unique UUID and internal journal");
+    const auto type=probe["type"].asString();need((type=="ext4"||type=="xfs"||type=="btrfs")&&!probe["uuid"].asString().empty()&&probe["single_device"]!=false&&probe["ambiguous"]!=true&&probe["external_journal"]!=true,"Journal requires an independent ext4/XFS or single-device Btrfs filesystem without external dependencies");
+    if(type=="btrfs")need(btrfs_mount(directory.get(),"/dev/"+name),"Journal mount differs from its Btrfs backing device");
     std::istringstream mounts(read("/proc/self/mountinfo",4*1024*1024));std::string line,mountpoint;
     while(std::getline(mounts,line)){std::istringstream fields(line);std::string a,b,dev,root,mount;fields>>a>>b>>dev>>root>>mount;if(dev==number){need(root=="/","Journal must use the filesystem root, without bind mounts");mountpoint=unescape(mount);break;}}
     need(!mountpoint.empty(),"External journal mount is unavailable");auto rel=fs::canonical(path).lexically_relative(mountpoint);need(!rel.empty()&&!rel.string().starts_with(".."),"Journal escapes its external mount");
