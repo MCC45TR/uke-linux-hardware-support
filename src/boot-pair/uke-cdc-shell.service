@@ -1,0 +1,23 @@
+[Unit]
+Description=Uke Fedora development shell over USB CDC ACM
+Requires=uke-cdc-acm.service
+After=uke-cdc-acm.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+
+[Service]
+Type=exec
+# A switch-root stop can interrupt readiness; keep it in the main process.
+ExecStart=/bin/sh -ec '/usr/bin/uke-boot-status --cdc --require-tty --wait 15; exec /usr/bin/bash --noprofile --norc -i'
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/ttyGS0
+TTYReset=yes
+TTYVHangup=yes
+Environment=TERM=vt100
+Restart=always
+RestartSec=3
+KillSignal=SIGHUP
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "stage": "boot",
+      "file": "uke-boot-integration-0.1.0-4.fc46.aarch64.rpm",
+      "arch": "aarch64",
+      "sha256": "363ae7698e826eb69e23258bdf72bc3fcf21d409a71891be3737d6c74c313faa",
+      "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/fedora-rawhide-aarch64/11081332-uke-boot-integration/uke-boot-integration-0.1.0-4.fc46.aarch64.rpm"
+    },
+    {
+      "stage": "boot",
+      "file": "uke-esp32-cdc-0.1.0-4.fc46.aarch64.rpm",
+      "arch": "aarch64",
+      "sha256": "0659dbd1cc0a69a11f2b9aaa0a4a5e97da7406abc2b0343cc33e0d7daa143b4b",
+      "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/fedora-rawhide-aarch64/11081332-uke-boot-integration/uke-esp32-cdc-0.1.0-4.fc46.aarch64.rpm"
+    }
+  ]
+}
