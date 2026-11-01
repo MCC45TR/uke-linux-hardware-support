@@ -1,12 +1,13 @@
 # Independent Rawhide packages
 
-1 November 2026: six [source integrations](consolidation/consolidation-plan.md)
-now replace 14 standalone producers while preserving 21 binary identities,
-including two optional debug RPMs. Native builds, signatures, 15 dependency
-plans and isolated config migration checks pass. Unstable has 28 active sources
-and 14 retained definitions which refuse new standalone builds; their old build
-history remains available. Device installation and hardware acceptance are
-separate. See the [validation record](consolidation/validation-results.md).
+1 November 2026: the [Control source family](consolidation/control-family-results.md)
+joins Control, Core/desktop selections and native power/display packaging while
+preserving 12 binary identities. Native builds, signed comparisons, 20 dependency
+plans and isolated config migration checks pass. Together with the earlier
+[six integrations](consolidation/consolidation-plan.md) and four original Fedora
+returns, unstable now has 23 active producers and 20 historical definitions that
+refuse another build. All 43 definitions remain visible. Device installation and
+hardware acceptance remain separate.
 
 29 October 2026: `mcc45tr/uke-linux-unstable` targets only
 `fedora-rawhide-aarch64`. At that date each component had its own source build.

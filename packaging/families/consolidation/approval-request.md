@@ -2,9 +2,9 @@
 
 1 November 2026. The requested GitHub main and `mcc45tr/uke-linux-unstable`
 source changes are applied through qualified Rawhide AArch64 builds. The
-[current GNU return receipt](gnu-return-results.md) supersedes the earlier
-three-desktop-source phase. The live snapshot records 43 definitions,
-25 active producers and 18 retained definitions. Complete source offers,
+[Control family receipt](control-family-results.md) follows the
+[four original Fedora returns](gnu-return-results.md). The live snapshot records
+43 definitions, 23 active producers and 20 retained definitions. Complete source offers,
 signed rollback packages and checksum receipts remain available.
 
 Original Fedora helpers and dependencies on the Fedora root, including GNU

@@ -1,5 +1,12 @@
 # Uke Control
 
+1 November 2026: the existing Control source now also builds the Core/desktop
+selections and native power/display children. All 12 RPMs retain their names,
+dependencies and optional selection. Native builds, 20 dependency plans and
+isolated config rollback checks pass. See the
+[source family record](../packaging/families/consolidation/control-family-results.md);
+tablet installation and hardware acceptance remain untested.
+
 1 November 2026: **2.8.0** combines the qualified terminal and microphone
 features with three independent signed channels and guarded package phase
 recovery. The compatible unstable meta selects three original Fedora desktop

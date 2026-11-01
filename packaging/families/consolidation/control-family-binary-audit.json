@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "environment": "Fedora Rawhide 46 AArch64; signed read-only RPM inspection",
+  "normalization": [
+    "cohort EVRs",
+    "generated ELF build-id paths",
+    "ELF bytes"
+  ],
+  "hardware_tested": false,
+  "packages": [
+    {
+      "name": "uke-control",
+      "old_release": "2.fc46",
+      "new_release": "4.fc46",
+      "build": 11240089,
+      "sha256": "eb2e4891aad7f2da59695f59cf10379ba73b55adc19cc86cca44e0a2c7339100",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-control-tests",
+      "old_release": "2.fc46",
+      "new_release": "4.fc46",
+      "build": 11240089,
+      "sha256": "388385fecd5225b8f4f64696b648bd2a020625562109e2e040c1c354e54f65f5",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-control-tui",
+      "old_release": "2.fc46",
+      "new_release": "4.fc46",
+      "build": 11240089,
+      "sha256": "2bd5f95fb8550ca9b0067bafe743e74d879df784a18a382f59c70c528d2c67f5",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-adaptive-display",
+      "old_release": "14.fc46",
+      "new_release": "16.fc46",
+      "build": 11240089,
+      "sha256": "06f155bfaa3576375289b46aa52944b41e02faf69493299f8695a8c437aa41d2",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-battery-observer",
+      "old_release": "3.fc46",
+      "new_release": "5.fc46",
+      "build": 11240089,
+      "sha256": "2091243b3327f412f71b29a28f34abb1076646641521bc0f94240fa945e7fd3d",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-charge-control",
+      "old_release": "3.fc46",
+      "new_release": "5.fc46",
+      "build": 11240089,
+      "sha256": "c6bb835625ee5cabd9ddbec9ecc9e9edb72fc32088408c9a55cf9ecf77a1065c",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-offline-charge",
+      "old_release": "3.fc46",
+      "new_release": "5.fc46",
+      "build": 11240089,
+      "sha256": "13a794795d4abdc81b0110702f395a080900c95d077041b9b2ed9624307d1d1f",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-core-meta",
+      "old_release": "16.fc46",
+      "new_release": "18.fc46",
+      "build": 11240089,
+      "sha256": "7a9e768dc320b94d2e1116fb047455a623ec7ef1e233c2a8380ca3f2a38cc441",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-cutefish-meta",
+      "old_release": "32.fc46",
+      "new_release": "34.fc46",
+      "build": 11240089,
+      "sha256": "df317dd7e14f58830d8f48e80af3bd86a4036fcc64fbd1e770e31feef4a9406d",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-desktop-metas",
+      "old_release": "32.fc46",
+      "new_release": "34.fc46",
+      "build": 11240089,
+      "sha256": "0bb74a743f1bbb7ae7c00b10f1ead4ff4c7ed704c6f76f88dcec937cd2fe005f",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-kde-plasma-meta",
+      "old_release": "32.fc46",
+      "new_release": "34.fc46",
+      "build": 11240089,
+      "sha256": "9b0039fbd2e9f4fd40df9b8732c0306e3c72df957bcd85458f7478a99d75d9bc",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    },
+    {
+      "name": "uke-plasma-controls",
+      "old_release": "32.fc46",
+      "new_release": "34.fc46",
+      "build": 11240089,
+      "sha256": "c6a85c23b42fe74502735d957d140b1975b98c8045fa85e4d036d7262ca6ce49",
+      "signature_verified": true,
+      "identity_preserved": true,
+      "metadata_scriptlets_files_and_non_elf_hashes_preserved": true
+    }
+  ],
+  "source_commit": "7949a25c1032161612f3e857524fa5e67f9b61ae",
+  "build": 11240089,
+  "source_rpm": "uke-control-2.8.0-4.fc46.src.rpm",
+  "abi": [
+    {
+      "library": "libuke-control-client.so.1",
+      "exported_symbols": 111,
+      "soname_preserved": true,
+      "exact_exported_symbol_names": true
+    },
+    {
+      "library": "libuke-control.so.0",
+      "exported_symbols": 211,
+      "soname_preserved": true,
+      "exact_exported_symbol_names": true
+    }
+  ],
+  "payload_executed": false
+}

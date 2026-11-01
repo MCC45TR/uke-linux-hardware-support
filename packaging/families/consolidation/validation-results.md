@@ -1,8 +1,14 @@
 # Validation results
 
-1 November 2026: [four original Fedora returns](gnu-return-results.md) passed
+1 November 2026: the [Control source family](control-family-results.md) preserves
+12 independently installable RPMs in one existing source producer. Native builds,
+signed metadata and ABI checks, 20 dependency plans with the retained kernel and
+isolated config upgrade/rollback checks pass. Routing now has 23 active and
+20 retained definitions; the complete visible listing still contains 43 rows.
+
+Earlier that day, [four original Fedora returns](gnu-return-results.md) passed
 native builds, signed package inspection, ten admission cases and 18 package
-plans. Live routing has 25 active and 18 retained definitions, including the
+plans. That routing phase had 25 active and 18 retained definitions, including the
 independent color-profile source. A native guard dependency archive contains
 zero Python files. Full tablet image and physical acceptance remain separate.
 

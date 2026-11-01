@@ -1,0 +1,241 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "verified_at": "2026-11-01T11:02:10Z",
+  "project": "mcc45tr/uke-linux-unstable",
+  "chroot": "fedora-rawhide-aarch64",
+  "state": "source-routing-applied",
+  "source_commit": "7949a25c1032161612f3e857524fa5e67f9b61ae",
+  "source_contract_run": 41298907651,
+  "candidate_build": 11240074,
+  "qualified_build": 11240089,
+  "version": "2.8.0-4.fc46",
+  "runtime_binary_count": 12,
+  "result": {
+    "definitions": 43,
+    "active": 23,
+    "retained": 20,
+    "definitions_deleted": false,
+    "all_auto_rebuild_disabled": true,
+    "complete_listing": true,
+    "empty_offset": 43
+  },
+  "source_scripts_changed": [
+    "uke-control",
+    "uke-meta-integration",
+    "uke-power-integration"
+  ],
+  "source_worker_sdk_changed": [
+    "uke-control"
+  ],
+  "unchanged_definitions": 40,
+  "other_source_fields_unchanged": true,
+  "project_settings_unchanged": true,
+  "independent_boot_pin_preserved": "53bf6c3fd27af3675a469f3bf778daed60a89184",
+  "inputs": [
+    {
+      "name": "uke-control",
+      "build_id": 11239677,
+      "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.8.0-2.fc46.src.rpm",
+      "sha256": "68e832bd37fc7d356bfb121a171d396b7e2018229d0acb096223013aed3c0405",
+      "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239677/uke-control-2.8.0-2.fc46.src.rpm"
+    },
+    {
+      "name": "uke-meta-integration",
+      "build_id": 11239896,
+      "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-meta-integration-1.0.0-8.src.rpm",
+      "sha256": "7e85db697ed6fbfb7f292d87b0516935cb9eaf2e4f1fc9ccb902d3e7e5fc7b16",
+      "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239896/uke-meta-integration-1.0.0-8.src.rpm"
+    },
+    {
+      "name": "uke-power-integration",
+      "build_id": 11239842,
+      "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-power-integration-1.0.0-2.src.rpm",
+      "sha256": "cb0a1250fe2d5c8dc321f81be234344d69887807b71f395131149f42090a56d0",
+      "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239842/uke-power-integration-1.0.0-2.src.rpm"
+    }
+  ],
+  "rollback_archive": {
+    "tag": "copr-consolidation-archive-20261101",
+    "input_srpms": 3,
+    "signed_binary_rpms": 12,
+    "checksum_file": "CONTROL-FAMILY-SHA256SUMS",
+    "new_assets": 13,
+    "total_assets_at_capture": 95,
+    "previous_assets_preserved": 82
+  },
+  "dependency_plans": {
+    "count": 20,
+    "package_dataset_build": 11240074,
+    "worker": 11240089,
+    "modes": [
+      "fresh",
+      "upgrade",
+      "mixed",
+      "rollback",
+      "weak-off"
+    ],
+    "selections": [
+      "core",
+      "kde",
+      "all-admitted-runtime",
+      "control"
+    ],
+    "retained_kernel_build": 11238013,
+    "retained_kernel_runtime_packages": 5,
+    "cutefish_provider_admitted": false,
+    "transaction_executed": false
+  },
+  "config_migration": {
+    "adaptive_display": 3,
+    "charge_control": 2,
+    "upgrade": true,
+    "rollback": true,
+    "rpmsave": true,
+    "scriptlets_executed": false
+  },
+  "retained_sources": [
+    {
+      "name": "uke-adaptive-display",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      }
+    },
+    {
+      "name": "uke-at-spi2-core",
+      "replacement": {
+        "kind": "original-Fedora",
+        "source": "at-spi2-core"
+      }
+    },
+    {
+      "name": "uke-battery-observer",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      }
+    },
+    {
+      "name": "uke-core-meta",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      }
+    },
+    {
+      "name": "uke-desktop-metas",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      }
+    },
+    {
+      "name": "uke-displayport-audio",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-audio-integration"
+      }
+    },
+    {
+      "name": "uke-front-color",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-sensor-integration"
+      }
+    },
+    {
+      "name": "uke-gstreamer1",
+      "replacement": {
+        "kind": "original-Fedora",
+        "source": "gstreamer1"
+      }
+    },
+    {
+      "name": "uke-libstdcxx-runtime",
+      "replacement": {
+        "kind": "original-Fedora",
+        "source": "libstdc++"
+      }
+    },
+    {
+      "name": "uke-libwacom",
+      "replacement": {
+        "kind": "original-Fedora",
+        "source": "libwacom"
+      }
+    },
+    {
+      "name": "uke-material-decoration",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-desktop-extras-integration"
+      }
+    },
+    {
+      "name": "uke-meta-integration",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      }
+    },
+    {
+      "name": "uke-plymonth",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-desktop-extras-integration"
+      }
+    },
+    {
+      "name": "uke-power-integration",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      }
+    },
+    {
+      "name": "uke-proximity-capture",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-sensor-integration"
+      }
+    },
+    {
+      "name": "uke-speaker-controls",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-audio-integration"
+      }
+    },
+    {
+      "name": "uke-speaker-orientation",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-audio-integration"
+      }
+    },
+    {
+      "name": "uke-ssc-fileservice",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-sensor-integration"
+      }
+    },
+    {
+      "name": "uke-vaapi-v4l2",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-video-integration"
+      }
+    },
+    {
+      "name": "uke-video-session",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-video-integration"
+      }
+    }
+  ],
+  "physical_installation": false,
+  "hardware_tested": false
+}

@@ -2,7 +2,7 @@
 
 1 November 2026. Fedora Rawhide 46, AArch64. The
 [current source snapshot](live-inventory-20261101.json) contains all 43 COPR
-definitions: 25 active and 18 retained without another build. Its empty offset
+definitions: 23 active and 20 retained without another build. Its empty offset
 43 page confirms the complete listing. Recipe hashes, exact pins and current
 main/TEST refs remain separate from installed-device evidence.
 
@@ -15,7 +15,13 @@ it was excluded from the source consolidations. The current independent
 kernel recipe uses `8983163763f708ec940b349ebb81ab43cc3725c3` and is not
 qualified by the runtime fixture's retained kernel 106.
 
-The six profiles in `../integrations.json` reuse the existing source composer.
+The [Control follow-up](control-family-results.md) combines its existing source
+with the meta-selection and native power/display integrations. It retains all
+12 binary names and removes two active producers without creating a new source
+definition. Five grouped producers remain active; the two initial integration
+profiles stay as pinned historical inputs and component maintenance recipes.
+
+The seven profiles in `../integrations.json` reuse the existing source composer.
 They take complete, checksum-pinned successful source RPMs, retain component
 versions, licenses, checks, dependencies, scriptlets and binary names, and
 increase every child Release. A source grouping creates no new runtime RPM,
@@ -26,6 +32,8 @@ increment above its pinned baseline. Do not reset it while retaining the same
 baseline versions. The sensor source retains the existing optional
 `uke-ssc-fileservice-debuginfo` and `uke-ssc-fileservice-debugsource` identities.
 
+The initial six integrations were:
+
 | Source group | Existing producers | Reduction |
 |---|---|---:|
 | uke-meta-integration | core-meta, desktop-metas | 1 |
@@ -35,7 +43,7 @@ baseline versions. The sensor source retains the existing optional
 | uke-video-integration | vaapi-v4l2, video-session | 1 |
 | uke-desktop-extras-integration | plymonth, material-decoration | 1 |
 
-The candidate active-producer count is `36 - 14 + 6 = 28`. The plan's 26
+The initial active-producer count was `36 - 14 + 6 = 28`. The plan's 26
 requires two further merges which this source review does not admit. The
 current generic firmware source explicitly says its file-level redistribution
 review remains incomplete; it cannot absorb the independently attributed
@@ -45,7 +53,8 @@ These are documented lifecycle and licensing boundaries, not completed merges.
 
 The [four Fedora returns](gnu-return-results.md) reduce the initial scope from
 28 to 24 active producers. The independently added color-profile source makes
-the live count 25. Original Fedora helpers on the Fedora root, including GNU
+the count 25 before the Control follow-up reduced it to 23. Original Fedora
+helpers on the Fedora root, including GNU
 C++ console helpers, were approved on 1 November 2026. The libaccounts-glib
 source retains a real destructor correction missing from the reviewed Fedora
 source. The original

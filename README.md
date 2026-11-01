@@ -278,7 +278,7 @@ For the current hardware matrix, use the [main project's hardware table](https:/
 - **Preserve original system components.** KDE/GNOME applications are obtained from Fedora. Native project tools use C++ and shell; original Fedora packages retain their distribution-provided helpers and dependencies, including console GNU C++ helpers. Project-owned tablet services and initramfs payloads do not ship Python.
 - **Do not infer hardware safety from software checks.** Charge limits, electrical cutoff, USB protection, thermal behavior, camera output and sleep need physical qualification on the exact device and software combination.
 
-The hardware baseline was summarized on **26 October 2026**. On **1 November 2026**, Fedora Rawhide 46 AArch64 source/package checks qualified six source integrations and four original Fedora returns. The [packaging results](packaging/families/consolidation/gnu-return-results.md) record that scope; physical device acceptance remains separate.
+The hardware baseline was summarized on **26 October 2026**. On **1 November 2026**, Fedora Rawhide 46 AArch64 source/package checks qualified the Control source family after six initial integrations and four original Fedora returns. The [packaging results](packaging/families/consolidation/control-family-results.md) record 12 retained binary identities, 23 active producers and 20 dependency plans; physical device acceptance remains separate.
 
 ## Documentation
 

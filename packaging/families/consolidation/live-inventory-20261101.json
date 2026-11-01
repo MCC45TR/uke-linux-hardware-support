@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "captured_at": "2026-11-01T09:14:31Z",
+  "captured_at": "2026-11-01T11:02:10Z",
   "owner": "mcc45tr",
   "project": "uke-linux-unstable",
   "api": "https://copr.fedorainfracloud.org/api_3/package/list?ownername=mcc45tr&projectname=uke-linux-unstable",
@@ -8,8 +8,8 @@
   "next_offset": 43,
   "next_offset_items": 0,
   "definition_count": 43,
-  "active_producers": 25,
-  "retained_definitions": 18,
+  "active_producers": 23,
+  "retained_definitions": 20,
   "items": [
     {
       "id": 3266635,
@@ -194,7 +194,7 @@
       "route": "retained-no-new-builds",
       "replacement": {
         "kind": "integration",
-        "source": "uke-power-integration"
+        "source": "uke-control"
       },
       "existed_at_baseline": true,
       "historical_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
@@ -336,7 +336,7 @@
       "route": "retained-no-new-builds",
       "replacement": {
         "kind": "integration",
-        "source": "uke-power-integration"
+        "source": "uke-control"
       },
       "existed_at_baseline": true,
       "historical_pin": "b37f97ecbbb54641d449e8808cfebeb0d0f17305",
@@ -362,13 +362,16 @@
           "xz",
           "findutils",
           "jq",
-          "make"
+          "make",
+          "systemd",
+          "dbus-daemon",
+          "util-linux"
         ],
         "repos": "",
         "resultdir": "result"
       },
-      "recipe_sha256": "fa541639d3512c9bbefc62a90587d279d431de6e43fe9bd6b5a4aa1373e45a11",
-      "source_pin": "22008576eaaa4ac14d3be22d39f1b8d1240e7556",
+      "recipe_sha256": "cc8b60f34705e24db2ee97082c442fd912df9aa9de9a7f7adc2fb53e248b0054",
+      "source_pin": "53bf6c3fd27af3675a469f3bf778daed60a89184",
       "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git",
       "source_ref": "pinned commit",
       "archive_urls": [],
@@ -389,37 +392,50 @@
       "source_worker": {
         "chroot": "fedora-rawhide-aarch64",
         "builddeps": [
-          "git",
-          "make",
-          "bash",
-          "coreutils",
-          "rpm-build",
-          "tar",
-          "gzip",
-          "xz",
-          "curl",
-          "jq",
-          "cpio",
-          "gawk",
-          "pkgconf-pkg-config",
-          "kf6-rpm-macros",
-          "systemd-rpm-macros",
-          "firewalld-filesystem",
-          "libxml2",
-          "cmake-rpm-macros",
-          "meson",
-          "gettext",
-          "python3-rpm-macros",
-          "cargo-rpm-macros",
-          "gcc-c++",
           "alsa-lib-devel",
-          "alsa-utils"
+          "alsa-utils",
+          "bash",
+          "binutils",
+          "cargo-rpm-macros",
+          "cmake-rpm-macros",
+          "coreutils",
+          "cpio",
+          "createrepo_c",
+          "curl",
+          "dnf5",
+          "dracut",
+          "firewalld-filesystem",
+          "gawk",
+          "gcc-c++",
+          "gettext",
+          "git",
+          "gnupg2",
+          "gzip",
+          "jq",
+          "kf6-rpm-macros",
+          "kmod",
+          "libdnf5-devel",
+          "libxml2",
+          "make",
+          "meson",
+          "pkgconf-pkg-config",
+          "python3-rpm-macros",
+          "redhat-rpm-config",
+          "rpm-build",
+          "rpm-devel",
+          "rpm-sign",
+          "systemd",
+          "systemd-devel",
+          "systemd-rpm-macros",
+          "systemd-udev",
+          "tar",
+          "xz"
         ],
         "repos": "",
         "resultdir": "result"
       },
-      "recipe_sha256": "6ec9e53f420a4f0edd027855938ba9495e21e79f814e1052946a64e73b8b666f",
-      "source_pin": "a51a0b9fa9ec779907c67ec97ec3654662bebc18",
+      "recipe_sha256": "6a794cc7021312039a69186497046fcf63b56645e4b808ea163845f7bcf78205",
+      "source_pin": "7949a25c1032161612f3e857524fa5e67f9b61ae",
       "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git",
       "source_ref": "pinned commit",
       "archive_urls": [],
@@ -477,7 +493,7 @@
       "route": "retained-no-new-builds",
       "replacement": {
         "kind": "integration",
-        "source": "uke-meta-integration"
+        "source": "uke-control"
       },
       "existed_at_baseline": true,
       "historical_pin": "2d9991c10deaa337678ec3855836dd0178a6c4e6",
@@ -581,7 +597,7 @@
       "route": "retained-no-new-builds",
       "replacement": {
         "kind": "integration",
-        "source": "uke-meta-integration"
+        "source": "uke-control"
       },
       "existed_at_baseline": true,
       "historical_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
@@ -1059,7 +1075,7 @@
       "recipe_sha256": "3e7928dc290851abc7c35e42ab2c7b843015bb756dabdbdc154ea0ab28af0443",
       "source_pin": null,
       "source_repository": null,
-      "source_ref": "pinned commit",
+      "source_ref": "superseded recipe; historical evidence retained",
       "archive_urls": [],
       "route": "retained-no-new-builds",
       "replacement": {
@@ -1330,19 +1346,20 @@
         "repos": "",
         "resultdir": "result"
       },
-      "recipe_sha256": "e44d926e5c2a6d48ae12cacf757ba3c7ce6503173087ddd5e671090efafa59b6",
-      "source_pin": "6b40e07b0943424a61051e71cc3e7a29cab853a9",
-      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git",
-      "source_ref": "pinned commit",
+      "recipe_sha256": "e3027ef1afe674b707c8c2c86a62f37cef78ff6ec627b58f9a4dff58abcaec8e",
+      "source_pin": null,
+      "source_repository": null,
+      "source_ref": "superseded recipe; historical evidence retained",
       "archive_urls": [],
-      "route": "active",
-      "replacement": null,
+      "route": "retained-no-new-builds",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      },
       "existed_at_baseline": false,
       "historical_pin": null,
       "historical_source_archive": null,
-      "source_repositories": [
-        "https://github.com/MCC45TR/uke-linux-hardware-support.git"
-      ]
+      "source_repositories": []
     },
     {
       "id": 3270013,
@@ -1604,19 +1621,20 @@
         "repos": "",
         "resultdir": "result"
       },
-      "recipe_sha256": "62c9fff20b2b250c1faecde015a2a8c5fdcc9943727c14a01d41e627bc774f6f",
-      "source_pin": "22008576eaaa4ac14d3be22d39f1b8d1240e7556",
-      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git",
-      "source_ref": "pinned commit",
+      "recipe_sha256": "e3027ef1afe674b707c8c2c86a62f37cef78ff6ec627b58f9a4dff58abcaec8e",
+      "source_pin": null,
+      "source_repository": null,
+      "source_ref": "superseded recipe; historical evidence retained",
       "archive_urls": [],
-      "route": "active",
-      "replacement": null,
+      "route": "retained-no-new-builds",
+      "replacement": {
+        "kind": "integration",
+        "source": "uke-control"
+      },
       "existed_at_baseline": false,
       "historical_pin": null,
       "historical_source_archive": null,
-      "source_repositories": [
-        "https://github.com/MCC45TR/uke-linux-hardware-support.git"
-      ]
+      "source_repositories": []
     },
     {
       "id": 3266615,
@@ -2090,7 +2108,7 @@
       },
       {
         "name": "main",
-        "sha": "c1b022880d8ff8a48fed830a43a05ab047aeae65"
+        "sha": "cbecc441059ebffa97497e736edd2e0b0b0546a5"
       }
     ],
     "kernel": [
@@ -2106,7 +2124,7 @@
     "builder": [
       {
         "name": "TEST",
-        "sha": "56564a02ad062c0f302a86eb364703aeb5ee7d9b"
+        "sha": "246688d8753ca420acb0cbec52447970fd92297b"
       },
       {
         "name": "main",
@@ -2133,11 +2151,11 @@
       "status": "ahead"
     },
     "control": {
-      "ahead_by": 18,
-      "base": "a51a0b9fa9ec779907c67ec97ec3654662bebc18",
-      "behind_by": 0,
-      "merge_base": "a51a0b9fa9ec779907c67ec97ec3654662bebc18",
-      "status": "ahead"
+      "ahead_by": 0,
+      "base": "7949a25c1032161612f3e857524fa5e67f9b61ae",
+      "behind_by": 5,
+      "merge_base": "cbecc441059ebffa97497e736edd2e0b0b0546a5",
+      "status": "behind"
     }
   }
 }
