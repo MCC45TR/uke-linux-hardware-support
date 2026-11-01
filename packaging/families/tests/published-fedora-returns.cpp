@@ -36,11 +36,15 @@ int main(int argc,char** argv) {
     for(const auto& pkg:installed)if(fedora_return(pkg.get_name(),false))++expected;
     if(!reverse)assert(p.returns.size()==expected);
     auto tx=resolve(base,p,selected,false);size_t inbound=0,outbound=0;
+    std::set<std::string> gnu_inbound;
+    for(const auto& item:tx.get_transaction_packages())if(item.get_package().get_name()=="uke-libstdcxx"&&libdnf5::transaction::transaction_item_action_is_inbound(item.get_action()))
+        gnu_inbound.insert(item.get_package().get_nevra());
     for(const auto& item:tx.get_transaction_packages()) {
         const auto pkg=item.get_package();const auto action=item.get_action();
         if(libdnf5::transaction::transaction_item_action_is_outbound(action)) {
             ++outbound;assert(!kernel_package(pkg.get_name())&&!private_package(pkg.get_name()));
-            if(pkg.get_name()=="uke-libstdcxx")assert(action==Action::REINSTALL);
+            // RPM-only seeds lack DNF origin history; the planner may re-admit the identical signed RPM.
+            if(pkg.get_name()=="uke-libstdcxx")assert(gnu_inbound.contains(pkg.get_nevra()));
         }
         if(libdnf5::transaction::transaction_item_action_is_inbound(action)) {
             ++inbound;assert(!kernel_package(pkg.get_name()));if(!reverse)assert(!fedora_return(pkg.get_name(),false));
