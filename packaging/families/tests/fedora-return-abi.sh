@@ -41,7 +41,7 @@ while IFS= read -r pair; do
         awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{exit bad}' "$stage/$side.members"
         rpm -qp --qf '[%{FILENAMES}\t%{FILECOLORS}\t%{FILEMODES:perms}\t%{FILELINKTOS}\n]' "$file" > "$stage/$side.files"
     done
-    dsos=0; interfaces=0
+    dsos=0; interfaces=0; datafiles=0
     while IFS=$'\t' read -r path color mode link; do
         if [[ $color == 2 && $path == /usr/lib64/*.so* && -z $link ]]; then
             for side in fork original; do
@@ -55,16 +55,16 @@ while IFS= read -r pair; do
             cmp "$stage/fork.soname" "$stage/original.soname"
             assert_superset "$stage/fork.symbols" "$stage/original.symbols" || { printf 'Missing ABI: %s %s\n' "$name" "$path" >&2; cat "$stage/missing" >&2; exit 1; }
             ((dsos+=1))
-        elif [[ $path == /usr/include/* || $path == /usr/lib64/pkgconfig/* || $path == /usr/share/gir-1.0/* || $path == /usr/lib64/girepository-1.0/* ]]; then
+        elif [[ $path == /usr/include/* || $path == /usr/lib64/pkgconfig/* || $path == /usr/share/gir-1.0/* || $path == /usr/lib64/girepository-1.0/* || $path == /usr/share/libwacom/* ]]; then
             [[ -z $link && $mode == -* ]] || continue
             member=$(awk -v p="${path#/}" '{f=$0;sub(/^[.]\//,"",f);if(f==p)print}' "$stage/fork.members")
             [[ -n $member ]] || continue
             cpio -i --to-stdout --quiet "$member" < "$stage/fork.cpio" > "$stage/fork.interface"
             cpio -i --to-stdout --quiet "$member" < "$stage/original.cpio" > "$stage/original.interface"
             cmp "$stage/fork.interface" "$stage/original.interface" || { printf 'Changed interface: %s %s\n' "$name" "$path" >&2; exit 1; }
-            ((interfaces+=1))
+            if [[ $path == /usr/share/libwacom/* ]]; then ((datafiles+=1)); else ((interfaces+=1)); fi
         fi
     done < "$stage/fork.files"
     checked=false;((dsos==0)) || checked=true
-    printf 'UKE_FEDORA_RETURN_STATIC package=%s dsos=%s interfaces=%s signatures=true abi_floor_checked=%s payload_executed=false admitted_for_replacement=false\n' "$name" "$dsos" "$interfaces" "$checked"
+    printf 'UKE_FEDORA_RETURN_STATIC package=%s dsos=%s interfaces=%s data_files=%s signatures=true abi_floor_checked=%s payload_executed=false admitted_for_replacement=false\n' "$name" "$dsos" "$interfaces" "$datafiles" "$checked"
 done < <(jq -c '.pairs[]' "$manifest")
