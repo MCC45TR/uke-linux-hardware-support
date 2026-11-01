@@ -1,0 +1,2 @@
+# Request the temporary passive observer when the role-switch device appears.
+ACTION=="add", SUBSYSTEM=="usb_role", TAG+="systemd", ENV{SYSTEMD_WANTS}+="uke-shutdown-trace.service"

@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.22
+Version: 1.8.23
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -186,6 +186,7 @@ install -Dm644 src/units/30-uke-plasmalogin-ready.conf %{buildroot}%{_unitdir}/p
 install -Dm644 src/units/30-uke-power-profiles-home.conf %{buildroot}%{_unitdir}/power-profiles-daemon.service.d/30-uke-state-home.conf
 install -Dm755 src/shutdown-trace.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-shutdown-trace
 install -Dm644 src/units/uke-shutdown-trace.service %{buildroot}%{_unitdir}/uke-shutdown-trace.service
+install -Dm644 src/profiles/73-uke-shutdown-trace.rules %{buildroot}%{_udevrulesdir}/73-uke-shutdown-trace.rules
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-native-power-profile-ready %{buildroot}%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 install -Dm644 src/units/uke-native-power-profile-ready.service %{buildroot}%{_unitdir}/uke-native-power-profile-ready.service
@@ -249,7 +250,7 @@ fi
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %posttrans
-# Temporary diagnosis for this build, without boot enablement or a reboot.
+# Keep current-session tracing without retriggering existing role devices.
 if [ -d /run/systemd/system ]; then
     systemctl --no-block start uke-shutdown-trace.service || :
 fi
@@ -329,6 +330,7 @@ fi
 %{_unitdir}/power-profiles-daemon.service.d/30-uke-state-home.conf
 %{_libexecdir}/senemos-uke/uke-shutdown-trace
 %{_unitdir}/uke-shutdown-trace.service
+%{_udevrulesdir}/73-uke-shutdown-trace.rules
 %{_presetdir}/80-uke-boot.preset
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service

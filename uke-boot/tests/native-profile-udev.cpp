@@ -18,6 +18,9 @@ int main(int argc, char **argv) {
     g_autofree char *foreign = umockdev_testbed_add_devicev(testbed,
         "platform", "unrelated-platform", nullptr, nullptr, nullptr);
     umockdev_testbed_set_attribute_link(testbed, foreign, "driver", "../../bus/platform/drivers/uke-platform-profile");
+    g_autofree char *role = umockdev_testbed_add_devicev(testbed,
+        "usb_role", "uke-role-switch", nullptr, nullptr, nullptr);
+    assert(role);
     const pid_t child = fork();
     assert(child >= 0);
     if (!child) { execl("/bin/bash", "bash", argv[1], static_cast<char *>(nullptr)); _exit(127); }
