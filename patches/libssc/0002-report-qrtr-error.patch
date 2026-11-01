@@ -1,0 +1,13 @@
+Subject: [PATCH] Report the underlying QRTR bus initialization error
+
+--- a/src/libssc-client.c
++++ b/src/libssc-client.c
+@@ -355,7 +355,7 @@
+ 
+ 	priv->bus = qrtr_bus_new_finish (res, &error);
+ 	if (error) {
+-		g_warning ("QRTR bus unavailable. Make sure access to AF_QIPCRTR address family is granted.");
++		g_warning ("QRTR bus unavailable: %s", error->message);
+ 		g_task_return_error (task, error);
+ 		g_clear_object (&task);
+ 		return;

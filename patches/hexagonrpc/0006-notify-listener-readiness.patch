@@ -1,0 +1,26 @@
+From: Uke Linux project <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Notify service readiness after registering the FastRPC listener
+
+Start the sensor PD only after the root listener has registered, and publish
+SensorProxy only after the sensor listener has registered. Exec completion
+does not establish either protocol boundary.
+
+--- a/hexagonrpcd/rpcd.c
++++ b/hexagonrpcd/rpcd.c
+@@ -43,6 +43,7 @@
+ #include "listener.h"
+ #include "localctl.h"
+ #include "rpcd_builder.h"
++#include <systemd/sd-daemon.h>
+ 
+ static int register_fastrpc_listener(int fd)
+ {
+@@ -219,6 +220,8 @@
+ 	if (ret)
+ 		goto err;
+ 
++	sd_notify(0, "READY=1");
++
+ 	run_fastrpc_listener(fd, n_ifaces, ifaces);
+ 
+ 	fastrpc_localctl_deinit(ifaces[REMOTECTL]);
