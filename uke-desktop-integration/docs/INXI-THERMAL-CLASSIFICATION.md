@@ -31,3 +31,12 @@ with release 3 and the classifier patch. The original name, license, dependencie
 documentation and Fedora self-update restriction remain. The binary RPM runs the
 thirteen classifier cases in `%check`. This candidate is restricted to the test
 repository; it does not change Fedora's normal source or update policy.
+
+COPR 11239935 produced signed source and noarch RPMs. On POCO Pad X1 with
+Fedora Rawhide AArch64 and Linux 7.3.1-115, inxi 3.3.41-3.fc46 was installed
+through a transaction that changed only inxi. Its dependencies match the prior
+Fedora package; signature, payload and installed-file verification pass. Both
+the graphical-user and root reports omit the thermal consumers while retaining
+the real display and network devices. The thirteen classifier cases pass on
+the actual binary payload. Future Fedora versions need the fix carried forward
+until it is accepted upstream.
