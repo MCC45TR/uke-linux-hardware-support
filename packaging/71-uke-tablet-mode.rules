@@ -1,0 +1,12 @@
+# Rear cover position does not establish whether a keyboard is attached.
+ACTION=="remove", GOTO="uke_tablet_mode_end"
+SUBSYSTEM!="input", GOTO="uke_tablet_mode_end"
+KERNEL!="event*", GOTO="uke_tablet_mode_end"
+PROGRAM!="/usr/bin/grep -Fzqx xiaomi,uke /sys/firmware/devicetree/base/compatible", GOTO="uke_tablet_mode_end"
+
+# Keep the raw switch readable without overriding KWin's attachment heuristic.
+# shortcut: key-only docks need an attachment driver; KWin detects touchpad docks.
+ATTRS{name}=="Uke Hall Tablet Mode", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+# A mouse alone does not turn a detachable tablet into a laptop.
+ENV{ID_INPUT_MOUSE}=="1", ENV{ID_INPUT_TOUCHPAD}!="1", TAG+="kwin-ignore-tablet-mode"
+LABEL="uke_tablet_mode_end"

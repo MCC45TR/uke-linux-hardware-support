@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MIT
+[Face-1001][Appearance]
+chartFace=org.kde.ksysguard.linechart
+showTitle=true
+title=GPU activity
+
+[Face-1001][Sensors]
+highPrioritySensorIds=["adreno/gpu0/usage"]
+
+[Face-1002][Appearance]
+chartFace=org.kde.ksysguard.linechart
+showTitle=true
+title=GPU frequency
+
+[Face-1002][Sensors]
+highPrioritySensorIds=["adreno/gpu0/coreFrequency"]
+
+[page]
+Title=Adreno GPU
+icon=video-display
+loadType=onstart
+margin=2
+version=1
+
+[page][row-0]
+heightMode=balanced
+isTitle=false
+name=row-0
+
+[page][row-0][column-0]
+name=column-0
+showBackground=true
+
+[page][row-0][column-0][section-0]
+face=Face-1001
+isSeparator=false
+name=section-0
+
+[page][row-0][column-1]
+name=column-1
+showBackground=true
+
+[page][row-0][column-1][section-0]
+face=Face-1002
+isSeparator=false
+name=section-0
