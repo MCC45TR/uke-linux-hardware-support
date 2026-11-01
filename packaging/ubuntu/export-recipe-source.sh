@@ -12,7 +12,10 @@ version=$(cd "$stage"; dpkg-parsechangelog -S Version)
 upstream=${version%-*}
 mkdir -p "$destination"
 cp -a "$stage/." "$destination/"
-[[ ! -e $destination/.git && ! -e $destination/.pc ]]
+[[ ! -e $destination/.git ]]
+# dpkg-source creates quilt bookkeeping even when this route has no patches.
+# It is extraction state, never part of the common source or recipe branch.
+rm -rf -- "$destination/.pc"
 mv "$destination/debian" "$destination.debian"
 git -C "$destination" init -q --initial-branch="launchpad/$package"
 git -C "$destination" config user.name MCC45TR

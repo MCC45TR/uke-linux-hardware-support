@@ -44,6 +44,7 @@ build_one() {
  for deb in "$out"/*.deb; do
   [[ $(dpkg-deb -f "$deb" Architecture) == arm64 || $(dpkg-deb -f "$deb" Architecture) == all ]]
   dpkg-deb -c "$deb" >> "/evidence/$pkg-payload.txt"
+  bash packaging/ubuntu/inspect-native-deb.sh "$deb" >> "/evidence/$pkg-payload-audit.txt"
  done
 }
 if [[ $package == iio-sensor-proxy ]]; then
@@ -66,7 +67,7 @@ if [[ $package == uke-speaker-firmware ]]; then
  [[ ! -e $preset ]]
  # Official git-build-recipe is an unavoidable Launchpad recipe host tool.
  # Its upstream Python dependencies remain confined to this server container.
- apt-get install -y git-build-recipe devscripts pristine-tar quilt
+ apt-get install -y --no-install-recommends git-build-recipe devscripts pristine-tar quilt
  dpkg-query -W git-build-recipe > /evidence/recipe-tool-version.tsv
  dpkg-source -x /work/uke-speaker-firmware/*.dsc /work/recipe-pristine
  bash packaging/ubuntu/export-recipe-source.sh /work/recipe-pristine /work/recipe-source
