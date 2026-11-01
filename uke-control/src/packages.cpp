@@ -298,18 +298,52 @@ void verify_repositories(const std::set<std::string>& ids,const std::string& sel
         if(id==prefix+project(selected))need(c.get_pkg_gpgcheck_option().get_value()&&c.get_sslverify_option().get_value(),"Repository admission policy changed");
     }
 }
-struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope;bool fallback=false;std::string kernel_nevra,krel;};
+struct FedoraReturn {const char *fork,*original,*source,*version,*last_fork_release;};
+// Admit only the reviewed source families; account, graphics and hardware forks stay independent.
+const std::array<FedoraReturn,13> fedora_returns{{
+    {"uke-atk","atk","at-spi2-core","2.62.1","17.fc46"},
+    {"uke-atk-devel","atk-devel","at-spi2-core","2.62.1","17.fc46"},
+    {"uke-at-spi2-atk","at-spi2-atk","at-spi2-core","2.62.1","17.fc46"},
+    {"uke-at-spi2-atk-devel","at-spi2-atk-devel","at-spi2-core","2.62.1","17.fc46"},
+    {"uke-at-spi2-core","at-spi2-core","at-spi2-core","2.62.1","17.fc46"},
+    {"uke-at-spi2-core-devel","at-spi2-core-devel","at-spi2-core","2.62.1","17.fc46"},
+    {"uke-gstreamer1","gstreamer1","gstreamer1","1.28.8","17.fc46"},
+    {"uke-gstreamer1-devel","gstreamer1-devel","gstreamer1","1.28.8","17.fc46"},
+    {"uke-libwacom","libwacom","libwacom","2.20.0","18.fc46"},
+    {"uke-libwacom-data","libwacom-data","libwacom","2.20.0","18.fc46"},
+    {"uke-libwacom-devel","libwacom-devel","libwacom","2.20.0","18.fc46"},
+    {"uke-libwacom-utils","libwacom-utils","libwacom","2.20.0","18.fc46"},
+    {"uke-libstdcxx","libstdc++","gcc","16.2.1","19.fc46"}
+}};
+const FedoraReturn* fedora_return(const std::string& name) {
+    for(const auto& entry:fedora_returns)if(name==entry.fork)return &entry;
+    return nullptr;
+}
+const FedoraReturn* fedora_original(const std::string& name) {
+    for(const auto& entry:fedora_returns)if(name==entry.original)return &entry;
+    return nullptr;
+}
+bool original_fedora(const Package& pkg,const FedoraReturn& entry,const std::string& arch) {
+    const auto repo=pkg.get_repo_id();
+    return (repo=="fedora"||repo=="updates"||repo=="rawhide")&&pkg.get_name()==entry.original&&pkg.get_arch()==arch&&
+        pkg.get_vendor()=="Fedora Project"&&pkg.get_source_name()==entry.source&&pkg.get_epoch()=="0"&&
+        fedora_package_release(pkg.get_release(),".fc46")&&rpmvercmp(pkg.get_version().c_str(),entry.version)>=0;
+}
+struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope,returns;bool fallback=false,originals=false;std::string kernel_nevra,krel;};
 Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids,const std::string& dist={}) {
     Plan p;const auto repo=prefix+project(selected);
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();
     libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(repo);
+    for(const auto& pkg:available)if(selected=="unstable"&&pkg.get_name()=="uke-core-meta")
+        for(const auto& dep:pkg.get_provides())if(std::string_view(dep.get_name())=="uke-core-meta(fedora-returns-v1)"&&std::string_view(dep.get_version())=="1")p.originals=true;
     std::map<std::string,std::vector<Package>> candidates;
     for(const auto& pkg:available) {
+        if(p.originals&&(fedora_return(pkg.get_name())||fedora_original(pkg.get_name())))continue;
         if(!dist.empty())need(fedora_package_release(pkg.get_release(),dist),"Foreign-release candidate: "+pkg.get_nevra());
         candidates[key(pkg)].push_back(pkg);
     }
     std::map<std::string,std::vector<Package>> replacements;
-    for(const auto& pkg:available)if(!protected_package(pkg)) {
+    for(const auto& pkg:available)if(!protected_package(pkg)&&!(p.originals&&(fedora_return(pkg.get_name())||fedora_original(pkg.get_name())))) {
         std::set<std::string> provides;
         for(const auto& dep:pkg.get_provides())provides.insert(dep.get_name());
         for(const auto& dep:pkg.get_obsoletes()) {
@@ -324,6 +358,17 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         if(kernel_package(pkg.get_name())){if(pkg.get_name()==kernel||pkg.get_name()==kernel+"-core")has_kernel=true;continue;}
         if(protected_package(pkg))continue;
         const auto k=key(pkg);
+        if(const auto entry=fedora_return(pkg.get_name());p.originals&&entry) {
+            need(pkg.get_epoch()=="0"&&pkg.get_version()==entry->version&&fedora_package_release(pkg.get_release(),".fc46")&&
+                rpmvercmp(pkg.get_release().c_str(),entry->last_fork_release)<=0,"Unreviewed installed fork: "+pkg.get_nevra());
+            need(++counts[k]==1,"Duplicate installed fork requires repair: "+k);
+            libdnf5::rpm::PackageQuery originals(base);originals.filter_available();originals.filter_name(entry->original);originals.filter_arch(pkg.get_arch());
+            std::vector<Package> choices;for(const auto& candidate:originals)if(original_fedora(candidate,*entry,pkg.get_arch()))choices.push_back(candidate);
+            need(!choices.empty(),"An admitted original Fedora replacement is unavailable for "+pkg.get_nevra()+"; nothing was removed");
+            const auto target=*std::max_element(choices.begin(),choices.end(),older);
+            p.scope.insert(k);p.scope.insert(key(target));p.targets.insert_or_assign(key(target),target);
+            p.returns.insert(pkg.get_nevra());p.renames.emplace(pkg.get_nevra(),target.get_nevra());continue;
+        }
         if(pkg.get_name()=="fastfetch") {
             // The project fork is withdrawn; return only this package to Fedora.
             libdnf5::rpm::PackageQuery fedora(base);fedora.filter_available();fedora.filter_repo_id(std::vector<std::string>{"fedora","updates","rawhide"});fedora.filter_name("fastfetch");fedora.filter_arch(pkg.get_arch());
@@ -381,12 +426,14 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     libdnf5::rpm::PackageQuery available(base);available.filter_available();
     for(const auto& pkg:available) {
         const auto k=key(pkg);auto chosen=p.targets.find(k);
+        const auto original=fedora_original(pkg.get_name());
         // Factory calibration belongs to the device, including when a public repo advertises its name.
-        if(private_package(pkg.get_name())||
+        if((p.originals&&(fedora_return(pkg.get_name())||(original&&!original_fedora(pkg,*original,pkg.get_arch()))))||private_package(pkg.get_name())||
            (kernel_package(pkg.get_name())&&(chosen==p.targets.end()||chosen->second.get_id()!=pkg.get_id()))||
            (p.scope.contains(k)&&pkg.get_repo_id()!=(chosen==p.targets.end()?prefix+project(selected):chosen->second.get_repo_id())))excluded.add(pkg);
     }
     base.get_rpm_package_sack()->add_user_excludes(excluded);
+    for(const auto& pkg:installed)if(p.returns.contains(pkg.get_nevra()))goal.add_rpm_remove(pkg.get_nevra());
     for(const auto& [k,target]:p.targets) {
         bool same=false,foreign=false;
         for(const auto& old:installed)if(key(old)==k&&old.get_nevra()==target.get_nevra()){same=true;foreign=old.get_from_repo_id()!=target.get_repo_id();}
@@ -409,8 +456,8 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     std::set<std::string> renamed_outbound;
     for(const auto& item:tx.get_transaction_packages()) {
         const auto pkg=item.get_package();const auto action=item.get_action();
-        need(action!=Action::REMOVE,"Transaction would remove "+pkg.get_nevra()+"; refusing");
-        if(action==Action::REPLACED&&p.renames.contains(pkg.get_nevra())) {
+        need(action!=Action::REMOVE||p.returns.contains(pkg.get_nevra()),"Transaction would remove "+pkg.get_nevra()+"; refusing");
+        if((action==Action::REPLACED||action==Action::REMOVE)&&p.renames.contains(pkg.get_nevra())) {
             renamed_outbound.insert(pkg.get_nevra());
         }
         if(protected_package(pkg))need(!libdnf5::transaction::transaction_item_action_is_outbound(action)&&action!=Action::REINSTALL,"Transaction would replace a protected package: "+pkg.get_nevra());
