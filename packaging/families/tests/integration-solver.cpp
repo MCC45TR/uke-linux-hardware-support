@@ -20,6 +20,7 @@ int main(int argc,char** argv) try {
     need(root.string().starts_with(fixture.string()+"/roots/"),"Require a disposable fixture root");
     const std::string mode=argv[3],selection=argv[4];
     const bool reverse=mode=="rollback",weak=mode!="weak-off";
+    const bool retained_kernel=fs::is_directory(fixture/"kernel");
     libdnf5::Base base;auto& config=base.get_config();
     config.get_installroot_option().set(root.string());
     config.get_use_host_config_option().set(false);config.get_plugins_option().set(false);
@@ -45,6 +46,7 @@ int main(int argc,char** argv) try {
     std::map<std::string,libdnf5::rpm::Package> wanted;
     std::ifstream names(fixture/"runtime-names");need(bool(names),"Missing runtime package inventory");
     for(std::string name;std::getline(names,name);){
+        if(selection=="control" && name!="uke-control")continue;
         if(selection=="core" && name!="uke-core-meta")continue;
         if(selection=="kde" && name!="uke-core-meta" && name!="uke-kde-plasma-meta")continue;
         if(selection=="all" && name=="uke-cutefish-meta")continue;
@@ -66,6 +68,8 @@ int main(int argc,char** argv) try {
     for(const auto& pkg:installed)retained.insert(pkg.get_nevra());
     for(const auto& item:tx.get_transaction_packages()){
         const auto pkg=item.get_package();const auto action=item.get_action();
+        if(retained_kernel && pkg.get_name().starts_with("senemos-uke-linux-kernel"))
+            need(!libdnf5::transaction::transaction_item_action_is_inbound(action)&&!libdnf5::transaction::transaction_item_action_is_outbound(action),"Kernel cohort changed in a source-family plan");
         need(action!=libdnf5::transaction::TransactionItemAction::REMOVE,"Unexpected removal: "+pkg.get_nevra());
         if(libdnf5::transaction::transaction_item_action_is_inbound(action)){
             inbound.insert(pkg.get_nevra());++count;

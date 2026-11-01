@@ -13,6 +13,24 @@ curl --fail --location --silent --show-error --max-time 60 "$archive/copr-pubkey
 (cd "$fixture"; grep '  copr-pubkey.gpg$' SHA256SUMS | sha256sum -c -)
 rpmkeys --dbpath "$fixture/keys" --import "$fixture/copr-pubkey.gpg"
 rpmkeys --dbpath "$fixture/keys" --list | grep -qi '^2204a661ea630a5303500085538797e72a3e4eca '
+fetch() {
+    local id=$1 group=$2 repo=$3 base="https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/$1-$2/"
+    curl -fLsS --max-time 60 "${base}results.json" -o "$fixture/results.json"
+    while IFS= read -r file;do
+        [[ $file =~ ^[A-Za-z0-9+_.~^-]+[.]rpm$ ]]
+        curl -fLsS --max-time 240 "$base$file" -o "$fixture/$repo/$file"
+        rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/$repo/$file"
+    done < <(jq -r '.packages[]|select(.arch!="src" and (.name|test("-debuginfo$|-debugsource$")|not))|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
+}
+if [[ -n ${UKE_COPR_CONTROL_FAMILY_BUILD:-} ]];then
+    [[ $UKE_COPR_CONTROL_FAMILY_BUILD =~ ^[0-9]+$ ]]
+    fetch 11239677 uke-control baseline
+    fetch 11239896 uke-meta-integration baseline
+    fetch 11239842 uke-power-integration baseline
+    mkdir "$fixture/kernel"
+    fetch 11238013 senemos-uke-linux-kernel-mainline kernel
+    [[ $(find "$fixture/kernel" -maxdepth 1 -name '*.rpm' | wc -l) == 5 ]]
+else
 while read -r hash file; do
     file=${file#./}
     [[ $file == *.rpm && $file != *.src.rpm ]] || continue
@@ -21,22 +39,19 @@ while read -r hash file; do
     printf '%s  %s\n' "$hash" "$fixture/baseline/${file#./}" | sha256sum -c -
     rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/baseline/${file#./}"
 done < "$fixture/SHA256SUMS"
+fi
 while IFS=$'\t' read -r id group; do
-    base="https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/$id-$group/"
-    curl --fail --location --silent --show-error --max-time 60 "${base}results.json" -o "$fixture/results.json"
-    while IFS= read -r file; do
-        [[ $file =~ ^[A-Za-z0-9+_.~^-]+[.]rpm$ ]]
-        curl --fail --location --silent --show-error --max-time 120 "$base$file" -o "$fixture/candidate/$file"
-        rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/candidate/$file"
-    done < <(jq -r '.packages[]|select(.arch!="src")|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
-done < <(jq -r '.builds[]|[.id,.name]|@tsv' "$root/packaging/families/consolidation/builds.json")
+    fetch "$id" "$group" candidate
+done < <(if [[ -n ${UKE_COPR_CONTROL_FAMILY_BUILD:-} ]];then printf '%s\tuke-control\n' "$UKE_COPR_CONTROL_FAMILY_BUILD";else jq -r '.builds[]|[.id,.name]|@tsv' "$root/packaging/families/consolidation/builds.json";fi)
 rpm -qp --qf '%{NAME}\n' "$fixture/baseline/"*.rpm | LC_ALL=C sort > "$fixture/old-names"
 rpm -qp --qf '%{NAME}\n' "$fixture/candidate/"*.rpm | LC_ALL=C sort > "$fixture/new-names"
 cmp "$fixture/old-names" "$fixture/new-names"
 grep -Ev -- '-(debuginfo|debugsource)$' "$fixture/new-names" > "$fixture/runtime-names"
 for repo in baseline candidate; do createrepo_c --quiet "$fixture/$repo"; done
 c++ -std=c++20 -O2 -Wall -Wextra -Werror $(pkg-config --cflags libdnf5) "$root/packaging/families/tests/integration-solver.cpp" -o "$fixture/solver" $(pkg-config --libs libdnf5)
-for selection in core kde all; do
+selections=(core kde all)
+[[ -z ${UKE_COPR_CONTROL_FAMILY_BUILD:-} ]] || selections+=(control)
+for selection in "${selections[@]}"; do
     for mode in fresh upgrade mixed rollback weak-off; do
         target="$fixture/roots/$selection-$mode"
         mkdir -p "$target/usr/lib/sysimage/rpm"
@@ -54,6 +69,7 @@ for selection in core kde all; do
                 done < "$fixture/runtime-names";;
             *) seed=();;
         esac
+        [[ -z ${UKE_COPR_CONTROL_FAMILY_BUILD:-} ]] || seed+=("$fixture/kernel/"*.rpm)
         # The separate Cutefish repository is not admitted by this Rawhide fixture.
         for i in "${!seed[@]}"; do [[ ${seed[$i]##*/} != uke-cutefish-meta-* ]] || unset 'seed[i]'; done
         # RPM 6 runs its built-in sysusers hook separately from --noscripts.
