@@ -59,6 +59,10 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-16
+- Qualify original Fedora GNU migration from the current desktop and skipped cohorts.
+- Retain native early-boot policy and compatible boot and power requirements.
+
 * Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-13
 - Use the original Fedora GNU C++ runtime with compatible boot and power consumers.
 - Preserve project Python exclusions and the separate initramfs boundary.

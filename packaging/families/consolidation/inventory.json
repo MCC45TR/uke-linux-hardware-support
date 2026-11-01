@@ -2328,11 +2328,11 @@
   "intended_active_count_after_qualified_routing": 28,
   "routing_completed": true,
   "current_definition_count": 43,
-  "current_active_sources": 26,
-  "retained_superseded_sources": 17,
+  "current_active_sources": 25,
+  "retained_superseded_sources": 18,
   "historical_builds_deleted": false,
   "historical_definition_deletion_completed": false,
   "baseline_scope": "Initial 36-source audit; items and refs are historical evidence",
   "current_snapshot": "live-inventory-20261101.json",
-  "current_captured_at": "2026-11-01T07:31:52Z"
+  "current_captured_at": "2026-11-01T09:14:31Z"
 }

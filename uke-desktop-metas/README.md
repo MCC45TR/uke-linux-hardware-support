@@ -108,12 +108,11 @@ sudo firewall-cmd --reload
 The override survives package updates. Existing KDE Connect pairing records and
 per-user autostart choices remain authoritative. Source/package validation and
 actual discovery on the tablet are recorded separately.
-The core console selection keeps
-its strict no-Python policy. Since 14 October 2026, unmodified original Fedora
-desktop RPMs may retain their Fedora-provided Python dependencies on the Fedora
-root. This exception does not cover project-owned code, recovery, initramfs or
-installers. The Plasma meta is independent of the strict console meta so these
-policies do not conflict during dependency resolution.
+1 November 2026. Unmodified original Fedora RPMs retain their provided helpers
+and dependencies on the Fedora root, including GNU C++ helpers in console
+profiles. Project components use C++ or shell. Recovery, initramfs and installers
+remain Python-free. The Plasma selection remains independent of the Core
+hardware selection.
 
 The application list was compared with the Nabu KDE manifest and image profile at
 [`03a5bdf09ce206410e7f7f1f97871110e66ffa82`](https://github.com/MCC45TR/Nabu-Fedora-Rawhide-Builder/tree/03a5bdf09ce206410e7f7f1f97871110e66ffa82).

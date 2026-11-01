@@ -1,11 +1,15 @@
 # Original Fedora desktop package returns
 
+This records the earlier three-desktop-source phase. The
+[GNU return result](gnu-return-results.md) contains current routing and the
+subsequent console runtime qualification; the original receipt stays intact.
+
 1 November 2026. Fedora Rawhide 46 AArch64. Control `2.8.0-2.fc46`
 ([11239677](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11239677/))
 and meta integration `1.0.0-4`
 ([11239731](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11239731/))
-passed native COPR checks. The unstable source recipes now use those qualified
-inputs. Three desktop forks stop producing new builds; their existing signed
+passed native COPR checks. Those were the qualified inputs for this phase.
+Three desktop forks stopped producing new builds; their existing signed
 packages, source offers and build history remain available.
 
 | Retained source definition | Original Fedora source | Mapped runtime/development RPMs |
@@ -18,7 +22,8 @@ The [receipt](fedora-return-results.json) records exact source commits,
 signatures, binary hashes and mappings. The static comparison covers 13
 original/fork pairs: 13 DSOs, 219 interface files and 836 libwacom data files.
 Package hooks and configuration, systemd and D-Bus ownership/content match.
-The additional GNU pair remains an audit input and is not admitted for return.
+At this stage the GNU pair was an audit input; its later qualification is
+recorded separately in the GNU result.
 
 Ten source-worker cases exercise candidate admission and refusal. A further
 [15 published-cohort plans](fedora-return-solver-results.txt) cover Core, KDE
@@ -55,7 +60,7 @@ all 24 added GitHub asset digests were checked. Unknown RPM outcomes retain
 their operation records and cannot be replayed blindly. The guarded updater
 continues to own automatic policy and the selected userdata boot profile.
 
-The live inventory has 43 definitions: 26 active producers and 17 retained
+This phase's inventory had 43 definitions: 26 active producers and 17 retained
 definitions that refuse another build. The initial 36-source scope now has
 25 active producers; the separately added `uke-o82-color-profile` accounts for
 the remaining live producer. Five script fields changed in this step. Only
@@ -67,11 +72,10 @@ The [dated live inventory](live-inventory-20261101.json) identifies every
 definition, recipe hash and independently pinned source; the baseline remains
 available in inventory.json and package-map.csv.
 
-The console GNU runtime stays on its existing capability and producer.
-`uke-core-meta(fedora-cxx-runtime-v1)` is not provided: the console helper
-policy and boot/power callers remain separate gates. Original Fedora desktop
-helpers use the existing Fedora-root exception; project services, startup,
-initramfs, recovery and installers gain no Python. `libaccounts-glib` retains
+The console helper policy and boot/power caller gates remained open in this
+phase. The GNU result supersedes that boundary with explicit policy approval
+and caller qualification. Project Python and Python in initramfs, recovery or
+installers remain excluded. `libaccounts-glib` retains
 the upstream destructor correction missing from the reviewed Fedora source.
 Firmware licensing, independent recovery packaging and physical kernel/DT
 acceptance retain the limits recorded in the consolidation plan.

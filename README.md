@@ -275,10 +275,10 @@ For the current hardware matrix, use the [main project's hardware table](https:/
 - **Keep kernel and userspace matched.** Kernel Image, modules, DTBs and boot profile must belong to the same reviewed build. A DNF transaction alone does not prove that the new boot image is active.
 - **Protect recovery paths.** Automatic boot writes are disabled by default in the documented updater. Review the [kernel-update requirements](uke-boot/docs/KERNEL-UPDATES.md) and retain a verified rollback before any explicit update trial.
 - **Keep device data private.** Factory identifiers, touch references and calibration do not belong in public source archives or generic images. The firmware component records acquisition and licensing boundaries; hash verification is not a redistribution license.
-- **Preserve original system components.** KDE/GNOME applications are obtained from Fedora. Native project tools use C++ and shell; original Fedora desktop packages may retain their upstream dependencies. Project-owned tablet services and initramfs payloads do not ship Python.
+- **Preserve original system components.** KDE/GNOME applications are obtained from Fedora. Native project tools use C++ and shell; original Fedora packages retain their distribution-provided helpers and dependencies, including console GNU C++ helpers. Project-owned tablet services and initramfs payloads do not ship Python.
 - **Do not infer hardware safety from software checks.** Charge limits, electrical cutoff, USB protection, thermal behavior, camera output and sleep need physical qualification on the exact device and software combination.
 
-The repository's hardware and integration baseline was last summarized in the previous README on **26 October 2026**. Source-family tracking changed on **28 October 2026**. Use per-component records and the main project's hardware table for later, device-specific results; these changes alone do not establish new hardware acceptance.
+The hardware baseline was summarized on **26 October 2026**. On **1 November 2026**, Fedora Rawhide 46 AArch64 source/package checks qualified six source integrations and four original Fedora returns. The [packaging results](packaging/families/consolidation/gnu-return-results.md) record that scope; physical device acceptance remains separate.
 
 ## Documentation
 

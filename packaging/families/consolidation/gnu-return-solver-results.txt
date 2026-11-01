@@ -1,0 +1,29 @@
+UKE_FEDORA_RETURN_SOLVER mode=fresh real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=forward real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=mixed real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=weak-off real_signed_pairs=13 weak_deps=0 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=update real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=reverse real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=missing real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=unreviewed real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=legacy-caller real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_FEDORA_RETURN_SOLVER mode=desktop-only real_signed_pairs=13 weak_deps=1 rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=fresh selection=core returns=0 inbound=666 outbound=0 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=upgrade selection=core returns=13 inbound=700 outbound=25 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=mixed selection=core returns=7 inbound=664 outbound=19 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=reverse selection=core returns=0 inbound=698 outbound=25 console_gnu_original=0 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=weak-off selection=core returns=13 inbound=522 outbound=25 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=desktop-upgrade selection=core returns=1 inbound=654 outbound=13 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=fresh selection=kde returns=0 inbound=1218 outbound=0 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=upgrade selection=kde returns=13 inbound=1245 outbound=26 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=mixed selection=kde returns=7 inbound=1209 outbound=20 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=reverse selection=kde returns=0 inbound=1243 outbound=26 console_gnu_original=0 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=weak-off selection=kde returns=13 inbound=986 outbound=26 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=desktop-upgrade selection=kde returns=1 inbound=1201 outbound=14 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=fresh selection=all returns=0 inbound=1219 outbound=0 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=upgrade selection=all returns=13 inbound=1247 outbound=28 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=mixed selection=all returns=7 inbound=1211 outbound=22 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=reverse selection=all returns=0 inbound=1245 outbound=28 console_gnu_original=0 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=weak-off selection=all returns=13 inbound=988 outbound=28 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=desktop-upgrade selection=all returns=1 inbound=1203 outbound=16 console_gnu_original=1 boot_power_callers=true rpm_transaction_executed=false hardware_tested=false
+UKE_GNU_INITRAMFS original_fedora_libstdcxx=true native_guard_dependency_fixture=true python_files=0 kernel_included=false full_tablet_image=false booted=false

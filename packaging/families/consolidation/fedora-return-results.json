@@ -186,5 +186,7 @@
     "libdnf5-devel",
     "rpm-devel",
     "systemd-devel"
-  ]
+  ],
+  "scope": "Earlier three-desktop-source return phase",
+  "superseded_by": "gnu-return-results.json"
 }

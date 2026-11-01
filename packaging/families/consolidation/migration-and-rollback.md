@@ -1,9 +1,11 @@
 # Migration and rollback
 
-The later [desktop package transition](fedora-return-results.md) explicitly
-maps 12 Uke names to original Fedora packages. It requires the compatible
-Control manager first and retains that manager for reverse plans. The source
-ownership-only procedure below remains the record for the six integrations.
+The current [Fedora package transition](gnu-return-results.md) explicitly maps
+13 Uke names to original Fedora packages. It requires compatible Control 2.8,
+boot and power metadata and retains that manager for reverse plans. Eighteen
+solver plans include the immediate desktop-return cohort and earlier skipped,
+mixed and reverse baselines. The source ownership-only procedure below remains
+the record for the six integrations.
 
 1 November 2026. This change moves source ownership while preserving binary
 package names. It does not authorize a tablet transaction, boot write, reboot,

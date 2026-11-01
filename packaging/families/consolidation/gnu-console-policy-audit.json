@@ -10,10 +10,17 @@
   "python_helper_files": 15,
   "python_helpers_marked_doc": 0,
   "payload_executed": false,
-  "abi_qualified": false,
-  "admitted_for_replacement": false,
-  "policy_boundary": "uke-desktop-metas/src/profile.json: desktop_dependency_exception.applies_to_core_console=false",
+  "abi_qualified": true,
+  "admitted_for_replacement": true,
+  "policy_boundary": "Original Fedora helpers permitted on the Fedora root, including console profiles; project and early boot payloads remain native or shell",
   "current_provider": "uke-libstdcxx",
   "separate_gate": "uke-core-meta(fedora-cxx-runtime-v1)",
-  "gate_provided": false
+  "gate_provided": true,
+  "policy_approval": {
+    "date": "2026-11-01",
+    "original_fedora_root_helpers": true,
+    "project_python": false,
+    "python_in_initramfs_recovery_or_installers": false
+  },
+  "qualification_receipt": "gnu-return-results.json"
 }

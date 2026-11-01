@@ -4,10 +4,10 @@
 snapshots must be compared with the pins in inventory.json; main alone does
 not describe the live unstable binaries.
 
-The later [desktop return result](fedora-return-results.md) closes the
-at-spi2-core, GStreamer and libwacom package gates. The table preserves their
-reviewed fork differences; the GNU console gate and the real corrections in
-the other sources remain open.
+The later [Fedora return result](gnu-return-results.md) closes the accessibility,
+GStreamer, libwacom and GNU package gates. The table preserves their historical
+fork differences; real corrections in the other sources and physical device
+acceptance remain separate.
 
 | Source | Retained difference | Removal gate |
 |---|---|---|
@@ -62,12 +62,10 @@ The GNU policy follow-up also inspected the signed original
 `libstdc++-16.2.1-3.fc46.aarch64.rpm`; its SHA256 and key are recorded in
 [gnu-console-policy-audit.json](gnu-console-policy-audit.json). It still owns
 15 Python helper files, none marked as documentation, so omitting documentation
-does not omit those files. This inspection does not qualify its ABI or admit
-it into the console. Fedora's [GCC package list](https://packages.fedoraproject.org/pkgs/gcc/)
-lists the runtime, development, documentation and static subpackages. The
-separate [gcc-gdb-plugin](https://packages.fedoraproject.org/pkgs/gcc/gcc-gdb-plugin/)
-implements C expression evaluation; it is not the runtime's Python helper
-split. The existing Uke runtime therefore stays active while the console
-exception is unresolved. Its source manifest builds the GNU runtime, so
-maintaining it also retains compiler-source, symbol-floor and security-update
-work. A future signed Fedora split can be reviewed without changing the policy.
+does not omit those files. The 1 November 2026 policy approval retains the
+original Fedora helpers on the Fedora root, including console profiles. The
+signed ABI, caller, forward/reverse and initramfs dependency checks are recorded
+in the GNU receipt. The Uke GNU producer now refuses another build; complete
+source and signed rollback packages remain archived. Original Fedora security
+updates no longer require this project to rebuild the GNU runtime. Project
+Python and Python in recovery, initramfs or installers remain excluded.

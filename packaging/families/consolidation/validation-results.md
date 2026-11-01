@@ -1,10 +1,10 @@
 # Validation results
 
-1 November 2026: [three original Fedora desktop returns](fedora-return-results.md)
-passed native builds, signed package inspection and 15 published-cohort
-dependency plans. Live routing has 26 active and 17 retained definitions,
-including the independently added color-profile source. The GNU console
-return and tablet acceptance remain open.
+1 November 2026: [four original Fedora returns](gnu-return-results.md) passed
+native builds, signed package inspection, ten admission cases and 18 package
+plans. Live routing has 25 active and 18 retained definitions, including the
+independent color-profile source. A native guard dependency archive contains
+zero Python files. Full tablet image and physical acceptance remain separate.
 
 The completion audit refreshed all 43 definitions and verified an empty
 offset 43 page. [Live recipe pins and refs](live-inventory-20261101.json) and
@@ -68,6 +68,6 @@ from admitted solver selections, not counted as a passing desktop installation.
 GNOME has no separate selection RPM in this source snapshot. The core graph
 still includes the existing adaptive-display KDE dependencies: fresh core
 resolves 671 incoming packages normally and 485 with weak dependencies off.
-This source consolidation changes neither that dependency policy nor the fork
-count. Conditional Fedora replacements remain subject to the report's policy,
-upstream-fix and ABI gates; their removal is not claimed.
+That initial consolidation changed neither the dependency policy nor the fork
+count. The subsequent desktop and GNU returns are recorded separately above;
+the libaccounts-glib correction and physical hardware gates remain open.
