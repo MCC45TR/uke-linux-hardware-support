@@ -19,7 +19,8 @@ inline void image(const std::filesystem::path& path) {
         const auto at=index*128;for(unsigned i=0;i<16;++i){if(!reserved)table[at+i]=char(i+11);table[at+16+i]=char(i+31+index);}
         put(table,at+32,first,8);put(table,at+40,end,8);if(reserved)put(table,at+48,1ULL<<60,8);for(size_t i=0;i<label.size();++i)table[at+56+2*i]=label[i];
     };
-    for(unsigned i=0;i<29;++i)entry(i,(i+1)*mib/sector,(i+2)*mib/sector-1,"oem_"+std::to_string(i));
+    for(unsigned i=0;i<29;++i)entry(i,(i+1)*mib/sector,(i+2)*mib/sector-1,i==9?"countrycode_a":i==10?"countrycode_b":"oem_"+std::to_string(i));
+    table[9*128]^=1;table[10*128]^=2;put(table,9*128+48,1ULL<<50,8);
     entry(29,64*mib/sector,250*gib/sector-1,"userdata");entry(30,32*mib/sector,33*mib/sector-1,"factory");entry(31,last,last,"last_parti",true);
     write(fd.get(),table,2*sector);write(fd.get(),table,backup*sector);
     for(const auto lba:std::array<std::uint64_t,2>{1,sectors-1}) {

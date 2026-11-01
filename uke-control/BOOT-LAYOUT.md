@@ -30,7 +30,13 @@ The helper verifies its complete twelve-member snapshot, sealed plan and termina
 state, unit/LUN/disk identity, healthy original GPT and byte-exact current GPT.
 It retains the checkpoint and creates `original-gpt/` plus `ownership.json` for
 the wizard. It does not infer ownership from labels, waive an unknown partition,
-write the target disk, format a filesystem or prepare a reboot. Keep the original
+write the target disk, format a filesystem or prepare a reboot. A later reciprocal
+type-GUID exchange and active-bit-50 flip is admitted only for both records of
+the existing `countrycode` or `vbmeta_system` OEM pair, with every other entry
+byte unchanged. The unmodified historical GPT is retained in
+`recovery-original-gpt/`; the wizard's baseline keeps those verified current OEM
+records and the original userdata extent. Unknown changes remain blocked.
+Keep the original
 recovery archive independently. Self-checksums bind bytes, not an OEM signature;
 the supplied checkpoint must come from trusted retained creation evidence.
 

@@ -59,8 +59,6 @@ int main(int argc,char** argv) {
         auto erased=propose(system,disk,r,work/"original","fixture",{},ev,false,true);assert(erased.document["confirmations_required"]==2&&erased.document["root_partition_removed"]==true&&erased.document["route"]=="shutdown");assert(propose(system,disk,r,work/"original","fixture",{},ev,false,false).document["route"]=="blocked");
         ure::Fd output(open(path.c_str(),O_RDWR|O_CLOEXEC));for(const auto& range:p.after)write(output.get(),range.bytes,range.offset);assert(!fsync(output.get()));disk=ure::storage_image(path,4096);
         StorageTarget imported_disk{ure::Fd(dup(disk.descriptor.get())),disk.identity};
-        imported_disk.identity["unit_identity_available"]=true;imported_disk.identity["unit_identity_sha256"]=ure::sha256("fixture-unit");imported_disk.identity["lun_address"]=0;
-        imported_disk.identity["disk_guid"]=ure::gpt_inspect(disk.descriptor.get(),4096)["disk_guid"];
         Value legacy;legacy["schema"]=1;legacy["operation"]="dualboot.setup";legacy["firmware_profile"]="fixture";legacy["target_identity"]=imported_disk.identity;
         legacy["gpt"]["target_identity"]=imported_disk.identity;legacy["gpt"]["before"]=p.document["before"];legacy["gpt"]["after"]=p.document["after"];
         legacy["gpt"]["plan_sha256"]=seal(legacy["gpt"],"plan_sha256");legacy["plan_sha256"]=seal(legacy,"plan_sha256");
@@ -72,10 +70,29 @@ int main(int argc,char** argv) {
         for(const auto& range:p.after)member("after-"+range.name+".bin",range.bytes);
         auto invalid=checkpoint;invalid["phase"]="PREPARED";refuse([&]{import_recovery_checkpoint(system,imported_disk,invalid,work/"invalid-import");});
         invalid=checkpoint;invalid["files"][2]["sha256"]=ure::sha256("changed");refuse([&]{import_recovery_checkpoint(system,imported_disk,invalid,work/"invalid-import");});
-        auto foreign=imported_disk.identity;imported_disk.identity["unit_identity_sha256"]=ure::sha256("another-unit");refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"invalid-import");});imported_disk.identity=foreign;
+        auto foreign=imported_disk.identity;imported_disk.identity["bytes"]=Json::UInt64(1);refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"invalid-import");});imported_disk.identity=foreign;
         const auto imported=import_recovery_checkpoint(system,imported_disk,checkpoint,work/"imported");assert(imported["completed"]==true&&imported["owned_rows"].size()==3);
         refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"imported");});
         for(const auto& range:p.after)assert(ure::storage_read(disk.descriptor.get(),range.offset,range.bytes.size())==range.bytes);
+        auto switched=p.after;
+        auto ranges_crc=[](std::vector<StorageRange>& ranges) {
+            auto find=[&](const char* name)->std::string&{for(auto& range:ranges)if(range.name==name)return range.bytes;throw std::runtime_error("Missing fixture metadata");};
+            auto number=[](const std::string& bytes,size_t at){unsigned value=0;for(unsigned i=0;i<4;++i)value|=unsigned(static_cast<unsigned char>(bytes[at+i]))<<(8*i);return value;};
+            for(const auto& [h,t]:{std::pair{"primary_header","primary_table"},std::pair{"backup_header","backup_table"}}){auto& header=find(h);const auto& table=find(t);put(header,88,crc(std::string_view(table).substr(0,size_t(number(header,80))*number(header,84))),4);put(header,16,0,4);put(header,16,crc(std::string_view(header).substr(0,number(header,12))),4);}
+        };
+        auto apply_fixture=[&](const std::vector<StorageRange>& ranges){for(const auto& range:ranges)write(output.get(),range.bytes,range.offset);assert(!fsync(output.get()));imported_disk=ure::storage_image(path,4096);};
+        for(auto& range:switched)if(range.name=="primary_table"||range.name=="backup_table") {
+            auto& table=range.bytes;const auto a=table.substr(9*128,16),b=table.substr(10*128,16);table.replace(9*128,16,b);table.replace(10*128,16,a);table[9*128+54]^=4;table[10*128+54]^=4;
+        }
+        ranges_crc(switched);apply_fixture(switched);
+        const auto slot_receipt=import_recovery_checkpoint(system,imported_disk,checkpoint,work/"imported-slots");assert(slot_receipt["preserved_oem_slot_transitions"].size()==1);
+        assert(ure::gpt_backup_verify(work/"imported-slots/recovery-original-gpt")["verified"]==true);
+        auto restored=propose(system,imported_disk,request(true),work/"imported-slots/original-gpt","fixture",slot_receipt,ev,true,true);assert(restored.document["new_rows"].size()==1);
+        auto unexpected=switched;for(auto& range:unexpected)if(range.name=="primary_table"||range.name=="backup_table")range.bytes[0]^=1;
+        ranges_crc(unexpected);apply_fixture(unexpected);refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"invalid-oem-import");});
+        auto broken_pair=switched;for(auto& range:broken_pair)if(range.name=="primary_table"||range.name=="backup_table")range.bytes[9*128+54]^=8;
+        ranges_crc(broken_pair);apply_fixture(broken_pair);refuse([&]{import_recovery_checkpoint(system,imported_disk,checkpoint,work/"invalid-slot-import");});
+        apply_fixture(p.after);disk=ure::storage_image(path,4096);
         auto proof=receipt(p.document,disk.identity);require_ownership(ure::multiboot_inspect(disk,work/"original","fixture",&system),proof,disk.identity);
         auto broken=proof;broken["owned_rows"][0]["end_lba"]=Json::UInt64(1);broken["sha256"]=seal(broken);refuse([&]{require_ownership(ure::multiboot_inspect(disk,work/"original","fixture",&system),broken,disk.identity);});
         auto single=request(true);ev.partition_bytes=p.document["new_rows"][0]["bytes"].asUInt64();ev.filesystem_bytes=ev.partition_bytes;ev.root_index=p.document["new_rows"][3]["index"].asUInt();ev.mounted.clear();ev.mounted.insert(ev.root_index);ev.userdata_mount="";
