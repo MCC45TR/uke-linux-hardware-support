@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+override_dh_auto_configure:
+override_dh_auto_build:
+override_dh_auto_clean:
+override_dh_auto_install:
+override_dh_auto_test:
+	cd release && sha256sum -c PACKAGE-SHA256SUMS
+	jq -e '.device=="uke" and .validation.physical_device==false' release/ARTIFACT-MANIFEST.json
+override_dh_install:
+	install -d debian/uke-orangefox-recovery/usr/share/senemos/recovery/uke/12.0~preview3.20261010
+	cp -a release/. debian/uke-orangefox-recovery/usr/share/senemos/recovery/uke/12.0~preview3.20261010/
+override_dh_strip:
+override_dh_strip_nondeterminism:
+	# Published recovery ZIP bytes and their signatures must remain unchanged.
+override_dh_shlibdeps:
+override_dh_compress:
+	dh_compress -X/usr/share/senemos/recovery/
