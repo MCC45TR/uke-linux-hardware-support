@@ -106,14 +106,18 @@ printf '[Unit]\nWants=systemd-logind.service\n' > "$order/multi-user.target.d/tr
 printf '[Unit]\nDefaultDependencies=no\nWants=uke-shutdown-trace.service multi-user.target user.slice systemd-logind.service\n' > "$order/trace-order.target"
 # Load the real ordering with a harmless command; verification runs no service.
 sed 's|^ExecStart=.*|ExecStart=/usr/bin/true|' src/units/uke-shutdown-trace.service > "$order/uke-shutdown-trace.service"
-SYSTEMD_UNIT_PATH="$order:/usr/lib/systemd/system" systemd-analyze --man=no --generators=no \
-    verify "$order/trace-order.target" > "$fixture/order-good.log" 2>&1
-! grep -Eiq 'ordering cycle|Job .*deleted' "$fixture/order-good.log"
+if ! SYSTEMD_UNIT_PATH="$order:/usr/lib/systemd/system" systemd-analyze --man=no --generators=no \
+    verify "$order/trace-order.target" > "$fixture/order-good.log" 2>&1; then
+    cat "$fixture/order-good.log" >&2; exit 1
+fi
+if grep -Eiq 'ordering cycle|Job .*deleted' "$fixture/order-good.log"; then
+    cat "$fixture/order-good.log" >&2; exit 1
+fi
 grep -Eq '^Before=(.* )?user[.]slice( |$)' "$order/uke-shutdown-trace.service"
 sed -i 's/^After=.*/& multi-user.target/' "$order/uke-shutdown-trace.service"
 status=0
 SYSTEMD_UNIT_PATH="$order:/usr/lib/systemd/system" systemd-analyze --man=no --generators=no \
     verify "$order/trace-order.target" > "$fixture/order-bad.log" 2>&1 || status=$?
 # systemd 262 can return zero after deleting a job to break an ordering cycle.
-grep -Eiq 'ordering cycle' "$fixture/order-bad.log"
+grep -Eiq 'ordering cycle' "$fixture/order-bad.log" || { cat "$fixture/order-bad.log" >&2; exit 1; }
 printf 'Actual trace ordering admits the user/logind/target graph and rejects the late-target cycle; offline verification only (bad-control status %s)\n' "$status"
