@@ -1,0 +1,9 @@
+# Retain the kernel scheduler for Qualcomm UFS LUNs sharing a tag set.
+ACTION=="add", SUBSYSTEM=="block", DRIVERS=="ufshcd-qcom", GOTO="uke_block_scheduler_end"
+
+# Fedora systemd-udev 262.1 policy for other disk devices.
+ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", \
+  KERNEL=="mmcblk*[0-9]|msblk*[0-9]|mspblk*[0-9]|sd*[!0-9]|sr*", \
+  ATTR{queue/scheduler}="bfq"
+
+LABEL="uke_block_scheduler_end"

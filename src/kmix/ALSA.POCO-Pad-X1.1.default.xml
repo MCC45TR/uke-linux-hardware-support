@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soundcard driver="ALSA" version="0:0" name="POCO-Pad-X1" type="*" generation="3">
+    <profile id="ALSA.POCO-Pad-X1.1.default" name="Four speakers"/>
+    <product vendor="Xiaomi" name="POCO-Pad-X1"/>
+    <control id="^TopLeft_Digital:0$" name="Top left" subcontrols="pvolume" show="simple"/>
+    <control id="^TopRight_Digital:0$" name="Top right" subcontrols="pvolume" show="simple"/>
+    <control id="^BottomLeft_Digital:0$" name="Bottom left" subcontrols="pvolume" show="simple"/>
+    <control id="^BottomRight_Digital:0$" name="Bottom right" subcontrols="pvolume" show="simple"/>
+    <control id="^.*$" subcontrols="*" show="never"/>
+</soundcard>

@@ -1,0 +1,9 @@
+# Original PowerDevil 6.8 schema; short presses toggle the display only.
+[AC][SuspendAndShutdown]
+PowerButtonAction=128
+
+[Battery][SuspendAndShutdown]
+PowerButtonAction=128
+
+[LowBattery][SuspendAndShutdown]
+PowerButtonAction=128
