@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+# Refresh an already active registry only; never activate sensors on install.
+if [ "$1" = triggered ] && [ -d /run/systemd/system ] &&
+   [ -r /sys/firmware/devicetree/base/compatible ] &&
+   grep -zFxq xiaomi,uke /sys/firmware/devicetree/base/compatible &&
+   systemctl -q is-active uke-ssc-root.service; then
+    systemctl daemon-reload
+    deb-systemd-invoke try-restart uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service iio-sensor-proxy.service
+fi
+#DEBHELPER#

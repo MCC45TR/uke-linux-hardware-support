@@ -1,0 +1,55 @@
+From: Uke Linux project <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Reject symlinks in DSP mapped-file operations
+
+Keep mapped reads and creations inside the configured disposable tree. The
+virtual path resolver already handles dot segments; it must not follow host
+symlinks at the mapped root or any child. A failed root open owns no backend
+context and must not call the backend close operation on uninitialized data.
+
+Upstream write-backend comparison: linux-msm/hexagonrpc
+510c87e5c89026ee2bd2034776fc4d15994f353d.
+
+--- a/hexagonrpcd/hexagonfs.c
++++ b/hexagonrpcd/hexagonfs.c
+@@ -125,8 +125,10 @@
+ 	fd->ops = root->ops;
+ 
+ 	ret = root->ops->from_dirent(root->u.ptr, true, &fd->data);
+-	if (ret)
+-		goto err;
++	if (ret) {
++		free(fd);
++		return ret;
++	}
+ 
+ 	ret = allocate_file_number(fds, fd);
+ 	if (ret < 0)
+--- a/hexagonrpcd/hexagonfs_mapped.c
++++ b/hexagonrpcd/hexagonfs_mapped.c
+@@ -52,7 +52,7 @@
+ {
+ 	struct mapped_ctx *ctx;
+ 	const char *name = dirent_data;
+-	int flags = O_RDONLY;
++	int flags = O_RDONLY | O_CLOEXEC | O_NOFOLLOW;
+ 	int ret;
+ 
+ 	ctx = malloc(sizeof(struct mapped_ctx));
+@@ -87,7 +87,7 @@
+ 	struct mapped_ctx *dir_ctx = dir->data;
+ 	struct hexagonfs_fd *fd;
+ 	struct mapped_ctx *ctx;
+-	int flags = O_RDONLY;
++	int flags = O_RDONLY | O_CLOEXEC | O_NOFOLLOW;
+ 	int ret;
+ 
+ 	ctx = malloc(sizeof(struct mapped_ctx));
+@@ -162,7 +162,7 @@
+ 	}
+ 
+ 	ctx->fd = openat(dir_ctx->fd, name,
+-			 O_RDWR | O_CREAT | O_CLOEXEC | (flags & (O_TRUNC | O_APPEND)),
++			 O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW | (flags & (O_TRUNC | O_APPEND)),
+ 			 0644);
+ 	if (ctx->fd == -1) {
+ 		ret = -errno;

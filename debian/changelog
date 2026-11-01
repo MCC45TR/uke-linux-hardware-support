@@ -1,0 +1,12 @@
+uke-ssc-fileservice (2026.09.21-0ubuntu1~tenacious2) tenacious; urgency=medium
+
+  * Preserve release 26 verified OEM references and packaged fallback behavior
+    from the exact shared source RPM, with its matching cache test source.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 12:00:00 +0000
+
+uke-ssc-fileservice (2026.09.21-0ubuntu1~tenacious1) tenacious; urgency=medium
+
+  * Preserve shared reviewed source and Uke patch series in Debian packaging.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 13:00:00 +0000
