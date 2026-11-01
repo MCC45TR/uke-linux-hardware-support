@@ -10,7 +10,7 @@ touch "$fixture/empty.conf"
 archive=https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101
 curl --fail --location --silent --show-error --max-time 120 "$archive/SHA256SUMS" -o "$fixture/SHA256SUMS"
 curl --fail --location --silent --show-error --max-time 60 "$archive/copr-pubkey.gpg" -o "$fixture/copr-pubkey.gpg"
-(cd "$fixture"; rg '  copr-pubkey.gpg$' SHA256SUMS | sha256sum -c -)
+(cd "$fixture"; grep '  copr-pubkey.gpg$' SHA256SUMS | sha256sum -c -)
 rpmkeys --dbpath "$fixture/keys" --import "$fixture/copr-pubkey.gpg"
 rpmkeys --dbpath "$fixture/keys" --list | grep -qi '^2204a661ea630a5303500085538797e72a3e4eca '
 while read -r hash file; do
@@ -33,7 +33,7 @@ done < <(jq -r '.builds[]|[.id,.name]|@tsv' "$root/packaging/families/consolidat
 rpm -qp --qf '%{NAME}\n' "$fixture/baseline/"*.rpm | LC_ALL=C sort > "$fixture/old-names"
 rpm -qp --qf '%{NAME}\n' "$fixture/candidate/"*.rpm | LC_ALL=C sort > "$fixture/new-names"
 cmp "$fixture/old-names" "$fixture/new-names"
-rg -v -- '-(debuginfo|debugsource)$' "$fixture/new-names" > "$fixture/runtime-names"
+grep -Ev -- '-(debuginfo|debugsource)$' "$fixture/new-names" > "$fixture/runtime-names"
 for repo in baseline candidate; do createrepo_c --quiet "$fixture/$repo"; done
 c++ -std=c++20 -O2 -Wall -Wextra -Werror $(pkg-config --cflags libdnf5) "$root/packaging/families/tests/integration-solver.cpp" -o "$fixture/solver" $(pkg-config --libs libdnf5)
 for selection in core kde all; do
