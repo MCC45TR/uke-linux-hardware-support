@@ -49,3 +49,18 @@ jobs:
           path: evidence/
           retention-days: 7
           if-no-files-found: warn
+      - name: Qualify dpkg provenance with stock ARM64 files only
+        run: |
+          mkdir -p host-evidence
+          set -o pipefail
+          docker run --rm --cap-drop=ALL --cap-add=CHOWN --cap-add=DAC_OVERRIDE --cap-add=FOWNER --cap-add=SETGID --cap-add=SETUID --cap-add=SETFCAP --cap-add=SYS_CHROOT \
+            -v "$GITHUB_WORKSPACE:/repo:ro" -v "$GITHUB_WORKSPACE/host-evidence:/evidence" \
+            uke-test-userspace:local bash /repo/packaging/ubuntu/qualify-boot-provenance-host.sh 2>&1 | tee host-evidence/host-provenance.log
+      - name: Retain host-only provenance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tenacious-arm64-stock-boot-provenance
+          path: host-evidence/
+          retention-days: 7
+          if-no-files-found: warn
