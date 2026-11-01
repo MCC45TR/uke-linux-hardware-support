@@ -167,3 +167,16 @@ uses explicit simulation in both configuration and arguments. It downloaded
 and installed nothing, and did not run hooks. This proves metadata solvability,
 not archive authentication, native compilation or runtime closure. Retain
 dependency-first libssc publication rather than weakening SensorProxy's gate.
+
+### Native server build admission, 1 November 2026
+
+The prepared source set was approved for clean server ARM64 compilation,
+including upstream helpers and disposable kernel module-signing keys. The
+private upload key remains on the tablet. GitHub's native ubuntu-24.04-arm
+runner is suitable; its host release is distinct from the build root.
+The official ubuntu:devel ARM64 manifest at digest 73b76549166d2d32444ccbd2b79b34381a1b3e25fd150cdd7fb12383fe7ebdc2
+still reports Stonking 26.10, and ubuntu:tenacious is absent. Bootstrap
+Tenacious from the signed ports archive instead and assert version plus
+architecture inside the disposable container. Retain logs and package outputs,
+never entire build trees that may contain transient module private keys.
+Compilation and hardware qualification remain separate evidence.

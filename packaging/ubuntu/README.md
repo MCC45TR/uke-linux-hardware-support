@@ -11,7 +11,13 @@ available. Parent confirmed accepted PPA terms and public ARM64-only
 `mcs45tr/uke-linux-unstable` and `mcs45tr/uke-linux-stable`, both empty. Stable
 remains gated. Parent confirmed OpenPGP enrollment on 1 November; the private
 key remains on the user's tablet. Local signing and uploads await package
-qualification. Native upstream build approval is still pending.
+qualification. Native server builds of the prepared source set were approved
+on 1 November, including build helpers and the disposable kernel module key.
+The dispatchable `Ubuntu Tenacious native ARM64 packages` workflow bootstraps
+a clean ARM64 root from the signed official Tenacious archive. Builds run as
+an unprivileged user; artifacts include source, DEBs, build logs and buildinfo.
+SensorProxy first builds and installs the exact patched libssc in its own
+disposable server environment. No tablet execution is involved.
 No key, credential, upload or Ubuntu image was created here.
 
 ## Implemented source routes
@@ -135,6 +141,6 @@ These are implementation gaps, not signing blockers.
 [Boot cohort checks](BOOT-COHORT.md) reject mismatched artifact identities but
 are not a finished initramfs or kernel port. Real kernel/DT/module validation,
 initramfs-tools integration, upgrade/rollback and device acceptance remain.
-Native ARM64 builds need action-specific execution approval under the current
-task constraint, followed by install/upgrade/remove and transitive dependency
-checks. Source signing and Launchpad upload follow only after those gates.
+Native ARM64 server builds are authorized. Successful compilation must still
+be followed by install/upgrade/remove and transitive dependency checks.
+Source signing and Launchpad publication follow only after those gates.
