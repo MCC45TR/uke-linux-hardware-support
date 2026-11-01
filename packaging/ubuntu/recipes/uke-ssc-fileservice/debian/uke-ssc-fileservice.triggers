@@ -1,0 +1,3 @@
+interest-noawait /usr/lib/firmware/qcom/uke/sensors
+interest-noawait /usr/share/uke-sensors
+interest-noawait /usr/libexec/uke-ssc-cache

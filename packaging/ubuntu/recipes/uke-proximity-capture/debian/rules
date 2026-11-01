@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+include /usr/share/dpkg/buildflags.mk
+%:
+	dh $@
+override_dh_auto_configure:
+override_dh_auto_test:
+	# No upstream execution is authorized by source preparation.
+override_dh_auto_clean:
+	rm -rf build
+override_dh_auto_install:
+# Device-event activation remains in the shipped units and udev rules.
+# Do not start hardware services during package configuration.
+override_dh_installsystemd:
+	dh_installsystemd --no-start
+override_dh_auto_build:
+	mkdir -p build
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/ssc-proximity-capture.cpp $(LDFLAGS) -o build/uke-proximity-capture
+# dh_fixperms runs first; keep the diagnostic root-only as in the RPM.
+override_dh_fixperms:
+	dh_fixperms
+	chmod 0750 debian/uke-proximity-capture/usr/sbin/uke-proximity-capture

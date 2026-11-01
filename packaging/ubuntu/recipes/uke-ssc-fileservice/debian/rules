@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+include /usr/share/dpkg/buildflags.mk
+%:
+	dh $@
+override_dh_auto_configure:
+override_dh_auto_build:
+	mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -std=gnu11 -Wall -Wextra -Werror -Wno-unused-parameter -I include libhexagonrpc/*.c libhexagonrpc/interface/*.c hexagonrpcd/*.c hexagonrpcd/interface/*.c -lsystemd -o build/uke-hexagonrpcd
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror uke/src/ssc-cache.cpp $(LDFLAGS) -o build/uke-ssc-cache
+override_dh_auto_test:
+	# Upstream/native execution needs separate approval; source checks are external.
+override_dh_auto_clean:
+	rm -rf build
+override_dh_auto_install:
+override_dh_install:
+	dh_install
+	install -Dm644 uke/packaging/systemd/iio-ssc-order.conf debian/uke-ssc-fileservice/usr/lib/systemd/system/iio-sensor-proxy.service.d/uke-ssc.conf
+override_dh_installsystemd:
+	dh_installsystemd --no-start

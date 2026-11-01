@@ -1,0 +1,39 @@
+Source: libssc
+Section: libs
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), meson (>= 1.4), ninja-build, pkgconf, libglib2.0-dev, libqmi-glib-dev (>= 1.33.4), libprotobuf-c-dev, protobuf-c-compiler, protobuf-compiler, gobject-introspection, libgirepository1.0-dev, gir1.2-qmi-1.0
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://codeberg.org/DylanVanAssche/libssc
+
+Package: libssc2
+Architecture: arm64
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}, libqmi-proxy
+Provides: uke-libssc-dual-light-abi-1
+Description: Qualcomm Sensor Core library with shared Uke fixes
+ Retains bounded proximity and front/rear light patches used by Fedora.
+ Python mock servers are excluded from runtime packages.
+
+Package: libssc-bin
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, libssc2 (= ${binary:Version})
+Description: native SSC diagnostic client
+ Command-line client from the same shared source as libssc2.
+
+Package: libssc-dev
+Section: libdevel
+Architecture: arm64
+Multi-Arch: same
+Depends: ${misc:Depends}, libssc2 (= ${binary:Version}), gir1.2-ssc-2 (= ${binary:Version}), libglib2.0-dev, libqmi-glib-dev, libprotobuf-c-dev
+Description: development files for the Uke-patched SSC library
+ Shared-source headers, linker interface and pkg-config metadata.
+
+Package: gir1.2-ssc-2
+Section: introspection
+Architecture: arm64
+Multi-Arch: same
+Depends: ${misc:Depends}, ${gir:Depends}, libssc2 (= ${binary:Version})
+Description: introspection data for the SSC library
+ Runtime introspection typelib; no Python mock service is included.

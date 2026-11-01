@@ -1,0 +1,2 @@
+build/uke-install-profile usr/libexec/senemos-uke
+src/units/uke-install-profile.service usr/lib/systemd/system

@@ -1,107 +1,107 @@
-# Ubuntu source packaging migration
+# Ubuntu shared-source package migration
 
-Status: 1 November 2026. Work in progress; no package is ready for publication.
-Fedora RPM specs and common C++ sources are unchanged. Debian overlays select
-those same tracked component sources; this is not an RPM-to-DEB conversion or a
-separate Ubuntu application fork. The packaging branch can merge back without
-changing Fedora recipes. Original Ubuntu KDE packages remain distribution-owned.
+Recorded 1 November 2026. Target: Ubuntu 27.04 **Tenacious ARM64**, unstable
+only. Migration is incomplete and no package is publication-ready. Fedora RPM
+recipes and common C/C++ sources are unchanged. Debian overlays select the same
+reviewed source/patches; there is no RPM conversion or separate application fork.
 
-## Target and source preparation
+Launchpad's [series](https://api.launchpad.net/1.0/ubuntu/tenacious) and
+[ARM64 architecture](https://api.launchpad.net/1.0/ubuntu/tenacious/arm64) are
+available. Parent confirmed accepted PPA terms and public ARM64-only
+`mcs45tr/uke-linux-unstable` and `mcs45tr/uke-linux-stable`, both empty. Stable
+remains gated. OpenPGP signer enrollment and signed uploads are still pending.
+No key, credential, upload or Ubuntu image was created here.
 
-Target: Ubuntu 27.04 **tenacious**, ARM64, unstable PPA only. Launchpad reports
-Tenacious in active development and its official ARM64 architecture with a
-virtualized builder and chroot. See the [series API](https://api.launchpad.net/1.0/ubuntu/tenacious),
-[architecture API](https://api.launchpad.net/1.0/ubuntu/tenacious/arm64), and
-[PPA series list](https://launchpad.net/ubuntu/+ppas). Development availability
-is not stable qualification. Stable must remain empty.
+## Implemented source routes
 
-Run from this repository using Bash, Git, tar, xz and dpkg-dev:
+`components.tsv` lists **14** prepared Debian source recipes:
+
+| Source | Implemented scope | Validation |
+| --- | --- | --- |
+| uke-battery-observer | Read-only collector, systemd/D-Bus/sysusers | Source only |
+| uke-front-color | Opt-in snapshot service; SSC lifecycle binding | Source only |
+| uke-proximity-capture | Root-only bounded diagnostic | Source only |
+| uke-ssc-fileservice | Six shared FastRPC patches, cache, service ordering, udev and refresh triggers | Source only |
+| libssc | Seven shared patches; original Ubuntu binary names and GIR split | Source only |
+| iio-sensor-proxy | Two shared patches; SSC, Polkit and systemd interfaces | Source only |
+| uke-vaapi-v4l2 | Six shared codec/capability patches; upstream Debian recipe inspected | Source only |
+| uke-bluetooth | Guarded factory address helper, udev and service | Source only |
+| uke-speaker-orientation | Existing Wayland/ALSA helper and desktop autostart | Source only |
+| uke-installation-profile | Existing root classifier and guarded configure reconciliation | Source only |
+| uke-displayport-audio | Seven UCM files, two links, WirePlumber policy | Data-only DEB/payload checked |
+| uke-speaker-controls | Original KMix desktop launcher/profile | Data-only DEB/payload checked |
+| uke-gpu-defaults | Root-stage MSM module/options with explicit kernel/firmware gates | Data-only DEB/payload checked |
+| uke-core-meta | Ubuntu dependency graph and unqualified profile | Data-only DEB/payload checked |
+
+Native sources have **not** been compiled or executed. These recipes use shared
+component baseline `cbecc441059ebffa97497e736edd2e0b0b0546a5`; later COPR
+integration source pins/patch overrides remain a distinct reconciliation step.
+For example the initial battery baseline is 1.2.0 while the current core
+selection requires >=1.4.1. The metapackage preserves that requirement rather
+than quietly treating the baseline as current. No installed/boot/device result
+is inferred from source assembly or a data-only package build.
+
+Service activation follows the original choices: front-color remains opt-in;
+battery/touch-independent boot services retain boot enablement, with no forced
+start during package configuration. D-Bus, udev and desktop event activation
+are retained. SSC refresh triggers act only on an already active Uke registry.
+Installation-profile reconciliation remains guarded against non-Uke, chroot
+and container hosts. Private touch inputs are excluded from public preparation.
+
+## Reproduce packaging checks
 
 ```sh
+bash packaging/ubuntu/fetch-upstreams.sh
 bash packaging/ubuntu/tests/source.sh
-bash packaging/ubuntu/prepare-source.sh uke-battery-observer /tmp/battery-source-new
-bash packaging/ubuntu/prepare-source.sh uke-front-color /tmp/color-source-new
+bash packaging/ubuntu/tests/cohort.sh
+bash packaging/ubuntu/tests/data-packages.sh
+bash packaging/ubuntu/prepare-source.sh libssc /tmp/libssc-source-new
 ```
 
-The output directory must not exist. The script reads shared source commit
-`cbecc441059ebffa97497e736edd2e0b0b0546a5` and writes a `3.0 (quilt)` source
-package: original source tarball, Debian tarball, unsigned `.dsc` and source `.changes`.
-It never runs upstream build commands, signs, uploads or installs anything.
-`SOURCE-ORIGIN` identifies the exact component and commit. A source revision
-change requires deliberate pin review and an appropriate package version bump.
-No external source fetch occurs during preparation or build.
+Use Bash, Git, curl, jq, tar/xz and dpkg-dev; data-only builds also need official
+debhelper and its dependencies. Downloads are source bytes checked against
+`upstreams.tsv`; no downloaded code is executed. Archives live under the owning
+component's `referances/`. Existing upstream Debian metadata is retained under
+`uke/upstream-debian` for review before applying the active overlay.
 
-## Implemented recipes
+Source preparation emits original and Debian tarballs, unsigned `.dsc`, source
+`.changes` including original sources, SHA256SUMS and source-origin records.
+The output directory must not exist. Debian quilt applies the same 21 shared
+patches used in the four external source routes. No build commands, keys or
+uploads run in source preparation. Data-only tests build just the four listed
+configuration packages; they do not compile or run upstream programs.
 
-- `uke-battery-observer` 1.2.0: read-only collector only, shared source and
-  systemd/D-Bus policy, dedicated sysusers identity created during configure,
-  Debian shlibs dependency generation. Charge writers and offline charging are
-  excluded and need separate coordinated review. D-Bus activation remains
-  available; install does not enable or start the systemd unit.
-- `uke-front-color` 0.1.0: native raw snapshot helper and unchanged Uke firmware
-  condition and SSC lifecycle binding. Installation never enables or starts it.
-  `uke-ssc-fileservice` must be ported before this package becomes installable.
+Host evidence: Debian 13 x86_64, dpkg 1.22.22 and official Ubuntu debhelper
+14.5ubuntu1; target data-package metadata is ARM64. Dependency checks were
+skipped for these isolated data-only builds, so successful packaging does not
+mean the dependencies are installable. CI uses official Ubuntu source tools
+and performs no upstream native compilation, hardware execution or publication.
 
-These source versions come from the shared component RPM recipes. Their former
-standalone COPR entries are superseded; Debian splitting does not revive them on
-Fedora. Integration-package payload coverage remains incomplete.
+## Coverage and remaining work
 
-## Coverage and migration order
+`coverage.json` accounts for all **43** COPR source entries, including historical
+standalone entries. `local-specs.tsv` records **30** literal RPM spec paths;
+`components.tsv` is the authoritative implemented Debian recipe list. Source
+entries and binary packages are not interchangeable counts. Partial integration
+entries remain partial even when some child recipes pass source checks.
 
-`coverage.json` covers all **43** entries returned by the public COPR source
-listing on this date. `source_revision` is the revision actually present in the
-COPR recipe, not a claim that main equals that recipe. Null means no Git commit
-was extracted (for example the archived speaker firmware SRPM).
-`local-specs.tsv` additionally inventories all **30** literal local RPM spec
-paths at the common-source baseline. Generated integration specs and archives
-are represented by the COPR listing, not by the literal-spec count. Local specs
-without an implemented Debian overlay have not yet been ported.
+See [actual Tenacious dependency evidence](DEPENDENCIES.md) and the selected
+version inventory. PipeWire, KDE/DDC and firmware/kernel ABI gaps are explicit.
+Ubuntu libstdc++6 replaces the Fedora alias; stock library candidates still need
+patch comparison. Original KDE applications are not forked. Desktop repository
+migration is handled separately.
 
-Current classification: 2 source-tested; 21 blocked; 9 superseded historical
-entries; 6 candidates for Ubuntu originals; 4 owned by the separate desktop
-migration; 1 unnecessary Fedora runtime alias. **Zero** ARM64 binary builds,
-installation tests, VM tests or physical tests were performed here.
+Implementation still needed: Control's APT/dpkg transaction/channel backend;
+current source-family delta reconciliation; charge/offline and UPower ports;
+PipeWire/Mesa/firmware/OrangeFox/OEM resources; remaining video/session and
+metapackage payloads. The pinned touchscreen recipe references
+`src/upstream/nt36532-thp/nvt_touch_core.cpp`, absent from the tracked source
+snapshot; recover its licensed source/provenance before declaring it buildable.
+These are implementation gaps, not signing blockers.
 
-The Fedora libstdc++ alias is unnecessary: use Ubuntu `libstdc++6` with
-`dpkg-shlibdeps`. AccountsService, libaccounts-glib, ddcutil, libwacom,
-AT-SPI and GStreamer are candidates for distribution originals, not proven
-removable forks: compare patches and Tenacious versions first. Do not remove
-Mesa, PipeWire, UPower, libssc or SensorProxy patches without that comparison.
-Firmware and OEM resources need provenance and redistribution review.
-
-1. Port SSC service/dependency integration and finish the sensor/power payloads.
-2. Replace `uke-control`'s libdnf5/RPM transaction and channel code with a native
-   APT/dpkg implementation behind a distro boundary; retain common device APIs.
-   Review Polkit identities/actions, system users, udev permissions and AppArmor
-   policy explicitly; dropping SELinux policy alone does not preserve confinement.
-3. Port kernel and boot integration as one cohort before any boot-affecting
-   package can be admitted. Keep immutable kernel release, DTB, modules and
-   initramfs identities, hardware-compatible DT checks, existing recovery and
-   previous known-good boot selection. Debian dependencies must bind the exact
-   cohort; never translate RPM virtual capability strings mechanically.
-4. Implement initramfs-tools hooks only after auditing the existing dracut
-   selection, firmware allowlist and mount/rollback behavior. No automatic
-   partition, firmware, boot-entry or initramfs writes are supplied by these
-   initial recipes. No Ubuntu images are created during package migration.
-5. Build in an approved clean Tenacious ARM64 worker, inspect all binary payloads
-   and transitive dependencies, run install/upgrade/remove and service-policy
-   tests, then perform separately authorized hardware qualification.
-
-## Publication blockers
-
-Launchpad account identity is `mcs45tr`; GitHub identity `MCC45TR` must not be
-substituted. Parent confirmed accepted PPA terms and created public ARM64-only
-`uke-linux-unstable` and `uke-linux-stable` PPAs; both are empty. Source-signing
-key enrollment remains pending. No key
-was generated, registered or inspected; no credential or upload configuration
-was created. Signed `.dsc` and source `.changes`, verified signer enrollment,
-PPA write authorization, ARM64 build enablement and dependency availability
-must all be confirmed before upload. The generated source `.changes` includes the original tarball; all upload
-metadata remains unsigned and is not a qualified Launchpad submission. No stable promotion is permitted until
-cohort, install/rollback and device qualification evidence exists.
-
-Validation: Debian 13 x86_64, dpkg-source 1.22.22. Both source packages assembled
-and extracted; source checksums, changelog target, architecture, no-start policy,
-maintainer-script shell syntax and invalid/reused-output rejection passed.
-No upstream code was executed. Native ARM64 builds and runtime tests require
-separate execution approval under the current task constraint.
+[Boot cohort checks](BOOT-COHORT.md) reject mismatched artifact identities but
+are not a finished initramfs or kernel port. Real kernel/DT/module validation,
+initramfs-tools integration, upgrade/rollback and device acceptance remain.
+Native ARM64 builds need action-specific execution approval under the current
+task constraint, followed by install/upgrade/remove and transitive dependency
+checks. Source signing and Launchpad upload follow only after those gates.

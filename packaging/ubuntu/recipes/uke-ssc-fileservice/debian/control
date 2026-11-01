@@ -1,0 +1,16 @@
+Source: uke-ssc-fileservice
+Section: admin
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), gcc, g++, make, libsystemd-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/linux-msm/hexagonrpc
+
+Package: uke-ssc-fileservice
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd, udev, util-linux, grep, init-system-helpers, uke-sensorproxy-dual-light-abi-1, uke-ssc-firmware-inputs-abi-1
+Description: native Uke SSC service with a disposable registry
+ Serve shared upstream FastRPC from a private RAM tree, preserving read-only
+ factory calibration and file permissions. Qualified local firmware and the
+ Uke dual-light SensorProxy are required separately. No private data is shipped.

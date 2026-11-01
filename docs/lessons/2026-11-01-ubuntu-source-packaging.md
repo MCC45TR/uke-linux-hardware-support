@@ -21,3 +21,34 @@ Next validation: approved Tenacious ARM64 builds and service lifecycle tests;
 port APT/dpkg transaction integration and boot cohorts before publication.
 Parent subsequently confirmed PPA terms accepted and ARM64-only PPAs created;
 source-signing key enrollment and signed upload remain pending.
+
+## Subsequent source-port implementation
+
+Expanded to fourteen Debian source routes, including native service policy,
+UCM/KMix/module data, an admission-gated core meta selection, SSC, libssc,
+SensorProxy and the VA backend. Verified the official Tenacious ARM64 package
+indexes: distribution PipeWire/KDE/DDC versions do not yet satisfy all shared
+requirements. This is now a concrete dependency record, not an assumed blocker.
+Four data-only ARM64 DEBs build with official debhelper 14.5ubuntu1 on Debian
+13 x86_64; exact UCM/link, launcher, module-policy and core-profile payload
+checks pass. Build-dependency resolution was intentionally not claimed.
+
+The upstream VA archive contained its own Debian directory. The initial source
+assembly caught the differing libva-v4l2 source name. Reviewed its control,
+rules and copyright, retained that directory as source evidence, and corrected
+overlay placement. Its six shared patches now apply through quilt. Across SSC,
+libssc, SensorProxy and VA, all 21 shared patches apply on extraction. No
+upstream compiler, executable, generator or native contract was run.
+
+Added metadata-only boot cohort checks and explicit negative fixtures. The
+first fixture creation exposed inherited private directory modes; fixtures now
+set umask 022 before dpkg-deb. Foreign series/architecture/device, mismatched
+versions, promotion, automatic boot selection, traversal and DT corruption are
+rejected. These tests do not inspect real kernel/DT/initramfs contents and must
+not be treated as boot admission.
+
+Baseline-to-current COPR family reconciliation remains unfinished; the current
+core selection deliberately retains the >=1.4.1 battery requirement although
+the initial component baseline recipe is 1.2.0. Source-only ports are not
+qualified replacements for later family releases. The missing tracked THP
+source also remains an implementation/provenance gap. Signing is independent.

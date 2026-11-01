@@ -1,0 +1,28 @@
+name: Ubuntu source packaging contracts
+on:
+  push:
+    branches: [ubuntu]
+    paths: ['packaging/ubuntu/**', '.github/workflows/ubuntu-source-packaging.yml']
+  pull_request:
+    paths: ['packaging/ubuntu/**', '.github/workflows/ubuntu-source-packaging.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sources:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Install official source tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev jq xz-utils debhelper
+      - name: Verify pinned source downloads without execution
+        run: bash packaging/ubuntu/fetch-upstreams.sh
+      - name: Check source packages and immutable boot cohort metadata
+        run: |
+          bash packaging/ubuntu/tests/source.sh
+          bash packaging/ubuntu/tests/cohort.sh
+          bash packaging/ubuntu/tests/data-packages.sh
+      - name: Record validation scope
+        run: echo 'Source assembly, quilt application and static cohort tests only; no upstream compilation, device execution, signing or publication.' >> "$GITHUB_STEP_SUMMARY"
