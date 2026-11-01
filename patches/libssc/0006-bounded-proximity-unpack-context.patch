@@ -1,0 +1,86 @@
+Subject: [PATCH] Bound proximity unpack diagnostics without logging sensor values
+
+Upstream: libssc 0.4.4. Keep both existing warnings and all decoder behavior.
+Only an existing unpack failure adds context: event ID, payload length and the
+first protobuf field/wire tag. Never log SUIDs, payload bytes or measurements.
+Use a saturated atomic counter for at most eight context messages per process.
+
+--- /dev/null
++++ b/src/libssc-proximity-context-private.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: GPL-3.0-or-later */
++#ifndef LIBSSC_PROXIMITY_CONTEXT_PRIVATE_H
++#define LIBSSC_PROXIMITY_CONTEXT_PRIVATE_H
++#include <glib.h>
++
++static inline gboolean
++proximity_first_tag (const GArray *buf, guint32 *field, guint *wire)
++{
++	guint32 key = 0;
++	if (buf == NULL || buf->data == NULL)
++		return FALSE;
++	/* Only inspect the first uint32 tag, never a payload value or length. */
++	for (guint i = 0; i < 5 && i < buf->len; i++) {
++		guint8 byte = (guint8) buf->data[i];
++		if (i == 4 && byte > 15)
++			return FALSE;
++		key |= (guint32) (byte & 127) << (7 * i);
++		if (!(byte & 128)) {
++			if (key < 8 || (key & 7) > 5)
++				return FALSE;
++			*field = key >> 3;
++			*wire = key & 7;
++			return TRUE;
++		}
++	}
++	return FALSE;
++}
++
++static inline void
++proximity_unpack_context (guint32 msg_id, const GArray *buf)
++{
++	static gint emitted = 0;
++	guint32 field;
++	guint wire;
++	for (;;) {
++		gint count = g_atomic_int_get (&emitted);
++		if (count >= 8)
++			return;
++		if (g_atomic_int_compare_and_exchange (&emitted, count, count + 1))
++			break;
++	}
++	if (proximity_first_tag (buf, &field, &wire))
++		g_message ("SSC proximity unpack context: event_id=%u payload_bytes=%u first_field=%u wire_type=%u",
++		           msg_id, buf ? buf->len : 0, field, wire);
++	else
++		g_message ("SSC proximity unpack context: event_id=%u payload_bytes=%u first_tag=invalid",
++		           msg_id, buf ? buf->len : 0);
++}
++
++#endif
+--- a/src/libssc-sensor-proximity.c
++++ b/src/libssc-sensor-proximity.c
+@@ -23,6 +23,7 @@
+ #include "libssc-common-private.h"
+ #include "libssc-sensor-proximity.h"
+ #include "libssc-sensor-proximity-private.h"
++#include "libssc-proximity-context-private.h"
+ 
+ #define SSC_SENSOR_PROXIMITY_NEAR	1
+ #define SSC_SENSOR_PROXIMITY_FAR	0
+@@ -90,6 +91,7 @@
+ 			SscProximityResponse *msg = ssc_proximity_response__unpack (NULL, buf->len, (const uint8_t *) buf->data);
+ 			if (msg == NULL) {
+ 				g_warning ("Failed to unpack proximity measurement message");
++				proximity_unpack_context (msg_id, buf);
+ 				return;
+ 			}
+ 
+@@ -115,6 +117,7 @@
+ 
+ 			if (msg == NULL) {
+ 				g_warning ("Failed to unpack Xiaomi Davinci proximity measurement message");
++				proximity_unpack_context (msg_id, buf);
+ 				return;
+ 			}
+ 

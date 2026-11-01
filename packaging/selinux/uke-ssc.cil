@@ -1,0 +1,4 @@
+; Candidate for the upstream SSC backend, not a policy for arbitrary DSP access.
+; libqrtr-glib uses datagram creation, send/receive, socket queries and GIO ioctl.
+; No device, firmware, calibration, TCP/IP or other domain access is granted.
+(allow iiosensorproxy_t self (qipcrtr_socket (create read write getattr getopt setopt ioctl)))
