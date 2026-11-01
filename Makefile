@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate test-native
+.PHONY: validate test-native native-guis check-guis
 components := uke-core-meta uke-desktop-metas uke-desktop-packaging uke-orangefox-packaging uke-boot uke-camera uke-desktop-integration uke-hardware-provenance uke-platform-runtime uke-sensors plasma-uke-kcm xiaomi-uke-firmware uke-control
 validate:
 	jq -e '.schema_version==1 and (.imports|length==12) and all(.imports[]; .imported_commit|test("^[a-f0-9]{40}$$"))' SOURCE-IMPORTS.json >/dev/null
@@ -17,3 +17,15 @@ test-native:
 	$(MAKE) -C uke-platform-runtime test-native
 	$(MAKE) -C uke-control check
 	$(MAKE) -C xiaomi-uke-firmware test-admission
+
+# Optional desktop applications; their toolkit dependencies stay out of the
+# core backend/TUI build and release-image selections.
+native-guis:
+	$(MAKE) -C uke-control build/libuke-control-client.so.1
+	cmake -S uke-control-gtk -B uke-control-gtk/build -DUKE_CONTROL_SOURCE="$(CURDIR)/uke-control"
+	cmake --build uke-control-gtk/build -j4
+	cmake -S uke-control-qt -B uke-control-qt/build -DUKE_CONTROL_SOURCE="$(CURDIR)/uke-control"
+	cmake --build uke-control-qt/build -j4
+check-guis: native-guis
+	ctest --test-dir uke-control-gtk/build --output-on-failure
+	ctest --test-dir uke-control-qt/build --output-on-failure

@@ -11,7 +11,7 @@ version := $(shell awk -F '"' '/application_version=/ {print $$2}' src/version.h
 protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check check-native check-bus check-rgb-policy check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
-all: build/uke-control-tui build/uke-control-client.pc
+all: build/uke-control-tui build/uke-control-client.pc build/uke-control-request
 client_sources := src/client.cpp src/client-catalog.cpp src/client-process.cpp
 client_flags := $(shell pkg-config --cflags jsoncpp)
 client_libs := $(shell pkg-config --libs jsoncpp) -pthread
@@ -19,6 +19,8 @@ build/libuke-control-client.so.1: $(client_sources) src/client.hpp src/sysfs.hpp
 	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -shared -Wl,-soname,libuke-control-client.so.1 -o $@ $(client_sources) $(client_libs)
 build/uke-control-tui: src/tui.cpp src/tui-text.hpp src/tui-menu.hpp src/client.hpp src/version.hpp build/libuke-control-client.so.1
 	$(CXX) $(CXXFLAGS) $(client_flags) $(LDFLAGS) -o $@ src/tui.cpp -Lbuild -l:libuke-control-client.so.1 $(shell pkg-config --cflags --libs ncursesw jsoncpp)
+build/uke-control-request: src/frontend-request.cpp src/client.hpp build/libuke-control-client.so.1
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -pthread -o $@ $< -Lbuild -l:libuke-control-client.so.1
 libdir ?= /usr/lib64
 includedir ?= /usr/include
 build/uke-control-client.pc: packaging/uke-control-client.pc.in src/version.hpp | build
@@ -28,15 +30,20 @@ build/test-client-child: tests/client-child.cpp | build
 build/test-client: tests/client.cpp $(client_sources) src/client.hpp src/tui-text.hpp src/sysfs.hpp src/version.hpp build/test-client-child
 	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(client_flags) $(LDFLAGS) -DUKE_CLIENT_PROGRAM='"$(CURDIR)/build/test-client-child"' -o $@ tests/client.cpp $(client_sources) $(client_libs)
 .PHONY: check-client check-tui
-check-client: build/test-client build/uke-control
+build/test-frontend: tests/frontend.cpp src/frontend.hpp src/client.hpp build/libuke-control-client.so.1 | build
+	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -pthread -o $@ $< -Lbuild -l:libuke-control-client.so.1
+check-client: build/test-client build/test-frontend build/uke-control build/uke-control-request
 	ulimit -c 0
 	timeout 45s build/test-client
+	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} build/test-frontend
+	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} bash tests/frontend-request.sh
 	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} bash tests/client-cli.sh
 build/test-tui: tests/tui.cpp src/tui-menu.hpp src/client.hpp build/libuke-control-client.so.1 | build
 	$(CXX) -Isrc $(CXXFLAGS) -UNDEBUG $(LDFLAGS) -o $@ $< -Lbuild -l:libuke-control-client.so.1 -lutil $(shell pkg-config --cflags --libs vterm)
 check-tui: build/uke-control-tui build/test-tui
 	ulimit -c 0
 	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} timeout 90s build/test-tui
+	LD_LIBRARY_PATH=build:$${LD_LIBRARY_PATH:-} bash tests/tui-cli.sh
 build/libuke-control.so.0: src/battery.cpp src/battery.hpp src/nfc.cpp src/nfc.hpp
 build/test-battery: tests/battery.cpp src/battery.cpp src/battery.hpp | build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/battery.cpp src/battery.cpp $(shell pkg-config --libs libsystemd) -o $@

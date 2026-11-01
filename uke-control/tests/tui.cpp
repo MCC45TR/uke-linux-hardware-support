@@ -43,7 +43,8 @@ public:
             for(int fd=0;fd<3;++fd)assert(dup2(slave_,fd)>=0);
             if(slave_>2)close(slave_);
             setenv("TERM","xterm-256color",1);setenv("LANG","C.UTF-8",1);setenv("LC_ALL","C.UTF-8",1);
-            std::vector<std::string> args{"build/uke-control-tui"};args.insert(args.end(),options.begin(),options.end());
+            const char* installed=getenv("UKE_TUI_TEST_PROGRAM");
+            std::vector<std::string> args{installed?installed:"build/uke-control-tui"};args.insert(args.end(),options.begin(),options.end());
             std::vector<char*> raw;for(auto& arg:args)raw.push_back(arg.data());raw.push_back(nullptr);
             execv(raw[0],raw.data());_exit(127);
         }
@@ -97,19 +98,21 @@ void menu_coverage() {
     for(const auto& m:menu::menus())for(const auto& item:menu::items(m.id))if(item.action)++count[item.id];
     assert(count.size()==uke::client::actions().size());
     for(const auto& a:uke::client::actions()){assert(count[a.id]==1);const auto& leaf=menu::menu(menu::owner(a));std::string id=leaf.id;unsigned depth=0;while(id!="home"){id=menu::menu(id).parent;assert(++depth<=3);}}
-    assert(menu::owner(uke::client::action("nfc.status"))=="nfc");
+    assert(menu::owner(uke::client::action("nfc.status"))=="connections");
     assert(menu::owner(uke::client::action("charge.protocol-inspect"))=="charge-expert");
     assert(menu::owner(uke::client::action("resize.prepare"))=="recovery");
+    assert(menu::items("home").size()==7);
+    for(const auto& m:menu::menus())if(m.parent=="home")assert(m.id!="disks"&&m.id!="developer"&&m.id!="support");
+    for(const auto& a:uke::client::actions())if(a.tests_package)assert(menu::owner(a)!="media"&&menu::owner(a)!="power"&&menu::owner(a)!="screen");
 }
 void navigation() {
-    Pty p(fixture());p.expect("Categories");p.expect("Power & battery");
-    p.send("j\n");p.expect("Charging: advanced");p.send("j\n");p.expect("Charging snapshot");
-    p.send("\033");p.expect("Charging: advanced");p.send("\n");p.expect("Charging snapshot");
-    p.tap("< Back [Esc]");p.expect("Charging: advanced");p.tap("< Back [Esc]");p.expect("Audio & camera");
-    const auto [x,y]=p.locate("Power & battery",5);p.tap_at(x,y);p.tap_at(x,y,false);p.expect("Charging: advanced");
+    Pty p(fixture(),80,24);p.expect("Device settings");p.expect("Power & battery");p.expect("Advanced");
+    p.send("\n");p.expect("Battery status");p.send("\n");p.expect("cycles: 0");
+    p.send("\033");p.expect("Memory & workload");p.tap("< Back [Esc]");p.expect("Audio & sensors");
+    const auto [x,y]=p.locate("Power & battery",5);p.tap_at(x,y);p.tap_at(x,y,false);p.expect("Battery health");
     p.send("\033");p.resize(80,24);p.expect("Power & battery");
     p.send("\033OP");p.expect("NAVIGATION");p.send("\033");p.expect("Power & battery");
-    p.resize(50,12);p.expect("Terminal too small");p.resize(64,18);p.expect("Categories");p.resize(120,36);
+    p.resize(50,12);p.expect("Terminal too small");p.resize(64,18);p.expect("Device settings");p.resize(120,36);
     p.send("q");assert(p.finish()==0);
 }
 void observations() {
@@ -131,6 +134,16 @@ void background_reads() {
     p.tap("History [H]");p.expect("Session history");p.send("\n");p.expect("Cancelled");
     p.send("q");assert(p.finish()==0);
 }
+void refresh_errors_and_empty() {
+    Pty daily(fixture("general"),80,24);daily.expect("Battery status");daily.send("\n");daily.expect("cycles: 0");
+    daily.tap("Refresh [R]");daily.expect("cycles: 0");daily.send("r");daily.expect("cycles: 0");
+    daily.send("\033");daily.expect("Memory & workload");daily.send("q");assert(daily.finish()==0);
+    Pty empty(fixture("desktop.plasma"));empty.send("\n");empty.expect("The provider returned no data");empty.send("q");assert(empty.finish()==0);
+    Pty error(fixture("charge.status"));error.send("\n");error.expect("Synthetic provider error",4000);error.expect("Not completed");
+    error.tap("Refresh [R]");error.expect("Reading…");error.tap("Stop");error.expect("Cancelled");error.send("q");assert(error.finish()==0);
+    Pty maintenance(fixture("resize.prepare"));maintenance.send("\n");maintenance.expect("WARNING:");
+    maintenance.send("\n");maintenance.expect("Confirmation does not match");maintenance.send("\033");maintenance.send("q");assert(maintenance.finish()==0);
+}
 void touch_editor() {
     Pty p(fixture("charge.limit"),80,24);p.tap("Continue [Enter]");p.tap("End threshold (%)",5);p.expect("Clear");
     p.tap("+10");p.tap("+10");p.tap("+10");p.expect("> 100");
@@ -151,13 +164,13 @@ void confirmations_and_paths() {
     Pty file(fixture("snapshot.save"));file.send("\n\n\025session Şarj file.json\n");file.expect("Parameters");file.expect("session Şarj file.json");file.send("q");assert(file.finish()==0);
 }
 void wireless_shortcuts() {
-    Pty p(fixture("connections"),80,24);p.expect("Bluetooth diagnostic report");p.tap("Wi-Fi diagnostic report",5);p.tap("Continue [Enter]");p.expect("Wi-Fi");p.send("\033[19~");p.expect("Review the request");p.expect("Wi-Fi");p.tap("Run [Enter]");p.expect("Changes are disabled");p.send("q");assert(p.finish()==0);
+    Pty p(fixture("support"),80,24);p.expect("Bluetooth diagnostic report");p.tap("Wi-Fi diagnostic report",5);p.tap("Continue [Enter]");p.expect("Wi-Fi");p.send("\033[19~");p.expect("Review the request");p.expect("Wi-Fi");p.tap("Run [Enter]");p.expect("Changes are disabled");p.send("q");assert(p.finish()==0);
 }
 void drag_and_resize() {
-    {Pty burst(fixture(),80,24);burst.expect("Power & battery");burst.send("\033[<0;8;8M\033[<0;8;8m");burst.expect("Charging: advanced");burst.send("q");assert(burst.finish()==0);}
+    {Pty burst(fixture(),80,24);burst.expect("Power & battery");burst.send("\033[<0;8;8M\033[<0;8;8m");burst.expect("Battery health");burst.send("q");assert(burst.finish()==0);}
     Pty p(fixture(),80,24);p.drain(260);
-    p.send("\033[<0;8;7M\033[<32;8;5M\033[<0;8;5m");p.expect("Categories");assert(p.screen().find("Charging: advanced")==std::string::npos);assert(p.screen().find("Device overview")==std::string::npos);
-    p.send("\033[<0;8;7M");p.resize(120,36);p.send("\033[<0;8;7m");p.expect("Categories");assert(p.screen().find("Charging: advanced")==std::string::npos);
+    p.send("\033[<0;8;7M\033[<32;8;5M\033[<0;8;5m");p.expect("Device settings");assert(p.screen().find("Battery readings")==std::string::npos);
+    p.send("\033[<0;8;7M");p.resize(120,36);p.send("\033[<0;8;7m");p.expect("Device settings");assert(p.screen().find("Battery readings")==std::string::npos);
     p.send("q");assert(p.finish()==0);
 }
 void readonly_and_signals() {
@@ -167,4 +180,4 @@ void readonly_and_signals() {
     {std::ofstream file(path);file<<"{\"schema\":\"org.uke.control.tui-fixture.v1\",\"results\":{},\"command\":\"/bin/true\"}";}
     Pty invalid({"--fixture",path});invalid.expect("Unknown fixture field");assert(invalid.finish()==1);unlink(path.c_str());
 }
-int main(){assert(setlocale(LC_ALL,"C.UTF-8"));menu_coverage();navigation();observations();forms();background_reads();touch_editor();touch_search();confirmations_and_paths();wireless_shortcuts();drag_and_resize();readonly_and_signals();std::cout<<"124-action coverage; PTY keyboard, SGR touch, drag, forms, confirmation, search, ownership, resize and terminal restoration passed\n";}
+int main(){assert(setlocale(LC_ALL,"C.UTF-8"));menu_coverage();navigation();observations();forms();background_reads();refresh_errors_and_empty();touch_editor();touch_search();confirmations_and_paths();wireless_shortcuts();drag_and_resize();readonly_and_signals();std::cout<<uke::client::actions().size()<<"-action coverage; daily/advanced hierarchy, read refresh, empty/error, maintenance refusal, PTY keyboard, SGR touch, drag, forms, confirmation, search, ownership, resize and terminal restoration passed\n";}

@@ -90,7 +90,7 @@ public:
 };
 struct Entry {client::Result result;client::Values values;unsigned sequence=0;};
 enum class View {menu,guide,form,choices,choice_info,review,result,help,history,edit,search,find,save,confirm};
-enum class Command {back,next,home,search,history,help,active,up,down,item,field,choice,keyboard,insert,shift,symbols,space,erase,clear,left,right,step,inspect,preview,details,favorite,raw,find,save,cancel};
+enum class Command {back,next,home,search,history,help,active,up,down,item,field,choice,keyboard,insert,shift,symbols,space,erase,clear,left,right,step,inspect,preview,details,favorite,raw,find,save,cancel,refresh};
 struct Hit {
     int y,x,h,w;Command command;size_t index=0;std::string value={};
     bool contains(int py,int px)const{return py>=y&&py<y+h&&px>=x&&px<x+w;}
@@ -157,7 +157,7 @@ class App {
         back_.push_back(page_);page_=std::move(next);invalidate();notice_.clear();
     }
     void back() {
-        if(back_.empty()){notice_=tr("At Categories. Use Quit or q to exit.","Kategorilerdesiniz. Çıkmak için Çıkış veya q kullanın.");return;}
+        if(back_.empty()){notice_=tr("At Device settings. Use Quit or q to exit.","Cihaz ayarlarındasınız. Çıkmak için Çıkış veya q kullanın.");return;}
         page_=std::move(back_.back());back_.pop_back();invalidate();notice_.clear();
     }
     client::Values& draft(const std::string& id){if(!drafts_.contains(id))drafts_[id]=client::defaults(client::action(id));return drafts_.at(id);}
@@ -175,7 +175,7 @@ class App {
         return uke::tui_menu::menu(page_.menu).title.get(options_.language);
     }
     std::string breadcrumb()const {
-        std::string result=tr("Categories","Kategoriler");
+        std::string result=tr("Device settings","Cihaz ayarları");
         if(page_.menu!="home"&&page_.menu!="search"&&page_.menu!="favorites") {
             std::vector<std::string> trail;auto id=page_.menu;
             while(id!="home"){const auto& node=uke::tui_menu::menu(id);trail.push_back(node.title.get(options_.language));id=node.parent;}
@@ -185,15 +185,15 @@ class App {
         return result;
     }
     void panel(const std::string& title) {
-        attron(accent());mvhline(4,0,ACS_HLINE,cols_);mvhline(rows_-6,0,ACS_HLINE,cols_);
-        mvvline(4,0,ACS_VLINE,rows_-9);mvvline(4,cols_-1,ACS_VLINE,rows_-9);
-        mvaddch(4,0,ACS_ULCORNER);mvaddch(4,cols_-1,ACS_URCORNER);mvaddch(rows_-6,0,ACS_LLCORNER);mvaddch(rows_-6,cols_-1,ACS_LRCORNER);attroff(accent());
+        attron(accent());mvhline(4,0,ACS_HLINE,cols_);mvhline(rows_-5,0,ACS_HLINE,cols_);
+        mvvline(4,0,ACS_VLINE,rows_-8);mvvline(4,cols_-1,ACS_VLINE,rows_-8);
+        mvaddch(4,0,ACS_ULCORNER);mvaddch(4,cols_-1,ACS_URCORNER);mvaddch(rows_-5,0,ACS_LLCORNER);mvaddch(rows_-5,cols_-1,ACS_LRCORNER);attroff(accent());
         line(4,2,cols_-4," "+title+" ",accent());
     }
     void paragraph(int y,int h,const std::string& value) {
         const auto lines=text::wrap(value,cols_-6);max_scroll_=std::max(0,int(lines.size())-h);page_.scroll=std::clamp(page_.scroll,0,max_scroll_);
         for(int row=0;row<h&&row+page_.scroll<int(lines.size());++row)line(y+row,3,cols_-6,text::utf8(lines[size_t(row+page_.scroll)]));
-        if(max_scroll_)line(rows_-6,cols_-19,16,std::to_string(page_.scroll+1)+" / "+std::to_string(lines.size()),accent());
+        if(max_scroll_)line(rows_-5,cols_-19,16,std::to_string(page_.scroll+1)+" / "+std::to_string(lines.size()),accent());
     }
     std::string access(const client::Action& a)const {
         if(a.access==client::Access::root)return geteuid()==0?tr("Root (current process)","Root (mevcut süreç)"):tr("Root; sudo authorizes only this action","Root; sudo yalnız bu işlemi yetkilendirir");
@@ -201,7 +201,8 @@ class App {
         return tr("Current user","Mevcut kullanıcı");
     }
     std::string details(const client::Action& a)const {
-        std::string value=a.description.get(options_.language)+"\n\n"+tr("What it does\n","İşlemin etkisi\n")+client::effect_description(a.effect).get(options_.language);
+        std::string value=uke::tui_menu::summary(a).get(options_.language);
+        if(page_.details)value="\n"+a.description.get(options_.language)+"\n\n"+tr("What it does\n","İşlemin etkisi\n")+client::effect_description(a.effect).get(options_.language);
         if(a.tests_package)value+="\n\n"+tr("Requires the optional uke-control-tests package.","İsteğe bağlı uke-control-tests paketi gerekir.");
         if(!a.parameters.empty())value+="\n\n"+tr("Continue to choose parameters. Form defaults are requests, not current device readings.","Parametreleri seçmek için devam edin. Form varsayılanları istektir; cihazın mevcut okuması değildir.");
         if(!writable()&&a.effect!=client::Effect::read)value+="\n\n"+tr("Changes are disabled. You can still inspect the form and request.","Değişiklikler kapalı. Formu ve isteği inceleyebilirsiniz.");
@@ -216,7 +217,7 @@ class App {
         const auto mode=simulation_?tr("SIMULATION","SİMÜLASYON"):options_.readonly?tr("READ ONLY","SALT OKUNUR"):"";
         line(0,2,cols_-4,"UKE CONTROL "+std::string(uke::application_version)+(mode.empty()?"":"   ·   "+mode),accent());
         if(busy())button(0,cols_-25,1,23,tr("Reading… [F9]","Okunuyor… [F9]"),Command::active);
-        const std::array<std::string,4> labels{cols_<100?tr("Categories","Kategoriler"):tr("Categories [Home]","Kategoriler [Home]"),tr("Search [/]","Ara [/]"),tr("History [H]","Geçmiş [H]"),tr("Help [F1]","Yardım [F1]")};
+        const std::array<std::string,4> labels{tr("Home","Ana ekran"),tr("Search [/]","Ara [/]"),tr("History [H]","Geçmiş [H]"),tr("Help [F1]","Yardım [F1]")};
         const std::array<Command,4> commands{Command::home,Command::search,Command::history,Command::help};
         for(int i=0;i<4;++i){const int x=1+i*(cols_-2)/4,end=1+(i+1)*(cols_-2)/4;button(1,x,2,end-x-1,labels[size_t(i)],commands[size_t(i)]);}
         line(3,2,cols_-4,breadcrumb());
@@ -236,13 +237,13 @@ class App {
     }
     void footer() {
         const std::string message=!notice_.empty()?notice_:busy()?tr("Reading in background — Stop is available on the result page.","Arka planda okunuyor — Durdur düğmesi sonuç ekranında."):"";
-        line(rows_-5,2,cols_-4,message,warning());
+        line(rows_-4,2,cols_-4,message,warning());
         const int back_width=std::max(15,(cols_-4)/4),arrow_width=7;
-        button(rows_-4,1,3,back_width,back_.empty()?tr("Quit [q]","Çıkış [q]"):tr("< Back [Esc]","< Geri [Esc]"),Command::back);
-        button(rows_-4,back_width+2,3,arrow_width,"↑",Command::up);
-        button(rows_-4,back_width+arrow_width+3,3,arrow_width,"↓",Command::down);
+        button(rows_-3,1,2,back_width,back_.empty()?tr("Quit [q]","Çıkış [q]"):tr("< Back [Esc]","< Geri [Esc]"),Command::back);
+        button(rows_-3,back_width+2,2,arrow_width,"↑",Command::up);
+        button(rows_-3,back_width+arrow_width+3,2,arrow_width,"↓",Command::down);
         const int next_x=back_width+2*arrow_width+4;
-        button(rows_-4,next_x,3,cols_-next_x-1,next_label(),Command::next,0,{},true);
+        button(rows_-3,next_x,2,cols_-next_x-1,next_label(),Command::next,0,{},true);
         line(rows_-1,2,cols_-4,tr("↑↓ select/scroll · Enter forward · Esc back · Tap buttons · F4 TR/EN","↑↓ seç/kaydır · Enter ileri · Esc geri · Düğmelere dokunun · F4 TR/EN"));
     }
     void list_position(size_t count,int capacity) {
@@ -251,7 +252,7 @@ class App {
         if(page_.selected<page_.top)page_.top=page_.selected;
         if(page_.selected>=page_.top+size_t(capacity))page_.top=page_.selected-size_t(capacity)+1;
         page_.top=std::min(page_.top,count>size_t(capacity)?count-size_t(capacity):0);
-        line(rows_-6,std::max(2,cols_-20),17,std::to_string(page_.selected+1)+" / "+std::to_string(count),accent());
+        line(rows_-5,std::max(2,cols_-20),17,std::to_string(page_.selected+1)+" / "+std::to_string(count),accent());
     }
     void list_row(int y,const std::string& title,const std::string& subtitle,bool selected,Command command,size_t index) {
         const int attributes=selected?A_REVERSE|A_BOLD:0;
@@ -262,20 +263,21 @@ class App {
     }
     void draw_menu() {
         panel(menu_title());const auto list=items();const int capacity=std::max(1,body_h_/row_h_);list_position(list.size(),capacity);
-        if(list.empty()){paragraph(body_y_,body_h_,tr("No matching action. Go back to change the search.","Eşleşen işlem yok. Aramayı değiştirmek için geri dönün."));return;}
+        if(list.empty()){paragraph(body_y_,body_h_,page_.menu=="favorites"?tr("No favorites yet. Open an action guide and press Space to add it.","Henüz favori yok. Eklemek için işlem açıklamasını açıp Boşluk'a basın."):tr("No matching action. Go back to change the search.","Eşleşen işlem yok. Aramayı değiştirmek için geri dönün."));return;}
         for(int row=0;row<capacity&&page_.top+size_t(row)<list.size();++row) {
             const auto index=page_.top+size_t(row);const auto& item=list[index];
             if(item.action) {
                 const auto& a=client::action(item.id);const auto prefix=a.effect==client::Effect::read?tr("Read · ","Oku · "):tr("Request · ","İstek · ");
-                list_row(body_y_+row*row_h_,a.title.get(options_.language)+(favorites_.contains(a.id)?" *":""),prefix+a.description.get(options_.language),index==page_.selected,Command::item,index);
+                list_row(body_y_+row*row_h_,uke::tui_menu::title(a).get(options_.language)+(favorites_.contains(a.id)?" *":""),prefix+a.description.get(options_.language),index==page_.selected,Command::item,index);
             } else {const auto& m=uke::tui_menu::menu(item.id);list_row(body_y_+row*row_h_,m.title.get(options_.language)+"  ›",m.description.get(options_.language),index==page_.selected,Command::item,index);}
         }
     }
     void action_tools() {
-        const int width=(cols_-6)/3;
-        button(body_y_,2,2,width,tr("Details [D]","Ayrıntı [D]"),Command::details);
-        button(body_y_,width+3,2,width,tr("Current [F5]","Mevcut [F5]"),Command::inspect);
-        button(body_y_,2*width+4,2,cols_-2*width-6,tr("Preview [F7]","Önizle [F7]"),Command::preview);
+        std::vector<std::pair<std::string,Command>> tools{{tr("Details [D]","Ayrıntı [D]"),Command::details}};
+        if(!current().inspect.empty())tools.push_back({tr("Current [F5]","Mevcut [F5]"),Command::inspect});
+        if(!current().preview.empty())tools.push_back({tr("Preview [F7]","Önizle [F7]"),Command::preview});
+        const int width=(cols_-4)/int(tools.size());
+        for(size_t i=0;i<tools.size();++i)button(body_y_,2+int(i)*width,2,width-1,tools[i].first,tools[i].second);
     }
     void draw_guide() {
         panel(current().title.get(options_.language));action_tools();
@@ -314,6 +316,7 @@ class App {
     void draw_review() {
         panel(tr("Review the request","İsteği incele"));action_tools();const auto& a=current();
         std::string value=a.title.get(options_.language)+"\n\n"+client::effect_description(a.effect).get(options_.language)+"\n\n";
+        if(a.effect==client::Effect::maintenance)value+=tr("WARNING: This workflow may erase data or restart the device. Read its check and backend plan before approving.\n\n","UYARI: Bu işlem veri silebilir veya cihazı yeniden başlatabilir. Onaylamadan önce denetimi ve backend planını okuyun.\n\n");
         for(const auto& p:a.parameters)value+=p.title.get(options_.language)+": "+choice_label(p,page_.plan->values.at(p.id))+"\n";
         if(a.presentation==client::Presentation::terminal)value+="\n"+tr("The command continues in the normal terminal. Existing system authentication and backend questions still apply.","Komut normal terminalde sürer. Mevcut sistem yetkilendirmesi ve backend soruları geçerlidir.");
         if(page_.details)value+="\n\n"+tr("Access: ","Yetki: ")+access(a)+"\n\n"+tr("Exact arguments (no shell):\n","Tam argümanlar (kabuk yok):\n")+client::display_command(page_.plan->argv);
@@ -332,6 +335,8 @@ class App {
         if(!r.output.empty())value+=client::format_output(r.output,options_.language,page_.raw);
         else if(r.running)value+=simulation_?tr("Synthetic read is pending; no command was started.","Örnek okuma bekleniyor; komut başlatılmadı."):tr("Waiting for the read query. You can go back while it runs.","Okuma sorgusu bekleniyor. Çalışırken geri dönebilirsiniz.");
         else if(client::action(r.action_id).presentation==client::Presentation::terminal)value+=tr("Output was displayed in the normal terminal. This receipt records the actual command exit.","Çıktı normal terminalde gösterildi. Bu makbuz gerçek komut çıkışını kaydeder.");
+        else if(!r.running&&r.output.empty()&&r.error.empty())value+=tr("The provider returned no data. Refresh this read or check Advanced > Diagnostics & support.","Sağlayıcı veri döndürmedi. Bu okumayı yenileyin veya Gelişmiş > Tanılama ve destek bölümüne bakın.");
+        if(!r.running&&r.exit_status!=0&&!r.cancelled)value+="\n\n"+tr("The request did not complete. Check provider availability and the details below; settings were not retried.","İstek tamamlanmadı. Sağlayıcının kullanılabilirliğini ve aşağıdaki ayrıntıları denetleyin; ayarlar yeniden denenmedi.");
         if(!r.error.empty())value+="\n\n"+tr("Details:\n","Ayrıntılar:\n")+r.error;
         return value;
     }
@@ -340,12 +345,14 @@ class App {
         button(body_y_,2,2,w,page_.raw?tr("Readable [J]","Okunabilir [J]"):"JSON [J]",Command::raw);
         button(body_y_,w+3,2,w,tr("Find [/]","Bul [/]"),Command::find);
         button(body_y_,2*w+4,2,w,tr("Save [S]","Kaydet [S]"),Command::save);
-        button(body_y_,3*w+5,2,cols_-3*w-7,page_.entry&&page_.entry->result.running?tr("Stop","Durdur"):tr("Current [F5]","Mevcut [F5]"),page_.entry&&page_.entry->result.running?Command::cancel:Command::inspect);
+        if(page_.entry&&page_.entry->result.running)button(body_y_,3*w+5,2,cols_-3*w-7,tr("Stop","Durdur"),Command::cancel);
+        else if(page_.entry&&current().effect==client::Effect::read&&current().presentation==client::Presentation::capture)button(body_y_,3*w+5,2,cols_-3*w-7,tr("Refresh [R]","Yenile [R]"),Command::refresh);
+        else if(!current().inspect.empty())button(body_y_,3*w+5,2,cols_-3*w-7,tr("Current [F5]","Mevcut [F5]"),Command::inspect);
         paragraph(body_y_+3,body_h_-3,result_text());
     }
     std::string help()const {
-        return tr("NAVIGATION\nChoose a category, an action, then Continue. Every action has a guide. The bottom Back and forward buttons always name the next step. Esc goes back without cancelling a background read. Home opens Categories; H opens session history; / searches all 124 actions. Up/down or j/k select; Page Up/Down scroll; Enter advances. F4 switches Turkish/English. Space marks a favorite on an action guide; F2 opens favorites. q quits outside text entry.\n\nTOUCH\nTap once to open a row or button. Drag vertically or use the large arrow buttons to scroll. A release after dragging does not open a row. Fields, options, previews, results and confirmation are tappable. Text fields have a built-in keyboard; numeric fields also have bounded step buttons. Physical keyboard editing remains available. Terminal mouse reporting must be enabled (Konsole/xterm compatible). Font size determines the physical target size. Use at least 80×24 for comfortable touch input. System passwords and existing backend terminal questions use the terminal/system input method.\n\nREQUESTS\nParameter defaults are requests, not device readings. Every option explains its effect. F5 opens related current state; F7 opens a separate preview when defined. F8 reviews a form. Details shows access and the exact argument vector; no shell is used. Changes require a separate Run action. Storage maintenance, packages and publishing also require typed confirmation. Existing backend checks and confirmations remain authoritative. Run the application as your normal session user.\n\nRESULTS & PRIVACY\nReads stay owned until actual process exit; Stop cancels only a read. Going back never cancels it. Writes restore the normal terminal and have no application timeout. J toggles JSON; / searches output; n finds the next match. S saves a new private 0600 receipt without overwriting. History is bounded and stays in memory; opening history never replays commands. Reports can contain private data: review before sharing. Unknown data is not zero or false. A command exit does not establish physical hardware support.\n\nSHARED CLIENT\nThe C++ client catalog, validation, plans, query ownership and receipts are shared with future GTK/QML frontends. Action IDs and API v1 remain stable. Simulation executes no commands and saves no files; read-only mode disables changes.",
-        "GEZİNME\nKategori, işlem ve Devam sırasını izleyin. Her işlemin açıklaması vardır. Alttaki Geri ve ileri düğmeleri sonraki adımı yazar. Esc arka plan okumasını iptal etmeden geri döner. Home kategorileri, H oturum geçmişini açar; / tüm 124 işlemde arar. Yukarı/aşağı veya j/k seçer; Page Up/Down kaydırır; Enter ilerler. F4 Türkçe/İngilizce değiştirir. İşlem açıklamasında Boşluk favoriye ekler; F2 favorileri açar. Metin girişi dışında q çıkar.\n\nDOKUNMATİK\nSatıra veya düğmeye bir kez dokunun. Kaydırmak için dikey sürükleyin veya büyük ok düğmelerini kullanın. Sürükleme sonunda satır açılmaz. Alanlar, seçenekler, önizlemeler, sonuçlar ve onay dokunulabilirdir. Metin alanında yerleşik klavye; sayı alanında ayrıca sınırlı artır/azalt düğmeleri bulunur. Fiziksel klavye kullanılabilir. Terminalde fare raporlaması açık olmalıdır (Konsole/xterm uyumlu). Fiziksel hedef boyutunu yazı boyutu belirler. Rahat dokunmatik giriş için en az 80×24 kullanın. Sistem parolaları ve mevcut backend terminal soruları terminalin/sistemin giriş yöntemini kullanır.\n\nİSTEKLER\nParametre varsayılanları cihaz okuması değil, istektir. Her seçeneğin etkisi açıklanır. F5 ilgili mevcut durumu, F7 varsa ayrı önizlemeyi açar. F8 formu incelemeye götürür. Ayrıntı yetkiyi ve tam argümanları gösterir; kabuk kullanılmaz. Değişiklikler ayrı Çalıştır işlemi gerektirir. Depolama bakımı, paketler ve yayımlama ayrıca yazılı onay ister. Mevcut backend denetimleri ve onayları yetkilidir. Uygulamayı normal oturum kullanıcısı olarak çalıştırın.\n\nSONUÇLAR VE GİZLİLİK\nOkumalar gerçek süreç çıkışına kadar sahiplenilir; Durdur yalnız okumayı iptal eder. Geri dönmek iptal etmez. Yazmalar normal terminali geri yükler ve uygulama süre aşımı kullanmaz. J JSON'u açar/kapatır; / çıktıda arar; n sonraki eşleşmeyi bulur. S üzerine yazmadan yeni özel 0600 makbuz kaydeder. Geçmiş sınırlıdır ve bellekte kalır; geçmişi açmak komut tekrarlamaz. Raporlar özel veri içerebilir; paylaşmadan önce inceleyin. Bilinmeyen veri sıfır veya yanlış değildir. Komut çıkışı fiziksel donanım desteğini kanıtlamaz.\n\nORTAK İSTEMCİ\nC++ istemci kataloğu, doğrulama, planlar, sorgu sahipliği ve makbuzlar gelecekteki GTK/QML ön yüzleriyle ortaktır. İşlem kimlikleri ve API v1 sabittir. Simülasyon komut çalıştırmaz ve dosya kaydetmez; salt okunur kip değişiklikleri kapatır.");
+        return tr("NAVIGATION\nChoose a category, an action, then Continue. Every action has a guide. The bottom Back and forward buttons always name the next step. Esc goes back without cancelling a background read. Home opens Device settings; H opens session history; / searches all actions. Up/down or j/k select; Page Up/Down scroll; Enter advances. F4 switches Turkish/English. Space marks a favorite on an action guide; F2 opens favorites. q quits outside text entry.\n\nTOUCH\nTap once to open a row or button. Drag vertically or use the large arrow buttons to scroll. A release after dragging does not open a row. Fields, options, previews, results and confirmation are tappable. Text fields have a built-in keyboard; numeric fields also have bounded step buttons. Physical keyboard editing remains available. Terminal mouse reporting must be enabled (Konsole/xterm compatible). Font size determines the physical target size. Use at least 80×24 for comfortable touch input. System passwords and existing backend terminal questions use the terminal/system input method.\n\nREQUESTS\nParameter defaults are requests, not device readings. Every option explains its effect. F5 opens related current state; F7 opens a separate preview when defined. F8 reviews a form. Details shows access and the exact argument vector; no shell is used. Changes require a separate Run action. Storage maintenance, packages and publishing also require typed confirmation. Existing backend checks and confirmations remain authoritative. Run the application as your normal session user.\n\nRESULTS & PRIVACY\nReads stay owned until actual process exit; Stop cancels only a read. Going back never cancels it. Writes restore the normal terminal and have no application timeout. J toggles JSON; / searches output; n finds the next match. S saves a new private 0600 receipt without overwriting. History is bounded and stays in memory; opening history never replays commands. Reports can contain private data: review before sharing. Unknown data is not zero or false. A command exit does not establish physical hardware support.\n\nSHARED CLIENT\nThe C++ client catalog, validation, plans, query ownership and receipts are shared with future GTK/QML frontends. Action IDs and API v1 remain stable. Simulation executes no commands and saves no files; read-only mode disables changes.",
+        "GEZİNME\nKategori, işlem ve Devam sırasını izleyin. Her işlemin açıklaması vardır. Alttaki Geri ve ileri düğmeleri sonraki adımı yazar. Esc arka plan okumasını iptal etmeden geri döner. Home cihaz ayarlarını, H oturum geçmişini açar; / tüm işlemlerde arar. Yukarı/aşağı veya j/k seçer; Page Up/Down kaydırır; Enter ilerler. F4 Türkçe/İngilizce değiştirir. İşlem açıklamasında Boşluk favoriye ekler; F2 favorileri açar. Metin girişi dışında q çıkar.\n\nDOKUNMATİK\nSatıra veya düğmeye bir kez dokunun. Kaydırmak için dikey sürükleyin veya büyük ok düğmelerini kullanın. Sürükleme sonunda satır açılmaz. Alanlar, seçenekler, önizlemeler, sonuçlar ve onay dokunulabilirdir. Metin alanında yerleşik klavye; sayı alanında ayrıca sınırlı artır/azalt düğmeleri bulunur. Fiziksel klavye kullanılabilir. Terminalde fare raporlaması açık olmalıdır (Konsole/xterm uyumlu). Fiziksel hedef boyutunu yazı boyutu belirler. Rahat dokunmatik giriş için en az 80×24 kullanın. Sistem parolaları ve mevcut backend terminal soruları terminalin/sistemin giriş yöntemini kullanır.\n\nİSTEKLER\nParametre varsayılanları cihaz okuması değil, istektir. Her seçeneğin etkisi açıklanır. F5 ilgili mevcut durumu, F7 varsa ayrı önizlemeyi açar. F8 formu incelemeye götürür. Ayrıntı yetkiyi ve tam argümanları gösterir; kabuk kullanılmaz. Değişiklikler ayrı Çalıştır işlemi gerektirir. Depolama bakımı, paketler ve yayımlama ayrıca yazılı onay ister. Mevcut backend denetimleri ve onayları yetkilidir. Uygulamayı normal oturum kullanıcısı olarak çalıştırın.\n\nSONUÇLAR VE GİZLİLİK\nOkumalar gerçek süreç çıkışına kadar sahiplenilir; Durdur yalnız okumayı iptal eder. Geri dönmek iptal etmez. Yazmalar normal terminali geri yükler ve uygulama süre aşımı kullanmaz. J JSON'u açar/kapatır; / çıktıda arar; n sonraki eşleşmeyi bulur. S üzerine yazmadan yeni özel 0600 makbuz kaydeder. Geçmiş sınırlıdır ve bellekte kalır; geçmişi açmak komut tekrarlamaz. Raporlar özel veri içerebilir; paylaşmadan önce inceleyin. Bilinmeyen veri sıfır veya yanlış değildir. Komut çıkışı fiziksel donanım desteğini kanıtlamaz.\n\nORTAK İSTEMCİ\nC++ istemci kataloğu, doğrulama, planlar, sorgu sahipliği ve makbuzlar gelecekteki GTK/QML ön yüzleriyle ortaktır. İşlem kimlikleri ve API v1 sabittir. Simülasyon komut çalıştırmaz ve dosya kaydetmez; salt okunur kip değişiklikleri kapatır.");
     }
     void draw_history() {
         panel(tr("Session history — view only","Oturum geçmişi — yalnız görüntüle"));const int capacity=std::max(1,body_h_/row_h_);list_position(history_.size(),capacity);
@@ -389,7 +396,7 @@ class App {
     }
     void render() {
         int old_rows=rows_,old_cols=cols_;getmaxyx(stdscr,rows_,cols_);if(old_rows!=rows_||old_cols!=cols_)invalidate();
-        body_h_=rows_-11;row_h_=rows_>=28?3:2;max_scroll_=0;hits_.clear();erase();curs_set(0);
+        body_h_=rows_-10;row_h_=rows_>=28?3:2;max_scroll_=0;hits_.clear();erase();curs_set(0);
         if(rows_<18||cols_<64){line(1,1,cols_-2,tr("Terminal too small. Minimum: 64×18. q exits.","Terminal çok küçük. En az 64×18 gerekli. q çıkar."));refresh();return;}
         header();
         switch(page_.view) {
@@ -414,12 +421,13 @@ class App {
         if(query_){query_->cancel();notice_=tr("Stopping the read; waiting for actual process exit.","Okuma durduruluyor; gerçek süreç çıkışı bekleniyor.");}
         if(fake_){fake_.reset();active_->result.cancelled=true;active_->result.exit_status=130;complete();}
     }
-    void start(client::Plan request) {
+    void start(client::Plan request,bool replace=false) {
         if(busy())throw std::runtime_error(tr("A read is still running. Open its result and use Stop before starting another action.","Bir okuma hâlâ çalışıyor. Başka işlemden önce sonucunu açıp Durdur kullanın."));
         if(!writable()&&request.effect!=client::Effect::read)throw std::runtime_error(tr("Changes are disabled in this mode.","Bu kipte değişiklikler kapalı."));
-        auto next=page_;next.view=View::result;next.scroll=0;next.raw=false;next.entry=std::make_shared<Entry>();next.entry->sequence=++sequence_;next.entry->values=request.values;next.entry->result.action_id=request.action_id;next.entry->result.running=true;push(next);active_=page_.entry;
+        auto next=page_;next.view=View::result;next.id=request.action_id;next.scroll=0;next.raw=false;next.entry=std::make_shared<Entry>();next.entry->sequence=++sequence_;next.entry->values=request.values;next.entry->result.action_id=request.action_id;next.entry->result.running=true;
+        if(replace){page_=next;invalidate();notice_.clear();}else push(next);active_=page_.entry;
         if(simulation_){const auto found=fixture_.find(request.action_id);fake_=found==fixture_.end()?FixtureValue{"{\"available\":false,\"reason\":\"no_fixture_result\"}",tr("No synthetic result for this action.","Bu işlem için örnek sonuç yok."),69,100}:found->second;fake_end_=Clock::now()+std::chrono::milliseconds(fake_->delay);return;}
-        if(request.presentation==client::Presentation::capture){try{query_=std::make_unique<client::Query>(request.action_id,request.values);}catch(...){active_->result.running=false;back();throw;}return;}
+        if(request.presentation==client::Presentation::capture){try{query_=std::make_unique<client::Query>(request.action_id,request.values);}catch(const std::exception& failure){active_->result.exit_status=127;active_->result.error=failure.what();complete();}return;}
         terminal_.pause();SignalHandler ignore_int(SIGINT,SIG_IGN),ignore_quit(SIGQUIT,SIG_IGN);
         std::cout<<"\n"<<client::action(request.action_id).title.get(options_.language)<<"\n"<<client::display_command(request.argv)<<"\n"<<tr("Returning after the command exits.\n","Komut çıktıktan sonra geri dönülecek.\n")<<std::flush;
         try{active_->result=client::run_terminal(request.action_id,request.values,request.confirmation_required);}catch(const std::exception& failure){active_->result.running=false;active_->result.exit_status=127;active_->result.error=failure.what();}
@@ -427,6 +435,12 @@ class App {
     }
     void guide(const std::string& id) {
         auto next=page_;next.view=View::guide;next.id=id;next.scroll=0;next.details=false;next.plan.reset();next.phrase.clear();push(next);
+    }
+    void open_action(const std::string& id) {
+        const auto& a=client::action(id);
+        const bool daily=page_.menu=="general"||page_.menu=="power"||page_.menu=="screen"||page_.menu=="connections"||page_.menu=="media"||page_.menu=="updates";
+        if(daily&&a.effect==client::Effect::read&&a.presentation==client::Presentation::capture&&a.parameters.empty())start(client::plan(id,{}));
+        else guide(id);
     }
     void related(bool preview) {
         if(page_.id.empty())return;
@@ -453,7 +467,7 @@ class App {
     void next(bool touch=false) {
         if(input_view()){accept_input();return;}
         switch(page_.view) {
-        case View::menu:{const auto list=items();if(list.empty())return;const auto item=list.at(page_.selected);if(item.action)guide(item.id);else {const auto& m=uke::tui_menu::menu(item.id);if(!m.action.empty()){draft(m.action)["topic"]=m.topic;guide(m.action);}else {Page next;next.menu=item.id;push(next);}}break;}
+        case View::menu:{const auto list=items();if(list.empty())return;const auto item=list.at(page_.selected);if(item.action)open_action(item.id);else {const auto& m=uke::tui_menu::menu(item.id);if(!m.action.empty()){draft(m.action)["topic"]=m.topic;guide(m.action);}else {Page next;next.menu=item.id;push(next);}}break;}
         case View::guide:if(!current().parameters.empty()){draft(page_.id);auto next=page_;next.view=View::form;next.top=next.field=next.selected=0;push(next);}else if(current().effect==client::Effect::read&&current().presentation==client::Presentation::capture)start(client::plan(page_.id,{}));else review();break;
         case View::form:review();break;
         case View::choices:{auto next=page_;next.view=View::choice_info;next.scroll=0;push(next);break;}
@@ -520,6 +534,7 @@ class App {
         case Command::find:begin_input(View::find,find_,touch);break;
         case Command::save:if(!writable())notice_=tr("Saving is disabled in this mode.","Bu kipte kaydetme devre dışı.");else if(page_.entry&&!page_.entry->result.running)begin_input(View::save,"uke-tui-result-"+std::to_string(page_.entry->sequence)+".json",touch);break;
         case Command::cancel:cancel_query();break;
+        case Command::refresh:if(page_.entry&&!page_.entry->result.running&&current().effect==client::Effect::read&&current().presentation==client::Presentation::capture)start(client::plan(page_.entry->result.action_id,page_.entry->values),true);break;
         }
     }
     std::optional<Hit> hit(int y,int x)const {for(auto it=hits_.rbegin();it!=hits_.rend();++it)if(it->contains(y,x))return *it;return {};}
@@ -559,7 +574,7 @@ class App {
         if(key==L'\n'||key==L'\r'||key==KEY_ENTER||key==KEY_RIGHT){if(page_.view==View::form)open_field(false);else next();return;}
         const int delta=key==KEY_DOWN||key==L'j'||key==L'\t'?1:key==KEY_UP||key==L'k'||key==KEY_BTAB?-1:key==KEY_NPAGE?std::max(1,body_h_/row_h_-1):key==KEY_PPAGE?-std::max(1,body_h_/row_h_-1):0;
         if(delta){select_delta(delta);return;}
-        if(page_.view==View::result){if(key==L'J')command({0,0,0,0,Command::raw},false);else if(key==L's'||key==L'S')command({0,0,0,0,Command::save},false);else if(key==L'n')find_next();else if(key==L'x')cancel_query();}
+        if(page_.view==View::result){if(key==L'J')command({0,0,0,0,Command::raw},false);else if(key==L's'||key==L'S')command({0,0,0,0,Command::save},false);else if(key==L'n')find_next();else if(key==L'x')cancel_query();else if(key==L'r'||key==L'R')command({0,0,0,0,Command::refresh},false);}
         if(page_.view==View::guide&&(key==L'd'||key==L'D'))command({0,0,0,0,Command::details},false);
         if(page_.view==View::guide&&key==L' ')command({0,0,0,0,Command::favorite},false);
         if(page_.view==View::review){if(key==L'd'||key==L'D'){page_.details=!page_.details;page_.scroll=0;}else if(key==L'c'||key==L'C')begin_input(View::confirm,page_.phrase,false);}

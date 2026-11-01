@@ -79,9 +79,11 @@ install -Dm644 src/uke-microphone.lua %{buildroot}%{_datadir}/wireplumber/script
 install -Dm644 src/uke-microphone-policy.lua %{buildroot}%{_datadir}/wireplumber/scripts/lib/uke-microphone-policy.lua
 install -Dm644 packaging/96-uke-microphone-policy.conf %{buildroot}%{_datadir}/wireplumber/wireplumber.conf.d/96-uke-microphone-policy.conf
 install -Dm755 build/uke-control-tui %{buildroot}%{_bindir}/uke-control-tui
+install -Dm755 build/uke-control-request %{buildroot}%{_libexecdir}/uke-control/frontend-request
 install -Dm755 build/libuke-control-client.so.1 %{buildroot}%{_libdir}/libuke-control-client.so.1
 ln -s libuke-control-client.so.1 %{buildroot}%{_libdir}/libuke-control-client.so
 install -Dm644 src/client.hpp %{buildroot}%{_includedir}/uke-control/client.hpp
+install -Dm644 src/frontend.hpp %{buildroot}%{_includedir}/uke-control/frontend.hpp
 install -Dm644 build/uke-control-client.pc %{buildroot}%{_libdir}/pkgconfig/uke-control-client.pc
 install -Dm644 packaging/uke-control.bash %{buildroot}%{_datadir}/bash-completion/completions/uke-control
 install -Dm755 build/uke-control-rgb %{buildroot}%{_libexecdir}/uke-control/rgb-led
@@ -188,6 +190,7 @@ fi
 %{_libexecdir}/uke-control/packages
 %{_libexecdir}/uke-control/resize-system
 %{_libexecdir}/uke-control/layout-manager
+%{_libexecdir}/uke-control/frontend-request
 %{_udevrulesdir}/91-uke-control-layout.rules
 %{_libexecdir}/uke-control/vrr-min-load
 %{_prefix}/lib/modprobe.d/60-uke-control-vrr.conf

@@ -1,6 +1,6 @@
 # Uke Control terminal interface and shared client
 
-Date: 2026-10-30. Software: Uke Control 2.6.0, native C++20 with ncursesw.
+Date: 2026-11-01. Software: Uke Control 2.8.0 source, native C++20 with ncursesw.
 
 Install the optional `uke-control-tui` package and run as a normal session user:
 
@@ -23,28 +23,35 @@ rows. `--no-color` preserves selection through text attributes.
 The interface uses one task list, a small command bar and separate action guides.
 The layout is inspired by [bluetuith's menus](https://github.com/bluetuith-org/bluetuith);
 no Go code, BlueZ client or other application is embedded. The C++ client retains
-all 124 existing action IDs and API v1. UI menus are independent of API categories.
+all existing action IDs and API v1. UI menus are independent of API categories.
 
 | Category | Contents |
 | --- | --- |
-| Device overview | General status, workload, chipset and firmware information |
-| Power & battery | Battery, common charging settings, advanced charging, sleep |
-| Display & desktop | Display links, brightness, rotation, flashlight and LED |
-| Connections | USB, Ethernet, NFC and focused Wi-Fi/Bluetooth report shortcuts |
-| Sensors & touch | Sensor capabilities/readings and attended input diagnostics |
-| Audio & camera | Existing audio and camera observations |
-| Storage & recovery | Inventory, roots, swap and guarded maintenance |
-| Updates | Repository channel, previews, synchronization and updates |
-| Diagnostics & support | Snapshots, focused reports, export and publication |
-| Developer tools | API information and optional development tests |
+| Device status | Selected battery, device and workload observations |
+| Power & battery | Battery readings/health, charging preference/limit and wake permissions |
+| Display & lights | Original KDE brightness/rotation controls, flashlight and LED |
+| Connections | USB/Ethernet observations and NFC permission |
+| Audio & sensors | Microphone channel, audio/camera observations and sensor readings |
+| Updates | Current channel, update preview and installation |
+| Advanced | Diagnostics, expert controls, storage, recovery and developer tests |
 
-Wi-Fi/Bluetooth shortcuts preselect the existing diagnostic topic. They do not
+All seven areas fit at 80×24. Daily pages contain an explicit set of reviewed
+tasks. Newly added catalog entries stay in the appropriate advanced area until
+their daily workflow is reviewed. Expert charging admission/setup, display
+lanes/DSC/VRR, USB roles/serial export and optional input tests are kept there.
+Storage and recovery are separate advanced pages; boot/partition maintenance
+adds a data-loss/restart warning and retains typed and backend confirmations.
+
+Wi-Fi/Bluetooth shortcuts under Advanced → Diagnostics & support preselect the
+existing diagnostic topic. They do not
 scan, discover, pair, connect or introduce new radio controls. Reports retain their
 current-directory file contract and a separate review before creation.
 
-Select a category, select an action and read its guide. Continue opens parameters
+Select an area and an action. On daily pages, selecting a parameter-free captured
+observation reads its actual provider directly. Other actions open their guide.
+Continue opens parameters
 or a separate request review; Read starts an explicitly selected observation.
-Back restores the previous screen, selection and scroll position. Categories/Home
+Back restores the previous screen, selection and scroll position. Home
 returns to the root menu. Back at the root does not exit; the visible Quit button
 or q exits. No device observation starts from highlighting or opening a guide.
 
@@ -62,6 +69,7 @@ or q exits. No device observation starts from highlighting or opening a guide.
 | F5 / F7 | Open related current-state / preview guide, when defined |
 | F8 | Validate a form and review its request |
 | F9 | Reopen the running read |
+| R on a completed captured read | Refresh with the same validated parameters |
 | D / C in review | Show exact arguments / edit required confirmation |
 | H | View bounded session history |
 | q | Quit outside text entry; stop an owned read first |
@@ -104,7 +112,11 @@ on that result requests cancellation. Only one read runs at a time. Writes resto
 the normal terminal and have no TUI timeout. No periodic device polling is added.
 
 Results distinguish completion, nonzero exit, cancellation, timeout and partial
-output. J toggles readable/raw JSON; slash searches output and n finds the next
+output. Empty output has an explicit message. Failed reads keep provider details
+and offer an explicit refresh. Refresh replaces the current result page, retains
+the old receipt in session history and never repeats a mutation or foreground
+operation. Related buttons appear only when an observation/preview exists.
+J toggles readable/raw JSON; slash searches output and n finds the next
 match. Unknown/null is distinct from zero, negative numbers and false. Control,
 escape and directional override characters are rendered visibly.
 
@@ -144,13 +156,15 @@ Fixture mode disables every command, sudo, device query, mutation and receipt
 save. Missing results are unavailable. A fixture must be a bounded regular file;
 it cannot supply executable callbacks.
 
-Native PTY/libvterm checks cover action placement, keyboard navigation, SGR taps,
+Native PTY/libvterm checks cover all 126 action placements, daily/advanced
+separation, direct daily reads, repeated refresh/back, empty/error results,
+maintenance confirmation refusal, keyboard navigation, SGR taps,
 dragging, resize invalidation, forms, numeric bounds, typed confirmation, Unicode,
 search, history, cancellation and terminal restoration. Xvfb/xterm screenshots are
 synthetic visual evidence. Neither establishes physical finger-touch acceptance,
 backend control success or hardware qualification on POCO Pad X1.
 
-## Shared API for GTK and QML
+## Shared API for GTK and Qt
 
 `libuke-control-client.so.1` and `<uke-control/client.hpp>` contain no ncurses,
 GTK, Qt, privileged backend or desktop dependency. Link C++20 clients using
@@ -171,9 +185,19 @@ only captured read actions, closes inherited descriptors, drains nonblocking
 bounded pipes, and retains the process-group leader until completion. Integrators
 must not independently reap its child. Destruction attempts bounded cleanup and
 leaves a reaper for a killed uninterruptible child. Foreground `run_terminal`
-requires a real terminal and explicit approval for mutations; a GTK/QML application
-needs its own reviewed terminal/authentication adapter. Do not run a blocking
-foreground writer on the GUI thread.
+requires a real terminal and explicit approval for mutations. The native
+[GTK](../uke-control-gtk/README.md) and [Qt](../uke-control-qt/README.md) applications
+reuse the header-only `<uke-control/frontend.hpp>` adapter after native review.
+It revalidates action ID/values and opens an original distribution terminal with
+the fixed ordinary-user `frontend-request` companion. The companion revalidates
+the request again and uses the existing `run_terminal` authentication path, which
+adds `sudo --` only for root backend actions. It keeps the actual command exit
+status visible until Enter closes the terminal. No shell, new D-Bus
+method or privilege policy is added. Its `launched` result means only that the
+terminal process started; the backend operation may still fail or remain pending.
+The applications ask users to inspect that terminal and current state afterward.
+They do not automatically replay requests or kill foreground work when closing.
+Build consumers with thread support. Do not run foreground writers on GUI threads.
 
 For clients that do not link C++ directly:
 
