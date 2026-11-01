@@ -1,0 +1,15 @@
+Source: uke-speaker-orientation
+Section: admin
+Priority: optional
+Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13), g++, make, pkg-config, libasound2-dev, libwayland-dev, libsystemd-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/MCC45TR/uke-linux-hardware-support
+
+Package: uke-speaker-orientation
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, uke-displayport-audio (>= 0.1.0-0ubuntu1~tenacious1)
+Description: display-aware Uke speaker rotation
+ Shared Uke component source with native Debian integration.
+ Package installation does not establish physical device qualification.
