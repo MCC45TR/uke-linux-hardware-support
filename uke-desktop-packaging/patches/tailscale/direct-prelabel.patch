@@ -1,0 +1,53 @@
+--- a/net/dns/direct.go
++++ b/net/dns/direct.go
+@@ -280,7 +280,7 @@
+ 		err := m.fs.Rename(old, new)
+ 		if err == nil {
+ 			if new == resolvConf {
+-				m.relabelResolvConf()
++				m.relabelResolvConf(resolvConf)
+ 			}
+ 			return nil
+ 		}
+@@ -315,7 +315,7 @@
+ 		}
+ 	}
+ 	if new == resolvConf {
+-		m.relabelResolvConf()
++		m.relabelResolvConf(resolvConf)
+ 	}
+ 	return nil
+ }
+@@ -323,10 +323,10 @@
+ var restoreconPath lazy.SyncValue[string] // path to restorecon, or "" if absent
+ 
+ // relabelResolvConf restores the policy-default SELinux context on
+-// /etc/resolv.conf. Best effort: only runs when SELinux is enforcing. See:
++// a resolver file. Best effort: only runs when SELinux is enforcing. See:
+ //
+ //	https://github.com/tailscale/tailscale/issues/20149.
+-func (m *directManager) relabelResolvConf() {
++func (m *directManager) relabelResolvConf(path string) {
+ 	if runtime.GOOS != "linux" {
+ 		return
+ 	}
+@@ -347,7 +347,7 @@
+ 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+ 	defer cancel()
+ 	// m.fs may be rooted at a test prefix; restorecon needs the real path.
+-	actualPath := m.fs.ActualPath(resolvConf)
++	actualPath := m.fs.ActualPath(path)
+ 	if out, err := exec.CommandContext(ctx, restorecon, actualPath).CombinedOutput(); err != nil {
+ 		m.logf("dns: restorecon of %q failed: %v, output: %s", actualPath, err, bytes.TrimSpace(out))
+ 		m.health.SetUnhealthy(selinuxRelabelWarnable, nil)
+@@ -637,6 +637,10 @@
+ 	if err := fs.Chmod(tmpName, perm); err != nil {
+ 		return fmt.Errorf("atomicWriteFile: Chmod: %w", err)
+ 	}
++	if filename == resolvConf {
++		// Fedora's resolver context also covers these temporary filenames.
++		m.relabelResolvConf(tmpName)
++	}
+ 
+ 	return m.rename(tmpName, filename)
+ }

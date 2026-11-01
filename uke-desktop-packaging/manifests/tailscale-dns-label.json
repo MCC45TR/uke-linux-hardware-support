@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "package": "tailscale",
+  "version": "1.104.4",
+  "release": "1.1",
+  "fedora": 46,
+  "architecture": "aarch64",
+  "source_rpm_url": "https://kojipkgs.fedoraproject.org/packages/tailscale/1.104.4/1.fc46/src/tailscale-1.104.4-1.fc46.src.rpm",
+  "source_rpm_sha256": "677257c81e93ec8bfd9f433dd55df6e5a8f0f8352fe9f4c05f95940283ece5e5",
+  "signed_source_url": "https://kojipkgs.fedoraproject.org/packages/tailscale/1.104.4/1.fc46/data/signed/91211fce/src/tailscale-1.104.4-1.fc46.src.rpm",
+  "signed_source_sha256": "241b1e4bf272b5b71a94d44108147fdf54912007e6eadc686bf7ecd5c9658424",
+  "source_payload_sha256": "4eab092301b6cf6104cf3883e525f6f70e7dc4f4e11647bcad543bfaab96ce9d",
+  "fedora_key_fingerprint": "D924B10D3E810DABDD8B56B596E7E91491211FCE",
+  "vendor_archive_sha256": "db18dec7a86671117a673505b405da8262e7b24f1694173cf3b6034646a36eba",
+  "upstream_commit": "27047635f237d1f3e0b08c0f487674757f30d2f7",
+  "upstream_tag": "v1.104.4",
+  "upstream_direct_sha256": "9c37c36f9d46b6fc29eb8a11f948d5f8e25c75395b0101a46024167832acd32b",
+  "scope": "Label the complete resolver temporary before atomic publication; preserve the original backup, fallback, preferences and SELinux policy.",
+  "native_fixture": "Selected production Go files with external-tool substitutes and synthetic user xattrs; original-source negative control required.",
+  "manual_source_recipe": true,
+  "python_target_payload": false,
+  "physical_acceptance": false
+}
