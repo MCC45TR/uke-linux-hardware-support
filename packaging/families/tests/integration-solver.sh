@@ -14,7 +14,9 @@ curl --fail --location --silent --show-error --max-time 60 "$archive/copr-pubkey
 rpmkeys --dbpath "$fixture/keys" --import "$fixture/copr-pubkey.gpg"
 rpmkeys --dbpath "$fixture/keys" --list | grep -qi '^2204a661ea630a5303500085538797e72a3e4eca '
 while read -r hash file; do
+    file=${file#./}
     [[ $file == *.rpm && $file != *.src.rpm ]] || continue
+    [[ $hash =~ ^[a-f0-9]{64}$ && $file =~ ^[A-Za-z0-9+_.~^-]+[.]rpm$ ]]
     curl --fail --location --silent --show-error --max-time 120 "$archive/${file#./}" -o "$fixture/baseline/${file#./}"
     printf '%s  %s\n' "$hash" "$fixture/baseline/${file#./}" | sha256sum -c -
     rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/baseline/${file#./}"
@@ -23,6 +25,7 @@ while IFS=$'\t' read -r id group; do
     base="https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/$id-$group/"
     curl --fail --location --silent --show-error --max-time 60 "${base}results.json" -o "$fixture/results.json"
     while IFS= read -r file; do
+        [[ $file =~ ^[A-Za-z0-9+_.~^-]+[.]rpm$ ]]
         curl --fail --location --silent --show-error --max-time 120 "$base$file" -o "$fixture/candidate/$file"
         rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/candidate/$file"
     done < <(jq -r '.packages[]|select(.arch!="src")|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
