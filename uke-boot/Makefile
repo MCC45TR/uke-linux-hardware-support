@@ -2,12 +2,13 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.8.15
+version := 1.8.16
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
 	jq -e '.device=="uke" and .partitions.esp=="esp" and .partitions.linux=="linux" and .filesystem_labels.esp=="UKE_ESP" and .filesystem_labels.linux=="UKE_LINUX" and .partition_offsets==null and .automatic_activation==false and .android_partition_writes==false and .uefi_binary_included==false and .handoff_accepted==false' src/profiles/image-contract.json >/dev/null
 	bash tests/update-packaging.sh
+	bash tests/shutdown-trace.sh
 	test "$$(grep -Fc '# @bluetooth-migration-save' packaging/uke-boot-integration.spec)" = 1
 	test "$$(grep -Fc '# @bluetooth-migration-restore' packaging/uke-boot-integration.spec)" = 1
 	test "$$(grep -Fc '# @touch-migration-save' packaging/uke-boot-integration.spec)" = 1

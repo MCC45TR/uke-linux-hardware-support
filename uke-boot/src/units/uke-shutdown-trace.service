@@ -1,0 +1,30 @@
+[Unit]
+Description=Temporary Uke USB role and host teardown call-path trace
+DefaultDependencies=no
+Requires=sys-kernel-tracing.mount
+After=sys-kernel-tracing.mount systemd-journald.socket multi-user.target
+Before=umount.target
+Conflicts=umount.target
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/sys/kernel/tracing/kprobe_events
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/senemos-uke/uke-shutdown-trace
+TimeoutStopSec=5
+UMask=0077
+WorkingDirectory=/
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/sys/kernel/tracing
+PrivateTmp=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_SYS_ADMIN
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=uke-shutdown-trace
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=2000

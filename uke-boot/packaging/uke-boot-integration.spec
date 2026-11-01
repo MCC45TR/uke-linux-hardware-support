@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.15
+Version: 1.8.16
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -136,6 +136,7 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
 %check
 cmp src/profiles/60-uke-security.conf %{buildroot}%{_prefix}/lib/sysctl.d/60-uke-security.conf
+bash tests/shutdown-trace.sh
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
 bash tests/userdata-update.sh
@@ -180,6 +181,8 @@ install -d %{buildroot}%{_prefix}/lib/firmware/novatek/uke
 ln -s ../../qcom/uke/touch/csot/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
 install -Dm644 src/units/30-uke-plasmalogin-ready.conf %{buildroot}%{_unitdir}/plasmalogin.service.d/30-uke-native-drm.conf
+install -Dm755 src/shutdown-trace.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-shutdown-trace
+install -Dm644 src/units/uke-shutdown-trace.service %{buildroot}%{_unitdir}/uke-shutdown-trace.service
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-native-power-profile-ready %{buildroot}%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 install -Dm644 src/units/uke-native-power-profile-ready.service %{buildroot}%{_unitdir}/uke-native-power-profile-ready.service
@@ -233,6 +236,9 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %preun
+if [ "$1" -eq 0 ] && [ -d /run/systemd/system ]; then
+    systemctl stop uke-shutdown-trace.service || :
+fi
 %systemd_preun uke-touchscreen.service
 
 %postun
@@ -240,6 +246,10 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %posttrans
+# Temporary diagnosis for this build, without boot enablement or a reboot.
+if [ -d /run/systemd/system ]; then
+    systemctl --no-block start uke-shutdown-trace.service || :
+fi
 # @bluetooth-migration-restore
 # @touch-migration-restore
 
@@ -286,6 +296,7 @@ fi
 %doc docs/USB-TYPEC.md
 %doc docs/NATIVE-POWER-PROFILES.md
 %doc docs/TOUCH-RUNTIME.md
+%doc docs/SHUTDOWN-TRACE.md
 %{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 %{_libexecdir}/senemos-uke/uke-touchscreen
 %{_libexecdir}/senemos-uke/uke-touch-thp
@@ -311,6 +322,8 @@ fi
 %{_unitdir}/chronyd.service.d/70-uke-clock.conf
 %dir %{_unitdir}/plasmalogin.service.d
 %{_unitdir}/plasmalogin.service.d/30-uke-native-drm.conf
+%{_libexecdir}/senemos-uke/uke-shutdown-trace
+%{_unitdir}/uke-shutdown-trace.service
 %{_presetdir}/80-uke-boot.preset
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
