@@ -1,0 +1,78 @@
+Subject: [PATCH] pulse: use the connected monitor name for the Uke DP card
+
+The digital-only Uke frontend has a generic PCM name. Use the actual ELD product
+from the selected route for its Pulse sink and port labels. Keep other cards
+and absent/empty ELD metadata unchanged. No EDID or hardware control is changed.
+
+--- a/src/modules/module-protocol-pulse/collect.c
++++ b/src/modules/module-protocol-pulse/collect.c
+@@ -442,6 +442,14 @@
+ 					pi->availability_group = value;
+ 				else if (spa_streq(key, "port.type"))
+ 					pi->type = port_type_value(value);
++				else if (spa_streq(key, PW_KEY_DEVICE_PRODUCT_NAME) && value[0] &&
++						card->info && ((struct pw_device_info *)card->info)->props &&
++						spa_streq(spa_dict_lookup(((struct pw_device_info *)card->info)->props,
++							"api.alsa.card.longname"), "POCO-Pad-X1-HDMI")) {
++					/* Uke's digital frontend has no monitor name of its own. */
++					pi->monitor_name = value;
++					pi->description = value;
++				}
+ 			}
+ 			spa_pod_parser_pop(&prs, &f[0]);
+ 			break;
+--- a/src/modules/module-protocol-pulse/collect.h
++++ b/src/modules/module-protocol-pulse/collect.h
+@@ -110,6 +110,7 @@
+ 	uint32_t direction;
+ 	const char *name;
+ 	const char *description;
++	const char *monitor_name;
+ 	uint32_t priority;
+ 	uint32_t available;
+ 
+--- a/src/modules/module-protocol-pulse/pulse-server.c
++++ b/src/modules/module-protocol-pulse/pulse-server.c
+@@ -3763,6 +3763,9 @@
+ 	uint32_t flags;
+ 	struct card_info card_info = CARD_INFO_INIT;
+ 	struct device_info dev_info;
++	struct port_info *port_info, *pi;
++	const char *active_port_name = NULL;
++	uint32_t n_ports, n;
+ 	size_t size;
+ 
+ 	if (!pw_manager_object_is_sink(o) || info == NULL || info->props == NULL)
+@@ -3804,6 +3807,16 @@
+ 	if (card)
+ 		collect_card_info(card, &card_info);
+ 
++	if (card_info.n_ports > MAX_ALLOCA_SIZE / sizeof(*port_info))
++		return -ENOMEM;
++	port_info = alloca(card_info.n_ports * sizeof(*port_info));
++	n_ports = collect_port_info(card, &card_info, &dev_info, port_info, &active_port_name);
++	for (n = 0; n < n_ports; n++) {
++		pi = &port_info[n];
++		if (pi->monitor_name && spa_streq(pi->name, active_port_name))
++			desc = pi->monitor_name;
++	}
++
+ 	flags = SINK_LATENCY | SINK_DYNAMIC_LATENCY | SINK_DECIBEL_VOLUME;
+ 	if (!pw_manager_object_is_virtual(o))
+ 		flags |= SINK_HARDWARE;
+@@ -3852,15 +3865,6 @@
+ 			TAG_INVALID);
+ 	}
+ 	if (client->version >= 16) {
+-		uint32_t n_ports, n;
+-		struct port_info *port_info, *pi;
+-		const char *active_port_name = NULL;
+-
+-		if (card_info.n_ports > MAX_ALLOCA_SIZE / sizeof(*port_info))
+-			return -ENOMEM;
+-		port_info = alloca(card_info.n_ports * sizeof(*port_info));
+-		n_ports = collect_port_info(card, &card_info, &dev_info, port_info, &active_port_name);
+-
+ 		message_put(m,
+ 			TAG_U32, n_ports,			/* n_ports */
+ 			TAG_INVALID);

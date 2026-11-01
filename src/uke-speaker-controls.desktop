@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Speaker Hardware Controls
+Name[tr]=Hoparlör Donanım Denetimleri
+Comment=Adjust the four Uke speaker amplifiers with KDE KMix
+Comment[tr]=Dört Uke hoparlörünü KDE KMix ile ayrı ayarlayın
+Exec=kmix --backends=ALSA --nosystemtray
+TryExec=kmix
+Icon=audio-volume-high
+Categories=Settings;HardwareSettings;
+OnlyShowIn=KDE;
+Terminal=false
