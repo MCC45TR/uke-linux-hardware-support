@@ -1,0 +1,101 @@
+{
+  "schema": "uke-kernel-abi-gap-plan-v1",
+  "recorded_date": "2026-11-01",
+  "source_commit": "fcbdae4b757732f0f0e3162c610f19abae290832",
+  "producer_run": 41331215146,
+  "receipt": "verified-artifacts/1006-native.json",
+  "scope": "Eleven unresolved binary dependency chains; not eleven distinct kernel ABIs",
+  "complete_runtime_closures_from_inert_artifacts": 0,
+  "new_kernel_build_required_for_artifact_packaging": false,
+  "runtime_providers_admitted": false,
+  "packages": [
+    {
+      "package": "uke-charge-control",
+      "gates": ["uke-kernel-charge-admission-abi-1"],
+      "existing_evidence": "1006 enables UKE_THRESHOLDS/CURRENT; signed qcom_battmgr has the guarded settings, protection, lease and current interface symbols. Patch0071 explicitly describes development-only admission.",
+      "remaining_work": ["Bind the live exact boot cohort and read-only API/protection inventory", "Qualify firmware/readback/autonomous protection and per-boot leases before any control operation"],
+      "blocker_classes": ["boot-integration", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-core-meta",
+      "gates": ["uke-boot-cohort-v1", "uke-control", "uke-control-apt-transactions-abi-1", "uke-kernel-update", "uke-pipewire-audio-abi-1", "uke-boot-factory-bluetooth-abi-1", "uke-boot-factory-wlan-abi-1", "uke-adaptive-display", "uke-kernel-platform-profile-qos-abi-1 | uke-power-profile-backend", "transitive child gates"],
+      "existing_evidence": "One matched full1006 Image/DT/module/initramfs cohort exists, including built-in Uke platform-profile support. Four inert DEB roles can preserve those bytes.",
+      "remaining_work": ["Implement APT transactions, finalizer/update and remaining userspace ports", "Qualify root security/layout, runtime OEM DT, selectors, rollback and child gates", "Establish firmware redistribution rights or admitted local inputs for factory handoff"],
+      "blocker_classes": ["userspace-port", "boot-integration", "firmware-rights-or-local-input", "security-decision", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-displayport-audio",
+      "gates": ["pipewire-pulse >= 1.6.10", "uke-pipewire-audio-abi-1"],
+      "existing_evidence": "The current policy DEB is built; kernel artifact repackaging cannot supply the patched PipeWire userspace ABI.",
+      "remaining_work": ["Port and qualify the shared PipeWire patch family and original version contract", "Test DP audio lifecycle with the admitted kernel/firmware/root"],
+      "blocker_classes": ["userspace-port", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-front-color",
+      "gates": ["uke-ssc-firmware-inputs-abi-1 (via uke-ssc-fileservice)"],
+      "existing_evidence": "Native service, libssc and SensorProxy build evidence exists; no SSC firmware is inside the verified embedded initramfs.",
+      "remaining_work": ["Establish exact SSC firmware/config redistribution rights or a separately admitted local stock input route", "Qualify fileservice ownership/lifecycle and real sensor behavior"],
+      "blocker_classes": ["firmware-rights-or-local-input", "boot-integration", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-gpu-defaults",
+      "gates": ["uke-kernel-render-only-abi-1", "uke-gpu-firmware-abi-1"],
+      "existing_evidence": "Signed1006 MSM has the actual separate_gpu_kms boolean module parameter used by the shipped policy. Its vermagic is 7.3.1-1006u1.",
+      "remaining_work": ["Bind the module/options to the live exact cohort and qualify render-only behavior", "Establish exact GPU firmware rights or admitted local inputs"],
+      "blocker_classes": ["boot-integration", "firmware-rights-or-local-input", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-offline-charge",
+      "gates": ["uke-boot-offline-charge-abi-1"],
+      "existing_evidence": "The native offline-charge helper is inventoried in the already verified embedded initramfs, with matching base provenance and module cohort.",
+      "remaining_work": ["Qualify charger-mode marker, selector, root handoff/security, failure behavior and recovery route", "Test actual offline charging without weakening shared guards"],
+      "blocker_classes": ["boot-integration", "security-decision", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-proximity-capture",
+      "gates": ["uke-ssc-firmware-inputs-abi-1 (via uke-ssc-fileservice)"],
+      "existing_evidence": "Native read-only capture and SSC userspace build evidence exists; the kernel archive is not an SSC firmware provider.",
+      "remaining_work": ["Resolve the exact SSC firmware/config input rights and lifecycle", "Qualify real sensor capture with the admitted provider"],
+      "blocker_classes": ["firmware-rights-or-local-input", "boot-integration", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-speaker-controls",
+      "gates": ["uke-kernel-speaker-controls-abi-1"],
+      "existing_evidence": "1006 includes the signed FS19xx module, shared smart-amplifier/rotation source patches and SND_SOC_UKE configuration. Module presence alone does not prove the mixer API or physical routing.",
+      "remaining_work": ["Bind the live exact cohort and validate the expected control names/read-only topology", "Qualify mixer routing/lifecycle and speaker behavior with admitted firmware"],
+      "blocker_classes": ["boot-integration", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-speaker-orientation",
+      "gates": ["uke-pipewire-audio-abi-1 (via uke-displayport-audio)"],
+      "existing_evidence": "Native orientation policy build evidence exists; its transitive PipeWire gate is unaffected by kernel artifact packaging.",
+      "remaining_work": ["Complete the shared PipeWire source port and exact ABI dependency", "Qualify orientation/audio lifecycle on an admitted root"],
+      "blocker_classes": ["userspace-port", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-ssc-fileservice",
+      "gates": ["uke-ssc-firmware-inputs-abi-1"],
+      "existing_evidence": "Native fileservice/cache helper packages and lifecycle guards are qualified as builds. No matching firmware/config payload admission exists.",
+      "remaining_work": ["Resolve individually proven firmware/config redistribution rights or admitted local stock inputs", "Qualify ownership, permissions, fallback and read-only persist lifecycle"],
+      "blocker_classes": ["firmware-rights-or-local-input", "boot-integration", "hardware-qualification"],
+      "runtime_closed": false
+    },
+    {
+      "package": "uke-touchscreen",
+      "gates": ["uke-kernel-touch-thp-abi-1"],
+      "existing_evidence": "1006 enables TOUCHSCREEN_NT36532_UKE and contains the matching signed NT36532 module; the pinned Apache processing inputs have a native userspace build result.",
+      "remaining_work": ["Bind the live cohort and validate the exact device/ioctl/geometry contract", "Retain private-input admission and qualify physical touch without distributing calibration"],
+      "blocker_classes": ["boot-integration", "hardware-qualification"],
+      "runtime_closed": false
+    }
+  ]
+}

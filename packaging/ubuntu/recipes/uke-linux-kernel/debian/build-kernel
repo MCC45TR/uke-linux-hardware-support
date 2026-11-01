@@ -1,6 +1,10 @@
 #!/bin/bash
 # Only invoked by an approved native build, never by source preparation.
 set -euo pipefail
+if [[ " ${DEB_BUILD_PROFILES:-} " == *" pkg.uke-linux-kernel.artifact-trial "* ]]; then
+ echo 'Unsupported: artifact-trial packaging cannot invoke the kernel source producer.' >&2
+ exit 78
+fi
 export LC_ALL=C ARCH=arm64 LLVM=1 LLVM_IAS=1
 root=$PWD
 kernel=$root/build/linux-7.3.1

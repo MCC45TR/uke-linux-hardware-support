@@ -27,6 +27,10 @@ while IFS=$'\t' read -r package component version; do
    [[ $(grep -c '\$(CXX).*build-tools/' "$debian/rules") == 6 ]]
    [[ ! -e $stage/guest-fedora-inputs.tar.xz ]] ;;
   uke-linux-kernel)
+   for tool in package-boot-trial inspect-boot-trial inspect-embedded-initramfs validate-cohort verify-native-artifact-receipt; do
+    cmp "$root/packaging/ubuntu/$tool.sh" "$debian/boot-trial-tools/$tool.sh"
+   done
+   cmp "$root/packaging/ubuntu/verified-artifacts/1006-native.json" "$debian/boot-trial-tools/1006-native.json"
    mkdir -m700 "$work/kernel-keyring"
    gpg --batch --dearmor < "$stage/inputs/linux-stable.asc" > "$work/kernel-keyring/linux.gpg"
    [[ ! -e $stage/inputs/linux-7.3.1.tar.xz ]]

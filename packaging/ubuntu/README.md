@@ -59,7 +59,7 @@ binary packages. Candidate packages are not deployable kernel packages.
 | uke-core-meta | Ubuntu dependency graph and unqualified profile | Data-only DEB/payload checked |
 | uke-orangefox-recovery | Existing Android v003 artifacts, exact checksums and source/license records; no install hooks | Data-only delivery, not recovery compilation |
 | uke-image-tools | Six original native image/payload tools from the shared builder source | Source only; no system image composition |
-| uke-linux-kernel | Exact experimental1006 source; coordinated candidates and explicit complete producer | Native kernel/boot artifact inspection and inert trial DEB readback pass; root/boot activation and standard source-package integration pending |
+| uke-linux-kernel | Exact experimental1006 source; default candidates and explicit complete producer | Native cohort inspection and four-role artifact-profile Debhelper build pass; root/boot activation and normal complete source-package integration pending |
 | uke-speaker-firmware | Exact separately attributed FS19xx preset, OEM notice and conffile preservation | Data-only DEB/payload checked |
 
 Native server results are recorded in [NATIVE-BUILDS.md](NATIVE-BUILDS.md) and
@@ -140,6 +140,10 @@ See the [kernel candidate boundary](KERNEL-SOURCE.md),
 `publication-gates.json`. The ordinary kernel recipe emits first-pass candidates;
 the complete producer is an explicit server trial route, with no root-image or
 activation admission.
+
+The [artifact-only Debian profile](ARTIFACT-PROFILE.md) reuses the existing
+native1006 cohort without recompilation. The [eleven unresolved binary
+chains](ABI-GAPS.md) retain their real runtime gates.
 
 Implementation still needed: Control's APT/dpkg transaction/channel backend;
 current source-family delta reconciliation and power-family release alignment;

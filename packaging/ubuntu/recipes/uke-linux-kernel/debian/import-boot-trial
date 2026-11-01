@@ -1,0 +1,72 @@
+#!/bin/bash
+# Explicit private artifact-packaging profile. Never calls a compiler, native
+# preparer, dracut, image producer, installer, selector or key generator.
+set -euo pipefail
+export LC_ALL=C
+[[ " ${DEB_BUILD_PROFILES:-} " == *" pkg.uke-linux-kernel.artifact-trial "* ]]
+tools=$PWD/debian/boot-trial-tools
+receipt=$tools/1006-native.json
+case ${1:-} in
+ prepare)
+  for name in UKE_TRIAL_COHORT UKE_TRIAL_EVIDENCE UKE_TRIAL_EARLY_MODULES UKE_TRIAL_LAYOUT; do
+   [[ -n ${!name:-} ]] || { echo "Unsupported: explicit $name is required; no source build started." >&2; exit 78; }
+  done
+  [[ $UKE_TRIAL_LAYOUT == singleboot || $UKE_TRIAL_LAYOUT == multiboot ]]
+  [[ -f $receipt && $(dpkg-parsechangelog -ldebian/changelog -SVersion) == $(jq -r .version "$receipt") ]]
+  [[ ! -e build/artifact-trial ]]
+  bash "$tools/verify-native-artifact-receipt.sh" "$receipt" "$UKE_TRIAL_COHORT" "$UKE_TRIAL_EVIDENCE" "$UKE_TRIAL_EARLY_MODULES"
+  # Snapshot only pinned files, then verify the copied bytes before inspection.
+  # Extra caller files (including keys or calibration) cannot enter staging.
+  snapshot=$PWD/build/artifact-trial/snapshot
+  mkdir -p "$snapshot/cohort" "$snapshot/evidence"
+  while IFS=$'\t' read -r scope path; do
+   case $scope in
+    cohort) from=$UKE_TRIAL_COHORT/$path; to=$snapshot/cohort/$path;;
+    evidence) from=$UKE_TRIAL_EVIDENCE/$path; to=$snapshot/evidence/$path;;
+    early) from=$UKE_TRIAL_EARLY_MODULES; to=$snapshot/early-modules.list;;
+   esac
+   install -Dm644 "$from" "$to"
+  done < <(jq -r '.files[]|[.scope,.path]|@tsv' "$receipt")
+  bash "$tools/verify-native-artifact-receipt.sh" "$receipt" "$snapshot/cohort" "$snapshot/evidence" "$snapshot/early-modules.list"
+  bash "$tools/package-boot-trial.sh" "$snapshot/cohort" "$snapshot/evidence" "$snapshot/early-modules.list" "$UKE_TRIAL_LAYOUT" "$PWD/build/artifact-trial/reference"
+  for package in uke-kernel-trial-core uke-kernel-trial-dtbs uke-kernel-trial-modules uke-kernel-trial-boot; do
+   expected=build/artifact-trial/expected/$package
+   mkdir -p "$expected"
+   debs=(build/artifact-trial/reference/"${package}_"*.deb)
+   [[ ${#debs[@]} == 1 ]]
+   dpkg-deb -x "${debs[0]}" "$expected"
+   install -m644 "$receipt" "$expected/usr/share/doc/$package/native-artifact-receipt.json"
+   printf '%s\n' 'profile=pkg.uke-linux-kernel.artifact-trial' artifact_packaging=true source_build=false root_image_admitted=false redistribution_admitted=false publication=false tablet_actions=false > "$expected/usr/share/doc/$package/build-origin"
+  done;;
+ install)
+  [[ -f build/artifact-trial/reference/qualification ]]
+  for package in uke-kernel-trial-core uke-kernel-trial-dtbs uke-kernel-trial-modules uke-kernel-trial-boot; do
+   [[ -d build/artifact-trial/expected/$package && ! -L debian/$package ]]
+   if [[ -e debian/$package ]]; then [[ -d debian/$package && -z $(find "debian/$package" -mindepth 1 -print -quit) ]]; fi
+   mkdir -p "debian/$package"
+   cp -a "build/artifact-trial/expected/$package/." "debian/$package/"
+  done;;
+ verify)
+  version=$(dpkg-parsechangelog -ldebian/changelog -SVersion)
+  scratch=$(mktemp -d)
+  trap 'rm -rf -- "$scratch"' EXIT
+  for package in uke-kernel-trial-core uke-kernel-trial-dtbs uke-kernel-trial-modules uke-kernel-trial-boot; do
+   deb=../${package}_${version}_arm64.deb
+   [[ -f $deb && $(dpkg-deb -f "$deb" Architecture) == arm64 && $(dpkg-deb -f "$deb" Package) == "$package" && $(dpkg-deb -f "$deb" Version) == "$version" ]]
+   for field in Provides Pre-Depends Recommends Suggests Enhances Conflicts Replaces; do [[ -z $(dpkg-deb -f "$deb" "$field") ]]; done
+   depends=$(dpkg-deb -f "$deb" Depends)
+   if [[ $package == uke-kernel-trial-boot ]]; then
+    [[ $depends == "uke-kernel-trial-core (= $version), uke-kernel-trial-dtbs (= $version), uke-kernel-trial-modules (= $version)" ]]
+   else [[ -z $depends ]]; fi
+   dpkg-deb -x "$deb" "$scratch/$package"
+   dpkg-deb -e "$deb" "$scratch/control"
+   [[ -z $(find "$scratch/control" -mindepth 1 ! \( -type f \( -name control -o -name md5sums \) \) -print -quit) ]]
+   diff -r --no-dereference "build/artifact-trial/expected/$package" "$scratch/$package"
+   (cd "build/artifact-trial/expected/$package"; find . -printf '%y %m %P %l\n' | sort) > "$scratch/expected-modes"
+   (cd "$scratch/$package"; find . -printf '%y %m %P %l\n' | sort) > "$scratch/actual-modes"
+   cmp "$scratch/expected-modes" "$scratch/actual-modes"
+   rm -rf "$scratch/control"
+  done
+  echo 'Debhelper trial profile preserves all four staged payloads; no source build, ABI provider or boot admission.';;
+ *) exit 2;;
+esac

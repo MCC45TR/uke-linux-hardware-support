@@ -1,0 +1,99 @@
+{
+  "schema": "uke-verified-native-artifact-v1",
+  "source_commit": "fcbdae4b757732f0f0e3162c610f19abae290832",
+  "producer_run": 41331215146,
+  "original_zip_sha256": "3494352ab845bd345b6191ec5c049780eaa1550b2b3b1b994560844fe84741a9",
+  "kernel_release": "7.3.1-1006u1",
+  "version": "7.3.1-1006ubuntu1~tenacious1",
+  "architecture": "arm64",
+  "derived_config": "Recovered IKCONFIG; original ZIP unchanged",
+  "artifact_only": true,
+  "root_image_admitted": false,
+  "redistribution_admitted": false,
+  "files": [
+    {
+      "scope": "cohort",
+      "path": "Image",
+      "sha256": "0dd5d95a2a4ee02992137b3f15c88ee174a2bc65cb618f4a68b9ff741b3932dc",
+      "size": 68921856
+    },
+    {
+      "scope": "cohort",
+      "path": ".config",
+      "sha256": "2e3c730acc537ad5ac70b1d3f45e45eca17251757383e792e83ab61ca4fbfd24",
+      "size": 265589
+    },
+    {
+      "scope": "cohort",
+      "path": "module-signing.x509",
+      "sha256": "5341cbd7717946eefa2b0693295a674e6b8af893a0eaa16cb2ba912a608ebcd5",
+      "size": 1357
+    },
+    {
+      "scope": "cohort",
+      "path": "modules.tar.xz",
+      "sha256": "d51ce5929283000e2b5d53d320edb1812d95a500e97b67142c808304e1151cdf",
+      "size": 13754604
+    },
+    {
+      "scope": "cohort",
+      "path": "sm7675-xiaomi-uke.dtb",
+      "sha256": "3c0606be427724e2b815b4b0abc96ec327b2a9f04199fa8dfc379b58f4e4e6b9",
+      "size": 5253
+    },
+    {
+      "scope": "cohort",
+      "path": "linux.img",
+      "sha256": "999a438a6f5db21411ab25de4c2ddd6ce3cab6daebdd47c7ad8ada9c287bddb5",
+      "size": 100663296
+    },
+    {
+      "scope": "cohort",
+      "path": "userdata.img",
+      "sha256": "24055c747c7d4f179f951a33fe44139ffa4e462e6a24228d120bcd4cc6cdce6c",
+      "size": 100663296
+    },
+    {
+      "scope": "cohort",
+      "path": "boot-manifest",
+      "sha256": "11f32275c1b5ed15628ab46c0741c6a2fa6aa6b5536b59cb297a2250a1c4df99",
+      "size": 501
+    },
+    {
+      "scope": "cohort",
+      "path": "boot-header.json",
+      "sha256": "cfecfe4701c0ce103ce8b5d0e0f14150deea4c2bd076270b948a6f68d4d43e26",
+      "size": 205
+    },
+    {
+      "scope": "cohort",
+      "path": "modules.sha256",
+      "sha256": "fb19a5da5f9570dcf67daeb1a7b6e3fb86da47df930784f66453830a39776b39",
+      "size": 92198
+    },
+    {
+      "scope": "evidence",
+      "path": "payload-provenance.tsv",
+      "sha256": "0c4f2392f9e76c8b14a70ccdd6e8885e12e9382f6d059f56d5ce4650ad4de746",
+      "size": 40244
+    },
+    {
+      "scope": "evidence",
+      "path": "build-debs.tsv",
+      "sha256": "b7285cc31ed5772537b9786a7d9b501f6db078a81818ae556da33981a1040f77",
+      "size": 2712
+    },
+    {
+      "scope": "evidence",
+      "path": "base-links.tsv",
+      "sha256": "ab169e3ba4f13c8bfd296483d225c1d1d7171a4cee5a8ed28f3cefc7c25916db",
+      "size": 6924
+    },
+    {
+      "scope": "early",
+      "path": "early-modules.list",
+      "sha256": "17ae751bfb30c3b2ec9d10e7ab37deeb53b5231793cf5733ceb438438c23a6a6",
+      "size": 2881
+    }
+  ]
+}

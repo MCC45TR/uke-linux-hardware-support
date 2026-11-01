@@ -12,6 +12,9 @@ output=$(realpath -m "$5")
 [[ $layout == multiboot || $layout == singleboot ]]
 [[ ! -e $output ]]
 here=$(cd -- "$(dirname -- "$0")"; pwd)
+copyright=$here/recipes/uke-linux-kernel/debian/copyright
+[[ -f $copyright ]] || copyright=$here/copyright
+[[ -f $copyright && ! -L $copyright ]]
 # Verify certificate identity, every module, both boot readbacks and embedded
 # payload provenance before creating any package staging tree.
 bash "$here/inspect-boot-trial.sh" "$cohort" "$evidence" "$early"
@@ -61,7 +64,7 @@ for role in kernel dtb modules boot; do
  esac
  # Keep source licensing metadata with every role. No builder path or private
  # log is copied; the existing public packaging copyright names source rights.
- install -m644 "$here/recipes/uke-linux-kernel/debian/copyright" "$tree/usr/share/doc/$package/copyright"
+ install -m644 "$copyright" "$tree/usr/share/doc/$package/copyright"
  if [[ -d $cohort/licenses && ! -L $cohort/licenses ]]; then
   [[ -z $(find "$cohort/licenses" ! -type d ! -type f -print -quit) ]]
   cp -a "$cohort/licenses" "$tree/usr/share/doc/$package/licenses"

@@ -27,7 +27,7 @@ Candidate release **7.3.1-1006u1** makes `sizeof("uke" UTS_RELEASE)` exactly
 oversized future identifiers fail before upstream compilation. The Debian
 version is `7.3.1-1006ubuntu1~tenacious1`.
 
-The recipe still defines three candidate-only ARM64 packages: Image/config,
+The default recipe defines three candidate-only ARM64 packages: Image/config,
 DT and modules, beneath `/usr/lib/uke-kernel-candidates/7.3.1-1006u1/`.
 Exact Debian dependencies bind them. It installs no live boot/module tree,
 hook, firmware, boot selection or boot ABI provider. The first-pass Image
@@ -35,6 +35,12 @@ retains INITRAMFS_FORCE with an empty embedded initramfs and is **not bootable**
 Do not deploy this intermediate Image. The separate explicit boot trial action
 now invokes the complete producer after requiring a root-prepared host hwdb
 receipt; it does not change the ordinary candidate-package build.
+
+The separate [artifact-only Debian profile](ARTIFACT-PROFILE.md) now packages
+the already verified complete native1006 cohort into four inert roles through
+Debhelper. It retains the exact existing bytes and does not run the producer
+or qualify a live boot/kernel ABI. Normal source-build integration and runtime
+admission remain separate work.
 
 The earlier server execution approval covered the prepared release-115 source
 set. The new 1006 profile differs in 28 files, including LMH policy lifecycle,

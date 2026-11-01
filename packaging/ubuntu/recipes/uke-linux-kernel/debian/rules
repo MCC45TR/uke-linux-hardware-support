@@ -1,6 +1,23 @@
 #!/usr/bin/make -f
 %:
 	dh $@
+ifneq ($(filter pkg.uke-linux-kernel.artifact-trial,$(DEB_BUILD_PROFILES)),)
+override_dh_auto_configure:
+	bash debian/import-boot-trial prepare
+override_dh_auto_build:
+	# Existing verified native output only; no source compilation is permitted.
+override_dh_auto_test:
+	# Host receipt, crypto and byte checks run in the importer; no target runs.
+override_dh_auto_install:
+	bash debian/import-boot-trial install
+override_dh_installdocs:
+	# Original role copyright/licenses are already staged byte for byte.
+override_dh_installchangelogs:
+	# Preserve the explicit artifact-only documentation and inventory.
+override_dh_builddeb:
+	dh_builddeb
+	bash debian/import-boot-trial verify
+else
 override_dh_auto_configure:
 	bash debian/build-kernel prepare
 override_dh_auto_build:
@@ -9,10 +26,11 @@ override_dh_auto_test:
 	# Mandatory shared preparation tests run in prepare; no hardware execution.
 override_dh_auto_install:
 	bash debian/build-kernel install
+endif
 override_dh_auto_clean:
 	rm -rf build
 override_dh_strip:
 override_dh_strip_nondeterminism:
 override_dh_shlibdeps:
 override_dh_compress:
-	dh_compress -X/usr/lib/uke-kernel-candidates/
+	dh_compress -X/usr/lib/uke-kernel-candidates/ -X/usr/lib/uke-kernel-trials/ -Xlicenses -Xbuild-origin -Xnative-artifact-receipt.json -Xpayload.sha256

@@ -2,12 +2,13 @@ Source: uke-linux-kernel
 Section: kernel
 Priority: optional
 Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
-Build-Depends: debhelper-compat (= 13), clang, llvm, lld, libclang-rt-dev, make, gcc, g++, flex, bison, bc, libelf-dev, libssl-dev, libncurses-dev, libfdt-dev, libsystemd-dev, libasound2-dev, device-tree-compiler, dt-schema, python3, alsa-utils, kmod, zstd, jq, git, xz-utils, gnupg, gpgv, openssl, rsync, ripgrep, pkg-config, libasan8, libubsan1, dracut-core, dracut-install, cpio, f2fs-tools, systemd, udev, binutils, util-linux, e2fsprogs
+Build-Depends: debhelper-compat (= 13), make:native, jq, dpkg-dev, coreutils, openssl, zstd, kmod, device-tree-compiler, libarchive-tools:native, binutils:native, perl:native, gzip:native, xz-utils, clang <!pkg.uke-linux-kernel.artifact-trial>, llvm <!pkg.uke-linux-kernel.artifact-trial>, lld <!pkg.uke-linux-kernel.artifact-trial>, libclang-rt-dev <!pkg.uke-linux-kernel.artifact-trial>, gcc <!pkg.uke-linux-kernel.artifact-trial>, g++ <!pkg.uke-linux-kernel.artifact-trial>, flex <!pkg.uke-linux-kernel.artifact-trial>, bison <!pkg.uke-linux-kernel.artifact-trial>, bc <!pkg.uke-linux-kernel.artifact-trial>, libelf-dev <!pkg.uke-linux-kernel.artifact-trial>, libssl-dev <!pkg.uke-linux-kernel.artifact-trial>, libncurses-dev <!pkg.uke-linux-kernel.artifact-trial>, libfdt-dev <!pkg.uke-linux-kernel.artifact-trial>, libsystemd-dev <!pkg.uke-linux-kernel.artifact-trial>, libasound2-dev <!pkg.uke-linux-kernel.artifact-trial>, dt-schema <!pkg.uke-linux-kernel.artifact-trial>, python3 <!pkg.uke-linux-kernel.artifact-trial>, alsa-utils <!pkg.uke-linux-kernel.artifact-trial>, git <!pkg.uke-linux-kernel.artifact-trial>, gnupg <!pkg.uke-linux-kernel.artifact-trial>, gpgv <!pkg.uke-linux-kernel.artifact-trial>, rsync <!pkg.uke-linux-kernel.artifact-trial>, ripgrep <!pkg.uke-linux-kernel.artifact-trial>, pkg-config <!pkg.uke-linux-kernel.artifact-trial>, libasan8 <!pkg.uke-linux-kernel.artifact-trial>, libubsan1 <!pkg.uke-linux-kernel.artifact-trial>, dracut-core <!pkg.uke-linux-kernel.artifact-trial>, dracut-install <!pkg.uke-linux-kernel.artifact-trial>, cpio <!pkg.uke-linux-kernel.artifact-trial>, f2fs-tools <!pkg.uke-linux-kernel.artifact-trial>, systemd <!pkg.uke-linux-kernel.artifact-trial>, udev <!pkg.uke-linux-kernel.artifact-trial>, util-linux <!pkg.uke-linux-kernel.artifact-trial>, e2fsprogs <!pkg.uke-linux-kernel.artifact-trial>
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
 Homepage: https://github.com/MCC45TR/senemos-uke-kernel-mainline
 
 Package: uke-kernel-candidate-core
+Build-Profiles: <!pkg.uke-linux-kernel.artifact-trial>
 Architecture: arm64
 Depends: ${misc:Depends}, uke-kernel-candidate-modules (= ${binary:Version}), uke-kernel-candidate-dtbs (= ${binary:Version})
 Description: Uke kernel candidate for source and payload qualification
@@ -16,6 +17,7 @@ Description: Uke kernel candidate for source and payload qualification
  boot bundle, activation hook or qualified kernel capability is provided.
 
 Package: uke-kernel-candidate-modules
+Build-Profiles: <!pkg.uke-linux-kernel.artifact-trial>
 Architecture: arm64
 Depends: ${misc:Depends}, uke-kernel-candidate-dtbs (= ${binary:Version})
 Description: Exact Uke kernel candidate module set
@@ -23,8 +25,42 @@ Description: Exact Uke kernel candidate module set
  No installation hook loads modules or selects a kernel.
 
 Package: uke-kernel-candidate-dtbs
+Build-Profiles: <!pkg.uke-linux-kernel.artifact-trial>
 Architecture: arm64
 Depends: ${misc:Depends}
 Description: Exact Uke kernel candidate device tree
  Device tree retained with the exact candidate source and kernel release.
  Installing this package does not apply the device tree or select a boot entry.
+
+Package: uke-kernel-trial-core
+Build-Profiles: <pkg.uke-linux-kernel.artifact-trial>
+Architecture: arm64
+Description: Inert Uke native artifact trial core
+ Existing verified server output, packaged without rebuilding source.
+ No boot activation, runtime ABI provider, root image or redistribution
+ admission. This explicit artifact profile is not a normal source build.
+
+Package: uke-kernel-trial-dtbs
+Build-Profiles: <pkg.uke-linux-kernel.artifact-trial>
+Architecture: arm64
+Description: Inert Uke native artifact trial dtbs
+ Existing verified server output, packaged without rebuilding source.
+ No boot activation, runtime ABI provider, root image or redistribution
+ admission. This explicit artifact profile is not a normal source build.
+
+Package: uke-kernel-trial-modules
+Build-Profiles: <pkg.uke-linux-kernel.artifact-trial>
+Architecture: arm64
+Description: Inert Uke native artifact trial modules
+ Existing verified server output, packaged without rebuilding source.
+ No boot activation, runtime ABI provider, root image or redistribution
+ admission. This explicit artifact profile is not a normal source build.
+
+Package: uke-kernel-trial-boot
+Build-Profiles: <pkg.uke-linux-kernel.artifact-trial>
+Architecture: arm64
+Depends: uke-kernel-trial-core (= ${binary:Version}), uke-kernel-trial-dtbs (= ${binary:Version}), uke-kernel-trial-modules (= ${binary:Version})
+Description: Inert Uke native artifact trial boot
+ Existing verified server output, packaged without rebuilding source.
+ No boot activation, runtime ABI provider, root image or redistribution
+ admission. This explicit artifact profile is not a normal source build.

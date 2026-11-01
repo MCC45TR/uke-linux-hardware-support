@@ -611,3 +611,35 @@ Unprivileged source-build provenance, four-role package wiring, runtime OEM DT,
 root layout/security and selector/rollback qualification must be resolved before
 normal boot admission. The selected shared config lacks AppArmor; no security
 profile or setting was changed to bypass that gate.
+
+## Reuse verified native output before rebuilding the kernel
+
+1 November 2026. The existing source-specific native1006 output is sufficient
+for a four-role Debian packaging trial. A fixed receipt binds fourteen inputs
+to source fcbdae4b and native producer41331215146, including the recovered
+IKCONFIG digest and unchanged original ZIP digest. An explicit Debian build
+profile snapshots only those files, repeats receipt/crypto/cohort checks and
+uses Debhelper to emit inert core, DT, modules and boot roles. It refuses the
+source producer, missing inputs, activation hooks and runtime ABI providers.
+No new upstream compilation, native helper execution, key generation or image
+composition is needed. Default source builds still produce first-pass candidates.
+
+The actual binary packaging trial passed in a network-disabled official
+Ubuntu24 x86_64 tools container using the verified ARM64 bytes. The first
+attempt exposed an invalid cross-build dependency qualification: dpkg rejects
+`:native` on Multi-Arch: foreign packages. Correcting that metadata allowed
+the full build without bypassing dependency checks. Final DEB readback and
+negative fixtures verify bytes/modes/control members, four active roles,
+exact dependencies, receipt corruption, linked inputs, hooks and false providers.
+Source export tests compare the included common tools to their canonical files.
+
+The real31-DEB APT fixture still rejects the same eleven binary chains;
+twenty resolve, with Python confined to two development SDK plans. Signed
+module metadata confirms the existing MSM separate_gpu_kms parameter and
+guarded battmgr symbols. Touch and FS19xx modules match the kernel release.
+These are software inventory results, not full runtime ABI or hardware proof.
+The explicit gap plan distinguishes further userspace porting, boot/runtime
+qualification, firmware rights/local input design and root security decisions.
+The original trial also lacks the complete embedded-userspace license
+collection, so binary redistribution stays blocked. No Ubuntu image, security
+change, stable promotion, new credential or tablet action occurred.
