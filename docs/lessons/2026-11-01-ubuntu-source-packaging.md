@@ -19,4 +19,5 @@ Uncertainty: target dependency resolution, ARM64 build/install behavior, exact
 kernel/DTB/initramfs cohort admission and current firmware redistribution rights.
 Next validation: approved Tenacious ARM64 builds and service lifecycle tests;
 port APT/dpkg transaction integration and boot cohorts before publication.
-PPA terms, source signing and upload authorization remain parent-owned blockers.
+Parent subsequently confirmed PPA terms accepted and ARM64-only PPAs created;
+source-signing key enrollment and signed upload remain pending.

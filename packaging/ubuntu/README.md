@@ -90,8 +90,9 @@ Firmware and OEM resources need provenance and redistribution review.
 ## Publication blockers
 
 Launchpad account identity is `mcs45tr`; GitHub identity `MCC45TR` must not be
-substituted. Parent owns PPA creation/terms acceptance and key enrollment.
-Neither acceptance nor source-signing authorization is established here. No key
+substituted. Parent confirmed accepted PPA terms and created public ARM64-only
+`uke-linux-unstable` and `uke-linux-stable` PPAs; both are empty. Source-signing
+key enrollment remains pending. No key
 was generated, registered or inspected; no credential or upload configuration
 was created. Signed `.dsc` and source `.changes`, verified signer enrollment,
 PPA write authorization, ARM64 build enablement and dependency availability
