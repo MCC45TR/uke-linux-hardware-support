@@ -31,11 +31,14 @@ case ${1:-} in
   done < <(jq -r '.patches[],.configs[]|[.path,.sha256]|@tsv' "$kernel/senemos-adaptation/source-lock.json")
   jq -r '.patches[].path|split("/")|last' "$kernel/senemos-adaptation/source-lock.json" > build/expected-series
   cmp build/expected-series "$kernel/senemos-adaptation/patches/series"
+  : > "$kernel/senemos-applied-patches.txt"
   while read -r patch; do
    [[ -n $patch ]]
    git -C "$kernel" apply --check "senemos-adaptation/patches/$patch"
    git -C "$kernel" apply "senemos-adaptation/patches/$patch"
+   printf '%s\n' "$patch" >> "$kernel/senemos-applied-patches.txt"
   done < build/expected-series
+  cmp build/expected-series "$kernel/senemos-applied-patches.txt"
   # Preserve the shared preparer's tests and generated DT/config inputs.
   bash "$kernel/native-profile/prepare.sh" "$kernel" ;;
  build)
