@@ -34,6 +34,7 @@ fetch() {
 }
 fetch 11239542 uke-meta-integration baseline
 fetch 11239678 uke-meta-integration candidate
+jq -r '.packages[]|select(.arch!="src")|.name' "$fixture/results.json" > "$fixture/meta-names"
 fetch 11239677 uke-control candidate
 cp "$fixture/candidate/uke-control-"*.rpm "$fixture/baseline/"
 for repo in baseline candidate originals; do createrepo_c --quiet "$fixture/$repo"; done
@@ -50,12 +51,14 @@ for selection in core kde all; do
             for file in "$fixture/baseline/"*.rpm; do
                 name=$(rpm -qp --qf '%{NAME}' "$file" 2>/dev/null)
                 case $name in uke-control-tests|uke-control-tui) continue;; uke-plasma-controls) [[ $selection == all ]] || continue;; esac
-                if [[ $name == *-meta && $name != uke-core-meta && $selection == core ]]; then continue; fi
-                if [[ $name == *-meta && $name != uke-core-meta && $name != uke-kde-plasma-meta && $selection == kde ]]; then continue; fi
+                original=
+                if [[ $name != uke-libstdcxx ]]; then original=$(jq -r --arg name "$name" '.pairs[]|select(.fork_name==$name)|.original.url|split("/")|last' "$root/packaging/families/consolidation/fedora-return-inputs.json");fi
+                if [[ -z $original && $name != uke-libstdcxx && $name != uke-control && $name != uke-core-meta ]];then
+                    [[ $selection == all || $selection == kde && $name == uke-kde-plasma-meta ]] || continue
+                fi
                 repo=baseline;[[ $mode != reverse ]] || repo=candidate
-                if [[ $mode == mixed && $name == uke-* && $name != uke-libstdcxx && $name != *-meta && $name != uke-control && $name != uke-plasma-controls ]]; then ((count+=1));if ((count%2==0));then repo=originals;fi;fi
-                if [[ $repo == originals || $mode == reverse && $name != uke-libstdcxx && $name != *-meta && $name != uke-control && $name != uke-plasma-controls ]]; then
-                    original=$(jq -er --arg name "$name" '.pairs[]|select(.fork_name==$name)|.original.url|split("/")|last' "$root/packaging/families/consolidation/fedora-return-inputs.json")
+                if [[ $mode == mixed && -n $original ]]; then ((count+=1));if ((count%2==0));then repo=originals;fi;fi
+                if [[ $repo == originals || $mode == reverse && -n $original ]]; then
                     seed+=("$fixture/originals/$original")
                 else
                     mapfile -t matches < <(find "$fixture/$repo" -maxdepth 1 -name "$name-*.rpm" | while read -r candidate; do [[ $(rpm -qp --qf '%{NAME}' "$candidate" 2>/dev/null) != "$name" ]] || printf '%s\n' "$candidate"; done)

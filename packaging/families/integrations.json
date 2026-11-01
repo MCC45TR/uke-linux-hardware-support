@@ -8,7 +8,7 @@
     {
       "name": "uke-meta-integration",
       "version": "1.0.0",
-      "release": 3,
+      "release": 4,
       "sources": [
         {
           "name": "uke-core-meta",

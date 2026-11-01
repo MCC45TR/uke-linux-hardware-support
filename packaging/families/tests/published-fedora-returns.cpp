@@ -27,8 +27,10 @@ int main(int argc,char** argv) {
     assert(p.originals==!reverse);assert(!p.cxx);
     if(mode=="fresh") {
         libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(target);
+        std::set<std::string> metas;std::istringstream names(read_file(fixture/"meta-names"));
+        for(std::string name;std::getline(names,name);)metas.insert(name);
         for(const auto& pkg:available)if(pkg.get_name()=="uke-core-meta"||(selection=="kde"&&pkg.get_name()=="uke-kde-plasma-meta")||
-            (selection=="all"&&(pkg.get_name().ends_with("-meta")||pkg.get_name()=="uke-plasma-controls"))) {p.targets.insert_or_assign(key(pkg),pkg);p.scope.insert(key(pkg));}
+            (selection=="all"&&metas.contains(pkg.get_name()))) {p.targets.insert_or_assign(key(pkg),pkg);p.scope.insert(key(pkg));}
     }
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();size_t expected=0;
     for(const auto& pkg:installed)if(fedora_return(pkg.get_name(),false))++expected;
