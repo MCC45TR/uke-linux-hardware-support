@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@
+override_dh_auto_configure:
+	 bash debian/verify-main-inputs
+override_dh_auto_test:
+	# Runtime tests require separate execution approval and an ARM64 worker.
+override_dh_auto_clean:
+	 bash debian/verify-main-inputs
+	rm -rf build source/build
+# Retain opt-in semantics; neither enable nor start during installation.
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
+override_dh_auto_build:
+	dh_auto_build --sourcedirectory=source -- build/uke-front-color
+override_dh_auto_install:
+	install -Dm755 source/build/uke-front-color debian/uke-front-color/usr/libexec/uke-front-color
+	install -Dm644 source/packaging/systemd/uke-front-color.service debian/uke-front-color/usr/lib/systemd/system/uke-front-color.service

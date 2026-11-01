@@ -9,9 +9,9 @@ output=${2:?new output directory required}
 [[ ! -e $output ]]
 canonical=$root/packaging/ubuntu/recipes/$package/debian
 case $package in
- uke-bluetooth|uke-speaker-orientation)
+ uke-bluetooth|uke-speaker-orientation|uke-core-meta|uke-front-color|uke-proximity-capture)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
-  [[ $version == 0.1.0-0ubuntu1~tenacious1 ]]
+  [[ $version == 0.1.0-0ubuntu1~tenacious1 || ( $package == uke-core-meta && $version == 1.0.7-0ubuntu1~tenacious1 ) ]]
   snapshot=${version/-0ubuntu/+uke0ubuntu}
   mkdir -p "$output"
   cp -a "$canonical/." "$output/"
@@ -20,7 +20,12 @@ case $package in
   sed "1s/($version)/($snapshot)/" "$canonical/changelog" > "$output/changelog"
   sed -e '/^override_dh_auto_configure:/a\	 bash debian/verify-main-inputs' \
       -e '/^override_dh_auto_clean:/a\	 bash debian/verify-main-inputs' \
-      -e 's| src/| source/src/|g' "$canonical/rules" > "$output/rules"
+      -e 's| src/| source/src/|g' -e 's| packaging/| source/packaging/|g' "$canonical/rules" > "$output/rules"
+  if [[ $package == uke-front-color ]]; then
+   sed -i -e 's|dh_auto_build -- build/uke-front-color|dh_auto_build --sourcedirectory=source -- build/uke-front-color|' \
+       -e 's|install -Dm755 build/uke-front-color|install -Dm755 source/build/uke-front-color|' \
+       -e '/rm -rf build$/s|$| source/build|' "$output/rules"
+  fi
   for list in "$output/"*.install; do
    [[ -f $list ]] || continue
    sed -i -E 's#^(src/|packaging/)#source/\1#' "$list"

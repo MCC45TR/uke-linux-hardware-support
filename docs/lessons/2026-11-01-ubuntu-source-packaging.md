@@ -450,3 +450,12 @@ The root Ubuntu integration was found still following hardware's ubuntu branch.
 Its .gitmodules now follows main and pins the checked shared source at dcbf828;
 root workspace-link CI passed at ed75a0a. No Fedora root, image release,
 security setting or device operation changed during this correction.
+
+While the external publication gate remains pending, local main source adapters
+are also prepared for core dependency selection, front-color and proximity
+capture. Core's existing unqualified Ubuntu profile and missing ABI dependencies
+are retained. Sensor source remains unchanged from cbecc44; front-color builds
+through the shared component Makefile in its nested source directory, while
+the root-only proximity diagnostic keeps its original permission mode. All
+generated-overlay, dependency and upgrade-order fixtures pass. Source-package
+construction and native qualification remain separate checks before enrollment.

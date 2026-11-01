@@ -5,3 +5,6 @@ uke-speaker-controls	uke-desktop-integration	uke-desktop-integration/manifests	p
 uke-gpu-defaults	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-gpu-defaults/debian	native-tenacious-arm64-passed-not-enrolled
 uke-bluetooth	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-bluetooth/debian	native-tenacious-arm64-passed-not-enrolled
 uke-speaker-orientation	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-orientation/debian	native-tenacious-arm64-passed-not-enrolled
+uke-core-meta	uke-core-meta	uke-core-meta/manifests	packaging/ubuntu/main-recipes/uke-core-meta/debian	source-qualification-pending
+uke-front-color	uke-sensors	uke-sensors/manifests	packaging/ubuntu/main-recipes/uke-front-color/debian	source-qualification-pending
+uke-proximity-capture	uke-sensors	uke-sensors/manifests	packaging/ubuntu/main-recipes/uke-proximity-capture/debian	source-qualification-pending
