@@ -468,3 +468,19 @@ Makefile; no target helper is executed. They remain unenrolled and do not admit
 the missing runtime ABI or a system image. Eight additional main routes now
 pass native builds, in addition to the first speaker preset; ten historical
 non-kernel adapters remain unfinished.
+
+## Installation profile source adapter
+
+1 November 2026. The installation classifier now has a canonical-main source
+recipe. Its native snapshot overlay prefixes shared source inputs and retains
+the original device/container guards in the maintainer script. The complete
+owning boot component compares unchanged to the approved source baseline.
+Generated metadata, runtime dependencies and version ordering pass static
+checks; native compilation and package readback are still pending. This does
+not qualify a root image, activate boot tools or establish device behavior.
+
+Two remaining routes need input reconciliation before main adapters: the
+battery 1.4.1 source archive includes the mandatory integrated-protection proof
+that the common Git component lacks; touchscreen assembly requires the three
+pinned Apache-licensed donor inputs. Neither may silently fall back to older
+Git inputs or omit the reviewed preparation step.

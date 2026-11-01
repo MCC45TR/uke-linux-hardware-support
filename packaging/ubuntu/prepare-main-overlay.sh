@@ -9,9 +9,9 @@ output=${2:?new output directory required}
 [[ ! -e $output ]]
 canonical=$root/packaging/ubuntu/recipes/$package/debian
 case $package in
- uke-bluetooth|uke-speaker-orientation|uke-core-meta|uke-front-color|uke-proximity-capture)
+ uke-bluetooth|uke-speaker-orientation|uke-core-meta|uke-front-color|uke-proximity-capture|uke-installation-profile)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
-  [[ $version == 0.1.0-0ubuntu1~tenacious1 || ( $package == uke-core-meta && $version == 1.0.7-0ubuntu1~tenacious1 ) ]]
+  [[ $version == 0.1.0-0ubuntu1~tenacious1 || ( $package == uke-core-meta && $version == 1.0.7-0ubuntu1~tenacious1 ) || ( $package == uke-installation-profile && $version == 1.0.31-0ubuntu1~tenacious1 ) ]]
   snapshot=${version/-0ubuntu/+uke0ubuntu}
   mkdir -p "$output"
   cp -a "$canonical/." "$output/"

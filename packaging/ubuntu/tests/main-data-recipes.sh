@@ -4,7 +4,7 @@ set -euo pipefail
 root=$(git -C "$(dirname -- "$0")" rev-parse --show-toplevel)
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
-for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-bluetooth uke-speaker-orientation uke-core-meta uke-front-color uke-proximity-capture; do
+for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-bluetooth uke-speaker-orientation uke-core-meta uke-front-color uke-proximity-capture uke-installation-profile; do
  bash "$root/packaging/ubuntu/prepare-main-overlay.sh" "$package" "$work/$package"
  diff -ru "$work/$package" "$root/packaging/ubuntu/main-recipes/$package/debian"
  grep -Fxq '3.0 (native)' "$work/$package/source/format"
@@ -14,4 +14,4 @@ for package in uke-displayport-audio uke-speaker-controls uke-gpu-defaults uke-b
  cmp "$work/$package/control" "$root/packaging/ubuntu/recipes/$package/debian/control"
  dpkg --compare-versions "$(dpkg-parsechangelog --file "$work/$package/changelog" -SVersion)" gt "$(dpkg-parsechangelog --file "$root/packaging/ubuntu/recipes/$package/debian/changelog" -SVersion)"
 done
-echo 'Eight canonical main overlays preserve dependencies and upgrade order; native helper execution is separate.'
+echo 'Nine canonical main overlays preserve dependencies and upgrade order; native helper execution is separate.'
