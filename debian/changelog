@@ -1,0 +1,5 @@
+iio-sensor-proxy (3.9-1ubuntu2~uke1~tenacious1) tenacious; urgency=medium
+
+  * Retain shared sensor initialization and Uke dual-light patches on Ubuntu.
+
+ -- MCC45TR <75160848+MCC45TR@users.noreply.github.com>  Sun, 01 Nov 2026 13:00:00 +0000

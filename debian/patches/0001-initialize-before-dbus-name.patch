@@ -1,0 +1,111 @@
+From: SenemOS Uke maintainers
+Subject: [PATCH] Initialize sensors before acquiring the public D-Bus name
+
+SSC's synchronous discovery and open calls iterate the main context. A
+client waiting on name ownership can claim a sensor while startup has no
+open device yet, leaving it claimed without enabling measurements. Finish
+discovery and opening in bus_acquired_handler, before GIO requests the
+well-known name. Keep exported objects registered before name ownership.
+
+Upstream baseline: iio-sensor-proxy 3.9 (Fedora 3.9-3.fc45 SRPM).
+GIO contract: https://docs.gtk.org/gio/func.bus_own_name.html
+--- a/src/iio-sensor-proxy.c
++++ b/src/iio-sensor-proxy.c
+@@ -723,39 +723,15 @@
+     };
+ 	guint i;
+ 
+-	g_dbus_connection_register_object (connection,
+-					   SENSOR_PROXY_DBUS_PATH,
+-					   data->introspection_data->interfaces[0],
+-					   &interface_vtable,
+-					   data,
+-					   NULL,
+-					   NULL);
+-
+-	g_dbus_connection_register_object (connection,
+-					   SENSOR_PROXY_COMPASS_DBUS_PATH,
+-					   data->introspection_data->interfaces[1],
+-					   &compass_interface_vtable,
+-					   data,
+-					   NULL,
+-					   NULL);
+-
+-	/* Initialize DBus clients hash table before DBus is fully exposed */
+ 	data->client = g_udev_client_new (subsystems);
+-
+-	for (guint i = 0; i < NUM_SENSOR_TYPES; i++)
+-		data->clients[i] = create_clients_hash_table ();
+-
+ 	data->connection = g_object_ref (connection);
+-}
+-
+-static void
+-name_acquired_handler (GDBusConnection *connection,
+-		       const gchar     *name,
+-		       gpointer         user_data)
+-{
+-	SensorData *data = user_data;
+-	guint i;
++	for (i = 0; i < NUM_SENSOR_TYPES; i++) {
++		data->clients[i] = create_clients_hash_table ();
++		data->sensor_startup_dbus_invocations_delayed[i] = g_ptr_array_new ();
++	}
+ 
++	/* SSC discovery dispatches the main context; finish opening drivers before
++	 * exposing the D-Bus name, so early claims cannot race driver startup. */
+ 	if (!find_sensors (data->client, data))
+ 		goto bail;
+ 
+@@ -765,8 +741,6 @@
+ 	for (i = 0; i < NUM_SENSOR_TYPES; i++) {
+ 		SensorDevice *sensor_device;
+ 
+-		data->sensor_startup_dbus_invocations_delayed[i] = g_ptr_array_new ();
+-
+ 		if (!driver_type_exists (data, i))
+ 			continue;
+ 
+@@ -784,8 +758,22 @@
+ 	if (!any_sensors_left (data))
+ 		goto bail;
+ 
+-	send_dbus_event (data, PROP_ALL);
+-	send_dbus_event (data, PROP_ALL_COMPASS);
++	g_dbus_connection_register_object (connection,
++					   SENSOR_PROXY_DBUS_PATH,
++					   data->introspection_data->interfaces[0],
++					   &interface_vtable,
++					   data,
++					   NULL,
++					   NULL);
++
++	g_dbus_connection_register_object (connection,
++					   SENSOR_PROXY_COMPASS_DBUS_PATH,
++					   data->introspection_data->interfaces[1],
++					   &compass_interface_vtable,
++					   data,
++					   NULL,
++					   NULL);
++
+ 	return;
+ 
+ bail:
+@@ -794,6 +782,17 @@
+ 	g_main_loop_quit (data->loop);
+ }
+ 
++static void
++name_acquired_handler (GDBusConnection *connection,
++		       const gchar     *name,
++		       gpointer         user_data)
++{
++	SensorData *data = user_data;
++
++	send_dbus_event (data, PROP_ALL);
++	send_dbus_event (data, PROP_ALL_COMPASS);
++}
++
+ static gboolean
+ setup_dbus (SensorData *data,
+ 	    gboolean    replace)
