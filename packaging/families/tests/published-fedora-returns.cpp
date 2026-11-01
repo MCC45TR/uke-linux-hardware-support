@@ -35,6 +35,7 @@ int main(int argc,char** argv) {
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();size_t expected=0;
     for(const auto& pkg:installed)if(fedora_return(pkg.get_name()))++expected;
     if(!reverse)assert(p.returns.size()==expected);
+    if(mode=="desktop-upgrade")assert(expected==1&&p.returns.size()==1);
     auto tx=resolve(base,p,selected,false);size_t inbound=0,outbound=0;
     bool gnu_original=false,gnu_fork=false;
     for(const auto& item:tx.get_transaction_packages())if(libdnf5::transaction::transaction_item_action_is_inbound(item.get_action())) {

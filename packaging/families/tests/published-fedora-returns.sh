@@ -10,7 +10,7 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cache=$root/uke-desktop-packaging/referances/fedora-returns-20261101
 fixture=$(mktemp -d)
 trap 'rm -rf -- "$fixture"' EXIT
-mkdir -p "$fixture"/{baseline,candidate,originals,kernel,roots,cache,keys}
+mkdir -p "$fixture"/{baseline,current,candidate,originals,kernel,roots,cache,keys}
 touch "$fixture/empty.conf"
 rpmkeys --dbpath "$fixture/keys" --import "$root/packaging/families/keys/fedora-46.asc"
 curl -fLsS --max-time 60 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/pubkey.gpg -o "$fixture/copr.asc"
@@ -34,6 +34,7 @@ fetch() {
     done < <(jq -r '.packages[]|select(.arch!="src")|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
 }
 fetch 11239542 uke-meta-integration baseline
+fetch 11239731 uke-meta-integration current
 fetch "${UKE_GNU_META_BUILD:?qualified candidate meta build}" uke-meta-integration candidate
 jq -r '.packages[]|select(.arch!="src")|.name' "$fixture/results.json" > "$fixture/meta-names"
 fetch 11239677 uke-control candidate
@@ -57,7 +58,7 @@ for repo in baseline candidate originals; do createrepo_c --quiet "$fixture/$rep
 c++ -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(pkg-config --cflags libdnf5 rpm libsystemd) \
     "$root/packaging/families/tests/published-fedora-returns.cpp" "$root/uke-control/src/cli.cpp" -I"$root/uke-control/src" -o "$fixture/solver" $(pkg-config --libs libdnf5 rpm libsystemd)
 for selection in core kde all; do
-    for mode in fresh upgrade mixed reverse weak-off; do
+    for mode in fresh upgrade mixed reverse weak-off desktop-upgrade; do
         target=$fixture/roots/$selection-$mode
         mkdir -p "$target/usr/lib/sysimage/rpm"
         rpm --dbpath "$target/usr/lib/sysimage/rpm" --initdb
@@ -76,6 +77,10 @@ for selection in core kde all; do
                 fi
                 repo=baseline;[[ $mode != reverse ]] || repo=candidate
                 if [[ $mode == mixed && -n $original ]]; then ((count+=1));if ((count%2==0));then repo=originals;fi;fi
+                if [[ $mode == desktop-upgrade ]];then
+                    [[ -z $original || $name == uke-libstdcxx ]] || repo=originals
+                    case $name in uke-core-meta|uke-desktop-metas|uke-kde-plasma-meta|uke-plasma-controls) repo=current;;esac
+                fi
                 if [[ $repo == originals || $mode == reverse && -n $original ]]; then
                     seed+=("$fixture/originals/$original")
                 else

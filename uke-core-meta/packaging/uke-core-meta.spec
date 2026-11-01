@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-core-meta
 Version: 1.0.7
-Release: 15%{?dist}
+Release: 16%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-meta
