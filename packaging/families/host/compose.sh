@@ -172,6 +172,10 @@ while IFS=$'\t' read -r key input; do
         # Compare only this child's files in the shared buildroot.
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi
+    if [[ $integration == true && $family == uke-meta-integration && $key == uke-core-meta && $(jq -r '.fedora_returns // false' <<<"$profile") == true ]]; then
+        bash packaging/families/host/fedora-return-meta.sh "${specs[0]}" "$part/fedora-return.spec"
+        cp "$part/fedora-return.spec" "${specs[0]}"
+    fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)

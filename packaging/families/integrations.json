@@ -8,7 +8,7 @@
     {
       "name": "uke-meta-integration",
       "version": "1.0.0",
-      "release": 2,
+      "release": 3,
       "sources": [
         {
           "name": "uke-core-meta",
@@ -24,7 +24,8 @@
           "sha256": "e03d6c1e244e6c052401705f42082b52cfe9e9b5a13750ff663226fb84c899ff",
           "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228126/uke-desktop-metas-1.0.0-24.fc46.src.rpm"
         }
-      ]
+      ],
+      "fedora_returns": true
     },
     {
       "name": "uke-audio-integration",

@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-core-meta
 Version: 1.0.7
-Release: 1%{?dist}
+Release: 11%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-meta
@@ -10,7 +10,7 @@ ExclusiveArch: aarch64
 BuildRequires: tar xz
 Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)
 Requires: uke-control >= 2.3.1 uke-kernel-update uke-installation-profile
-Requires: bluez libinput uke-libwacom uke-libssc uke-iio-sensor-proxy
+Requires: bluez libinput libwacom uke-libssc uke-iio-sensor-proxy
 Requires: uke-pipewire uke-pipewire-alsa wireplumber alsa-utils
 Requires: uke-displayport-audio >= 0.1.0-8 uke-speaker-orientation >= 0.1.0-5 uke-speaker-firmware >= 3.0.304.0-2
 Requires: (uke-speaker-controls >= 0.1.0-4 if plasma-workspace)
@@ -25,6 +25,20 @@ Requires: bash coreutils util-linux-core kmod
 Requires: NetworkManager openssh-server sudo
 Requires: senemos-native-runtime(libstdc++)
 Recommends: uke-plymonth >= 1.0.2-3
+Requires: uke-control(fedora-returns-v1) >= 1
+Provides: uke-core-meta(fedora-returns-v1) = 1
+Conflicts: uke-atk <= 2.62.1-17.fc46
+Conflicts: uke-atk-devel <= 2.62.1-17.fc46
+Conflicts: uke-at-spi2-atk <= 2.62.1-17.fc46
+Conflicts: uke-at-spi2-atk-devel <= 2.62.1-17.fc46
+Conflicts: uke-at-spi2-core <= 2.62.1-17.fc46
+Conflicts: uke-at-spi2-core-devel <= 2.62.1-17.fc46
+Conflicts: uke-gstreamer1 <= 1.28.8-17.fc46
+Conflicts: uke-gstreamer1-devel <= 1.28.8-17.fc46
+Conflicts: uke-libwacom <= 2.20.0-18.fc46
+Conflicts: uke-libwacom-data <= 2.20.0-18.fc46
+Conflicts: uke-libwacom-devel <= 2.20.0-18.fc46
+Conflicts: uke-libwacom-utils <= 2.20.0-18.fc46
 %description
 A minimal console package selection and explicit Uke readiness record.
 No unqualified firmware, Nabu hardware services or boot selection is installed.
@@ -40,6 +54,10 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-11
+- Select original Fedora accessibility, media and tablet metadata through the compatible manager.
+- Bound conflicts to reviewed fork releases; retain the existing console GNU runtime capability.
+
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-1
 - Select individual runtime packages without source-family dependencies.
 

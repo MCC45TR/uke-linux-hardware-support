@@ -33,7 +33,7 @@
         "fastfetch",
         "bluez",
         "libinput",
-        "uke-libwacom"
+        "libwacom"
       ],
       "suggests": [],
       "release": 1,
@@ -297,7 +297,7 @@
     "accountsservice": "16.fc46",
     "material-decoration": "7.fc46",
     "uke-desktop-metas": "24.fc46",
-    "uke-core-meta": "8.fc46",
+    "uke-core-meta": "11.fc46",
     "uke-proximity-capture": "6.fc46",
     "uke-speaker-controls": "4.fc46",
     "uke-displayport-audio": "8.fc46",

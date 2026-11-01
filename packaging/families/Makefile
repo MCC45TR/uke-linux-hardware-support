@@ -14,3 +14,4 @@ check:
 	bash tests/contracts.sh
 	bash tests/rawhide.sh
 	bash tests/fedora-return-abi.sh
+	bash tests/fedora-return-meta.sh

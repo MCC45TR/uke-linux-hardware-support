@@ -12,7 +12,7 @@ jq -e '(.packages|length==9) and all(.packages[]; .name!="uke-power-profile-back
 jq -e 'any(.[]; .name=="material-decoration" and .family=="uke-extras")' packaging/families/source-inputs.json >/dev/null
 jq -e 'any(.[]; .name=="uke-mesa-libclc22-spirv" and .family=="uke-additional" and (.url|startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/")))' packaging/families/source-inputs.json >/dev/null
 jq -e '.rename["material-decoration"]=="uke-material-decoration" and (.exceptions|length)==4' packaging/families/families.json >/dev/null
-jq -e '.families[]|select(.name=="uke-hw")|.requires|index("bluez")!=null and index("libinput")!=null and index("uke-libwacom")!=null' packaging/families/families.json >/dev/null
+jq -e '.families[]|select(.name=="uke-hw")|.requires|index("bluez")!=null and index("libinput")!=null and index("libwacom")!=null' packaging/families/families.json >/dev/null
 jq -e 'all(.[]|select(.name=="pipewire" or .name=="uke-speaker-orientation" or .name=="uke-speaker-firmware"); .family=="uke-sound") and ([.[]|select(.name=="pipewire" or .name=="uke-speaker-orientation" or .name=="uke-speaker-firmware")]|length==3)' packaging/families/source-inputs.json >/dev/null
 for script in packaging/families/host/*.sh; do bash -n "$script"; done
 for name in uke-core uke-hw uke-power uke-sensors uke-extras uke-additional uke-metas uke-camera uke-sound; do
