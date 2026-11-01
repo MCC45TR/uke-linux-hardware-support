@@ -13,7 +13,7 @@ int main(int argc,char** argv) {
     config.get_plugins_option().set(false);config.get_reposdir_option().set(std::vector<std::string>{});
     config.get_config_file_path_option().set((fixture/"empty.conf").string());
     config.get_cachedir_option().set((fixture/"cache").string());
-    config.get_optional_metadata_types_option().set(std::vector<std::string>{"filelists"});
+    config.get_optional_metadata_types_option().set(std::set<std::string>{"filelists"});
     config.get_install_weak_deps_option().set(weak);config.get_best_option().set(true);
     config.get_allow_vendor_change_option().set(false);retain_kernels(base);
     base.get_vars()->set("releasever","46");base.get_vars()->set("basearch","aarch64");base.setup();
