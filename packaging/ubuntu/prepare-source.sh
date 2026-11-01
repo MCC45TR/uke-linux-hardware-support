@@ -24,4 +24,5 @@ epoch=$(git -C "$root" show -s --format=%ct "$revision")
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$out/${pkg}_${version}.orig.tar.xz" -C "$out" "$pkg-$version"
 cp -a "$root/packaging/ubuntu/recipes/$pkg/debian" "$stage/debian"
 (cd "$out"; dpkg-source -b "$pkg-$version")
-(cd "$out"; sha256sum ./*.dsc ./*.tar.xz > SHA256SUMS)
+(cd "$stage"; dpkg-genchanges -S -sa > "$out/${pkg}_$(dpkg-parsechangelog -S Version)_source.changes")
+(cd "$out"; sha256sum ./*.dsc ./*.tar.xz ./*.changes > SHA256SUMS)

@@ -25,7 +25,7 @@ bash packaging/ubuntu/prepare-source.sh uke-front-color /tmp/color-source-new
 
 The output directory must not exist. The script reads shared source commit
 `cbecc441059ebffa97497e736edd2e0b0b0546a5` and writes a `3.0 (quilt)` source
-package: original source tarball, Debian tarball and unsigned `.dsc`.
+package: original source tarball, Debian tarball, unsigned `.dsc` and source `.changes`.
 It never runs upstream build commands, signs, uploads or installs anything.
 `SOURCE-ORIGIN` identifies the exact component and commit. A source revision
 change requires deliberate pin review and an appropriate package version bump.
@@ -96,8 +96,8 @@ key enrollment remains pending. No key
 was generated, registered or inspected; no credential or upload configuration
 was created. Signed `.dsc` and source `.changes`, verified signer enrollment,
 PPA write authorization, ARM64 build enablement and dependency availability
-must all be confirmed before upload. Source assembly alone does not produce a
-complete signed Launchpad submission. No stable promotion is permitted until
+must all be confirmed before upload. The generated source `.changes` includes the original tarball; all upload
+metadata remains unsigned and is not a qualified Launchpad submission. No stable promotion is permitted until
 cohort, install/rollback and device qualification evidence exists.
 
 Validation: Debian 13 x86_64, dpkg-source 1.22.22. Both source packages assembled
