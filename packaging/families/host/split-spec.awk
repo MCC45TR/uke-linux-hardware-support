@@ -77,6 +77,7 @@ BEGIN {
     next
 }
 /^%(files|pre|post|preun|postun|pretrans|posttrans|trigger.*|filetrigger.*|transfiletrigger.*)([[:space:]]|$)/ {
+    if($1=="%files") {split(section_package($0,"%files"),file_section,/[[:space:]]+/);has_files[file_section[3]]=1}
     phase="tail";tail[++tails]=$0;next
 }
 /^: __UKE_CWD__=/ {cwd=substr($0,index($0,"=")+1);next}
@@ -131,6 +132,11 @@ END {
     for(i=0;i<=package;i++) {
         pkg=original
         if(i>0){split(headers[i],a,/[[:space:]]+/);pkg=a[2]=="-n"?a[3]:original "-" a[2]}
+        # Previously composed sources have a source-only parent without a runtime file list.
+        if(preserve_identity && i==0 && !(renamed(pkg) in has_files)) {
+            if(standalone)fail("Primary runtime package has no file list")
+            continue
+        }
         if(preserve_identity) {
             newversion=versions[pkg];newrelease=next_releases[pkg]
             epoch=epochs[pkg]
