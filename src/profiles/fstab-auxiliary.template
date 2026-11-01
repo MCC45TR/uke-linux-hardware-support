@@ -1,0 +1,10 @@
+# Apply after confirming these Uke partition labels and filesystem types.
+# context= changes only the mount view; OEM SELinux xattrs remain untouched.
+PARTLABEL=persist /mnt/vendor/persist ext4 ro,noload,nodev,nosuid,noexec,context=system_u:object_r:var_lib_t:s0,nofail,x-systemd.device-timeout=10s 0 0
+# Keep both slots separate. These are inspection paths, not firmware search paths.
+PARTLABEL=modem_a /mnt/vendor/firmware/modem_a vfat ro,nodev,nosuid,noexec,umask=0077,context=system_u:object_r:lib_t:s0,nofail,x-systemd.automount,x-systemd.idle-timeout=60s,x-systemd.device-timeout=3s 0 0
+PARTLABEL=modem_b /mnt/vendor/firmware/modem_b vfat ro,nodev,nosuid,noexec,umask=0077,context=system_u:object_r:lib_t:s0,nofail,x-systemd.automount,x-systemd.idle-timeout=60s,x-systemd.device-timeout=3s 0 0
+PARTLABEL=dsp_a /mnt/vendor/firmware/dsp_a ext4 ro,noload,nodev,nosuid,noexec,context=system_u:object_r:lib_t:s0,nofail,x-systemd.automount,x-systemd.idle-timeout=60s,x-systemd.device-timeout=3s 0 0
+PARTLABEL=dsp_b /mnt/vendor/firmware/dsp_b ext4 ro,noload,nodev,nosuid,noexec,context=system_u:object_r:lib_t:s0,nofail,x-systemd.automount,x-systemd.idle-timeout=60s,x-systemd.device-timeout=3s 0 0
+PARTLABEL=bluetooth_a /mnt/vendor/firmware/bluetooth_a vfat ro,nodev,nosuid,noexec,umask=0077,context=system_u:object_r:lib_t:s0,nofail,x-systemd.automount,x-systemd.idle-timeout=60s,x-systemd.device-timeout=3s 0 0
+PARTLABEL=bluetooth_b /mnt/vendor/firmware/bluetooth_b vfat ro,nodev,nosuid,noexec,umask=0077,context=system_u:object_r:lib_t:s0,nofail,x-systemd.automount,x-systemd.idle-timeout=60s,x-systemd.device-timeout=3s 0 0

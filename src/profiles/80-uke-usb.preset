@@ -1,0 +1,5 @@
+disable uke-usb-auto.service
+disable uke-cdc-acm.service
+disable uke-cdc-shell.service
+disable uke-usb-network.service
+disable uke-usb-network-shell.service

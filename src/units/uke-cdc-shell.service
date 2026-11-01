@@ -1,0 +1,25 @@
+[Unit]
+Description=Uke development shell over USB CDC ACM
+Requires=uke-cdc-acm.service
+PartOf=uke-cdc-acm.service
+After=uke-cdc-acm.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+
+[Service]
+ExecCondition=/usr/libexec/senemos-uke/uke-usb-network allow-legacy
+# Opening the gadget TTY can wait for USB carrier; do not hold up boot.
+Type=simple
+ExecStart=-/usr/bin/bash --noediting --noprofile --norc -i
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/ttyGS0
+TTYReset=no
+TTYVHangup=no
+Environment=TERM=dumb
+Restart=always
+RestartSec=3
+KillSignal=SIGHUP
+
+[Install]
+WantedBy=multi-user.target

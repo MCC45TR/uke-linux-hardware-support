@@ -1,0 +1,25 @@
+[Unit]
+Description=Uke explicit development shell on the USB network gadget's ACM port
+Requires=uke-usb-network.service
+PartOf=uke-usb-network.service
+After=uke-usb-network.service
+ConditionKernelCommandLine=senemos.debug=cdc-acm
+
+[Service]
+ExecCondition=/usr/libexec/senemos-uke/uke-usb-network allow-legacy
+# Opening the gadget TTY can wait for USB carrier; do not hold up boot.
+Type=simple
+ExecStart=-/usr/bin/bash --noediting --noprofile --norc -i
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/ttyGS0
+TTYReset=no
+TTYVHangup=no
+Environment=TERM=vt100
+Restart=always
+RestartSec=3
+KillSignal=SIGHUP
+
+[Install]
+WantedBy=multi-user.target

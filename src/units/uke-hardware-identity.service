@@ -1,0 +1,18 @@
+[Unit]
+Description=Uke public hardware identity from the current boot
+After=local-fs.target
+Before=systemd-hostnamed.service
+ConditionPathExists=/sys/firmware/devicetree/base/compatible
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/senemos-uke/uke-hardware-identity
+RemainAfterExit=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/etc
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

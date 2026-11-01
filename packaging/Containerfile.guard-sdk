@@ -1,0 +1,3 @@
+FROM sha256:c630bd8cee1afa01e5ebad02f98192e7eb6eea9b1198cf3875302933a712f72a
+RUN dnf -y install --setopt=install_weak_deps=False systemd-devel wayland-devel jq dtc rpm-build \
+    && rpm -qa | sort > /boot-guard-host-packages.txt && dnf clean all

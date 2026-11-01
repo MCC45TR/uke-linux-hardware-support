@@ -1,0 +1,25 @@
+[Unit]
+Description=Uke read-only USB-C connection inventory
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.senemos.Uke.USB1
+ExecStart=/usr/bin/uke-usb-port --serve
+User=root
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+DevicePolicy=closed
+DeviceAllow=char-drm r
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
