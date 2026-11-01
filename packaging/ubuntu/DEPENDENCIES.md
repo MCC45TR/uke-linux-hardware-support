@@ -51,3 +51,9 @@ battery/history patches and original `upower`, `libupower-glib3`,
 and systemd behavior is retained. The charge-control and offline-charge
 binaries remain separately gated by the corresponding kernel and boot ABI
 providers; defining their packages does not qualify a charging writer.
+
+A name-level check of every declared Build-Depends against these ARM64 indexes
+found all concrete package names. `debhelper-compat (= 13)` is provided by
+Tenacious debhelper 14.5ubuntu1. This check does not replace an APT solver or a
+clean native build: the patched libssc-dev minimum intentionally exceeds stock
+libssc-dev, and ABI providers must be built in dependency order.

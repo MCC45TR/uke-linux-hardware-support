@@ -74,3 +74,12 @@ use 26 quilt patches; the THP source importer applies four additional patches.
 GitHub commit 85ced4b passed both Ubuntu source packaging contracts (run
 41300695468) and Hardware source contracts (run 41300695434). These results
 cover the fourteen-source snapshot; subsequent sources need the next CI run.
+
+## Workspace branch validation
+
+Root Ubuntu CI 41299730079 failed at configured branch validation with exit 128.
+A fresh shallow hardware-support clone plus fetch of the pinned packaging SHA
+reproduced the missing `origin/ubuntu` reference. Fetching only the configured
+branch ref repairs validation without moving the pinned checkout. Root commit
+33e237d retains all existing tests; run 41301170081 passed the workspace job.
+This is branch-awareness, not a package or hardware qualification result.
