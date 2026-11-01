@@ -1,0 +1,2 @@
+src/ucm2/Qualcomm/sm7675/*.conf usr/share/alsa/ucm2/Qualcomm/sm7675
+src/wireplumber/75-uke-thp-not-camera.conf usr/share/wireplumber/wireplumber.conf.d
