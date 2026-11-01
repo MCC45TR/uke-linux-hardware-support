@@ -1,0 +1,30 @@
+From: Uke Linux project <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Reject incomplete FastRPC shell images
+
+Do not initialize a process domain from an unread or partial input. Preserve
+DMA unmapping and descriptor cleanup on the error path. The Uke sensor units
+do not use the optional shell-loader command, but the full upstream native
+binary must build with Fedora's fortified read checks.
+
+--- a/hexagonrpcd/rpcd.c
++++ b/hexagonrpcd/rpcd.c
+@@ -117,7 +117,10 @@
+ 		goto err_close_dmabuf;
+ 	}
+ 
+-	read(shellfd, buf, stats.st_size);
++	if (read(shellfd, buf, stats.st_size) != stats.st_size) {
++		ret = -1;
++		goto err_unmap;
++	}
+ 
+ 	init.file = (__u64) buf;
+ 	init.filefd = dmabuf.fd;
+@@ -125,6 +128,7 @@
+ 
+ 	ret = ioctl(fd, FASTRPC_IOCTL_INIT_CREATE, &init);
+ 
++err_unmap:
+ 	munmap(buf, dmabuf.size);
+ err_close_dmabuf:
+ 	close(dmabuf.fd);

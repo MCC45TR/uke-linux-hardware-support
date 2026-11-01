@@ -1,0 +1,71 @@
+Pinned upstream: linux-msm/hexagonrpc da7a3742ab8d5273a281b70ee11f16fb2cb6a690
+
+Select each type sequence from its own definition. A preceding TYPE argument
+must not implicitly determine the sequence descriptor. Preserve input and
+output bounds before looking up the descriptor. Add a standalone-sequence
+golden vector that fails to depend on a previous TYPE argument.
+
+--- a/libhexagonrpc/hexagonrpc.c
++++ b/libhexagonrpc/hexagonrpc.c
+@@ -213,6 +213,9 @@
+ 			case HRPC_ARG_TYPE_SEQ:
+ 				arg32 = va_arg(list, uint32_t);
+ 				iptr = va_arg(list, const void *);
++				if (def->args[i].d >= def->n_inner_types)
++					return -1;
++				inner_type = &def->inner_types[def->args[i].d];
+ 
+ 				ops->emit_prim_in(sizeof(arg32), &arg32, data);
+ 				ret = ops->emit_type_seq_in(def, inner_type,
+@@ -244,6 +247,9 @@
+ 			case HRPC_ARG_OUT_TYPE_SEQ:
+ 				arg32 = va_arg(list, uint32_t);
+ 				optr = va_arg(list, void *);
++				if (def->args[i].d >= def->n_inner_types)
++					return -1;
++				inner_type = &def->inner_types[def->args[i].d];
+ 
+ 				ops->emit_prim_in(sizeof(arg32), &arg32, data);
+ 				ret = ops->emit_type_seq_out(def, inner_type,
+--- a/tests/test_hexagonrpc.c
++++ b/tests/test_hexagonrpc.c
+@@ -237,6 +237,26 @@
+ 	.inner_types = inner_type_method_types,
+ };
+ 
++/* A sequence must select its own type, without a preceding TYPE argument. */
++static const struct hrpc_arg_def_interp4 sequence_args[] = {
++	{ HRPC_ARG_TYPE_SEQ, 0 },
++};
++static const struct hrpc_method_def_interp4 sequence_def = {
++	.msg_id = 3,
++	.n_args = 1,
++	.args = sequence_args,
++	.n_inner_types = HRPC_ARRAY_SIZE(inner_type_method_types),
++	.inner_types = inner_type_method_types,
++};
++static const unsigned char sequence_prim[] = { 2, 0, 0, 0 };
++static const unsigned char sequence_lengths[] = { 3, 0, 0, 0, 3, 0, 0, 0 };
++static const struct expected_invoke_arg sequence_exp[] = {
++	{ .len = sizeof(sequence_prim), .ptr = sequence_prim },
++	{ .len = sizeof(sequence_lengths), .ptr = sequence_lengths },
++	{ .len = 3, .ptr = "huh" },
++	{ .len = 3, .ptr = "heh" },
++};
++
+ static const uint32_t thirty_third_method_sc = REMOTE_SCALARS_MAKE(31, 3, 0);
+ 
+ static const unsigned char thirty_third_method_exp0[] = {
+@@ -385,6 +405,12 @@
+ 	strings[1].s = 3;
+ 	strings[1].p = "heh";
+ 
++	expected_sc = REMOTE_SCALARS_MAKE(3, 4, 0);
++	expected = sequence_exp;
++	ret = hexagonrpc(&sequence_def, fd, hdl, (uint32_t) 2, (const void *) strings);
++	if (ret)
++		return 1;
++
+ 	expected_sc = inner_type_method_sc;
+ 	expected = inner_type_method_exp;
+ 	ret = hexagonrpc(&inner_type_method_def, fd, hdl,

@@ -1,0 +1,29 @@
+From: Uke Linux project <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] libssc: make Python mock tests optional
+
+Upstream: libssc 0.4.4, archive SHA256
+716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587
+
+Keep upstream test behavior by default. Native runtime builds can disable
+the mock/test subtree so no Python server is installed on the tablet.
+
+--- a/meson.build
++++ b/meson.build
+@@ -101,7 +101,11 @@
+ headers = files()
+ map_source = files('libssc.map')
+ 
+-subdir('mocking')
++if get_option('tests')
++  subdir('mocking')
++endif
+ subdir('data')
+ subdir('src')
+-subdir('tests')
++if get_option('tests')
++  subdir('tests')
++endif
+--- /dev/null
++++ b/meson.options
+@@ -0,0 +1 @@
++option('tests', type: 'boolean', value: true, description: 'Build SSC tests and Python mock server')

@@ -1,0 +1,97 @@
+--- a/nvt_touch_core.hpp
++++ b/nvt_touch_core.hpp
+@@ -76,9 +76,16 @@
+     bool interference = false;
+ };
+ 
++struct Geometry {
++    std::array<int,kRows> rows{};
++    std::array<int,kColumns> columns{};
++    int width = 0;
++    int height = 0;
++};
++
+ class TouchCore {
+ public:
+-    TouchCore();
++    explicit TouchCore(const Geometry &geometry);
+ 
+     void reset();
+     void processNoTouch(int matrix_maximum = 0);
+@@ -122,6 +129,8 @@
+ 
+ private:
+ 
++    Geometry geometry_;
++
+     std::optional<Matrix> reference_;
+     std::vector<Plan> previous_plans_;
+     std::vector<Domain> previous_groups_;
+--- a/nvt_touch_core.cpp
++++ b/nvt_touch_core.cpp
+@@ -982,7 +982,7 @@
+     return result;
+ }
+ 
+-std::optional<Contact> domainContact(const Matrix &delta, const Domain &domain) {
++std::optional<Contact> domainContact(const Matrix &delta, const Domain &domain,const Geometry &geometry) {
+     float row_sum = 0.0F;
+     float column_sum = 0.0F;
+     int denominator = 0;
+@@ -995,9 +995,9 @@
+         const int weight = std::max(delta[index] - kCoordinateReduce, 0);
+         denominator += weight;
+         row_sum += static_cast<float>(
+-            weight * kRowMap[index / kColumns] * kSuperResolution);
++            weight * geometry.rows[index / kColumns] * kSuperResolution);
+         column_sum += static_cast<float>(
+-            weight * kColumnMap[index % kColumns] * kSuperResolution);
++            weight * geometry.columns[index % kColumns] * kSuperResolution);
+     }
+     if (denominator == 0)
+         return std::nullopt;
+@@ -1005,8 +1005,8 @@
+         const float value = weighted_sum / static_cast<float>(denominator);
+         return std::clamp(static_cast<int>(value + 0.5F), 0, maximum - 1);
+     };
+-    const int x = coordinate(column_sum, kLongAxisMaximum);
+-    const int y = coordinate(row_sum, kShortAxisMaximum);
++    const int x = coordinate(column_sum, geometry.width);
++    const int y = coordinate(row_sum, geometry.height);
+     return Contact{domain.label, x, y, peak,
+                    static_cast<int>(domain.nodes.count()), denominator,
+                    domain.nodes};
+@@ -1029,10 +1029,10 @@
+     return value;
+ }
+ 
+-void mapContactEdges(Contact &contact) {
++void mapContactEdges(Contact &contact,const Geometry &geometry) {
+     // Apply the edge mapping before slot tracking and filtering.
+-    contact.y = mapEdgeAxis(contact.y, kShortAxisMaximum, true);
+-    contact.x = mapEdgeAxis(contact.x, kLongAxisMaximum, false);
++    contact.y = mapEdgeAxis(contact.y, geometry.height, true);
++    contact.x = mapEdgeAxis(contact.x, geometry.width, false);
+ }
+ 
+ int contactDistance(int first_x, int first_y, int second_x, int second_y) {
+@@ -1161,7 +1161,7 @@
+ 
+ }  // namespace
+ 
+-TouchCore::TouchCore() = default;
++TouchCore::TouchCore(const Geometry &geometry): geometry_(geometry) { }
+ 
+ void TouchCore::reset() {
+     reference_.reset();
+@@ -1581,8 +1581,8 @@
+     result.groups = groups;
+     result.contacts.reserve(groups.size());
+     for (const Domain &domain : groups) {
+-        if (auto contact = domainContact(coordinate_delta, domain)) {
+-            mapContactEdges(*contact);
++        if (auto contact = domainContact(coordinate_delta, domain,geometry_)) {
++            mapContactEdges(*contact,geometry_);
+             result.contacts.push_back(std::move(*contact));
+         }
+     }

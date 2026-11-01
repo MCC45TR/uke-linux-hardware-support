@@ -1,0 +1,11 @@
+--- a/hexagonrpcd/apps_mem.c
++++ b/hexagonrpcd/apps_mem.c
+@@ -84,7 +84,7 @@
+ 	       first_in->rflags,
+ 	       first_in->vin,
+ 	       first_in->len,
+-	       mmap.vaddrout);
++	       (uint64_t)mmap.vaddrout);
+ #endif
+ 
+ 	first_out->vapps = 0;
