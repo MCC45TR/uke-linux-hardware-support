@@ -44,3 +44,28 @@ comparison. A source count reduction does not reduce binary RPMs or processes.
 No producer definition or old build is deleted during candidate builds. Old
 signed binaries and source pins remain the rollback inputs. A final live
 inventory must distinguish retained definitions from active producers.
+
+Source maintenance stays explicit. To change one integration, prepare and
+validate that component's complete source recipe, archive its source offer,
+update only that profile's URL/hash/build identity, and increase the profile
+Release. The manifest preserves the original COPR URL alongside the durable
+GitHub archive URL. Never silently follow main or reuse a published child
+NEVRA. Unchanged integrations and large upstream forks need no rebuild.
+
+The live reference audit also finds kernel source divergence. Compared with
+main, the pinned kernel source `d86aea3e8cc2f90ac101d03b81560d8e1eab38cc`
+has four commits outside main and shares merge base
+`43bec2521c5846393031e8409c77d75118a21161`; main has 57 additional commits at
+that observation. Preserve its exact source/DT/modules tuple. This source
+consolidation neither silently advances that pin nor labels main as the
+installed kernel. Builder main contains the older `35280a5` image-tool source,
+but the live producer now uses separately qualified `9e4d2153`; inventory.json
+records the recipe and live branch refs. Neither repository has a Git branch
+named unstable; `uke-linux-unstable` here is the COPR project.
+
+The routing is now applied. The official live inventory contains 42 definitions,
+with 28 admitted producer scripts and 14 explicitly superseded scripts retained
+for history and rollback. No historical definition/build was deleted. Only 20
+script fields changed; all other source fields, the remaining 22 definitions
+and project settings were independently compared. This is an eight-producer
+maintenance reduction, not fewer installed RPMs or fewer upstream forks.

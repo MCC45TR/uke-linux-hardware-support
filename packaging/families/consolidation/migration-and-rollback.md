@@ -33,3 +33,20 @@ Kernel, DTB, modules, initramfs, firmware and updater remain an exact cohort.
 The native touch path requires physical contact/multitouch, display and suspend
 acceptance before any fallback retirement. Preserve private reference data,
 factory identity handoff, read-only persist and independent recovery artifacts.
+
+The baseline is now independently retained in the public
+`copr-consolidation-archive-20261101` release: 14 complete source RPMs and 21
+original signed binaries. The integration manifest uses those archive URLs
+and records original COPR URLs and build IDs. This avoids depending on a
+historical COPR build after any later separately approved deletion. Debug
+package identities remain optional; their generated source/build-id paths
+naturally follow the new SRPM identity.
+
+The applied routing changes only six integration recipes and the 14 superseded
+standalone source scripts. The latter print their replacement and stop before
+any build. Existing signed binaries remain installable from the retained
+repository/archive. Restoring an original recipe from inventory.json is a
+source-routing reversal; it is not a tablet rollback transaction. Future source
+builds must advance the integration Release before an already known revision
+can be generated again. Project build settings and automatic rebuild flags are
+unchanged.

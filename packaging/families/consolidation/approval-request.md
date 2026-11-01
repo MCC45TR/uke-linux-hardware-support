@@ -13,3 +13,11 @@ is deleted under this publication scope. Such retirement requires a concrete
 list and evidence after replacement and rollback checks. Physical tablet
 installation, flashing, slot changes, reboot, firmware/calibration access,
 amplifier stimulus and charge writes remain separate explicit approvals.
+
+The authorized source publication and routing are applied; see
+routing-receipt.json. The next separately approved cleanup would target the
+14 original definitions listed in integrations.json, not the six replacement
+sources or the independent kernel/boot/firmware producers. Deletion is not
+needed for active-source reduction: historical definitions currently refuse
+new standalone builds and retain their build history. No deletion, device
+transaction or stable promotion is included in this receipt.

@@ -1,12 +1,15 @@
 # Independent Rawhide packages
 
-1 November 2026: the [consolidation plan](consolidation/consolidation-plan.md)
-defines six candidate source integrations which preserve the existing binary
-package identities. Their native builds and migration checks are separate
-gates; retained producer definitions are not deleted by source preparation.
+1 November 2026: six [source integrations](consolidation/consolidation-plan.md)
+now replace 14 standalone producers while preserving 21 binary identities,
+including two optional debug RPMs. Native builds, signatures, 15 dependency
+plans and isolated config migration checks pass. Unstable has 28 active sources
+and 14 retained definitions which refuse new standalone builds; their old build
+history remains available. Device installation and hardware acceptance are
+separate. See the [validation record](consolidation/validation-results.md).
 
 29 October 2026: `mcc45tr/uke-linux-unstable` targets only
-`fedora-rawhide-aarch64`. Each component has its own source package and build.
+`fedora-rawhide-aarch64`. At that date each component had its own source build.
 Conventional upstream subpackages, such as a library and its development files,
 remain in that component's source build. The nine umbrella source packages are
 not submitted to this repository.

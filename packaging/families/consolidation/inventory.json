@@ -66,6 +66,12 @@
             "version": "3.0.304.0-2"
           }
         }
+      },
+      "source_pin": null,
+      "source_repository": null,
+      "source_archive": {
+        "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/uke-speaker-firmware-3.0.304.0-1.fc46.src.rpm",
+        "sha256": "ddded730ac0a182f3006009ab9524768c0899a219ef532d90bee6e5807eab9b3"
       }
     },
     {
@@ -123,7 +129,9 @@
             "version": "7.3.1-109"
           }
         }
-      }
+      },
+      "source_pin": "d86aea3e8cc2f90ac101d03b81560d8e1eab38cc",
+      "source_repository": "https://github.com/MCC45TR/senemos-uke-kernel-mainline.git"
     },
     {
       "id": 3266603,
@@ -180,7 +188,9 @@
             "version": "2.7.0-1"
           }
         }
-      }
+      },
+      "source_pin": "116b05cc663692910da29afcd7f233c0ddd84e8b",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266604,
@@ -237,7 +247,9 @@
             "version": "1.0.7-8.fc46"
           }
         }
-      }
+      },
+      "source_pin": "2d9991c10deaa337678ec3855836dd0178a6c4e6",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266605,
@@ -294,7 +306,9 @@
             "version": "0.4.4-20.fc46"
           }
         }
-      }
+      },
+      "source_pin": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266606,
@@ -351,7 +365,9 @@
             "version": "0.2.0-7.fc46"
           }
         }
-      }
+      },
+      "source_pin": "99fbc01ac89eb651b789367cf9af702860378831",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266607,
@@ -408,7 +424,9 @@
             "version": "1.0.2-14.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266608,
@@ -465,7 +483,9 @@
             "version": "1.0.16-12.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266609,
@@ -522,7 +542,9 @@
             "version": "1.0.0-24.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266610,
@@ -579,7 +601,9 @@
             "version": "1.4.1-1"
           }
         }
-      }
+      },
+      "source_pin": "b37f97ecbbb54641d449e8808cfebeb0d0f17305",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266611,
@@ -636,7 +660,9 @@
             "version": "1.6.10-2.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266612,
@@ -693,7 +719,9 @@
             "version": "1.0.2-5.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266613,
@@ -750,7 +778,9 @@
             "version": "20261006.094154-7.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266614,
@@ -807,7 +837,9 @@
             "version": "1.8.13-1.fc46"
           }
         }
-      }
+      },
+      "source_pin": "c7dbcf491348a93eb4abbfcdbbdbfcabceec5c01",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266615,
@@ -864,7 +896,9 @@
             "version": "0.1.0-6.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266616,
@@ -921,7 +955,9 @@
             "version": "0.1.0-8.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266617,
@@ -978,7 +1014,9 @@
             "version": "3.0.304.0-14.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266618,
@@ -1035,7 +1073,9 @@
             "version": "12.0~preview3.20261010-6.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266619,
@@ -1092,7 +1132,9 @@
             "version": "0.1.0-4.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266620,
@@ -1149,7 +1191,9 @@
             "version": "1.0.0-10"
           }
         }
-      }
+      },
+      "source_pin": "1076bc33049f1e0a8985cd5d6efbd13aead2b478",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266621,
@@ -1206,7 +1250,9 @@
             "version": "2026.09.21-26"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266622,
@@ -1263,7 +1309,9 @@
             "version": "0.1.0-5.fc46"
           }
         }
-      }
+      },
+      "source_pin": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266623,
@@ -1320,7 +1368,9 @@
             "version": "2.20.0-18.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4a6f5430004ce9e11837862eb6add987130655a3",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266624,
@@ -1377,7 +1427,9 @@
             "version": "1.91.5-20.fc46"
           }
         }
-      }
+      },
+      "source_pin": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266625,
@@ -1434,7 +1486,9 @@
             "version": "2.62.1-17.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4a6f5430004ce9e11837862eb6add987130655a3",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266626,
@@ -1491,7 +1545,9 @@
             "version": "1.28.8-17.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4a6f5430004ce9e11837862eb6add987130655a3",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266627,
@@ -1548,7 +1604,9 @@
             "version": "1.25-45.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4a6f5430004ce9e11837862eb6add987130655a3",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266628,
@@ -1605,7 +1663,9 @@
             "version": "26.27.3-16.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4a6f5430004ce9e11837862eb6add987130655a3",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266629,
@@ -1662,7 +1722,9 @@
             "version": "3.9-24.fc46"
           }
         }
-      }
+      },
+      "source_pin": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266630,
@@ -1719,7 +1781,9 @@
             "version": "26.2.6-17.fc46"
           }
         }
-      }
+      },
+      "source_pin": "b5cdd136cc932ae8a2bedaa36560d57c2d54b7d4",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266631,
@@ -1776,7 +1840,9 @@
             "version": "16.2.1-19.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4a6f5430004ce9e11837862eb6add987130655a3",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266634,
@@ -1833,7 +1899,9 @@
             "version": "1.1.4-3.fc46"
           }
         }
-      }
+      },
+      "source_pin": "0982197bac4c32391c752cc800a5ebaaa9335df6",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266635,
@@ -1890,7 +1958,9 @@
             "version": "3.0.2-2.uke1.fc46"
           }
         }
-      }
+      },
+      "source_pin": "4335808aa1bafe9c2adf23326db621f75539f599",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3266696,
@@ -1947,7 +2017,9 @@
             "version": "1.0.0-26"
           }
         }
-      }
+      },
+      "source_pin": "9e4d2153e116419c474d0c73eb2280447bf45243",
+      "source_repository": "https://github.com/MCC45TR/uke-fedora-builder.git"
     },
     {
       "id": 3266792,
@@ -2004,7 +2076,9 @@
             "version": "1.1.0-1"
           }
         }
-      }
+      },
+      "source_pin": "4ca77097a14bcbbfdd0c59ed6f2b086641f3c66a",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     },
     {
       "id": 3267473,
@@ -2061,7 +2135,201 @@
             "version": "1.0.0-5"
           }
         }
-      }
+      },
+      "source_pin": "53ae6371b12758e01fe0af4690e6fb54d2e1b436",
+      "source_repository": "https://github.com/MCC45TR/uke-linux-hardware-support.git"
     }
-  ]
+  ],
+  "refs": {
+    "hardware": [
+      {
+        "name": "TEST",
+        "sha": "ebffdc296fe2bb26d4b07d15e7a4d191cc1ecba7"
+      },
+      {
+        "name": "codex/control-kernel-ownership-20261030",
+        "sha": "6f5d7023bb3f192a69f57d9516450e37119f70a5"
+      },
+      {
+        "name": "feat/boot-watchdog-20261030",
+        "sha": "378fb98763bf87d49828834aeb7d7ab2996efcfe"
+      },
+      {
+        "name": "feat/fsr-copr-20261029",
+        "sha": "a90d65e40ac34340b6fce5e406a61e09065e46f6"
+      },
+      {
+        "name": "feat/oem-resources-20261031",
+        "sha": "53ae6371b12758e01fe0af4690e6fb54d2e1b436"
+      },
+      {
+        "name": "fix/automatic-video-policy-20261030",
+        "sha": "60c8274ece7bb5abf26c2bc356e3eb900211f5d0"
+      },
+      {
+        "name": "fix/boot-shutdown-20261101",
+        "sha": "fa4ed78b399be40125759155094df0b78f41d77b"
+      },
+      {
+        "name": "fix/control-capability-audit-20261030",
+        "sha": "db264db63bec90f8553b345203404e29c7a8f6bd"
+      },
+      {
+        "name": "fix/control-lifecycle-safety-20261030",
+        "sha": "b6f6b2b31a2c8be098954c86e9864527b00f2d21"
+      },
+      {
+        "name": "fix/control-memory-performance-20261030",
+        "sha": "0aa99ee5f5f7e616fea99b4bdd6108aea5897746"
+      },
+      {
+        "name": "fix/control-transaction-policy-20261030",
+        "sha": "116b05cc663692910da29afcd7f233c0ddd84e8b"
+      },
+      {
+        "name": "fix/ddcutil-first-line-20261029",
+        "sha": "fd97a5eb1811f3ebe3931679c4b2f8727beaf989"
+      },
+      {
+        "name": "fix/display-native-policy-20261030",
+        "sha": "92ab28fa6f8d4394706f8954578ac8c5040d037a"
+      },
+      {
+        "name": "fix/dnf-seamless-20261030",
+        "sha": "6e0c17080a442ef5db1f2d98a5e4a2111245a6e0"
+      },
+      {
+        "name": "fix/kernel-transaction-20261030",
+        "sha": "63d48532133968098fd42c39100cbb8a736f6a94"
+      },
+      {
+        "name": "fix/sensor-integration-20261030",
+        "sha": "0b0124e8515660292b324a2fb6a72959c8145843"
+      },
+      {
+        "name": "fix/video-cpu-copy-20261030",
+        "sha": "b755b3b7cf2e5ffc2b5f1cfb108bc978a068785b"
+      },
+      {
+        "name": "main",
+        "sha": "50e18c0575b474857a8d53930e1a638ff7a1e0a7"
+      },
+      {
+        "name": "release/unstable-current-20261029",
+        "sha": "165a3224cf4a09327ef559c84c5d06279b7860b7"
+      },
+      {
+        "name": "research/charging-datasheets-20261029",
+        "sha": "b37f97ecbbb54641d449e8808cfebeb0d0f17305"
+      },
+      {
+        "name": "work/copr-simplification-20261031",
+        "sha": "472c32231cdb6fb54212af5e6e23e7c6928daf24"
+      },
+      {
+        "name": "work/copr-simplification-debug-20261101",
+        "sha": "549fee4066108495f0d136996cb1b953ceb042e7"
+      },
+      {
+        "name": "work/four-microphones-20261031",
+        "sha": "c7dbcf491348a93eb4abbfcdbbdbfcabceec5c01"
+      },
+      {
+        "name": "work/mic-mountinfo-20261031",
+        "sha": "07ac9ea08d6a8829f91a02efbe3d508c1f287402"
+      },
+      {
+        "name": "work/smart-microphone-low-power-20261031",
+        "sha": "dfb44b79fc830563b9fe8a24538bac8f05e8c921"
+      }
+    ],
+    "kernel": [
+      {
+        "name": "kvm",
+        "sha": "7a8b75f1471a6c9e2e1b6dccdb24bcb20276780f"
+      },
+      {
+        "name": "main",
+        "sha": "61420893a928c7b7bc6a80320ae20dcea2f26cde"
+      },
+      {
+        "name": "test",
+        "sha": "e256bedb435861e56a69d6e3af06c155a5acc92f"
+      },
+      {
+        "name": "work/audio-topology-names-20261031",
+        "sha": "1ea50711f0acf2e5cb3aa1cb7c349ba065c3db33"
+      }
+    ],
+    "builder": [
+      {
+        "name": "TEST",
+        "sha": "56564a02ad062c0f302a86eb364703aeb5ee7d9b"
+      },
+      {
+        "name": "main",
+        "sha": "9e942465bca927a901ab639f6a22df09e69cd24f"
+      },
+      {
+        "name": "release/copr-filesystem-20261031",
+        "sha": "9e4d2153e116419c474d0c73eb2280447bf45243"
+      },
+      {
+        "name": "release/copr-guest-image-20261030",
+        "sha": "be742f21eb7a194ded62db0d8b24d73e39fdb6c3"
+      },
+      {
+        "name": "release/copr-guest-root-20261030",
+        "sha": "e947f76dfb6c1c44e9d58d3446180b15449944af"
+      },
+      {
+        "name": "release/copr-guest-transport-20261030",
+        "sha": "748367b079933ef7cb28194997a7c2ba4240f47f"
+      },
+      {
+        "name": "release/copr-image-worker-20261030",
+        "sha": "e7ee48cb656b65f1363bb585e2b9b783041a3a43"
+      },
+      {
+        "name": "release/copr-production-root-20261030",
+        "sha": "6d133c61acff72c6d87f6aa4d84e57b20ce16e57"
+      },
+      {
+        "name": "release/unstable-image-current-20261030",
+        "sha": "01095735b859c754aea40ca3446bfb9a09b3aaff"
+      }
+    ]
+  },
+  "ancestry": {
+    "hardware_9d4421a": {
+      "ahead_by": 29,
+      "base": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "behind_by": 0,
+      "merge_base": "9d4421a145540fbeb82d685c1e99e971b65d8abf",
+      "status": "ahead"
+    },
+    "kernel_d86aea3": {
+      "ahead_by": 57,
+      "base": "d86aea3e8cc2f90ac101d03b81560d8e1eab38cc",
+      "behind_by": 4,
+      "merge_base": "43bec2521c5846393031e8409c77d75118a21161",
+      "status": "diverged"
+    },
+    "builder_35280a5": {
+      "ahead_by": 15,
+      "base": "35280a534b729443b89dddcd806c7c2d20e484c8",
+      "behind_by": 0,
+      "merge_base": "35280a534b729443b89dddcd806c7c2d20e484c8",
+      "status": "ahead"
+    }
+  },
+  "candidate_definition_count": 42,
+  "retained_legacy_definitions": 14,
+  "intended_active_count_after_qualified_routing": 28,
+  "routing_completed": true,
+  "current_definition_count": 42,
+  "current_active_sources": 28,
+  "retained_superseded_sources": 14,
+  "historical_builds_deleted": false,
+  "historical_definition_deletion_completed": false
 }

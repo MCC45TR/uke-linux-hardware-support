@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "verified_at": "2026-11-01T05:13:06Z",
+  "project": "mcc45tr/uke-linux-unstable",
+  "chroot": "fedora-rawhide-aarch64",
+  "result": {
+    "definitions": 42,
+    "retained_superseded": 14,
+    "active": 28,
+    "all_auto_rebuild_disabled": true,
+    "definitions_deleted": false
+  },
+  "source_scripts_changed": 20,
+  "unchanged_definitions": 22,
+  "other_source_fields_unchanged": true,
+  "project_settings_unchanged": true,
+  "pinned_generator": "0d72558157de23e36c868f127e056dd9ad2ef345",
+  "physical_installation": false,
+  "hardware_tested": false,
+  "affected_binary_rpm_count": 21
+}
