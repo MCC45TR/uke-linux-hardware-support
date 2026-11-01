@@ -384,3 +384,14 @@ replacement source and ARM64 Launchpad builds, then archive unique history
 before removing obsolete heads. Ubuntu source CI follows main; expensive
 native/user-root workflows are explicit dispatches rather than stale branch
 push hooks. Other snapshot routes still need canonical-main adapters.
+
+The first exact-main hardware source-contract CI reached the unchanged Fedora
+return ABI audit and failed on a pruned pinned COPR RPM (HTTP404). The preceding
+main validation and family metadata fixtures passed. The UI task had already
+qualified the same bytes from the existing consolidation release after filling
+its local cache; a clean CI worker lacked that cache. The host audit now falls
+back only for a fork RPM to the existing archived filename, verifies its original
+pinned SHA256 before admitting it to the cache, then retains every original
+signature, architecture, scriptlet, policy, DSO and interface assertion. Original
+Fedora input failures remain fatal. This changes neither runtime dependencies
+nor ABI admission and does not execute a payload or publish a COPR package.

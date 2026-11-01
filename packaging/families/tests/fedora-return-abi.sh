@@ -30,7 +30,20 @@ while IFS= read -r pair; do
             *) echo 'Unreviewed RPM URL' >&2; exit 1;;
         esac
         file="$cache/${url##*/}"
-        if [[ ! -s $file ]]; then curl --fail --location --silent --show-error --max-time 180 "$url" -o "$file.part"; mv "$file.part" "$file"; fi
+        if [[ ! -s $file ]]; then
+            if ! curl --fail --location --silent --show-error --max-time 180 "$url" -o "$file.part"; then
+                rm -f -- "$file.part"
+                [[ $side == fork ]] || { echo 'Original Fedora input is unavailable' >&2; exit 1; }
+                # COPR may prune completed builds. The existing source archive
+                # retains these exact signed bytes; hashes and all trust/ABI
+                # assertions below are unchanged. Never substitute a newer RPM.
+                archive=https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101
+                printf 'Pinned COPR input unavailable; reading archived bytes: %s\n' "${url##*/}" >&2
+                curl --fail --location --silent --show-error --max-time 180 "$archive/${url##*/}" -o "$file.part"
+            fi
+            printf '%s  %s\n' "$hash" "$file.part" | sha256sum -c - >/dev/null
+            mv "$file.part" "$file"
+        fi
         printf '%s  %s\n' "$hash" "$file" | sha256sum -c - >/dev/null
         rpmkeys --dbpath "$stage/keys" --checksig "$file" > "$stage/signature"
         [[ $(rpm -qp --qf '%{ARCH}' "$file") == "$arch" ]]
