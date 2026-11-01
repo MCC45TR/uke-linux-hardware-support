@@ -39,10 +39,13 @@ DEB. Its conffile survives a disposable data-package upgrade and removal; purge
 removes it. That lifecycle test registered ARM64 as a foreign architecture in
 an Ubuntu24 x86_64 container; no target program or maintainer helper ran.
 
-At 21:53 UTC, the source publication remains Pending. A successful build alone
-does not admit branch deletion: verify the new source and binary through the
-PPA's signed APT index, exact version ordering and an isolated upgrade solver
-before removing archived heads. Preserve the existing recipe during this wait.
+Launchpad published the new source at 22:05:34 UTC. Subsequent verification
+passed the complete PPA-key/InRelease/SHA512-index/source/ARM64-DEB chain.
+The authenticated DEB matches the actual build output byte for byte. An
+isolated APT solver selects the exact new version as an upgrade from the earlier
+published conventional version, with no package removal or downgrade. The
+replacement recipe's publication gate has passed; preserve its main inputs
+and the archived historical tips while removing obsolete heads.
 
 This does not admit an image,
 prove speaker operation, grant rights for other firmware or enroll additional

@@ -532,3 +532,20 @@ release overlay continues to reference its generated origin records. This
 corrects metadata paths that do not exist in the native snapshot layout;
 generated-overlay fixtures verify both paths. Compiled source, patch identity,
 build rules and runtime dependencies are unchanged from native qualification.
+
+## Verified publication and main-only CI transition
+
+1 November 2026, 22:08 UTC. Launchpad published replacement source 18914465 at
+22:05:34. Verification passed the PPA key, signed InRelease, SHA512 package and
+source indexes, both source files and exact ARM64 DEB. The authenticated binary
+matches build33899943 byte for byte. The isolated APT solver upgrades the prior
+published version to the exact new native snapshot without removals or a
+downgrade; the separately tested conffile lifecycle remains valid. This
+supersedes the Pending archive reports above. The stable archive remains gated.
+
+For the main-only repository, both general source-validation workflows now
+filter pushes to main while retaining pull requests and manual dispatch.
+GitHub's documented push event also includes branch deletion; limiting retired
+head events avoids redundant jobs during archive-backed cleanup. All main
+safety checks remain in place. This changes trigger scope, not validation.
+Reference: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#push
