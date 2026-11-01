@@ -1,5 +1,48 @@
 # Stock-ABL kernel updates
 
+31 October 2026, POCO Pad X1, Fedora Rawhide AArch64. Normal DNF update with
+updater 1.8.11 replaced an unbooted 7.3.0-60 trial with 7.3.1-3 in slot A.
+DNF reported completion before reboot. A normal reboot started 7.3.1-3 and
+the packaged health service accepted A. The running Image notes/build ID,
+signed package identities, all 821 module digests and native GPT/UFS admission
+passed; the complete B/7.3.0-54 image hash remained unchanged. Existing SPMI
+and initial-console warnings remain; an automatic suspend attempt failed.
+This result does not qualify offline reboot, forced fallback or power loss.
+
+31 October 2026. Updater 1.8.11 releases the old GPT descriptors after a verified
+reselection of the accepted slot, before reacquiring fresh metadata to stage a
+replacement trial. The global updater lock remains held across both phases.
+
+30 October 2026. Updater 1.8.10 waits up to five seconds for a busy UFS metadata
+lock, then refuses the update if exclusivity is still unavailable. Descriptor
+identity/capacity failures are reported separately. Native regular-file checks
+cover contention that clears, a held lock that times out and invalid descriptors.
+
+30 October 2026. Updater 1.8.9 retains active `transaction BUNDLE` calls from
+Uke Control and direct callers. The final RPM trigger also covers profile-only
+updates and verifies an already prepared candidate without another image write.
+Version 1.8.8's unconditional transaction deferral is superseded.
+
+30 October 2026. Updater 1.8.8 finalizes userdata updates after all RPM package
+scripts, including a transaction that changes only the singleboot profile link.
+The terminal reports the candidate release, verified target slot and retained
+rollback release. A refusal returns a failed scriptlet and says to resolve it
+before rebooting; RPM payloads may already be installed.
+
+Normal `sudo dnf update` stages the selected kernel before returning. For an
+offline transaction, use `sudo dnf upgrade --offline`, then
+`sudo dnf offline reboot`. Boot preparation runs when that stored transaction
+executes. An already accepted running baseline is verified without requiring
+desktop services in the offline environment. A new trial still requires normal
+boot-health acceptance. Physical offline reboot validation remains open.
+
+30 October 2026. Updater 1.8.7 supplies `transaction BUNDLE` for kernel RPM
+post-transaction hooks. It honors the selected root profile and administrator
+policy. Userdata transactions use the final installed singleboot profile and
+the A/B writer. Disabled automatic activation now prints an explicit message;
+an installed kernel alone does not change the next boot. See the
+[userdata admission check](USERDATA-AB.md) before enabling an installation.
+
 22 October 2026 source update: updater 1.6.0 adds a guarded return from a booted,
 unaccepted userdata current-slot trial to its recorded accepted B image. See
 [userdata restoration](USERDATA-AB.md#restore-an-unaccepted-current-slot-trial).

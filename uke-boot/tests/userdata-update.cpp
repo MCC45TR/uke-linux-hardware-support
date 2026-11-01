@@ -22,6 +22,14 @@ static Bytes image(const std::string &release) {
     memcpy(bytes.data()+page+128,banner.data(),banner.size());return bytes;
 }
 int main() {
+    assert(userdata_bundle("kernel-updates/7.3.0-54/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-54");
+    assert(userdata_bundle("kernel-updates/7.3.0-14-unstable/userdata.img")=="/usr/lib/senemos/kernel-updates/7.3.0-14-unstable");
+    for(const auto target:{"/kernel-updates/7.3.0-54/userdata.img","kernel-updates/../userdata.img",
+                           "kernel-updates/7.3.0-54/linux.img","other/7.3.0-54/userdata.img",
+                           "kernel-updates/7.3.0-54/../7.3.0-49/userdata.img"})
+        reject([&]{userdata_bundle(target);});
+    assert(global_automatic_updates("# Administrator policy\nautomatic=1\n"));
+    assert(!global_automatic_updates("automatic=0\n"));
     {
         std::ifstream fixture("tests/fixtures/early-firmware-20261023.txt");assert(fixture);
         std::ostringstream contents;contents<<fixture.rdbuf();assert(!fixture.bad());
@@ -78,6 +86,16 @@ int main() {
         uke_install::verified(trial.policy);
         assert(!booted_ab_trial(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
         (void)uke_install::arm(trial.policy);const auto before=encode(trial);
+        auto replacement=superseded_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id,"7.2.11-17");
+        assert(replacement.policy.phase==uke_install::Phase::stable && replacement.policy.good==good);
+        assert(replacement.good_image==trial.good_image && replacement.policy.good_release==trial.policy.good_release);
+        assert(replacement.policy.candidate.empty() && replacement.candidate_image.empty() && replacement.staged_boot_id.empty());
+        assert(unsigned(uke_install::stage(replacement.policy,good,"7.2.11-14","7.2.11-17"))==target);
+        for(const auto next:{"7.2.11-14","7.2.11-16","../bad"})
+            reject([&]{superseded_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id,next);});
+        reject([&]{superseded_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,boot_id,"7.2.11-17");});
+        reject([&]{superseded_trial(trial,target,"7.2.11-16",trial.candidate_image,boot_id,"7.2.11-17");});
+        reject([&]{superseded_trial(saved,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id,"7.2.11-17");});
         assert(awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id));
         assert(!awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.good_image,boot_id));
         assert(!awaiting_ab_reboot(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
@@ -198,6 +216,24 @@ int main() {
     auto duplicate=capable;capability(duplicate,page+336);reject([&]{userdata_vrr(duplicate,true,manifest);});
     auto unaligned=boots[1];capability(unaligned,page+257);reject([&]{userdata_vrr(unaligned,true,manifest);});
     auto truncated=boots[1];capability(truncated,page+460);reject([&]{userdata_vrr(truncated,true,manifest);});
+    {
+        const auto path=root/"metadata-lock";
+        std::ofstream(path)<<"fixture";
+        Fd held(open(path.c_str(),O_RDWR|O_CLOEXEC));
+        Fd contender(open(path.c_str(),O_RDWR|O_CLOEXEC));
+        assert(lock_metadata_fd(held.value));
+        const auto child=fork();assert(child>=0);
+        if(!child){usleep(150000);assert(!flock(held.value,LOCK_UN));_exit(0);}
+        assert(lock_metadata_fd(contender.value));
+        int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+        assert(!flock(contender.value,LOCK_UN));
+        assert(lock_metadata_fd(held.value));
+        assert(!lock_metadata_fd(contender.value) && (errno==EWOULDBLOCK || errno==EAGAIN));
+        assert(!flock(held.value,LOCK_UN));
+        assert(lock_metadata_fd(contender.value));
+        assert(!lock_metadata_fd(-1) && errno==EBADF);
+        std::cout<<"Actual metadata flock: transient contention recovers, held locks time out, invalid descriptors refuse\n";
+    }
     fs::remove_all(root);
     std::cout<<"Userdata durable states, alternating and current-slot trials, healthy acceptance/fallback, stale/symlink/hardlink refusals, unique running Image identity and bounded VRR derivation passed; regular files only\n";
 }
