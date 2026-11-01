@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "project": "mcc45tr/uke-linux-unstable",
+  "chroot": "fedora-rawhide-aarch64",
+  "builds": [
+    {"name":"uke-meta-integration","id":11239474},
+    {"name":"uke-audio-integration","id":11239483},
+    {"name":"uke-sensor-integration","id":11239521},
+    {"name":"uke-power-integration","id":11239485},
+    {"name":"uke-video-integration","id":11239487},
+    {"name":"uke-desktop-extras-integration","id":11239488}
+  ],
+  "superseded": [
+    {"id":11239484,"reason":"Runtime outputs passed, but optional sensor debuginfo/debugsource were omitted."},
+    {"id":11239511,"reason":"Debug extraction ran, but expanded source specs had no debug package declarations; unpackaged-file check correctly failed."}
+  ],
+  "rollback_archive": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/tag/copr-consolidation-archive-20261101"
+}
