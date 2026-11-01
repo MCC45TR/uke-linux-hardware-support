@@ -1,0 +1,265 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Select P010 for HEVC Main10 encode contexts
+
+Keep decoder Main10 render-format compatibility. Require matching profile,
+sample depth, kernel raw layout and runtime profile-menu availability.
+Native firmware, bitstream precision and GPU/import acceptance remain separate.
+
+---
+diff --git a/src/backend.cpp b/src/backend.cpp
+index 80e6739..67b4707 100644
+--- a/src/backend.cpp
++++ b/src/backend.cpp
+@@ -101,11 +101,10 @@ static bool encode_supported(const Driver &d, VAProfile p, VAEntrypoint e) {
+            d.encoder_profiles.end();
+ }
+ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+-    (void)profile; // HEVC attributes are only available in libva >= 1.13.
+     switch (type) {
+ #if VA_CHECK_VERSION(1, 13, 0)
+     case VAConfigAttribEncHEVCFeatures: {
+-        if (profile != VAProfileHEVCMain)
++        if (!is_hevc(profile))
+             return VA_ATTRIB_NOT_SUPPORTED;
+         // Iris generates the parameter sets and chooses coding tools itself.
+         VAConfigAttribValEncHEVCFeatures features{};
+@@ -116,7 +115,7 @@ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+         return features.value;
+     }
+     case VAConfigAttribEncHEVCBlockSizes: {
+-        if (profile != VAProfileHEVCMain)
++        if (!is_hevc(profile))
+             return VA_ATTRIB_NOT_SUPPORTED;
+         VAConfigAttribValEncHEVCBlockSizes sizes{};
+         sizes.bits.log2_max_coding_tree_block_size_minus3 = 2;
+@@ -126,7 +125,7 @@ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+     }
+ #endif
+     case VAConfigAttribRTFormat:
+-        return VA_RT_FORMAT_YUV420;
++        return is_10bit(profile) ? VA_RT_FORMAT_YUV420_10 : VA_RT_FORMAT_YUV420;
+     case VAConfigAttribRateControl:
+         return VA_RC_CQP | VA_RC_CBR | VA_RC_VBR;
+     case VAConfigAttribEncPackedHeaders:
+@@ -151,7 +150,9 @@ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+         return VA_ATTRIB_NOT_SUPPORTED;
+     }
+ }
+-static unsigned profile_format(VAProfile p) {
++static unsigned profile_format(VAProfile p, VAEntrypoint entry) {
++    if (entry == VAEntrypointEncSlice)
++        return encode_attribute(VAConfigAttribRTFormat, p);
+     bool is_vp9_2 = p == VAProfileVP9Profile2;
+     // Chromium requires Main10 to be compatible with 8-bit format.
+     // This also applies to future 10-bit profiles other than VP9_2.
+@@ -293,7 +294,7 @@ API(
+         }
+         switch (attrs[i].type) {
+         case VAConfigAttribRTFormat:
+-            attrs[i].value = profile_format(profile);
++            attrs[i].value = profile_format(profile, entry);
+             break;
+         case VAConfigAttribDecSliceMode:
+             attrs[i].value = VA_DEC_SLICE_MODE_NORMAL;
+@@ -324,7 +325,8 @@ API(
+                   "unsupported encoder config attribute", VA_STATUS_ERROR_ATTR_NOT_SUPPORTED);
+             auto value = encode_attribute(type, p);
+             check(!(attrs[i].value & ~value) &&
+-                      (type != VAConfigAttribRTFormat || attrs[i].value == VA_RT_FORMAT_YUV420),
++                      (type != VAConfigAttribRTFormat ||
++                       attrs[i].value == encode_attribute(VAConfigAttribRTFormat, p)),
+                   "unsupported encoder attribute", VA_STATUS_ERROR_ATTR_NOT_SUPPORTED);
+             if (attrs[i].type == VAConfigAttribRateControl) {
+                 check(attrs[i].value == VA_RC_CQP || attrs[i].value == VA_RC_CBR ||
+@@ -333,7 +335,7 @@ API(
+                 config.rate_control = attrs[i].value;
+             }
+         } else if (attrs[i].type == VAConfigAttribRTFormat)
+-            check(attrs[i].value && !(attrs[i].value & ~profile_format(p)),
++            check(attrs[i].value && !(attrs[i].value & ~profile_format(p, e)),
+                   "unsupported render format", VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT);
+         else if (e == VAEntrypointVLD && attrs[i].type == VAConfigAttribDecSliceMode)
+             check(attrs[i].value == VA_DEC_SLICE_MODE_NORMAL, "unsupported slice mode",
+@@ -349,7 +351,7 @@ API(query_config,
+     (VADriverContextP ctx, VAConfigID id, VAProfile *p, VAEntrypoint *e, VAConfigAttrib *a, int *n),
+     auto config = lookup(d.configs, id, VA_STATUS_ERROR_INVALID_CONFIG);
+     *p = config.profile; *e = config.entrypoint;
+-    a[0] = {VAConfigAttribRTFormat, profile_format(*p)}; *n = 1;
++    a[0] = {VAConfigAttribRTFormat, profile_format(*p, *e)}; *n = 1;
+     if (*e == VAEntrypointEncSlice) a[(*n)++] = {VAConfigAttribRateControl, config.rate_control};
+     return VA_STATUS_SUCCESS;)
+ API(
+@@ -378,7 +380,8 @@ API(
+         a[i].value.type = VAGenericValueTypeInteger;
+         a[i].value.value.i = values[i];
+     } unsigned n = 6;
+-    if (values[0] != VA_FOURCC_NV12 && (profile_format(profile) & VA_RT_FORMAT_YUV420)) {
++    if (values[0] != VA_FOURCC_NV12 &&
++        (profile_format(profile, config.entrypoint) & VA_RT_FORMAT_YUV420)) {
+         a[n] = a[0];
+         a[n++].value.value.i = VA_FOURCC_NV12;
+     } if (!attrs) {
+diff --git a/src/encoder.cpp b/src/encoder.cpp
+index 2ab6bc4..145fb67 100644
+--- a/src/encoder.cpp
++++ b/src/encoder.cpp
+@@ -111,20 +111,22 @@ void validate_h264(const EncodeSettings &s, const EncodePicture &p, unsigned wid
+                     unsigned(seq.picture_height_in_mbs) * 16)),
+           "unsupported encode cropping", VA_STATUS_ERROR_INVALID_PARAMETER);
+ }
+-void validate_hevc(const EncodeSettings &s, const EncodePicture &p, unsigned width,
++void validate_hevc(const EncodeSettings &s, const EncodePicture &p, VAProfile profile, unsigned width,
+                    unsigned height) {
+     check(s.has_sequence && p.has_params && p.hevc_slices.size() == 1,
+           "encoding requires a sequence, picture and one slice", VA_STATUS_ERROR_INVALID_PARAMETER);
+     const auto &seq = s.hevc_sequence;
+     const auto &pic = p.hevc_params;
+     const auto &slice = p.hevc_slices.front();
+-    check(seq.general_profile_idc == 1 && seq.seq_fields.bits.chroma_format_idc == 1 &&
+-              !seq.seq_fields.bits.bit_depth_luma_minus8 &&
+-              !seq.seq_fields.bits.bit_depth_chroma_minus8 &&
++    const bool ten_bit = profile == VAProfileHEVCMain10;
++    check(seq.general_profile_idc == (ten_bit ? 2u : 1u) &&
++              seq.seq_fields.bits.chroma_format_idc == 1 &&
++              seq.seq_fields.bits.bit_depth_luma_minus8 == (ten_bit ? 2u : 0u) &&
++              seq.seq_fields.bits.bit_depth_chroma_minus8 == (ten_bit ? 2u : 0u) &&
+               !seq.seq_fields.bits.separate_colour_plane_flag &&
+               !seq.seq_fields.bits.pcm_enabled_flag && !seq.seq_fields.bits.hierachical_flag &&
+               !seq.vui_fields.bits.field_seq_flag && seq.ip_period <= 1,
+-          "only progressive 8-bit HEVC Main I/P encoding is supported",
++          "HEVC encoding requires progressive 4:2:0 Main/Main10 I/P with matching bit depth",
+           VA_STATUS_ERROR_UNIMPLEMENTED);
+     check(seq.log2_min_luma_coding_block_size_minus3 <= 3 &&
+               seq.log2_diff_max_min_luma_coding_block_size <= 3 &&
+@@ -172,9 +174,12 @@ void validate_hevc(const EncodeSettings &s, const EncodePicture &p, unsigned wid
+               (!seq.general_tier_flag || seq.general_level_idc >= 120),
+           "invalid HEVC filter or tier", VA_STATUS_ERROR_INVALID_PARAMETER);
+ }
+-void validate(const EncodeSettings &s, const EncodePicture &p, unsigned width, unsigned height) {
++void validate(const EncodeSettings &s, const EncodePicture &p, VAProfile profile,
++              unsigned width, unsigned height) {
++    check(s.hevc == is_hevc(profile), "encode codec does not match context profile",
++          VA_STATUS_ERROR_INVALID_PARAMETER);
+     if (s.hevc)
+-        validate_hevc(s, p, width, height);
++        validate_hevc(s, p, profile, width, height);
+     else
+         validate_h264(s, p, width, height);
+     check(s.fps_num && s.fps_den && s.fps_num >= s.fps_den &&
+@@ -345,12 +350,15 @@ struct Encoder::Impl {
+     uint64_t token = 0;
+     VASurfaceID last_reference = VA_INVALID_SURFACE;
+     EncodeSettings settings;
++    VAProfile profile;
++    unsigned fourcc;
+     unsigned entropy;
+     std::array<int, 3> filter{};
+     std::vector<std::shared_ptr<Memory>> capture, raw;
+ 
+-    Impl(unsigned w, unsigned h, const EncodeSettings &s, unsigned cabac)
+-        : width(w), height(h), settings(s), entropy(cabac) {}
++    Impl(unsigned w, unsigned h, VAProfile p, const EncodeSettings &s, unsigned cabac)
++        : width(w), height(h), settings(s), profile(p),
++          fourcc(is_10bit(p) ? VA_FOURCC_P010 : VA_FOURCC_NV12), entropy(cabac) {}
+     ~Impl() {
+         stop(VA_STATUS_ERROR_INVALID_CONTEXT);
+         if (fd >= 0)
+@@ -574,9 +582,9 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+     check(width >= 128 && height >= 128 && width <= 3840 && height <= 2160 && !(width & 1) &&
+               !(height & 1),
+           "unsupported visible encoder dimensions", VA_STATUS_ERROR_RESOLUTION_NOT_SUPPORTED);
+-    validate(s, p, width, height);
++    validate(s, p, profile, width, height);
+     auto impl = std::make_unique<Impl>(
+-        width, height, s, s.hevc ? 1 : p.params.pic_fields.bits.entropy_coding_mode_flag);
++        width, height, profile, s, s.hevc ? 1 : p.params.pic_fields.bits.entropy_coding_mode_flag);
+     auto &e = *impl;
+     e.filter = deblocking(p, s.hevc);
+     e.render_fd = fcntl(render_fd, F_DUPFD_CLOEXEC, 0);
+@@ -600,14 +608,21 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+     fmt.type = OUTPUT;
+     fmt.fmt.pix_mp.width = width;
+     fmt.fmt.pix_mp.height = height;
+-    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12;
++    const unsigned raw_format = e.fourcc == VA_FOURCC_P010 ? V4L2_PIX_FMT_P010 : V4L2_PIX_FMT_NV12;
++    fmt.fmt.pix_mp.pixelformat = raw_format;
+     fmt.fmt.pix_mp.field = V4L2_FIELD_NONE;
+-    checked(e.fd, VIDIOC_S_FMT, &fmt, "encoder S_FMT NV12");
+-    check(fmt.fmt.pix_mp.pixelformat == V4L2_PIX_FMT_NV12 && fmt.fmt.pix_mp.num_planes == 1,
++    checked(e.fd, VIDIOC_S_FMT, &fmt, "encoder S_FMT raw format");
++    check(fmt.fmt.pix_mp.pixelformat == raw_format && fmt.fmt.pix_mp.num_planes == 1,
+           "unsupported Iris encoder input layout");
+     e.stride = fmt.fmt.pix_mp.plane_fmt[0].bytesperline;
+     e.storage_height = fmt.fmt.pix_mp.height;
+     e.input_size = fmt.fmt.pix_mp.plane_fmt[0].sizeimage;
++    check(e.stride >= uint64_t(width) * (e.fourcc == VA_FOURCC_P010 ? 2u : 1u) &&
++              e.storage_height >= height &&
++              e.stride <= e.input_size /
++                              (uint64_t(e.storage_height) + (uint64_t(e.storage_height) + 1) / 2),
++          "encoder raw buffer is smaller than its visible planes",
++          VA_STATUS_ERROR_ENCODING_ERROR);
+     v4l2_selection crop{};
+     crop.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+     crop.target = V4L2_SEL_TGT_CROP;
+@@ -615,7 +630,9 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+     crop.r.height = height;
+     checked(e.fd, VIDIOC_S_SELECTION, &crop, "encoder S_SELECTION");
+     if (s.hevc) {
+-        e.control(V4L2_CID_MPEG_VIDEO_HEVC_PROFILE, V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN);
++        e.control(V4L2_CID_MPEG_VIDEO_HEVC_PROFILE,
++                  profile == VAProfileHEVCMain10 ? V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10
++                                                 : V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN);
+         e.control(V4L2_CID_MPEG_VIDEO_HEVC_LEVEL,
+                   hevc_level_control(s.hevc_sequence.general_level_idc));
+         v4l2_queryctrl tier{};
+@@ -691,6 +708,7 @@ Encoder::Encoder(const std::string &device, unsigned width, unsigned height, VAP
+             check(ptr != MAP_FAILED, "mmap encoder buffer");
+             m->mapping = ptr;
+             if (type == OUTPUT) {
++                m->fourcc = e.fourcc;
+                 m->stride = e.stride;
+                 m->storage_height = e.storage_height;
+                 m->width = e.width;
+@@ -730,7 +748,7 @@ std::shared_ptr<EncodeTask> Encoder::encode(const EncodeSettings &s, const Encod
+     auto &e = *impl_;
+     check(!e.failed, "encoder session failed; create a new context",
+           VA_STATUS_ERROR_ENCODING_ERROR);
+-    validate(s, p, e.width, e.height);
++    validate(s, p, e.profile, e.width, e.height);
+     check(deblocking(p, s.hevc) == e.filter, "changing deblocking requires a new context",
+           VA_STATUS_ERROR_UNIMPLEMENTED);
+     check((s.hevc
+@@ -773,7 +791,7 @@ std::shared_ptr<EncodeTask> Encoder::encode(const EncodeSettings &s, const Encod
+                  : p.params.pic_fields.bits.reference_pic_flag,
+           "non-reference encoding unsupported", VA_STATUS_ERROR_UNIMPLEMENTED);
+     auto memory = input->memory;
+-    check(memory && memory->fourcc == VA_FOURCC_NV12 && memory->width >= e.width &&
++    check(memory && memory->fourcc == e.fourcc && memory->width >= e.width &&
+               memory->height >= e.height,
+           "invalid encoder input surface", VA_STATUS_ERROR_INVALID_SURFACE);
+     check(!output.coded_mapped, "coded buffer is mapped", VA_STATUS_ERROR_SURFACE_BUSY);
+@@ -823,6 +841,7 @@ std::shared_ptr<EncodeTask> Encoder::encode(const EncodeSettings &s, const Encod
+             // GPU-write an Iris MMAP allocation with cached CPU aliases.
+             if (!e.staging[index]) {
+                 auto m = std::make_shared<Memory>();
++                m->fourcc = e.fourcc;
+                 m->width = e.width;
+                 m->height = e.height;
+                 m->stride = e.stride;
+diff --git a/src/runtime-caps.cpp b/src/runtime-caps.cpp
+index d547d34..0948660 100644
+--- a/src/runtime-caps.cpp
++++ b/src/runtime-caps.cpp
+@@ -56,10 +56,10 @@ std::vector<VAProfile> probe_profiles(const std::string &path, bool encoder) {
+         const unsigned raw = encoder ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
+                                      : V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+         for (const auto &profile : profiles) {
+-            // The backend encoder implements only H264 and HEVC Main NV12.
++            // Encode uses NV12 for H264/Main and P010 for HEVC Main10.
+             if (encoder && profile.va != VAProfileH264ConstrainedBaseline &&
+                 profile.va != VAProfileH264Main && profile.va != VAProfileH264High &&
+-                profile.va != VAProfileHEVCMain) continue;
++                profile.va != VAProfileHEVCMain && profile.va != VAProfileHEVCMain10) continue;
+             if (!format_available(fd, coded, profile.codec)) continue;
+             v4l2_format fmt{};
+             fmt.type = coded;

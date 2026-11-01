@@ -1,0 +1,216 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] intersect VA profiles and entrypoints with runtime Iris formats and menus
+
+Query each codec on its coded queue before enumerating raw formats and profile
+menus. Keep 10-bit and encoder support bounded by the backend implementation.
+Reject unimplemented configs instead of advertising the complete static table.
+
+--- a/meson.build
++++ b/meson.build
+@@ -57,6 +57,7 @@
+ summary('FastCV CDSP VPP', have_fastcv)
+ 
+ sources = files(
++  'src/runtime-caps.cpp',
+   'src/backend.cpp',
+   'src/decoder.cpp',
+   'src/encoder.cpp',
+--- a/src/internal.hpp
++++ b/src/internal.hpp
+@@ -278,6 +278,7 @@
+     std::recursive_mutex mutex;
+     std::string device;
+     std::string encoder_device;
++    std::vector<VAProfile> decoder_profiles, encoder_profiles;
+     uint32_t next_id = 1;
+     std::map<uint32_t, Config> configs;
+     std::map<uint32_t, std::shared_ptr<Context>> contexts;
+@@ -285,6 +286,7 @@
+     std::map<uint32_t, std::shared_ptr<Buffer>> buffers;
+     std::map<uint32_t, VAImage> images;
+ };
++std::vector<VAProfile> probe_profiles(const std::string &path, bool encoder);
+ template <class T> auto lookup(std::map<uint32_t, T> &table, uint32_t id, VAStatus status) {
+     auto it = table.find(id);
+     if (it == table.end())
+--- a/src/backend.cpp
++++ b/src/backend.cpp
+@@ -86,14 +86,19 @@
+     static VAStatus name args {                                                                    \
+         return guard(ctx, [&](Driver &d) -> VAStatus { __VA_ARGS__ });                             \
+     }
+-static bool supported(VAProfile p) {
+-    return p == VAProfileH264ConstrainedBaseline || p == VAProfileH264Main ||
+-           p == VAProfileH264High || is_hevc(p) || is_vp9(p);
++static bool decode_supported(const Driver &d, VAProfile p) {
++    return std::find(d.decoder_profiles.begin(), d.decoder_profiles.end(), p) !=
++           d.decoder_profiles.end();
++}
++static bool supported(const Driver &d, VAProfile p) {
++    return decode_supported(d, p) ||
++           std::find(d.encoder_profiles.begin(), d.encoder_profiles.end(), p) !=
++           d.encoder_profiles.end();
+ }
+ static bool encode_supported(const Driver &d, VAProfile p, VAEntrypoint e) {
+-    return !d.encoder_device.empty() && e == VAEntrypointEncSlice &&
+-           (p == VAProfileH264ConstrainedBaseline || p == VAProfileH264Main ||
+-            p == VAProfileH264High || p == VAProfileHEVCMain);
++    return e == VAEntrypointEncSlice &&
++           std::find(d.encoder_profiles.begin(), d.encoder_profiles.end(), p) !=
++           d.encoder_profiles.end();
+ }
+ static unsigned encode_attribute(VAConfigAttribType type, VAProfile profile) {
+     (void)profile; // HEVC attributes are only available in libva >= 1.13.
+@@ -248,26 +253,29 @@
+ 
+ API(query_profiles, (VADriverContextP ctx, VAProfile *out, int *count), (void)d;
+     check(out && count, "null profiles", VA_STATUS_ERROR_INVALID_PARAMETER);
+-    out[0] = VAProfileH264ConstrainedBaseline; out[1] = VAProfileH264Main;
+-    out[2] = VAProfileH264High; out[3] = VAProfileHEVCMain; out[4] = VAProfileHEVCMain10;
+-    out[5] = VAProfileVP9Profile0; out[6] = VAProfileVP9Profile2; *count = 7;
++    *count = 0;
++    for (auto p : d.decoder_profiles) out[(*count)++] = p;
++    for (auto p : d.encoder_profiles)
++        if (!decode_supported(d, p)) out[(*count)++] = p;
+     if (vpp_supported(VAProfileNone, VAEntrypointVideoProc)) out[(*count)++] = VAProfileNone;
+     return VA_STATUS_SUCCESS;)
+ API(query_entrypoints, (VADriverContextP ctx, VAProfile profile, VAEntrypoint *out, int *count),
+     (void)d;
+-    check(supported(profile) || vpp_supported(profile, VAEntrypointVideoProc),
++    check(supported(d, profile) || vpp_supported(profile, VAEntrypointVideoProc),
+           "unsupported profile", VA_STATUS_ERROR_UNSUPPORTED_PROFILE);
+     check(out && count, "null entrypoints", VA_STATUS_ERROR_INVALID_PARAMETER);
+-    out[0] = profile == VAProfileNone ? VAEntrypointVideoProc : VAEntrypointVLD; *count = 1;
++    *count = 0;
++    if (profile == VAProfileNone) out[(*count)++] = VAEntrypointVideoProc;
++    else if (decode_supported(d, profile)) out[(*count)++] = VAEntrypointVLD;
+     if (encode_supported(d, profile, VAEntrypointEncSlice)) out[(*count)++] = VAEntrypointEncSlice;
+     return VA_STATUS_SUCCESS;)
+ API(
+     get_attributes,
+     (VADriverContextP ctx, VAProfile profile, VAEntrypoint entry, VAConfigAttrib *attrs, int count),
+     (void)d;
+-    check(supported(profile) || vpp_supported(profile, VAEntrypointVideoProc),
++    check(supported(d, profile) || vpp_supported(profile, VAEntrypointVideoProc),
+           "unsupported profile", VA_STATUS_ERROR_UNSUPPORTED_PROFILE);
+-    check((supported(profile) && entry == VAEntrypointVLD) || vpp_supported(profile, entry) ||
++    check((decode_supported(d, profile) && entry == VAEntrypointVLD) || vpp_supported(profile, entry) ||
+               encode_supported(d, profile, entry),
+           "unsupported entrypoint", VA_STATUS_ERROR_UNSUPPORTED_ENTRYPOINT);
+     for (int i = 0; i < count; ++i) {
+@@ -302,9 +310,9 @@
+     create_config,
+     (VADriverContextP ctx, VAProfile p, VAEntrypoint e, VAConfigAttrib *attrs, int count,
+      VAConfigID *id),
+-    check(supported(p) || vpp_supported(p, VAEntrypointVideoProc), "unsupported profile",
++    check(supported(d, p) || vpp_supported(p, VAEntrypointVideoProc), "unsupported profile",
+           VA_STATUS_ERROR_UNSUPPORTED_PROFILE);
+-    check((supported(p) && e == VAEntrypointVLD) || vpp_supported(p, e) ||
++    check((decode_supported(d, p) && e == VAEntrypointVLD) || vpp_supported(p, e) ||
+               encode_supported(d, p, e),
+           "unsupported entrypoint", VA_STATUS_ERROR_UNSUPPORTED_ENTRYPOINT);
+     Config config{p, e, VA_RC_CQP}; check(id, "null config ID", VA_STATUS_ERROR_INVALID_PARAMETER);
+@@ -1035,6 +1043,10 @@
+         auto d = std::make_unique<Driver>();
+         d->device = find_device();
+         d->encoder_device = find_encoder_device();
++        d->decoder_profiles = probe_profiles(d->device, false);
++        d->encoder_profiles = probe_profiles(d->encoder_device, true);
++        check(!d->decoder_profiles.empty() || !d->encoder_profiles.empty(),
++              "no implemented profiles exposed by the Iris kernel driver");
+         ctx->version_major = VA_MAJOR_VERSION;
+         ctx->version_minor = VA_MINOR_VERSION;
+         ctx->max_profiles = 8;
+--- /dev/null
++++ b/src/runtime-caps.cpp
+@@ -0,0 +1,90 @@
++// SPDX-License-Identifier: MIT
++#include "internal.hpp"
++#include <linux/videodev2.h>
++#include <sys/ioctl.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <cerrno>
++
++namespace irisva {
++namespace {
++int query(int fd, unsigned long request, void *arg) {
++    int result;
++    do { result = ioctl(fd, request, arg); } while (result < 0 && errno == EINTR);
++    return result;
++}
++bool format_available(int fd, unsigned type, unsigned fourcc) {
++    v4l2_fmtdesc fmt{};
++    fmt.type = type;
++    while (!query(fd, VIDIOC_ENUM_FMT, &fmt)) {
++        if (fmt.pixelformat == fourcc) return true;
++        ++fmt.index;
++    }
++    return false;
++}
++struct Profile {
++    VAProfile va;
++    unsigned codec, control, menu, raw;
++};
++constexpr Profile profiles[] = {
++    {VAProfileH264ConstrainedBaseline, V4L2_PIX_FMT_H264,
++     V4L2_CID_MPEG_VIDEO_H264_PROFILE, V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE,
++     V4L2_PIX_FMT_NV12},
++    {VAProfileH264Main, V4L2_PIX_FMT_H264, V4L2_CID_MPEG_VIDEO_H264_PROFILE,
++     V4L2_MPEG_VIDEO_H264_PROFILE_MAIN, V4L2_PIX_FMT_NV12},
++    {VAProfileH264High, V4L2_PIX_FMT_H264, V4L2_CID_MPEG_VIDEO_H264_PROFILE,
++     V4L2_MPEG_VIDEO_H264_PROFILE_HIGH, V4L2_PIX_FMT_NV12},
++    {VAProfileHEVCMain, V4L2_PIX_FMT_HEVC, V4L2_CID_MPEG_VIDEO_HEVC_PROFILE,
++     V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN, V4L2_PIX_FMT_NV12},
++    {VAProfileHEVCMain10, V4L2_PIX_FMT_HEVC, V4L2_CID_MPEG_VIDEO_HEVC_PROFILE,
++     V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10, V4L2_PIX_FMT_P010},
++    {VAProfileVP9Profile0, V4L2_PIX_FMT_VP9, V4L2_CID_MPEG_VIDEO_VP9_PROFILE,
++     V4L2_MPEG_VIDEO_VP9_PROFILE_0, V4L2_PIX_FMT_NV12},
++    {VAProfileVP9Profile2, V4L2_PIX_FMT_VP9, V4L2_CID_MPEG_VIDEO_VP9_PROFILE,
++     V4L2_MPEG_VIDEO_VP9_PROFILE_2, V4L2_PIX_FMT_P010},
++};
++}
++
++std::vector<VAProfile> probe_profiles(const std::string &path, bool encoder) {
++    std::vector<VAProfile> result;
++    if (path.empty()) return result;
++    int fd = open(path.c_str(), O_RDWR | O_NONBLOCK | O_CLOEXEC);
++    check(fd >= 0, "open Iris capability probe");
++    try {
++        const unsigned coded = encoder ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
++                                       : V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
++        const unsigned raw = encoder ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
++                                     : V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
++        for (const auto &profile : profiles) {
++            // The backend encoder implements only H264 and HEVC Main NV12.
++            if (encoder && profile.va != VAProfileH264ConstrainedBaseline &&
++                profile.va != VAProfileH264Main && profile.va != VAProfileH264High &&
++                profile.va != VAProfileHEVCMain) continue;
++            if (!format_available(fd, coded, profile.codec)) continue;
++            v4l2_format fmt{};
++            fmt.type = coded;
++            fmt.fmt.pix_mp.width = fmt.fmt.pix_mp.height = 128;
++            fmt.fmt.pix_mp.pixelformat = profile.codec;
++            fmt.fmt.pix_mp.num_planes = 1;
++            if (query(fd, VIDIOC_S_FMT, &fmt) < 0 ||
++                fmt.fmt.pix_mp.pixelformat != profile.codec) continue;
++            v4l2_queryctrl control{};
++            control.id = profile.control;
++            if (query(fd, VIDIOC_QUERYCTRL, &control) < 0 ||
++                control.flags & V4L2_CTRL_FLAG_DISABLED ||
++                control.type != V4L2_CTRL_TYPE_MENU) continue;
++            v4l2_querymenu menu{};
++            menu.id = profile.control;
++            menu.index = profile.menu;
++            if (query(fd, VIDIOC_QUERYMENU, &menu) < 0 ||
++                !format_available(fd, raw, profile.raw)) continue;
++            result.push_back(profile.va);
++        }
++    } catch (...) {
++        close(fd);
++        throw;
++    }
++    close(fd);
++    return result;
++}
++}
