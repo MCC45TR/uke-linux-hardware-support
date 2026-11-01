@@ -1,0 +1,16 @@
+etc/UPower/UPower.conf
+etc/UPower/UPower.conf.d/README.md usr/share/doc/upower
+usr/bin/upower
+usr/libexec/upowerd
+usr/lib/systemd/system/upower.service
+usr/lib/udev/rules.d/*
+usr/lib/udev/hwdb.d/*
+usr/share/dbus-1/system.d/*
+usr/share/dbus-1/system-services/*
+usr/share/polkit-1/actions/*
+usr/share/polkit-1/rules.d/*
+usr/share/locale/*
+usr/share/man/man1/*
+usr/share/man/man7/*
+usr/share/man/man8/*
+usr/share/zsh/site-functions/*

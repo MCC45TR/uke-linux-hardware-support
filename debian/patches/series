@@ -1,0 +1,5 @@
+0001-required-threshold-write-errors.patch
+0002-preserve-reported-health-capacity.patch
+0003-recognize-standard-wireless-supplies.patch
+0004-recover-late-capacity-units.patch
+0005-deterministic-history-selftest.patch
