@@ -11,9 +11,11 @@ validate:
 	! grep -Eq '^Requires:.*(python|pypy|nabu)' packaging/uke-boot-integration.spec
 	bash -n src/audit-kernel-inputs.sh
 	sh -n src/uke-usb-network.sh
+	sh -n src/uke-hardware-identity.sh
 	jq -e . src/profiles/fastfetch.jsonc >/dev/null
 test-native: validate
 	bash tests/boot-status.sh
+	bash tests/hardware-info.sh
 	bash tests/kernel-inputs.sh
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 src/esp32-cdc.cpp -o build/tests/uke-esp32-cdc
 	c++ -std=c++17 -Wall -Wextra -Werror -O2 tests/esp32-tty.cpp -o build/tests/esp32-tty -lutil
