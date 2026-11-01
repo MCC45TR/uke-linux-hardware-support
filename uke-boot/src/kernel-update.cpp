@@ -476,7 +476,8 @@ int main(int argc,char **argv) {
                 (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
                 verify_early_firmware();
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
-                const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
+                // The identical-default path returns below, so reuse its verified buffer.
+                const auto baseline=bundle==running_bundle?std::move(bytes):validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 const bool stable=fs::exists(state/"userdata.state") && decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::stable;
                 userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem);
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}

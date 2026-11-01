@@ -174,3 +174,13 @@ This extends package verification without enabling automatic updates. It does
 not qualify alternating-slot firmware, suspend, KVM or an unstable kernel boot.
 The manual current-slot path retains its physical boot identity, power, durable
 backup, readback and protected-partition checks.
+
+## Reuse of the verified running bundle
+
+1 November 2026: when the default bundle is the running kernel, automatic
+activation reuses the bytes already verified in that invocation. It retains
+the manifest, complete module inventory, RPM ownership, early firmware, physical
+boot image and accepted-state checks. The path returns without writing a slot.
+A distinct candidate still receives independent candidate and baseline
+validation. This removes one repeated bundle validation; device boot timing
+and shutdown reliability require separate measurements.
