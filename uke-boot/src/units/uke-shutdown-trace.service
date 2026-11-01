@@ -2,8 +2,8 @@
 Description=Temporary Uke USB role and host teardown call-path trace
 DefaultDependencies=no
 Requires=sys-kernel-tracing.mount
-After=sys-kernel-tracing.mount systemd-journald.socket multi-user.target
-Before=umount.target
+After=sys-kernel-tracing.mount systemd-journald.socket
+Before=umount.target user.slice
 Conflicts=umount.target
 ConditionFirmware=device-tree-compatible(xiaomi,uke)
 ConditionPathExists=/sys/kernel/tracing/kprobe_events

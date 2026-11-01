@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.18
+Version: 1.8.19
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -13,10 +13,10 @@ BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland
 BuildRequires: openssl-devel
 BuildRequires: pkgconfig(fdisk) pkgconfig(zlib) util-linux
 BuildRequires: pkgconfig(libdrm)
-BuildRequires: glib2 strace
+BuildRequires: glib2 strace systemd
 BuildRequires: jq
 BuildRequires: dbus-daemon systemd-udev pkgconfig(umockdev-1.0)
-Requires: senemos-native-runtime(libstdc++)
+Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Requires: systemd-udev
@@ -54,7 +54,7 @@ does not establish RAM/UFS/firmware handoff or physical tablet boot.
 License: MIT
 Summary: Native ESP32-S3 CDC journal forwarding for the Uke Core debug profile
 Requires: %{name} = %{version}-%{release}
-Requires: systemd senemos-native-runtime(libstdc++)
+Requires: systemd (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1)
 %description -n uke-esp32-cdc
 Native raw-TTY configuration and real-root journal forwarding to an explicitly
 configured ttyACM USB-host port. Core composition may apply the separate original
@@ -86,7 +86,7 @@ The console grants local root access over USB. USB networking stays optional.
 %package -n uke-kernel-update
 License: MIT
 Summary: Native checked installation of matched Uke stock-ABL kernel bundles
-Requires: senemos-native-runtime(libstdc++) openssl-libs rpm
+Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1) openssl-libs rpm
 Requires: systemd >= 254
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
@@ -111,7 +111,7 @@ recovery requires device validation.
 %package -n uke-installation-profile
 License: MIT
 Summary: Native classification of the Uke Linux root partition
-Requires: senemos-native-runtime(libstdc++) systemd
+Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1) systemd
 Requires: /usr/lib/systemd/systemd-growfs
 Requires: %{name} = %{version}-%{release}
 %description -n uke-installation-profile
@@ -378,6 +378,14 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.19-1
+- Keep the temporary USB trace through user shutdown without a target-order cycle.
+- Verify the actual systemd ordering graph and a cyclic negative control.
+- Admit original and existing GNU 16.2.1 runtimes without forcing a runtime migration.
+
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.18-2
+- Use the original Fedora GNU C++ runtime; retain all boot programs and service behavior.
+
 * Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.18-1
 - Give the original Power Profiles daemon its existing state directory as HOME.
 - Avoid a GIO startup NSS lookup while retaining the SELinux policy and daemon.
