@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "device": "uke",
+  "soc": "SM7675",
+  "profile": "device-runtime-selection",
+  "kernel_family": "senemos-uke-linux-kernel-mainline",
+  "minimum_kernel_evr": "7.3.0-33",
+  "boot_tested": false,
+  "hardware_tested": false,
+  "firmware_delivery": "COPR-generic-files-and-separate-per-device-calibration",
+  "boot_selection": "preserve-installed-linux-or-userdata-profile",
+  "runtime_policy": "project-native-code-with-original-Fedora-package-dependencies",
+  "native_runtime_capabilities": [
+    "libstdc++(aarch-64) >= 16.2.1"
+  ],
+  "desktop_dependency_exception": {
+    "date": "2026-11-01",
+    "scope": "Unmodified original Fedora RPMs retain distribution-provided helpers and dependencies on the Fedora root",
+    "project_owned_python": false,
+    "applies_to_core_console": true,
+    "applies_to_initramfs_recovery_or_installers": false
+  }
+}
