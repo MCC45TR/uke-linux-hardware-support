@@ -1,5 +1,15 @@
 # Uke Control changes
 
+## 2.8.0 — 2026-11-01
+
+Add a declared unstable package transition for the reviewed at-spi2-core,
+GStreamer, libwacom and GNU runtime families, including installed development
+children. Require a compatible core selection before enabling returns. Accept
+only original Fedora candidates from admitted repositories with the owning
+source, vendor, architecture, release and version floor. Retain all unrelated
+removal, private-data and kernel protections. This release alone does not
+withdraw any producer or install the replacement cohort.
+
 ## 2.7.1 — 2026-11-01
 
 Merge the Control 2.7.0 qualified source with the independent stable, test and

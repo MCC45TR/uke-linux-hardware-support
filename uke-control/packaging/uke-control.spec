@@ -1,5 +1,5 @@
 Name: uke-control
-Version: 2.7.1
+Version: 2.8.0
 Release: 1%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
@@ -11,7 +11,6 @@ BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon jq lua
-BuildRequires: createrepo_c rpm-sign gnupg2
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 BuildRequires: pkgconfig(ncursesw)
@@ -35,6 +34,7 @@ Requires: (wireplumber >= 0.5.16 if wireplumber)
 Recommends: uke-battery-observer
 Recommends: uke-control-tui%{?_isa} = %{version}-%{release}
 Provides: uke-control(channel-api) = 1
+Provides: uke-control(fedora-returns-v1) = 1
 Conflicts: uke-plasma-controls < 1.0.0-23
 %{?systemd_requires}
 
@@ -127,7 +127,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %check
 ulimit -c 0
-%make_build check check-repositories
+%make_build check
 
 %pre
 # Stop the previous root worker while its matching cleanup executable still exists.
@@ -218,6 +218,10 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.8.0-1
+- Add bounded original Fedora package returns behind compatible unstable metadata.
+- Retain native phase recovery; test dependency plans in source-worker fixtures.
+
 * Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.7.1-1
 - Preserve the qualified terminal client and microphone features with three independent signed channels.
 - Keep phase recovery and use the guarded updater transaction interface.
