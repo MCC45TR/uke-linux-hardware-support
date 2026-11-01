@@ -395,3 +395,16 @@ pinned SHA256 before admitting it to the cache, then retains every original
 signature, architecture, scriptlet, policy, DSO and interface assertion. Original
 Fedora input failures remain fatal. This changes neither runtime dependencies
 nor ABI admission and does not execute a payload or publish a COPR package.
+
+### Additional main data adapters, local preparation
+
+Three additional native snapshot adapters select the shared desktop integration
+component directly from main: DisplayPort/UCM policy, speaker-controls data and
+GPU defaults. The source subtree, including its component license, remains
+unchanged from the previously qualified baseline. Generated Debian overlays
+derive from the release metadata, prefix source input paths and preserve every
+runtime dependency and missing hardware ABI gate. No application fork, new
+source pin, upstream execution, Launchpad mutation or branch deletion is used.
+Generated-overlay and upgrade-order metadata fixtures pass. Real source recipe
+assembly and package payload qualification are separate next checks; these
+local adapters are not native Tenacious or Launchpad qualifications.

@@ -6,9 +6,37 @@ umask 022
 root=$(git -C "$(dirname -- "$0")" rev-parse --show-toplevel)
 package=${1:?Usage: prepare-main-overlay.sh PACKAGE NEW_OUTPUT_DIRECTORY}
 output=${2:?new output directory required}
-[[ $package == uke-speaker-firmware ]] || { echo 'No qualified main snapshot adapter for this package' >&2; exit 78; }
 [[ ! -e $output ]]
 canonical=$root/packaging/ubuntu/recipes/$package/debian
+case $package in
+ uke-displayport-audio|uke-speaker-controls|uke-gpu-defaults)
+  version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
+  [[ $version == 0.1.0-0ubuntu1~tenacious1 ]]
+  snapshot=${version/-0ubuntu/+uke0ubuntu}
+  mkdir -p "$output"
+  cp -a "$canonical/." "$output/"
+  cp "$root/packaging/ubuntu/recipes/uke-speaker-firmware/debian/verify-main-inputs" "$output/verify-main-inputs"
+  printf '3.0 (native)\n' > "$output/source/format"
+  sed "1s/($version)/($snapshot)/" "$canonical/changelog" > "$output/changelog"
+  # The common component, including its source license, is nested at source/.
+  # Preserve release metadata and original install choices; prefix only inputs.
+  sed -e '/^override_dh_auto_configure:/a\	 bash debian/verify-main-inputs' \
+      -e '/^override_dh_auto_clean:/a\	 bash debian/verify-main-inputs' \
+      -e 's|dh_install$|dh_install --sourcedir=source|' \
+      -e 's|install -Dm644 src/|install -Dm644 source/src/|' "$canonical/rules" > "$output/rules"
+  if [[ $package == uke-displayport-audio ]]; then
+   printf '\noverride_dh_install:\n\tdh_install --sourcedir=source\n' >> "$output/rules"
+  fi
+  cat >> "$output/copyright" <<'COPYRIGHT'
+
+Files: AGENTS.md README.md LICENSE debian/*
+Copyright: 2026 MCC45TR
+License: MIT
+COPYRIGHT
+  exit 0;;
+ uke-speaker-firmware) ;;
+ *) echo 'No main snapshot adapter for this package' >&2; exit 78;;
+esac
 version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
 [[ $version == 3.0.304.0-0ubuntu*~tenacious1 ]]
 snapshot=${version/-0ubuntu/+uke0ubuntu}

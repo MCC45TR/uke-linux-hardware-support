@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+include /usr/share/dpkg/buildflags.mk
+%:
+	dh $@
+override_dh_auto_configure:
+	 bash debian/verify-main-inputs
+override_dh_auto_test:
+	# No upstream execution is authorized by source preparation.
+override_dh_auto_clean:
+	 bash debian/verify-main-inputs
+	rm -rf build
+override_dh_auto_install:
+# Device-event activation remains in the shipped units and udev rules.
+# Do not start hardware services during package configuration.
+override_dh_installsystemd:
+	dh_installsystemd --no-start
+override_dh_auto_build:
+override_dh_install:
+	dh_install --sourcedir=source
+	install -Dm644 source/src/uke-speaker-controls.desktop debian/uke-speaker-controls/usr/share/applications/org.uke.SpeakerControls.desktop
