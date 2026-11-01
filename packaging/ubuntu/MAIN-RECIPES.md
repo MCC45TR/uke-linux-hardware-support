@@ -85,3 +85,29 @@ partially prepared tree.
 Eight other historical non-kernel routes still need main adapters, including
 battery release and touchscreen input reconciliation. Historical source exports
 remain reproducible through archived tags.
+
+## Completion of the nineteen non-kernel main routes
+
+1 November 2026, superseding the remaining-adapter statements above: all eight
+remaining routes passed clean native Tenacious ARM64 source/package construction
+at `23e25a7fc4f442d30cd13bbcbfa9478f2e11f782`: battery observer, touchscreen,
+SSC fileservice, SensorProxy, UPower, VA-API, recovery delivery and image tools.
+Downloaded artifact/manifest hashes, all three equal input commits and direct
+payload audits pass for all thirteen resulting binary packages. Every prepared
+upstream source file matches the earlier approved native source set. The same
+job built the real matching libssc SDK before compiling SensorProxy.
+
+All nineteen non-kernel routes now have canonical main adapters; the eighteen
+additional recipes remain unenrolled in Launchpad. SensorProxy's follow-up
+build ABI requirement is satisfied by the real SDK recorded in its native
+builder; live source builds require libssc to be published in the PPA first.
+The SSC RPM release advances beyond the archived26 family to avoid reusing an
+older published revision for the reconciled cache code. These follow-up changes
+are metadata; compiled code, flags and runtime guards are unchanged.
+
+Recovery is unchanged previously published Android v003 delivery data with its
+source offer and licenses, not an Ubuntu recovery or new image. Image tools
+contain only six AArch64 inspection utilities at the approved builder pin.
+Kernel/boot source integration, missing runtime firmware/ABI providers and the
+remaining43-source inventory are separate unfinished work. This checkpoint
+does not admit a root image or promote anything to stable.

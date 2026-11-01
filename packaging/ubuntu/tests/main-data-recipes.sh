@@ -19,3 +19,4 @@ grep -Fxq 'Source: https://codeberg.org/DylanVanAssche/libssc/archive/v0.4.4.tar
 grep -Fxq 'Files: source/src/ssc-cache.cpp' "$work/libssc/copyright"
 printf '%s  %s\n' 716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587 "$root/uke-sensors/referances/libssc/libssc-v0.4.4.tar.gz" | sha256sum -c -
 echo 'Eighteen canonical main overlays preserve dependencies and upgrade order; native helper execution is separate.'
+grep -E '^Build-Depends: .*libssc-dev .*uke-libssc-dual-light-abi-1' "$root/packaging/ubuntu/main-recipes/iio-sensor-proxy/debian/control"

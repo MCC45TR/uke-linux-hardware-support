@@ -575,3 +575,39 @@ kernel5712080a/DT94c84aeb, upstream4056b3c9 and the distinct-board compatibility
 limits. No donor checkout/script was used as a new hardware fix. Native source
 and package qualification of these drafts is pending; live PPA enrollment stays
 separate. Existing Fedora/GUI changes and main-only architecture are preserved.
+
+SensorProxy's build dependencies now additionally require the real dual-light
+ABI provider, as its runtime dependencies already do. A later stock libssc-dev
+version alone must not satisfy this patched build contract. The native trial
+built/installed the matching real SDK; installed package versions are retained
+for independent readback. This metadata tightening changes no compiled source.
+Live SensorProxy enrollment still requires the qualified libssc packages to
+exist in the PPA first. It is not resolved by an invented virtual provider.
+
+## Remaining eight native routes qualified
+
+1 November 2026. Clean Tenacious ARM64 run41358005301 passed all eight remaining
+main routes at23e25a7f, whose tree matches source-qualified9a7928e. Thirteen
+binary packages and the dependency-first libssc SDK were read back; ZIP/internal
+hashes, identical nested commits, AArch64 executables and direct Python exclusion
+pass. Battery profiles/protection inventory match the reviewed unqualified
+release. Recovery data and all source-offer/license bytes match the original
+v003 payload and have no maintainer/activation hooks. Image tools contain only
+the six approved9e4d2153 utilities. Source fixtures reject corruption, incomplete
+or broken patches and changed touch licensing; all release hashes pass.
+
+The SSC legacy RPM revision advances to27 after reconciling the released cache
+helper, avoiding a rollback/collision with archived26. Its build/runtime gates
+remain unchanged. SensorProxy's stronger build ABI dependency is satisfied by
+the exact real SDK present in the native trial; this is not a new compiled input.
+No new source revision, physical behavior, automatic stable promotion, Ubuntu
+image or tablet operation is claimed. Launchpad main refreshed to9d7c056 after
+its prior import completed; archived mirror heads were pruned by that import.
+
+Kernel inspection confirms a separate implementation gap: default Debian rules
+still emit three first-pass candidate packages, while the complete two-pass
+producer remains an explicit boot action requiring a root-prepared hwdb receipt.
+Unprivileged source-build provenance, four-role package wiring, runtime OEM DT,
+root layout/security and selector/rollback qualification must be resolved before
+normal boot admission. The selected shared config lacks AppArmor; no security
+profile or setting was changed to bypass that gate.
