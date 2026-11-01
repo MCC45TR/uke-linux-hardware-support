@@ -1,0 +1,221 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "fedora": 46,
+  "architecture": "aarch64",
+  "admitted_for_replacement": false,
+  "key_fingerprints": {
+    "fedora": "D924B10D3E810DABDD8B56B596E7E91491211FCE",
+    "copr": "2204A661EA630A5303500085538797E72A3E4ECA"
+  },
+  "pairs": [
+    {
+      "original_name": "atk",
+      "fork_name": "uke-atk",
+      "source_name": "at-spi2-core",
+      "version": "2.62.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/at-spi2-core/2.62.1/1.fc46/data/signed/91211fce/aarch64/atk-2.62.1-1.fc46.aarch64.rpm",
+        "sha256": "dcefbcef4bf3099e4141cf5cc20b2cac700b632ca59d1a961d7319d2b15b8722"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228248-uke-at-spi2-core/uke-atk-2.62.1-17.fc46.aarch64.rpm",
+        "sha256": "c056d680bac275946f71feeb417e3963aa25d71a5240913e6f81f9896468d949",
+        "build": 11228248
+      }
+    },
+    {
+      "original_name": "atk-devel",
+      "fork_name": "uke-atk-devel",
+      "source_name": "at-spi2-core",
+      "version": "2.62.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/at-spi2-core/2.62.1/1.fc46/data/signed/91211fce/aarch64/atk-devel-2.62.1-1.fc46.aarch64.rpm",
+        "sha256": "828868a231af63079adfba77e78b41568aa387dcfe71e3c43ea2bf247d6b9da0"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228248-uke-at-spi2-core/uke-atk-devel-2.62.1-17.fc46.aarch64.rpm",
+        "sha256": "a935b19878f79f90bce46c86f24d88633765dde8f3a3c72a9a1a1e98db34eedf",
+        "build": 11228248
+      }
+    },
+    {
+      "original_name": "at-spi2-atk",
+      "fork_name": "uke-at-spi2-atk",
+      "source_name": "at-spi2-core",
+      "version": "2.62.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/at-spi2-core/2.62.1/1.fc46/data/signed/91211fce/aarch64/at-spi2-atk-2.62.1-1.fc46.aarch64.rpm",
+        "sha256": "d780416798470db3fd11b2f116958105ebbab2a0d44d2fea035dcc77e26157ef"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228248-uke-at-spi2-core/uke-at-spi2-atk-2.62.1-17.fc46.aarch64.rpm",
+        "sha256": "4d763e901292152b0dd8abe3c5b82d2326ca04b9773a0abc2fc9729faab40e2b",
+        "build": 11228248
+      }
+    },
+    {
+      "original_name": "at-spi2-atk-devel",
+      "fork_name": "uke-at-spi2-atk-devel",
+      "source_name": "at-spi2-core",
+      "version": "2.62.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/at-spi2-core/2.62.1/1.fc46/data/signed/91211fce/aarch64/at-spi2-atk-devel-2.62.1-1.fc46.aarch64.rpm",
+        "sha256": "added7cb741e076ac91dbd1f8112dfb21020b4ee22e2858a569be5605bad71be"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228248-uke-at-spi2-core/uke-at-spi2-atk-devel-2.62.1-17.fc46.aarch64.rpm",
+        "sha256": "9ee6d62545b57372adca5706c7e63eefc7e5d126431325689d34c33be353ea6d",
+        "build": 11228248
+      }
+    },
+    {
+      "original_name": "at-spi2-core",
+      "fork_name": "uke-at-spi2-core",
+      "source_name": "at-spi2-core",
+      "version": "2.62.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/at-spi2-core/2.62.1/1.fc46/data/signed/91211fce/aarch64/at-spi2-core-2.62.1-1.fc46.aarch64.rpm",
+        "sha256": "f2027ba2e3145affbba2b4a98d36ee4dc5f4de4793ec0e941784fad37a90cc4f"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228248-uke-at-spi2-core/uke-at-spi2-core-2.62.1-17.fc46.aarch64.rpm",
+        "sha256": "e54f43dfabe85b3eea827e3385fc1cdde13f70e1a2cd04c1bacd5873fae0892e",
+        "build": 11228248
+      }
+    },
+    {
+      "original_name": "at-spi2-core-devel",
+      "fork_name": "uke-at-spi2-core-devel",
+      "source_name": "at-spi2-core",
+      "version": "2.62.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/at-spi2-core/2.62.1/1.fc46/data/signed/91211fce/aarch64/at-spi2-core-devel-2.62.1-1.fc46.aarch64.rpm",
+        "sha256": "86965693a9c5dfce4f9608496723757829eb8b5e558f1e4ba42bb5af53e7d252"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228248-uke-at-spi2-core/uke-at-spi2-core-devel-2.62.1-17.fc46.aarch64.rpm",
+        "sha256": "74adc214509f58c8a60427417f6213dfb7df6ae9e649c6480f95e82ea35a2f8f",
+        "build": 11228248
+      }
+    },
+    {
+      "original_name": "gstreamer1",
+      "fork_name": "uke-gstreamer1",
+      "source_name": "gstreamer1",
+      "version": "1.28.8",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/gstreamer1/1.28.8/1.fc46/data/signed/91211fce/aarch64/gstreamer1-1.28.8-1.fc46.aarch64.rpm",
+        "sha256": "37551f8b4c97e0af65f6fb0df4791e51e895c697e3c6bc5f0d8086a7386c3e5b"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228249-uke-gstreamer1/uke-gstreamer1-1.28.8-17.fc46.aarch64.rpm",
+        "sha256": "f71b79b0a2c48762b28b506403cf0ab4f70981f53e727147fa264b1ffd28de84",
+        "build": 11228249
+      }
+    },
+    {
+      "original_name": "gstreamer1-devel",
+      "fork_name": "uke-gstreamer1-devel",
+      "source_name": "gstreamer1",
+      "version": "1.28.8",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/gstreamer1/1.28.8/1.fc46/data/signed/91211fce/aarch64/gstreamer1-devel-1.28.8-1.fc46.aarch64.rpm",
+        "sha256": "5157021beca4d157f9739f6e3f822570a2349ff12feb283bd1d42f51935f3273"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228249-uke-gstreamer1/uke-gstreamer1-devel-1.28.8-17.fc46.aarch64.rpm",
+        "sha256": "f70afb25aa177710cd8e8b866d5a9b8ba0b5c7aca804f5424faabef146c4b163",
+        "build": 11228249
+      }
+    },
+    {
+      "original_name": "libwacom",
+      "fork_name": "uke-libwacom",
+      "source_name": "libwacom",
+      "version": "2.20.0",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/libwacom/2.20.0/1.fc46/data/signed/91211fce/aarch64/libwacom-2.20.0-1.fc46.aarch64.rpm",
+        "sha256": "0e68d95ceba675bb155068634aff89cc18d3fb5305a783d037ffc60b26ed52fe"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228251-uke-libwacom/uke-libwacom-2.20.0-18.fc46.aarch64.rpm",
+        "sha256": "960e726ec5dba2d6c2624ee1a28d7cfcfbf76286f243d8dfccf897746ed84219",
+        "build": 11228251
+      }
+    },
+    {
+      "original_name": "libwacom-data",
+      "fork_name": "uke-libwacom-data",
+      "source_name": "libwacom",
+      "version": "2.20.0",
+      "arch": "noarch",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/libwacom/2.20.0/1.fc46/data/signed/91211fce/noarch/libwacom-data-2.20.0-1.fc46.noarch.rpm",
+        "sha256": "7517ba0de5425bc3a44e8799dddfda08d387141dc582815d9db0253a441faa05"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228251-uke-libwacom/uke-libwacom-data-2.20.0-18.fc46.noarch.rpm",
+        "sha256": "626713ea7454fcd91a4d288a208e8e209115c0f81c1f6595cca86cbcada52d41",
+        "build": 11228251
+      }
+    },
+    {
+      "original_name": "libwacom-devel",
+      "fork_name": "uke-libwacom-devel",
+      "source_name": "libwacom",
+      "version": "2.20.0",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/libwacom/2.20.0/1.fc46/data/signed/91211fce/aarch64/libwacom-devel-2.20.0-1.fc46.aarch64.rpm",
+        "sha256": "f7bc428e3d3d9857a6a16255b7b7c1c53d312cbab6376e56336776e4e6dcd56d"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228251-uke-libwacom/uke-libwacom-devel-2.20.0-18.fc46.aarch64.rpm",
+        "sha256": "67f9799e2f2a52cf8ddd448832cce90de1d253199ac3705afc9937da50e49e12",
+        "build": 11228251
+      }
+    },
+    {
+      "original_name": "libwacom-utils",
+      "fork_name": "uke-libwacom-utils",
+      "source_name": "libwacom",
+      "version": "2.20.0",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/libwacom/2.20.0/1.fc46/data/signed/91211fce/aarch64/libwacom-utils-2.20.0-1.fc46.aarch64.rpm",
+        "sha256": "c8b9d63f200ffec2c834b34ecdb0cfc5f1b895ef8f92698eca55d1b072cb9f23"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228251-uke-libwacom/uke-libwacom-utils-2.20.0-18.fc46.aarch64.rpm",
+        "sha256": "683e371dc236973833ee53e49927c39482052ec65809661f39b1f69321b11596",
+        "build": 11228251
+      }
+    },
+    {
+      "original_name": "libstdc++",
+      "fork_name": "uke-libstdcxx",
+      "source_name": "gcc",
+      "version": "16.2.1",
+      "arch": "aarch64",
+      "original": {
+        "url": "https://kojipkgs.fedoraproject.org/packages/gcc/16.2.1/2.fc46.1/data/signed/91211fce/aarch64/libstdc++-16.2.1-2.fc46.1.aarch64.rpm",
+        "sha256": "b9c35fc7a359bc8de3fb930a3bdf86a3ab712379eb120038f2617809b00ed732"
+      },
+      "fork": {
+        "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228253-uke-libstdcxx-runtime/uke-libstdcxx-16.2.1-19.fc46.aarch64.rpm",
+        "sha256": "555f8134e87a03b71f9ff99999356728ec944ace3bceb17fcc79232cc16574b0",
+        "build": 11228253
+      }
+    }
+  ]
+}
