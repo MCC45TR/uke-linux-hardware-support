@@ -20,7 +20,7 @@ fetch() {
         [[ $file =~ ^[A-Za-z0-9+_.~^-]+[.]rpm$ ]]
         curl -fLsS --max-time 240 "$base$file" -o "$fixture/$repo/$file"
         rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/$repo/$file"
-    done < <(jq -r '.packages[]|select(.arch!="src" and (.name|test("-debuginfo$|-debugsource$")|not))|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
+    done < <(jq -r --arg repo "$repo" '.packages[]|select(.arch!="src")|select($repo!="kernel" or (.name|test("^senemos-uke-linux-kernel-mainline(-core|-modules|-dtbs|-boot)?$")))|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
 }
 if [[ -n ${UKE_COPR_CONTROL_FAMILY_BUILD:-} ]];then
     [[ $UKE_COPR_CONTROL_FAMILY_BUILD =~ ^[0-9]+$ ]]
