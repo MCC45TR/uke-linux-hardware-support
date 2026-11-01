@@ -315,7 +315,7 @@ Multi-Arch libc and a relocated dracut script. Package bytes, ARM64 ELF headers,
 copyright/common-license records and generated-metadata distinctions passed.
 This ran project-owned host metadata code only; it did not invoke the1006 Uke
 preparer, native helpers, kernel or boot producer and did not construct an
-initramfs. New source execution is still awaiting the user's15:12 approval
-response. The current source archive includes the bounded adapter and explicit
+initramfs. Source-specific native execution remains pending authorization at
+this checkpoint. The current source archive includes the bounded adapter and explicit
 dracut/f2fs/systemd/provenance host dependencies; their APT simulation resolves.
 No further implementation is started while that authorization remains pending.
