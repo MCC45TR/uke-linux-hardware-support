@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Uke Control (GTK)
+Comment=Inspect device state and review guarded Uke controls
+Exec=uke-control-gtk
+Icon=org.uke.Control.Gtk
+Terminal=false
+Categories=GTK;Settings;HardwareSettings;
+Keywords=Battery;Charging;Display;USB;Sensors;Uke;
+StartupNotify=true
+DBusActivatable=false

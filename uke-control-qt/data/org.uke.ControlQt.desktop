@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Uke Control (Qt)
+Comment=Inspect device observations and review guarded control requests
+Exec=uke-control-qt
+Icon=org.uke.ControlQt
+Terminal=false
+Categories=Qt;KDE;Settings;HardwareSettings;
+Keywords=Uke;Battery;Charging;Display;USB;Sensors;
+StartupNotify=true

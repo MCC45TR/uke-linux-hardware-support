@@ -37,6 +37,8 @@ flowchart TD
 
 The kernel provides hardware interfaces. Native services and Fedora components use those interfaces; `uke-control` provides a shared command-line backend for supported settings. Desktop applications remain the original Fedora packages wherever possible.
 
+Uke Control has three separate native interfaces: the [terminal application](uke-control/TUI.md), [GTK4/libadwaita application](uke-control-gtk/README.md) for GNOME, and [Qt6 Widgets/Breeze application](uke-control-qt/README.md) for KDE. They share the existing typed C++ client and secured backend. The graphical applications are optional source builds (`make native-guis` / `make check-guis`); their inclusion in release packages and images requires a separate release review.
+
 ## Repository structure
 
 The tree below shows the **main directories and selected files**, rather than every source file or test fixture.
