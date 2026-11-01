@@ -26,6 +26,19 @@ while IFS=$'\t' read -r package component version; do
   uke-vaapi-v4l2)
    [[ $(wc -l < "$debian/patches/series") == 6 ]]
    grep -q -- "-Dfastcv=disabled" "$debian/rules" ;;
+  uke-battery-observer)
+   grep -q "dh_installsystemd -puke-battery-observer --no-start" "$debian/rules"
+   grep -q "dh_installsystemd -puke-charge-control --no-enable --no-start" "$debian/rules"
+   jq -e ".enable_control==false and .qualification==\"unqualified\"" "$stage/manifests/control-profile.json" >/dev/null ;;
+  uke-touchscreen)
+   [[ $(sha256sum "$stage/src/upstream/nt36532-thp/nvt_touch_core.cpp" | cut -d " " -f1) == 7619b12a440be1f64cacb47b4b617fcfcf4486853822323f8d143c6e73aba9b1 ]]
+   grep -q "uke-kernel-touch-thp-abi-1" "$debian/control"
+   [[ ! -d $stage/var/lib/uke-touch ]] ;;
+  upower)
+   [[ $(wc -l < "$debian/patches/series") == 5 ]]
+   grep -q "uke-upower-battery-abi-1" "$debian/control"
+   grep -q -- "-Dinstalled_tests=false" "$debian/rules"
+   dpkg --compare-versions "$(dpkg-parsechangelog -l"$debian/changelog" -S Version)" gt 1.91.5-1 ;;
   libssc)
    [[ $(wc -l < "$debian/patches/series") == 7 ]]
    grep -q "get_option('tests')" "$stage/meson.build"
@@ -41,7 +54,7 @@ while IFS=$'\t' read -r package component version; do
  for list in "$debian/"*.install; do
   [[ -f $list ]] || continue
   while read -r pattern destination; do
-   [[ $pattern == build/* || $pattern == usr/* ]] && continue
+   [[ $pattern == build/* || $pattern == usr/* || $pattern == etc/* ]] && continue
    compgen -G "$stage/$pattern" >/dev/null
   done < "$list"
  done

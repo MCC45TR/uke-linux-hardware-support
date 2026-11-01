@@ -1,0 +1,9 @@
+usr/libexec/uke-charge-control
+usr/lib/systemd/system/uke-charge-control.service
+usr/lib/systemd/system/uke-charge-automatic.service
+usr/lib/systemd/system/uke-charge-protection.service
+usr/lib/systemd/system-preset/91-uke-charge-control.preset
+usr/lib/udev/rules.d/80-uke-charge-protection.rules
+usr/share/uke-battery/protection-readiness.json
+etc/uke-battery/control-profile.json
+etc/UPower/UPower.conf.d/60-uke-battery-safety.conf

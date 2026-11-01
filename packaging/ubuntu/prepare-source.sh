@@ -1,6 +1,7 @@
 #!/bin/bash
 # Assemble source only. Never execute upstream build rules or sign/upload.
 set -euo pipefail
+umask 022
 export LC_ALL=C
 root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 pkg=${1:?Usage: prepare-source.sh PACKAGE NEW_OUTPUT_DIRECTORY}
@@ -22,10 +23,14 @@ for item in Makefile LICENSE LICENSE.GPL-3.0 LICENSE.Apache-2.0 src packaging ma
 done
 git -C "$root" archive "$revision" "${paths[@]}" | tar -x -C "$stage" --strip-components=1
 source "$root/packaging/ubuntu/prepare-upstream.sh"
+if [[ $pkg == uke-touchscreen ]]; then source "$root/packaging/ubuntu/prepare-touch.sh"; fi
 printf '%s\n' "Repository: https://github.com/MCC45TR/uke-linux-hardware-support" "Revision: $revision" "Component: $component" > "$stage/SOURCE-ORIGIN"
 epoch=$(git -C "$root" show -s --format=%ct "$revision")
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$out/${pkg}_${version}.orig.tar.xz" -C "$out" "$pkg-$version"
 cp -a "$root/packaging/ubuntu/recipes/$pkg/debian" "$stage/debian"
+find "$stage/debian" -type d -exec chmod 0755 {} +
+find "$stage/debian" -type f -perm /111 -exec chmod 0755 {} +
+find "$stage/debian" -type f ! -perm /111 -exec chmod 0644 {} +
 if [[ -n ${upstream:-} ]]; then
  mkdir -p "$stage/debian/patches"
  cp "$stage/uke/patches/$patchset/"*.patch "$stage/debian/patches/"

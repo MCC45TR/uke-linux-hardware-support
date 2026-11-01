@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@ --buildsystem=meson
+override_dh_auto_configure:
+	dh_auto_configure -- --libexecdir=libexec -Didevice=enabled -Dpolkit=enabled -Dman=true -Dgtk-doc=true -Dintrospection=enabled -Dinstalled_tests=false -Dudevrulesdir=/usr/lib/udev/rules.d -Dudevhwdbdir=/usr/lib/udev/hwdb.d -Dsystemdsystemunitdir=/usr/lib/systemd/system
+override_dh_auto_test:
+	# Native synthetic-battery tests require separate execution approval.
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/tmp
+	! find debian/tmp -type f \( -name '*.py' -o -name '*.pyc' -o -name 'python*' \) | grep .
+override_dh_gencontrol:
+	dh_girepository
+	dh_gencontrol

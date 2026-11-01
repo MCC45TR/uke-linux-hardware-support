@@ -1,0 +1,14 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: UPower
+Source: https://gitlab.freedesktop.org/upower/upower
+
+Files: *
+Copyright: See preserved upstream AUTHORS and individual source notices
+License: GPL-2+
+ The full GNU General Public License version 2 is available in
+ /usr/share/common-licenses/GPL-2 on Debian systems.
+
+Files: uke/* debian/*
+Copyright: 2026 Senemos Contributors
+License: MIT
+ See the complete MIT license retained in uke/LICENSE.

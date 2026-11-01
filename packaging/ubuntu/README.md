@@ -14,16 +14,18 @@ No key, credential, upload or Ubuntu image was created here.
 
 ## Implemented source routes
 
-`components.tsv` lists **14** prepared Debian source recipes:
+`components.tsv` lists **16** prepared Debian source recipes:
 
 | Source | Implemented scope | Validation |
 | --- | --- | --- |
-| uke-battery-observer | Read-only collector, systemd/D-Bus/sysusers | Source only |
+| uke-battery-observer | Collector plus separate gated charge-control and offline-charge binaries | Source only |
 | uke-front-color | Opt-in snapshot service; SSC lifecycle binding | Source only |
 | uke-proximity-capture | Root-only bounded diagnostic | Source only |
 | uke-ssc-fileservice | Six shared FastRPC patches, cache, service ordering, udev and refresh triggers | Source only |
 | libssc | Seven shared patches; original Ubuntu binary names and GIR split | Source only |
 | iio-sensor-proxy | Two shared patches; SSC, Polkit and systemd interfaces | Source only |
+| upower | Five shared patches, original Ubuntu binary names and lifecycle | Source only |
+| uke-touchscreen | Verified THP import with four shared geometry/tracking patches | Source only |
 | uke-vaapi-v4l2 | Six shared codec/capability patches; upstream Debian recipe inspected | Source only |
 | uke-bluetooth | Guarded factory address helper, udev and service | Source only |
 | uke-speaker-orientation | Existing Wayland/ALSA helper and desktop autostart | Source only |
@@ -66,8 +68,8 @@ component's `referances/`. Existing upstream Debian metadata is retained under
 
 Source preparation emits original and Debian tarballs, unsigned `.dsc`, source
 `.changes` including original sources, SHA256SUMS and source-origin records.
-The output directory must not exist. Debian quilt applies the same 21 shared
-patches used in the four external source routes. No build commands, keys or
+The output directory must not exist. Debian quilt applies the same 26 shared
+quilt patches used in five external source routes, plus four touchscreen patches. No build commands, keys or
 uploads run in source preparation. Data-only tests build just the four listed
 configuration packages; they do not compile or run upstream programs.
 
@@ -92,11 +94,12 @@ patch comparison. Original KDE applications are not forked. Desktop repository
 migration is handled separately.
 
 Implementation still needed: Control's APT/dpkg transaction/channel backend;
-current source-family delta reconciliation; charge/offline and UPower ports;
+current source-family delta reconciliation and power-family release alignment;
 PipeWire/Mesa/firmware/OrangeFox/OEM resources; remaining video/session and
-metapackage payloads. The pinned touchscreen recipe references
-`src/upstream/nt36532-thp/nvt_touch_core.cpp`, absent from the tracked source
-snapshot; recover its licensed source/provenance before declaring it buildable.
+metapackage payloads. The absent generated THP directory was recovered from its recorded commit
+34046210932d654a4c0df0121ecc31c008f8148c with exact input and transformed-output
+hashes. No donor executable was run; native touchscreen build and current
+integration-release reconciliation remain pending.
 These are implementation gaps, not signing blockers.
 
 [Boot cohort checks](BOOT-COHORT.md) reject mismatched artifact identities but

@@ -52,3 +52,25 @@ core selection deliberately retains the >=1.4.1 battery requirement although
 the initial component baseline recipe is 1.2.0. Source-only ports are not
 qualified replacements for later family releases. The missing tracked THP
 source also remains an implementation/provenance gap. Signing is independent.
+
+## Superseding touchscreen source-gap finding
+
+The missing tracked THP directory is generated, not an unavailable donor.
+Reviewed `touch-thp-source.json` and `prepare-touch-core.sh`; recovered the two
+source files and Apache license at upstream commit
+34046210932d654a4c0df0121ecc31c008f8148c. Input hashes and both transformed
+output hashes match the shared recipe after its four static patches. This
+supersedes the earlier missing-source blocker. Added a Debian touchscreen
+source recipe without private calibration or donor execution. Build/runtime and
+current-family reconciliation are still pending.
+
+Expanded the power baseline's source recipe to retain separate charge-control
+and offline-charge binaries, their disabled/gated activation, and the exact
+UPower/kernel/boot ABI prerequisites. Added UPower 1.91.5 with all five shared
+patches, original Ubuntu binary names, Polkit data and standard service lifecycle.
+All sixteen source routes pass extraction checks. The five external archives
+use 26 quilt patches; the THP source importer applies four additional patches.
+
+GitHub commit 85ced4b passed both Ubuntu source packaging contracts (run
+41300695468) and Hardware source contracts (run 41300695434). These results
+cover the fourteen-source snapshot; subsequent sources need the next CI run.

@@ -1,0 +1,5 @@
+usr/include/libupower-glib/*
+usr/lib/*/libupower-glib.so
+usr/lib/*/pkgconfig/upower-glib.pc
+usr/share/gir-1.0/UPowerGlib-1.0.gir
+usr/share/gtk-doc/html/*

@@ -16,3 +16,6 @@ override_dh_installsystemd:
 override_dh_auto_build:
 	mkdir -p build
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++20 -Wall -Wextra -Werror src/bluetooth-address.cpp $(LDFLAGS) -o build/uke-bluetooth-address
+
+override_dh_installudev:
+	dh_installudev --priority=70

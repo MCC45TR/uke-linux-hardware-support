@@ -188,8 +188,8 @@
     "source_type": "custom",
     "superseded": false,
     "source_revision": "1f0ea819c5e6faaaf9ed3996be89ee2caf4a1402",
-    "status": "not-yet-ported",
-    "reason": "Native Debian port and Tenacious ARM64 validation pending"
+    "status": "source-tested",
+    "reason": "UPower 1.91.5 source and five shared patches prepared with Ubuntu binary names; native build/runtime and current release reconciliation pending"
   },
   {
     "name": "uke-at-spi2-core",
@@ -301,7 +301,7 @@
     "superseded": false,
     "source_revision": "0d72558157de23e36c868f127e056dd9ad2ef345",
     "status": "partial",
-    "reason": "Front-color, proximity, SSC, libssc and SensorProxy source recipes prepared; touchscreen THP source absent at shared pin; current integration delta review pending"
+    "reason": "SSC/libssc/SensorProxy/front-color/proximity sources prepared; verified pinned THP input recovered and touchscreen recipe added; current integration delta review remains"
   },
   {
     "name": "uke-power-integration",
@@ -309,7 +309,7 @@
     "superseded": false,
     "source_revision": "22008576eaaa4ac14d3be22d39f1b8d1240e7556",
     "status": "partial",
-    "reason": "Read-only battery baseline prepared; charge/offline/UPower and current integration release deltas not ported"
+    "reason": "Battery/charge/offline baseline binary definitions and patched UPower source prepared; native builds and current family release reconciliation remain"
   },
   {
     "name": "uke-video-integration",

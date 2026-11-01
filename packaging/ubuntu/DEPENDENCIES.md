@@ -44,3 +44,10 @@ SSC firmware/configuration must supply `uke-ssc-firmware-inputs-abi-1` only
 after its exact firmware/config payload is admitted. Neither calibration nor
 private touch data may enter a public source upload. The public source
 preparation allowlist rejects `uke-local-touch-data` explicitly.
+
+UPower is already 1.91.5-1 in Tenacious. The overlay retains its five shared
+battery/history patches and original `upower`, `libupower-glib3`,
+`libupower-glib-dev`, and `gir1.2-upowerglib-1.0` binary names. Standard Polkit
+and systemd behavior is retained. The charge-control and offline-charge
+binaries remain separately gated by the corresponding kernel and boot ABI
+providers; defining their packages does not qualify a charging writer.

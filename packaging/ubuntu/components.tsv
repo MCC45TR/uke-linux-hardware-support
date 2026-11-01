@@ -12,3 +12,5 @@ iio-sensor-proxy	uke-sensors	3.9
 uke-core-meta	uke-core-meta	1.0.7
 uke-gpu-defaults	uke-desktop-integration	0.1.0
 uke-vaapi-v4l2	uke-video	1.0.0
+uke-touchscreen	uke-sensors	0.1.0
+upower	uke-platform-runtime	1.91.5

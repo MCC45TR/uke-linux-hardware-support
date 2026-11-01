@@ -2,7 +2,7 @@ Source: uke-battery-observer
 Section: admin
 Priority: optional
 Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
-Build-Depends: debhelper-compat (= 13), g++, make, pkg-config, libsystemd-dev (>= 257)
+Build-Depends: debhelper-compat (= 13), g++, make, pkg-config, libsystemd-dev (>= 257), libssl-dev, libdrm-dev
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
 Homepage: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -13,3 +13,19 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, systemd, dbus
 Description: Uke read-only battery telemetry
  Native device helper. Software packaging does not establish physical
  qualification. Firmware calibration and charging controls are not included.
+
+Package: uke-charge-control
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd, udev, upower (>= 1.91.5), uke-upower-battery-abi-1, uke-kernel-charge-admission-abi-1
+Description: evidence-gated native Uke charge control
+ Retains the shared unqualified profile and exact per-boot identity gates.
+ Threshold and current services remain disabled by default. Voltage and PD
+ remain firmware-owned. No calibration or physical acceptance is supplied.
+
+Package: uke-offline-charge
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd, uke-boot-offline-charge-abi-1
+Description: native Uke offline charger screen
+ Retains the isolated charger target and exact boot-mode marker. The normal
+ boot target is never changed by package installation. A matched initramfs
+ must separately admit charger boot; device qualification remains pending.
