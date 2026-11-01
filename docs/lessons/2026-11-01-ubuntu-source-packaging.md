@@ -216,3 +216,21 @@ senemos-applied-patches.txt, which the Debian driver had omitted. Record only
 successfully applied patches, compare the full ledger against the verified
 series, and retain all shared tests. Retry 41309327976 remains active; no
 kernel binary or boot result is inferred from its preparer fixture tests.
+
+### Paused checkpoint after terminal kernel retry
+
+Kernel run 41309327976 terminated on 1 November with a real compiler failure
+in sound/soc/qcom/uke-audio-card.c:411: the shared assertion limits
+sizeof("uke" UTS_RELEASE) to 16, while the Debian kernel release string
+7.3.1-115-uke-ubuntu1 is too long. Patch-ledger preparation passed. The next
+implementation action is a shorter coordinated Debian release identity with
+matching candidate manifests and inspectors, retaining the shared assertion;
+no fix or new dispatch was made after the user's Fedora Rawhide DE priority
+change. Nineteen non-kernel routes remain native-build-passed. All nineteen
+recipe source branches are published with exact-original pristine-tar metadata.
+The two-package colliding-version regression passes. Runtime metadata simulation
+of all 27 actual DEBs resolves 16 closures and refuses 11 missing real ABI
+providers; two resolved development closures include host Python and remain
+server-only. Launchpad recipebuild 4108742 is currently building source; it is
+not evidence of an ARM64 binary publication. New Ubuntu work is paused and
+existing remote builds are monitored read-only.

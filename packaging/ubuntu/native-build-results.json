@@ -23,9 +23,11 @@
     },
     {
       "source": "uke-linux-kernel",
-      "status": "in_progress",
+      "status": "completed",
       "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309327976",
-      "packaging_commit": "d840464"
+      "packaging_commit": "d840464",
+      "conclusion": "failure",
+      "failure": "sound/soc/qcom/uke-audio-card.c:411: sizeof(\"uke\" UTS_RELEASE) > 16; Debian kernel release suffix too long"
     }
   ],
   "initial_packages": [
@@ -149,5 +151,6 @@
       "conclusion": "success",
       "job_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325/job/124853346336"
     }
-  ]
+  ],
+  "work_state": "paused for Fedora Rawhide DE priority; existing Launchpad source build monitored read-only"
 }

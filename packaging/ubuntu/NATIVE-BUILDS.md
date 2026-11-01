@@ -13,11 +13,20 @@ The initial matrix passed eighteen; the corrected
 passed all four binary packages and payload audits. The separate firmware
 recipe/lifecycle run also passed. The
 [kernel retry](https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309327976)
-is still active. Its first attempt stopped during the shared preparer's
+has terminated with a compilation failure. Its first attempt stopped during the shared preparer's
 contracts because the Debian driver had not recorded its successfully applied
 patches in `senemos-applied-patches.txt`. The corrected driver appends only
 after successful application and compares the complete ledger before invoking
-the unchanged preparer. No kernel binary or boot success is asserted.
+the unchanged preparer. That correction passed preparation; compilation then
+failed at `sound/soc/qcom/uke-audio-card.c:411`:
+`BUILD_BUG_ON failed: sizeof("uke" UTS_RELEASE) > 16`.
+The Debian release suffix `7.3.1-115-uke-ubuntu1` exceeds the shared ALSA driver
+identifier bound. No kernel binary or boot success is asserted. On resumption,
+use a coordinated shorter Debian kernel release identity within that bound
+across the recipe, candidate manifests and inspectors, preserving the shared
+driver assertion. Implementation and new native dispatches are paused while
+Fedora Rawhide DE release work takes priority. The existing Launchpad source
+build remains active and is monitored read-only.
 
 Each package uses a fresh native `ubuntu-24.04-arm` server and a minimal
 Tenacious root bootstrapped from Ubuntu's signature-verified ARM64 ports
