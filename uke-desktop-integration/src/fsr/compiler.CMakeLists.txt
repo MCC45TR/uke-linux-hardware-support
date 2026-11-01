@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MIT
+cmake_minimum_required(VERSION 3.23)
+project(FidelityFX_SC LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(Threads REQUIRED)
+find_path(UTF8CPP_INCLUDE_DIR utf8.h PATH_SUFFIXES utf8cpp REQUIRED)
+set(compiler "${CMAKE_CURRENT_SOURCE_DIR}/sdk/tools/ffx_shader_compiler")
+file(GLOB sources CONFIGURE_DEPENDS "${compiler}/src/*.cpp")
+add_executable(FidelityFX_SC ${sources}
+    "${compiler}/libs/MD5/md5.cpp"
+    "${compiler}/libs/SPIRV-Reflect/spirv_reflect.c"
+    "${compiler}/libs/tiny-process-library/process.cpp"
+    "${compiler}/libs/tiny-process-library/process_unix.cpp")
+target_include_directories(FidelityFX_SC PRIVATE
+    "${compiler}/src" "${compiler}/libs/MD5"
+    "${compiler}/libs/SPIRV-Reflect" "${compiler}/libs/tiny-process-library"
+    "${UTF8CPP_INCLUDE_DIR}")
+target_link_libraries(FidelityFX_SC PRIVATE Threads::Threads)

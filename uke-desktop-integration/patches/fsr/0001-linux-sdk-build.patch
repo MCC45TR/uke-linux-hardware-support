@@ -1,0 +1,284 @@
+diff --git a/sdk/CMakeLists.txt b/sdk/CMakeLists.txt
+index bfa1349..0f5c790 100644
+--- a/sdk/CMakeLists.txt
++++ b/sdk/CMakeLists.txt
+@@ -88,6 +88,8 @@ elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "arm64" OR CMAKE_EXE_LINKER_FLAGS STREQ
+     set(FFX_PLATFORM_NAME arm64)
+ elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "arm64ec" OR CMAKE_EXE_LINKER_FLAGS STREQUAL "/machine:ARM64EC")
+ 	set(FFX_PLATFORM_NAME arm64ec)
++elseif(UNIX AND (FFX_API_BACKEND STREQUAL VK_X64))
++    set(FFX_PLATFORM_NAME ${CMAKE_SYSTEM_PROCESSOR})
+ else()
+     message(FATAL_ERROR "Unsupported target platform \"${CMAKE_GENERATOR_PLATFORM}\"")
+ endif()
+@@ -116,7 +118,9 @@ endif()
+ if (NOT FFX_CUSTOM_API)
+ 
+ 	# Embed PDBs in the debug versions of the libs
+-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7 /Od")
++	if(MSVC)
++		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7 /Od")
++	endif()
+     
+ 	# Write debug, profile, and release versions of the static libs to the /bin folder as they are uniquely named	
+ 	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG   ${CMAKE_HOME_DIRECTORY}/bin/ffx_sdk/)
+@@ -163,13 +167,22 @@ add_compile_definitions(_UNICODE)
+ add_compile_definitions(UNICODE)
+ add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
+ 
++# POSIX compat for all targets on Linux (wcscpy_s, _countof, etc.)
++if(UNIX)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include ${CMAKE_CURRENT_SOURCE_DIR}/src/backends/vk/ffx_posix_compat.h")
++endif()
++
+ if(FFX_VS_VERSION STREQUAL 2015 OR FFX_VS_VERSION STREQUAL 2017)
+     message(NOTICE "Forcing the SDK path for VS 2015 and VS 2017")
+     set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "10.0.18362.0")
+ endif()
+ 
+ # Setup common variables
+-set(FFX_SC_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/tools/binary_store/FidelityFX_SC.exe)
++if(UNIX)
++    set(FFX_SC_EXECUTABLE ${FFX_NATIVE_COMPILER})
++else()
++    set(FFX_SC_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/tools/binary_store/FidelityFX_SC.exe)
++endif()
+ set(FFX_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ set(FFX_LIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+ set(FFX_BIN_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin/ffx_sdk)
+diff --git a/sdk/include/FidelityFX/gpu/CMakeCompileShaders.txt b/sdk/include/FidelityFX/gpu/CMakeCompileShaders.txt
+index ac1088d..3f9d218 100644
+--- a/sdk/include/FidelityFX/gpu/CMakeCompileShaders.txt
++++ b/sdk/include/FidelityFX/gpu/CMakeCompileShaders.txt
+@@ -74,6 +74,8 @@ function(compile_shaders_with_depfile
+ 		set(FFX_GDK_OPTION )
+ 	endif()
+ 
++	set(_PERM_HDRS "")
++
+ 	foreach(PASS_SHADER ${SHADER_FILES})
+ 		get_filename_component(PASS_SHADER_FILENAME ${PASS_SHADER} NAME_WE)
+ 		get_filename_component(PASS_SHADER_TARGET ${PASS_SHADER} NAME_WLE)
+@@ -93,8 +95,9 @@ function(compile_shaders_with_depfile
+ 			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+ 			DEPENDS ${PASS_SHADER}
+ 			DEPFILE ${WAVE32_PERMUTATION_HEADER}.d
++		VERBATIM
+ 		)
+-		list(APPEND PERMUTATION_OUTPUTS ${WAVE32_PERMUTATION_HEADER})
++		list(APPEND _PERM_HDRS ${WAVE32_PERMUTATION_HEADER})
+ 
+ 		# Wave64
+ 		add_custom_command(
+@@ -104,7 +107,7 @@ function(compile_shaders_with_depfile
+ 			DEPENDS ${PASS_SHADER}
+ 			DEPFILE ${WAVE64_PERMUTATION_HEADER}.d
+ 		)
+-		list(APPEND PERMUTATION_OUTPUTS ${WAVE64_PERMUTATION_HEADER})
++		list(APPEND _PERM_HDRS ${WAVE64_PERMUTATION_HEADER})
+ 
+ 		# Wave32 16-bit
+ 		add_custom_command(
+@@ -114,7 +117,7 @@ function(compile_shaders_with_depfile
+ 			DEPENDS ${PASS_SHADER}
+ 			DEPFILE ${WAVE32_16BIT_PERMUTATION_HEADER}.d
+ 		)
+-		list(APPEND PERMUTATION_OUTPUTS ${WAVE32_16BIT_PERMUTATION_HEADER})
++		list(APPEND _PERM_HDRS ${WAVE32_16BIT_PERMUTATION_HEADER})
+ 
+ 		# Wave64 16-bit
+ 		add_custom_command(
+@@ -124,10 +127,10 @@ function(compile_shaders_with_depfile
+ 			DEPENDS ${PASS_SHADER}
+ 			DEPFILE ${WAVE64_16BIT_PERMUTATION_HEADER}.d
+ 		)
+-		list(APPEND PERMUTATION_OUTPUTS ${WAVE64_16BIT_PERMUTATION_HEADER})
++		list(APPEND _PERM_HDRS ${WAVE64_16BIT_PERMUTATION_HEADER})
+ 	endforeach(PASS_SHADER)
+ 
+-	set(${PERMUTATION_OUTPUTS} ${PERMUTATION_OUTPUTS} PARENT_SCOPE)
++	set(${PERMUTATION_OUTPUTS} ${_PERM_HDRS} PARENT_SCOPE)
+ endfunction()
+ 
+ # macro to add shader output files to a list for dependencies
+diff --git a/sdk/include/FidelityFX/host/ffx_spd.h b/sdk/include/FidelityFX/host/ffx_spd.h
+index 14e3230..453a7fb 100644
+--- a/sdk/include/FidelityFX/host/ffx_spd.h
++++ b/sdk/include/FidelityFX/host/ffx_spd.h
+@@ -57,7 +57,12 @@
+ /// The size of the context specified in 32bit values.
+ ///
+ /// @ingroup FfxSpd
++// Linux: wchar_t is 4 bytes — private struct larger than Windows.
++#ifdef _WIN32
+ #define FFX_SPD_CONTEXT_SIZE       (9300)
++#else
++#define FFX_SPD_CONTEXT_SIZE       (18600)
++#endif
+ 
+ /// If this ever changes, need to also reflect a change in number
+ /// of resources in ffx_spd_resources.h
+diff --git a/sdk/include/FidelityFX/host/ffx_types.h b/sdk/include/FidelityFX/host/ffx_types.h
+index ca9bc37..f75ff65 100644
+--- a/sdk/include/FidelityFX/host/ffx_types.h
++++ b/sdk/include/FidelityFX/host/ffx_types.h
+@@ -77,7 +77,13 @@
+ #define FFX_API __declspec(dllexport)
+ #endif // #if defined (FFX_GCC)
+ 
++// Linux: wchar_t is 4 bytes (vs 2 on Windows), so private context structs with
++// wchar_t name arrays are larger. 2x headroom covers the difference.
++#ifdef _WIN32
+ #define FFX_SDK_DEFAULT_CONTEXT_SIZE (1024 * 128)
++#else
++#define FFX_SDK_DEFAULT_CONTEXT_SIZE (1024 * 256)
++#endif
+ 
+ /// Maximum supported number of simultaneously bound SRVs.
+ ///
+diff --git a/sdk/include/FidelityFX/host/ffx_util.h b/sdk/include/FidelityFX/host/ffx_util.h
+index f06a368..ca90cf5 100644
+--- a/sdk/include/FidelityFX/host/ffx_util.h
++++ b/sdk/include/FidelityFX/host/ffx_util.h
+@@ -22,6 +22,9 @@
+ 
+ #pragma once
+ 
++#if __cplusplus >= 202002L
++#include <bit>
++#endif
+ #include <FidelityFX/host/ffx_types.h>
+ 
+ /// @defgroup Utils Utilities
+diff --git a/sdk/src/backends/vk/CMakeLists.txt b/sdk/src/backends/vk/CMakeLists.txt
+index f66866b..5000822 100644
+--- a/sdk/src/backends/vk/CMakeLists.txt
++++ b/sdk/src/backends/vk/CMakeLists.txt
+@@ -53,9 +53,34 @@ file(GLOB PRIVATE_SOURCE
+ 	"${FFX_SRC_BACKENDS_PATH}/shared/blob_accessors/"
+     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
++)
++
++# FrameInterpolationSwapchain requires Win32 threading — exclude on Linux.
++if(NOT UNIX)
++file(GLOB FI_SWAPCHAIN_SOURCE
+     "${CMAKE_CURRENT_SOURCE_DIR}/FrameInterpolationSwapchain/*.h"
+     "${CMAKE_CURRENT_SOURCE_DIR}/FrameInterpolationSwapchain/*.cpp"
+ )
++list(APPEND PRIVATE_SOURCE ${FI_SWAPCHAIN_SOURCE})
++endif()
++
++# On Linux, component API sources must be compiled into the monolithic backend
++# library (AMD's Windows build produces them as separate static libs).
++if(UNIX)
++    set(FFX_COMPONENTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../components")
++    list(APPEND PRIVATE_SOURCE
++        "${FFX_COMPONENTS_PATH}/fsr3upscaler/ffx_fsr3upscaler.cpp"
++        "${FFX_COMPONENTS_PATH}/opticalflow/ffx_opticalflow.cpp"
++        "${FFX_COMPONENTS_PATH}/frameinterpolation/ffx_frameinterpolation.cpp"
++        "${FFX_COMPONENTS_PATH}/spd/ffx_spd.cpp"
++        "${FFX_SHARED_PATH}/ffx_object_management.cpp"
++    )
++    # Force-include POSIX compat header for component sources (they use _countof, wcscmp, etc.)
++    # Do NOT use VK_NO_PROTOTYPES here — FFX must call Vulkan functions through libvulkan.so,
++    # not volk's data symbols. Building as a shared library ensures GOT entries resolve to
++    # the Vulkan loader at runtime, avoiding the linker GOT relaxation issue with volk.
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include ${CMAKE_CURRENT_SOURCE_DIR}/ffx_posix_compat.h")
++endif()
+ 
+ if (FFX_FSR1 OR FFX_ALL)
+ 	set(FFX_FSR1_PRIVATE_SOURCE
+@@ -403,8 +428,18 @@ endif()
+ file(GLOB_RECURSE PUBLIC_SOURCE
+     "${FFX_HOST_BACKENDS_PATH}/vk/*.h")
+ 
+-if (FFX_BUILD_AS_DLL)
++if (FFX_BUILD_AS_DLL OR UNIX)
++    # On Linux: build as shared library so Vulkan calls resolve to libvulkan.so
++    # at runtime, not volk's data symbols in the engine binary.
+     add_library(ffx_backend_vk_${FFX_PLATFORM_NAME} SHARED ${PRIVATE_SOURCE} ${PUBLIC_SOURCE} ${PRIVATE_SHADERS} ${PUBLIC_SHADERS})
++    if(UNIX)
++        # -Bsymbolic: resolve Vulkan symbols to libvulkan.so within this .so,
++        # NOT to volk's data symbols in the main executable. Without this, ELF
++        # symbol interposition causes the .so to call volk's function pointer
++        # variables as code addresses → segfault.
++        target_link_libraries(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE Vulkan::Vulkan)
++        target_link_options(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE -Wl,-Bsymbolic)
++    endif()
+ else()
+     add_library(ffx_backend_vk_${FFX_PLATFORM_NAME} STATIC ${PRIVATE_SOURCE} ${PUBLIC_SOURCE} ${PRIVATE_SHADERS} ${PUBLIC_SHADERS})
+ endif()
+@@ -425,7 +460,7 @@ target_include_directories(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE ${FFX_SHA
+ target_include_directories(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE "${FFX_SRC_BACKENDS_PATH}/shared")
+ target_include_directories(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE ${FFX_PASS_SHADER_OUTPUT_PATH})
+ 
+-target_link_libraries(ffx_backend_vk_${FFX_PLATFORM_NAME} "Vulkan::Vulkan")
++target_link_libraries(ffx_backend_vk_${FFX_PLATFORM_NAME} PRIVATE Vulkan::Vulkan)
+ 
+ set_source_files_properties(${PRIVATE_SHADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
+ set_source_files_properties(${PUBLIC_SHADERS} PROPERTIES HEADER_FILE_ONLY TRUE)
+diff --git a/sdk/src/shared/ffx_breadcrumbs_list.h b/sdk/src/shared/ffx_breadcrumbs_list.h
+index facc77e..0e607f2 100644
+--- a/sdk/src/shared/ffx_breadcrumbs_list.h
++++ b/sdk/src/shared/ffx_breadcrumbs_list.h
+@@ -23,9 +23,16 @@
+ #pragma once
+ 
+ #include <cstdint>
+-#include <cstdio>      // sprintf_s
++#include <cstdio>
++#include <cstring>
+ #include <FidelityFX/host/ffx_assert.h>
+ 
++#ifndef _WIN32
++#ifndef sprintf_s
++#define sprintf_s(buf, size, ...) snprintf(buf, size, __VA_ARGS__)
++#endif
++#endif
++
+ #define FFX_BREADCRUMBS_APPEND_STRING(buff, count, str)                                  \
+     do                                                                                   \
+     {                                                                                    \
+diff --git a/sdk/src/shared/ffx_message.cpp b/sdk/src/shared/ffx_message.cpp
+index 7dd5127..6f5a03e 100644
+--- a/sdk/src/shared/ffx_message.cpp
++++ b/sdk/src/shared/ffx_message.cpp
+@@ -21,6 +21,7 @@
+ // THE SOFTWARE.
+ 
+ #include <FidelityFX/host/ffx_message.h>
++#include <FidelityFX/host/ffx_util.h>
+ 
+ #ifdef _WIN32
+ #ifndef WIN32_LEAN_AND_MEAN
+diff --git a/sdk/toolchain.cmake b/sdk/toolchain.cmake
+index 61aba48..3d6be5b 100644
+--- a/sdk/toolchain.cmake
++++ b/sdk/toolchain.cmake
+@@ -50,15 +50,18 @@ if (FFX_API_BACKEND STREQUAL DX12_X64 OR
+ 	FFX_API_BACKEND STREQUAL VK_X64)
+ 
+ 	set(CMAKE_RELWITHDEBINFO_POSTFIX drel)
+-	set(CMAKE_SYSTEM_NAME WINDOWS)
+-	set(CMAKE_SYSTEM_VERSION 10.0)
+ 
+-	set(CMAKE_GENERATOR_PLATFORM "x64" CACHE STRING "" FORCE)
+-	set(CMAKE_VS_PLATFORM_NAME "x64" CACHE STRING "" FORCE)
++	if(UNIX)
++		# Linux: do not force Windows system name or generator platform.
++		set(CMAKE_POSITION_INDEPENDENT_CODE ON)
++	else()
++		set(CMAKE_SYSTEM_NAME WINDOWS)
++		set(CMAKE_SYSTEM_VERSION 10.0)
++		set(CMAKE_GENERATOR_PLATFORM "x64" CACHE STRING "" FORCE)
++		set(CMAKE_VS_PLATFORM_NAME "x64" CACHE STRING "" FORCE)
++		set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "x64" CACHE STRING "" FORCE)
++	endif()
+ 
+-	# Ensure our platform toolset is x64
+-	set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "x64" CACHE STRING "" FORCE)
+-	
+ elseif(FFX_API_BACKEND STREQUAL DX12_ARM64)
+ 
+ 	set(CMAKE_RELWITHDEBINFO_POSTFIX drel)

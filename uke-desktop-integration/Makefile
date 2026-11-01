@@ -4,6 +4,11 @@ SHELL := /bin/bash
 .PHONY: validate srpm test-native test-plugin
 outdir ?= $(CURDIR)/build/srpm
 BUILD_DIR ?= build
+.PHONY: test-fsr-compat
+test-fsr-compat:
+	mkdir -p build/fsr-selfcheck
+	$(CXX) -std=c++20 -Wall -Wextra -Werror src/fsr/posix-selfcheck.cpp -o build/fsr-selfcheck/posix-selfcheck
+	build/fsr-selfcheck/posix-selfcheck
 .PHONY: pipewire-monitor-srpm
 pipewire-monitor-srpm:
 	bash scripts/build-pipewire-monitor-srpm.sh "$(FEDORA_PIPEWIRE_SRPM)" "$(abspath $(BUILD_DIR))/pipewire-monitor/rpmbuild"
