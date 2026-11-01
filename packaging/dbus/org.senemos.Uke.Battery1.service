@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.senemos.Uke.Battery1
+Exec=/usr/bin/uke-battery --daemon
+User=uke-battery
+SystemdService=uke-battery.service

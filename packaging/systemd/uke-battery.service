@@ -1,0 +1,33 @@
+[Unit]
+Description=Read-only Uke battery telemetry
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.senemos.Uke.Battery1
+User=uke-battery
+Group=uke-battery
+ExecStart=/usr/bin/uke-battery --daemon
+Restart=no
+TimeoutStopSec=35
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+MemoryMax=64M
+TasksMax=8
+UMask=0077
+StateDirectory=uke-battery
+StateDirectoryMode=0700
+
+[Install]
+WantedBy=multi-user.target

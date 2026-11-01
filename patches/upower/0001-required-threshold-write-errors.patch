@@ -1,0 +1,106 @@
+From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Propagate every required battery threshold and charge_types failure
+
+Base: UPower v1.91.5, 233615a1505166ef4a28c959836fe8c7781f5697
+Source license: GPL-2.0-or-later; original upstream attribution is retained.
+Host results and physical limits are recorded in packaging/upower/README.md.
+Uke battery controls remain disabled.
+
+--- a/src/linux/up-device-supply-battery.c
++++ b/src/linux/up-device-supply-battery.c
+@@ -682,9 +682,8 @@
+ 
+ 	if (!g_file_set_contents_full (type_filename, charge_type_str, -1,
+ 		G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error)) {
+-		g_set_error_literal (error, G_IO_ERROR,
+-				     G_IO_ERROR_FAILED, "Failed to set charge_types");
+-		return TRUE;
++		g_prefix_error (error, "Failed to set charge_types: ");
++		return FALSE;
+ 	}
+ 
+ 	return TRUE;
+@@ -692,7 +691,6 @@
+ 
+ static gboolean
+ up_device_supply_battery_set_battery_charge_thresholds(UpDevice *device, guint start, guint end, GError **error) {
+-	guint err_count = 0;
+ 	GUdevDevice *native;
+ 	UpDeviceSupplyBattery *self = UP_DEVICE_SUPPLY_BATTERY (device);
+ 	g_autofree gchar *native_path = NULL;
+@@ -707,29 +705,19 @@
+ 	start_filename = g_build_filename (native_path, "charge_control_start_threshold", NULL);
+ 	end_filename = g_build_filename (native_path, "charge_control_end_threshold", NULL);
+ 
+-	/* if the charge threshold is controlled by charge_types,
+-	 * the charge_types will be set to Long_life when enabling the charge threshold.
+-	 * the charge_types will be set to Standard/Adaptive/Fast when disabling the charge threshold. */
+ 	if (self->charge_threshold_by_charge_type) {
+-		if (start == 0 && end == 100) {
++		if (start == 0 && end == 100)
+ 			charge_type_enum = up_device_battery_charge_find_available_charge_types_for_charging (device);
+-			up_device_supply_battery_set_battery_charge_types (device,
+-									   charge_type_enum,
+-									   NULL);
+-		} else {
+-			up_device_supply_battery_set_battery_charge_types (device,
+-									   UP_DEVICE_SUPPLY_BATTERY_CHARGE_TYPES_LONG_LIFE,
+-									   NULL);
+-		}
+-
+-		return TRUE;
++		else
++			charge_type_enum = UP_DEVICE_SUPPLY_BATTERY_CHARGE_TYPES_LONG_LIFE;
++		return up_device_supply_battery_set_battery_charge_types (device, charge_type_enum, error);
+ 	}
+ 
+ 	if (start != G_MAXUINT) {
+-		g_string_printf (start_str, "%d", CLAMP (start, 0, 100));
++		g_string_printf (start_str, "%u", MIN (start, 100u));
+ 		if (!g_file_set_contents_full (start_filename, start_str->str, start_str->len,
+-					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, NULL))
+-			err_count++;
++					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error))
++			return FALSE;
+ 	} else {
+ 		g_debug ("Ignore charge_control_start_threshold setting");
+ 	}
+@@ -737,31 +725,17 @@
+ 	if (end != G_MAXUINT) {
+-		g_string_printf (end_str, "%d", CLAMP (end, 0, 100));
++		g_string_printf (end_str, "%u", MIN (end, 100u));
+ 		if (!g_file_set_contents_full (end_filename, end_str->str, end_str->len,
+-					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, NULL))
+-			err_count++;
++					  G_FILE_SET_CONTENTS_ONLY_EXISTING, 0644, error))
++			return FALSE;
+ 	} else {
+ 		g_debug ("Ignore charge_control_end_threshold setting");
+ 	}
+ 
+-	if (err_count == 2) {
+-		g_set_error_literal (error, G_IO_ERROR,
+-				     G_IO_ERROR_FAILED, "Failed to set charge control thresholds");
+-		return FALSE;
+-	}
+-
+-	if (start == 0 && end == 100) {
++	if (start == 0 && end == 100)
+ 		charge_type_enum = up_device_battery_charge_find_available_charge_types_for_charging (device);
+-		up_device_supply_battery_set_battery_charge_types (device,
+-								   charge_type_enum,
+-								   NULL);
+-	} else {
+-		/* for the Dell laptops, the charge_types has to be set to "Custom" to enable the charging threshold */
+-		up_device_supply_battery_set_battery_charge_types (device,
+-								   UP_DEVICE_SUPPLY_BATTERY_CHARGE_TYPES_CUSTOM,
+-								   NULL);
+-	}
+-
+-	return TRUE;
++	else
++		charge_type_enum = UP_DEVICE_SUPPLY_BATTERY_CHARGE_TYPES_CUSTOM;
++	return up_device_supply_battery_set_battery_charge_types (device, charge_type_enum, error);
+ }
+ 
+ static void

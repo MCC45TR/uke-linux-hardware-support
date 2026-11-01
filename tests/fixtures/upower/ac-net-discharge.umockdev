@@ -1,0 +1,52 @@
+P: /devices/platform/uke-fixture/power_supply/BAT0
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=BAT0
+A: type=Battery
+A: present=1
+A: status=Discharging
+A: capacity=3
+A: voltage_now=4000000
+A: energy_full=40000000
+A: energy_full_design=44000000
+A: energy_now=1200000
+A: power_now=4000000
+A: cycle_count=0
+A: technology=Li-ion
+
+P: /devices/platform/uke-fixture/power_supply/AC
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=AC
+A: type=Mains
+A: online=1
+
+P: /devices/platform/uke-fixture/power_supply/WIRELESS_MISSING
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=WIRELESS_MISSING
+A: type=Wireless
+
+P: /devices/platform/uke-fixture/power_supply/WIRELESS0
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=WIRELESS0
+A: type=Wireless
+A: scope=System
+A: online=0
+
+P: /devices/platform/uke-fixture/power_supply/WIRELESS1
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=WIRELESS1
+A: type=Wireless
+A: scope=System
+A: online=1
+
+P: /devices/platform/uke-fixture/power_supply/WIRELESS_INVALID
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=WIRELESS_INVALID
+A: type=Wireless
+A: scope=System
+A: online=not-a-number
+
+P: /devices/platform/uke-fixture/power_supply/UNKNOWN
+E: SUBSYSTEM=power_supply
+E: POWER_SUPPLY_NAME=UNKNOWN
+A: type=FixtureUnknown
+A: scope=System
