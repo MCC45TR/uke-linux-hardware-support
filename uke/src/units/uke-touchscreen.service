@@ -1,0 +1,24 @@
+[Unit]
+Description=Novatek NT36532 touchscreen input for Xiaomi Uke
+After=systemd-modules-load.service systemd-udev-trigger.service
+ConditionFileNotEmpty=/var/lib/uke-touch/normal.bin
+ConditionFileNotEmpty=/var/lib/uke-touch/config.ini
+ConditionFileNotEmpty=/var/lib/uke-touch/reference.bin
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+[Service]
+Type=notify
+TimeoutStartSec=20
+ExecStart=/usr/libexec/senemos-uke/uke-touch-thp --daemon
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=5
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+MemoryMax=128M
+MemorySwapMax=0
+
+[Install]
+WantedBy=multi-user.target

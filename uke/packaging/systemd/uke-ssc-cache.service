@@ -1,0 +1,23 @@
+[Unit]
+Description=Prepare a complete private SSC registry in RAM
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+RequiresMountsFor=/mnt/vendor/persist
+Before=uke-ssc-root.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecCondition=/usr/bin/findmnt --mountpoint /mnt/vendor/persist --options ro --noheadings
+ExecStart=/usr/libexec/uke-ssc-cache
+RuntimeDirectory=uke-ssc
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/mnt/vendor/persist
+ReadWritePaths=/run/uke-ssc
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+NoNewPrivileges=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX

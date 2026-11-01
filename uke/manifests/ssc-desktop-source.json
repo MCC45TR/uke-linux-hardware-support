@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "copr_build_host": {
+    "date": "2026-10-27",
+    "python": "3.15.1-1.fc46",
+    "scope": "Pinned upstream Meson build tool only; no tablet Python payload"
+  },
+  "scope": "SSC desktop package preview; physical automatic rotation and brightness pending",
+  "libssc": {
+    "version": "0.4.4",
+    "repository": "https://codeberg.org/DylanVanAssche/libssc",
+    "archive_sha256": "716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587",
+    "runtime_sha256": "ead6e1a0835b5c677c2fa3fd3debe9c66ff12cbcf1e2ada6bd117589b126b483",
+    "patches": [
+      "0001-optional-python-mocks.patch",
+      "0002-report-qrtr-error.patch",
+      "0003-gyroscope-cli-units.patch"
+    ],
+    "python_runtime": false,
+    "cli_sha256": "905007dd7d2642428d3a297019807e2b5bc4f53f4dfffe1f1b8a265c745323f2",
+    "next_candidate": {
+      "release": "0.4.4-6",
+      "patches": [
+        "0001-optional-python-mocks.patch",
+        "0002-report-qrtr-error.patch",
+        "0003-gyroscope-cli-units.patch",
+        "0004-light-data-type-and-validity.patch",
+        "0005-preserve-nonzero-mount-matrix.patch",
+        "0006-bounded-proximity-unpack-context.patch",
+        "0007-reject-invalid-proximity-values.patch"
+      ],
+      "retained_fix": "8766d4e3b74602a919104da232d53851ee76c593",
+      "hardware_result": "not established by package checks"
+    }
+  },
+  "iio_sensor_proxy": {
+    "version": "3.9",
+    "fedora_srpm": "3.9-3.fc45",
+    "srpm_sha256": "a2b0ef06afed329bd029addcee6967dd06b27ffa3b4d7536b13a9982b85137a0",
+    "archive_sha256": "19a4ae99b1b8af603fc789841025f9747bf445418d69ec7389e75adb6c8186bf",
+    "runtime_sha256": "bfe35fe22aa9c8eb0a78f7b79392d3fae7769c78f2bda4c57e3084529580ca7a",
+    "ssc_support": "enabled",
+    "patch": "0001-initialize-before-dbus-name.patch"
+  },
+  "libqrtr_glib": {
+    "version": "1.2.2-10.fc45",
+    "signed_srpm_sha256": "e35b79fd9b59477f668a07d75aad49b1db01c765549eda233bb19b6b818e8007",
+    "archive_sha256": "69ec8883d887a426c6402440b200fa53c41e9da8e098333369f2388d3559e856",
+    "role": "Socket permission source review; distribution runtime retained"
+  },
+  "host_sdk": {
+    "libssc": "sha256:d6698dae40b102eb3aba57abcdec6f41639f106c42b5fe124a4da1c8aeb000eb",
+    "iio_sensor_proxy": "sha256:bd8083b65020395b6b94ea4c26df66564dfc404dfba55b34bbdb872b80c4dc56",
+    "meson": "1.12.1-2.fc46",
+    "python": "3.15.0-1.fc46",
+    "gcc": "16.2.1-2.fc46.1",
+    "python_scope": "Host-only upstream Meson; no Python mock server or target runtime"
+  },
+  "observed": {
+    "motion_samples": true,
+    "stationary_orientation_dbus": true,
+    "early_client_regression_fixed": true,
+    "selinux_confined_dbus": true
+  },
+  "rpm_candidate": {
+    "date": "2026-10-14",
+    "host_sdk": "sha256:3a8c611494801b70581b9d5a502a1d1fbc8fe7d16c5be43e647e7a235038a829",
+    "libssc": "0.4.4-2.fc46.aarch64",
+    "iio_sensor_proxy": "3.9-5.fc46.aarch64",
+    "python_runtime_payload": false,
+    "tablet_installed": false,
+    "persistent_startup_accepted": false,
+    "copr_status": "published-preview",
+    "copr_builds": {
+      "libssc": 11122170,
+      "iio_sensor_proxy": 11122171,
+      "fileservice": 11122172,
+      "adaptive_display": 11122177
+    },
+    "verified_binary_subpackages": 11,
+    "isolated_sdk_install_remove": true,
+    "no_new_python_packages": true
+  },
+  "remaining": [
+    "Matched firmware and persistent fileservice lifecycle",
+    "Front light and magnetometer SUID discovery",
+    "Rear-light units and lux conversion",
+    "Controlled physical axes and desktop rotation",
+    "Cold boot, restart and suspend/resume",
+    "Complete package and no-Python target audit"
+  ],
+  "permanent_activation": false,
+  "package_ready": false,
+  "physical_calibration_accepted": false,
+  "candidate_copr_build_host": {
+    "date": "2026-10-29",
+    "python": "3.15.2-1.fc46",
+    "scope": "Pinned upstream Meson build tool on the remote worker only; no tablet payload",
+    "evidence": "Original Fedora Rawhide repository query; native COPR validation pending"
+  }
+}

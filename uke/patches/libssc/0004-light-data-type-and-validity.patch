@@ -1,0 +1,80 @@
+Subject: [PATCH] Add bounded ambient-light type construction and reject invalid lux
+
+Upstream: libssc 0.4.4. Reuse the existing GAsyncInitable and synchronous context
+for the Uke OEM ambient_light_back channel. Keep the original constructor and
+ABI; the additional constructor accepts only the two demonstrated light types.
+Discard unreliable, non-finite and negative lux before publishing measurements.
+
+--- a/src/libssc-sensor-light.c
++++ b/src/libssc-sensor-light.c
+@@ -21,6 +21,7 @@
+ #include "ssc-common.pb-c.h"
+ #include "ssc-sensor-light.pb-c.h"
+ #include "libssc-sensor-light.h"
++#include <math.h>
+ 
+ enum {
+ 	SIGNAL_MEASUREMENT,
+@@ -81,11 +82,11 @@
+ 		}
+ 
+ 		/* Only report intensity in Lux, raw sensor values are ignored */
+-		if (msg->n_intensity >= 1) {
++		if (msg->n_intensity >= 1 && msg->accuracy > 0 && msg->accuracy <= 3) {
+ 			intensity = msg->intensity[0];
+ 
+ 			/* Emit signal in main context instead of thread's context if intensity is positive */
+-			if (intensity >= 0.0) {
++			if (isfinite (intensity) && intensity >= 0.0) {
+ 				ctx = g_slice_new0 (SignalContext);
+ 				ctx->sensor = sensor;
+ 				ctx->intensity = intensity;
+@@ -279,6 +280,28 @@
+ }
+ 
+ SSCSensorLight *
++ssc_sensor_light_new_for_type_sync (const gchar *data_type, GCancellable *cancellable, GError **error)
++{
++	SyncContext ctx;
++	SSCSensorLight *self;
++
++	if (g_strcmp0 (data_type, "ambient_light") != 0 &&
++	    g_strcmp0 (data_type, "ambient_light_back") != 0) {
++		g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
++		                     "Unsupported ambient light data type");
++		return NULL;
++	}
++	ssc_common_init_sync_context (&ctx);
++	g_async_initable_new_async (SSC_TYPE_SENSOR_LIGHT, G_PRIORITY_DEFAULT, cancellable,
++	                           ssc_common_callback_sync_context, &ctx,
++	                           SSC_SENSOR_DATA_TYPE, data_type, NULL);
++	ssc_common_wait_sync_context (&ctx);
++	self = ssc_sensor_light_new_finish (ctx.result, error);
++	ssc_common_clear_sync_context (&ctx);
++	return self;
++}
++
++SSCSensorLight *
+ ssc_sensor_light_new_sync (GCancellable *cancellable, GError **error)
+ {
+ 	SSCSensorLight *self = NULL;
+--- a/src/libssc-sensor-light.h
++++ b/src/libssc-sensor-light.h
+@@ -34,6 +34,7 @@
+ void		 ssc_sensor_light_new (GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+ SSCSensorLight	*ssc_sensor_light_new_finish (GAsyncResult *result, GError **error);
+ SSCSensorLight	*ssc_sensor_light_new_sync (GCancellable *cancellable, GError **error);
++SSCSensorLight	*ssc_sensor_light_new_for_type_sync (const gchar *data_type, GCancellable *cancellable, GError **error);
+ void		 ssc_sensor_light_open (SSCSensorLight *self, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+ gboolean	 ssc_sensor_light_open_finish (SSCSensorLight *self, GAsyncResult *result, GError **error);
+ gboolean	 ssc_sensor_light_open_sync (SSCSensorLight *self, GCancellable *cancellable, GError **error);
+--- a/libssc.map
++++ b/libssc.map
+@@ -30,6 +30,7 @@
+ 		ssc_sensor_light_new;
+ 		ssc_sensor_light_new_finish;
+ 		ssc_sensor_light_new_sync;
++		ssc_sensor_light_new_for_type_sync;
+ 		ssc_sensor_light_open;
+ 		ssc_sensor_light_open_finish;
+ 		ssc_sensor_light_open_sync;

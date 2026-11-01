@@ -1,0 +1,51 @@
+{
+  "repository": "https://github.com/linux-msm/hexagonrpc",
+  "commit": "da7a3742ab8d5273a281b70ee11f16fb2cb6a690",
+  "archive_url": "https://api.github.com/repos/linux-msm/hexagonrpc/tarball/da7a3742ab8d5273a281b70ee11f16fb2cb6a690",
+  "archive_sha256": "7714edc602057b4ad40b7d350acf6cef0167551e3c2876c0ed77486ab188690a",
+  "license": "GPL-3.0-or-later",
+  "scope": "Native sensor file-service research baseline; persistent startup remains unqualified",
+  "write_candidate": {
+    "repository": "https://github.com/linux-msm/hexagonrpc",
+    "commit": "510c87e5c89026ee2bd2034776fc4d15994f353d",
+    "archive_url": "https://api.github.com/repos/linux-msm/hexagonrpc/tarball/510c87e5c89026ee2bd2034776fc4d15994f353d",
+    "archive_sha256": "ed7b0e704a5e8c20b77b013b4b34f3cddbe41d4cf546edc73f029501f7ebdec5",
+    "scope": "Unmerged write-backend comparison; RAM registry only, no OEM persist writes",
+    "packaging_candidate": "uke-ssc-fileservice-2026.09.21-2.fc46.aarch64",
+    "runtime_sha256": "ae7ad9a74cdcb76ff8e36d94942d0386cd119ebdde6980134a508d3819d39330",
+    "additional_patches": [
+      {
+        "path": "patches/hexagonrpc/0004-reject-mapped-symlinks.patch",
+        "sha256": "90d2f5d0e374da8c81dcc7a184cb117f7e89762f185543ce6a78b2c8dfa87565"
+      },
+      {
+        "path": "patches/hexagonrpc/0005-reject-incomplete-shell-images.patch",
+        "sha256": "def1772137e0641487144a4605fb77141a014454329bb1bc7fbaaace807f1083"
+      }
+    ],
+    "tablet_installed": false,
+    "persistent_startup_accepted": false
+  },
+  "oem_registry_config": {
+    "repository": "https://github.com/uke-resources/vendor_xiaomi_uke",
+    "commit": "51ecce187b180e1df9230ff50b604af535b8e116",
+    "path": "proprietary/vendor/etc/sensors/sns_reg_config",
+    "version": 14,
+    "sha256": "1955666f46427f102b2bf19a0018123fbc27cf6951d531a5e623823a0ed1ea35",
+    "scope": "Source provenance only; no redistribution permission inferred"
+  },
+  "readiness_candidate": {
+    "date": "2026-10-17",
+    "fileservice": "2026.09.21-4.fc46",
+    "adaptive_display": "0.1.0-2.fc46",
+    "patch": {
+      "path": "patches/hexagonrpc/0006-notify-listener-readiness.patch",
+      "sha256": "99f4b5a49220f2a07766c6748084ed3839577875fc07eb7f3d43df96b422c3ba"
+    },
+    "activation": "explicit-device-dependency",
+    "readiness": "successful-listener-registration",
+    "host_tests_passed": true,
+    "tablet_startup_accepted": false,
+    "copr_build": 11164005
+  }
+}
