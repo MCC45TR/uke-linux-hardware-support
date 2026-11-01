@@ -1,0 +1,15 @@
+#!/bin/bash
+# Host-only metadata guard. Release source packages have no recipe manifest.
+set -euo pipefail
+[[ -f debian/git-build-recipe.manifest ]] || exit 0
+awk '
+ $1=="nest-part" && ($2=="source" || $2=="metadata" || $2=="packaging") {
+  revision=$NF
+  sub(/^git-commit:/,"",revision)
+  if(length(revision)!=40 || revision ~ /[^0-9a-f]/ || seen[$2]++) bad=1
+  if(first=="") first=revision
+  if(first!=revision) bad=1
+  count++
+ }
+ END {if(bad || count!=3) {print "Main source, metadata and packaging must resolve to one exact commit" > "/dev/stderr";exit 1}}
+' debian/git-build-recipe.manifest

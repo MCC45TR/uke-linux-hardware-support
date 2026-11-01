@@ -9,6 +9,29 @@ output=${2:?new output directory required}
 [[ ! -e $output ]]
 canonical=$root/packaging/ubuntu/recipes/$package/debian
 case $package in
+ uke-bluetooth|uke-speaker-orientation)
+  version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
+  [[ $version == 0.1.0-0ubuntu1~tenacious1 ]]
+  snapshot=${version/-0ubuntu/+uke0ubuntu}
+  mkdir -p "$output"
+  cp -a "$canonical/." "$output/"
+  cp "$root/packaging/ubuntu/recipes/uke-speaker-firmware/debian/verify-main-inputs" "$output/verify-main-inputs"
+  printf '3.0 (native)\n' > "$output/source/format"
+  sed "1s/($version)/($snapshot)/" "$canonical/changelog" > "$output/changelog"
+  sed -e '/^override_dh_auto_configure:/a\	 bash debian/verify-main-inputs' \
+      -e '/^override_dh_auto_clean:/a\	 bash debian/verify-main-inputs' \
+      -e 's| src/| source/src/|g' "$canonical/rules" > "$output/rules"
+  for list in "$output/"*.install; do
+   [[ -f $list ]] || continue
+   sed -i -E 's|^(src/|packaging/)|source/\1|' "$list"
+  done
+  cat >> "$output/copyright" <<'COPYRIGHT'
+
+Files: AGENTS.md README.md LICENSE debian/*
+Copyright: 2026 MCC45TR
+License: MIT
+COPYRIGHT
+  exit 0;;
  uke-displayport-audio|uke-speaker-controls|uke-gpu-defaults)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
   [[ $version == 0.1.0-0ubuntu1~tenacious1 ]]
