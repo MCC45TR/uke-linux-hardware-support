@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "source_package": "gcc-16.2.1-3.fc46.src.rpm",
+  "runtime": "libstdc++-16.2.1-3.fc46.aarch64.rpm",
+  "url": "https://kojipkgs.fedoraproject.org/packages/gcc/16.2.1/3.fc46/data/signed/91211fce/aarch64/libstdc++-16.2.1-3.fc46.aarch64.rpm",
+  "sha256": "62c88a073889ef2b765dd06f072d19a2ad0f0803525819cfdbc847c470601cef",
+  "fedora_key_fingerprint": "D924B10D3E810DABDD8B56B596E7E91491211FCE",
+  "signature_verified": true,
+  "python_helper_files": 15,
+  "python_helpers_marked_doc": 0,
+  "payload_executed": false,
+  "abi_qualified": false,
+  "admitted_for_replacement": false,
+  "policy_boundary": "uke-desktop-metas/src/profile.json: desktop_dependency_exception.applies_to_core_console=false",
+  "current_provider": "uke-libstdcxx",
+  "separate_gate": "uke-core-meta(fedora-cxx-runtime-v1)",
+  "gate_provided": false
+}

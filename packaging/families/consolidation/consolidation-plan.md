@@ -1,10 +1,19 @@
 # Source consolidation
 
-1 November 2026. Fedora Rawhide 46, AArch64. The live COPR inventory contains
-36 producer definitions. GitHub main is `bb2899e`; producers retain independent
-source pins. The kernel source recipe is pinned to `d86aea3e8cc2f90ac101d03b81560d8e1eab38cc`
-and build 11239296 is running at this snapshot. It is not part of these source
-consolidations.
+1 November 2026. Fedora Rawhide 46, AArch64. The
+[current source snapshot](live-inventory-20261101.json) contains all 43 COPR
+definitions: 26 active and 17 retained without another build. Its empty offset
+43 page confirms the complete listing. Recipe hashes, exact pins and current
+main/TEST refs remain separate from installed-device evidence.
+
+The initial audit covered 36 definitions. Its source recipes, binary baseline
+and earlier refs remain in [inventory.json](inventory.json) and
+[package-map.csv](package-map.csv). The
+[current route table](current-source-routes.csv) covers all 43 definitions.
+The initial kernel recipe used `d86aea3e8cc2f90ac101d03b81560d8e1eab38cc`;
+it was excluded from the source consolidations. The current independent
+kernel recipe uses `b6321b82b3a840e7a3767e62ba82b21c32fd18b3` and is not
+qualified by the runtime fixture's retained kernel 106.
 
 The six profiles in `../integrations.json` reuse the existing source composer.
 They take complete, checksum-pinned successful source RPMs, retain component
@@ -34,9 +43,14 @@ Apache-2.0 speaker preset. Recovery remains separate because its large image
 archive and source offer should not depend on a Qt/KWin decoration rebuild.
 These are documented lifecycle and licensing boundaries, not completed merges.
 
-The conditional Fedora returns are a separate step. Removing five policy-only
-forks would make this design 23 active producers, or 21 if the two deferred
-merges later qualify. The existing original-Fedora desktop exception is not
+The conditional Fedora returns are a separate step. Three desktop source
+returns now reduce the initial scope from 28 to 25 active producers. The
+independently added color-profile source makes the live count 26. The GNU
+console return remains unadmitted, and libaccounts-glib retains a real
+destructor correction missing from the reviewed Fedora source. The original
+21-source proposal also depended on both deferred merges and all five Fedora
+equivalents; it is not the current result or a required quota.
+The existing original-Fedora desktop exception is not
 permission to introduce Python hardware/startup services or recovery payloads.
 Each replacement still needs a signed API/ABI, file-ownership and dependency
 comparison. A source count reduction does not reduce binary RPMs or processes.
@@ -63,9 +77,10 @@ but the live producer now uses separately qualified `9e4d2153`; inventory.json
 records the recipe and live branch refs. Neither repository has a Git branch
 named unstable; `uke-linux-unstable` here is the COPR project.
 
-The routing is now applied. The official live inventory contains 42 definitions,
-with 28 admitted producer scripts and 14 explicitly superseded scripts retained
-for history and rollback. No historical definition/build was deleted. Only 20
-script fields changed; all other source fields, the remaining 22 definitions
-and project settings were independently compared. This is an eight-producer
-maintenance reduction, not fewer installed RPMs or fewer upstream forks.
+The first routing phase produced 42 definitions, with 28 admitted producer
+scripts and 14 superseded scripts retained for history and rollback. Its
+20-script comparison is retained in routing-receipt.json. That phase reduced
+source maintenance by eight producers without reducing binary RPMs or forks.
+The later [desktop return result](fedora-return-results.md) records the three
+fork withdrawals, the additional worker dependencies and preserved unrelated
+fields. No historical definition or build was deleted in either phase.

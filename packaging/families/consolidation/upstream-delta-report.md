@@ -57,3 +57,17 @@ board value. Existing touch processing/licensing and physical acceptance gaps
 prevent fallback retirement. Factory MAC/calibration handoff remains read-only;
 no provider with demonstrated equivalent security is introduced. Internal
 four-channel playback and separate stereo DisplayPort routes stay distinct.
+
+The GNU policy follow-up also inspected the signed original
+`libstdc++-16.2.1-3.fc46.aarch64.rpm`; its SHA256 and key are recorded in
+[gnu-console-policy-audit.json](gnu-console-policy-audit.json). It still owns
+15 Python helper files, none marked as documentation, so omitting documentation
+does not omit those files. This inspection does not qualify its ABI or admit
+it into the console. Fedora's [GCC package list](https://packages.fedoraproject.org/pkgs/gcc/)
+lists the runtime, development, documentation and static subpackages. The
+separate [gcc-gdb-plugin](https://packages.fedoraproject.org/pkgs/gcc/gcc-gdb-plugin/)
+implements C expression evaluation; it is not the runtime's Python helper
+split. The existing Uke runtime therefore stays active while the console
+exception is unresolved. Its source manifest builds the GNU runtime, so
+maintaining it also retains compiler-source, symbol-floor and security-update
+work. A future signed Fedora split can be reviewed without changing the policy.

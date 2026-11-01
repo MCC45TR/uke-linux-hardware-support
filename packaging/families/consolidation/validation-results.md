@@ -6,6 +6,12 @@ dependency plans. Live routing has 26 active and 17 retained definitions,
 including the independently added color-profile source. The GNU console
 return and tablet acceptance remain open.
 
+The completion audit refreshed all 43 definitions and verified an empty
+offset 43 page. [Live recipe pins and refs](live-inventory-20261101.json) and
+the [43-row source route table](current-source-routes.csv) supplement the
+preserved 36-row package baseline. Independent kernel/boot pin changes are
+inventory observations and do not become runtime or hardware acceptance.
+
 The initial [original Fedora comparison](fedora-return-audit.md) passed its
 signed static checks for 13 libraries, 219 interface files and 836 libwacom
 database files. That comparison alone did not admit migration or reduce the
@@ -45,11 +51,12 @@ the need for a pinned key in each isolated RPM database and RPM 6's separate
 sysusers hook. All were corrected before 11239542. These failures are not
 reported as successful gates.
 
-[The archive](https://github.com/MCC45TR/uke-linux-hardware-support/releases/tag/copr-consolidation-archive-20261101)
-retains 14 SRPMs, 21 original signed binaries, the original public key and
-SHA256SUMS. No original COPR definition or build was deleted. The live project
-has 42 definitions: 28 active sources and 14 retained definitions whose source
-scripts explicitly refuse new standalone builds. Six integration scripts use
+[The first-phase archive](https://github.com/MCC45TR/uke-linux-hardware-support/releases/tag/copr-consolidation-archive-20261101)
+retains its original 14 SRPMs, 21 signed binaries, public key and SHA256SUMS.
+The desktop return receipt describes the later additions. No original COPR
+definition or build was deleted. The first routing phase recorded 42
+definitions: 28 active sources and 14 retained definitions whose source
+scripts refuse another standalone build. Six integration scripts use
 the pinned reviewed generator and refuse regeneration of a known source
 revision. The independent routing audit verifies only those 20 script fields
 changed; the other 22 definitions, source settings and project settings match.

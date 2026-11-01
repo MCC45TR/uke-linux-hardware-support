@@ -63,6 +63,9 @@ the meta source worker gains the development dependencies required for its
 native solver checks. Other definitions, project settings and automatic
 rebuild policy are unchanged. No definition or historical build was deleted.
 These are source counts, not installed RPM or process counts.
+The [dated live inventory](live-inventory-20261101.json) identifies every
+definition, recipe hash and independently pinned source; the baseline remains
+available in inventory.json and package-map.csv.
 
 The console GNU runtime stays on its existing capability and producer.
 `uke-core-meta(fedora-cxx-runtime-v1)` is not provided: the console helper

@@ -14,10 +14,21 @@ list and evidence after replacement and rollback checks. Physical tablet
 installation, flashing, slot changes, reboot, firmware/calibration access,
 amplifier stimulus and charge writes remain separate explicit approvals.
 
-The authorized source publication and routing are applied; see
-routing-receipt.json. The next separately approved cleanup would target the
-14 original definitions listed in integrations.json, not the six replacement
-sources or the independent kernel/boot/firmware producers. Deletion is not
-needed for active-source reduction: historical definitions currently refuse
-new standalone builds and retain their build history. No deletion, device
-transaction or stable promotion is included in this receipt.
+The authorized source publication and routing are applied; the initial
+routing-receipt.json and later fedora-return-results.json describe their
+separate scopes. The [current inventory](live-inventory-20261101.json) contains
+17 retained definitions: the original 14 consolidation inputs and three
+desktop forks. No deletion is proposed or needed to stop their new builds.
+Any later deletion needs its own exact artifact list and source/rollback
+review. Device transactions and stable promotion remain outside this scope.
+
+The next unresolved policy decision concerns original GNU GDB Python files
+in the console profile. The existing desktop exception records
+`applies_to_core_console=false` in
+`uke-desktop-metas/src/profile.json`. The GNU original return stays disabled
+until that boundary is resolved; elapsed time does not supply approval.
+The [current signed runtime audit](gnu-console-policy-audit.json) confirms
+that Fedora `16.2.1-3.fc46` still carries non-document Python helper files.
+If permitted, actual boot/power/Core callers, initramfs exclusion and a
+compatible package cohort still need qualification before another producer
+is stopped. No runtime alias or weakened capability substitutes for that work.
