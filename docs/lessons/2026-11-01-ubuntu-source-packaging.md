@@ -180,3 +180,29 @@ Tenacious from the signed ports archive instead and assert version plus
 architecture inside the disposable container. Retain logs and package outputs,
 never entire build trees that may contain transient module private keys.
 Compilation and hardware qualification remain separate evidence.
+
+### Native build and first recipe results, 1 November 2026
+
+Run 41308345325 compiled the shared sources in clean Tenacious ARM64 server
+roots, including patched libssc and SensorProxy in dependency order. The
+first eight downloaded route artifacts produced ten DEBs; their full artifact
+checksums and direct payload audits passed, including ELF64 AArch64 identity
+and absence of Python payloads or direct Python runtime dependencies.
+Image tools later passed compilation without composing a system image.
+Recovery delivery passed packaging of the existing Android artifacts only.
+These findings do not qualify hardware or transitive runtime closure.
+
+The first UPower build compiled successfully, then dh_missing rejected four
+unassigned API/documentation files. Retain the D-Bus interface XML in the
+development package and move the configuration-directory README into daemon
+documentation; do not suppress dh_missing. The corrected build is retried.
+
+Firmware validation run 41308699685 passed native DEB build, payload checks,
+install, reinstall preserving a locally changed conffile, remove preserving
+that file, purge and git-build-recipe 0.3.7build1 source construction.
+dpkg-source creates .pc bookkeeping even without patches; exclude that
+generated state from the recipe export. An upstream Git tag lets the official
+recipe tool construct its original archive without changing quilt format.
+The published launchpad/uke-speaker-firmware branch and upstream/3.0.304.0 tag
+preserve shared source bytes. Launchpad import and recipe creation remain
+pending in the parent UI session, not blocked on a server private GPG key.
