@@ -1,4 +1,5 @@
 etc/UPower/UPower.conf
+etc/UPower/UPower.conf.d/README.md usr/share/doc/upower
 usr/bin/upower
 usr/libexec/upowerd
 usr/lib/systemd/system/upower.service
