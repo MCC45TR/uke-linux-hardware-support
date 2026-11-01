@@ -1,0 +1,5 @@
+# git-build-recipe format 0.4 deb-version 0.4.4+uke2ubuntu1~uke1~tenacious1+git{revtime:source}
+https://git.launchpad.net/~mcs45tr/uke-linux-hardware-support/+git/uke-linux-hardware-support c762763ad5f230719d6a5dc07c680fb25c78cfd0
+nest-part source https://git.launchpad.net/~mcs45tr/uke-linux-hardware-support/+git/uke-linux-hardware-support uke-sensors source main
+nest-part metadata https://git.launchpad.net/~mcs45tr/uke-linux-hardware-support/+git/uke-linux-hardware-support uke-sensors/manifests metadata main
+nest-part packaging https://git.launchpad.net/~mcs45tr/uke-linux-hardware-support/+git/uke-linux-hardware-support packaging/ubuntu/main-recipes/libssc/debian debian main

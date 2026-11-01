@@ -498,3 +498,20 @@ the signed PPA index continues to expose the earlier published version. Do not
 infer APT availability or remove old heads until signed index, exact payload
 and upgrade-solver checks pass. Both public source/contract CI checks passed
 at5fa0f59. This records package construction, not runtime qualification.
+
+## Dependency-first canonical libssc source
+
+1 November 2026. The installation classifier subsequently passed native
+Tenacious ARM64 construction at 4600858f32a8c704c0120c6e32bc11a5f6d87eaa.
+Downloaded artifact digests, same-main input commits, the AArch64 executable,
+service bytes and original actual-Uke/container/chroot maintainer guards verify.
+This supersedes its pending native status above; no service or tablet ran.
+
+The libssc adapter now retains Fedora's exact 0.4.4 source archive below the
+owning sensor component and applies the same seven shared patches during host
+source preparation. The preparation helper checks the archive digest, rejects
+traversal and requires zero-fuzz patches. Generated native metadata retains the
+runtime/dev ABI relationships and excludes Python mocks through the original
+Meson options and payload audit. Explicit patch tooling is a build dependency.
+Source tree comparison and native qualification are pending. SensorProxy must
+wait for the real qualified libssc-dev package; no ABI provider is fabricated.

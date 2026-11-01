@@ -2,7 +2,7 @@ Source: libssc
 Section: libs
 Priority: optional
 Maintainer: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
-Build-Depends: debhelper-compat (= 13), meson (>= 1.4), ninja-build, pkgconf, libglib2.0-dev, libqmi-glib-dev (>= 1.33.4), libprotobuf-c-dev, protobuf-c-compiler, protobuf-compiler, gobject-introspection, libgirepository1.0-dev, gir1.2-qmi-1.0
+Build-Depends: debhelper-compat (= 13), meson (>= 1.4), ninja-build, pkgconf, patch, libglib2.0-dev, libqmi-glib-dev (>= 1.33.4), libprotobuf-c-dev, protobuf-c-compiler, protobuf-compiler, gobject-introspection, libgirepository1.0-dev, gir1.2-qmi-1.0
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
 Homepage: https://codeberg.org/DylanVanAssche/libssc

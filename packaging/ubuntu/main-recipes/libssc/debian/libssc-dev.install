@@ -1,0 +1,4 @@
+usr/include/libssc
+usr/lib/*/libssc.so
+usr/lib/*/pkgconfig/libssc.pc
+usr/share/gir-1.0/SSC-2.gir

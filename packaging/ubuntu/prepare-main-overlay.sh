@@ -9,6 +9,33 @@ output=${2:?new output directory required}
 [[ ! -e $output ]]
 canonical=$root/packaging/ubuntu/recipes/$package/debian
 case $package in
+ libssc)
+  version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
+  [[ $version == 0.4.4-2ubuntu1~uke1~tenacious1 ]]
+  snapshot=${version/-/+uke}
+  mkdir -p "$output"
+  cp -a "$canonical/." "$output/"
+  cp "$root/packaging/ubuntu/recipes/uke-speaker-firmware/debian/verify-main-inputs" "$output/verify-main-inputs"
+  cp "$root/packaging/ubuntu/prepare-main-libssc.sh" "$output/prepare-libssc"
+  printf '3.0 (native)\n' > "$output/source/format"
+  sed "1s/($version)/($snapshot)/" "$canonical/changelog" > "$output/changelog"
+  sed -e 's|dh $@ --buildsystem=meson|dh $@ --buildsystem=meson --sourcedirectory=upstream|' \
+      -e '/^override_dh_auto_configure:/a\	 bash debian/verify-main-inputs\n\t bash debian/prepare-libssc' \
+      -e 's|dh_auto_configure -- |dh_auto_configure --sourcedirectory=upstream -- |' "$canonical/rules" > "$output/rules"
+  cat >> "$output/rules" <<'RULES'
+
+override_dh_auto_clean:
+	bash debian/verify-main-inputs
+	if test -d upstream; then dh_auto_clean --sourcedirectory=upstream; fi
+	rm -rf upstream
+RULES
+  cat >> "$output/copyright" <<'COPYRIGHT'
+
+Files: AGENTS.md README.md LICENSE debian/*
+Copyright: 2026 MCC45TR
+License: MIT
+COPYRIGHT
+  exit 0;;
  uke-bluetooth|uke-speaker-orientation|uke-core-meta|uke-front-color|uke-proximity-capture|uke-installation-profile)
   version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
   [[ $version == 0.1.0-0ubuntu1~tenacious1 || ( $package == uke-core-meta && $version == 1.0.7-0ubuntu1~tenacious1 ) || ( $package == uke-installation-profile && $version == 1.0.31-0ubuntu1~tenacious1 ) ]]

@@ -31,15 +31,15 @@ changes through `a9428ca`. The exact preset, notice, provenance and license
 read back unchanged; no Python payload or runtime dependency entered the DEB.
 The native version upgrades the published conventional package.
 
-The replacement also passed actual Launchpad [source construction4108876](https://launchpad.net/~mcs45tr/+archive/ubuntu/uke-linux-unstable/+recipebuild/4108876)
-and [ARM64 build33899943](https://launchpad.net/~mcs45tr/+archive/ubuntu/uke-linux-unstable/+build/33899943).
-All three nested inputs resolve to20c7d841ac493c0453b2b3a525a372ae729d1411.
+The replacement also passed actual Launchpad [source construction 4108876](https://launchpad.net/~mcs45tr/+archive/ubuntu/uke-linux-unstable/+recipebuild/4108876)
+and [ARM64 build 33899943](https://launchpad.net/~mcs45tr/+archive/ubuntu/uke-linux-unstable/+build/33899943).
+All three nested inputs resolve to `20c7d841ac493c0453b2b3a525a372ae729d1411`.
 The preset, notice, attribution and license read back unchanged from the actual
 DEB. Its conffile survives a disposable data-package upgrade and removal; purge
 removes it. That lifecycle test registered ARM64 as a foreign architecture in
 an Ubuntu24 x86_64 container; no target program or maintainer helper ran.
 
-At21:53 UTC, the source publication remains Pending. A successful build alone
+At 21:53 UTC, the source publication remains Pending. A successful build alone
 does not admit branch deletion: verify the new source and binary through the
 PPA's signed APT index, exact version ordering and an isolated upgrade solver
 before removing archived heads. Preserve the existing recipe during this wait.
@@ -54,8 +54,8 @@ and pristine metadata tips before deleting old branches.
 
 DisplayPort/UCM, speaker-control data, GPU defaults, Bluetooth and speaker
 orientation passed clean native Tenacious ARM64 source/package construction
-and payload audits atdcbf8288afe4456f32a95d1fc3fca56342d54d2f. The core
-selection profile, front-color and proximity capture passed at94f3f26e15d63c6e6dba752eeaf6e4b96e284831.
+and payload audits at `dcbf8288afe4456f32a95d1fc3fca56342d54d2f`. The core
+selection profile, front-color and proximity capture passed at `94f3f26e15d63c6e6dba752eeaf6e4b96e284831`.
 Downloaded artifact manifests and the three equal input revisions verify
 independently. The complete owning components compare unchanged to the approved
 baseline. Installed data and both UCM links match the shared source.
@@ -65,9 +65,13 @@ requirements, false qualification flags, opt-in service policy and root-only
 diagnostic mode remain unchanged. Package construction does not qualify service
 or device operation.
 
-An installation classifier main adapter now passes source construction,
-same-revision and static dependency/version checks. It preserves the original
-actual-Uke, container and chroot guards; native qualification remains pending.
-Nine other historical non-kernel routes still need main adapters, including
-explicit battery release and touchscreen input reconciliation. Historical
-source exports remain reproducible through archived tags.
+The installation classifier also passed native Tenacious ARM64 qualification
+at `4600858f32a8c704c0120c6e32bc11a5f6d87eaa`. Its downloaded artifact hashes,
+same-revision source manifest, AArch64 payload and actual-Uke/container/chroot
+maintainer guards verify independently. It remains unenrolled in Launchpad.
+
+The libssc source adapter retains the same upstream archive and seven shared
+patches as Fedora. Its generated native overlay has not yet passed native
+qualification. Eight other historical non-kernel routes still need main
+adapters, including battery release and touchscreen input reconciliation.
+Historical source exports remain reproducible through archived tags.
