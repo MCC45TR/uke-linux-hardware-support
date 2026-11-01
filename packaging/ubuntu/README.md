@@ -53,7 +53,9 @@ binary packages. Candidate packages are not deployable kernel packages.
 | uke-linux-kernel | Exact release-115 source composition; separate candidate Image, DT and modules | Source/signature checked; native build and boot integration pending |
 | uke-speaker-firmware | Exact separately attributed FS19xx preset, OEM notice and conffile preservation | Data-only DEB/payload checked |
 
-Package native payload sources have **not** been compiled or executed. These recipes use shared
+Native server results are recorded in [NATIVE-BUILDS.md](NATIVE-BUILDS.md) and
+`native-build-results.json`; source-only results below predate those builds.
+These recipes use shared
 component baseline `cbecc441059ebffa97497e736edd2e0b0b0546a5`, except battery
 1.4.1, which uses the exact released source pinned in `release-sources.tsv`.
 Source RPM extraction retrieves only the named, checksum-verified source tar;
