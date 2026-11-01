@@ -19,6 +19,8 @@ case $package in
   cp "$root/packaging/ubuntu/prepare-main-libssc.sh" "$output/prepare-libssc"
   printf '3.0 (native)\n' > "$output/source/format"
   sed "1s/($version)/($snapshot)/" "$canonical/changelog" > "$output/changelog"
+  sed -e 's|^Source: See UPSTREAM-ORIGIN and SOURCE-ORIGIN in this source package.$|Source: https://codeberg.org/DylanVanAssche/libssc/archive/v0.4.4.tar.gz|' \
+      -e 's|^Files: uke/src/|Files: source/src/|' "$canonical/copyright" > "$output/copyright"
   sed -e 's|dh $@ --buildsystem=meson|dh $@ --buildsystem=meson --sourcedirectory=upstream|' \
       -e '/^override_dh_auto_configure:/a\	 bash debian/verify-main-inputs\n\t bash debian/prepare-libssc' \
       -e 's|dh_auto_configure -- |dh_auto_configure --sourcedirectory=upstream -- |' "$canonical/rules" > "$output/rules"

@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: libssc
-Source: See UPSTREAM-ORIGIN and SOURCE-ORIGIN in this source package.
+Source: https://codeberg.org/DylanVanAssche/libssc/archive/v0.4.4.tar.gz
 
 Files: *
 Copyright: See retained upstream copyright notices in individual source files
@@ -8,7 +8,7 @@ License: GPL-3+
  The full GNU General Public License version 3 is available in
  /usr/share/common-licenses/GPL-3 on Debian systems.
 
-Files: uke/src/ssc-cache.cpp
+Files: source/src/ssc-cache.cpp
 Copyright: 2026 Senemos Contributors
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy

@@ -525,3 +525,10 @@ regression fixtures now reject corrupted archives, missing or broken patches
 and partial preparation; successful patching leaves no offset backup files.
 The main snapshot retains real library/dev ABI relationships and upgrade order.
 This is server package qualification, not Launchpad enrollment or sensor success.
+
+The native libssc layout's copyright header now links its exact upstream
+archive directly and names the nested source/src MIT file. The conventional
+release overlay continues to reference its generated origin records. This
+corrects metadata paths that do not exist in the native snapshot layout;
+generated-overlay fixtures verify both paths. Compiled source, patch identity,
+build rules and runtime dependencies are unchanged from native qualification.
