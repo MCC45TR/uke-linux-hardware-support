@@ -1,6 +1,6 @@
 Name: uke-control
 Version: 2.8.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native Uke settings backend and command-line client
 License: MIT AND Apache-2.0
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -248,15 +248,6 @@ fi
 - Correct CLI contracts, bounded execution, persistence and maintenance ownership.
 - Journal package phases and block blind replay of an unknown RPM outcome.
 
-* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
-- Deliver the diagnostic correction with its matching Core family dependency.
-- Advance the rebuilt children beyond the earlier standalone test identity.
-
-* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
-- Record independent lid consumers and the current session's screensaver state.
-- Include active display depth and cached DSC state in diagnostic reports.
-- Correct the CLI version banner; retain read-only, no-activation queries.
-
 * Fri Oct 30 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-4
 - Report native RPM transaction problems and check system-repository lock admission.
 
@@ -269,6 +260,16 @@ fi
 
 * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.1-1
 - Select a separately signed Rawhide unstable repository and defer guarded kernel activation.
+
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-2
+- Deliver the diagnostic correction with its matching Core family dependency.
+- Advance the rebuilt children beyond the earlier standalone test identity.
+
+* Tue Oct 27 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.15.1-1
+- Record independent lid consumers and the current session's screensaver state.
+- Include active display depth and cached DSC state in diagnostic reports.
+- Correct the CLI version banner; retain read-only, no-activation queries.
 
 * Mon Oct 26 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.3.0-1
 - Add expiring identity review and the qualified positive-current restore command.
