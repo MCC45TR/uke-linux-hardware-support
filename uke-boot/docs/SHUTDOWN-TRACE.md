@@ -1,8 +1,9 @@
 # Temporary USB shutdown trace
 
-1 November 2026: source 1.8.20 corrects the observer's stop ordering after a
-physical reboot exposed early cleanup in 1.8.18. Offline ordering and negative
-controls pass; native packaging and the revised physical lifetime remain pending.
+1 November 2026: version 1.8.20 corrects early observer cleanup seen in 1.8.18.
+Native Fedora Rawhide AArch64 packaging, ordering and negative controls pass.
+On POCO Pad X1, unstable DNF delivery starts the isolated observer with the
+revised ordering. Its lifetime through a physical shutdown remains unverified.
 
 The DNF transaction starts a current-session diagnostic. It observes `usb_role_switch_set_role`,
 `dwc3_set_mode` and `dwc3_host_exit` using the kernel's existing kprobe interface.
