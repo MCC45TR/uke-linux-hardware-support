@@ -184,3 +184,13 @@ boot image and accepted-state checks. The path returns without writing a slot.
 A distinct candidate still receives independent candidate and baseline
 validation. This removes one repeated bundle validation; device boot timing
 and shutdown reliability require separate measurements.
+
+## Native display readiness
+
+1 November 2026: the Plasma Login Manager drop-in retains its bounded udev
+wait and allows it to finish when Uke's native display device alias exists.
+The original Fedora service and application remain unchanged. Other USB
+coldplug work continues independently. The reviewed original service is
+`plasma-login-manager-6.8.2-1.fc46`; recheck the drop-in if upstream adds other
+pre-start commands. This configuration requires a separate measured reboot
+and does not establish physical display or shutdown acceptance.

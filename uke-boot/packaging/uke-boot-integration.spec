@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.13
+Version: 1.8.15
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -177,8 +177,9 @@ install -Dm644 touch-runtime/legacy/src/udev/70-uke-touchscreen.rules %{buildroo
 install -Dm644 touch-runtime/legacy/src/modules-load.d/uke-touchscreen.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-touchscreen.conf
 install -Dm644 touch-runtime/legacy/src/modprobe.d/uke-touchscreen.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-touchscreen.conf
 install -d %{buildroot}%{_prefix}/lib/firmware/novatek/uke
-ln -s /usr/lib/firmware/qcom/uke/touch/csot/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
+ln -s ../../qcom/uke/touch/csot/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
+install -Dm644 src/units/30-uke-plasmalogin-ready.conf %{buildroot}%{_unitdir}/plasmalogin.service.d/30-uke-native-drm.conf
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-native-power-profile-ready %{buildroot}%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 install -Dm644 src/units/uke-native-power-profile-ready.service %{buildroot}%{_unitdir}/uke-native-power-profile-ready.service
@@ -308,6 +309,8 @@ fi
 %{_unitdir}/uke-usb-observer.service
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
 %{_unitdir}/chronyd.service.d/70-uke-clock.conf
+%dir %{_unitdir}/plasmalogin.service.d
+%{_unitdir}/plasmalogin.service.d/30-uke-native-drm.conf
 %{_presetdir}/80-uke-boot.preset
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
