@@ -8,7 +8,7 @@ mkdir -p "$stage/repo/packaging/families/host" "$stage/repo/packaging/families/k
 cp "$root/packaging/families/host/track-rawhide.sh" "$stage/repo/packaging/families/host/"
 touch "$stage/repo/packaging/families/keys/fedora-46.asc"
 cat >"$stage/base.json" <<'JSON'
-{"packages":[{"name":"upower","binary_name":"upower","family":"uke-power","version":"1.0","release":"1.fc46","native_release":"4","sha256":"old","host_tools":{"python3-dbusmock":"0.1-1.fc46"}},{"name":"retained-fork","binary_name":"retained-fork","tracking_enabled":false}],"tracking":{"key_fingerprints":["D924B10D3E810DABDD8B56B596E7E91491211FCE"]},"build_tools":{"python3":"3.15.0-1.fc46"}}
+{"packages":[{"name":"upower","binary_name":"upower","family":"uke-power","version":"1.0","release":"1.fc46","native_release":"4","sha256":"old","host_tools":{"python3-dbusmock":"0.1-1.fc46"}}],"tracking":{"key_fingerprints":["D924B10D3E810DABDD8B56B596E7E91491211FCE"]},"build_tools":{"python3":"3.15.0-1.fc46"}}
 JSON
 cat >"$stage/families.json" <<'JSON'
 {"families":[{"name":"uke-power","release":1,"requires":["uke-upower"],"suggests":["uke-adaptive-display = 1.0.15-2%{?dist}"]}],"release_overrides":{"upower":"4.fc46","uke-adaptive-display":"2.fc46"}}

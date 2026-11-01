@@ -28,24 +28,21 @@ results have distinct `docs/lessons/` and `reports/` records.
 Fedora's shared `powerdevil` and `plymouth` engines are dependencies. No measured
 Uke issue currently justifies replacing them with Nabu-patched generic RPMs.
 The source catalog retains those reference families for later Uke-specific work.
-No Python enters target payloads or the accepted dependency closure. Official
-Fedora RPM policy and upstream build dependencies may use host tools only.
+Project payloads use C++ or shell. Original Fedora packages retain their
+distribution-provided helpers and dependencies on the Fedora root.
 Neither decoration compilation nor theme installation proves Uke graphics or boot.
 
 [Uke package hub](https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/PACKAGE-HUB.md)
 · [Development COPR](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-test/)
 
-Five admitted [native runtime source variants](docs/NATIVE-RUNTIME.md) are owned here:
-`at-spi2-core`, `gstreamer1`, `libaccounts-glib`, `libwacom`
-and `libstdcxx-uke-runtime` producing native `libstdc++`.
-The reviewed complete Fedora sources retain their native APIs;
-optional Python bindings/host utilities are excluded. Their target acceptance remains separate from
-source registration. A GitHub Actions workflow explicitly requests these five
-builds after shared adapter/manifest changes, because a package-subdirectory
-push hook alone may not observe repository-root source changes. The hook value
-is held only in an encrypted repository secret. Healthy COPR jobs are preserved.
-These sources use reviewed Fedora pins; automatic builds do not silently admit
-arbitrary new Fedora source recipes or assert physical hardware support.
+1 November 2026. The original Fedora accessibility, GStreamer, libwacom and
+GNU C++ packages replace four policy-only source variants. Their Uke source
+offers remain archived. The active [native runtime catalog](docs/NATIVE-RUNTIME.md)
+retains Mesa, libaccounts-glib, UPower, IIO-Sensor-Proxy and AccountsService for
+their functional corrections. Hardware acceptance remains separate.
+
+Recovery, initramfs and installers remain Python-free. Project components
+do not introduce Python hardware or startup services.
 
 A sixth source candidate, [Mesa](packaging/mesa/README.md), corrects an observed
 AArch64 llvmpipe SIGILL by passing Linux-reported CPU features to Gallivm.

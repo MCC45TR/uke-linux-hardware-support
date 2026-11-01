@@ -1,21 +1,18 @@
-# Python-free Fedora native runtime variants
+# Fedora native runtime sources
 
-21 October 2026 update: the active lock now tracks ten Fedora bases through the
-[Rawhide source workflow](../../packaging/families/RAWHIDE-TRACKING.md), including
-UPower, SensorProxy, AccountsService and the native PPD backend. Source/tool pins below describe
-earlier measurements; the JSON lock records the current complete inputs.
-Original KDE application variants remain withdrawn.
+1 November 2026. The active lock contains Mesa, libaccounts-glib, UPower,
+IIO-Sensor-Proxy and AccountsService. Four policy-only forks move to retained
+provenance; source generation and Rawhide tracking no longer select them.
+Original Fedora packages retain their distribution-provided helpers and
+dependencies on the Fedora root, including GNU C++ helpers in console profiles.
+Project components use C++ or shell. Initramfs, recovery and installers remain
+Python-free. KDE applications remain the original distribution packages.
 
-**Current policy:** Never clone, fork or rebuild KDE desktop applications as Uke
-variants. Plasma/Dolphin recipes described in older evidence below are withdrawn
-from the active source allowlist and automatic COPR publication. Six non-KDE
-source families remain admitted for build evaluation, including the separately
-qualified [Mesa host-feature candidate](../packaging/mesa/README.md).
-Use original distribution KDE applications. The development exception covers
-unavoidable
-Python dependencies only in these original Fedora KDE packages; the builder
-audits their exact original payload. This does not relax native runtime or
-early-boot policy and does not establish graphical operation.
+The following records describe earlier source and package trials. Their
+versions and old Python exclusion policy are historical; the JSON lock and
+the [GNU return receipt](../../packaging/families/consolidation/gnu-return-results.md)
+record the current scope. Source, package and dependency checks remain separate
+from physical tablet acceptance.
 
 The first complete Plasma dependency transaction pulled Python through optional
 GI bindings, installed documentation utilities and configuration migrations.

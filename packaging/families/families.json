@@ -163,7 +163,7 @@
       "name": "uke-additional",
       "version": "1.0.0",
       "requires": [
-        "uke-libstdcxx"
+        "libstdc++ >= 16.2.1"
       ],
       "suggests": [
         "uke-mesa-dri-drivers",
@@ -263,7 +263,6 @@
     "senemos-uke-linux-kernel-mainline-kvm-singleboot"
   ],
   "rename": {
-    "libstdc++": "uke-libstdcxx",
     "material-decoration": "uke-material-decoration"
   },
   "native_versions": {

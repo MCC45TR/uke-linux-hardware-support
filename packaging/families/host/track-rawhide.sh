@@ -34,7 +34,7 @@ query() {
     [[ $binary == "$package" && $epoch == 0 && $version =~ ^[a-zA-Z0-9._+~^]+$ && $release =~ ^[a-zA-Z0-9._+~^]+$ ]]
 }
 cp "$manifest" "$stage/new.json"
-jq -er '.packages[]|select(.tracking_enabled != false)|[.name,(.source_name // .name),.binary_name]|@tsv' "$manifest" >"$stage/packages"
+jq -er '.packages[]|[.name,(.source_name // .name),.binary_name]|@tsv' "$manifest" >"$stage/packages"
 cache="$root/uke-desktop-packaging/referances/fedora-srpms"
 mkdir -p "$cache"
 while IFS=$'\t' read -r name source_name package; do
