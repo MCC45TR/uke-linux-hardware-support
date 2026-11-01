@@ -12,7 +12,7 @@ keydb=$(mktemp -d /tmp/uke-qt-keydb.XXXXXX)
 trap 'find "$stage" "$keydb" -depth -delete' EXIT
 for channel in uke-linux-unstable uke-linux-test uke-linux; do
     curl -fsS --max-time 30 --get --data-urlencode ownername=mcc45tr --data-urlencode "projectname=$channel" --data-urlencode packagename=qt6-qtvirtualkeyboard --data-urlencode limit=100 https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
-    jq -e '(.items|type)=="array" and (.items|length)<100 and all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+$";""))!="6.12.0-1.2")' "$stage/builds.json" >/dev/null
+    jq -e '(.items|type)=="array" and (.items|length)<100 and all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+$";""))!="6.12.0-1.3")' "$stage/builds.json" >/dev/null
 done
 for kind in source_rpm signed_source; do
     curl -fsS --proto '=https' --proto-redir '=https' --max-time 120 "$(jq -er ".${kind}_url" "$manifest")" -o "$stage/$kind.rpm"
@@ -43,6 +43,6 @@ awk -v release="$(jq -er .release "$manifest")" -f "$project/src/native-runtime/
 cp "$stage/source_rpm.rpm" "$top/SOURCES/qt6-qtvirtualkeyboard-6.12.0-1.fc46.src.rpm"
 cp "$project/tests/qt-virtualkeyboard-sound.cpp" "$top/SOURCES/"
 jq --arg commit "$(git -C "$project" rev-parse HEAD)" '. + {recipe_commit:$commit}' "$manifest" > "$top/SOURCES/qt-virtualkeyboard-build-source.json"
-[[ $(rpmspec --define 'dist .fc46' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$top/SPECS/qt6-qtvirtualkeyboard.spec") == 6.12.0-1.2.fc46 ]]
+[[ $(rpmspec --define 'dist .fc46' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$top/SPECS/qt6-qtvirtualkeyboard.spec") == 6.12.0-1.3.fc46 ]]
 # Custom COPR collection consumes a specification and its sources, not an SRPM alone.
 install -m644 "$top/SPECS/qt6-qtvirtualkeyboard.spec" "$top/SOURCES/qtvirtualkeyboard-everywhere-src-6.12.0.tar.xz" "$top/SOURCES/qt6-qtvirtualkeyboard-6.12.0-1.fc46.src.rpm" "$top/SOURCES/qt-virtualkeyboard-sound.cpp" "$top/SOURCES/qt-virtualkeyboard-build-source.json" "$output/"

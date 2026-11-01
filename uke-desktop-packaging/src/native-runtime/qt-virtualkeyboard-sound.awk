@@ -15,7 +15,10 @@
 /^BuildRequires: hunspell-devel$/ {
     print; print "BuildRequires: qt6-qtmultimedia-devel = %{version}\nBuildRequires: pkgconf-pkg-config"; multimedia++; next
 }
-/^%cmake_qt6/ { print; print "  -DFEATURE_vkb_sound_effects:BOOL=ON \\"; feature++; next }
+/^%cmake_qt6/ {
+    print "cp %{SOURCE9999} qt-virtualkeyboard-build-source.json"
+    print; print "  -DFEATURE_vkb_sound_effects:BOOL=ON \\"; feature++; next
+}
 /^%files$/ {
     print "%check"
     print "test -s %{buildroot}%{_qt6_qmldir}/QtQuick/VirtualKeyboard/Components/MultiSoundEffect.qml"
@@ -24,7 +27,7 @@
     print "mkdir -m700 qt-sound-runtime"
     print "QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR=\"$PWD/qt-sound-runtime\" QML_IMPORT_PATH=%{buildroot}%{_qt6_qmldir} LD_LIBRARY_PATH=%{buildroot}%{_qt6_libdir} timeout 30 ./qt-sound-contract %{buildroot}%{_qt6_qmldir}/QtQuick/VirtualKeyboard/Components"
     print ""
-    print; print "%doc %{SOURCE9999}"; checks++; next
+    print; print "%doc qt-virtualkeyboard-build-source.json"; checks++; next
 }
 /^%changelog/ {
     print

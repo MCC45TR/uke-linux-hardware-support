@@ -11,6 +11,9 @@ awk -v release="$release" -f "$transform" "$original" > "$stage/updated.spec"
 grep -Fxq "Release: $release%{?dist}" "$stage/updated.spec"
 grep -Fxq 'BuildRequires: qt6-qtmultimedia-devel = %{version}' "$stage/updated.spec"
 grep -Fq -- '-DFEATURE_vkb_sound_effects:BOOL=ON' "$stage/updated.spec"
+grep -Fxq 'cp %{SOURCE9999} qt-virtualkeyboard-build-source.json' "$stage/updated.spec"
+grep -Fxq '%doc qt-virtualkeyboard-build-source.json' "$stage/updated.spec"
+! grep -Fq '%doc %{SOURCE9999}' "$stage/updated.spec"
 cmp <(sed -n '/^%prep$/,/^%build$/p' "$original") <(sed -n '/^%prep$/,/^%build$/p' "$stage/updated.spec")
 cmp <(sed -n '/^%files devel/,$p' "$original" | sed '/^%changelog/,$d') <(sed -n '/^%files devel/,$p' "$stage/updated.spec" | sed '/^%changelog/,$d')
 original_history=$(sed -n '/^%changelog/,$p' "$original" | sed '1d')
