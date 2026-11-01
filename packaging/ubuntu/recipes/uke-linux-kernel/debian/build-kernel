@@ -15,8 +15,37 @@ export SOURCE_DATE_EPOCH=1793362198
 export KBUILD_BUILD_TIMESTAMP="$(date -u -d "@$SOURCE_DATE_EPOCH" '+%Y-%m-%d %H:%M:%S UTC')"
 case ${1:-} in
  boot)
-  echo 'Unsupported: Ubuntu root handoff and embedded initramfs are not implemented; no boot bundle may be emitted.' >&2
-  exit 78 ;;
+  # An explicit server-only trial build. Package installation never calls this
+  # action. The existing default DEB build remains a first-pass candidate.
+  receipt=${UKE_HWDB_RECEIPT:-/run/uke-hwdb-provenance}
+  [[ -s $receipt/inputs.tsv && -s $receipt/cache.sha256 && -s $receipt/generator.sha256 ]] || {
+   echo 'Unsupported: root-prepared signed-host hwdb receipt is required before the trial producer; no build started.' >&2
+   exit 78
+  }
+  for path in "$receipt" "$receipt/inputs.tsv" "$receipt/cache.sha256" "$receipt/generator.sha256"; do
+   [[ ! -L $path && $(stat -c %u "$path") == 0 && $((8#$(stat -c %a "$path") & 8#022)) == 0 ]]
+  done
+  [[ $(dpkg-architecture -qDEB_HOST_ARCH) == arm64 && -d $kernel/native-generated ]]
+  [[ ! -e build/boot-recipe-ubuntu && ! -e build/boot-base && ! -e build/boot-output ]]
+  bash debian/boot-adapter/stage.sh "$kernel/boot-recipe" build/boot-recipe-ubuntu
+  ported=$root/build/boot-recipe-ubuntu
+  bash "$ported/src/boot/make-initramfs-base.sh" "$root/build/boot-base" "$release"
+  # One producer retains one module key across both Image passes, checks its
+  # embedded root-selector note, reads back both wrappers, then deletes the key.
+  bash "$ported/src/boot/build-payload.sh" "$kernel" "$root/build/boot-output" "$root/build/boot-base/base" "$release" "${DEB_BUILD_OPTIONS_JOBS:-$(nproc)}"
+  [[ ! -e build/boot-output/certs/signing_key.pem ]]
+  mkdir build/boot-cohort
+  for file in linux.img userdata.img boot-manifest boot-header.json modules.sha256 module-signing.x509; do
+   install -m644 "build/boot-output/$file" build/boot-cohort/
+  done
+  install -m644 build/boot-output/.config build/boot-cohort/config
+  install -m644 build/boot-output/arch/arm64/boot/Image build/boot-output/arch/arm64/boot/dts/qcom/sm7675-xiaomi-uke.dtb build/boot-cohort/
+  cp -a build/boot-base/licenses build/boot-cohort/licenses
+  install -d build/boot-cohort/licenses/linux
+  install -m644 "$kernel/LICENSES/preferred/GPL-2.0" "$kernel/LICENSES/preferred/MIT" "$kernel/LICENSES/preferred/BSD-3-Clause" build/boot-cohort/licenses/linux/
+  tar -cJf build/boot-cohort/modules.tar.xz -C build/boot-output/boot-modules "lib/modules/$release"
+  printf '%s\n' build_only=true publication_authorized=false tablet_actions=false root_image_created=false boot_cohort_admitted=false security_profile_selected=false > build/boot-cohort/admission
+  ;;
  prepare)
   [[ $(dpkg-architecture -qDEB_HOST_ARCH) == arm64 ]]
   [[ ! -e $kernel ]]

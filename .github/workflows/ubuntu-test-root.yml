@@ -1,8 +1,5 @@
 name: Ubuntu ARM64 test userspace qualification
 on:
-  push:
-    branches: [ubuntu]
-    paths: ['.github/workflows/ubuntu-test-root.yml']
   workflow_dispatch:
 permissions:
   contents: read

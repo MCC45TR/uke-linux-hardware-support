@@ -1,0 +1,57 @@
+--- a/src/boot/dracut/module-setup.sh
++++ b/src/boot/dracut/module-setup.sh
+@@ -9,7 +9,7 @@
+         i2c_qcom_geni gpi g_serial usb_f_acm usbhid hid_generic xhci_hcd xhci_plat_hcd
+ }
+ install() {
+-    inst_multiple /bin/sh /usr/bin/bash /usr/sbin/modprobe /usr/bin/blkid /usr/bin/readlink /usr/bin/grep /usr/bin/sleep /usr/bin/cat /usr/bin/udevadm /usr/bin/mount /usr/bin/dmesg /usr/bin/tail
++    inst_multiple /bin/sh /usr/bin/bash /usr/sbin/modprobe "$(type -P blkid)" /usr/bin/readlink /usr/bin/grep /usr/bin/sleep /usr/bin/cat /usr/bin/udevadm /usr/bin/mount /usr/bin/dmesg /usr/bin/tail
+     inst_multiple /usr/bin/od /usr/bin/flock /usr/bin/stat /usr/bin/id /usr/bin/chmod \
+         /usr/bin/mkdir /usr/bin/rmdir /usr/bin/rm /usr/bin/tr
+     inst_simple "$moddir/uke-usb-network" /usr/libexec/senemos-uke/uke-usb-network
+--- a/src/boot/make-initramfs-base.sh
++++ b/src/boot/make-initramfs-base.sh
+@@ -29,6 +29,7 @@
+     --filesystems 'ext4 f2fs' --omit 'network plymouth crypt systemd-cryptsetup syslog lvm mdraid btrfs i18n' \
+     "$work/base.cpio.gz" "$release"
+ (cd "$work/base"; gzip -cd ../base.cpio.gz | cpio -idm --quiet --no-absolute-filenames)
++bash "$here/normalize-initramfs-accounts.sh" "$work/base"
+ if grep -rE '(^|[[:space:]])(root|rootfstype|panic)=' "$work/base/etc/cmdline.d"; then
+     echo 'Embedded dracut defaults must not override the selected root policy' >&2; exit 1
+ fi
+--- a/src/boot/ubuntu-dpkg-provenance.sh
++++ b/src/boot/ubuntu-dpkg-provenance.sh
+@@ -33,6 +33,11 @@
+   [[ -f $source && ! -L $source ]] || continue
+   printf '%s\t%s\n' "$(sha256sum "$source" | cut -d ' ' -f1)" "${source##*/}" >> "$scratch/project-index"
+  done
++ # The shared dracut module renders one literal, single-quoted UNIT heredoc.
++ if [[ -f $recipe/dracut/module-setup.sh ]]; then
++  awk -v marker="<<'UNIT'" 'index($0,marker){found++;inside=1;next} inside && $0=="UNIT"{inside=0;next} inside{print} END{if(found!=1 || inside)exit 1}' "$recipe/dracut/module-setup.sh" > "$scratch/project-initrd.conf"
++  printf '%s\t%s\n' "$(sha256sum "$scratch/project-initrd.conf" | cut -d ' ' -f1)" 'module-setup.sh:UNIT-dropin' >> "$scratch/project-index"
++ fi
+  while IFS= read -r -d '' file; do
+   local path digest owner origin kind resolved candidate
+   path=/${file#"$work/base/"}
+@@ -53,7 +58,11 @@
+    [[ -n $owner ]] || continue
+    [[ $owner != *$'\n'* && $owner =~ ^[A-Za-z0-9+.:_-]+$ ]] || { echo 'Ambiguous package ownership' >&2; exit 1; }
+    # Ownership alone does not prove that the payload retained those bytes.
+-   cmp "$file" "$resolved"
++   if cmp -s "$file" "$resolved"; then break; fi
++   # Dracut may replace a systemd path with its own exact packaged source.
++   # Clear the path owner and require an exact registered content match.
++   printf 'Path bytes differ; checking registered source: %s\n' "$path" >&2
++   owner=
+    break
+   done
+   if [[ -n $owner ]]; then
+@@ -72,7 +81,7 @@
+      if [[ -x $file || $(od -An -tx1 -N4 "$file" | tr -d ' \n') == 7f454c46 || $(od -An -tx1 -N2 "$file" | tr -d ' \n') == 2321 ]]; then
+       echo "Unmapped executable initramfs payload: $path" >&2; exit 1
+      fi
+-     case $path in /etc/*|/run/*|/usr/lib/dracut/*) :;; *) echo "Unmapped initramfs payload: $path" >&2; exit 1;; esac
++     case $path in /usr/lib/initrd-release) bash "$recipe/verify-initrd-release.sh" "$file" "$prefix";; /usr/lib/udev/hwdb.bin) bash "$recipe/verify-hwdb.sh" "$file" "$prefix" "$work/hwdb-inputs.tsv";; /etc/*|/run/*|/usr/lib/dracut/*) :;; *) echo "Unmapped initramfs payload: $path" >&2; exit 1;; esac
+      case $path in /etc/shadow|/etc/gshadow) echo 'Private account metadata refused' >&2; exit 1;; esac
+      kind=generated-metadata; origin=dracut-output
+     fi

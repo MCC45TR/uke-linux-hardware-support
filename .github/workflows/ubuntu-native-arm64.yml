@@ -1,8 +1,5 @@
 name: Ubuntu Tenacious native ARM64 packages
 on:
-  push:
-    branches: [ubuntu]
-    paths: ['.github/workflows/ubuntu-native-arm64.yml']
   workflow_dispatch:
     inputs:
       package:

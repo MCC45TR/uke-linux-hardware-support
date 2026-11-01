@@ -1,5 +1,26 @@
 # Native Tenacious ARM64 server evidence
 
+## Release1006 update
+
+The subsequently approved release1006 composition at
+`fcbdae4b757732f0f0e3162c610f19abae290832` passed a clean native Tenacious ARM64
+server build on 1 November 2026. The coordinated release is `7.3.1-1006u1`;
+the shared ALSA bound remains unchanged. A single producer retained its module
+key through both Image passes and removed the private key before export.
+Independent offline inspection verified all 823 module signatures against the
+certificate embedded in Image, both Android-v4 wrapper readbacks, 90 pinned
+early drivers, and the embedded base's 318 file digests and 116 links.
+
+Four inert trial DEBs assembled from those checked artifacts passed exact
+dependency and byte-readback checks. That step is artifact packaging, not an
+additional source build or Launchpad kernel qualification. The normal source
+recipe still builds first-pass candidates; an explicit complete-producer action
+now preserves the qualified host adaptations. Root-image composition, runtime
+OEM DT, security profile and physical handoff remain unqualified. No public
+Ubuntu kernel or image release was produced.
+
+## Earlier release115 package matrix
+
 Recorded 1 November 2026. The [initial native run](https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325)
 uses packaging commit 4642c7d (see the complete commit ID in
 `native-build-results.json`) and the unchanged reviewed source pins from

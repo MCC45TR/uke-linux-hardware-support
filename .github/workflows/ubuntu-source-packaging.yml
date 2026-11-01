@@ -1,7 +1,7 @@
 name: Ubuntu source packaging contracts
 on:
   push:
-    branches: [ubuntu]
+    branches: [main]
     paths: ['packaging/ubuntu/**', 'uke-control/src/apt-policy.hpp', 'uke-control/tests/apt-policy.cpp', '.github/workflows/ubuntu-source-packaging.yml']
   pull_request:
     paths: ['packaging/ubuntu/**', 'uke-control/src/apt-policy.hpp', 'uke-control/tests/apt-policy.cpp', '.github/workflows/ubuntu-source-packaging.yml']
@@ -31,5 +31,8 @@ jobs:
           bash packaging/ubuntu/tests/native-payload.sh
           bash packaging/ubuntu/tests/recipe-sources.sh
           bash packaging/ubuntu/tests/boot-provenance.sh
+          bash packaging/ubuntu/tests/main-recipes.sh
+          bash packaging/ubuntu/recipes/uke-linux-kernel/debian/boot-adapter/test-account-normalization.sh
+          bash packaging/ubuntu/recipes/uke-linux-kernel/debian/boot-adapter/test-initrd-release.sh
       - name: Record validation scope
         run: echo 'Source assembly, quilt application and static cohort tests only; no upstream compilation, device execution, signing or publication.' >> "$GITHUB_STEP_SUMMARY"

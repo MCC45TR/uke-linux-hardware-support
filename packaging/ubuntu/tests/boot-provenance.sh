@@ -3,7 +3,7 @@
 set -euo pipefail
 umask 022
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
-adapter=$repo/packaging/ubuntu/recipes/uke-linux-kernel/debian/boot-adapter/ubuntu-dpkg-provenance.sh
+adapter=${UKE_BOOT_PROVENANCE_ADAPTER:-$repo/packaging/ubuntu/recipes/uke-linux-kernel/debian/boot-adapter/ubuntu-dpkg-provenance.sh}
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 host=$scratch/host
@@ -43,7 +43,7 @@ grep -F $'generated-metadata\tdracut-output' "$work/payload-provenance.tsv"
 test -s "$work/licenses/fixture-runtime:arm64/copyright"
 echo corruption >> "$work/base/usr/bin/fixture-command"
 if bash "$adapter" "$work" "$recipe" "$host" > "$scratch/rejected" 2>&1; then echo 'Changed owned bytes admitted' >&2; exit 1; fi
-grep -E 'differ|EOF' "$scratch/rejected"
+grep -E 'differ|EOF|Unmapped executable initramfs payload' "$scratch/rejected"
 cp "$host/usr/bin/fixture-command" "$work/base/usr/bin/fixture-command"
 cp /bin/true "$work/base/usr/libexec/unmapped"
 chmod 644 "$work/base/usr/libexec/unmapped"

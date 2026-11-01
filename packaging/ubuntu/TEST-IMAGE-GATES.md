@@ -28,18 +28,17 @@ Fedora DE release work stays independent and retains its existing cohort.
 
 ## Required work before emitting a test image
 
-1. Obtain source-specific approval for native server execution of the prepared
-   1006 set, including shared preparer/sanitizer fixtures, boot helpers and the
-   normal disposable kernel module-signing key. No tablet execution is involved.
-2. Pass native kernel compilation and real DT/module inspection. The successful
-   Fedora test-channel build is not an Ubuntu build or boot result.
-3. Natively qualify the prepared systemd/dracut dpkg provenance and release
-   adapter without weakening filesystem/root-selector, timeout, recovery,
-   privacy or target-payload tests. Keep the base free of firmware, host
-   identity, Python and stale root-specific command lines.
-4. Validate a complete same-job Image/DT/modules/embedded-initramfs cohort,
-   preserving module-key identity through both Image passes. Candidate-only
-   Image packaging is not a substitute for this step.
+1. **Passed:** source-specific approval and clean native server execution of
+   exact1006, including preparer, boot helpers and disposable module key.
+2. **Passed for build payloads:** kernel compilation, 823 signed ARM64 modules
+   and compile-stage DT identity. Runtime OEM DT remains a separate gate.
+3. **Passed:** native dracut/dpkg host adaptation and exact embedded payload
+   provenance. No filesystem/root selector, timeout or recovery check was
+   disabled; base remains free of firmware, Python and host credentials.
+4. **Passed for server artifacts:** one same-job Image/modules/initramfs key
+   identity, both boot wrapper readbacks and four inert trial DEB byte checks.
+   This does not complete the normal Debian source-package kernel route or
+   admit a root image. Candidate-only packaging remains distinct.
 5. Validate the selected existing Uke root layout and explicitly resolve the
    security profile. Ubuntu stock uses AppArmor, which the current shared
    configuration does not support. Retaining SELinux instead needs policy,

@@ -41,6 +41,8 @@ while IFS=$'\t' read -r package component version; do
    [[ $release == 7.3.1-1006u1 && $((${#release}+3+1)) -le 16 ]]
    bash "$debian/boot-adapter/stage.sh" "$stage/inputs/boot-recipe" "$work/ubuntu-boot-recipe" > "$work/adapter-stage.log"
    jq -e '.native_executed==false and .security_configuration_changed==false and .boot_qualified==false' "$work/ubuntu-boot-recipe/ubuntu-adapter.json" >/dev/null
+   UKE_BOOT_PROVENANCE_ADAPTER="$work/ubuntu-boot-recipe/src/boot/ubuntu-dpkg-provenance.sh" bash "$root/packaging/ubuntu/tests/boot-provenance.sh"
+   bash "$root/packaging/ubuntu/tests/embedded-initramfs.sh" "$stage/inputs/boot-recipe/src/boot/dracut/root-guard.sh"
    cp -a "$stage/inputs/boot-recipe" "$work/corrupt-boot-recipe"
    printf '\nchanged source fixture\n' >> "$work/corrupt-boot-recipe/src/boot/dracut/root-guard.sh"
    if bash "$debian/boot-adapter/stage.sh" "$work/corrupt-boot-recipe" "$work/refused-adapter" > "$work/adapter-rejected.log" 2>&1; then echo 'Changed shared boot source admitted' >&2; exit 1; fi
@@ -49,7 +51,7 @@ while IFS=$'\t' read -r package component version; do
    status=0
    (cd "$stage"; bash debian/build-kernel boot) 2> "$work/unsupported-boot" || status=$?
    [[ $status == 78 ]]
-   grep -q 'Unsupported: Ubuntu root handoff' "$work/unsupported-boot"
+   grep -q 'Unsupported: root-prepared signed-host hwdb receipt' "$work/unsupported-boot"
    [[ ! -d $stage/build ]]
    bash -n "$debian/build-kernel" ;;
   uke-orangefox-recovery)

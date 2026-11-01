@@ -13,7 +13,7 @@
     "superseded": false,
     "source_revision": "fcbdae4b757732f0f0e3162c610f19abae290832",
     "status": "partial",
-    "reason": "Exact experimental test-channel release1006 source staged; signed Linux source/chunks and emitted inventories verified. Coordinated suffix fixed; new native execution and Ubuntu embedded initramfs/full cohort remain unqualified."
+    "reason": "Exact experimental1006 native Tenacious ARM64 full producer passes. All823 module signatures, both wrappers and embedded payload inspected; four inert trial DEBs pass readback. Normal source-package boot integration, root security/layout, runtime OEM DT and activation remain unfinished."
   },
   {
     "name": "uke-control",

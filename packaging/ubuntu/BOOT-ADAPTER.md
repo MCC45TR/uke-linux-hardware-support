@@ -1,12 +1,15 @@
 # Ubuntu host boot adapter preparation
 
-Recorded 1 November 2026. This is a bounded host-integration overlay for the
-exact release1006 boot recipe. No source from that new set has been executed.
-The source-specific native approval is pending; the boot action still exits78.
+Updated 1 November 2026. The approved clean Tenacious ARM64 server build of
+exact release1006 succeeded. Its complete two-pass producer, embedded payload
+and all 823 module signatures passed independent host inspection. This is
+source/build evidence; no root image, hardware boot or public Ubuntu release
+is admitted.
 
 `debian/boot-adapter/stage.sh INPUT NEW_OUTPUT` checks the immutable emitted
 boot lock and every source asset before copying it. It applies a three-file
-host integration patch, adds the project-owned Bash provenance module and
+host integration patch and the natively tested Tenacious/dracut compatibility
+patch, adds the project-owned Bash provenance module and
 records original and ported file hashes in `ubuntu-adapter.json`. It does not
 rewrite the original lock to hide changes or claim the ported files are still
 byte-identical to Fedora. It executes no shared source script or native helper.
@@ -41,7 +44,20 @@ generated metadata and license records. Negative cases refuse changed owned
 bytes, unknown non-executable ELF, unknown interpreter scripts and foreign
 architecture. No fixture payload is executed. Static staging on the real1006
 source passes; source CI also rejects a changed root-guard asset before output.
-Native dracut operation remains untested until approval.
+The compatibility layer additionally resolves blkid through the host PATH,
+recognizes exact package-content replacements, registers the literal shared
+unit drop-in, verifies dracut's generated release metadata, and authenticates
+the generated hwdb cache against a root-prepared package/generator receipt.
+Generated locked shadow/gshadow tables are checked before omission; unknown
+accounts, password hashes and empty passwords remain refused. Passwd/group
+and service policy are preserved. All three auditors are host-only.
+
+`debian/build-kernel boot` now exposes that complete producer as an explicit
+server trial action after prepare. It requires the external root-owned hwdb
+receipt before starting; no package installation calls it. The ordinary
+Debian binary recipe still emits the older first-pass candidates. Launchpad's
+unprivileged binary builder has no supported receipt preparation step yet;
+do not claim an automated kernel source-package route until that is resolved.
 
 ## Userspace and security boundaries
 
@@ -59,7 +75,7 @@ the current shared configuration lacks AppArmor support. SELinux policy
 packages alone do not prove an enforcing Ubuntu handoff. Any final security
 configuration change requires approval; neither option is silently forced.
 
-Remaining runtime qualification includes the approved native boot helpers,
-dracut base, same-job Image/DT/module trust, selected root layout, security
-profile decision and actual root handoff. Do not promote the candidate-only
-empty-initramfs Image or emit boot artifacts before those checks pass.
+Native boot helpers, dracut base and same-job Image/module trust now pass.
+Selected root layout, security profile and actual root handoff remain open.
+The compile-stage DT template is not the runtime OEM DT. Do not promote the
+candidate-only empty-initramfs Image or infer hardware support from this build.

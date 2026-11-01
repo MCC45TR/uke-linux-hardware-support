@@ -1,14 +1,16 @@
 # Ubuntu shared-source package migration
 
 Recorded 1 November 2026. Target: Ubuntu 27.04 **Tenacious ARM64**, unstable
-only. Migration is incomplete and no package is publication-ready. Fedora RPM
+only. Migration is incomplete; the first speaker preset is already published
+in unstable, while other routes retain their qualification gates. Fedora RPM
 recipes and common C/C++ sources are unchanged. Debian overlays select the same
 reviewed source/patches; there is no RPM conversion or separate application fork.
 
 Launchpad's [series](https://api.launchpad.net/1.0/ubuntu/tenacious) and
 [ARM64 architecture](https://api.launchpad.net/1.0/ubuntu/tenacious/arm64) are
 available. Parent confirmed accepted PPA terms and public ARM64-only
-`mcs45tr/uke-linux-unstable` and `mcs45tr/uke-linux-stable`, both empty. Stable
+`mcs45tr/uke-linux-unstable` and `mcs45tr/uke-linux-stable`. The first preset is
+published in unstable; stable remains empty. Stable
 remains gated. Parent confirmed OpenPGP enrollment on 1 November; the private
 key remains on the user's tablet. Local signing and uploads await package
 qualification. Native server builds of the prepared source set were approved
@@ -21,8 +23,9 @@ disposable server environment. No tablet execution is involved.
 No key, credential, upload or Ubuntu image was created here.
 
 Test-image work has now resumed on explicit user request. The experimental
-test-channel 1006 source is staged and the coordinated kernel suffix is fixed;
-its new native source execution and complete boot cohort remain unqualified.
+test-channel1006 source passed the approved native build and complete boot
+artifact inspection. Four inert trial DEBs pass byte readback; the standard
+kernel source-package integration and root-image admission remain incomplete.
 The official Ubuntu/PPA userspace qualification runs independently and exports
 evidence only. See [TEST-IMAGE-GATES.md](TEST-IMAGE-GATES.md).
 
@@ -56,7 +59,7 @@ binary packages. Candidate packages are not deployable kernel packages.
 | uke-core-meta | Ubuntu dependency graph and unqualified profile | Data-only DEB/payload checked |
 | uke-orangefox-recovery | Existing Android v003 artifacts, exact checksums and source/license records; no install hooks | Data-only delivery, not recovery compilation |
 | uke-image-tools | Six original native image/payload tools from the shared builder source | Source only; no system image composition |
-| uke-linux-kernel | Exact experimental release-1006 source composition; coordinated candidate Image, DT and modules | Source/signature/chunk identities checked; new native execution and full boot integration pending |
+| uke-linux-kernel | Exact experimental1006 source; coordinated candidates and explicit complete producer | Native kernel/boot artifact inspection and inert trial DEB readback pass; root/boot activation and standard source-package integration pending |
 | uke-speaker-firmware | Exact separately attributed FS19xx preset, OEM notice and conffile preservation | Data-only DEB/payload checked |
 
 Native server results are recorded in [NATIVE-BUILDS.md](NATIVE-BUILDS.md) and
@@ -134,7 +137,9 @@ migration is handled separately.
 
 See the [kernel candidate boundary](KERNEL-SOURCE.md),
 [firmware provenance decisions](FIRMWARE-PROVENANCE.md), and explicit
-`publication-gates.json`. The kernel recipe does not emit a usable boot bundle.
+`publication-gates.json`. The ordinary kernel recipe emits first-pass candidates;
+the complete producer is an explicit server trial route, with no root-image or
+activation admission.
 
 Implementation still needed: Control's APT/dpkg transaction/channel backend;
 current source-family delta reconciliation and power-family release alignment;
@@ -147,8 +152,8 @@ integration-release reconciliation remain pending.
 These are implementation gaps, not signing blockers.
 
 [Boot cohort checks](BOOT-COHORT.md) reject mismatched artifact identities but
-are not a finished initramfs or kernel port. Real kernel/DT/module validation,
-initramfs-tools integration, upgrade/rollback and device acceptance remain.
+are not a finished image or boot activation port. Runtime OEM DT/root policy,
+Debian boot integration, upgrade/rollback and device acceptance remain.
 Native ARM64 server builds are authorized. Successful compilation must still
 be followed by install/upgrade/remove and transitive dependency checks.
 Source signing and Launchpad publication follow only after those gates.

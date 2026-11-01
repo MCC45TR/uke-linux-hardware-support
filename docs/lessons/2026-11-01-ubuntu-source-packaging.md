@@ -337,3 +337,50 @@ initramfs. Source-specific native execution remains pending authorization at
 this checkpoint. The current source archive includes the bounded adapter and explicit
 dracut/f2fs/systemd/provenance host dependencies; their APT simulation resolves.
 No further implementation is started while that authorization remains pending.
+
+### Superseding release1006 and main consolidation result
+
+The later source-specific approval covered exact commit fcbdae4b, native boot
+helpers and disposable module signing on the server. The clean Tenacious ARM64
+trial succeeded with release7.3.1-1006u1. Every original artifact digest passed
+after recovering the uploader-omitted config from the Image's unique IKCONFIG
+stream and comparing its recorded hash. The original archive was not changed.
+All823 module signatures verify against the certificate embedded in Image.
+Both Android-v4 wrappers read back to the identical Image. The embedded base
+matches318 file digests,116 links and all90 pinned early drivers; one legacy
+shell link is deliberately absent for the typec-v1 producer. No early PAS,
+Python, host credential database or firmware payload was introduced.
+
+The tested host compatibility changes are now retained in the Debian adapter:
+Ubuntu's blkid path, exact package-content replacements, the literal shared
+unit drop-in, generated initrd release metadata, root-attested hwdb generation
+and validation of locked generated account tables before their omission.
+Unknown accounts, password hashes and empty password fields still fail.
+An explicit complete-producer trial action retains one module key through both
+Image passes. The normal DEB source build remains a first-pass candidate route;
+Launchpad cannot yet prepare the required root-owned hwdb receipt. This is an
+implementation gap, not an upload-key issue.
+
+Four inert ARM64 trial DEBs from the verified cohort passed exact version
+dependencies and byte readback without maintainer scripts, live module paths
+or boot activation. Their build record explicitly says artifact packaging,
+not source build. Full boot-userspace licensing collection remains required
+before redistribution. No root filesystem image or public Ubuntu release was
+produced; root security/layout, runtime OEM DT and handoff remain unqualified.
+
+The unpublished Ubuntu history was reconciled with main through a9428ca,
+preserving the newer TUI/GTK/Qt source and package dependency fixes. The first
+canonical firmware main recipe passed source assembly and a clean native
+Tenacious ARM64 binary build at e76e456. Generated overlay, same-main revision
+guards and original source/license hashes passed. Initial host trials caught
+Git's exact source-directory ownership check, git-build-recipe's cwd-relative
+nest-part collision and an unsatisfied declared jq dependency. Correcting the
+isolated host setup and installing declared Build-Depends resolved them;
+neither package dependency checks nor source guards were bypassed.
+
+The active Launchpad recipe is unchanged. Native server qualification alone
+does not authorize deleting its source branch: import main, qualify the actual
+replacement source and ARM64 Launchpad builds, then archive unique history
+before removing obsolete heads. Ubuntu source CI follows main; expensive
+native/user-root workflows are explicit dispatches rather than stale branch
+push hooks. Other snapshot routes still need canonical-main adapters.

@@ -25,7 +25,21 @@ version scheme when promoting a qualified snapshot; do not silently switch
 back to a lower conventional revision. Upstream source remains 3.0.304.0.
 
 Static input, generated-overlay and refusal checks pass. Clean Tenacious
-ARM64 replacement qualification is pending. This does not admit an image,
+ARM64 replacement source and binary qualification passed on reconciled
+commit `e76e45643df83425c63f3127a1e6141510e322d5`, preserving main's TUI/GTK/Qt
+changes through `a9428ca`. The exact preset, notice, provenance and license
+read back unchanged; no Python payload or runtime dependency entered the DEB.
+The native version upgrades the published conventional package.
+
+This is private server qualification; the replacement has not yet run through
+Launchpad's source and ARM64 binary builders. The existing public daily recipe
+still uses its original branch. After importing the reconciled main commit,
+replace that recipe with the checked text above, build it for Tenacious only
+and verify source acceptance, ARM64 binary publication and APT upgrade order.
+Only then archive and remove the old active source branch. Other historical
+source routes remain pinned snapshots and still need canonical-main adapters.
+
+This does not admit an image,
 prove speaker operation, grant rights for other firmware or enroll additional
 recipes. Keep the existing recipe and its branches until the replacement is
 qualified and the publication transition is authorized. Archive unique source

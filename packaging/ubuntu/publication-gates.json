@@ -1,5 +1,5 @@
 {
   "uke-firmware": "Complete firmware publication is blocked: the shared review maps 7 of 217 files to exact notices, with redistribution review incomplete for the remaining 210. Do not infer rights from the speaker preset's separate Apache-2.0 provenance.",
-  "uke-kernel-boot": "Ubuntu embedded initramfs, root handoff and boot finalization are not implemented. Candidate Image/DT/module packages must not satisfy boot admission capabilities.",
+  "uke-kernel-boot": "The approved full native producer and inert trial DEB readback pass, but root security/layout, runtime OEM DT, normal source-package integration and boot activation remain unqualified. Candidate or trial packages must not satisfy boot admission capabilities.",
   "uke-oem-resources": "The pinned OEM helper is code-only, but its unconditional SELinux mount context needs shared-source portability work before Ubuntu runtime packaging. Do not ship OEM partition bytes or replace packaged/private data."
 }
