@@ -65,8 +65,10 @@ recheck the full package suite on an admitted Fedora target.
 
 The source-family offline split/filelist/cohort/service/contracts/tracking checks
 pass. The subsequent unchanged external Fedora-return ABI audit stops at HTTP 404
-for the old `uke-linux-unstable` COPR public key; this UI work neither changes that
-pin nor publishes a package. A temporary terminal stub in the disposable container
+for its pinned `uke-atk-2.62.1-17.fc46.aarch64.rpm` in archived COPR build 11228248.
+The public key remains available (HTTP 200); the failure is the archived RPM, not
+the key. This UI work neither changes that pin nor publishes a package.
+A temporary terminal stub in the disposable container
 also captures the exact fixed companion and typed `charge.mode mode=firmware`
 arguments. It executes no backend and is removed immediately. This proves
 argument handoff only, not real desktop terminal authentication or a device write.
