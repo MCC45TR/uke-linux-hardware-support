@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "cli.hpp"
+#include "error.hpp"
 #include "sysfs.hpp"
 #include <algorithm>
 #include <cctype>
@@ -34,7 +35,16 @@ Arguments arguments(int argc,char** argv) {
 namespace {
 struct Group {const char* name;const char* summary;const char* usage;};
 constexpr Group groups[]={
+    {"tui","Bilingual native terminal interface with guided parameters", "tui [--language tr|en] [--read-only] [--no-color] [--start CATEGORY|ACTION] [--fixture FILE]\n\nRequires uke-control-tui and an interactive UTF-8 terminal. F1 opens full help.\nRun as the session user; privileged actions authorize only their validated command.\nFixture mode executes no commands. Read-only mode also disables receipt writes."},
+    {"actions","Shared frontend catalog and validated plans (metadata only)", "actions\nactions describe ID\nactions plan ID KEY=VALUE...\n\nUse --json for versioned bilingual metadata and exact argv plans.\nThese commands do not query hardware, execute plans or authorize changes."},
     {"status","Device overview", "status"},
+    {"microphone","Internal array status and saved channel preference", "microphone status|list\nmicrophone select auto|uke-amic1|uke-amic3|uke-amic4|uke-amic5\nmicrophone processing status\n\nManual selection affects new implicit mono/stereo streams. Explicit targets and raw four-channel capture remain available.\nAutomatic camera/orientation profiles and audio effects require separate qualification."},
+    {"overview","Read-only component snapshots and private snapshot files", "overview [battery|charge|display|usb|desktop|hardware|sensors|audio|camera|nfc|sleep|storage|updates|recovery|workload]\noverview save FILE [COMPONENT]\noverview --fixture FILE\n\nSnapshots separate observations from physical acceptance. Fixture mode performs no queries."},
+    {"capabilities","Discover the versioned read-only interface", "capabilities\n\nStatic command metadata does not qualify hardware controls."},
+    {"complete","Print command or global-option completion candidates", "complete [PREFIX]\n\nOne candidate per line; --json returns the versioned completion object."},
+    {"compare","Compare two local overview snapshots", "compare BEFORE AFTER\n\nMissing data stays distinct from an unchanged value. Correlation does not establish cause."},
+    {"support","Create a reviewed public summary from a private snapshot", "support export SNAPSHOT NEW-FILE\n\nExports only fixed device-family/application metadata and component availability. No upload is performed."},
+    {"roots","Read-only root candidate discovery and mounted-root inspection", "roots list\nroots inspect PARTUUID\n\nDoes not mount, repair or execute a target. Inspection requires one verified current mount."},
     {"battery","Battery readings, pack health, cells and charging protocol", "battery status\nbattery health\nbattery cells\nbattery protocol\n\nReuses uke-battery and uke-charge-control. Reports unavailable values explicitly.\nPack health, vendor SOH and calculated retention are separate observations.\nIndividual cell health requires individual cell measurements; it is not inferred.\nA reported USB class is not a negotiated PD revision or a verified QC/MI session."},
     {"nfc","Linux NFC controller and radio permission", "nfc status\nnfc on|off\n\nOn/off changes only a unique NFC controller's rfkill permission and requires root.\nIt does not start tag polling or provide card emulation.\nA passive tap-to-share feature does not establish a controllable Linux reader."},
     {"channel","COPR channel selection and synchronization", "channel status\nchannel set stable|test|unstable [--dry-run] [--yes]\nchannel sync [--dry-run] [--yes]"},
@@ -42,10 +52,10 @@ constexpr Group groups[]={
     {"swap","Swap status and saved policy", "swap status\nswap set half|full|MiB\nswap apply"},
     {"inventory","Partition and filesystem inventory", "inventory [--refresh]"},
     {"charge","Charging status, qualification and guarded requests", "charge status\ncharge capabilities|admission|protocols|protocol-inspect|settings|protection|protection-status\ncharge modes\ncharge plan firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge plan temporary-full MINUTES\ncharge mode firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge review /ABSOLUTE/REVIEW_FILE\ncharge restore-current\ncharge limit PERCENT\ncharge enable-cap80|apply-cap80|moisture-enable\ncharge notifications\n\nReview installs expiring operator evidence; it does not start charging control.\nRestore-current uses the reviewed positive FCC value and is not a factory reset."},
-    {"usb","USB topology, roles and per-device power policy", "usb status\nusb watch [SECONDS]\nusb role host|device\nusb power DEVICE performance|auto"},
+    {"usb","USB topology, roles and per-device power policy", "usb status\nusb watch [SECONDS]\nusb role host|device\nusb power DEVICE performance|auto\nusb transition status|recover\n\nRecovery requires root and stable, unused Uke role readbacks. Unknown legacy records are preserved for review."},
     {"cdc","Manual USB serial export", "cdc on|off [--persistent]"},
     {"ethernet","Ethernet capabilities and link profiles", "ethernet status IFACE\nethernet profile IFACE auto|1000-full|100-full|10-full"},
-    {"display","Display stream, lane profiles and VRR minimum", "display bits\ndisplay profiles\ndisplay profile usb3-display|display4\ndisplay lane-limit 1|2|4\ndisplay vrr-min [status|configured]\ndisplay vrr-min set HZ\ndisplay sensor"},
+    {"display","Display stream, lane profiles and VRR minimum", "display bits\ndisplay profiles\ndisplay profile usb3-display|display4\ndisplay lane-limit 1|2|4\ndisplay compression [auto|on|off]\ndisplay vrr-min [status|configured]\ndisplay vrr-min set HZ\ndisplay sensor\n\nCompression auto requires driver interface 2. Live requests are handled by DRM; policy readback is not physical validation."},
     {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off"},
     {"hardware","Cached chipset, audio, media and input paths", "hardware status"},
     {"firmware","Cached remote processors and SCMI discovery", "firmware status"},
@@ -148,6 +158,9 @@ void render(std::ostream& out,sd_json_variant* value,unsigned depth,std::string_
     }
 }
 }
+std::vector<std::string> command_names() {
+    std::vector<std::string> names;for(const auto& group:groups)names.emplace_back(group.name);return names;
+}
 std::string help(std::string_view group) {
     std::ostringstream out;out<<"Usage: uke-control ";
     if(group.empty()) {
@@ -205,5 +218,10 @@ void print(const std::string& data,bool json,std::string_view title) {
         if(!title.empty())std::cout<<safe(title)<<'\n';
         std::cout<<human(data);
     }
+}
+bool json_requested(int argc,char** argv){return json_requested_inline(argc,argv);}
+int error(const std::string& message,bool json,int status) {
+    if(json)return json_failure(message,status);
+    std::cerr<<"uke-control: "<<safe(message)<<'\n';return status;
 }
 }

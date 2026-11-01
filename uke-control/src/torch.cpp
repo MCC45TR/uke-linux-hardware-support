@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "torch.hpp"
 #include "cli.hpp"
+#include "cli.hpp"
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -90,7 +91,7 @@ std::string Actuator::status() {
     auto result=lights::snapshot();
     const auto position=result.find(",\"max_microamp\":");
     need(position!=std::string::npos,"Invalid torch status");
-    result.insert(position,",\"requested_percent\":"+std::to_string(requested));return result;
+    result.insert(position,",\"broker_version\":\""+std::string(cli::version)+"\",\"requested_percent\":"+std::to_string(requested));return result;
 }
 int prepare_access(bool remove) {
     need(geteuid()==0,"Torch permission setup is reserved for package and device initialization");

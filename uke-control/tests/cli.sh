@@ -8,9 +8,16 @@ stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
 build/test-cli
 app=$PWD/build/uke-control
+"$app" </dev/null > "$stage/no-terminal"
+grep -F 'Usage: uke-control' "$stage/no-terminal" >/dev/null
+if "$app" --json </dev/null > "$stage/empty-json" 2> "$stage/empty-error"; then exit 1; else test "$?" = 64; fi
 "$app" --version > "$stage/version"
-grep -Fx 'uke-control 2.3.1' "$stage/version"
-"$app" --version --json | jq -e '.program=="uke-control" and .version=="2.3.1"' >/dev/null
+version=$(awk -F '"' '/application_version=/ {print $2}' src/version.hpp)
+grep -Fx "uke-control $version" "$stage/version"
+"$app" --version --json | jq -e --arg version "$version" '.program=="uke-control" and .version==$version' >/dev/null
+"$app" complete dis | grep -Fx display
+"$app" complete --j --json | jq -e '.schema=="org.uke.control.completions.v1" and .candidates==["--json"]' >/dev/null
+"$app" capabilities --json | jq -er '.commands[]' | while read -r command; do "$app" "$command" --help >/dev/null; done
 for alias in channel branch brunch; do "$app" "$alias" --help > "$stage/help"; grep -q 'channel set' "$stage/help"; done
 for alias in diagnostics diagnostic; do "$app" "$alias" --help > "$stage/help"; grep -q 'diagnostics all' "$stage/help"; done
 "$app" charge plan charge80 > "$stage/human"
@@ -22,7 +29,17 @@ jq -e '.applied==false and .effective==null and .requested=="charge80"' "$stage/
 "$app" charge plan charge80 --json | cmp "$stage/json" -
 "$app" charge modes > "$stage/modes"
 grep -q 'Charging modes' "$stage/modes"
-"$app" charge modes --json | jq -e '.qualification_checked==false and (.modes|map(.id)|sort)==["automatic","charge80","firmware","hold70-80","hold80-90","slow","temporary-full"] and any(.modes[]; .id=="temporary-full" and .apply_implemented==false)' >/dev/null
+"$app" charge modes --json | jq -e '
+    .qualification_checked==false and
+    ([.modes[].id] as $ids |
+     ($ids|length)==($ids|unique|length) and
+     (["firmware","charge80","hold70-80","hold80-90","temporary-full","slow","automatic"] - $ids | length)==0) and
+    any(.modes[]; .id=="temporary-full" and .apply_implemented==false)
+' >/dev/null
+"$app" charge plan temporary-full 30 --json | jq -e '
+    .duration_minutes==30 and .armed==false and .applied==false and
+    .hardware_write==false and .persisted==false and .effective==null
+' >/dev/null
 for args in 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resize system --json' 'sensors -- --json' 'channel status -- --json' 'test -- --help' 'singleboot status -- --json' 'multiboot -- --help'; do
     read -r -a words <<< "$args"
     set +e
@@ -31,7 +48,9 @@ for args in 'unknown-command' 'usb typo' 'flashlight status --json --json' 'resi
     set -e
     test "$result" = 64
     test ! -s "$stage/out"
-    grep -q '^uke-control:' "$stage/error"
+    if [[ $args == 'flashlight status --json --json' || $args == 'resize system --json' ]]; then
+        jq -e '.schema=="org.uke.control.error.v1" and .error.code=="USAGE_ERROR" and .exit_status==64' "$stage/error" >/dev/null
+    else grep -q '^uke-control:' "$stage/error"; fi
 done
 # Help/version must exit before privileged device or package dispatch.
 "$app" wake apply --help >/dev/null

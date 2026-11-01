@@ -9,7 +9,6 @@ trap 'rm -rf -- "$work"' EXIT
 awk '/^std::string report\(\)/{copy=1} /^void report_github/{copy=0} copy' "$project/src/backend.cpp" > "$work/report.inc"
 test -s "$work/report.inc"
 cat > "$work/test.cpp" <<'CPP'
-#include "cli.hpp"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -21,16 +20,28 @@ cat > "$work/test.cpp" <<'CPP'
 #include <string>
 #include <utility>
 #include <vector>
-namespace fs=std::filesystem;
+#include "cli.hpp"
+#include "report-budget.hpp"
+#include <optional>
+#include <unistd.h>
 namespace cli=uke::cli;
+namespace uke::reporting {
+static std::optional<uid_t> selected_uid=1001;
+static std::optional<uid_t> graphical_uid(){return selected_uid;}
+}
+namespace reporting=uke::reporting;
+namespace fs=std::filesystem;
+static constexpr uint64_t MiB=1024*1024;
 static fs::path state;
 static bool bad_inventory=false,bad_status=false,bad_firmware=false;
-struct Lock {};
+struct Lock {Lock(bool wait,const char* name){assert(!wait&&std::string(name)=="report.lock");}};
 struct Result {int status;std::string output;};
 static void need(bool ok,const std::string& error){if(!ok)throw std::runtime_error(error);}
 static void directory(const fs::path& path){fs::create_directories(path);}
 static void atomic_file(const fs::path& path,const std::string& value){std::ofstream(path)<<value;}
-static Result execute(const std::vector<std::string>& args,unsigned) {
+static Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limit=16*1024*1024) {
+    assert(seconds>0&&seconds<=25&&limit<=16*1024*1024);
+    if(args[0]=="/usr/bin/journalctl")for(const auto& arg:args)if(arg.starts_with("_UID="))assert(arg=="_UID=1001");
     if(args.size()==2&&args[0]=="/usr/bin/uname"&&args[1]=="-r")return {0,"7.2.11-fixture\n"};
     if(args[0]=="/usr/bin/uke-battery") {assert(args.size()==1);return {0,"private battery snapshot\n"};}
     if(args[0]=="/usr/bin/uke-control") {assert((args==std::vector<std::string>{"/usr/bin/uke-control","--json","desktop","status"}));return {0,"private desktop interfaces\n"};}
@@ -49,7 +60,7 @@ static Result execute(const std::vector<std::string>& args,unsigned) {
     }
     return {args[0]=="/usr/bin/dmesg"?3:0,"fixture command\n"};
 }
-static std::string read(const std::string& path){std::ifstream f(path);std::ostringstream out;out<<f.rdbuf();return out.str();}
+static std::string read(const std::string& path,size_t limit=1024*1024){std::ifstream f(path);std::ostringstream out;out<<f.rdbuf();return out.str().substr(0,limit);}
 static std::string inventory(bool){if(bad_inventory)throw std::runtime_error("inventory unavailable");return "{}\n";}
 static std::string status(){if(bad_status)throw std::runtime_error("charge helper unavailable");return "fixture status\n";}
 static std::string firmware_status(){if(bad_firmware)throw std::runtime_error("firmware cache unavailable");return "{\"fixture\":true}\n";}
@@ -58,9 +69,10 @@ static std::string wake_status(){return "{\"physical_acceptance\":null}\n";}
 #include "report.inc"
 int main(int argc,char** argv) {
     assert(argc==2);
-    for(int scenario:{2,1,3,0,4,5,6,7}) {
+    for(int scenario:{2,1,3,0,4,5,6,7,8}) {
         state=fs::path(argv[1])/std::to_string(scenario);
         bad_inventory=scenario&1;bad_status=scenario&2;bad_firmware=scenario&4;
+        reporting::selected_uid=scenario==8?std::nullopt:std::optional<uid_t>(1001);
         const fs::path output=report();
         auto receipt=read((output/"collection.log").string());
         assert(receipt.find("dmesg exit=3")!=std::string::npos);
@@ -91,7 +103,10 @@ int main(int argc,char** argv) {
         assert(summary.find("private unavailable battery")==std::string::npos);
         assert(summary.find("private process sample")==std::string::npos);
         assert(summary.find("private frequency snapshot")==std::string::npos);
-        assert(summary.find("Application: uke-control 2.3.1")!=std::string::npos);
+        assert(summary.find(std::string("Application: uke-control ")+cli::version)!=std::string::npos);
+        assert(read((output/"collection-state.json").string()).find("\"complete\":true")!=std::string::npos);
+        assert(read((output/"collection-state.json").string()).find("\"partial\":true")!=std::string::npos);
+        if(scenario==8)assert(receipt.find("unknown_or_ambiguous_graphical_session")!=std::string::npos);
     }
 }
 CPP

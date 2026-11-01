@@ -25,9 +25,10 @@ int main(int argc,char** argv) {
         snapshot(disk,p.before,work/"before-gpt","fixture","observed-before",p.document["sha256"].asString());
         snapshot(disk,p.after,work/"after-gpt","fixture","planned-after",p.document["sha256"].asString());
         for(const auto* name:{"before-gpt","after-gpt"})assert(ure::gpt_backup_verify(work/name)["verified"]==true);
-        // COPR runs fixtures as mockbuild; production admits only root-owned records.
-        if(geteuid()==0)assert(load_private(work/"after-gpt/snapshot.json")["kind"]=="planned-after");
-        else refuse([&]{load_private(work/"after-gpt/snapshot.json");});
+        const auto snapshot_file=work/"after-gpt/snapshot.json";
+        assert(ure::json_file(snapshot_file)["kind"]=="planned-after");
+        if(geteuid()==0)assert(load_private(snapshot_file)["kind"]=="planned-after");
+        else refuse([&]{load_private(snapshot_file);});
         auto consent_for=[](const Value& plan){Value c;c["schema"]="org.uke.control.layout.consent.v1";c["plan_sha256"]=plan["sha256"];c["approvals"]=plan["confirmations_required"];c["boot_id_sha256"]="fixture-boot";c["expires_ms"]=Json::UInt64(2000);c["sha256"]=seal(c);return c;};
         const auto consent=consent_for(p.document);const auto pinned=consent["sha256"].asString();validate_authorization(p.document,consent,pinned,"fixture-boot",1000);
         auto altered=consent;altered["expires_ms"]=Json::UInt64(3000);altered["sha256"]=seal(altered);refuse([&]{validate_authorization(p.document,altered,pinned,"fixture-boot",1000);});
@@ -57,10 +58,12 @@ int main(int argc,char** argv) {
         auto restore=propose(system,disk,single,work/"original","fixture",proof,ev,true,true);assert(restore.document["new_rows"].size()==1&&restore.document["route"]=="shutdown"&&restore.document["confirmations_required"]==2);assert(restore.document["new_rows"][0]["bytes"]==Json::UInt64(250*gib-64*mib));
         auto mismatched=propose(system,disk,r,work/"original","fixture",proof,ev,true,true);assert(mismatched.document["no_changes_required"]==false&&mismatched.document["confirmations_required"]==2);
         refuse([&]{propose(system,disk,single,work/"original","fixture",{},ev,true,true);});assert(ure::storage_read(disk.descriptor.get(),mib,27)=="OEM PAYLOAD MUST NOT CHANGE");
-        save_private(work/"record.json",proof);
-        if(geteuid()==0)assert(ure::json(load_private(work/"record.json"))==ure::json(proof));
-        else refuse([&]{load_private(work/"record.json");});
-        assert(!chmod((work/"record.json").c_str(),0644));refuse([&]{load_private(work/"record.json");});
+        const auto record_file=work/"record.json";save_private(record_file,proof);
+        assert(ure::json(ure::json_file(record_file))==ure::json(proof));
+        if(geteuid()==0)assert(ure::json(load_private(record_file))==ure::json(proof));
+        else refuse([&]{load_private(record_file);});
+        assert(!chmod(record_file.c_str(),0644));refuse([&]{load_private(record_file);});
+        std::cout<<(geteuid()==0?"Root-owned private-record round trip passed\n":"Unprivileged private-record ownership rejection passed\n");
         fs::remove_all(work);std::cout<<"Layout policy: allocation, OEM bytes, table expansion, live/offline routes, erase approvals, original proof, exact ownership and private records passed\n";
     }catch(...){fs::remove_all(work);throw;}
 }

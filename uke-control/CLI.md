@@ -1,5 +1,14 @@
 # Command-line interface
 
+30 October 2026, Control 2.5.1: an interactive `uke-control` invocation without
+operands opens the TUI. Redirection retains help output; `--json` requires a
+command. `uke-control --help` always shows the command reference.
+
+30 October 2026, Control 2.5: `uke-control tui` opens the optional guided C++
+terminal interface. `actions [describe ID|plan ID KEY=VALUE...] --json` exposes
+the same versioned bilingual catalog and validated plans without device access
+or execution. See [the terminal and frontend API guide](TUI.md).
+
 25 October 2026. Control 2.0 defaults to readable terminal output, including when
 stdout is redirected or piped. Structured output requires an explicit `--json`.
 This is a major CLI compatibility change: scripts that consumed default JSON
@@ -50,8 +59,10 @@ Existing privilege, qualification, confirmation and rollback checks still apply.
 `--json` never grants permission and never implies `--yes`. Package changes with
 JSON require explicit `--yes`; `--dry-run` or update's `--check` remains a preview.
 Package status, previews and successful transactions have a single structured
-result. A failed operation may produce only stderr and a nonzero exit status;
-callers must check that status before parsing stdout. Private helper logs and
+result. With `--json`, CLI and package exception paths emit
+`org.uke.control.error.v1` on stderr, with a stable code and nonzero exit status.
+Helper/measurement streams retain their documented contracts; callers must check
+status before parsing stdout. Private helper logs and
 kernel-updater progress use stderr when package JSON is selected.
 
 `usb watch --json` and `sensors -n5 --json` emit one complete object per sample.
@@ -73,6 +84,15 @@ The widget explicitly requests JSON for every backend command. Control 2.0
 conflicts with widget revisions older than 23, so a package resolver cannot
 silently combine the new CLI with a client expecting default JSON. Widget 23
 requires Control 2.0. The widget remains separately removable and KDE-specific.
+
+30 October 2026: Control 2.4 adds `capabilities`, `complete [PREFIX]`,
+`overview [COMPONENT]`, `overview save FILE [COMPONENT]`,
+`overview --fixture FILE`, `compare BEFORE AFTER`, `support export INPUT NEWFILE`
+and `roots list|inspect PARTUUID`. See [the bounded read-only API](OVERVIEW.md).
+Completion metadata and help share one command registry. Bash completion reads
+that metadata and never runs an actuator. `usb transition status` reports the
+current-boot inhibit receipt; root-only `usb transition recover` clears a receipt
+only after stable, verified disconnected state. It does not change a USB role.
 The existing module-loader hook requests and strictly validates the one-field
 JSON minimum-frequency response; it adds no general parser or Python dependency.
 

@@ -1,5 +1,14 @@
 # Diagnostic logs
 
+30 October 2026: the separate general `report` directory collector uses its own
+lock, a 63 MiB data budget plus metadata reserve, 300-second collection deadline,
+256 MiB free reserve and 512 MiB/8192-entry retained-store admission. Incomplete
+or skipped collection is explicit in `collection-state.json`; old evidence is
+not deleted. Final metadata synchronization is outside the collector deadline.
+KDE journal collection requires exactly one active graphical nonroot UID;
+ambiguous or unavailable sessions are skipped with a private receipt.
+These limits are separate from the focused diagnostic log limits below.
+
 27 October 2026: version 1.15.1 adds independent logind/UPower lid queries and
 the invoking session's screensaver state to `sleep` reports. `display` reports
 include actual active-stream depth and cached DSC policy/activation. These are

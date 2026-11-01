@@ -29,8 +29,11 @@ static std::map<std::string,std::string> runtime;
 static void need(bool ok,const std::string& why){if(!ok)throw std::runtime_error(why);}
 static void board(){need(board_ok,"foreign board");}
 struct Lock {
- explicit Lock(bool wait=false){(void)wait;assert(!locked);locked=true;}
- ~Lock(){assert(locked);locked=false;}
+ bool manager;
+ explicit Lock(bool wait=false,const char* name="lock"):manager(std::string(name)=="lock"){
+  (void)wait;if(manager){assert(!locked);locked=true;}else assert(std::string(name)=="cdc-policy.lock");
+ }
+ ~Lock(){if(manager){assert(locked);locked=false;}}
 };
 struct Fd{int n;~Fd(){if(n>=0)close(n);}};
 std::string read(const std::string& path,size_t limit) {

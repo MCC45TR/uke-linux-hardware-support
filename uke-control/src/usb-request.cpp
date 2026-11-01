@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
 #include "usb-request.hpp"
+#include "usb-transition.hpp"
 #include "link-policy.hpp"
 #include "rpm-api.hpp"
 #include "sysfs.hpp"
@@ -239,21 +240,31 @@ struct GadgetLock {
     void acquire(){need(flock(fd.n,LOCK_EX|LOCK_NB)==0,"USB_OWNER_BUSY");}
     void release(){need(flock(fd.n,LOCK_UN)==0,"USB_LOCK_FAILED");}
 };
-struct Inhibit {
-    static constexpr auto path="/run/senemos-uke/usb-gadget-inhibit";
-    Fd fd{open(path,O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW|O_CLOEXEC,0600)};
-    Inhibit(){need(fd.n>=0,"USB_TRANSITION_ALREADY_INHIBITED");}
-    ~Inhibit() {
-        if(fd.n<0)return;
-        struct stat own{},live{};
-        if(fstat(fd.n,&own)==0&&lstat(path,&live)==0&&own.st_dev==live.st_dev&&own.st_ino==live.st_ino)unlink(path);
-    }
-};
+using Inhibit=TransitionInhibit;
 std::string escaped(const std::string& text) {
     std::string out;
     for(unsigned char c:text)if(c>=32&&c<127&&c!='"'&&c!='\\')out+=char(c);else out+='?';
     return out;
 }
+}
+std::string transition_status() {
+    if(geteuid()!=0)return "{\"schema\":\"org.uke.control.usb.transition.v1\",\"private_state_readable\":false,\"state\":null}";
+    return "{\"schema\":\"org.uke.control.usb.transition.v1\",\"private_state_readable\":true,\"state\":"+sysfs::quote(Inhibit::status())+"}";
+}
+Result recover_transition() {
+    need(geteuid()==0,"ROOT_REQUIRED");GadgetLock lock;
+    if(Inhibit::status()=="absent")return {0,"{\"schema\":\"org.uke.control.usb.transition.v1\",\"state\":\"absent\",\"recovered\":false}"};
+    Inhibit::recover([] {
+        const auto stable=[](const Graph& g) {
+            return g.state.profile&&g.state.port&&g.state.role_switch&&!g.state.storage&&!g.state.network&&!g.state.display&&!g.state.gadget&&
+                (g.state.typec_role=="host"||g.state.typec_role=="device")&&g.state.typec_role==g.state.controller_role;
+        };
+        const auto first=graph();if(!stable(first))return false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));const auto current=graph();
+        return stable(current)&&first.port==current.port&&first.role==current.role&&first.state.typec_role==current.state.typec_role&&
+            ((!first.state.partner&&!current.state.partner)||same_partner(first,current));
+    });
+    return {0,"{\"schema\":\"org.uke.control.usb.transition.v1\",\"state\":\"absent\",\"recovered\":true,\"role_write\":false,\"physical_acceptance\":null}"};
 }
 std::string display_profiles(const fs::path& requested_root) {
     const auto root=fs::canonical(requested_root);
@@ -328,6 +339,7 @@ Result request_display_profile(const std::string& profile) {
             struct statfs filesystem{};
             need(fd.n>=0&&fstatfs(fd.n,&filesystem)==0&&filesystem.f_type==SYSFS_MAGIC,"TYPEC_SYSFS_NOT_WRITABLE");
             const std::string data=std::string(1,pin)+'\n';
+            inhibit.begin_write();
             const auto written=write(fd.n,data.data(),data.size());
             need(written==ssize_t(data.size()),written<0?"PIN_REQUEST_FAILED: "+std::string(strerror(errno)):"PIN_REQUEST_SHORT_WRITE");
             accepted=true;
@@ -341,6 +353,7 @@ Result request_display_profile(const std::string& profile) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             if(!observed){error="PIN_CONVERGENCE_TIMEOUT";status=124;}
+            else inhibit.complete();
         }
     }catch(const std::exception& e){error=e.what();}
     const auto boolean=[](bool b){return b?"true":"false";};
@@ -370,6 +383,7 @@ Result request_data(const std::string& desired) {
             auto current=graph();need(same_partner(first,current),"ATTACHMENT_CHANGED");
             if(current.state.gadget) {
                 need(value("/run/senemos-uke/usb-gadget-profile")=="auto-acm","FOREIGN_OR_LEGACY_GADGET_BOUND");
+                inhibit.begin_write();
                 lock.release();
                 const auto cleanup=execute({"/usr/libexec/senemos-uke/uke-usb-network","stop-auto"},10,4096);
                 lock.acquire();need(cleanup.status==0,"OWNED_GADGET_TEARDOWN_FAILED");
@@ -379,6 +393,7 @@ Result request_data(const std::string& desired) {
             Fd fd{open((current.port/"data_role").c_str(),O_WRONLY|O_CLOEXEC|O_NOFOLLOW)};
             struct statfs filesystem{};need(fd.n>=0&&fstatfs(fd.n,&filesystem)==0&&filesystem.f_type==SYSFS_MAGIC,"TYPEC_SYSFS_NOT_WRITABLE");
             const auto data=desired+'\n';
+            inhibit.begin_write();
             const auto written=write(fd.n,data.data(),data.size());
             if(written!=ssize_t(data.size()))throw std::runtime_error("TYPEC_REQUEST_FAILED: "+(written<0?std::string(strerror(errno)):"short write"));
             accepted=true;
@@ -392,6 +407,7 @@ Result request_data(const std::string& desired) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             if(!observed){reason="ROLE_CONVERGENCE_TIMEOUT";status=124;}
+            else inhibit.complete();
         }
     }catch(const std::exception& e){reason=e.what();}
     const auto boolean=[](bool b){return b?"true":"false";};

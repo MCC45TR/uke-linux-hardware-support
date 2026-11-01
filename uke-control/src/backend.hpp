@@ -4,7 +4,14 @@
 #include <string>
 #include <vector>
 namespace uke {
-struct Result { int status; std::string output; };
+struct Result {int status;std::string output;};
+struct ProcessResult {
+    int status;
+    std::string output;
+    bool timed_out=false, truncated=false;
+    int signal=0;
+};
+ProcessResult execute_bounded(const std::vector<std::string>& arguments, unsigned seconds=20, size_t limit=16*1024*1024);
 Result execute(const std::vector<std::string>& arguments, unsigned seconds=20, size_t limit=16*1024*1024);
 uint64_t swap_mib(const std::string& policy, uint64_t memory_bytes);
 std::string read(const std::string& path, size_t limit=1024*1024);
@@ -35,6 +42,7 @@ std::string hardware_status();
 void usb_watch(unsigned seconds);
 void usb_watch(unsigned seconds,bool as_json);
 Result usb_request_data(const std::string& role);
+Result usb_transition_recover();
 Result display_profile_set(const std::string& profile);
 Result display_lane_limit(const std::string& lanes);
 Result display_compression(const std::string& policy);

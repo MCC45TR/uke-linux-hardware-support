@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "cli.hpp"
+#include "sysfs.hpp"
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -14,6 +15,22 @@ static std::string output(const std::string& data,bool json) {
     return result.str();
 }
 int main() {
+    assert(uke::sysfs::quote(std::string("a\0b",3))=="\"a\\u0000b\"");
+    for(const auto& value:{std::string("Türkçe 😀 中文 e\xcc\x81"),std::string("a\nb\t\"\\")}) {
+        const auto quoted=uke::sysfs::quote(value);
+        sd_json_variant* parsed=nullptr;
+        assert(sd_json_parse(quoted.c_str(),sd_json_parse_flags_t(0),&parsed,nullptr,nullptr)>=0);
+        assert(value==sd_json_variant_string(parsed));
+        sd_json_variant_unref(parsed);
+    }
+    for(const auto& invalid:{std::string("\x80"),std::string("\xc0\xaf"),std::string("\xed\xa0\x80"),
+                            std::string("\xf4\x90\x80\x80"),std::string("\xe2\x82")}) {
+        const auto quoted=uke::sysfs::quote(invalid);
+        assert(quoted.find("\\ufffd")!=std::string::npos);
+        sd_json_variant* parsed=nullptr;
+        assert(sd_json_parse(quoted.c_str(),sd_json_parse_flags_t(0),&parsed,nullptr,nullptr)>=0);
+        sd_json_variant_unref(parsed);
+    }
     const auto renamed=args({"ignored","--json","brunch","test"});
     assert(renamed.json && (renamed.words==std::vector<std::string>{"uke-control","channel","set","test"}));
     assert(args({"app","branch","status","--json"}).json);
@@ -25,6 +42,7 @@ int main() {
     assert(args({"app","resize","system","--version"}).version);
     bool refused=false;try{args({"app","--json","--json"});}catch(const UsageError&){refused=true;}assert(refused);
     for(const auto* group:{"status","channel","update","swap","inventory","charge","usb","cdc","ethernet","display","desktop","hardware","firmware","battery","nfc","wake","flashlight","led","sensors","diagnostics","report","resize","test"})assert(help(group).find("Usage: uke-control ") == 0);
+    assert(help("display").find("display compression [auto|on|off]")!=std::string::npos);
     refused=false;try{help("unknown");}catch(const UsageError&){refused=true;}assert(refused);
     const std::string data=R"({"schema":"org.uke.control.fixture.v1","flashlight":{"available":true,"on":false,"requested_percent":17,"brightness_percent":0,"max_microamp":20000},"physical_acceptance":null,"values":[true,false,null,1.25],"reason":"control_backend_unqualified","detail":"{\"applied\":false}","warning":"\u001b[31munsafe\rtext"})";
     const auto text=output(data,false);

@@ -12,6 +12,7 @@
 #include <thread>
 static std::atomic<bool> invalid_percentage = false;
 static std::atomic<int> screensaver_state = 0;
+static std::atomic<int> charge_cycles = 0;
 static int get(sd_bus *, const char *, const char *, const char *name, sd_bus_message *reply, void *, sd_bus_error *) {
     if (!std::strcmp(name,"State")) return sd_bus_message_append(reply,"u",2U);
     if (!std::strcmp(name,"Percentage")) return sd_bus_message_append(reply,"d",invalid_percentage ? NAN : 3.0);
@@ -25,6 +26,7 @@ static int get(sd_bus *, const char *, const char *, const char *name, sd_bus_me
     if (!std::strcmp(name,"ChargeThresholdSupported")) return sd_bus_message_append(reply,"b",0);
     if (!std::strcmp(name,"ChargeEndThreshold")) return sd_bus_message_append(reply,"u",0U);
     if (!std::strcmp(name,"Temperature")) return sd_bus_message_append(reply,"d",-5.0);
+    if (!std::strcmp(name,"ChargeCycles")) return sd_bus_message_append(reply,"i",int(charge_cycles));
     if (!std::strcmp(name,"ActiveProfile")) return sd_bus_message_append(reply,"b",1); // Deliberately wrong type.
     return -EINVAL;
 }
@@ -68,6 +70,9 @@ static void verify(const std::string &json,bool bad) {
     assert(sd_json_variant_real(sd_json_variant_by_key(empty,"value"))==1080);
     assert(!std::strcmp(sd_json_variant_string(sd_json_variant_by_key(empty,"unit")),"s"));
     auto pack=sd_json_variant_by_key(sd_json_variant_by_index(list,2),"properties");
+    auto cycles=sd_json_variant_by_key(sd_json_variant_by_key(pack,"ChargeCycles"),"value");
+    if(charge_cycles<0)assert(sd_json_variant_is_null(cycles));
+    else assert(sd_json_variant_real(cycles)==charge_cycles);
     assert(sd_json_variant_is_null(sd_json_variant_by_key(sd_json_variant_by_key(pack,"ChargeEndThreshold"),"value")));
     assert(sd_json_variant_real(sd_json_variant_by_key(sd_json_variant_by_key(pack,"Temperature"),"value"))==-5);
     auto ppd=sd_json_variant_by_key(sd_json_variant_by_index(list,4),"properties");
@@ -109,6 +114,7 @@ int main() {
         SD_BUS_METHOD("batteryRemainingTime","","t",method,SD_BUS_VTABLE_UNPRIVILEGED),SD_BUS_VTABLE_END};
     static const sd_bus_vtable pack[]={SD_BUS_VTABLE_START(0),
         SD_BUS_PROPERTY("Temperature","d",get,0,0),
+        SD_BUS_PROPERTY("ChargeCycles","i",get,0,0),
         SD_BUS_PROPERTY("ChargeThresholdSupported","b",get,0,0),
         SD_BUS_PROPERTY("ChargeEndThreshold","u",get,0,0),SD_BUS_VTABLE_END};
     static const sd_bus_vtable ppd[]={SD_BUS_VTABLE_START(0),
@@ -128,6 +134,7 @@ int main() {
     std::atomic<bool> done=false;
     std::thread worker([&]{while(!done){int r=sd_bus_process(server,nullptr);assert(r>=0);if(!r)assert(sd_bus_wait(server,10000)>=0);}});
     verify(uke::desktop::snapshot(client,client),false);
+    for(int cycles:{-1,0,1,2147483647}){charge_cycles=cycles;verify(uke::desktop::snapshot(client,client),false);}
     invalid_percentage=true;screensaver_state=1;verify(uke::desktop::snapshot(client,client),true);
     screensaver_state=-1;verify(uke::desktop::snapshot(client,client),true);
     auto missing=uke::desktop::snapshot(nullptr,nullptr);assert(missing.find("\"available\":true")==std::string::npos);

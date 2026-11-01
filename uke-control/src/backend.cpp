@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "report-context.hpp"
+#include "report-budget.hpp"
 #include "cli.hpp"
 #include "rpm-api.hpp"
 #include "charge-client.hpp"
+#include "charge-intent.hpp"
 #include "battery.hpp"
 #include "nfc.hpp"
 #include "usb-request.hpp"
@@ -53,9 +56,8 @@ static void charge_helper() {
          "Install the reviewed uke-charge-control backend");
 }
 Result charge_control_query(const std::string& operation) {charge_helper();return charge::control_query(operation);}
-Result charge_enable_preconfigured_cap() {charge_helper();return charge::enable_preconfigured_cap();}
 Result charge_enable_moisture() {charge_helper();return charge::enable_moisture();}
-Result charge_apply_preconfigured_cap() {charge_helper();return charge::apply_preconfigured_cap();}
+static void remember_qualified_charge(const std::string& mode);
 static void directory(const fs::path& path) {
     fs::create_directories(path);
     struct stat st{};need(lstat(path.c_str(),&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),"Untrusted state directory: "+path.string());
@@ -63,9 +65,22 @@ static void directory(const fs::path& path) {
 }
 struct Lock {
     Fd fd;
-    explicit Lock(bool wait=false){root();directory(state);fd.n=open((state/"lock").c_str(),O_CREAT|O_RDWR|O_CLOEXEC|O_NOFOLLOW,0600);need(fd.n>=0,"Cannot open manager lock");need(flock(fd.n,LOCK_EX|(wait?0:LOCK_NB))==0,"Another uke-control operation is running");}
+    explicit Lock(bool wait=false,const char* name="lock") {
+        root();directory(state);
+        // A direct helper keeps exclusion even if the CLI disappears mid-write.
+        fd.n=open((state/name).c_str(),O_CREAT|O_RDWR|O_NOFOLLOW|O_NONBLOCK,0600);
+        struct stat st{};
+        need(fd.n>=0&&!fstat(fd.n,&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1&&(st.st_mode&0777)==0600,"Untrusted manager lock");
+        need(flock(fd.n,LOCK_EX|(wait?0:LOCK_NB))==0,"Another uke-control operation is running");
+    }
 };
-Result charge_control_mode(const std::string& mode) {root();board();Lock lock;charge_helper();return charge::control_mode(mode);}
+Result charge_enable_preconfigured_cap() {root();board();Lock lock;charge_helper();remember_qualified_charge("enable-cap80");return charge::enable_preconfigured_cap();}
+Result charge_apply_preconfigured_cap() {root();board();Lock lock;charge_helper();remember_qualified_charge("apply-cap80");return charge::apply_preconfigured_cap();}
+Result charge_control_mode(const std::string& mode) {
+    root();board();Lock lock;charge_helper();
+    if(mode!="firmware"&&mode!="temporary-full")remember_qualified_charge(mode);
+    return charge::control_mode(mode);
+}
 Result charge_review(const std::string& review) {
     root();board();Lock lock;charge_helper();
     need(!review.empty()&&review.front()=='/'&&review.size()<=4096,"Review file must use an absolute path");
@@ -77,7 +92,7 @@ std::string read(const std::string& path,size_t limit) {
     while(file&&value.size()<limit){file.read(buffer.data(),std::min(buffer.size(),limit-value.size()));value.append(buffer.data(),size_t(file.gcount()));}
     return value;
 }
-Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limit) {
+ProcessResult execute_bounded(const std::vector<std::string>& args,unsigned seconds,size_t limit) {
     need(!args.empty()&&args[0].starts_with("/usr/"),"Executable must use an absolute distribution path");
     int pipes[2];need(pipe2(pipes,O_CLOEXEC)==0,"Cannot create command pipe");
     Fd input{pipes[0]},output{pipes[1]};
@@ -92,18 +107,41 @@ Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limi
     }
     setpgid(pid,pid);close(output.n);output.n=-1;fcntl(input.n,F_SETFL,O_NONBLOCK);
     const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);
-    std::string value;bool eof=false,expired=false;int status{};bool exited=false;
+    std::string value;bool eof=false,timed_out=false,truncated=false,io_error=false;int status{};bool exited=false;
     while(!eof||!exited) {
-        if(std::chrono::steady_clock::now()>=end||value.size()>=limit){expired=true;kill(-pid,SIGKILL);break;}
-        pollfd p{eof?-1:input.n,POLLIN,0};poll(&p,1,50);
-        std::array<char,8192> buffer{};ssize_t n;
-        while((n=::read(input.n,buffer.data(),std::min(buffer.size(),limit-value.size())))>0)value.append(buffer.data(),size_t(n));
-        if(n==0)eof=true;
-        if(!exited)exited=waitpid(pid,&status,WNOHANG)==pid;
+        if(std::chrono::steady_clock::now()>=end){timed_out=true;break;}
+        pollfd p{eof?-1:input.n,POLLIN,0};
+        if(poll(&p,1,50)<0&&errno!=EINTR){io_error=true;break;}
+        std::array<char,8192> buffer{};
+        while(!eof) {
+            const auto remaining=limit-value.size();
+            // A one-byte probe distinguishes exact-limit EOF from excess output.
+            const auto n=::read(input.n,buffer.data(),remaining?std::min(buffer.size(),remaining):1);
+            if(n>0) {
+                if(!remaining){truncated=true;break;}
+                value.append(buffer.data(),size_t(n));
+            } else if(n==0)eof=true;
+            else if(errno==EINTR)continue;
+            else {if(errno!=EAGAIN&&errno!=EWOULDBLOCK)io_error=true;break;}
+            if(std::chrono::steady_clock::now()>=end){timed_out=true;break;}
+        }
+        if(truncated||timed_out||io_error)break;
+        if(!exited) {
+            const auto waited=waitpid(pid,&status,WNOHANG);
+            if(waited==pid)exited=true;
+            else if(waited<0&&errno!=EINTR){io_error=true;break;}
+        }
     }
+    if(timed_out||truncated||io_error)kill(-pid,SIGKILL);
     if(!exited)while(waitpid(pid,&status,0)<0&&errno==EINTR){}
-    if(expired)return {124,value+"\n[collection bounded by time/output limit]\n"};
-    return {WIFEXITED(status)?WEXITSTATUS(status):128+WTERMSIG(status),value};
+    const int signal=WIFSIGNALED(status)?WTERMSIG(status):0;
+    if(timed_out||truncated)return {124,value+"\n[collection bounded by time/output limit]\n",timed_out,truncated,signal};
+    if(io_error)return {125,value+"\n[command output or wait failed]\n",false,false,signal};
+    return {WIFEXITED(status)?WEXITSTATUS(status):128+signal,value,false,false,signal};
+}
+Result execute(const std::vector<std::string>& args,unsigned seconds,size_t limit) {
+    auto result=execute_bounded(args,seconds,limit);
+    return {result.status,std::move(result.output)};
 }
 static void checked(const std::vector<std::string>& args,unsigned seconds=30) {
     auto result=execute(args,seconds);need(result.status==0,"Command failed: "+args[0]+"\n"+result.output);
@@ -122,6 +160,28 @@ static void atomic_file(const fs::path& path,const std::string& value) {
 static uint64_t decimal(const std::string& value) {
     uint64_t n{};auto p=std::from_chars(value.data(),value.data()+value.size(),n);
     need(p.ec==std::errc{}&&p.ptr==value.data()+value.size(),"Expected an unsigned integer");return n;
+}
+static std::string private_charge_record(const fs::path& path) {
+    Fd fd{open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC)};
+    if(fd.n<0){need(errno==ENOENT,"Cannot read saved charge intent");return {};}
+    struct stat st{};need(!fstat(fd.n,&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1&&(st.st_mode&0777)==0600&&st.st_size>0&&st.st_size<=256,"Untrusted saved charge policy");
+    std::array<char,257> data{};ssize_t n;do{n=::read(fd.n,data.data(),data.size());}while(n<0&&errno==EINTR);
+    need(n==st.st_size,"Incomplete saved charge policy");return {data.data(),size_t(n)};
+}
+static void remember_qualified_charge(const std::string& mode) {
+    const auto intent=charge::intent::qualified(mode);
+    auto legacy=private_charge_record(state/"charge-limit");
+    if(!legacy.empty()) {
+        auto number=legacy;if(number.back()=='\n')number.pop_back();
+        const auto percent=decimal(number);need(percent>=1&&percent<=100,"Invalid legacy charge limit");
+        atomic_file(state/"charge-limit.retired",legacy);
+    }
+    // Intent is durable before a helper request; it is never proof of application.
+    atomic_file(state/"charge-intent",intent);
+    if(!legacy.empty()) {
+        need(!unlink((state/"charge-limit").c_str()),"Cannot retire legacy charge persistence");
+        Fd parent{open(state.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC)};need(parent.n>=0&&!fsync(parent.n),"Cannot sync charge persistence migration");
+    }
 }
 std::string wake_status() { return wake::snapshot(); }
 void display_vrr_set(unsigned hz) {
@@ -343,16 +403,19 @@ void nfc_set(bool enabled) {
     const auto after=nfc::radios();
     need(after.size()==1&&after[0].path==before[0].path&&after[0].index==before[0].index&&after[0].soft&&*after[0].soft==!enabled,"NFC radio permission was not confirmed; inspect nfc status");
 }
-void charge_set(unsigned percent) {
-    Lock lock;auto paths=thresholds();need(paths.size()==1,"A unique standard charge threshold is required; no raw firmware writes are supported");
+static void charge_set_locked(unsigned percent) {
+    auto paths=thresholds();need(paths.size()==1,"A unique standard charge threshold is required; no raw firmware writes are supported");
     need(percent>=1&&percent<=100,"Charge limit outside 1..100 percent");
     Fd fd{open(paths[0].c_str(),O_WRONLY|O_CLOEXEC)};need(fd.n>=0,"Charge threshold is not writable");write_all(fd.n,std::to_string(percent));
     auto value=read(paths[0].string(),64);need(value==std::to_string(percent)+"\n","Driver did not confirm the requested threshold");atomic_file(state/"charge-limit",std::to_string(percent)+"\n");
+    atomic_file(state/"charge-intent",charge::intent::standard(percent));
 }
+void charge_set(unsigned percent) {Lock lock;charge_set_locked(percent);}
 Result usb_request_data(const std::string& role) {
     Lock lock;
     return usb::request_data(role);
 }
+Result usb_transition_recover() {root();board();Lock lock;return usb::recover_transition();}
 Result display_profile_set(const std::string& profile) {
     Lock lock;
     return usb::request_display_profile(profile);
@@ -424,6 +487,8 @@ Result cdc_apply() {
     return {0,"{\"persistent_cdc\":\"on\",\"applied\":false,\"state\":\"waiting_for_device_role\"}\n"};
 }
 Result cdc_persistent(bool enabled) {
+    // Service callbacks take only the manager lock; a separate lock orders intent.
+    Lock coordinator(true,"cdc-policy.lock");
     {
         Lock lock(true);board();
         if(enabled)cdc_validate();
@@ -467,18 +532,51 @@ std::string status() {
     return "{\"schema\":\"org.uke.control.status.v1\",\"version\":"+sysfs::quote(cli::version)+",\"swap\":"+swap_status()+",\"charge\":"+charge+",\"usb\":"+usb_status()+"}\n";
 }
 void boot() {
-    root();board();(void)inventory(true);swap_apply();
-    if(fs::exists(state/"charge-limit")){auto value=read((state/"charge-limit").string(),64);if(!value.empty()&&value.back()=='\n')value.pop_back();charge_set(unsigned(decimal(value)));}
+    root();board();directory(state);
+    std::string tasks="{",failures;
+    const auto task=[&](const char* name,const auto& apply) {
+        if(tasks.size()>1)tasks+=',';
+        tasks+=sysfs::quote(name)+":";
+        try {const auto result=apply();tasks+="{\"completed\":true,\"state\":"+sysfs::quote(result)+"}";}
+        catch(const std::exception& error) {
+            tasks+="{\"completed\":false,\"error\":"+sysfs::quote(error.what())+"}";
+            failures+=std::string(name)+": "+error.what()+"; ";
+        }
+    };
+    task("inventory",[]{(void)inventory(true);return "recorded";});
+    task("swap",[]{swap_apply();return "applied_or_noop";});
+    task("legacy_charge",[]{
+        Lock lock;
+        if(fs::exists(state/"charge-limit")) {
+            auto value=private_charge_record(state/"charge-limit");
+            if(!value.empty()&&value.back()=='\n')value.pop_back();
+            const auto percent=decimal(value);need(percent>=1&&percent<=100,"Invalid saved charge limit");
+            if(charge::intent::restore_legacy(private_charge_record(state/"charge-intent"),unsigned(percent))) {charge_set_locked(unsigned(percent));return "restored";}
+            return "superseded_by_qualified_intent";
+        }
+        return "not_configured";
+    });
+    {Lock lock;atomic_file(state/"startup.json","{\"schema\":\"org.uke.control.startup.v1\",\"tasks\":"+tasks+"}}\n");}
+    need(failures.empty(),"Startup policies incomplete; inspect startup.json: "+failures);
 }
 std::string report() {
-    Lock lock;directory(state/"reports");
+    Lock lock(false,"report.lock");directory(state/"reports");
+    uint64_t retained=0;unsigned files=0;
+    for(const auto& entry:fs::recursive_directory_iterator(state/"reports")) {
+        need(++files<=8192&&!entry.is_symlink(),"Report retention requires review before another collection");
+        if(entry.is_regular_file()){const auto bytes=entry.file_size();need(bytes<=512*MiB-retained,"Report store is full; preserve or archive selected old reports before collecting again");retained+=bytes;}
+    }
+    need(retained<=448*MiB,"Report store has less than one collection budget remaining; preserve or archive selected old reports");
     const auto stamp=std::to_string(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     auto path=state/"reports"/stamp;need(fs::create_directory(path),"Report already exists; retry in the next second");directory(path);
-    const std::vector<std::pair<std::string,std::vector<std::string>>> commands{
+    atomic_file(path/"collection-state.json","{\"complete\":false,\"partial\":true}\n");
+    reporting::Budget budget(path);bool partial=false;
+    const auto uid=reporting::graphical_uid();
+    atomic_file(path/"journal-session.json","{\"uid\":"+(uid?std::to_string(*uid):"null")+",\"selection\":\""+(uid?"unique_active_graphical_session":"unknown_or_ambiguous")+"\"}\n");
+    std::vector<std::pair<std::string,std::vector<std::string>>> commands{
       {"kernel",{"/usr/bin/uname","-a"}}, {"dmesg",{"/usr/bin/dmesg","--color=never"}},
       {"journal-boot",{"/usr/bin/journalctl","-b","--no-pager","-o","short-monotonic","-n","60000"}},
       {"journal-previous",{"/usr/bin/journalctl","-b","-1","--no-pager","-o","short-monotonic","-n","20000"}},
-      {"journal-kde",{"/usr/bin/journalctl","-b","_UID=1000","--no-pager","-n","30000"}},
       {"failed-units",{"/usr/bin/systemctl","--failed","--no-pager"}},
       {"services",{"/usr/bin/systemctl","list-units","--all","--no-pager"}},
       {"processes",{"/usr/bin/ps","-e","-o","pid,ppid,comm,stat,etimes,pcpu,pmem,rss,wchan:32","--sort=-rss"}},
@@ -505,25 +603,35 @@ std::string report() {
       {"mounts",{"/usr/bin/findmnt","--json"}},
       {"fstab-verify",{"/usr/bin/findmnt","--verify","--verbose"}},
       {"display",{"/usr/bin/modetest","-M","msm-kms","-c","-p"}}};
+    if(uid)commands.push_back({"journal-kde",{"/usr/bin/journalctl","-b","_UID="+std::to_string(*uid),"--no-pager","-n","30000"}});
     std::ostringstream receipt;
+    if(!uid){receipt<<"journal-kde unavailable=unknown_or_ambiguous_graphical_session\n";partial=true;}
+    const auto store=[&](const std::string& name,const std::string& value) {
+        if(budget.allowance(value.size())<value.size()){receipt<<name<<" bounded=total_time_bytes_or_free_space\n";partial=true;return false;}
+        budget.charge(value.size());atomic_file(path/name,value);return true;
+    };
     for(const auto& [name,args]:commands){
-        const auto started=std::chrono::steady_clock::now();auto result=execute(args,25);
+        const auto limit=budget.allowance(4*MiB);
+        if(!limit){receipt<<name<<" bounded=total_time_bytes_or_free_space\n";partial=true;continue;}
+        const auto started=std::chrono::steady_clock::now();auto result=execute(args,std::min(25U,budget.seconds()),limit);
         const auto elapsed=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-started).count();
-        atomic_file(path/(name+".log"),result.output);receipt<<name<<" exit="<<result.status<<" elapsed_ms="<<elapsed<<'\n';
+        store(name+".log",result.output);receipt<<name<<" exit="<<result.status<<" elapsed_ms="<<elapsed<<'\n';
+        if(result.status)partial=true;
     }
     for(const char* file:{"meminfo","swaps","vmstat","interrupts","softirqs","uptime","loadavg","stat","schedstat","diskstats","buddyinfo","pressure/cpu","pressure/memory","pressure/io"}) {
-        std::string name=file;std::replace(name.begin(),name.end(),'/','-');atomic_file(path/("proc-"+name+".log"),read(std::string("/proc/")+file));
+        std::string name=file;std::replace(name.begin(),name.end(),'/','-');store("proc-"+name+".log",read(std::string("/proc/")+file,budget.allowance(MiB)));
     }
     for(const char* file:{"enabled","defrag","shmem_enabled"})
-        atomic_file(path/(std::string("thp-")+file+".log"),read(std::string("/sys/kernel/mm/transparent_hugepage/")+file));
+        store(std::string("thp-")+file+".log",read(std::string("/sys/kernel/mm/transparent_hugepage/")+file,budget.allowance(MiB)));
     auto capture=[&](const std::string& name,const auto& collect) {
+        if(!budget.allowance(1)){partial=true;receipt<<name<<" bounded=total_time_bytes_or_free_space\n";return;}
         std::string value;
         try {value=collect();}
         catch(const std::exception& error) {
-            atomic_file(path/(name+".error"),std::string("Collection unavailable: ")+error.what()+'\n');
+            store(name+".error",std::string("Collection unavailable: ")+error.what()+'\n');partial=true;
             receipt<<name<<" exit=1\n";return;
         }
-        atomic_file(path/name,value);receipt<<name<<" exit=0\n";
+        if(store(name,value))receipt<<name<<" exit=0\n";
     };
     capture("partitions.json",[]{return inventory(false);});
     capture("device-status.log",[]{return status();});
@@ -536,6 +644,7 @@ std::string report() {
     need(release.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-+_\n")==std::string::npos,"Unexpected kernel release; refusing public summary");
     const auto collected=std::time(nullptr);std::tm utc{};need(gmtime_r(&collected,&utc),"UTC clock unavailable");char date[32]{};need(std::strftime(date,sizeof(date),"%Y-%m-%dT%H:%M:%SZ",&utc),"UTC clock formatting failed");
     atomic_file(path/"github-summary.md",std::string("Date: ")+date+"\nDevice family: Uke / SM7675\nApplication: uke-control "+cli::version+"\nKernel: "+release+"\nA private local diagnostic bundle was collected. Raw logs, addresses, identifiers and partition inventories are not attached.\n\nObserved problem and reproduction steps: to be supplied by the reporter.\nHardware acceptance is not inferred from collection success.\n");
+    atomic_file(path/"collection-state.json","{\"complete\":true,\"partial\":"+std::string(partial?"true":"false")+",\"data_bytes\":"+std::to_string(budget.used())+"}\n");
     return path.string();
 }
 void report_github(const std::string& dir,const std::string& repository) {

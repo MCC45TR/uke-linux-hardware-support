@@ -1,5 +1,15 @@
 # Charging policy source — 18 October 2026
 
+30 October 2026 persistence correction: qualified mode requests store a versioned
+`charge-intent` before invoking the helper. Any old standard `charge-limit` is
+retained as `charge-limit.retired` and removed from active boot restoration.
+Intent is not proof of admission or application: even a refused new helper
+request suppresses the obsolete legacy request. A fresh standard-threshold
+request writes both matching records. Boot restoration rejects unknown or
+conflicting intent; it never guesses which provider should own the policy.
+Firmware and unimplemented temporary-full routes do not retire a legacy request.
+These file/host contracts require installed reboot and qualified electrical tests.
+
 29 October 2026 longevity candidate: `charge plan hold70-80` previews the daily
 band and `charge mode hold70-80` routes the existing qualified pair70/80 helper.
 Neither operation qualifies a profile or proves physical cutoff. Original KDE

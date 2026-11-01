@@ -14,4 +14,6 @@ Result request_data(const std::string& role);
 char profile_pin(const std::string& assignments,const std::string& profile);
 std::string display_profiles(const std::filesystem::path& root);
 Result request_display_profile(const std::string& profile);
+std::string transition_status();
+Result recover_transition();
 }

@@ -131,8 +131,9 @@ must come from Fedora's `rawhide` repository, including a necessary downgrade.
 No other project package is handed to an arbitrary outside repository. If the
 original replacement is unavailable, the whole transaction is refused.
 
-`sync` repairs the saved selection; without a saved selection the default is
-stable. `update` performs the same synchronization and upgrades the other
+`sync` repairs the saved selection; without a saved selection it infers exactly
+one enabled stable/test COPR and refuses missing or ambiguous selections.
+`update` performs the same synchronization and upgrades the other
 distribution packages in the same dependency transaction. Dependency failures,
 version locks, missing candidates, duplicate repository definitions and
 unintended package removal are errors. There is no `nodeps`, signature bypass,
@@ -168,22 +169,28 @@ A candidate with a different RPM identity cannot
 reuse an installed `kernel-uname-r` module directory. This is a deliberate
 exception to ordinary-package replacement: the running and recovery modules
 must survive channel changes. The selected core, modules, DTBs and boot bundle
-must match exactly. Installing a different bundle with `automatic=0` leaves boot
-selection unchanged and reports pending activation. Selecting a different default requires the already reviewed
-`uke-kernel-update` `automatic=1` gate. The command never enables that gate.
-When that gate is enabled and RPM succeeds, it calls the existing guarded updater for the selected
-bundle; a post-transaction RPM hook may already have applied it. Its idempotent
-readback covers both paths. Updater failure keeps the channel pending and
+must match exactly. On 30 October 2026, Control 2.3.2 routes successful package
+transactions through updater 1.8.7's `transaction` interface. The updater reads
+both automatic policies and the trusted selected userdata profile, retains a
+pending trial and verifies an idempotent match with any RPM hook. Installing a
+newer kernel leaves an older selected userdata profile in force. The command
+does not enable automatic updates or select another default. The
+`kernel_activation_pending` field remains true while the package-selected
+kernel differs from the running kernel, including after staging. It does not
+establish that the selected boot profile changed. Updater failure keeps the channel pending and
 reports that the tablet must not reboot. Stock firmware, Android A, storage
 layout, persist policy and the updater's battery/backup checks are not bypassed.
 
 Downloads and signatures precede persistent channel changes. Root-private
-`channel-pending`, `channel-transaction.json` and
+`channel-pending`, versioned `channel-operation`, `channel-transaction.json` and
 `channel-repositories.before` records under `/var/lib/uke-control` describe
 interrupted work. The saved successful channel is committed only after the RPM
 transaction and required boot selection succeed. If an operation is interrupted,
-`channel sync` resumes the pending selection against current signed metadata;
-it does not promise the old exact transaction or an automatic package rollback.
+`channel sync` can replan only before RPM starts. Once RPM is durably complete,
+it resumes the recorded original kernel's boot/selection finalization without
+replaying RPM or resolving a new transaction. An unknown RPM outcome refuses
+automatic retry and requires DNF history/boot-state inspection. Root channel
+status reports operation IDs and phases; no userspace rollback is promised.
 An interrupted `.new` file is refused for inspection. RPM/scriptlet failure can
 leave some packages installed; read DNF history and the retained record. Do not
 reboot an incomplete kernel transition.
@@ -194,3 +201,11 @@ DNF4/Python backend, donor installer or project Python payload is invoked.
 root in a disposable host container with rpm-sign, GnuPG and createrepo_c,
 exercises signed local repositories and an isolated RPM database. None of these
 checks establishes a tablet channel switch, kernel boot or rollback result.
+
+30 October 2026: preview includes download/RPM payload totals and filesystem
+bytes/inodes. Staging peak remains unknown; native RPM space checks remain
+required. No kernel cleanup occurs without complete running/selected/recovery,
+module, firmware and boot reference ownership. The boot helper must be trusted
+before mutation or supplied by the planned helper package. A common maintenance
+reservation excludes prepared layout/resize. Catchable termination is deferred
+during mutation; SIGKILL/power loss can still leave uncertain RPM completion.

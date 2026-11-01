@@ -5,6 +5,7 @@
 #include <charconv>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <fcntl.h>
@@ -148,16 +149,59 @@ std::vector<fs::path> compression_controls(const fs::path& root) {
     }
     return out;
 }
+namespace {
+std::optional<unsigned> stream_field(const std::string& state,const std::string& name) {
+    std::istringstream input(state);std::string token;std::optional<unsigned> result;
+    while(input>>token) {
+        if(!token.starts_with(name+'='))continue;
+        if(result)return std::nullopt;
+        const auto raw=std::string_view(token).substr(name.size()+1);unsigned number{};
+        const auto parsed=std::from_chars(raw.data(),raw.data()+raw.size(),number);
+        if(raw.empty()||parsed.ec!=std::errc{}||parsed.ptr!=raw.data()+raw.size())return std::nullopt;
+        result=number;
+    }
+    return result;
+}
+std::string compression_stream(const fs::path& root,const fs::path& node) {
+    const auto path=sysfs::resolved(root,node.parent_path()/"uke_dp_stream_state");
+    return path?value(*path):std::string{};
+}
+unsigned compression_interface(const std::string& state) {
+    if(!state.empty()&&stream_field(state,"version")!=1)return 0;
+    // Drivers predating the versioned live control have only the boolean ABI.
+    std::istringstream input(state);std::string token;bool advertised=false;
+    while(input>>token)if(token.starts_with("dsc_control="))advertised=true;
+    if(!advertised)return 1;
+    return stream_field(state,"version")==1&&stream_field(state,"dsc_control")==2?2:0;
+}
+}
+std::string compression_value(const std::string& policy,unsigned interface_version) {
+    need(policy=="auto"||policy=="on"||policy=="off","DP_COMPRESSION_MUST_BE_AUTO_ON_OR_OFF");
+    need(interface_version==1||interface_version==2,"DP_COMPRESSION_INTERFACE_UNSUPPORTED");
+    need(policy!="auto"||interface_version==2,"DP_COMPRESSION_AUTO_REQUIRES_INTERFACE_2");
+    return policy=="auto"?"auto":policy=="on"?"1":"0";
+}
 std::string compression_status(const fs::path& root) {
     const auto nodes=compression_controls(root);
     const std::string prefix="{\"schema\":\"org.uke.control.display.compression.v1\",";
     if(nodes.size()!=1)return prefix+"\"control_available\":false,\"reason\":"+
         sysfs::quote(nodes.empty()?"kernel_control_unavailable":"ambiguous_kernel_control")+"}\n";
     const auto policy=sysfs::attribute(root,nodes.front());
-    if(policy!="\"0\""&&policy!="\"1\"")
+    const auto stream=compression_stream(root,nodes.front());
+    const auto interface_version=compression_interface(stream);
+    if(!interface_version)return prefix+"\"control_available\":false,\"reason\":\"unsupported_driver_interface\"}\n";
+    if(policy!="\"0\""&&policy!="\"1\""&&!(interface_version==2&&policy=="\"auto\""))
         return prefix+"\"control_available\":false,\"reason\":\"invalid_kernel_policy\"}\n";
-    return prefix+"\"control_available\":true,\"requested\":"+(policy=="\"1\""?"true":"false")+
-        ",\"requires_disconnected\":true,\"persisted\":false,\"cached_driver_state\":"+
+    const auto active=stream_field(stream,"active"),dsc=stream_field(stream,"dsc_active");
+    const bool valid_active=stream_field(stream,"version")==1&&active&&dsc&&*active<=1&&*dsc<=1&&(*active||!*dsc);
+    return prefix+"\"control_available\":true,\"driver_interface_version\":"+std::to_string(interface_version)+
+        ",\"policy\":"+sysfs::quote(policy=="\"auto\""?"auto":policy=="\"1\""?"on":"off")+
+        ",\"requested\":"+(policy!="\"0\""?"true":"false")+
+        ",\"forced\":"+(interface_version==2?(policy=="\"1\""?"true":"false"):"null")+
+        ",\"dsc_active\":"+(valid_active?(*dsc?"true":"false"):"null")+
+        ",\"live_change_supported\":"+(interface_version==2?"true":"false")+
+        ",\"requires_disconnected\":"+(interface_version==2?"false":"true")+
+        ",\"persisted\":false,\"cached_driver_state\":"+
         sysfs::object(root,nodes.front().parent_path(),{"uke_dp_stream_state"})+
         ",\"physical_validation\":\"NOT_ESTABLISHED\"}\n";
 }
@@ -228,9 +272,10 @@ Result lane_limit(const std::string& lanes) {
     return {0,receipt("dp_lane_ceiling",lanes)};
 }
 Result compression(const std::string& policy) {
-    need(policy=="on"||policy=="off","DP_COMPRESSION_MUST_BE_ON_OR_OFF");
+    need(policy=="auto"||policy=="on"||policy=="off","DP_COMPRESSION_MUST_BE_AUTO_ON_OR_OFF");
     const auto nodes=compression_controls("/");need(nodes.size()==1,"DP_COMPRESSION_UNAVAILABLE_OR_AMBIGUOUS");
-    write_attribute(nodes.front(),policy=="on"?"1":"0");
+    const auto input=compression_value(policy,compression_interface(compression_stream("/",nodes.front())));
+    write_attribute(nodes.front(),input);
     return {0,receipt("dp_dsc_request",policy)};
 }
 Result usb_power(const std::string& name,const std::string& policy) {

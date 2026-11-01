@@ -10,6 +10,26 @@ static Options options(std::initializer_list<const char*> input) {
 }
 int main() {
     {
+        char pattern[]="/tmp/uke-kernel-transaction-XXXXXX";assert(mkdtemp(pattern));
+        const fs::path root=pattern,helper=root/"updater",arguments=root/"arguments";
+        std::ofstream(helper)<<"#!/bin/sh\nprintf '%s\\n' \"$@\" > '"<<arguments.string()<<"'\n";
+        assert(chmod(helper.c_str(),0700)==0);
+        // Exercise the real fork/exec/wait path with a COPR-only helper, without boot or policy access.
+        for(const bool json:{false,true}) {
+            boot_kernel("7.3.0-60",json,helper);
+            assert(read_file(arguments)=="transaction\n/usr/lib/senemos/kernel-updates/7.3.0-60\n");
+        }
+        const auto rejected=[&](const fs::path& path){
+            bool caught=false;try{boot_kernel("7.3.0-60",false,path);}catch(const std::exception&){caught=true;}assert(caught);
+        };
+        assert(chmod(helper.c_str(),0777)==0);rejected(helper);
+        assert(chmod(helper.c_str(),0700)==0);
+        fs::create_symlink(helper,root/"link");rejected(root/"link");rejected(root/"missing");
+        std::ofstream(helper)<<"#!/bin/sh\nexit 23\n";
+        rejected(helper);
+        fs::remove_all(root);
+    }
+    {
         libdnf5::Base base;auto& c=base.get_config();
         c.get_installonlypkgs_option().set(std::vector<std::string>{"","custom-kernel","installonlypkg(kernel)"});
         c.get_installonly_limit_option().set(2);c.get_protect_running_kernel_option().set(false);
@@ -61,6 +81,8 @@ int main() {
     assert(private_package("uke-video-firmware-local"));
     assert(!private_package("uke-video-firmware-local-extra"));
     assert(!private_package("uke-local-sensor-data")&&!private_package("uke-local-touch-data-extra"));
+    assert(kernel_userspace("kernel-headers")&&kernel_userspace("kernel-tools"));
+    assert(!kernel_userspace("kernel-core")&&!kernel_userspace("kernel-modules"));
     assert(managed_repo(prefix+"uke-linux-test:custom:experiment"));assert(!managed_repo(prefix+"unrelated"));
     assert(infer_channel({prefix+"uke-linux-test"})=="test");
     assert(infer_channel({"uke-linux"})=="stable");
@@ -84,6 +106,12 @@ int main() {
     if(geteuid()==0) {
         char dir[]="/tmp/uke-channel-state-XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
         auto rejected=[](auto&& fn){bool caught=false;try{fn();}catch(const std::exception&){caught=true;}assert(caught);};
+        const auto helper=root/"updater";
+        assert(!boot_helper_ready(helper));
+        std::ofstream(helper)<<"#!/bin/sh\nexit 0\n";assert(!chmod(helper.c_str(),0755));assert(boot_helper_ready(helper));
+        assert(!chmod(helper.c_str(),0775));assert(!boot_helper_ready(helper));assert(!chmod(helper.c_str(),0755));
+        fs::create_symlink(helper,root/"updater-link");assert(!boot_helper_ready(root/"updater-link"));
+        fs::create_hard_link(helper,root/"updater-hardlink");assert(!boot_helper_ready(helper));fs::remove(root/"updater-hardlink");
         const auto previous_mask=umask(0077);
         atomic_write(root/"channel","test\n");assert(saved(root/"channel")=="test");
         struct stat mode{};assert(stat((root/"channel").c_str(),&mode)==0&&(mode.st_mode&0777)==0644);

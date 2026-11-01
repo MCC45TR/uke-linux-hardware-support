@@ -52,9 +52,11 @@ struct App {
     wl_display *display{}; wl_registry *registry{}; wl_compositor *compositor{}; wl_shm *shm{};
     xdg_wm_base *shell{}; wp_presentation *presentation{}; wl_surface *surface{};
     xdg_surface *xdg{}; xdg_toplevel *toplevel{};
+    wl_callback* initial_sync{}; bool globals_ready=false;
     std::array<Buffer,3> buffers{}; std::unordered_set<Feedback*> pending;
     int width=1208,height=807; bool configured{},failed{},csv{}; uint32_t clock{},presented{},discarded{};
     ~App() {
+        if(initial_sync)wl_callback_destroy(initial_sync);
         for (auto *f:pending) { wp_presentation_feedback_destroy(f->object); delete f; }
         for (auto &b:buffers) { if(b.object)wl_buffer_destroy(b.object); if(b.pixels)munmap(b.pixels,b.bytes); }
         if(toplevel)xdg_toplevel_destroy(toplevel);
@@ -86,6 +88,27 @@ static void global(void *data,wl_registry *registry,uint32_t id,const char *name
 }
 static void removed(void*,wl_registry*,uint32_t){}
 static const wl_registry_listener registry_listener{global,removed};
+static void globals_done(void* data,wl_callback* callback,uint32_t) {
+    auto& app=*static_cast<App*>(data);app.globals_ready=true;app.initial_sync=nullptr;
+    wl_callback_destroy(callback);
+}
+static const wl_callback_listener globals_listener{globals_done};
+static void dispatch(wl_display* display,uint64_t deadline) {
+    while(wl_display_prepare_read(display)!=0) {
+        if(wl_display_dispatch_pending(display)<0)throw std::runtime_error("Prepare dispatch");
+        if(stopped||now()>=deadline)return;
+    }
+    const int flushed=wl_display_flush(display);const bool wants_write=flushed<0&&errno==EAGAIN;
+    if(flushed<0&&!wants_write){wl_display_cancel_read(display);throw std::runtime_error("Wayland flush");}
+    const auto current=now();const uint64_t wait=deadline>current?std::min<uint64_t>(deadline-current,50000000):0;
+    const timespec timeout{0,long(wait)};
+    pollfd fd{wl_display_get_fd(display),short(POLLIN|(wants_write?POLLOUT:0)),0};
+    const int ready=ppoll(&fd,1,&timeout,nullptr);
+    if(ready>0&&(fd.revents&POLLIN)){if(wl_display_read_events(display)<0)throw std::runtime_error("Read events");}
+    else wl_display_cancel_read(display);
+    if((ready<0&&errno!=EINTR)||(fd.revents&(POLLERR|POLLHUP|POLLNVAL)))throw std::runtime_error("Display poll");
+    if(wl_display_dispatch_pending(display)<0)throw std::runtime_error("Pending dispatch");
+}
 static void configure(void *data,xdg_surface *surface,uint32_t serial) {
     xdg_surface_ack_configure(surface,serial); static_cast<App*>(data)->configured=true;
 }
@@ -160,18 +183,22 @@ int run(int argc,char **argv) {
     }
     std::signal(SIGINT,[](int){stopped=1;});std::signal(SIGTERM,[](int){stopped=1;});
     try {
+        const auto configure_deadline=now()+5000000000ULL;
         App a;a.csv=csv;a.display=wl_display_connect(nullptr);if(!a.display)throw std::runtime_error("Wayland display");
         a.registry=wl_display_get_registry(a.display);wl_registry_add_listener(a.registry,&registry_listener,&a);
-        if(wl_display_roundtrip(a.display)<0||!a.compositor||!a.shm||!a.shell||!a.presentation)throw std::runtime_error("Required original Wayland globals");
+        a.initial_sync=wl_display_sync(a.display);
+        if(!a.initial_sync)throw std::runtime_error("Wayland initial sync allocation");
+        wl_callback_add_listener(a.initial_sync,&globals_listener,&a);
+        while(!a.globals_ready&&!stopped&&now()<configure_deadline)dispatch(a.display,configure_deadline);
+        if(!a.globals_ready)throw std::runtime_error(stopped?"Wayland registry cancelled":"Wayland registry timeout");
+        if(!a.compositor||!a.shm||!a.shell||!a.presentation)throw std::runtime_error("Required original Wayland globals");
         a.surface=wl_compositor_create_surface(a.compositor);a.xdg=xdg_wm_base_get_xdg_surface(a.shell,a.surface);
         xdg_surface_add_listener(a.xdg,&surface_listener,&a);a.toplevel=xdg_surface_get_toplevel(a.xdg);
         xdg_toplevel_add_listener(a.toplevel,&toplevel_listener,&a);
         xdg_toplevel_set_title(a.toplevel,"Uke VRR laboratory — bounded 43-second cadence");
         xdg_toplevel_set_app_id(a.toplevel,"org.senemos.Uke.VrrLab");xdg_toplevel_set_fullscreen(a.toplevel,nullptr);wl_surface_commit(a.surface);
-        const auto configure_deadline=now()+5000000000ULL;
         while(!a.configured&&!a.failed&&!stopped&&now()<configure_deadline) {
-            pollfd fd{wl_display_get_fd(a.display),POLLIN,0};wl_display_flush(a.display);
-            if(poll(&fd,1,100)>0&&wl_display_dispatch(a.display)<0)throw std::runtime_error("Configure dispatch");
+            dispatch(a.display,configure_deadline);
         }
         if(!a.configured||a.failed||stopped)throw std::runtime_error("Fullscreen configure timeout or unsupported size");
         allocate(a);const auto start=now();uint64_t deadline=start;unsigned frame=0,last_stage=99;
@@ -198,16 +225,7 @@ int run(int argc,char **argv) {
                 // Absolute targets exclude rendering cost without a catch-up burst.
                 deadline=next_deadline(deadline,now(),s.interval);
             }
-            while(wl_display_prepare_read(a.display)!=0)if(wl_display_dispatch_pending(a.display)<0)throw std::runtime_error("Prepare dispatch");
-            const int flushed=wl_display_flush(a.display);const bool wants_write=flushed<0&&errno==EAGAIN;
-            if(flushed<0&&!wants_write){wl_display_cancel_read(a.display);throw std::runtime_error("Wayland flush");}
-            const auto current=now();const uint64_t wait=deadline>current?std::min<uint64_t>(deadline-current,50000000):0;
-            const timespec timeout{0,long(wait)};
-            pollfd fd{wl_display_get_fd(a.display),short(POLLIN|(wants_write?POLLOUT:0)),0};
-            const int ready=ppoll(&fd,1,&timeout,nullptr);
-            if(ready>0&&(fd.revents&POLLIN)){if(wl_display_read_events(a.display)<0)throw std::runtime_error("Read events");}
-            else wl_display_cancel_read(a.display);
-            if((ready<0&&errno!=EINTR)||(fd.revents&(POLLERR|POLLHUP|POLLNVAL)))throw std::runtime_error("Display poll");
+            dispatch(a.display,deadline);
         }
         if(a.failed)throw std::runtime_error("Output size changed");
         require_presentation(a.presented);

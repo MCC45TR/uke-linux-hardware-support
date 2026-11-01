@@ -7,7 +7,7 @@
 #include <csignal>
 #include <memory>
 #include <stdexcept>
-#include <thread>
+#include <poll.h>
 #include <unistd.h>
 
 namespace uke::charge {
@@ -95,8 +95,8 @@ void moisture_notifications() {
         const auto event=state.observe(observation);
         if(event!=MoistureNotice::none) pending=event;
         if(pending!=MoistureNotice::none && notify(bus.get(),id,pending)) pending=MoistureNotice::none;
-        for(unsigned ticks=0;ticks<20 && !stopping;++ticks)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // Signals interrupt the single fallback timer; no 100 ms wake-up loop.
+        if(!stopping)poll(nullptr,0,2000);
     }
 }
 }
