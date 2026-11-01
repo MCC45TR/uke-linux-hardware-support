@@ -9,7 +9,7 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cache=$root/uke-desktop-packaging/referances/fedora-returns-20261101
 fixture=$(mktemp -d)
 trap 'rm -rf -- "$fixture"' EXIT
-mkdir -p "$fixture"/{baseline,candidate,originals,roots,cache,keys}
+mkdir -p "$fixture"/{baseline,candidate,originals,kernel,roots,cache,keys}
 touch "$fixture/empty.conf"
 rpmkeys --dbpath "$fixture/keys" --import "$root/packaging/families/keys/fedora-46.asc"
 curl -fLsS --max-time 60 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/pubkey.gpg -o "$fixture/copr.asc"
@@ -37,6 +37,17 @@ fetch 11239678 uke-meta-integration candidate
 jq -r '.packages[]|select(.arch!="src")|.name' "$fixture/results.json" > "$fixture/meta-names"
 fetch 11239677 uke-control candidate
 cp "$fixture/candidate/uke-control-"*.rpm "$fixture/baseline/"
+# Model an installed tablet cohort; Control deliberately refuses kernel-free roots.
+kernel_url=https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11238013-senemos-uke-linux-kernel-mainline/
+curl -fLsS --max-time 60 "${kernel_url}results.json" -o "$fixture/kernel-results.json"
+while IFS= read -r file;do
+    [[ $file =~ ^senemos-uke-linux-kernel-mainline(-core|-modules|-dtbs|-boot)?-[A-Za-z0-9_.~-]+[.]aarch64[.]rpm$ ]]
+    curl -fLsS --max-time 240 "$kernel_url$file" -o "$fixture/kernel/$file"
+    rpmkeys --dbpath "$fixture/keys" --checksig "$fixture/kernel/$file"
+done < <(jq -r '.packages[]|select(.arch=="aarch64" and (.name|test("^senemos-uke-linux-kernel-mainline(-core|-modules|-dtbs|-boot)?$")))|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/kernel-results.json")
+[[ $(find "$fixture/kernel" -maxdepth 1 -name '*.rpm' | wc -l) == 5 ]]
+cp "$fixture/kernel/"*.rpm "$fixture/baseline/"
+cp "$fixture/kernel/"*.rpm "$fixture/candidate/"
 for repo in baseline candidate originals; do createrepo_c --quiet "$fixture/$repo"; done
 c++ -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(pkg-config --cflags libdnf5 rpm libsystemd) \
     "$root/packaging/families/tests/published-fedora-returns.cpp" "$root/uke-control/src/cli.cpp" -I"$root/uke-control/src" -o "$fixture/solver" $(pkg-config --libs libdnf5 rpm libsystemd)
@@ -46,11 +57,11 @@ for selection in core kde all; do
         mkdir -p "$target/usr/lib/sysimage/rpm"
         rpm --dbpath "$target/usr/lib/sysimage/rpm" --initdb
         rpmkeys --dbpath "$target/usr/lib/sysimage/rpm" --import "$fixture/copr.asc" "$root/packaging/families/keys/fedora-46.asc"
-        seed=();count=0
+        seed=("$fixture/kernel/"*.rpm);count=0
         if [[ $mode != fresh ]]; then
             for file in "$fixture/baseline/"*.rpm; do
                 name=$(rpm -qp --qf '%{NAME}' "$file" 2>/dev/null)
-                case $name in uke-control-tests|uke-control-tui) continue;; uke-plasma-controls) [[ $selection == all ]] || continue;; esac
+                case $name in senemos-uke-linux-kernel-*|uke-control-tests|uke-control-tui) continue;; uke-plasma-controls) [[ $selection == all ]] || continue;; esac
                 original=
                 if [[ $name != uke-libstdcxx ]]; then original=$(jq -r --arg name "$name" '.pairs[]|select(.fork_name==$name)|.original.url|split("/")|last' "$root/packaging/families/consolidation/fedora-return-inputs.json");fi
                 if [[ -z $original && $name != uke-libstdcxx && $name != uke-control && $name != uke-core-meta ]];then

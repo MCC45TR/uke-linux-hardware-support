@@ -43,7 +43,7 @@ int main(int argc,char** argv) {
             if(pkg.get_name()=="uke-libstdcxx")assert(action==Action::REINSTALL);
         }
         if(libdnf5::transaction::transaction_item_action_is_inbound(action)) {
-            ++inbound;if(!reverse)assert(!fedora_return(pkg.get_name(),false));
+            ++inbound;assert(!kernel_package(pkg.get_name()));if(!reverse)assert(!fedora_return(pkg.get_name(),false));
             if(pkg.get_name()=="libstdc++")assert(false&&"Console GNU runtime changed without its policy gate");
         }
     }
