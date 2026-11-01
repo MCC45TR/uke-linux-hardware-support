@@ -45,6 +45,10 @@ mkdir -p "$bundle/inputs" "$stage/parts" "$output"/{SOURCES,SPECS,SRPMS}
 printf '%s\n' '20 October 2026. Source-family packaging; device acceptance remains separate.' >"$bundle/README"
 cp packaging/families/{families.json,source-inputs.json} "$bundle/"
 cp LICENSE "$bundle/LICENSE"
+if [[ $integration == true && $family == uke-meta-integration ]];then
+    cp uke-core-meta/src/profile.json "$bundle/core-profile.json"
+    cp uke-desktop-metas/src/profile.json "$bundle/desktops-profile.json"
+fi
 cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
@@ -180,15 +184,6 @@ while IFS=$'\t' read -r key input; do
         bash packaging/families/host/fedora-cxx-runtime.sh "${specs[0]}" "$part/fedora-cxx.spec"
         cp "$part/fedora-cxx.spec" "${specs[0]}"
     fi
-    if [[ $integration == true && $family == uke-meta-integration ]]; then
-        # Keep the shipped readiness record consistent with the admitted Fedora root policy.
-        input_version=$(rpm -qp --qf '%{VERSION}' "$input")
-        archive=$source/$key-$input_version.tar.xz
-        mkdir -p "$part/profile"
-        tar -xJf "$archive" -C "$part/profile"
-        install -m644 "$root/$key/src/profile.json" "$part/profile/$key-$input_version/src/profile.json"
-        tar --sort=name --mtime=@1793491200 --owner=0 --group=0 --numeric-owner -cJf "$archive" -C "$part/profile" "$key-$input_version"
-    fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
@@ -291,6 +286,15 @@ spec="$output/SPECS/$family.spec"
             ' "$part/$phase"
             printf ')\n'
         done <"$stage/inputs"
+        if [[ $integration == true && $family == uke-meta-integration && ( $phase == install || $phase == check ) ]];then
+            # Retained child archives are nested source families; apply policy at their installed boundary.
+            for selection in core desktops;do
+                policy="%{_builddir}/$family-$version/$selection-profile.json"
+                installed="%{buildroot}%{_datadir}/senemos/uke/$selection/profile.json"
+                if [[ $phase == install ]];then printf 'install -Dm644 "%s" "%s"\n' "$policy" "$installed"
+                else printf 'cmp "%s" "%s"\n' "$policy" "$installed";fi
+            done
+        fi
         if [[ $group == uke-hw && ( -z $standalone || $standalone == uke-firmware ) && $phase == install ]]; then
             # RPM's native post-install processing runs before %check.
             printf 'mv "%%{buildroot}/usr/lib/firmware" "%%{_builddir}/%s-%s/firmware-unprocessed"\n' "$family" "$version"
