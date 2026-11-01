@@ -3,5 +3,5 @@ uke-speaker-firmware	xiaomi-uke-firmware/referances/speaker-preset-3.0.304.0	xia
 uke-displayport-audio	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-displayport-audio/debian	local-x86_64-data-build-passed-native-pending
 uke-speaker-controls	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-controls/debian	local-x86_64-data-build-passed-native-pending
 uke-gpu-defaults	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-gpu-defaults/debian	local-x86_64-data-build-passed-native-pending
-uke-bluetooth	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-bluetooth/debian	source-qualification-pending
-uke-speaker-orientation	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-orientation/debian	source-qualification-pending
+uke-bluetooth	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-bluetooth/debian	local-source-build-passed-native-pending
+uke-speaker-orientation	uke-desktop-integration	uke-desktop-integration/manifests	packaging/ubuntu/main-recipes/uke-speaker-orientation/debian	local-source-build-passed-native-pending

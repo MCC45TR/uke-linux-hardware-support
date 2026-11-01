@@ -44,3 +44,17 @@ prove speaker operation, grant rights for other firmware or enroll additional
 recipes. Keep the existing recipe and its branches until the replacement is
 qualified and the publication transition is authorized. Archive unique source
 and pristine metadata tips before deleting old branches.
+
+## Additional adapters
+
+DisplayPort/UCM, speaker-control data and GPU defaults now have generated main
+overlays. Official Ubuntu24 x86_64 tools constructed source and ARM64-tagged
+data-only DEBs with dependencies checked; installed bytes and both UCM links
+match the common source. They retain all missing runtime ABI requirements.
+This is not native Tenacious or service/device admission.
+
+Bluetooth and speaker orientation have source-only main adapters with guarded
+input revisions and prefixed shared source paths. Source construction and
+dry build plans pass; no helper compilation or execution occurred in this
+adapter qualification. These five routes remain unenrolled in Launchpad.
+The other thirteen historical non-kernel routes still need main adapters.

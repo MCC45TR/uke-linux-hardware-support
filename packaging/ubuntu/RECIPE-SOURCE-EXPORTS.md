@@ -1,5 +1,22 @@
 # Shared-source recipe exports
 
+## Main-only migration update
+
+The active speaker daily recipe now uses the canonical main recipe described
+in [MAIN-RECIPES.md](MAIN-RECIPES.md). Historical export and pristine metadata
+tips are preserved as `archive/main-only-20261101/launchpad/PACKAGE` and
+`archive/main-only-20261101/pristine-tar` tags. Before removing old heads, the
+replacement's actual Launchpad source, ARM64 binary and signed APT checks
+must pass. The older branch-based enrollment instructions below are historical.
+
+`prepare-archived-recipe.sh PACKAGE NEW_DIRECTORY` materializes a disposable
+local repository and recipe from those exact tags. Source and metadata pins
+are checked against `recipe-source-manifest.tsv`; original archives retain
+their recorded hashes. All nineteen exports reconstructed byte for byte using
+official recipe tools without network or upstream execution. This preserves
+historical reproducibility without requiring remote export/pristine branches.
+It is not an automatic daily main adapter for the other eighteen packages.
+
 Recorded 1 November 2026. Nineteen non-kernel source routes passed native
 Tenacious ARM64 package construction and now have public `launchpad/PACKAGE`
 branches in the shared hardware-support repository. The kernel retry remains
