@@ -150,26 +150,26 @@
     {
       "name": "uke-control",
       "version": "2.8.0",
-      "release": 1,
+      "release": 2,
       "sources": [
         {
           "name": "uke-control",
           "build_id": 11239677,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239677/uke-control-2.8.0-2.fc46.src.rpm",
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.8.0-2.fc46.src.rpm",
           "sha256": "68e832bd37fc7d356bfb121a171d396b7e2018229d0acb096223013aed3c0405",
           "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239677/uke-control-2.8.0-2.fc46.src.rpm"
         },
         {
           "name": "uke-meta-integration",
           "build_id": 11239896,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239896/uke-meta-integration-1.0.0-8.src.rpm",
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-meta-integration-1.0.0-8.src.rpm",
           "sha256": "7e85db697ed6fbfb7f292d87b0516935cb9eaf2e4f1fc9ccb902d3e7e5fc7b16",
           "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239896/uke-meta-integration-1.0.0-8.src.rpm"
         },
         {
           "name": "uke-power-integration",
           "build_id": 11239842,
-          "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239842/uke-power-integration-1.0.0-2.src.rpm",
+          "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-power-integration-1.0.0-2.src.rpm",
           "sha256": "cb0a1250fe2d5c8dc321f81be234344d69887807b71f395131149f42090a56d0",
           "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11239842/uke-power-integration-1.0.0-2.src.rpm"
         }

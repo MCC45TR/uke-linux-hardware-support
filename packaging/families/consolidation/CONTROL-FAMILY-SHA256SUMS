@@ -1,0 +1,15 @@
+b95125cbfcb302cbe30c587a2c7efa3a2ce2ed8e57499d0b442dc89fc81ff66c  uke-adaptive-display-1.0.16-14.fc46.aarch64.rpm
+741b5c299a2c6a33740312c91a9a29525900bff3f8a71dd42c080f99d39e5867  uke-battery-observer-1.4.1-3.fc46.aarch64.rpm
+dd440f98b5fc0e9fae8c4f3e515976f516761f34fe686d400fcc7ff7b9a39e8e  uke-charge-control-1.4.1-3.fc46.aarch64.rpm
+a633307c9500fceb7d6c840e133d0ccc95808eb716327943c412166cc7512b68  uke-control-2.8.0-2.fc46.aarch64.rpm
+68e832bd37fc7d356bfb121a171d396b7e2018229d0acb096223013aed3c0405  uke-control-2.8.0-2.fc46.src.rpm
+b3e0847ff6b873f194aebfcfb35a38e88be9104185a87f7cc92bf2af33fef2e3  uke-control-tests-2.8.0-2.fc46.aarch64.rpm
+86b65af7898d6b529097e320366a3bb94f632a86051f79337f194c8955ef333d  uke-control-tui-2.8.0-2.fc46.aarch64.rpm
+c1056f29674926a2020f44419b331d421d1ea8e48383f98de460cb95c8cf761e  uke-core-meta-1.0.7-16.fc46.aarch64.rpm
+348a16201f1ac4ed7c69085599cb994f5f5dc82edafd6e665af9550426e0d2f1  uke-cutefish-meta-1.0.0-32.fc46.aarch64.rpm
+0f548ebd93ede0f42af9f6686e97c14b4e36423d321c491fef05024c3b7dbb0b  uke-desktop-metas-1.0.0-32.fc46.aarch64.rpm
+a1ed4bb92b33eba27f4fcf7ceba0f875f37233bd5828dc7d31fe67f1e408fa35  uke-kde-plasma-meta-1.0.0-32.fc46.aarch64.rpm
+7e85db697ed6fbfb7f292d87b0516935cb9eaf2e4f1fc9ccb902d3e7e5fc7b16  uke-meta-integration-1.0.0-8.src.rpm
+dcba012e915da34510a1d46d8894de3b65b4ee2cb006766653a7f9c62e73216d  uke-offline-charge-1.4.1-3.fc46.aarch64.rpm
+83c364dea04a256fa1ffcd24708beb0ee0abbba14639ff8087d4700624ebdb85  uke-plasma-controls-1.0.0-32.fc46.noarch.rpm
+cb0a1250fe2d5c8dc321f81be234344d69887807b71f395131149f42090a56d0  uke-power-integration-1.0.0-2.src.rpm
