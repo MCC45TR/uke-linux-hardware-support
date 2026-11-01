@@ -1,0 +1,12 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Uke FS19xx speaker preset
+Source: https://bigota.d.miui.com/OS3.0.304.0.WOZMIXM/uke_global-ota_full-OS3.0.304.0.WOZMIXM-user-16.0-f70cbc0556.zip
+Comment: Exact /odm/firmware/fs19xx.fsm mapping is retained in odm-NOTICE.xml.gz.
+ Its file hash, notice content ID and source identity are in provenance.json.
+ This attribution is specific to this preset, not the remaining OEM firmware.
+
+Files: *
+Copyright: Original OEM contributors identified by the bundled ODM notice
+License: Apache-2.0
+ Complete text is retained in LICENSE.Apache-2.0 and is also available at
+ /usr/share/common-licenses/Apache-2.0.
