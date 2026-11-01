@@ -25,6 +25,6 @@ awk '
 ' "$stage/rpmbuild/SOURCES/inxi.spec" > "$spec"
 install -m644 "$owner/patches/0002-inxi-soc-thermal-classification.patch" \
     "$owner/tests/inxi-soc-thermal.sh" "$stage/rpmbuild/SOURCES/"
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec") == inxi-3.3.41-3.* ]]
+[[ $(rpmspec --define 'dist %{nil}' -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec") == inxi-3.3.41-3 ]]
 rpmbuild -bs --nodeps --define "_topdir $stage/rpmbuild" --define '_buildhost copr-builder' "$spec"
 install -m644 "$stage/rpmbuild/SRPMS/"*.src.rpm "$output/"
