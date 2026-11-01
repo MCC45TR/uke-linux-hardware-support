@@ -56,7 +56,6 @@ for spec in "$inner/packaging/uke-boot-integration.spec" "$input/uke-boot-integr
  install -m644 "$stage/updated.spec" "$spec"
 done
 rewrite_spec "$stage/sources/uke-boot-integration.spec" "$output/uke-boot-integration.spec"
-sed -i 's/^version := .*/version := 1.8.19/' "$inner/Makefile"
 commit=$(git -C "$owner" rev-parse HEAD)
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
 mv "$inner" "$stage/inner/uke-boot-integration-1.8.19"
