@@ -1,2 +1,2 @@
 build/uke-bluetooth-address usr/libexec
-packaging/uke-bluetooth-address.service usr/lib/systemd/system
+source/packaging/uke-bluetooth-address.service usr/lib/systemd/system

@@ -45,3 +45,7 @@ Copyright: 2013 The Android Open Source Project
 License: Apache-2.0
  Licensed under the Apache License, Version 2.0. The full text is available
  in /usr/share/common-licenses/Apache-2.0 on Debian systems.
+
+Files: AGENTS.md README.md LICENSE debian/*
+Copyright: 2026 MCC45TR
+License: MIT

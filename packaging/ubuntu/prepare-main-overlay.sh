@@ -23,7 +23,7 @@ case $package in
       -e 's| src/| source/src/|g' "$canonical/rules" > "$output/rules"
   for list in "$output/"*.install; do
    [[ -f $list ]] || continue
-   sed -i -E 's|^(src/|packaging/)|source/\1|' "$list"
+   sed -i -E 's#^(src/|packaging/)#source/\1#' "$list"
   done
   cat >> "$output/copyright" <<'COPYRIGHT'
 
