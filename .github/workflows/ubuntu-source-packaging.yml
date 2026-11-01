@@ -33,6 +33,7 @@ jobs:
           bash packaging/ubuntu/tests/boot-provenance.sh
           bash packaging/ubuntu/tests/main-recipes.sh
           bash packaging/ubuntu/tests/main-data-recipes.sh
+          bash packaging/ubuntu/tests/main-libssc.sh
           bash packaging/ubuntu/tests/archived-source.sh
           bash packaging/ubuntu/recipes/uke-linux-kernel/debian/boot-adapter/test-account-normalization.sh
           bash packaging/ubuntu/recipes/uke-linux-kernel/debian/boot-adapter/test-initrd-release.sh

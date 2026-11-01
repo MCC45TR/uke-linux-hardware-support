@@ -70,8 +70,15 @@ at `4600858f32a8c704c0120c6e32bc11a5f6d87eaa`. Its downloaded artifact hashes,
 same-revision source manifest, AArch64 payload and actual-Uke/container/chroot
 maintainer guards verify independently. It remains unenrolled in Launchpad.
 
-The libssc source adapter retains the same upstream archive and seven shared
-patches as Fedora. Its generated native overlay has not yet passed native
-qualification. Eight other historical non-kernel routes still need main
-adapters, including battery release and touchscreen input reconciliation.
-Historical source exports remain reproducible through archived tags.
+The libssc adapter retains Fedora's upstream archive and seven shared patches.
+Every unpacked upstream file matches the historical quilt result. Its clean
+native Tenacious ARM64 build passed at `d0d453a31772b821b08a3b50b5ff3d29520e6f18`;
+all four downloaded binary packages, artifact hashes and input revisions verify.
+The library retains the real dual-light ABI; its development package remains
+a host SDK input. No new Launchpad enrollment or sensor operation is claimed.
+Source fixtures reject corruption, incomplete or broken patches and leave no
+partially prepared tree.
+
+Eight other historical non-kernel routes still need main adapters, including
+battery release and touchscreen input reconciliation. Historical source exports
+remain reproducible through archived tags.

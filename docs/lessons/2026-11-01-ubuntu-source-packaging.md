@@ -515,3 +515,13 @@ runtime/dev ABI relationships and excludes Python mocks through the original
 Meson options and payload audit. Explicit patch tooling is a build dependency.
 Source tree comparison and native qualification are pending. SensorProxy must
 wait for the real qualified libssc-dev package; no ABI provider is fabricated.
+
+Superseding libssc qualification: the clean native Tenacious ARM64 build at
+`d0d453a31772b821b08a3b50b5ff3d29520e6f18` passed for all four binary packages.
+Downloaded artifact and per-file hashes, AArch64 payloads, absence of Python
+payloads/direct runtime dependencies and equal recipe input revisions verify.
+Every unpacked upstream file matches the older qualified quilt result. Source
+regression fixtures now reject corrupted archives, missing or broken patches
+and partial preparation; successful patching leaves no offset backup files.
+The main snapshot retains real library/dev ABI relationships and upgrade order.
+This is server package qualification, not Launchpad enrollment or sensor success.

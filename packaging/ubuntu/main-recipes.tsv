@@ -9,4 +9,4 @@ uke-core-meta	uke-core-meta	uke-core-meta/manifests	packaging/ubuntu/main-recipe
 uke-front-color	uke-sensors	uke-sensors/manifests	packaging/ubuntu/main-recipes/uke-front-color/debian	native-tenacious-arm64-passed-not-enrolled
 uke-proximity-capture	uke-sensors	uke-sensors/manifests	packaging/ubuntu/main-recipes/uke-proximity-capture/debian	native-tenacious-arm64-passed-not-enrolled
 uke-installation-profile	uke-boot	uke-boot/manifests	packaging/ubuntu/main-recipes/uke-installation-profile/debian	native-tenacious-arm64-passed-not-enrolled
-libssc	uke-sensors	uke-sensors/manifests	packaging/ubuntu/main-recipes/libssc/debian	source-adapter-native-qualification-pending
+libssc	uke-sensors	uke-sensors/manifests	packaging/ubuntu/main-recipes/libssc/debian	native-tenacious-arm64-passed-not-enrolled
