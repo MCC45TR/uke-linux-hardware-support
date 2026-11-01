@@ -27,6 +27,7 @@ int main(int argc,char** argv) try {
     config.get_reposdir_option().set(std::vector<std::string>{});
     config.get_cachedir_option().set((fixture/"cache").string());
     config.get_install_weak_deps_option().set(weak);
+    config.get_optional_metadata_types_option().set(std::set<std::string>{"filelists"});
     config.get_best_option().set(true);config.get_installonly_limit_option().set(0);
     base.get_vars()->set("releasever","46");base.setup();
     const std::string target=reverse?"baseline":"candidate";
