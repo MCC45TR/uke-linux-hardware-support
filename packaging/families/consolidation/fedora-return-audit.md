@@ -6,6 +6,10 @@ Uke. The [input manifest](fedora-return-inputs.json) identifies 13 signed
 original/fork pairs, immutable download locations and complete SHA256 hashes.
 It does not admit replacements.
 
+The later [desktop return result](fedora-return-results.md) records the three
+admitted source families and their separate migration checks. The GNU and
+libaccounts limits below remain in force.
+
 The static comparison passed for 13 shared libraries. The original Fedora
 libraries retain the reviewed exported-symbol versions and SONAMEs. All 219
 header, pkg-config, GIR and typelib files and 836 libwacom database files

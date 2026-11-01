@@ -1,5 +1,12 @@
 # Uke Control
 
+1 November 2026: **2.8.0** combines the qualified terminal and microphone
+features with three independent signed channels and guarded package phase
+recovery. The compatible unstable meta selects three original Fedora desktop
+families while retaining the console GNU runtime. Native checks and isolated
+dependency plans passed; tablet migration remains untested. See the
+[package record](../packaging/families/consolidation/fedora-return-results.md).
+
 30 October 2026: release 2.3.1-5 recognizes the driver's automatic DSC policy
 and live DRM control interface. Policy and cached activation are reported
 separately; older boolean drivers retain their existing restrictions.

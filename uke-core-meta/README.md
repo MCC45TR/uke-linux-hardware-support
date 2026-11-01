@@ -1,5 +1,11 @@
 # Uke core package selection
 
+1 November 2026. Core `1.0.7-12` uses the compatible Control manager for three
+original Fedora desktop package returns. Native builds and dependency plans
+passed; tablet installation and rollback remain untested. The console GNU
+runtime and boot policy stay in place. See the
+[migration record](../packaging/families/consolidation/fedora-return-results.md).
+
 22 October 2026. Version `1.0.5` recommends `uke-plymonth` for installation with
 normal `dnf update` when weak dependencies are enabled. It is not required:
 `sudo dnf remove uke-plymonth` keeps Core installed. DNF's default

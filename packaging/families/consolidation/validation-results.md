@@ -1,9 +1,15 @@
 # Validation results
 
-1 November 2026: the additional [original Fedora comparison](fedora-return-audit.md)
-passed its signed static checks for 13 libraries, 219 interface files and 836
-libwacom database files. Original-package migration remains unadmitted; this
-does not reduce the active producer or installed binary count.
+1 November 2026: [three original Fedora desktop returns](fedora-return-results.md)
+passed native builds, signed package inspection and 15 published-cohort
+dependency plans. Live routing has 26 active and 17 retained definitions,
+including the independently added color-profile source. The GNU console
+return and tablet acceptance remain open.
+
+The initial [original Fedora comparison](fedora-return-audit.md) passed its
+signed static checks for 13 libraries, 219 interface files and 836 libwacom
+database files. That comparison alone did not admit migration or reduce the
+producer or installed binary count.
 
 1 November 2026. Source editing and RPM inspection on Fedora Rawhide 46
 AArch64; all native compilation and package checks run in COPR. No tablet

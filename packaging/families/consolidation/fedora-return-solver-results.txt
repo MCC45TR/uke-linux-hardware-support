@@ -1,0 +1,15 @@
+UKE_PUBLISHED_FEDORA_RETURN mode=fresh selection=core returns=0 inbound=666 outbound=0 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=upgrade selection=core returns=12 inbound=695 outbound=15 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=mixed selection=core returns=6 inbound=671 outbound=9 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=reverse selection=core returns=0 inbound=693 outbound=15 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=weak-off selection=core returns=12 inbound=517 outbound=15 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=fresh selection=kde returns=0 inbound=1219 outbound=0 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=upgrade selection=kde returns=12 inbound=1241 outbound=16 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=mixed selection=kde returns=6 inbound=1217 outbound=10 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=reverse selection=kde returns=0 inbound=1239 outbound=16 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=weak-off selection=kde returns=12 inbound=982 outbound=16 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=fresh selection=all returns=0 inbound=1220 outbound=0 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=upgrade selection=all returns=12 inbound=1243 outbound=18 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=mixed selection=all returns=6 inbound=1219 outbound=12 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=reverse selection=all returns=0 inbound=1241 outbound=18 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false
+UKE_PUBLISHED_FEDORA_RETURN mode=weak-off selection=all returns=12 inbound=984 outbound=18 console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false

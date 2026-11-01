@@ -1,0 +1,190 @@
+{
+  "schema": 1,
+  "date": "2026-11-01",
+  "project": "mcc45tr/uke-linux-unstable",
+  "chroot": "fedora-rawhide-aarch64",
+  "state": "source-routing-applied",
+  "builds": [
+    {
+      "name": "uke-control",
+      "id": 11239677,
+      "version": "2.8.0-2.fc46",
+      "source_commit": "a51a0b9fa9ec779907c67ec97ec3654662bebc18"
+    },
+    {
+      "name": "uke-meta-integration",
+      "id": 11239731,
+      "version": "1.0.0-4",
+      "source_commit": "8f1d4c61719f544e5e6e16ecc4c9c05c7b2db6db"
+    }
+  ],
+  "returned_sources": [
+    "uke-at-spi2-core",
+    "uke-gstreamer1",
+    "uke-libwacom"
+  ],
+  "mappings": [
+    {
+      "fork": "uke-atk",
+      "original": "atk",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-atk-devel",
+      "original": "atk-devel",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-at-spi2-atk",
+      "original": "at-spi2-atk",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-at-spi2-atk-devel",
+      "original": "at-spi2-atk-devel",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-at-spi2-core",
+      "original": "at-spi2-core",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-at-spi2-core-devel",
+      "original": "at-spi2-core-devel",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-gstreamer1",
+      "original": "gstreamer1",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-gstreamer1-devel",
+      "original": "gstreamer1-devel",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-libwacom",
+      "original": "libwacom",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-libwacom-data",
+      "original": "libwacom-data",
+      "architecture": "noarch"
+    },
+    {
+      "fork": "uke-libwacom-devel",
+      "original": "libwacom-devel",
+      "architecture": "aarch64"
+    },
+    {
+      "fork": "uke-libwacom-utils",
+      "original": "libwacom-utils",
+      "architecture": "aarch64"
+    }
+  ],
+  "console_gnu_return_admitted": false,
+  "libaccounts_return_admitted": false,
+  "source_routing": {
+    "definitions": 43,
+    "active_before": 29,
+    "active_after": 26,
+    "retained_after": 17,
+    "script_fields_changed": 5,
+    "source_worker_builddeps_changed": [
+      "uke-meta-integration"
+    ],
+    "definitions_deleted": false,
+    "unrelated_fields_preserved": true,
+    "project_settings_preserved": true,
+    "guard_checks": {
+      "known_control_revision_refused": true,
+      "known_meta_revision_refused": true,
+      "malformed_history_refused": true
+    }
+  },
+  "independent_new_source_preserved": "uke-o82-color-profile",
+  "signed_binaries": [
+    {
+      "file": "uke-control-2.8.0-2.fc46.aarch64.rpm",
+      "build": 11239677,
+      "sha256": "a633307c9500fceb7d6c840e133d0ccc95808eb716327943c412166cc7512b68",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-control-tests-2.8.0-2.fc46.aarch64.rpm",
+      "build": 11239677,
+      "sha256": "b3e0847ff6b873f194aebfcfb35a38e88be9104185a87f7cc92bf2af33fef2e3",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-control-tui-2.8.0-2.fc46.aarch64.rpm",
+      "build": 11239677,
+      "sha256": "86b65af7898d6b529097e320366a3bb94f632a86051f79337f194c8955ef333d",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-core-meta-1.0.7-12.fc46.aarch64.rpm",
+      "build": 11239731,
+      "sha256": "d955e9e3122b9d83efd0ca743c2dd0b8d723a945aa997a1a295273fd91a97566",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-desktop-metas-1.0.0-28.fc46.aarch64.rpm",
+      "build": 11239731,
+      "sha256": "a2fe82a9e6d6cfa0157ff80a2e0546dbb8375c16ff79868869bb3b1339ed544c",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-plasma-controls-1.0.0-28.fc46.noarch.rpm",
+      "build": 11239731,
+      "sha256": "baea3d5d42967cc1aaa1ecf61c0a38fe09932721e71c2f91ff6e4ef4ca986ff4",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-cutefish-meta-1.0.0-28.fc46.aarch64.rpm",
+      "build": 11239731,
+      "sha256": "82c2d0f55588245f9ebf35c25470eb4b70c06080ecee9fe63760dc308dc17801",
+      "signature_verified": true
+    },
+    {
+      "file": "uke-kde-plasma-meta-1.0.0-28.fc46.aarch64.rpm",
+      "build": 11239731,
+      "sha256": "16fafeed0bbcad5f6ee03a34d36fc37bb47913d7b2f25031fa42a24ffe87d271",
+      "signature_verified": true
+    }
+  ],
+  "static_comparison": {
+    "signed_pairs": 13,
+    "dsos": 13,
+    "interface_files": 219,
+    "libwacom_data_files": 836,
+    "package_hooks_and_service_policy_match": true
+  },
+  "source_solver_modes": 10,
+  "published_cohort_plans": 15,
+  "fixture_kernel": {
+    "build": 11238013,
+    "version": "7.3.1-106.fc46",
+    "parts": 5,
+    "retained": true
+  },
+  "archive": {
+    "release": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/tag/copr-consolidation-archive-20261101",
+    "additional_checksum_file": "FEDORA-RETURN-SHA256SUMS",
+    "additional_artifacts": 23,
+    "github_digests_verified": 24
+  },
+  "tablet_transaction_executed": false,
+  "physical_acceptance": false,
+  "source_worker_dependencies_added": [
+    "binutils",
+    "createrepo_c",
+    "dnf5",
+    "libdnf5-devel",
+    "rpm-devel",
+    "systemd-devel"
+  ]
+}

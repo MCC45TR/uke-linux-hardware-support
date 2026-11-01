@@ -4,6 +4,11 @@
 snapshots must be compared with the pins in inventory.json; main alone does
 not describe the live unstable binaries.
 
+The later [desktop return result](fedora-return-results.md) closes the
+at-spi2-core, GStreamer and libwacom package gates. The table preserves their
+reviewed fork differences; the GNU console gate and the real corrections in
+the other sources remain open.
+
 | Source | Retained difference | Removal gate |
 |---|---|---|
 | uke-at-spi2-core | Optional Python GI override excluded | Signed original Fedora accessibility payload and closure equivalence |

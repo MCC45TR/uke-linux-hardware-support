@@ -54,6 +54,9 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-12
+- Validate published desktop return and reverse plans with the retained kernel and GNU runtime.
+
 * Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-11
 - Select original Fedora accessibility, media and tablet metadata through the compatible manager.
 - Bound conflicts to reviewed fork releases; retain the existing console GNU runtime capability.
