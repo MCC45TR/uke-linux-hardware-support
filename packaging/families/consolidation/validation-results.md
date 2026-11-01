@@ -1,5 +1,10 @@
 # Validation results
 
+1 November 2026: the additional [original Fedora comparison](fedora-return-audit.md)
+passed its signed static checks for 13 libraries, 219 interface files and 836
+libwacom database files. Original-package migration remains unadmitted; this
+does not reduce the active producer or installed binary count.
+
 1 November 2026. Source editing and RPM inspection on Fedora Rawhide 46
 AArch64; all native compilation and package checks run in COPR. No tablet
 installation, hardware test, boot write or reboot was performed.
