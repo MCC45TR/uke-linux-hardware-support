@@ -51,4 +51,29 @@ if [[ $package == iio-sensor-proxy ]]; then
  apt-get install -y /work/libssc/*.deb
 fi
 build_one "$package"
+if [[ $package == uke-speaker-firmware ]]; then
+ # No maintainer hooks or device services exist in this data-only package.
+ apt-get install -y /work/uke-speaker-firmware/*.deb
+ preset=/usr/lib/firmware/qcom/uke/audio/fs19xx.fsm
+ printf '%s  %s\n' f319e71d60ed19d539296665fa06cc07fbcf93bf82f773c787bed65289129e7b "$preset" | sha256sum -c -
+ printf '\nlocal-conffile-test\n' >> "$preset"
+ cp "$preset" /work/expected-conffile
+ dpkg --force-confold -i /work/uke-speaker-firmware/*.deb
+ cmp /work/expected-conffile "$preset"
+ apt-get remove -y uke-speaker-firmware
+ cmp /work/expected-conffile "$preset"
+ apt-get purge -y uke-speaker-firmware
+ [[ ! -e $preset ]]
+ # Official git-build-recipe is an unavoidable Launchpad recipe host tool.
+ # Its upstream Python dependencies remain confined to this server container.
+ apt-get install -y git-build-recipe devscripts pristine-tar quilt
+ dpkg-query -W git-build-recipe > /evidence/recipe-tool-version.tsv
+ dpkg-source -x /work/uke-speaker-firmware/*.dsc /work/recipe-pristine
+ bash packaging/ubuntu/export-recipe-source.sh /work/recipe-pristine /work/recipe-source
+ chown -R builder:builder /work/recipe-source
+ printf '%s\n' '# git-build-recipe format 0.4 deb-version {debupstream}-0ubuntu1~tenacious1+git{revtime}' '/work/recipe-source launchpad/uke-speaker-firmware' > /work/test.recipe
+ runuser -u builder -- git-build-recipe --distribution tenacious /work/test.recipe /work/recipe-result
+ find /work/recipe-result -maxdepth 1 -type f \( -name '*.dsc' -o -name '*.tar.*' -o -name '*.changes' \) -exec cp -t /evidence/ -- {} +
+ echo 'install/reinstall/local-conffile/remove/purge and recipe source construction passed' > /evidence/firmware-acceptance.txt
+fi
 (cd /evidence; find . -maxdepth 1 -type f ! -name ARTIFACT-SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > ARTIFACT-SHA256SUMS)
