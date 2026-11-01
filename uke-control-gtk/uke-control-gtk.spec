@@ -10,8 +10,10 @@ BuildRequires: pkgconfig(gtk4) >= 4.12
 BuildRequires: pkgconfig(libadwaita-1) >= 1.5
 BuildRequires: pkgconfig(jsoncpp)
 BuildRequires: pkgconfig(uke-control-client) >= 2.8.0
+BuildRequires: %{_includedir}/uke-control/frontend.hpp
 BuildRequires: desktop-file-utils
 Requires: uke-control >= 2.8.0
+Requires: %{_libexecdir}/uke-control/frontend-request
 Requires: gnome-terminal
 
 %description

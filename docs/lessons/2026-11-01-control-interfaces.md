@@ -93,3 +93,50 @@ real GNOME and KDE sessions, exercise existing authenticated terminal handoff,
 and perform separately authorized hardware acceptance before claiming charging,
 screen, microphone, touch or recovery support. Xvfb, fixture values and command
 exit statuses do not establish physical behavior.
+
+## Review follow-up — 1 November 2026
+
+The package-fixture failure above was narrowed to an optional Rawhide-only test
+branch calling the real runtime release parser without handling an unsupported
+build host. The test now explicitly skips that branch on an unsupported host,
+continues all other package checks and asserts that the Container Image
+Prerelease spelling remains refused. Neither `src/fedora-target.hpp` nor runtime
+`src/packages.cpp` changed. This does not qualify that container for channel
+switching; the optional configuration branch still needs an admitted Rawhide host.
+
+The unchanged ABI audit and complete source-family aggregate check subsequently
+pass after populating their existing ignored cache with exact archived artifacts.
+The existing GitHub release `copr-consolidation-archive-20261101` contains all 13
+fork RPMs; each release digest and independently downloaded SHA-256 matches the
+pinned manifest. The missing uke-atk file is 84,895 bytes with SHA-256
+`c056d680bac275946f71feeb417e3963aa25d71a5240913e6f81f9896468d949`.
+The direct COPR URL remains HTTP 404. The audit separately verifies all 13 signed
+pairs, 13 DSOs, 219 interfaces and 836 data files; payloads are not executed and
+replacement admission remains false. No pin or runtime dependency upgrade was
+used to obtain these passes.
+
+Both GUI specs now explicitly require the installed `frontend-request` path and
+build against the installed `frontend.hpp` path, in addition to the existing
+client/version requirements. This prevents an older nominally matching core
+package lacking the new companion from satisfying the GUI contract.
+
+Remote CI verification for source commits `59f26ba` and `a190182` found zero
+Actions runs. `a190182` has zero check runs and zero legacy statuses; GitHub's
+combined status is `pending` because no statuses exist. These commits deliberately
+use `[skip ci]` to avoid a COPR request. Local test results are not remote CI passes.
+
+After the test-only correction, `make -C uke-control check` passes completely in
+this laboratory, with the optional Rawhide-specific configuration branch
+explicitly skipped. `make validate` also passes. A normal core RPM build passes
+build dependency admission and package assembly without `--nodeps`; its package
+owns the required client library, SDK header and terminal companion.
+
+Normal DNF dry runs of both rebuilt GUI RPMs correctly refuse default Fedora
+repositories lacking Uke Control. Including the actual locally built core RPM
+satisfies their new core/file/library requirements, but the transaction still
+cannot resolve the core's existing `uke-kernel-update >= 1.8.7` and
+`uke-kernel-update(transaction-v1) >= 1` dependencies from the enabled repositories.
+No provider RPM is available in this workspace. No missing dependency was
+stubbed, bypassed, downgraded or installed, and no unrelated repository or package
+upgrade was used. The GUI RPM assembly tests are passes; complete normal package
+transaction acceptance remains blocked on that existing external core dependency.

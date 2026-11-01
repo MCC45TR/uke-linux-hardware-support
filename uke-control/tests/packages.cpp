@@ -8,7 +8,19 @@ static Options options(std::initializer_list<const char*> input) {
     std::vector<char*> args;for(auto arg:input)args.push_back(const_cast<char*>(arg));
     return parse(int(args.size()),args.data());
 }
+// configure() deliberately checks the real host release. This optional fixture
+// must not turn an unsupported build host into a runtime-admission test failure.
+static bool rawhide_repository_fixture_host(const std::string& release) {
+    try{return fedora_target(release)=="rawhide";}
+    catch(const std::runtime_error&){return false;}
+}
 int main() {
+    const std::string container_release="ID=fedora\nVERSION_ID=46\nVERSION=\"46 (Container Image Prerelease)\"\n";
+    bool container_refused=false;try{fedora_target(container_release);}catch(const std::runtime_error&){container_refused=true;}
+    assert(container_refused);
+    assert(!rawhide_repository_fixture_host(container_release));
+    assert(!rawhide_repository_fixture_host("ID=fedora\nVERSION_ID=45\n"));
+    assert(rawhide_repository_fixture_host("ID=fedora\nVERSION_ID=46\nVERSION=\"46 (Rawhide Prerelease)\"\n"));
     {
         char pattern[]="/tmp/uke-kernel-transaction-XXXXXX";assert(mkdtemp(pattern));
         const fs::path root=pattern,helper=root/"updater",arguments=root/"arguments";
@@ -37,7 +49,7 @@ int main() {
         assert((c.get_installonlypkgs_option().get_value()==std::vector<std::string>{"custom-kernel","installonlypkg(kernel)",kernel}));
         assert(c.get_installonly_limit_option().get_value()==0&&c.get_protect_running_kernel_option().get_value());
     }
-    if(fedora_target(read_file("/etc/os-release"))=="rawhide") {
+    if(rawhide_repository_fixture_host(read_file("/etc/os-release"))) {
         char pattern[]="/tmp/uke-channel-repository-XXXXXX";assert(mkdtemp(pattern));const fs::path root=pattern;
         {
             libdnf5::Base base;base.get_config().get_installroot_option().set((root/"root").string());
@@ -59,7 +71,7 @@ int main() {
             assert(checked&&persisted.get_value()==std::vector<std::string>{"custom-block"});
         }
         fs::remove_all(root);
-    }
+    } else std::cerr<<"Skipping optional Rawhide repository fixture: host is not an admitted Rawhide target.\n";
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
     assert(options({"update"}).update);assert(options({"update","--check"}).dry);

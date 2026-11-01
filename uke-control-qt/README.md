@@ -92,6 +92,12 @@ source archives built against an installed client may disable tests with
 the existing monolithic `uke-control` package. CMake installs the executable,
 desktop entry and scalable icon using standard GNU installation directories.
 It does not change the existing family package metadata.
+The RPM additionally requires the package-owned
+`/usr/libexec/uke-control/frontend-request` helper: an older package with the same
+2.8.0 version may lack that addition. Building requires the package-owned
+`/usr/include/uke-control/frontend.hpp` header and `pkgconfig(uke-control-client)`
+2.8.0 or newer. Manually copied SDK files do not satisfy RPM dependency checks;
+a `--nodeps` assembly build alone does not establish installability.
 
 On 1 November 2026, the Fedora 46/rawhide software container built the application
 with GCC 16.2.1 and Qt 6.12.0. The installed native Breeze plugin was
@@ -100,6 +106,14 @@ with GCC 16.2.1 and Qt 6.12.0. The installed native Breeze plugin was
 review blocking and an actual nonroot charging read. The actual read returned
 `available: false`; this was displayed as provider unavailable. A staged CMake
 installation was executed against the installed shared client.
+
+Dependency verification on the same date built the current core RPM with normal
+RPM dependency checks and `--nocheck`. A default-repository `dnf --assumeno install`
+preview of the two GUI RPMs could not find the core package. Including the actual
+local core RPM supplied the helper and shared-library providers, but resolution
+still stopped on external `uke-kernel-update >= 1.8.7` and
+`uke-kernel-update(transaction-v1) >= 1` requirements. The preview ran no
+transaction or scriptlets; complete installation remains unverified.
 
 Screenshots and logs stay under ignored `build/`. These are source, build and
 synthetic desktop checks. No tablet, physical touch acceptance, charging cutoff,

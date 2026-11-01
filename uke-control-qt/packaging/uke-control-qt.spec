@@ -8,8 +8,10 @@ BuildRequires:  gcc-c++
 BuildRequires:  cmake
 BuildRequires:  make
 BuildRequires:  qt6-qtbase-devel
-BuildRequires:  pkgconfig(uke-control-client)
+BuildRequires:  pkgconfig(uke-control-client) >= 2.8.0
+BuildRequires:  %{_includedir}/uke-control/frontend.hpp
 Requires:       uke-control >= 2.8.0
+Requires:       %{_libexecdir}/uke-control/frontend-request
 Requires:       plasma-breeze-qt6
 Requires:       konsole
 
