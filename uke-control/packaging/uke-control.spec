@@ -11,6 +11,7 @@ BuildRequires: pkgconfig(wayland-client) wayland-devel wayland-protocols-devel
 BuildRequires: pkgconfig(libselinux) systemd-rpm-macros
 BuildRequires: libdnf5-devel >= 5.4.6.0 pkgconfig(rpm)
 BuildRequires: dbus-daemon jq lua
+BuildRequires: createrepo_c rpm-sign gnupg2
 BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 BuildRequires: pkgconfig(ncursesw)
@@ -126,7 +127,7 @@ install -d -m700 %{buildroot}%{_localstatedir}/lib/uke-control
 
 %check
 ulimit -c 0
-%make_build check
+%make_build check check-repositories
 
 %pre
 # Stop the previous root worker while its matching cleanup executable still exists.
