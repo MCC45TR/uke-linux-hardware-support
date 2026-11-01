@@ -36,11 +36,15 @@ No key, credential, upload or Ubuntu image was created here.
 | uke-core-meta | Ubuntu dependency graph and unqualified profile | Data-only DEB/payload checked |
 
 Native sources have **not** been compiled or executed. These recipes use shared
-component baseline `cbecc441059ebffa97497e736edd2e0b0b0546a5`; later COPR
-integration source pins/patch overrides remain a distinct reconciliation step.
-For example the initial battery baseline is 1.2.0 while the current core
-selection requires >=1.4.1. The metapackage preserves that requirement rather
-than quietly treating the baseline as current. No installed/boot/device result
+component baseline `cbecc441059ebffa97497e736edd2e0b0b0546a5`, except battery
+1.4.1, which uses the exact released source pinned in `release-sources.tsv`.
+Source RPM extraction retrieves only the named, checksum-verified source tar;
+it neither converts a binary RPM nor executes RPM specs. This preserves the
+mandatory integrated protection inventory proof missing in the initial 1.2.0
+baseline. Later integration patches for other components still need review.
+Front-color's Fedora wrapper version 1.0.2 contains application source 0.1.0;
+its five C++ source/header files match the shared baseline byte for byte.
+No installed/boot/device result
 is inferred from source assembly or a data-only package build.
 
 Service activation follows the original choices: front-color remains opt-in;

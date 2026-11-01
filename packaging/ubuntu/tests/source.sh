@@ -27,6 +27,9 @@ while IFS=$'\t' read -r package component version; do
    [[ $(wc -l < "$debian/patches/series") == 6 ]]
    grep -q -- "-Dfastcv=disabled" "$debian/rules" ;;
   uke-battery-observer)
+   grep -q 'integrated_protection_inventory' "$stage/src/battery/control-profile.cpp"
+   grep -q 'Source-SHA256: 59ddb88df4139a1ba9e893ac23975ef6885582afcbfa1ed2d4d8b68c42573839' "$stage/RELEASE-ORIGIN"
+   dpkg --compare-versions "$(dpkg-parsechangelog -l"$debian/changelog" -S Version)" ge 1.4.1
    grep -q "dh_installsystemd -puke-battery-observer --no-start" "$debian/rules"
    grep -q "dh_installsystemd -puke-charge-control --no-enable --no-start" "$debian/rules"
    jq -e ".enable_control==false and .qualification==\"unqualified\"" "$stage/manifests/control-profile.json" >/dev/null ;;

@@ -83,3 +83,19 @@ reproduced the missing `origin/ubuntu` reference. Fetching only the configured
 branch ref repairs validation without moving the pinned checkout. Root commit
 33e237d retains all existing tests; run 41301170081 passed the workspace job.
 This is branch-awareness, not a package or hardware qualification result.
+# Release source reconciliation: battery protection inventory
+
+Recorded 1 November 2026 on Debian 13 x86_64. Lesson ID:
+`ubuntu-source-release-identity-20261101`. The current Control family reuses
+the released battery 1.4.1 source RPM, whereas the common Git component is
+older. Its `control-profile.cpp` requires an additional
+`integrated_protection_inventory` digest; readiness metadata also demands
+inventory review and leaves physical acceptance false. Pin both the source
+RPM and its nested source archive and reuse that source verbatim in Debian.
+Never advance a version label without reconciling these safety differences.
+All 16 source assembly/extraction checks pass; no upstream code was compiled
+or executed. Battery ARM64 build, runtime and physical qualification remain
+pending. Front-color's 1.0.2 wrapper contains 0.1.0 source with five source
+files identical to the common baseline; wrapper and application versions
+must be reported separately.
+

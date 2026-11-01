@@ -23,6 +23,7 @@ for item in Makefile LICENSE LICENSE.GPL-3.0 LICENSE.Apache-2.0 src packaging ma
 done
 git -C "$root" archive "$revision" "${paths[@]}" | tar -x -C "$stage" --strip-components=1
 source "$root/packaging/ubuntu/prepare-upstream.sh"
+source "$root/packaging/ubuntu/prepare-release.sh"
 if [[ $pkg == uke-touchscreen ]]; then source "$root/packaging/ubuntu/prepare-touch.sh"; fi
 printf '%s\n' "Repository: https://github.com/MCC45TR/uke-linux-hardware-support" "Revision: $revision" "Component: $component" > "$stage/SOURCE-ORIGIN"
 epoch=$(git -C "$root" show -s --format=%ct "$revision")

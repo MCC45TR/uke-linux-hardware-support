@@ -4,7 +4,7 @@ uke-speaker-controls	uke-desktop-integration	0.1.0
 uke-bluetooth	uke-desktop-integration	0.1.0
 uke-proximity-capture	uke-sensors	0.1.0
 uke-installation-profile	uke-boot	1.0.31
-uke-battery-observer	uke-platform-runtime	1.2.0
+uke-battery-observer	uke-platform-runtime	1.4.1
 uke-front-color	uke-sensors	0.1.0
 uke-ssc-fileservice	uke-sensors	2026.09.21
 libssc	uke-sensors	0.4.4

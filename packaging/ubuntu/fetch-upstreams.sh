@@ -11,6 +11,15 @@ while IFS=$'\t' read -r package archive url hash patchset; do
  fi
  printf '%s  %s\n' "$hash" "$root/$archive" | sha256sum -c -
 done < "$root/packaging/ubuntu/upstreams.tsv"
+while IFS=$'\t' read -r package archive url hash member source_hash; do
+ if [[ ! -s $root/$archive ]]; then
+  mkdir -p "$(dirname "$root/$archive")"
+  curl --fail --location --max-time 90 "$url" -o "$root/$archive.part"
+  printf '%s  %s\n' "$hash" "$root/$archive.part" | sha256sum -c -
+  mv "$root/$archive.part" "$root/$archive"
+ fi
+ printf '%s  %s\n' "$hash" "$root/$archive" | sha256sum -c -
+done < "$root/packaging/ubuntu/release-sources.tsv"
 touch_root=$root/uke-sensors/referances/nt36532-thp
 while IFS=$'\t' read -r path hash; do
  if [[ ! -s $touch_root/$path ]]; then
