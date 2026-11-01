@@ -12,6 +12,10 @@ versions, licenses, checks, dependencies, scriptlets and binary names, and
 increase every child Release. A source grouping creates no new runtime RPM,
 mandatory dependency or service. Each profile has its own revision; changing
 the common converter does not request unrelated rebuilds.
+Increase the source Release for every rebuild: it also determines each child's
+increment above its pinned baseline. Do not reset it while retaining the same
+baseline versions. The sensor source retains the existing optional
+`uke-ssc-fileservice-debuginfo` and `uke-ssc-fileservice-debugsource` identities.
 
 | Source group | Existing producers | Reduction |
 |---|---|---:|

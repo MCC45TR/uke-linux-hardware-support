@@ -30,6 +30,7 @@ if [[ $family =~ ^uke-(meta|power|sensor|audio|video|desktop-extras)-integration
 catalog=packaging/families/families.json
 if [[ $integration == true ]]; then catalog=packaging/families/integrations.json; fi
 profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' "$catalog")
+debug_owner=$(jq -r '.debug_owner // ""' <<<"$profile")
 if [[ $integration == true ]]; then
     [[ $fedora_target == rawhide && $(jq -er .fedora "$catalog") == "$fedora_number" ]]
 fi
@@ -169,14 +170,16 @@ while IFS=$'\t' read -r key input; do
         sed -i 's@^diff -r usr .*@find usr -type f -print0 | while IFS= read -r -d '\'''\'' file; do cmp -- "$file" "%{buildroot}/$file" || exit; done@' "${specs[0]}"
     fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
-    rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
+    debug_options=(--define 'debug_package %{nil}')
+    if [[ $key == "$debug_owner" ]]; then debug_options=(); fi
+    rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" "${debug_options[@]}" "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
     release_override=$(jq -r --arg key "$key" '.release_overrides[$key] // ""' packaging/families/families.json)
     preserve_identity=0
     if [[ $integration == true ]]; then native_version=;release_override=;preserve_identity=1; fi
     [[ -z $release_override || $release_override =~ ^[1-9][0-9]*[.]fc[0-9]+$ ]]
     [[ -z $release_override ]] || release_override=${release_override%%.fc*}$dist
-    awk -v preserve_identity="$preserve_identity" -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
+    awk -v release_increment="$release" -v preserve_identity="$preserve_identity" -v standalone="$standalone" -v dist="$dist" -v out="$part" -v mapping="$stage/rename" -v native_version="$native_version" -v release_override="$release_override" -f packaging/families/host/split-spec.awk "$part/expanded.spec"
     printf '%s\t%s\n' "$key" "$(sha256sum "$input" | cut -d' ' -f1)" >>"$bundle/INPUT-SRPMS.tsv"
 done <"$stage/inputs"
 group=$family
@@ -197,6 +200,7 @@ spec="$output/SPECS/$family.spec"
     for part in "$stage/parts/"*; do [[ ! -f $part/preamble ]] || awk '/^License:/{sub(/^License:[[:space:]]*/, "");print}' "$part/preamble"; done | LC_ALL=C sort -u | while IFS= read -r license; do printf ' AND (%s)' "$license"; done
     printf '\n'
     fi
+    if [[ -n $debug_owner ]]; then printf '%%global __debug_package 1\n%%global _debugsource_packages 1\n'; fi
     if [[ $group == uke-hw && ( -z $standalone || $standalone == uke-firmware ) ]]; then
         # DSP firmware ELF data is not a host executable and has no build-id link.
         printf '%%global _build_id_links none\n%%global _binaries_in_noarch_packages_terminate_build 0\n'
@@ -238,6 +242,10 @@ spec="$output/SPECS/$family.spec"
     for phase in prep generate_buildrequires build install check; do
         if [[ $phase == generate_buildrequires ]] && ! find "$stage/parts" -name generate_buildrequires -print -quit | grep -q .; then continue; fi
         [[ $phase == prep ]] || printf '\n%%%s\n' "$phase"
+        if [[ $phase == check && -n $debug_owner ]]; then
+            IFS=$'\t' read -r _ _ _ cwd _ _ <"$stage/parts/$debug_owner/identity"
+            printf 'cp debugfiles.list debugsourcefiles.list "%%{_builddir}/%s-%s/work/%s/%s/"\n' "$family" "$version" "$debug_owner" "$cwd"
+        fi
         if [[ $group == uke-hw && ( -z $standalone || $standalone == uke-firmware ) && $phase == check ]]; then
             printf 'mv "%%{_builddir}/%s-%s/firmware-unprocessed" "%%{buildroot}/usr/lib/firmware"\n' "$family" "$version"
         fi

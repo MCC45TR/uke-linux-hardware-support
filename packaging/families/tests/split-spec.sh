@@ -60,6 +60,17 @@ grep -Fx 'Obsoletes: uke-legacy < 2.0-7.fc46' "$stage/integration/preamble"
 [[ $(grep -c '^Epoch: 1$' "$stage/integration/preamble") == 2 ]]
 [[ $(grep -c '^License:' "$stage/integration/preamble") == 2 ]]
 printf '%s\n' 'PASS: integration identities, per-child EVRs, licenses, exact dependencies and compatibility bounds are preserved.'
+mkdir "$stage/integration-rebuild"
+awk -v preserve_identity=1 -v release_increment=3 -v out="$stage/integration-rebuild" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/integration-input"
+grep -Fx 'Release: 10.fc46' "$stage/integration-rebuild/preamble"
+grep -Fx 'Release: 6.fc46' "$stage/integration-rebuild/preamble"
+grep -Fx 'Requires: uke-fixture(aarch-64) = 2.0-10.fc46' "$stage/integration-rebuild/preamble"
+mkdir "$stage/integration-debug"
+awk '/^%build/ {print "%package debuginfo\nSummary: Optional debug\n%description debuginfo\nDebug.\n%package debugsource\nSummary: Optional sources\n%description debugsource\nSources."} {print}' "$stage/integration-input" >"$stage/integration-debug-input"
+awk -v preserve_identity=1 -v release_increment=2 -v out="$stage/integration-debug" -v mapping="$stage/rename" -f host/split-spec.awk "$stage/integration-debug-input"
+grep -Fx '%package -n uke-fixture-debuginfo' "$stage/integration-debug/preamble"
+grep -Fx '%package -n uke-fixture-debugsource' "$stage/integration-debug/preamble"
+[[ $(grep -c '^Release: 9.fc46$' "$stage/integration-debug/preamble") == 3 ]]
 grep -Fx 'Release: 2.fc46' "$stage/1.0.19/preamble"
 grep -Fx 'Release: 1.fc46' "$stage/0.1.0/preamble"
 mkdir "$stage/material"

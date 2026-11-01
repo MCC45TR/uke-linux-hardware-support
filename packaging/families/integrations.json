@@ -52,7 +52,8 @@
     {
       "name": "uke-sensor-integration",
       "version": "1.0.0",
-      "release": 1,
+      "release": 2,
+      "debug_owner": "uke-ssc-fileservice",
       "sources": [
         {
           "name": "uke-ssc-fileservice",

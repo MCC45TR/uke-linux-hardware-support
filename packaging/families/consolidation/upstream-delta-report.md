@@ -8,7 +8,7 @@ not describe the live unstable binaries.
 |---|---|---|
 | uke-at-spi2-core | Optional Python GI override excluded | Signed original Fedora accessibility payload and closure equivalence |
 | uke-gstreamer1 | Host documentation helpers excluded; native scanner retained | Original Fedora media/plugin closure and helper provenance |
-| uke-libaccounts-glib | Optional Python GI override excluded | Original native API, typelib, file ownership and account smoke checks |
+| uke-libaccounts-glib | Optional Python GI override excluded; upstream destructor/leak correction | Equivalent destructor fix as well as original native API, typelib, file ownership and account smoke checks |
 | uke-libwacom | Optional Python updater/viewer excluded | Original library/database, helper origin and tablet metadata checks |
 | uke-libstdcxx-runtime | GNU ABI without GDB Python pretty-printers | Exact versioned C++ symbols, security-update and original Fedora payload/closure audit; prefer the distribution runtime when admitted |
 | uke-accountsservice | Missing optional TCB directory accepts only ENOENT | Equivalent upstream error semantics and account regression checks |
@@ -23,11 +23,28 @@ not describe the live unstable binaries.
 | uke-fidelityfx | Linux portability and experimental context ABI | Compatible upstream SDK; installation is not frame-generation support |
 | material-decoration | Qt/QML metadata corrections for the pinned upstream decoration | Equivalent upstream metadata and KWin ABI |
 
+The five-return proposal needs a correction: the pinned Fedora
+`libaccounts-glib-1.25-28.fc46.src.rpm` does not contain the upstream destructor
+fix. Its SHA256 is
+`d9895473a2e6fe342f8a3975148166aa3bbf74580dee7da4bf57300664efdbcb`.
+The unmodified `ag-account.c` still passes `priv->services` instead of
+`priv->changes` to `_ag_account_changes_free`; the original spec declares no
+patch for this. Uke applies upstream commit
+`270a66d5efe1453a2be4bad10894b947fdd2923e` through
+`uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch`.
+The extracted original source file hashes to
+`b5c79b0f02019d3ddc4728d5c71379e0671a8e31b7fd08952f506d470cdb0f92`.
+Returning to that Fedora build would lose a real correction. A newer signed
+Fedora source must first demonstrate equivalence; relaxing the helper-payload
+policy alone is insufficient.
+
 DT describes documented hardware bindings. Kernel drivers own IRQ, transport,
 regulators, input, DRM, media and power-supply mechanisms. D-Bus, session
 policy, package updates/rollback, UCM, WirePlumber, UI and host image production
 retain their userspace owners. No synthetic DT node replaces a missing SSC
 protocol or desktop consumer. Mesa and a VA-API adapter are not kernel drivers.
+This follows the upstream [binding design guidance](https://docs.kernel.org/devicetree/bindings/writing-bindings.html):
+describe actual hardware and avoid nodes created solely to instantiate drivers.
 
 The donor policy requires Uke OEM, applicable same-SoC/shared-IP and upstream
 comparison before a driver change. This packaging change changes no driver or
