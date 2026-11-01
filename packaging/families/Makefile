@@ -16,3 +16,4 @@ check:
 	bash tests/fedora-return-abi.sh
 	bash tests/fedora-return-meta.sh
 	bash tests/fedora-cxx-runtime.sh
+	bash -n tests/gnu-initramfs.sh tests/published-fedora-returns.sh

@@ -24,7 +24,7 @@ int main(int argc,char** argv) {
     }
     need(base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING),"Fixture lock failed");
     base.get_repo_sack()->load_repos();auto p=plan(base,selected,{target},".fc46");
-    assert(p.originals==!reverse);assert(!p.cxx);
+    assert(p.originals==!reverse);assert(p.cxx==!reverse);
     if(mode=="fresh") {
         libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(target);
         std::set<std::string> metas;std::istringstream names(read_file(fixture/"meta-names"));
@@ -33,26 +33,28 @@ int main(int argc,char** argv) {
             (selection=="all"&&metas.contains(pkg.get_name()))) {p.targets.insert_or_assign(key(pkg),pkg);p.scope.insert(key(pkg));}
     }
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();size_t expected=0;
-    for(const auto& pkg:installed)if(fedora_return(pkg.get_name(),false))++expected;
+    for(const auto& pkg:installed)if(fedora_return(pkg.get_name()))++expected;
     if(!reverse)assert(p.returns.size()==expected);
     auto tx=resolve(base,p,selected,false);size_t inbound=0,outbound=0;
-    std::set<std::string> gnu_inbound;
-    for(const auto& item:tx.get_transaction_packages())if(item.get_package().get_name()=="uke-libstdcxx"&&libdnf5::transaction::transaction_item_action_is_inbound(item.get_action()))
-        gnu_inbound.insert(item.get_package().get_nevra());
+    bool gnu_original=false,gnu_fork=false;
+    for(const auto& item:tx.get_transaction_packages())if(libdnf5::transaction::transaction_item_action_is_inbound(item.get_action())) {
+        if(item.get_package().get_name()=="libstdc++")gnu_original=true;
+        if(item.get_package().get_name()=="uke-libstdcxx")gnu_fork=true;
+    }
     for(const auto& item:tx.get_transaction_packages()) {
         const auto pkg=item.get_package();const auto action=item.get_action();
         if(libdnf5::transaction::transaction_item_action_is_outbound(action)) {
             ++outbound;assert(!kernel_package(pkg.get_name())&&!private_package(pkg.get_name()));
-            // RPM-only seeds lack DNF origin history; the planner may re-admit the identical signed RPM.
-            if(pkg.get_name()=="uke-libstdcxx")assert(gnu_inbound.contains(pkg.get_nevra()));
+            if(pkg.get_name()=="uke-libstdcxx")assert(gnu_original&&!reverse);
         }
         if(libdnf5::transaction::transaction_item_action_is_inbound(action)) {
-            ++inbound;assert(!kernel_package(pkg.get_name()));if(!reverse)assert(!fedora_return(pkg.get_name(),false));
-            if(pkg.get_name()=="libstdc++")assert(false&&"Console GNU runtime changed without its policy gate");
+            ++inbound;assert(!kernel_package(pkg.get_name()));if(!reverse)assert(!fedora_return(pkg.get_name()));
+            if(pkg.get_name()=="libstdc++")assert(p.cxx&&original_fedora(pkg,fedora_returns.back(),"aarch64"));
         }
     }
-    if(reverse)for(const auto& entry:fedora_returns)if(std::string_view(entry.source)!="gcc")
+    assert(reverse?gnu_fork:gnu_original);
+    if(reverse)for(const auto& entry:fedora_returns)
         assert(p.targets.contains(std::string(entry.fork)+(std::string_view(entry.original)=="libwacom-data"?".noarch":".aarch64")));
     std::cout<<"UKE_PUBLISHED_FEDORA_RETURN mode="<<mode<<" selection="<<selection<<" returns="<<p.returns.size()<<" inbound="<<inbound<<" outbound="<<outbound
-        <<" console_gnu_retained=true rpm_transaction_executed=false hardware_tested=false\n";
+        <<" console_gnu_original="<<(!reverse)<<" boot_power_callers=true rpm_transaction_executed=false hardware_tested=false\n";
 }

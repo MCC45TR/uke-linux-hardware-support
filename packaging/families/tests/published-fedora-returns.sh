@@ -3,6 +3,7 @@
 # Run after the candidate Control and meta RPMs are signed; no tablet access.
 set -Eeuo pipefail
 [[ ${UKE_COPR_FEDORA_RETURN_FIXTURE:-} == 1 ]]
+[[ ${UKE_GNU_META_BUILD:-} =~ ^[0-9]+$ ]]
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 && $(rpm --eval '%{fedora}') == 46 ]]
 test ! -e /etc/senemos/kernel-update.conf
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
@@ -33,10 +34,14 @@ fetch() {
     done < <(jq -r '.packages[]|select(.arch!="src")|.name+"-"+.version+"-"+.release+"."+.arch+".rpm"' "$fixture/results.json")
 }
 fetch 11239542 uke-meta-integration baseline
-fetch 11239678 uke-meta-integration candidate
+fetch "${UKE_GNU_META_BUILD:?qualified candidate meta build}" uke-meta-integration candidate
 jq -r '.packages[]|select(.arch!="src")|.name' "$fixture/results.json" > "$fixture/meta-names"
 fetch 11239677 uke-control candidate
 cp "$fixture/candidate/uke-control-"*.rpm "$fixture/baseline/"
+fetch 11239644 uke-boot-integration baseline
+fetch 11239485 uke-power-integration baseline
+fetch 11239841 uke-boot-integration candidate
+fetch 11239842 uke-power-integration candidate
 # Model an installed tablet cohort; Control deliberately refuses kernel-free roots.
 kernel_url=https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11238013-senemos-uke-linux-kernel-mainline/
 curl -fLsS --max-time 60 "${kernel_url}results.json" -o "$fixture/kernel-results.json"
@@ -63,8 +68,10 @@ for selection in core kde all; do
                 name=$(rpm -qp --qf '%{NAME}' "$file" 2>/dev/null)
                 case $name in senemos-uke-linux-kernel-*|uke-control-tests|uke-control-tui) continue;; uke-plasma-controls) [[ $selection == all ]] || continue;; esac
                 original=
-                if [[ $name != uke-libstdcxx ]]; then original=$(jq -r --arg name "$name" '.pairs[]|select(.fork_name==$name)|.original.url|split("/")|last' "$root/packaging/families/consolidation/fedora-return-inputs.json");fi
-                if [[ -z $original && $name != uke-libstdcxx && $name != uke-control && $name != uke-core-meta ]];then
+                original=$(jq -r --arg name "$name" '.pairs[]|select(.fork_name==$name)|.original.url|split("/")|last' "$root/packaging/families/consolidation/fedora-return-inputs.json")
+                caller=false
+                case $name in uke-boot-integration|uke-boot-recovery|uke-cdc-debug|uke-esp32-cdc|uke-kernel-update|uke-installation-profile|uke-battery-observer|uke-charge-control|uke-offline-charge|uke-adaptive-display) caller=true;;esac
+                if [[ -z $original && $name != uke-control && $name != uke-core-meta && $caller == false ]];then
                     [[ $selection == all || $selection == kde && $name == uke-kde-plasma-meta ]] || continue
                 fi
                 repo=baseline;[[ $mode != reverse ]] || repo=candidate
@@ -81,3 +88,4 @@ for selection in core kde all; do
         "$fixture/solver" "$fixture" "$target" "$mode" "$selection"
     done
 done
+UKE_COPR_GNU_RETURN=1 bash "$root/packaging/families/tests/gnu-initramfs.sh" "$fixture/candidate/uke-boot-recovery-1.8.18-2.fc46.aarch64.rpm"
