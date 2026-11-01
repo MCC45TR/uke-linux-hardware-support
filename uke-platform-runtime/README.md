@@ -1,38 +1,29 @@
 # uke-platform-runtime
 
-Qualcomm remoteproc, QRTR, FastRPC and SSC native runtime integration for Xiaomi Pad 7 / POCO Pad X1 (`uke`, SM7675).
+Source status, **18 October 2026**: native read-only battery observation and
+model/packaging candidates are prepared for Xiaomi Pad 7 / POCO Pad X1 (`uke`,
+SM7675). Compilation, host tests, RPM/service checks and tablet tests were
+explicitly deferred. This is not physical charging acceptance.
 
-Status, 13 October 2026: this component contains package definitions and source
-plans. It provides no working device feature. The manifest lists the proposed
-packages and the checks required before release.
+The C++ observer reads an audited standard power-supply allowlist and offers
+read-only JSON and D-Bus snapshots. Missing/stale data stay unavailable. Health,
+EFC and duration models share one session across CLI/daemon observations; unqualified
+firmware/pack data do not produce precise health or time claims. New charging
+controls, thresholds, high power, PPS and EPR remain disabled.
+The identity resolver requires privileged, matching per-boot evidence with an
+expiry. The installed profile is unqualified; no evidence record enables a
+charging actuator. See [runtime identity and recovery](docs/RUNTIME-PROFILE.md).
 
-## Package scope
+[Battery contract and limitations](docs/BATTERY.md),
+[qualification record](manifests/battery-profile.json),
+[readiness](manifests/battery-readiness.json).
 
-- `uke-platform-runtime`
-- `hexagonrpc-uke`
-- `libssc-uke`
+Qualcomm remoteproc, QRTR, FastRPC and SSC integration remains a separate scope.
+This component does not start another remote processor or claim completed
+hexagonrpc/libssc payloads. Use the original Fedora KDE applications.
 
-Nabu reference families: `nabu-platform-runtime`.
-These are process references; Uke wiring, firmware and runtime behavior require
-independent implementation and validation.
-
-## Required validation
-
-- Pin upstream C/C++ sources and their licenses.
-- Prove Uke firmware/service topology and kernel interfaces.
-- Do not carry Nabu service arguments or firmware names.
-
-The first packaging target is Fedora Rawhide AArch64 in
-[uke-linux-test COPR](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-test/).
-DEB and Alpine APK targets require their own native rules later.
-Unimplemented targets fail explicitly rather than producing placeholder RPMs.
-
-Use `make validate` to check this repository's manifest contract. Native device
-applications use C++; upstream C/assembly interfaces retain their original
-languages. Host automation uses Bash or Make. Python does not enter tablet
-payloads. Source archives belong in `referances/`, development in `src/`.
-Public records exclude personal paths, unit identifiers and calibration data.
-
-See [the roadmap](docs/ROADMAP.md), [source policy](docs/SOURCE-POLICY.md) and
-[manifest](manifests/component.json). New material findings are recorded in
-`docs/lessons/`; source, package, emulation and physical evidence stay distinct.
+Future host entry points are `make all`, `make test-native` and `make srpm`.
+The first RPM candidate is `uke-battery-observer` for Fedora AArch64. Other
+runtime package names and distribution targets are not implemented by this
+recipe. Python does not enter its target payload. Archives stay in
+`referances/`; original implementation lives in `src/`.

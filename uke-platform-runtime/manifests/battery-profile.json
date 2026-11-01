@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "qualification_record",
+  "profile_id": "uke-unqualified",
+  "qualification": "unqualified",
+  "device": "uke",
+  "enable_control": false,
+  "firmware_build_id": null,
+  "battery_pack_id": null,
+  "cell_topology": null,
+  "measurement_reference": null,
+  "allowed_vbus_uv": [],
+  "max_input_current_ua": null,
+  "normal_cc_current_ua": null,
+  "normal_cv_voltage_uv": null,
+  "precharge_current_ua": null,
+  "termination_current_ua": null,
+  "recharge_condition": null,
+  "jeita_bands": [],
+  "connector_thermal_policy": null,
+  "safe_shutdown_reserve_uwh": null,
+  "learned_full_capacity_qualified": false,
+  "hardware_cycles_qualified": false,
+  "autonomous_protection_evidence": [],
+  "validated_adapter_cases": [],
+  "note": "Evidence record only. The observer does not parse this file into hardware controls or enable qualification flags.",
+  "sensors": [
+    {
+      "field": "battery.temp",
+      "source": "standard power_supply temp",
+      "unit": "deciC",
+      "physical_location": null,
+      "alias_group": null,
+      "qualified": false
+    }
+  ]
+}
