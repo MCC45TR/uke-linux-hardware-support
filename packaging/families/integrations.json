@@ -8,7 +8,7 @@
     {
       "name": "uke-meta-integration",
       "version": "1.0.0",
-      "release": 4,
+      "release": 5,
       "sources": [
         {
           "name": "uke-core-meta",
@@ -87,7 +87,7 @@
     {
       "name": "uke-power-integration",
       "version": "1.0.0",
-      "release": 1,
+      "release": 2,
       "sources": [
         {
           "name": "uke-battery-observer",

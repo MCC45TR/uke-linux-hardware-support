@@ -7,7 +7,7 @@ License: MIT
 Source0: %{name}-%{version}.tar.xz
 ExclusiveArch: aarch64
 BuildRequires: gcc-c++ bash coreutils
-Requires: senemos-native-runtime(libstdc++) systemd
+Requires: libstdc++%{?_isa} >= 16.2.1 systemd
 Requires(posttrans): systemd coreutils grep
 
 %description

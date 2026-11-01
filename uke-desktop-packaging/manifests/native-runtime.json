@@ -28,7 +28,9 @@
       "family": "uke-additional",
       "binary_name": "at-spi2-core",
       "signed_mirror_sha256": "4949a0ecf2e79348f973d9a8f8d5768185b426640e9b2956b2c83ba72196b3bf",
-      "source_payload_sha256": "421871de01ef5a443c9cfb48606920119145d7a68191b5cba030a5329182d10f"
+      "source_payload_sha256": "421871de01ef5a443c9cfb48606920119145d7a68191b5cba030a5329182d10f",
+      "tracking_enabled": false,
+      "tracking_reason": "Retained provenance for original Fedora return; do not maintain a policy-only fork automatically"
     },
     {
       "name": "gstreamer1",
@@ -40,7 +42,9 @@
       "family": "uke-additional",
       "binary_name": "gstreamer1",
       "signed_mirror_sha256": "138bb6e5a3298f8a1c969b3b2ab8b158f5f873981e9c33d191a3b7c9a623fbe2",
-      "source_payload_sha256": "a6ba2417a7bf7110dacfafedaf5781db8a17f48d1b707d01e9356db8f0bb33a1"
+      "source_payload_sha256": "a6ba2417a7bf7110dacfafedaf5781db8a17f48d1b707d01e9356db8f0bb33a1",
+      "tracking_enabled": false,
+      "tracking_reason": "Retained provenance for original Fedora return; do not maintain a policy-only fork automatically"
     },
     {
       "name": "libaccounts-glib",
@@ -64,7 +68,9 @@
       "family": "uke-additional",
       "binary_name": "libwacom",
       "signed_mirror_sha256": "1463346554806de0929722a32b283497d66a23b191d65cf99546eb4b2379a4f0",
-      "source_payload_sha256": "83d524d267d9a2f993151193ceb11dc5fad0b0336c3e5a1f62f7818bddf7dd36"
+      "source_payload_sha256": "83d524d267d9a2f993151193ceb11dc5fad0b0336c3e5a1f62f7818bddf7dd36",
+      "tracking_enabled": false,
+      "tracking_reason": "Retained provenance for original Fedora return; do not maintain a policy-only fork automatically"
     },
     {
       "name": "libstdcxx-uke-runtime",
@@ -77,7 +83,9 @@
       "family": "uke-additional",
       "binary_name": "libstdc++",
       "signed_mirror_sha256": "7de21e95d3a0d126aeb16b238e39af9bfb97d21eebb7a03797b30a89ac57a2e2",
-      "source_payload_sha256": "1a07f0f3aa43b26865ad5511205f738eb8a94708ab3ef04d5a4d5e66aff03729"
+      "source_payload_sha256": "1a07f0f3aa43b26865ad5511205f738eb8a94708ab3ef04d5a4d5e66aff03729",
+      "tracking_enabled": false,
+      "tracking_reason": "Retained provenance for original Fedora return; do not maintain a policy-only fork automatically"
     },
     {
       "name": "upower",

@@ -25,12 +25,12 @@ diff -u <(jq -r '.packages[]' "$profile" | LC_ALL=C sort) \
   <(awk '/^# BEGIN ORIGINAL FEDORA PLASMA PACKAGES$/ {selection=1; next}
          /^# END ORIGINAL FEDORA PLASMA PACKAGES$/ {selection=0}
          selection && /^(Requires|Recommends):/ {print $2}' "$spec" | LC_ALL=C sort)
-# The console meta conflicts with Python; Plasma must not pull it indirectly.
+# Keep the original desktop selection independent of the Core hardware policy.
 if awk '/^%package -n uke-kde-plasma-meta$/ {selection=1; next}
        /^%description -n uke-kde-plasma-meta$/ {selection=0}
        selection && /^(Requires|Recommends):.*uke-(core-meta|desktop-metas)/ {bad=1}
        END {exit !bad}' "$spec"; then
-  echo 'Plasma must not require the strict console meta' >&2
+  echo 'Plasma must not require the Core hardware selection' >&2
   exit 1
 fi
 # Only the vendor firewall policy is reloaded; Fedora owns session autostart.

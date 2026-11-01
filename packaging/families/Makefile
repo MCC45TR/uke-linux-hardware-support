@@ -15,3 +15,4 @@ check:
 	bash tests/rawhide.sh
 	bash tests/fedora-return-abi.sh
 	bash tests/fedora-return-meta.sh
+	bash tests/fedora-cxx-runtime.sh

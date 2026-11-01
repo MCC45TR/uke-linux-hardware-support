@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-core-meta
 Version: 1.0.7
-Release: 12%{?dist}
+Release: 13%{?dist}
 Summary: Console package selection for the Senemos Uke build candidate
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-core-meta
@@ -23,10 +23,15 @@ Requires: (uke-kernel(platform-profile-qos-v1) >= 1 or uke-power-profile-backend
 Requires: uke-ssc-fileservice uke-upower
 Requires: bash coreutils util-linux-core kmod
 Requires: NetworkManager openssh-server sudo
-Requires: senemos-native-runtime(libstdc++)
+Requires: libstdc++%{?_isa} >= 16.2.1
 Recommends: uke-plymonth >= 1.0.2-3
 Requires: uke-control(fedora-returns-v1) >= 1
 Provides: uke-core-meta(fedora-returns-v1) = 1
+Provides: uke-core-meta(fedora-cxx-runtime-v1) = 1
+Requires: uke-boot-integration >= 1.8.18-2.fc46 uke-battery-observer >= 1.4.1-3.fc46
+Conflicts: uke-charge-control < 1.4.1-3.fc46
+Conflicts: uke-offline-charge < 1.4.1-3.fc46
+Conflicts: uke-libstdcxx <= 16.2.1-19.fc46
 Conflicts: uke-atk <= 2.62.1-17.fc46
 Conflicts: uke-atk-devel <= 2.62.1-17.fc46
 Conflicts: uke-at-spi2-atk <= 2.62.1-17.fc46
@@ -54,6 +59,10 @@ install -Dm644 src/profile.json %{buildroot}%{_datadir}/senemos/uke/core/profile
 %{_datadir}/senemos/uke/core/profile.json
 
 %changelog
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-13
+- Use the original Fedora GNU C++ runtime with compatible boot and power consumers.
+- Preserve project Python exclusions and the separate initramfs boundary.
+
 * Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.0.7-12
 - Validate published desktop return and reverse plans with the retained kernel and GNU runtime.
 

@@ -208,8 +208,8 @@
       "version": "16.2.1",
       "arch": "aarch64",
       "original": {
-        "url": "https://kojipkgs.fedoraproject.org/packages/gcc/16.2.1/2.fc46.1/data/signed/91211fce/aarch64/libstdc++-16.2.1-2.fc46.1.aarch64.rpm",
-        "sha256": "b9c35fc7a359bc8de3fb930a3bdf86a3ab712379eb120038f2617809b00ed732"
+        "url": "https://kojipkgs.fedoraproject.org/packages/gcc/16.2.1/3.fc46/data/signed/91211fce/aarch64/libstdc++-16.2.1-3.fc46.aarch64.rpm",
+        "sha256": "62c88a073889ef2b765dd06f072d19a2ad0f0803525819cfdbc847c470601cef"
       },
       "fork": {
         "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11228253-uke-libstdcxx-runtime/uke-libstdcxx-16.2.1-19.fc46.aarch64.rpm",

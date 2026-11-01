@@ -12,7 +12,7 @@ BuildRequires: gcc-c++ make systemd-rpm-macros jq dbus-daemon systemd
 BuildRequires: pkgconfig(libsystemd) >= 257
 BuildRequires: pkgconfig(libcrypto)
 BuildRequires: pkgconfig(libdrm)
-Requires: senemos-native-runtime(libstdc++) systemd-libs
+Requires: libstdc++%{?_isa} >= 16.2.1 systemd-libs
 Requires(pre): systemd
 
 %description
@@ -24,7 +24,7 @@ component reports software tests and physical qualification separately.
 
 %package -n uke-charge-control
 Summary: Evidence-gated native Uke charge-control backend
-Requires: senemos-native-runtime(libstdc++) systemd-libs
+Requires: libstdc++%{?_isa} >= 16.2.1 systemd-libs
 Requires: upower >= 1.91.5
 Requires(pre): systemd
 
@@ -41,7 +41,7 @@ firmware reply is reported as receipt only, with physical effect unknown.
 
 %package -n uke-offline-charge
 Summary: Minimal native charger-boot interface for Uke
-Requires: systemd senemos-native-runtime(libstdc++)
+Requires: systemd libstdc++%{?_isa} >= 16.2.1
 
 %description -n uke-offline-charge
 Native DRM battery screen for an explicitly detected charger boot. The matched

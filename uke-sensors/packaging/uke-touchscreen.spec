@@ -8,7 +8,7 @@ ExclusiveArch: aarch64
 Source0: %{name}-%{version}.tar.xz
 BuildRequires: gcc-c++ openssl-devel systemd-devel systemd-rpm-macros
 Requires: senemos-uke-linux-kernel-mainline-modules >= 7.2.9-1.53.native53
-Requires: senemos-native-runtime(libstdc++) kmod systemd systemd-udev
+Requires: libstdc++%{?_isa} >= 16.2.1 kmod systemd systemd-udev
 
 %description
 Native C++ THP processing with standard Linux multitouch input. The foreground

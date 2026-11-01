@@ -176,6 +176,19 @@ while IFS=$'\t' read -r key input; do
         bash packaging/families/host/fedora-return-meta.sh "${specs[0]}" "$part/fedora-return.spec"
         cp "$part/fedora-return.spec" "${specs[0]}"
     fi
+    if [[ $integration == true && $family == uke-power-integration && $key == uke-battery-observer ]]; then
+        bash packaging/families/host/fedora-cxx-runtime.sh "${specs[0]}" "$part/fedora-cxx.spec"
+        cp "$part/fedora-cxx.spec" "${specs[0]}"
+    fi
+    if [[ $integration == true && $family == uke-meta-integration ]]; then
+        # Keep the shipped readiness record consistent with the admitted Fedora root policy.
+        input_version=$(rpm -qp --qf '%{VERSION}' "$input")
+        archive=$source/$key-$input_version.tar.xz
+        mkdir -p "$part/profile"
+        tar -xJf "$archive" -C "$part/profile"
+        install -m644 "$root/$key/src/profile.json" "$part/profile/$key-$input_version/src/profile.json"
+        tar --sort=name --mtime=@1793491200 --owner=0 --group=0 --numeric-owner -cJf "$archive" -C "$part/profile" "$key-$input_version"
+    fi
     awk '/^%build([[:space:]]|$)/ {print ": __UKE_CWD__=%{buildsubdir}\n: __UKE_BUILDROOT__=%{buildroot}\n: __UKE_BUILDDIR__=%{_builddir}"} {print}' "${specs[0]}" >"$part/input.spec"
     rpmspec --parse --target "$target" "${rpm_target[@]}" --define "_builddir /__UKE_BUILD__/$key" --define "_sourcedir $source" --define 'debug_package %{nil}' "$part/input.spec" >"$part/expanded.spec"
     native_version=$(jq -r --arg key "$key" '.native_versions[$key] // ""' packaging/families/families.json)
