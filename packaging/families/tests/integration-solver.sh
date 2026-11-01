@@ -56,7 +56,8 @@ for selection in core kde all; do
         esac
         # The separate Cutefish repository is not admitted by this Rawhide fixture.
         for i in "${!seed[@]}"; do [[ ${seed[$i]##*/} != uke-cutefish-meta-* ]] || unset 'seed[i]'; done
-        if ((${#seed[@]})); then rpm --dbpath "$target/usr/lib/sysimage/rpm" -i --justdb --nodeps --noscripts --notriggers "${seed[@]}"; fi
+        # RPM 6 runs its built-in sysusers hook separately from --noscripts.
+        if ((${#seed[@]})); then rpm --define '__systemd_sysusers /usr/bin/true' --dbpath "$target/usr/lib/sysimage/rpm" -i --justdb --nodeps --noscripts --notriggers "${seed[@]}"; fi
         "$fixture/solver" "$fixture" "$target" "$mode" "$selection"
     done
 done
@@ -71,7 +72,7 @@ while IFS= read -r name; do
     mkdir -p "$sandbox/db" "$sandbox/payload"
     rpm --dbpath "$sandbox/db" --initdb
     rpmkeys --dbpath "$sandbox/db" --import "$fixture/copr-pubkey.gpg"
-    args=(--dbpath "$sandbox/db" --nodeps --noscripts --notriggers --badreloc --relocate "/=$sandbox/payload")
+    args=(--define '__systemd_sysusers /usr/bin/true' --dbpath "$sandbox/db" --nodeps --noscripts --notriggers --badreloc --relocate "/=$sandbox/payload")
     rpm "${args[@]}" -i "$old"
     for config in "${configs[@]}"; do
         [[ $config == /* && $config != *..* && -f $sandbox/payload$config && ! -L $sandbox/payload$config ]]
@@ -81,7 +82,7 @@ while IFS= read -r name; do
     for config in "${configs[@]}"; do grep -Fxq 'Uke migration fixture modified configuration' "$sandbox/payload$config"; done
     rpm "${args[@]}" -U --oldpackage "$old"
     for config in "${configs[@]}"; do grep -Fxq 'Uke migration fixture modified configuration' "$sandbox/payload$config"; done
-    rpm --dbpath "$sandbox/db" --nodeps --noscripts --notriggers -e "$name"
+    rpm --define '__systemd_sysusers /usr/bin/true' --dbpath "$sandbox/db" --nodeps --noscripts --notriggers -e "$name"
     for config in "${configs[@]}"; do grep -Fxq 'Uke migration fixture modified configuration' "$sandbox/payload$config.rpmsave"; done
     printf 'UKE_INTEGRATION_CONFIG package=%s configs=%s upgrade=true rollback=true rpmsave=true scriptlets_executed=false hardware_tested=false\n' "$name" "${#configs[@]}"
 done < "$fixture/runtime-names"
