@@ -10,7 +10,7 @@ ExclusiveArch: aarch64
 BuildRequires: tar xz
 Requires: (senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)
 Requires: uke-control >= 2.3.1 uke-kernel-update uke-installation-profile
-Requires: bluez libinput libwacom uke-libssc uke-iio-sensor-proxy
+Requires: bluez libinput libwacom >= 2.20.0 uke-libssc uke-iio-sensor-proxy
 Requires: uke-pipewire uke-pipewire-alsa wireplumber alsa-utils
 Requires: uke-displayport-audio >= 0.1.0-8 uke-speaker-orientation >= 0.1.0-5 uke-speaker-firmware >= 3.0.304.0-2
 Requires: (uke-speaker-controls >= 0.1.0-4 if plasma-workspace)

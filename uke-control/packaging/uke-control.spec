@@ -218,6 +218,9 @@ fi
 %{_datadir}/applications/uke-control-tests.desktop
 
 %changelog
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.8.0-2
+- Keep the merged source changelog in date order and retain the qualified runtime code.
+
 * Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 2.8.0-1
 - Add bounded original Fedora package returns behind compatible unstable metadata.
 - Retain native phase recovery; test dependency plans in source-worker fixtures.

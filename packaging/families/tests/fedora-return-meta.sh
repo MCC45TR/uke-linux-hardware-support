@@ -14,7 +14,7 @@ Source fixture.
 echo unchanged-fixture
 SPEC
 bash "$root/packaging/families/host/fedora-return-meta.sh" "$stage/input" "$stage/output"
-grep -Eq '^Requires: bluez libinput libwacom +uke-libssc$' "$stage/output"
+grep -Eq '^Requires: bluez libinput libwacom >= 2.20.0 +uke-libssc$' "$stage/output"
 grep -Fx 'Requires: senemos-native-runtime(libstdc++)' "$stage/output" >/dev/null
 ! grep -Fq 'Conflicts: uke-libstdcxx' "$stage/output"
 grep -Fx 'echo unchanged-fixture' "$stage/output" >/dev/null

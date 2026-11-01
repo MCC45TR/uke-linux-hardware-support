@@ -16,7 +16,7 @@ jq -r '.pairs[]|select(.source_name!="gcc")|. as $pair|"Conflicts: "+.fork_name+
 sed -E 's/[.](aarch64|noarch)[.]rpm$//' "$stage/raw" > "$stage/conflicts"
 [[ $(wc -l < "$stage/conflicts") == 12 ]]
 awk -v conflicts="$stage/conflicts" '
-    /^Requires:/ {gsub(/(^|[[:space:]])uke-libwacom([[:space:]]|$)/," libwacom ")}
+    /^Requires:/ {gsub(/(^|[[:space:]])uke-libwacom([[:space:]]|$)/," libwacom >= 2.20.0 ")}
     /^%description([[:space:]]|$)/ && !inserted {
         print "Requires: uke-control(fedora-returns-v1) >= 1"
         print "Provides: uke-core-meta(fedora-returns-v1) = 1"
