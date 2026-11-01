@@ -17,6 +17,20 @@ path-exclude=/usr/share/apport/package-hooks/systemd.py
 path-exclude=/usr/share/gcc/python/*
 path-exclude=/usr/share/gdb/auto-load/usr/lib/*/libstdc++.so.*-gdb.py
 EOF
+printf 'package-owner\tsha256-and-path\n' > /evidence/bootstrap-diagnostic-exclusions.tsv
+# debootstrap initially extracts base packages before dpkg filters are active.
+# Remove only the same identified optional diagnostics already in that base.
+for path in /usr/share/apport/package-hooks/source_shadow.py \
+ /usr/share/gcc/python/libstdcxx/__init__.py \
+ /usr/share/gcc/python/libstdcxx/v6/__init__.py \
+ /usr/share/gcc/python/libstdcxx/v6/printers.py \
+ /usr/share/gcc/python/libstdcxx/v6/xmethods.py \
+ /usr/share/gdb/auto-load/usr/lib/aarch64-linux-gnu/libstdc++.so.*-gdb.py; do
+ [[ -e $path ]] || continue
+ [[ -f $path && ! -L $path ]]
+ printf '%s\t%s\n' "$(dpkg-query -S "$path")" "$(sha256sum "$path")" >> /evidence/bootstrap-diagnostic-exclusions.tsv
+ rm -- "$path"
+done
 install -m644 /verified-key/uke-linux-unstable.gpg /usr/share/keyrings/uke-linux-unstable.gpg
 printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
 chmod 755 /usr/sbin/policy-rc.d
