@@ -92,7 +92,9 @@ int main(int argc, char **argv) {
     assert(gpu_read_is("max_freq", "500000000"));
     write(std::string(gpu) + "min_freq", "633000000\n");
     g_clear_error(&gpu_error);
-    assert(!activate(PPD_DRIVER(driver), PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
+    assert(activate(PPD_DRIVER(driver), PPD_PROFILE_POWER_SAVER, PPD_PROFILE_ACTIVATION_REASON_USER, &gpu_error));
+    assert(!gpu_error && gpu_read_is("max_freq", "500000000"));
+    assert(gpu_read_is("min_freq", "633000000")); // Preserve other clients' requests; kernel max QoS wins.
     write(std::string(gpu) + "min_freq", "255000000\n");
     g_autoptr(GError) error = nullptr;
     assert(!activate(PPD_DRIVER(driver), static_cast<PpdProfile>(0), PPD_PROFILE_ACTIVATION_REASON_USER, &error));

@@ -1,6 +1,6 @@
 Name: uke-power-profile-backend
 Version: 0.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: Native Uke CPU and GPU backend for Power Profiles daemon
 License: GPL-3.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support
@@ -64,6 +64,10 @@ if [ "$1" -eq 0 ]; then semodule -r uke-power-profile; fi
 %{_datadir}/selinux/packages/uke-power-profile.cil
 
 %changelog
+* Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Apply the power-saver maximum QoS preference during transient GPU boosts.
+- Preserve other clients' minimum requests and kernel thermal arbitration.
+
 * Sun Oct 18 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Restore the last requested GPU preference after failures under a thermal clamp.
 

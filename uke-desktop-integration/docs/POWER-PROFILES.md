@@ -56,6 +56,16 @@ checks the restored request, then removes the clamp and checks the original
 profile cap. Initial activation still captures the current effective limit
 conservatively until the backend has its own successful preference.
 
+Release 5 removes an incorrect rejection of power saver when min_freq exceeds
+its 500 MHz preference. Linux MSM temporarily raises a minimum QoS request while
+waking the GPU. Devfreq combines that request with maximum/thermal constraints
+and clamps the effective minimum to the maximum. A transient boost therefore
+does not prevent selecting a lower maximum preference. The backend leaves other
+minimum requests unchanged and retains write/readback failure handling and
+rollback. The native fixture covers an existing 633 MHz minimum request with
+a 500 MHz maximum preference. This source correction alone does not identify
+every reported desktop notification or qualify energy savings.
+
 COPR 11164959 passes the release-4 fixture. DNF installs the signed RPM on the
 same .4056 tablet; all three CPU/GPU profile choices pass the repeated bounded
 test and power saver is restored. This adds rollback coverage without changing

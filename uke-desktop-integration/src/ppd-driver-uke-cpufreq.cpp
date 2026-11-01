@@ -94,25 +94,17 @@ static gboolean activate(PpdDriver *driver, PpdProfile profile, PpdProfileActiva
     char *previous[3] = {};
     g_autofree char *gpu_max_path = gpu_path("max_freq");
     g_autofree char *previous_gpu = nullptr;
-    g_autofree char *gpu_min_path = gpu_path("min_freq");
-    g_autofree char *gpu_min = nullptr;
     const char *gpu_max = profile == PPD_PROFILE_POWER_SAVER ? "500000000" : "950000000";
     // shortcut: the 500 MHz preference needs energy calibration before a production release.
-    if (!g_file_get_contents(gpu_max_path, &previous_gpu, nullptr, error) ||
-        !g_file_get_contents(gpu_min_path, &gpu_min, nullptr, error)) return FALSE;
+    if (!g_file_get_contents(gpu_max_path, &previous_gpu, nullptr, error)) return FALSE;
     g_strchomp(previous_gpu);
     // Sysfs reports the thermal-clamped limit, not our previous QoS preference.
     if (self->gpu_preference) {
         g_free(previous_gpu);
         previous_gpu = g_strdup(self->gpu_preference);
     }
-    g_strchomp(gpu_min);
-    guint64 minimum = 0;
-    if (!g_ascii_string_to_unsigned(gpu_min, 10, 0, 950000000, &minimum, error)) return FALSE;
-    if (minimum > g_ascii_strtoull(gpu_max, nullptr, 10)) {
-        g_set_error_literal(error, G_IO_ERROR, G_IO_ERROR_BUSY, "GPU minimum conflicts with the requested profile");
-        return FALSE;
-    }
+    // min_freq includes transient MSM boost requests. Devfreq clamps the
+    // effective minimum to the maximum QoS bound; leave other clients intact.
     bool success = true;
     unsigned attempted = 0;
     for (unsigned i = 0; i < 3; i++) {
