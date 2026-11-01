@@ -6,6 +6,19 @@ uses packaging commit 4642c7d (see the complete commit ID in
 6fb34ec406987866ceee5d38a3eafb393fc4b27b. The JSON is a recorded snapshot;
 the live workflow may have advanced.
 
+Nineteen of twenty prepared source routes now pass native server package
+construction: thirteen compile native payloads and six package data only.
+The initial matrix passed eighteen; the corrected
+[UPower retry](https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309136146)
+passed all four binary packages and payload audits. The separate firmware
+recipe/lifecycle run also passed. The
+[kernel retry](https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309327976)
+is still active. Its first attempt stopped during the shared preparer's
+contracts because the Debian driver had not recorded its successfully applied
+patches in `senemos-applied-patches.txt`. The corrected driver appends only
+after successful application and compares the complete ledger before invoking
+the unchanged preparer. No kernel binary or boot success is asserted.
+
 Each package uses a fresh native `ubuntu-24.04-arm` server and a minimal
 Tenacious root bootstrapped from Ubuntu's signature-verified ARM64 ports
 archive. Compilation runs as an unprivileged builder inside a disposable

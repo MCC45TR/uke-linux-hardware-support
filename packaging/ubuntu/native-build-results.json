@@ -5,13 +5,30 @@
   "packaging_commit": "4642c7d3c76e496c4dfbcc3c630024144bdcd19c",
   "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308345325",
   "scope": "Native server compilation and package construction; no device acceptance",
+  "successful_source_routes_after_retries": 19,
+  "data_only_routes": 6,
+  "compiled_payload_routes": 13,
   "firmware_recipe_validation": {
     "status": "success",
     "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41308699685",
     "packaging_commit": "99bf892",
     "recipe_branch_commit": "482f7d1170eeb8d8ffce38e53ec5173bb6890e0f"
   },
-  "packages": [
+  "retries": [
+    {
+      "source": "upower",
+      "conclusion": "success",
+      "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309136146",
+      "packaging_commit": "2a9da86"
+    },
+    {
+      "source": "uke-linux-kernel",
+      "status": "in_progress",
+      "run_url": "https://github.com/MCC45TR/uke-linux-hardware-support/actions/runs/41309327976",
+      "packaging_commit": "d840464"
+    }
+  ],
+  "initial_packages": [
     {
       "source": "uke-speaker-orientation",
       "status": "completed",

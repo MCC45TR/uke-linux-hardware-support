@@ -206,3 +206,13 @@ recipe tool construct its original archive without changing quilt format.
 The published launchpad/uke-speaker-firmware branch and upstream/3.0.304.0 tag
 preserve shared source bytes. Launchpad import and recipe creation remain
 pending in the parent UI session, not blocked on a server private GPG key.
+
+UPower retry 41309136146 passed after the install-list correction, including
+all four binary packages and direct payload audits. The initial matrix passed
+18 of 20 routes; this retry brings qualified server construction to 19 of 20.
+Six routes are data-only and thirteen compile native payloads. Kernel attempt
+124853346238 stopped when the unchanged shared preparer required
+senemos-applied-patches.txt, which the Debian driver had omitted. Record only
+successfully applied patches, compare the full ledger against the verified
+series, and retain all shared tests. Retry 41309327976 remains active; no
+kernel binary or boot result is inferred from its preparer fixture tests.
