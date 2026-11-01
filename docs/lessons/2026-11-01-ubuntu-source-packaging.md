@@ -484,3 +484,17 @@ battery 1.4.1 source archive includes the mandatory integrated-protection proof
 that the common Git component lacks; touchscreen assembly requires the three
 pinned Apache-licensed donor inputs. Neither may silently fall back to older
 Git inputs or omit the reviewed preparation step.
+
+## Actual Launchpad construction and publication gate
+
+1 November 2026,21:53 UTC. Replacement source recipe4108876 and its ARM64 binary
+build33899943 succeeded. The actual source manifest records20c7d841 for all
+three nested main inputs; the extracted preset, notice, attribution and license
+match canonical inputs. The actual old-to-new data DEB upgrade preserves a
+synthetically modified conffile; removal retains it and purge removes it. This
+used an official Ubuntu24 x86_64 container with registered ARM64 foreign
+architecture and no target execution. The source publication is still Pending;
+the signed PPA index continues to expose the earlier published version. Do not
+infer APT availability or remove old heads until signed index, exact payload
+and upgrade-solver checks pass. Both public source/contract CI checks passed
+at5fa0f59. This records package construction, not runtime qualification.
