@@ -7,12 +7,12 @@ package=${1:?package required}
 source /etc/os-release
 [[ $VERSION_CODENAME == tenacious && $VERSION_ID == 27.04 ]]
 cd /repo
-git config --global --add safe.directory /repo
 awk -F '\t' -v p="$package" '$1==p {found=1} END {exit !found}' packaging/ubuntu/components.tsv
 printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
 chmod 755 /usr/sbin/policy-rc.d
 apt-get update
 apt-get install -y --no-install-recommends build-essential dpkg-dev debhelper curl ca-certificates git jq xz-utils libarchive-tools gnupg gpgv
+git config --global --add safe.directory /repo
 useradd --create-home builder
 mkdir -p /work /evidence
 chown builder:builder /work
