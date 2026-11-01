@@ -80,6 +80,11 @@ std::string snapshot(const fs::path& requested_root) {
     out+=",\"read_only\":true,\"device_nodes_opened\":false,\"firmware_rpcs_performed\":false";
     out+=",\"coherence\":\"sequential_metadata_reads\",\"physical_acceptance\":null";
     out+=",\"speaker_stimulus_admitted\":false,\"capture_admitted\":false,\"feature_support_inferred\":false";
+    const auto dt=root/"sys/firmware/devicetree/base";
+    out+=",\"board_model\":"+attribute(root,dt/"model");
+    out+=",\"soc\":{\"model\":"+attribute(root,dt/"cpus/model");
+    out+=",\"family\":"+attribute(root,root/"sys/devices/soc0/family");
+    out+=",\"soc_id\":"+attribute(root,root/"sys/devices/soc0/soc_id")+'}';
     const auto group=[&](const char* name,const char* class_path,const std::vector<std::string>& fields) {
         check();out+=','+quote(name)+":{\"class_present\":"+std::string(exists(root,root/class_path)?"true":"false")+",\"devices\":[";
         bool first=true;
@@ -111,6 +116,7 @@ std::string snapshot(const fs::path& requested_root) {
     group("accelerators","sys/class/accel",{"dev"});
     group("cpu_policies","sys/devices/system/cpu/cpufreq",{"affected_cpus","scaling_driver","scaling_governor","scaling_min_freq","scaling_max_freq","cpuinfo_max_freq"});
     group("devfreq","sys/class/devfreq",{"governor","available_frequencies","min_freq","max_freq"});
+    group("iio","sys/bus/iio/devices",{"name","label","dev"});
     out+=",\"cpu_caches\":[";bool first_cpu=true;
     for(const auto& cpu:entries(root,root/"sys/devices/system/cpu")) {
         check();if(!numbered(cpu,"cpu")||!directory(root,cpu))continue;
@@ -130,7 +136,7 @@ std::string snapshot(const fs::path& requested_root) {
     }
     out+=']';
     out+=",\"configured_nodes\":[";bool first=true;
-    const auto base=root/"sys/firmware/devicetree/base";
+    const auto base=dt;
     if(const auto target=resolved(root,base)) {
         // Exact compatible strings only; no inferred sensor or amplifier identity.
         const std::pair<const char*,const char*> selected[]{
@@ -160,6 +166,7 @@ std::string snapshot(const fs::path& requested_root) {
                 first=false;
                 out+="{\"path\":"+quote(it->path().lexically_relative(*target).string())+",\"stage\":"+quote(stage);
                 out+=",\"matched_compatible\":"+quote(match)+",\"reported_status\":"+attribute(root,it->path()/"status");
+                out+=",\"reported_model\":"+attribute(root,it->path()/"model");
                 out+=",\"effective_available\":"+effective_status(root,it->path(),*target)+'}';
                 break;
             }

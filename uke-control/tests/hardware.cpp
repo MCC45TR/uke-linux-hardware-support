@@ -20,6 +20,16 @@ int main() {
         assert(data.find("\"accelerators\":{\"class_present\":false,\"devices\":[]}")!=std::string::npos);
         assert(data.find("\"cpu_caches\":[]")!=std::string::npos);
         const auto dt=root/"sys/firmware/devicetree/base";
+        put(dt/"model",std::string("POCO Pad X1")+'\0');
+        put(dt/"cpus/model",std::string("Qualcomm Snapdragon 7+ Gen 3")+'\0');
+        put(root/"sys/devices/soc0/family","Snapdragon\n");
+        put(root/"sys/devices/soc0/soc_id","643\n");
+        put(dt/"serial-number","DO_NOT_COLLECT_BOARD_SERIAL");
+        put(dt/"soc/gpu/compatible",std::string("qcom,adreno-43030b00")+'\0');
+        put(dt/"soc/gpu/model",std::string("Qualcomm Adreno 732")+'\0');
+        put(root/"sys/bus/iio/devices/iio:device0/name","sensor-test\n");
+        put(root/"sys/bus/iio/devices/iio:device0/label","Front color fixture\n");
+        put(root/"sys/bus/iio/devices/iio:device0/in_illuminance_raw","DO_NOT_READ_SENSOR_CHANNEL");
         const auto amp=dt/"soc/i2c@88c000/amp@34";
         put(amp/"compatible",std::string("foursemi,fs16xx")+'\0');
         put(amp.parent_path()/"status",std::string("disabled\0",9));
@@ -61,6 +71,10 @@ int main() {
         fs::create_directory_symlink("/sys",dt/"soc/escape");
         data=uke::hardware::snapshot(root);
         assert(data.find("\"driver\":\"test-audio\"")!=std::string::npos);
+        assert(data.find("\"board_model\":\"POCO Pad X1\"")!=std::string::npos);
+        assert(data.find("\"soc\":{\"model\":\"Qualcomm Snapdragon 7+ Gen 3\",\"family\":\"Snapdragon\",\"soc_id\":\"643\"}")!=std::string::npos);
+        assert(data.find("\"reported_model\":\"Qualcomm Adreno 732\"")!=std::string::npos);
+        assert(data.find("\"label\":\"Front color fixture\"")!=std::string::npos);
         assert(data.find("test\\\"card")!=std::string::npos);
         assert(data.find("\"effective_available\":false")!=std::string::npos);
         assert(data.find("\"effective_available\":true")!=std::string::npos);
