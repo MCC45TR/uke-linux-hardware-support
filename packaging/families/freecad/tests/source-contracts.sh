@@ -27,7 +27,9 @@ jq -e '
       .url=="https://raw.githubusercontent.com/nlohmann/json/v3.11.3/LICENSE.MIT"))
 ' source-lock.json >/dev/null
 expected=$(jq -r '[.name,(.epoch|tostring),.version,(.release|tostring)]|join("|")' source-lock.json)
-actual=$(rpmspec --target aarch64 --undefine dist --query --srpm --queryformat '%{NAME}|%{EPOCHNUM}|%{VERSION}|%{RELEASE}' freecad.spec)
+# Mock can reload its user dist macro while parsing BuildArch subpackages.
+# An explicit empty command-line definition survives that reload.
+actual=$(rpmspec --target aarch64 --define 'dist %{nil}' --query --srpm --queryformat '%{NAME}|%{EPOCHNUM}|%{VERSION}|%{RELEASE}' freecad.spec)
 [[ $actual == "$expected" ]] || {
   printf 'Unexpected source RPM identity: expected %s, got %s.\n' "$expected" "$actual" >&2
   exit 1

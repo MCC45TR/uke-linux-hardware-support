@@ -60,8 +60,13 @@ COPR build 11246334 checked out the pinned source successfully but failed in
 the source-contract script inside its Fedora 44 AArch64 source chroot, before
 the binary build. The same script passes in Fedora 44 x86_64 and Rawhide x86_64.
 Source validation now reports its failing line and RPM identity mismatch;
-the dedicated CI checks both Fedora 44 and Rawhide. The native source-chroot
-failure remains under investigation; checksum and channel checks stay enabled.
+the dedicated CI checks both Fedora 44 and Rawhide on x86_64 and AArch64.
+Diagnostic build 11246374 identified the mismatch: Mock restored `.fc44` after
+the query's `--undefine dist`, producing `1.fc44` where the base-release check
+expected `1`. An explicit empty `--define 'dist %{nil}'` fixes that identity
+query while preserving the real binary RPM distribution suffix. A user dist
+macro fixture reproduces the failure and passes with the explicit definition.
+Checksum and channel checks stay enabled.
 
 ## Channel boundary and next validation
 
