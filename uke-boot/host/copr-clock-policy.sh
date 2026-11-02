@@ -41,7 +41,7 @@ for relative in src/units/70-uke-chronyd-clock.conf src/units/uke-userdata-accep
     install -Dm644 "$owner/$relative" "$inner/$relative"
 done
 rewrite_spec() {
-    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.27-1";print "- Preserve systemd clock epoch and accept disabled legacy userdata policy.";print "";history=1;next}
+    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.27-1";print "- Retain accepted A/B slots without image copies and block incomplete candidates.";print "";history=1;next}
         !history {gsub(/1[.]8[.]24-1/,"1.8.27-1");gsub(/1[.]8[.]24/,"1.8.27")}
         {print}
         /^Provides: uke-kernel-update\(qualified-firmware-cohort-v1\) = 1$/ {
@@ -63,7 +63,7 @@ done
 rewrite_expanded_spec() {
     # The standalone outer spec contains the actual expanded install/check/file
     # sections. Editing its retained inner recipe alone does not change the RPM.
-    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.27-1";print "- Install and check the systemd epoch in the expanded standalone recipe.";print "";history=1;next}
+    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.27-1";print "- Retain accepted A/B slots without image copies and block incomplete candidates.";print "";history=1;next}
         !history {gsub(/1[.]8[.]24-1/,"1.8.27-1");gsub(/1[.]8[.]24/,"1.8.27")}
         /^%check$/ {checking=1}
         {print}
@@ -89,7 +89,7 @@ mv "$inner" "$stage/inner/uke-boot-integration-1.8.27"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.27.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.27
 unlink "$input/uke-boot-integration-1.8.24.tar.xz"
 jq -n --arg commit "$commit" --argjson epoch "$epoch" \
-    '{source_commit:$commit,parent_build:11240620,parent_srpm_sha256:"3a8e8923d0b127b13e7b2f4f819ba0da25e2bc7dc0f55ec64393ed561d7118a9",clock_epoch:$epoch,rtc_writes:false,automatic_policy_unchanged:true,physical_acceptance:false}' > "$outer/clock-policy-overlay.json"
+    '{source_commit:$commit,parent_build:11240620,parent_srpm_sha256:"3a8e8923d0b127b13e7b2f4f819ba0da25e2bc7dc0f55ec64393ed561d7118a9",clock_epoch:$epoch,whole_boot_image_copies:false,inactive_unbootable_barrier:true,rtc_writes:false,automatic_policy_unchanged:true,physical_acceptance:false}' > "$outer/clock-policy-overlay.json"
 (cd "$outer"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
 mv "$outer" "$stage/unpacked/uke-boot-integration-1.8.27"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.27.tar.xz" -C "$stage/unpacked" uke-boot-integration-1.8.27
