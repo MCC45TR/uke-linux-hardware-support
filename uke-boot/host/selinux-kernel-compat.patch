@@ -68,7 +68,7 @@ index 62fe74d..7a00ab2 100644
  ')
  
 diff --git a/policy/modules/kernel/kernel.te b/policy/modules/kernel/kernel.te
-index 513cde9..66efd5d 100644
+index 513cde9..e806a2e 100644
 --- a/policy/modules/kernel/kernel.te
 +++ b/policy/modules/kernel/kernel.te
 @@ -459,6 +459,7 @@ optional_policy(`
@@ -79,16 +79,19 @@ index 513cde9..66efd5d 100644
  	libs_use_shared_libs(kernel_t)
  ')
  
-@@ -591,6 +592,9 @@ if( ! secure_mode_insmod ) {
- 	allow can_load_kernmodule self:capability sys_module;
+@@ -598,6 +599,12 @@ if( ! secure_mode_insmod ) {
+ 	kernel_setsched(can_load_kernmodule)
+ }
  
- 	files_load_kernel_modules(can_load_kernmodule)
-+	optional_policy(`
++optional_policy(`
++	if( ! secure_mode_insmod ) {
 +		libs_load_firmware(can_load_kernmodule)
-+	')
- 
- 	# load_module() calls stop_machine() which
- 	# calls sched_setscheduler()
++	}
++')
++
+ ########################################
+ #
+ # Rules for unconfined acccess to this module
 diff --git a/policy/modules/system/libraries.if b/policy/modules/system/libraries.if
 index 3043d95..f847b2b 100644
 --- a/policy/modules/system/libraries.if

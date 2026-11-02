@@ -1,7 +1,7 @@
 # Fedora policy compatibility candidate
 
 3 November 2026. This COPR-only producer retains Fedora's installed
-`selinux-policy-45.23-1.fc46` source package and advances its Release to `1.1`.
+`selinux-policy-45.23-1.fc46` source package and advances its Release to `1.2`.
 The original source archive, contributed modules, policy capabilities, unknown
 permission setting, package names and lifecycle scripts remain unchanged.
 No kernel policy is loaded during the build or its checks.

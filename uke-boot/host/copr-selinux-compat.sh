@@ -14,7 +14,7 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
         --data-urlencode "projectname=$project" --data-urlencode packagename=selinux-policy \
         --data-urlencode limit=100 https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
     jq -e '(.items|type)=="array" and (.items|length)<100 and all(.items[];
-        ((.source_package.version // "")|sub("[.]fc[0-9]+$";""))!="45.23-1.1")' "$stage/builds.json" >/dev/null
+        ((.source_package.version // "")|sub("[.]fc[0-9]+$";""))!="45.23-1.2")' "$stage/builds.json" >/dev/null
 done
 base=https://kojipkgs.fedoraproject.org/packages/selinux-policy/45.23/1.fc46
 curl -fLsS --proto '=https' --proto-redir '=https' --retry 2 --max-time 180 \
@@ -44,7 +44,7 @@ printf '%s  %s\n' 63ce943b9b060e81b714501cce086bc509f0b9f6457e2fb468824aa3548253
     "$output/fedora-targeted-baseline.35" | sha256sum -c -
 cp "$here/selinux-kernel-compat.patch" "$here/check-selinux-kernel-compat.sh" "$output/"
 awk '
-    /^Release: 1%\{\?dist\}$/ {print "Release: 1.1%{?dist}"; releases++; next}
+    /^Release: 1%\{\?dist\}$/ {print "Release: 1.2%{?dist}"; releases++; next}
     /^Source40:/ {
         print
         print "Patch10001: selinux-kernel-compat.patch"
@@ -67,7 +67,7 @@ awk '
 # Reverse only the declared metadata and new check hook, then compare the
 # complete original recipe, including early sandbox/devel lifecycle sections.
 awk '
-    /^Release: 1[.]1%\{\?dist\}$/ {print "Release: 1%{?dist}"; releases++; next}
+    /^Release: 1[.]2%\{\?dist\}$/ {print "Release: 1%{?dist}"; releases++; next}
     /^(Patch10001|Source1000[123]):/ {metadata++; next}
     /^BuildRequires: setools-console patch coreutils bash$/ {metadata++; next}
     /^%check$/ {
@@ -88,4 +88,4 @@ jq -n --arg commit "$commit" '{source_commit:$commit,
     original_sources_and_lifecycle_retained:true,policy_capabilities_unchanged:true,
     original_unknown_permission_setting_unchanged:true,physical_acceptance:false}' \
     > "$output/selinux-compat-receipt.json"
-[[ $(rpmspec --target aarch64 --define "_sourcedir $output" -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/selinux-policy.spec") == 45.23-1.1.fc46 ]]
+[[ $(rpmspec --target aarch64 --define "_sourcedir $output" -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/selinux-policy.spec") == 45.23-1.2.fc46 ]]
