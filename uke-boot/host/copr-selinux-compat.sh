@@ -88,4 +88,4 @@ jq -n --arg commit "$commit" '{source_commit:$commit,
     original_sources_and_lifecycle_retained:true,policy_capabilities_unchanged:true,
     original_unknown_permission_setting_unchanged:true,physical_acceptance:false}' \
     > "$output/selinux-compat-receipt.json"
-[[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/selinux-policy.spec") == 45.23-1.1.fc46 ]]
+[[ $(rpmspec --target aarch64 --define "_sourcedir $output" -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/selinux-policy.spec") == 45.23-1.1.fc46 ]]
