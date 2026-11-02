@@ -70,6 +70,8 @@ Provides:       bundled(libkdtree++)
 
 %global __provides_exclude_from ^%{_libdir}/freecad/.*$
 %global __requires_exclude ^(lib(Driver(|DAT|STL|UNV)|FreeCAD(App|Base|Gui)|MEFISTO2|SMDS|SMESH|SMESHDS|StdMeshers|area-native)[.]so.*)$
+# limit_build expands to job flags, not a shell command.
+%global _smp_mflags %{?_smp_mflags} %{limit_build -m 3000}
 
 %description
 FreeCAD is an open-source parametric 3D computer-aided design modeler for
@@ -96,7 +98,6 @@ rm -r src/3rdParty/PyCXX src/3rdParty/OndselSolver src/3rdParty/libE57Format \
 find src -type f -name '*.py' -exec sed -i '1{/^#!/d;}' {} +
 
 %build
-%limit_build -m 3000
 %cmake \
  -DCMAKE_INSTALL_PREFIX=%{_libdir}/freecad \
  -DCMAKE_INSTALL_BINDIR=%{_libdir}/freecad/bin \

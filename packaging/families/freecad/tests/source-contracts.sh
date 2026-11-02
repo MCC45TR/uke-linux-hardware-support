@@ -35,6 +35,11 @@ actual=$(rpmspec --target aarch64 --define 'dist %{nil}' --query --srpm --queryf
   exit 1
 }
 rpmspec --target aarch64 --parse freecad.spec >"$stage/expanded.spec"
+rpmspec --target aarch64 --define '_smp_build_ncpus 999999' --parse freecad.spec >"$stage/limited.spec"
+if grep -Eq '^[[:space:]]*-j[0-9]+[[:space:]]*$' "$stage/limited.spec"; then
+  echo 'Job-limit flags must belong to a build command.' >&2; exit 1
+fi
+grep -E 'cmake.*--build.*-j[0-9]+' "$stage/limited.spec" >/dev/null
 awk '/^(Source[0-9]*|Patch[0-9]*):/ && $2 ~ /^https:/ {sub(/#\/.*/, "", $2); print $2}' "$stage/expanded.spec" | LC_ALL=C sort >"$stage/spec-inputs"
 jq -r '.inputs[].url' source-lock.json | LC_ALL=C sort >"$stage/locked-inputs"
 cmp "$stage/spec-inputs" "$stage/locked-inputs"

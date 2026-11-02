@@ -79,3 +79,12 @@ promote the untested application. Submit only `fedora-rawhide-aarch64`, inspect
 native build/test logs, then solve the published RPM transaction against the
 official Rawhide and unstable repositories. Device installation and GUI/CAD
 testing remain unperformed until actual tablet evidence is available.
+
+## Binary-build job flags
+
+COPR build 11246389 passed source generation and dependency installation, then
+stopped before compilation because the standalone `limit_build` macro expanded
+to `-j2`. Rawhide’s installed macro definition returns job flags; it is not a
+shell command. Append its result to `_smp_mflags`, which `cmake_build` consumes.
+Expanded-spec regression checks force a constrained job limit, require the
+numeric flag on the CMake build command and reject standalone job flags.
