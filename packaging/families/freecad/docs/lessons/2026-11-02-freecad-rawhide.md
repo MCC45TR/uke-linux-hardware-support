@@ -75,6 +75,16 @@ shell command. Append its result to `_smp_mflags`, which `cmake_build` consumes.
 Expanded-spec regression checks force a constrained job limit, require the
 numeric flag on the CMake build command and reject standalone job flags.
 
+The corrected native build reached C++ compilation. Build 11246440 then failed
+in `src/Gui/PythonWrapper.cpp`: PySide 6.12 moved `PyObjectWrapper` into a separate
+header. Upstream [PR #33408](https://github.com/FreeCAD/FreeCAD/pull/33408), commit
+`636365fd4a30e017c76ef6a44cf045e77ec5e632`, adds a conditional header include while
+preserving the Quantity converter and earlier PySide support. Pin that upstream
+patch and increase the RPM Release to 2; the upstream version remains 1.1.4.
+All four patches apply with zero fuzz, and the actual failing translation unit
+compiles against Fedora Rawhide's Qt/PySide 6.12 headers on the x86_64 host.
+The next native AArch64 build and its complete test suite remain separate.
+
 ## Channel boundary and next validation
 
 FreeCAD is a new optional package only for unstable. Its dedicated family is

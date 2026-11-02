@@ -148,7 +148,7 @@ run_dispatch() {
     GITHUB_STEP_SUMMARY='' bash "$family/host/request-unstable.sh" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >"$FREECAD_FIXTURE/log" 2>&1
 }
 build_fixture() {
-  local state=$1 version=${2:-1:1.1.4-1.fc46}
+  local state=$1 version=${2:-$(jq -r '(.epoch|tostring)+":"+.version+"-"+(.release|tostring)+".fc46"' "$family/source-lock.json")}
   jq -n --arg state "$state" --arg version "$version" '{items:[{id:7,ownername:"mcc45tr",projectname:"uke-linux-unstable",state:$state,submitted_on:1793600000,source_package:{name:"freecad",version:$version}}]}' >"$FREECAD_FIXTURE/builds.json"
 }
 fixture active 1.1.4

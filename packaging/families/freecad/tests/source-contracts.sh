@@ -18,8 +18,8 @@ jq -e '
   .chroots==["fedora-rawhide-aarch64"] and
   .binary_build_networking==false and .automatic_promotion==false and
   .hardware_tested==false and .python_target_payload==true and
-  (.inputs|length==5) and
-  ([.inputs[].filename]|unique|length)==5 and
+  (.inputs|length==6) and
+  ([.inputs[].filename]|unique|length)==6 and
   all(.inputs[];
     (.filename|test("^[a-zA-Z0-9_.-]+$")) and
     (.sha256|test("^[a-f0-9]{64}$")) and

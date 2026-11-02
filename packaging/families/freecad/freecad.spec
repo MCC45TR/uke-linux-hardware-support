@@ -3,7 +3,7 @@
 Name:           freecad
 Epoch:          1
 Version:        1.1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A 3D parametric modeler
 
 License:        LGPL-2.1-or-later AND Zlib AND BSD-3-Clause AND Apache-2.0 AND EUPL-1.2 AND BSL-1.0 AND MIT AND Artistic-2.0 AND GPL-2.0-or-later AND CC-BY-SA-4.0
@@ -15,6 +15,8 @@ Source2:        https://raw.githubusercontent.com/nlohmann/json/v3.11.3/LICENSE.
 Patch0:         https://github.com/FreeCAD/FreeCAD/commit/2f899992a048a8a1011bd59ccb66eeec00d42b29.patch
 Patch1:         https://github.com/FreeCAD/FreeCAD/commit/e9b4a1c4bfdb7d08f4f3dc4c7a8df4e3bc2cb284.patch
 Patch2:         https://github.com/FreeCAD/FreeCAD/commit/8c8b7c1d8fa34fc3d11d593ce0a6d5f655f37f80.patch
+# Upstream PR #33408: PySide 6.12 moved PyObjectWrapper to its own header.
+Patch3:         https://github.com/FreeCAD/FreeCAD/commit/636365fd4a30e017c76ef6a44cf045e77ec5e632.patch
 
 ExclusiveArch:  aarch64
 
@@ -161,6 +163,9 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/org.freecad.Fr
 %{_datadir}/freecad/
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1:1.1.4-2
+- Backport upstream PySide 6.12 header compatibility without removing Quantity conversion.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1:1.1.4-1
 - Build the upstream stable release for Fedora Rawhide AArch64 in unstable.
 - Adapt the Fedora review spec and retain its upstream build and test fixes.

@@ -18,12 +18,14 @@ FreeCAD package was retired after its Python 3.12 installation failure
 That retirement does not establish a current AArch64-specific failure.
 
 `source-lock.json` records the source archive, upstream commit, published
-SHA-256, three upstream build/test fixes and the bundled JSON license text.
+SHA-256, upstream build/test fixes and the bundled JSON license text.
 The source factory checks every downloaded file before creating the source RPM.
 It does not consume an AppImage or a prebuilt application. The newer review's
 external JSON/kdtree patches target main rather than the stable branch; this
 package retains the stable branch's bundled headers and declares their licenses.
 Bundled SMESH and zipios++ remain FreeCAD's maintained implementations.
+Release 2 additionally backports upstream
+[PySide 6.12 compatibility fix #33408](https://github.com/FreeCAD/FreeCAD/pull/33408).
 
 FreeCAD embeds upstream Python and imports Python workbenches at runtime. The
 user explicitly requested this optional application for the Fedora root. Its
