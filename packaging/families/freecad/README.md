@@ -98,7 +98,8 @@ COPR requests use the authenticated SCM API with the validated full Git commit
 in each request. They do not depend on the persistent package definition's old
 committish and do not enable build networking. Running builds, successful
 matching releases and previously attempted identical commits prevent duplicate
-requests. An uncertain POST is not retried automatically. No project settings,
+requests. A new documentation or automation commit cannot retry unchanged inputs
+from a failed build. An uncertain POST is not retried automatically. No project settings,
 dependencies outside Fedora Rawhide, or channel-promotion rules are changed.
 
 Activation requires merging the workflow and configuring the account's existing

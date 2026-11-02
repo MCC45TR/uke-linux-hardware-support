@@ -27,6 +27,7 @@ mapfile -t ids < <(jq -r '.items[]|select(.source_package.name=="freecad" or .so
 for id in "${ids[@]}"; do
   [[ $id =~ ^[0-9]+$ ]]
   get "$api/build/source-build-config/$id" "$stage/source.json"
+  jq -e '.source_type|type=="string"' "$stage/source.json" >/dev/null
   if ! jq -e '.source_type=="scm" and .source_dict.clone_url=="https://github.com/MCC45TR/uke-linux-hardware-support.git" and .source_dict.subdirectory=="packaging/families/freecad"' "$stage/source.json" >/dev/null; then continue; fi
   state=$(jq -er --argjson id "$id" '.items[]|select(.id==$id)|.state' "$stage/builds.json")
   case "$state" in running|pending|starting|importing|waiting)
@@ -34,6 +35,22 @@ for id in "${ids[@]}"; do
   esac
   if [[ $(jq -r .source_dict.committish "$stage/source.json") == "$commit" ]]; then
     printf 'Commit already attempted as build %s (%s); inspect it before retrying.\n' "$id" "$state" >&2; exit 1
+  fi
+  if [[ $state == failed || $state == canceled ]]; then
+    previous=$(jq -er '.source_dict.committish|select(test("^[a-f0-9]{40}$"))' "$stage/source.json")
+    if ! git cat-file -e "$previous^{commit}" 2>/dev/null; then git fetch --quiet origin "$previous"; fi
+    paths=("$family/freecad.spec" "$family/source-lock.json")
+    name=$(jq -r --argjson id "$id" '.items[]|select(.id==$id)|.source_package.name' "$stage/builds.json")
+    if [[ $name == null ]]; then
+      paths+=(.copr/Makefile "$family/Makefile" "$family/tests/source-contracts.sh")
+    fi
+    if git diff --quiet "$previous" "$commit" -- "${paths[@]}"; then
+      printf 'Build %s failed with unchanged source inputs; a new documentation or automation commit is not a retry.\n' "$id" >&2
+      exit 1
+    else
+      status=$?
+      [[ $status == 1 ]] || exit "$status"
+    fi
   fi
 done
 # A full recent page may hide older source failures without package metadata.

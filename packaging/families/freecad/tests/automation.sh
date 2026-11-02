@@ -72,6 +72,8 @@ case "$*" in
   'rev-parse HEAD') printf '%s\n' aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;;
   'ls-remote origin refs/heads/main') printf '%s\trefs/heads/main\n' aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;;
   'show -s --format=%ct '*) printf '1793700000\n';;
+  'cat-file -e '*) exit 0;;
+  'diff --quiet '*) [[ ${FIXTURE_SOURCE_CHANGED:-0} == 0 ]];;
   *) exit 99;;
 esac
 MOCK
@@ -114,6 +116,15 @@ run_tracker; unchanged
 fixture regression 1.1.3
 if run_tracker; then echo 'Regression accepted' >&2; exit 1; fi
 unchanged
+fixture moved_tag 1.1.4
+jq '.object.sha="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"' "$FREECAD_FIXTURE/tag.json" >"$FREECAD_FIXTURE/tmp"; mv "$FREECAD_FIXTURE/tmp" "$FREECAD_FIXTURE/tag.json"
+if run_tracker; then echo 'Moved stable tag accepted' >&2; exit 1; fi
+unchanged
+fixture reissued 1.1.4
+printf '%064d  freecad_source_1.1.4.tar.gz\n' 0 >"$FREECAD_FIXTURE/checksum"
+jq '.assets[0].digest="sha256:0000000000000000000000000000000000000000000000000000000000000000"' "$FREECAD_FIXTURE/release.json" >"$FREECAD_FIXTURE/tmp"; mv "$FREECAD_FIXTURE/tmp" "$FREECAD_FIXTURE/release.json"
+if run_tracker; then echo 'Reissued stable source accepted' >&2; exit 1; fi
+unchanged
 fixture prerelease
 jq '.prerelease=true' "$FREECAD_FIXTURE/release.json" >"$FREECAD_FIXTURE/tmp"; mv "$FREECAD_FIXTURE/tmp" "$FREECAD_FIXTURE/release.json"
 if run_tracker; then echo 'Prerelease accepted' >&2; exit 1; fi
@@ -153,6 +164,13 @@ if run_dispatch; then echo 'Failed commit was retried' >&2; exit 1; fi
 fixture request 1.1.4
 run_dispatch
 jq -e '.projectname=="uke-linux-unstable" and .committish=="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" and .chroots==["fedora-rawhide-aarch64"] and .source_build_method=="make_srpm"' "$FREECAD_FIXTURE/post.json" >/dev/null
+[[ $(wc -l <"$FREECAD_FIXTURE/posts") == 1 ]]
+fixture unchanged_inputs 1.1.4
+build_fixture failed
+jq '.source_dict.committish="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"' "$FREECAD_FIXTURE/source.json" >"$FREECAD_FIXTURE/tmp"; mv "$FREECAD_FIXTURE/tmp" "$FREECAD_FIXTURE/source.json"
+if run_dispatch; then echo 'Unchanged failed source inputs were retried' >&2; exit 1; fi
+[[ ! -f $FREECAD_FIXTURE/posts ]]
+FIXTURE_SOURCE_CHANGED=1 run_dispatch
 [[ $(wc -l <"$FREECAD_FIXTURE/posts") == 1 ]]
 fixture uncertain 1.1.4
 if FIXTURE_POST_FAIL=1 run_dispatch; then echo 'Uncertain request reported success' >&2; exit 1; fi

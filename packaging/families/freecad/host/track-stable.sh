@@ -40,7 +40,9 @@ for _ in 1 2 3; do
 done
 [[ $kind == commit ]]
 if [[ $comparison == 0 ]]; then
-  [[ $commit == "$(jq -er .upstream_commit source-lock.json)" ]]
+  [[ $commit == "$(jq -er .upstream_commit source-lock.json)" ]] || {
+    echo 'The stable tag moved without a version change; manual review required.' >&2; exit 1;
+  }
   [[ $expected == "$(jq -er --arg url "$url" '.inputs[]|select(.url==$url)|.sha256' source-lock.json)" ]] || {
     echo 'Source was reissued at an unchanged version; manual review required.' >&2; exit 1;
   }
