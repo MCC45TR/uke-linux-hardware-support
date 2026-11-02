@@ -4,12 +4,16 @@
 #include "boot-common.hpp"
 #include <array>
 #include <cerrno>
+#include <cstdint>
 #include <fcntl.h>
 #include <iostream>
+#include <vector>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <sys/wait.h>
+#include <sys/xattr.h>
+#include <sys/random.h>
 #include <linux/magic.h>
 #include <unistd.h>
 
@@ -102,6 +106,73 @@ static bool repair_default_clock_config(int etc_fd) {
             "Clock configuration changed during inspection");
     // Complete only Fedora's empty default; retain the inode, label and any administrator settings.
     write_all(clock.value, "UTC\n");
+    return true;
+}
+// Migrate only the exact image-generated legacy entry. Mount view labels leave
+// OEM persist xattrs intact; this does not remount or open the OEM partition.
+template<class BeforeCommit = void(*)()>
+static bool repair_persist_context(int etc_fd, BeforeCommit before_commit = +[]{}) {
+    constexpr std::string_view legacy = "PARTLABEL=persist /mnt/vendor/persist ext4 ro,noload,nodev,nosuid,noexec,nofail,x-systemd.device-timeout=10s 0 0";
+    constexpr std::string_view updated = "PARTLABEL=persist /mnt/vendor/persist ext4 ro,noload,nodev,nosuid,noexec,context=system_u:object_r:var_lib_t:s0,nofail,x-systemd.device-timeout=10s 0 0";
+    trusted(etc_fd, true);
+    const int raw = openat(etc_fd, "fstab", O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    if (raw < 0 && errno == ENOENT) return false;
+    ProfileFd source(raw); trusted(source.value, false);
+    require(flock(source.value, LOCK_EX | LOCK_NB) == 0, "Filesystem configuration is busy");
+    struct stat original{};
+    require(fstat(source.value, &original) == 0, "Cannot inspect filesystem configuration");
+    const auto input = bounded_read(source.value, 1024 * 1024);
+    size_t offset = 0, match = std::string::npos; unsigned entries = 0;
+    while (offset < input.size()) {
+        const auto end = input.find('\n', offset);
+        const auto line = input.substr(offset, end == std::string::npos ? end : end - offset);
+        std::istringstream fields(line); std::string device, mount;
+        if ((fields >> device) && device.front() != '#' && (fields >> mount) &&
+            (device == "PARTLABEL=persist" || mount == "/mnt/vendor/persist")) {
+            ++entries;
+            if (line == legacy) match = offset;
+        }
+        if (end == std::string::npos) break;
+        offset = end + 1;
+    }
+    if (entries != 1 || match == std::string::npos) return false;
+    auto replacement = input; replacement.replace(match, legacy.size(), updated);
+    uint64_t random = 0;
+    require(getrandom(&random, sizeof(random), 0) == ssize_t(sizeof(random)), "Cannot allocate filesystem staging name");
+    const auto temporary = ".uke-fstab-" + std::to_string(random);
+    ProfileFd output(openat(etc_fd, temporary.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600));
+    struct Cleanup {int dir; const std::string &name; ~Cleanup(){unlinkat(dir, name.c_str(), 0);}} cleanup{etc_fd, temporary};
+    require(fchown(output.value, original.st_uid, original.st_gid) == 0 &&
+            fchmod(output.value, original.st_mode & 07777) == 0, "Cannot preserve filesystem configuration owner/mode");
+    const auto length = flistxattr(source.value, nullptr, 0);
+    require(length >= 0 && length <= 65536, "Cannot inspect filesystem configuration attributes");
+    std::vector<char> names(static_cast<size_t>(length));
+    if (length) require(flistxattr(source.value, names.data(), names.size()) == length, "Filesystem attributes changed");
+    for (size_t p = 0; p < names.size();) {
+        const auto size = strnlen(names.data() + p, names.size() - p);
+        require(size < names.size() - p, "Malformed filesystem attribute list");
+        const auto *name = names.data() + p;
+        require(std::string_view(name) != "security.ima" && std::string_view(name) != "security.evm",
+                "Signed filesystem configuration requires administrator review");
+        const auto count = fgetxattr(source.value, name, nullptr, 0);
+        require(count >= 0 && count <= 65536, "Cannot read filesystem configuration attribute");
+        std::vector<char> value(static_cast<size_t>(count));
+        require(fgetxattr(source.value, name, value.data(), value.size()) == count &&
+                fsetxattr(output.value, name, value.data(), value.size(), 0) == 0, "Cannot preserve filesystem configuration attributes");
+        p += size + 1;
+    }
+    write_all(output.value, replacement);
+    before_commit();
+    struct stat current{}, named{};
+    require(fstat(source.value, &current) == 0 && fstatat(etc_fd, "fstab", &named, AT_SYMLINK_NOFOLLOW) == 0 &&
+            current.st_dev == original.st_dev && current.st_ino == original.st_ino && current.st_nlink == 1 &&
+            named.st_dev == original.st_dev && named.st_ino == original.st_ino &&
+            current.st_size == original.st_size && current.st_mtim.tv_sec == original.st_mtim.tv_sec &&
+            current.st_mtim.tv_nsec == original.st_mtim.tv_nsec && current.st_ctim.tv_sec == original.st_ctim.tv_sec &&
+            current.st_ctim.tv_nsec == original.st_ctim.tv_nsec && lseek(source.value, 0, SEEK_SET) == 0 &&
+            bounded_read(source.value, 1024 * 1024) == input, "Filesystem configuration changed; migration refused");
+    require(renameat(etc_fd, temporary.c_str(), etc_fd, "fstab") == 0 && fsync(etc_fd) == 0,
+            "Cannot commit filesystem mount-view policy");
     return true;
 }
 static void mask_unit(int directory_fd, const char *unit) {
@@ -253,6 +324,8 @@ int main(int argc, char **argv) {
         auto etc = directory("/etc", false);
         if (repair_default_clock_config(etc.value))
             std::cout << "Completed the empty default clock configuration with UTC; no RTC access.\n";
+        if (action == "reconcile" && repair_persist_context(etc.value))
+            std::cout << "Added the Fedora context to the legacy read-only persist mount; effective on next mount, OEM labels unchanged.\n";
         if (profile == uke_install::Profile::linux) {
             mask_unit(units.value, "uke-userdata-update.service");
             mask_unit(units.value, "uke-userdata-accept.service");

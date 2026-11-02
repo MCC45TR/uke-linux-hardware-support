@@ -70,9 +70,9 @@ int main(int argc,char **argv) {
     assert(uke_video::partitions(fd.value,total).contains("vendor_a"));
     write_all(fd.value,base);reject([&]{uke_video::partitions(fd.value,total-512);});
     const std::string expected("fixture\0payload",15);
-    const auto extracted=uke_video::capture({"/usr/sbin/debugfs","-R","cat /firmware/vpu30_2v.mbn",argv[1]});
+    const auto extracted=uke_video::capture({"/usr/bin/debugfs","-R","cat /firmware/vpu30_2v.mbn",argv[1]});
     assert(std::string(extracted.begin(),extracted.end())==expected);
-    assert(uke_video::capture({"/usr/sbin/debugfs","-R","cat /missing",argv[1]}).empty());
+    assert(uke_video::capture({"/usr/bin/debugfs","-R","cat /missing",argv[1]}).empty());
     assert(!uke_video::admitted(extracted) && !uke_video::admitted(Bytes{}));
     reject([&]{uke_video::capture({"/usr/bin/false"});});
     reject([&]{uke_video::capture({"/usr/bin/head","-c","8192","/dev/zero"},1024);});

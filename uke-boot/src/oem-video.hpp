@@ -192,7 +192,9 @@ static inline void publish(const fs::path &destination,const Bytes &bytes) {
 }
 #ifndef UKE_KERNEL_UPDATE_TEST
 static inline Bytes load_local(const std::pair<std::string,dev_t> &super) {
-    trusted("/usr/sbin/debugfs");
+    // Fedora's merged /usr/sbin is a symlink. Descriptor ancestry is checked
+    // on the real /usr/bin path, as for the updater's other trusted inputs.
+    trusted("/usr/bin/debugfs");
     Fd source(open(("/dev/"+super.first).c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK));
     struct stat st{};uint64_t size=0;
     need(!fstat(source.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==super.second && !ioctl(source.value,BLKGETSIZE64,&size),
@@ -201,7 +203,7 @@ static inline Bytes load_local(const std::pair<std::string,dev_t> &super) {
     for(const auto &label:{"odm_a","vendor_a"}) {
         const auto found=inputs.find(label);if(found==inputs.end())continue;
         auto [loop,path]=readonly_loop(source.value,found->second);
-        const auto bytes=capture({"/usr/sbin/debugfs","-R","cat /firmware/vpu30_2v.mbn",path});
+        const auto bytes=capture({"/usr/bin/debugfs","-R","cat /firmware/vpu30_2v.mbn",path});
         if(!admitted(bytes))continue;
         return bytes;
     }

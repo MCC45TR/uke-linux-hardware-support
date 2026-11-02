@@ -18,6 +18,45 @@ int main() {
     {
         ProfileFd dir(open(root.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
         trusted(dir.value, true);
+        assert(!repair_persist_context(dir.value));
+        const auto fstab = root / "fstab";
+        const std::string legacy = "PARTLABEL=persist /mnt/vendor/persist ext4 ro,noload,nodev,nosuid,noexec,nofail,x-systemd.device-timeout=10s 0 0";
+        const std::string context = "context=system_u:object_r:var_lib_t:s0,";
+        const auto content = "# preserved comment\nUUID=example / ext4 defaults 0 1\n" + legacy + "\n";
+        std::ofstream(fstab) << content;
+        assert(chmod(fstab.c_str(), 0640) == 0);
+        assert(setxattr(fstab.c_str(), "user.uke-fixture", "preserved", 9, 0) == 0);
+        assert(repair_persist_context(dir.value));
+        auto expected = content; expected.insert(expected.find("noexec,") + 7, context);
+        assert(observation(fstab, 4096) == expected && !repair_persist_context(dir.value));
+        struct stat fstab_stat{}; assert(stat(fstab.c_str(), &fstab_stat) == 0);
+        assert((fstab_stat.st_mode & 07777) == 0640 && fstab_stat.st_uid == geteuid());
+        char attribute[16]{};
+        assert(getxattr(fstab.c_str(), "user.uke-fixture", attribute, sizeof(attribute)) == 9 &&
+               std::string(attribute, 9) == "preserved");
+        for (const auto &custom : {legacy + ",custom\n", "# " + legacy + "\n",
+                                  legacy + "\n" + legacy + "\n", legacy + "\nUUID=other /mnt/vendor/persist ext4 ro 0 0\n"}) {
+            std::ofstream(fstab) << custom;
+            assert(!repair_persist_context(dir.value) && observation(fstab, 4096) == custom);
+        }
+        std::ofstream(fstab) << content;
+        {
+            ProfileFd busy(open(fstab.c_str(), O_RDONLY | O_CLOEXEC));
+            assert(flock(busy.value, LOCK_EX | LOCK_NB) == 0);
+            refuse([&] { repair_persist_context(dir.value); });
+        }
+        refuse([&] { repair_persist_context(dir.value, [&] { std::ofstream(fstab) << "administrator update\n"; }); });
+        assert(observation(fstab, 4096) == "administrator update\n");
+        for (const auto &entry : fs::directory_iterator(root))
+            assert(entry.path().filename().string().find(".uke-fstab-") != 0);
+        fs::remove(fstab); std::ofstream(root / "other-fstab") << content;
+        fs::create_symlink(root / "other-fstab", fstab);
+        refuse([&] { repair_persist_context(dir.value); });
+        fs::remove(fstab); fs::create_hard_link(root / "other-fstab", fstab);
+        refuse([&] { repair_persist_context(dir.value); });
+        assert(observation(root / "other-fstab", 4096) == content);
+        fs::remove(fstab); fs::remove(root / "other-fstab");
+        std::cout << "Exact legacy persist mount-view migration, metadata/xattr preservation, custom/duplicate/busy/changed/symlink/hardlink refusal passed; no mount or OEM xattr operation.\n";
         assert(!repair_default_clock_config(dir.value));
         const auto clock_file = root / "adjtime";
         std::ofstream(clock_file) << "0.0 0 0.0\n0\n";
