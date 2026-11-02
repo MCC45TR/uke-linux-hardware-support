@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run only in COPR: retain the installed boot cohort and overlay clock/policy fixes.
+# Run only in COPR: retain the installed boot cohort and overlay checked repairs.
 set -Eeuo pipefail
 export LC_ALL=C
 test ! -e /etc/senemos/kernel-update.conf
@@ -14,7 +14,7 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
         --data-urlencode "projectname=$project" --data-urlencode packagename=uke-boot-integration \
         --data-urlencode limit=100 https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
     jq -e '(.items|type)=="array" and (.items|length)<100 and
-        all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+([.][0-9]+)*$";""))!="1.8.28-1")' "$stage/builds.json" >/dev/null
+        all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+([.][0-9]+)*$";""))!="1.8.29-1")' "$stage/builds.json" >/dev/null
 done
 curl -fLsS --proto '=https' --proto-redir '=https' --retry 3 \
     https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11240620/uke-boot-integration-1.8.24-1.fc46.src.rpm -o "$stage/base.src.rpm"
@@ -36,16 +36,23 @@ for relative in src/install-profile.cpp src/touch-health.hpp src/shutdown-trace.
     cmp "$inner/$relative" "$owner/$relative"
 done
 for relative in src/units/70-uke-chronyd-clock.conf src/units/uke-userdata-accept.service \
-    src/profiles/clock-epoch src/kernel-update.cpp src/userdata-update.hpp src/slot-control.hpp \
-    tests/kernel-update.cpp tests/userdata-update.cpp tests/slot-control.cpp docs/KERNEL-UPDATES.md docs/USERDATA-AB.md; do
+    src/profiles/clock-epoch src/kernel-update.cpp src/userdata-update.hpp src/slot-control.hpp src/oem-video.hpp \
+    tests/kernel-update.cpp tests/userdata-update.cpp tests/slot-control.cpp tests/oem-video.cpp tests/oem-video.sh \
+    docs/KERNEL-UPDATES.md docs/USERDATA-AB.md; do
     install -Dm644 "$owner/$relative" "$inner/$relative"
 done
 rewrite_spec() {
-    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.28-1";print "- Retain accepted A/B slots without image copies and block incomplete candidates.";print "";history=1;next}
-        !history {gsub(/1[.]8[.]24-1/,"1.8.28-1");gsub(/1[.]8[.]24/,"1.8.28")}
+    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.29-1";print "- Add bounded device-local video import and original Fedora integration dependencies.";print "";history=1;next}
+        !history {gsub(/1[.]8[.]24-1/,"1.8.29-1");gsub(/1[.]8[.]24/,"1.8.29")}
         {print}
+        /^BuildRequires: jq$/ {print "BuildRequires: e2fsprogs"}
+        /^Requires: bluez$/ {
+            print "Requires: realtek-firmware"
+            print "Requires: (pipewire-plugin-libcamera if wireplumber)"}
+        /^Requires: systemd >= 254$/ {print "Requires: e2fsprogs"}
         /^Provides: uke-kernel-update\(qualified-firmware-cohort-v1\) = 1$/ {
-            print "Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1"}
+            print "Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1"
+            print "Provides: uke-kernel-update(device-local-video-import-v1) = 1"}
         /^install -Dm644 src\/units\/70-uke-chronyd-clock[.]conf / {
             print "install -pDm644 src/profiles/clock-epoch %{buildroot}%{_prefix}/lib/clock-epoch"}
         /^%\{_unitdir\}\/chronyd[.]service[.]d\/70-uke-clock[.]conf$/ {
@@ -53,6 +60,7 @@ rewrite_spec() {
         /^%check$/ {
             print "test -f %{buildroot}%{_prefix}/lib/clock-epoch"
             print "test $(stat -c %Y %{buildroot}%{_prefix}/lib/clock-epoch) -eq $(stat -c %Y src/profiles/clock-epoch)"
+            print "bash tests/oem-video.sh"
         }' "$1" > "$2"
 }
 for spec in "$inner/packaging/uke-boot-integration.spec" "$input/uke-boot-integration.spec"; do
@@ -63,12 +71,18 @@ done
 rewrite_expanded_spec() {
     # The standalone outer spec contains the actual expanded install/check/file
     # sections. Editing its retained inner recipe alone does not change the RPM.
-    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.28-1";print "- Retain accepted A/B slots without image copies and block incomplete candidates.";print "";history=1;next}
-        !history {gsub(/1[.]8[.]24-1/,"1.8.28-1");gsub(/1[.]8[.]24/,"1.8.28")}
+    awk '/^%changelog/ {print;print "* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.29-1";print "- Add bounded device-local video import and original Fedora integration dependencies.";print "";history=1;next}
+        !history {gsub(/1[.]8[.]24-1/,"1.8.29-1");gsub(/1[.]8[.]24/,"1.8.29")}
         /^%check$/ {checking=1}
         {print}
+        /^BuildRequires: jq$/ {print "BuildRequires: e2fsprogs"}
+        /^Requires: bluez$/ {
+            print "Requires: realtek-firmware"
+            print "Requires: (pipewire-plugin-libcamera if wireplumber)"}
+        /^Requires: systemd >= 254$/ {print "Requires: e2fsprogs"}
         /^Provides: uke-kernel-update\(qualified-firmware-cohort-v1\) = 1$/ {
-            print "Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1"}
+            print "Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1"
+            print "Provides: uke-kernel-update(device-local-video-import-v1) = 1"}
         /^install -Dm644 src\/units\/70-uke-chronyd-clock[.]conf / {
             print "install -pDm644 src/profiles/clock-epoch %{buildroot}/usr/lib/clock-epoch"}
         /^\/usr\/lib\/systemd\/system\/chronyd[.]service[.]d\/70-uke-clock[.]conf$/ {
@@ -76,6 +90,7 @@ rewrite_expanded_spec() {
         checking && /^cd / {
             print "test -f %{buildroot}/usr/lib/clock-epoch"
             print "test $(stat -c %Y %{buildroot}/usr/lib/clock-epoch) -eq $(stat -c %Y src/profiles/clock-epoch)"
+            print "bash tests/oem-video.sh"
             checking=0
         }' "$1" > "$2"
 }
@@ -83,14 +98,18 @@ rewrite_expanded_spec "$stage/sources/uke-boot-integration.spec" "$output/uke-bo
 test "$(grep -Fxc '/usr/lib/clock-epoch' "$output/uke-boot-integration.spec")" = 1
 test "$(grep -Fxc 'install -pDm644 src/profiles/clock-epoch %{buildroot}/usr/lib/clock-epoch' "$output/uke-boot-integration.spec")" = 1
 test "$(grep -Fxc 'test -f %{buildroot}/usr/lib/clock-epoch' "$output/uke-boot-integration.spec")" = 1
+test "$(grep -Fxc 'bash tests/oem-video.sh' "$output/uke-boot-integration.spec")" = 1
+test "$(grep -Fxc 'Provides: uke-kernel-update(device-local-video-import-v1) = 1' "$output/uke-boot-integration.spec")" = 1
+test "$(grep -Fxc 'Requires: realtek-firmware' "$output/uke-boot-integration.spec")" = 1
+test "$(grep -Fxc 'Requires: (pipewire-plugin-libcamera if wireplumber)' "$output/uke-boot-integration.spec")" = 1
 commit=$(git -C "$owner" rev-parse HEAD)
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
-mv "$inner" "$stage/inner/uke-boot-integration-1.8.28"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.28.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.28
+mv "$inner" "$stage/inner/uke-boot-integration-1.8.29"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.29.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.29
 unlink "$input/uke-boot-integration-1.8.24.tar.xz"
 jq -n --arg commit "$commit" --argjson epoch "$epoch" \
-    '{source_commit:$commit,parent_build:11240620,parent_srpm_sha256:"3a8e8923d0b127b13e7b2f4f819ba0da25e2bc7dc0f55ec64393ed561d7118a9",clock_epoch:$epoch,whole_boot_image_copies:false,inactive_unbootable_barrier:true,rtc_writes:false,automatic_policy_unchanged:true,physical_acceptance:false}' > "$outer/clock-policy-overlay.json"
+    '{source_commit:$commit,parent_build:11240620,parent_srpm_sha256:"3a8e8923d0b127b13e7b2f4f819ba0da25e2bc7dc0f55ec64393ed561d7118a9",clock_epoch:$epoch,whole_boot_image_copies:false,inactive_unbootable_barrier:true,device_local_video_import:true,firmware_payload_included:false,rtc_writes:false,automatic_policy_unchanged:true,physical_acceptance:false}' > "$outer/clock-policy-overlay.json"
 (cd "$outer"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-mv "$outer" "$stage/unpacked/uke-boot-integration-1.8.28"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.28.tar.xz" -C "$stage/unpacked" uke-boot-integration-1.8.28
-test "$(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec")" = 1.8.28-1.fc46
+mv "$outer" "$stage/unpacked/uke-boot-integration-1.8.29"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.29.tar.xz" -C "$stage/unpacked" uke-boot-integration-1.8.29
+test "$(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec")" = 1.8.29-1.fc46

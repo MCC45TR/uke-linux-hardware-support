@@ -441,6 +441,7 @@ static void boot_userdata(const fs::path &running,Validate validate,Accept accep
     inspect(selected,bytes);
     if(selected!=running)apply(selected,bytes);
 }
+#include "oem-video.hpp"
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd inhibit_shutdown() {
     sd_bus *raw=nullptr;const auto opened=sd_bus_open_system(&raw);
@@ -483,9 +484,9 @@ int main(int argc,char **argv) {
     try {
         need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
-                         std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction")) ||
-             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | boot | accept | fallback | auto | check-auto");
+                         std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
+             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
         const bool restore=action=="check-restore-current"||action=="restore-current";
@@ -504,6 +505,21 @@ int main(int argc,char **argv) {
         need(label=="userdata"||(action!="boot" && action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
         const auto root=partition(label);const auto filesystem=root_mount(root.second,read_mountinfo(),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
+        if(action=="check-oem-video" || action=="import-oem-video") {
+            need(label=="userdata","Device-local firmware import requires the measured userdata profile");
+            const auto super=partition("super");
+            need(ufs_controller(fs::path("/sys/class/block")/super.first)==ufs_controller(fs::path("/sys/class/block")/root.first),
+                 "Super and userdata must share the measured UFS controller");
+            if(action=="check-oem-video") {
+                const auto bytes=uke_video::load_local(super);
+                std::cout<<"Device-local video candidate verified: "<<bytes.size()<<" bytes, SHA256 "<<digest(bytes)<<"; no firmware file installed\n";
+            } else {
+                const std::string release=argv[2];need(token(release),"Invalid firmware release");
+                (void)validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/release,"/usr/lib/modules",label,current.release);
+                uke_video::import_firmware(release,current.release,super);
+            }
+            return 0;
+        }
         fs::path bundle=(action=="boot"||action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if((automatic || preflight) && label=="userdata") {
             bundle=selected_userdata_bundle();

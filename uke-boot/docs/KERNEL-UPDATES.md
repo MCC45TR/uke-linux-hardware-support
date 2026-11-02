@@ -235,3 +235,24 @@ and use no VRR override. A legacy enabled policy still requires an explicit
 `vrr_min_hz`; unknown keys and malformed values remain errors. Installing this
 update does not enable automatic activation, write an RTC, repair a filesystem
 or establish a successful reboot.
+# Device-local video firmware
+
+`uke-kernel-update check-oem-video` inspects the physical Uke super partition
+read-only and reports a candidate without installing it. The importer admits
+mirrored, SHA256-checked Android LP metadata, the measured single-device linear
+ODM/vendor layout, and fixed firmware size/hash/ELF memory bounds. Unknown,
+changed or absent inputs fail closed. Temporary loop devices are read-only and
+autoclear; helper output and runtime are bounded.
+
+`uke-kernel-update import-oem-video RELEASE` additionally requires a fully
+validated installed kernel bundle and confines a new firmware file to that
+non-running kernel's versioned firmware directory. Publication is atomic and
+does not overwrite different existing bytes. Kernel-specific lookup follows
+the standard Linux firmware search path. This command neither writes Android
+partitions nor activates a kernel or reboots. Firmware bytes are never included
+in source archives or public COPR packages. Size/hash admission does not prove
+PAS authentication, HFI compatibility or codec operation on hardware.
+
+LP format reference: AOSP system/core commit
+`a3b721a32242006b59cb12bd62c9133632af3a2d`,
+`fs_mgr/liblp/include/liblp/metadata_format.h` (Apache-2.0).
