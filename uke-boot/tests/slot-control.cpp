@@ -111,7 +111,7 @@ int main(int argc,char **argv) {
         assert((blocked_flags&slot::unbootable) && !(blocked_flags&(slot::successful|slot::retries|slot::priority|slot::active)));
         assert(!blocked->block_inactive(good,failed));
         reject([&]{blocked->block_inactive(failed,good);});
-        assert(blocked->reread()->observed==blocked->observed);
+        assert(blocked->reread()->before==blocked->before);
         slot::Disk foreign(fd.value,st.st_size,sector);
         assert(foreign.prepare(good,failed));foreign.commit();
         reject([&]{blocked->reread();});
