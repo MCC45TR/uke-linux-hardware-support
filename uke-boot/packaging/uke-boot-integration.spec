@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.25
+Version: 1.8.26
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -382,6 +382,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.26-1
+- Install the epoch through the expanded standalone spec and verify its RPM payload.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.25-1
 - Preserve the packaged systemd clock epoch instead of restoring an old RTC counter.
 - Retain disabled legacy userdata policy without enabling updates or display overrides.
