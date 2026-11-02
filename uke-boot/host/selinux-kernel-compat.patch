@@ -68,7 +68,7 @@ index 62fe74d..7a00ab2 100644
  ')
  
 diff --git a/policy/modules/kernel/kernel.te b/policy/modules/kernel/kernel.te
-index 513cde9..e806a2e 100644
+index 513cde9..f7f9995 100644
 --- a/policy/modules/kernel/kernel.te
 +++ b/policy/modules/kernel/kernel.te
 @@ -459,6 +459,7 @@ optional_policy(`
@@ -79,13 +79,17 @@ index 513cde9..e806a2e 100644
  	libs_use_shared_libs(kernel_t)
  ')
  
-@@ -598,6 +599,12 @@ if( ! secure_mode_insmod ) {
+@@ -598,6 +599,16 @@ if( ! secure_mode_insmod ) {
  	kernel_setsched(can_load_kernmodule)
  }
  
 +optional_policy(`
++	gen_require(`
++		type lib_t;
++		class system firmware_load;
++	')
 +	if( ! secure_mode_insmod ) {
-+		libs_load_firmware(can_load_kernmodule)
++		allow can_load_kernmodule lib_t:system firmware_load;
 +	}
 +')
 +
