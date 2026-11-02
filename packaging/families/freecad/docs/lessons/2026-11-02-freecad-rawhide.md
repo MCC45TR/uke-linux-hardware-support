@@ -68,23 +68,49 @@ query while preserving the real binary RPM distribution suffix. A user dist
 macro fixture reproduces the failure and passes with the explicit definition.
 Checksum and channel checks stay enabled.
 
+COPR build 11246389 passed source generation and dependency installation, then
+stopped before compilation because the standalone `limit_build` macro expanded
+to `-j2`. Rawhide's installed macro definition returns job flags; it is not a
+shell command. Append its result to `_smp_mflags`, which `cmake_build` consumes.
+Expanded-spec regression checks force a constrained job limit, require the
+numeric flag on the CMake build command and reject standalone job flags.
+
 ## Channel boundary and next validation
 
 FreeCAD is a new optional package only for unstable. Its dedicated family is
 `packaging/families/freecad`, with all source, spec, checks and source-generation
 rules kept together. It is outside the old 25-source channel-parity snapshot
-and is not registered in the automatic `uke-*` family build hooks. Complete
-the old final reforks before adding it to unstable, otherwise a bulk fork could
-promote the untested application. Submit only `fedora-rawhide-aarch64`, inspect
+and is not registered in the automatic `uke-*` family build hooks. The user
+subsequently allowed FreeCAD to accompany the initial channel synchronization
+on 2 November; that supersedes the initial hold before the final reforks.
+Future automatic builds target unstable only; later promotions remain gated
+by test results. Submit only `fedora-rawhide-aarch64`, inspect
 native build/test logs, then solve the published RPM transaction against the
 official Rawhide and unstable repositories. Device installation and GUI/CAD
 testing remain unperformed until actual tablet evidence is available.
 
-## Binary-build job flags
+## Stable-source tracking and pinned dispatch
 
-COPR build 11246389 passed source generation and dependency installation, then
-stopped before compilation because the standalone `limit_build` macro expanded
-to `-j2`. Rawhide’s installed macro definition returns job flags; it is not a
-shell command. Append its result to `_smp_mflags`, which `cmake_build` consumes.
-Expanded-spec regression checks force a constrained job limit, require the
-numeric flag on the CMake build command and reject standalone job flags.
+The user requested automatic latest-version builds. The implementation follows
+the upstream latest stable release, rejects drafts/prereleases/regressions and
+checks both published source digests before source preparation. Candidate pins
+are isolated until the RPM source preparation and official Rawhide AArch64 SAT
+transaction succeed. Synthetic fixtures confirm that failures do not advance
+the real source pins and that unchanged releases are idempotent.
+
+The persistent COPR package was initially pinned to a fixed source commit.
+A generic custom webhook would keep using that old definition. Use COPR's
+[SCM build API](https://github.com/fedora-copr/copr/blob/main/python/copr/v3/proxies/build.py)
+with the validated `committish` in every request instead. The request is limited
+to the unstable project and AArch64 chroot. Build history includes source-stage
+failures without package metadata; inspect their source configurations as well
+as normal named builds before submitting. A truncated history or uncertain POST
+must not become permission for a duplicate request.
+
+The current cloud runtime has no COPR API credential binding. The workflow
+requires existing credentials in two named GitHub Actions secrets and reports
+missing configuration before any pin update. No credentials are generated or
+exposed. Publication to main and actual automatic dispatch remain unverified
+until the reviewed changes are merged, credentials are configured and a real
+workflow run succeeds. Local tests and a real unchanged-release provenance
+check do not establish that automatic COPR access is enabled.

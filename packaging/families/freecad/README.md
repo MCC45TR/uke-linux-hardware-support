@@ -69,7 +69,7 @@ configuration passed with GCC 16.2.1, Python 3.15.2 and Qt/PySide 6.12.0; SWIG/P
 runtime compatibility passed. This is a source/configuration result. A native
 COPR build, published RPM dependency resolution and tablet testing remain separate.
 
-The dedicated GitHub workflow checks only this family's source contracts and
+The `freecad.yml` GitHub workflow checks this family's source contracts and
 does not submit COPR builds. The existing `uke-*` family registry is unchanged,
 so its test/stable hooks do not pick up FreeCAD. See the family's
 [lesson record](docs/lessons/2026-11-02-freecad-rawhide.md) for evidence and limits.
@@ -82,3 +82,39 @@ sudo dnf install freecad
 ```
 
 Review the transaction before accepting it. Launch `FreeCAD` or `freecad`.
+
+## Latest stable release automation
+
+The proposed `freecad-stable.yml` workflow checks the upstream latest stable
+release every six hours and on manual dispatch. Drafts, prereleases and version
+regressions are rejected. It resolves the release tag to an immutable commit,
+compares GitHub's source-asset digest with the upstream checksum file, verifies
+the downloaded archive, prepares an isolated source RPM and checks its patches
+and official Rawhide AArch64 dependency transaction before changing source pins.
+An unchanged release does not create a commit. A failed check leaves the pins
+unchanged. A new release whose patches need review stops before publication.
+
+COPR requests use the authenticated SCM API with the validated full Git commit
+in each request. They do not depend on the persistent package definition's old
+committish and do not enable build networking. Running builds, successful
+matching releases and previously attempted identical commits prevent duplicate
+requests. An uncertain POST is not retried automatically. No project settings,
+dependencies outside Fedora Rawhide, or channel-promotion rules are changed.
+
+Activation requires merging the workflow and configuring the account's existing
+COPR API login and token as GitHub repository Actions secrets named
+`COPR_FREECAD_LOGIN` and `COPR_FREECAD_TOKEN`. Do not put their values in source,
+logs, pull requests or chat. The workflow fails explicitly before changing pins
+when either secret is absent. This implementation neither generates credentials
+nor claims dispatch is enabled until those settings and a real run are verified.
+
+Synthetic updater and dispatch tests run with:
+
+```sh
+make -C packaging/families/freecad test-automation
+```
+
+They cover stable-release idempotence, prerelease/regression/checksum refusals,
+rollback after source-preparation or dependency failures, active/published/failed
+build deduplication, pinned unstable requests and a single uncertain POST. They
+make no external requests. Native builds and device tests remain separate.
