@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # COPR source worker only. Retain the installed KDE selection, not a new SDK.
 set -Eeuo pipefail
+trap 'printf "KDE source preparation failed at line %s.\n" "$LINENO" >&2' ERR
 export LC_ALL=C
 test ! -e /etc/senemos/kernel-update.conf
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 && $(rpm --eval '%{fedora}') == 46 ]]
@@ -60,6 +61,7 @@ cmp "$stage/sections.before" "$stage/sections.after"
 [[ $(rpm --eval "%{lua: print(rpm.vercmp('35.1.fc46', '36.fc46'))}") == -1 ]]
 [[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == 2.8.1-5.1.fc46 ]]
 rpmspec --target aarch64 -q --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "$output/uke-control.spec" > "$stage/identities"
+cat "$stage/identities"
 [[ $(wc -l < "$stage/identities") == 1 ]]
 grep -Fxq $'uke-kde-plasma-meta\t1.0.0-35.1.fc46' "$stage/identities"
 commit=$(git -C "$here" rev-parse HEAD)
