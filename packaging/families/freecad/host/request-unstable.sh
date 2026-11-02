@@ -26,10 +26,22 @@ fi
 mapfile -t ids < <(jq -r '.items[]|select(.source_package.name=="freecad" or .source_package.name==null)|.id' "$stage/builds.json")
 for id in "${ids[@]}"; do
   [[ $id =~ ^[0-9]+$ ]]
+  state=$(jq -er --argjson id "$id" '.items[]|select(.id==$id)|.state' "$stage/builds.json")
+  name=$(jq -r --argjson id "$id" '.items[]|select(.id==$id)|.source_package.name' "$stage/builds.json")
+  if [[ $name == freecad ]]; then
+    case "$state" in running|pending|starting|importing|waiting)
+      printf 'FreeCAD build %s is active; no duplicate requested.\n' "$id"; exit 0;;
+    esac
+  fi
   get "$api/build/source-build-config/$id" "$stage/source.json"
   jq -e '.source_type|type=="string"' "$stage/source.json" >/dev/null
-  if ! jq -e '.source_type=="scm" and .source_dict.clone_url=="https://github.com/MCC45TR/uke-linux-hardware-support.git" and .source_dict.subdirectory=="packaging/families/freecad"' "$stage/source.json" >/dev/null; then continue; fi
-  state=$(jq -er --argjson id "$id" '.items[]|select(.id==$id)|.state' "$stage/builds.json")
+  if ! jq -e '.source_type=="scm" and .source_dict.clone_url=="https://github.com/MCC45TR/uke-linux-hardware-support.git" and .source_dict.subdirectory=="packaging/families/freecad"' "$stage/source.json" >/dev/null; then
+    prior_version=$(jq -r --argjson id "$id" '.items[]|select(.id==$id)|.source_package.version' "$stage/builds.json")
+    if [[ $name == freecad && ( $state == failed || $state == canceled ) && ( $prior_version == "$version" || $prior_version == "$version".* ) ]]; then
+      echo 'A matching FreeCAD release failed from an uncomparable source; inspect it before resubmission.' >&2; exit 1
+    fi
+    continue
+  fi
   case "$state" in running|pending|starting|importing|waiting)
     printf 'FreeCAD build %s is active; no duplicate requested.\n' "$id"; exit 0;;
   esac
@@ -40,7 +52,6 @@ for id in "${ids[@]}"; do
     previous=$(jq -er '.source_dict.committish|select(test("^[a-f0-9]{40}$"))' "$stage/source.json")
     if ! git cat-file -e "$previous^{commit}" 2>/dev/null; then git fetch --quiet origin "$previous"; fi
     paths=("$family/freecad.spec" "$family/source-lock.json")
-    name=$(jq -r --argjson id "$id" '.items[]|select(.id==$id)|.source_package.name' "$stage/builds.json")
     if [[ $name == null ]]; then
       paths+=(.copr/Makefile "$family/Makefile" "$family/tests/source-contracts.sh")
     fi

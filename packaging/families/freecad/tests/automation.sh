@@ -153,7 +153,13 @@ build_fixture() {
 }
 fixture active 1.1.4
 build_fixture running
+printf '{"source_type":"upload","source_dict":{}}\n' >"$FREECAD_FIXTURE/source.json"
 run_dispatch; [[ ! -f $FREECAD_FIXTURE/posts ]]
+fixture manual_failure 1.1.4
+build_fixture failed
+printf '{"source_type":"upload","source_dict":{}}\n' >"$FREECAD_FIXTURE/source.json"
+if run_dispatch; then echo 'Uncomparable failed upload was retried' >&2; exit 1; fi
+[[ ! -f $FREECAD_FIXTURE/posts ]]
 fixture published 1.1.4
 build_fixture succeeded
 run_dispatch; [[ ! -f $FREECAD_FIXTURE/posts ]]
