@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.26
+Version: 1.8.27
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -98,6 +98,7 @@ Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
 Provides: uke-kernel-update(userdata-fallback-v1) = 1
 Provides: uke-kernel-update(qualified-firmware-cohort-v1) = 1
+Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1
 %description -n uke-kernel-update
 Validates matched installed boot-v4 payloads and module inventories. The Linux
 root profile retains its opt-in boot_b writer. The userdata profile writes an
@@ -382,6 +383,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.27-1
+- Retain the accepted A/B slot directly without full boot-image file copies.
+- Verify the protected slot before and after inactive writes and slot selection.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.26-1
 - Install the epoch through the expanded standalone spec and verify its RPM payload.
 

@@ -391,6 +391,31 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
                      {"-core",{{modules/release/"vmlinuz",digest(core)}}},{"-dtbs",{{dtb,digest(file(dtb))}}},{"-modules",module_files}},release,query);
     return bytes;
 }
+static bool replace_inactive_verified(int target,int accepted,const Bytes &next,const Bytes &good,
+                                      void(*writer)(int,const Bytes&)=write_fd) {
+    need(next.size()==capacity && good.size()==capacity,"A/B boot image size differs");
+    struct stat to{},from{};
+    need(!fstat(target,&to) && !fstat(accepted,&from),"Cannot verify A/B device identities");
+#ifdef UKE_KERNEL_UPDATE_TEST
+    need(S_ISREG(to.st_mode) && S_ISREG(from.st_mode) &&
+         (to.st_dev!=from.st_dev || to.st_ino!=from.st_ino),"A/B fixture targets alias");
+#else
+    need(S_ISBLK(to.st_mode) && S_ISBLK(from.st_mode) && to.st_rdev!=from.st_rdev,
+         "Inactive and accepted boot devices must differ");
+#endif
+    CriticalSignals signals;
+    need(read_fd(accepted,capacity)==good,"Accepted boot slot changed before inactive write");
+    if(read_fd(target,capacity)==next)return false;
+    try {
+        writer(target,next);
+        need(read_fd(target,capacity)==next,"Inactive boot partition readback mismatch");
+    } catch(...) {
+        need(read_fd(accepted,capacity)==good,"Accepted slot changed during a failed inactive write; use recovery");
+        throw std::runtime_error("Inactive boot write failed; verified accepted slot retained without selecting the candidate");
+    }
+    need(read_fd(accepted,capacity)==good,"Accepted slot changed during inactive write; candidate was not selected");
+    return true;
+}
 static bool replace_verified(int target,const Bytes &next,const fs::path &backup,void(*writer)(int,const Bytes&)=write_fd) {
     CriticalSignals signals;
     const auto original=read_fd(target,capacity);

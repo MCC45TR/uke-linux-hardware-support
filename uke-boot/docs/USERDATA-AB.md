@@ -159,12 +159,16 @@ are checked before writing the physical GPT arrays and headers. The protective
 MBR is preserved byte for byte; libfdisk's PMBR normalization remains in memory.
 Restoration verifies both headers, both arrays and the protective MBR.
 
-The accepted slot and GPT metadata receive synced private backups. With at least
+The accepted boot slot itself remains the rollback image; no full accepted or
+inactive boot image is copied to the root filesystem. Small synced GPT metadata
+journals retain the existing checked restoration contract. With at least
 50% measured battery, or 30% plus external power, the inactive boot slot is
 written, synced and fully read back. Only then are the QTI GPT type GUIDs and
 slot flags selected, followed by the UFS boot LUN and its readback. The accepted
 boot slot is retained. A metadata failure attempts verified restoration before
-returning an error. Keep the private transaction backups and a fastboot route.
+returning an error. An inactive-image write failure leaves the accepted slot
+selected and verifies that its bytes are unchanged; it does not select a partial
+candidate. Keep the metadata journals and a fastboot route.
 
 The durable state records staging, verification and trial separately. A boot
 ID distinguishes a pending trial before reboot from a return to the old slot.

@@ -501,20 +501,24 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     need(!changed.empty(),"No consistent QTI slot metadata found");
     if(action=="check"){std::cout<<"Matched userdata bundle, running Image, inactive slot, GPTs, early firmware and UFS boot LUN checks passed; no hardware writes\n";return;}
     need(charging(),"Verified battery must be at least 50%, or at least 30% with external power");
-    need(fs::space(state).available>2*capacity+32*1024*1024,"Insufficient durable slot backup space");
+    need(fs::space(state).available>32*1024*1024,"Insufficient durable slot metadata space");
     auto inhibitor=inhibit_shutdown();CriticalSignals signals;
     const auto transaction=state/(next+"-"+saved.candidate_image);auto transaction_dir=directory(transaction,true);
     for(auto *disk:changed)disk->gpt->backup(transaction/(disk->name+".gpt"));
-    if(!fs::exists(transaction/"accepted-boot.img"))save_new(transaction/"accepted-boot.img",images[running]);
-    need(file(transaction/"accepted-boot.img")==images[running],"Accepted boot backup differs");save_update(statefile,saved);
+    save_update(statefile,saved);
+    // The proven accepted slot is the rollback image. Never copy either full
+    // boot partition to the root filesystem for an inactive-slot transaction.
+    auto accepted=physical_boot(running?b:a);
     auto destination=physical_boot(target?b:a,true);
-    replace_verified(destination.value,bytes,transaction/"inactive-previous.img");
+    replace_inactive_verified(destination.value,accepted.value,bytes,images[running]);
     uke_install::verified(saved.policy);save_update(statefile,saved);
     (void)uke_install::arm(saved.policy);save_update(statefile,saved);
     try {
+        need(read_fd(accepted.value,capacity)==images[running],"Accepted slot changed before candidate selection");
         for(auto *disk:changed)disk->gpt->commit();
         (void)slot::boot_lun(bsg.value,target+1);
         need(read_fd(destination.value,capacity)==bytes,"Inactive boot changed after selection");
+        need(read_fd(accepted.value,capacity)==images[running],"Accepted slot changed after candidate selection");
     }catch(...) {
         try {
             for(auto *disk:changed)disk->gpt->restore();

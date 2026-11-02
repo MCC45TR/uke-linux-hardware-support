@@ -2,6 +2,7 @@
 #define UKE_KERNEL_UPDATE_TEST
 #include "../src/kernel-update.cpp"
 #include <cassert>
+#include <iterator>
 #include <functional>
 #include <source_location>
 static void reject(const std::function<void()> &call,const std::source_location where=std::source_location::current()) {
@@ -318,6 +319,29 @@ int main() {
     if(!child){replace_verified(target.value,up,root/"signal-backup.img",terminate_during_write);_exit(99);}
     int status=0;assert(waitpid(child,&status,0)==child && WIFSIGNALED(status) && WTERMSIG(status)==SIGTERM);
     assert(read_fd(target.value,capacity)==up && file(root/"signal-backup.img")==lp);
+    // Real regular-file writes model the inactive/accepted partition boundary.
+    // No backup pathname is supplied or created by the A/B writer.
+    save_new(root/"accepted-slot.img",lp);
+    Fd accepted(open((root/"accepted-slot.img").c_str(),O_RDONLY|O_CLOEXEC));
+    const auto entries=std::distance(fs::directory_iterator(root),fs::directory_iterator{});
+    write_fd(target.value,lp);
+    assert(replace_inactive_verified(target.value,accepted.value,up,lp));
+    assert(read_fd(target.value,capacity)==up && read_fd(accepted.value,capacity)==lp);
+    assert(!replace_inactive_verified(target.value,accepted.value,up,lp));
+    write_fd(target.value,lp);attempts=0;
+    reject([&]{replace_inactive_verified(target.value,accepted.value,up,lp,fail_first_write);});
+    assert(attempts==1 && read_fd(accepted.value,capacity)==lp);
+    const auto partial=read_fd(target.value,capacity);
+    reject([&]{replace_inactive_verified(target.value,target.value,up,lp);});
+    reject([&]{replace_inactive_verified(target.value,accepted.value,up,up);});
+    reject([&]{replace_inactive_verified(target.value,accepted.value,Bytes(1),lp);});
+    assert(read_fd(target.value,capacity)==partial);
+    write_fd(target.value,lp);
+    const auto ab_child=fork();assert(ab_child>=0);
+    if(!ab_child){replace_inactive_verified(target.value,accepted.value,up,lp,terminate_during_write);_exit(99);}
+    assert(waitpid(ab_child,&status,0)==ab_child && WIFSIGNALED(status) && WTERMSIG(status)==SIGTERM);
+    assert(read_fd(target.value,capacity)==up && read_fd(accepted.value,capacity)==lp);
+    assert(std::distance(fs::directory_iterator(root),fs::directory_iterator{})==entries);
     fs::remove_all(root);
     std::cout<<"Boot header, descriptor ancestry, RPM ownership/digest/tuple, root/UFS, battery, idempotence, retry, partial-write restore and deferred SIGTERM fixtures passed; no block device opened\n";
 }
