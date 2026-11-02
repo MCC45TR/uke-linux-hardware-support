@@ -517,6 +517,8 @@ int main(int argc,char **argv) {
                 const std::string release=argv[2];need(token(release),"Invalid firmware release");
                 (void)validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/release,"/usr/lib/modules",label,current.release);
                 uke_video::import_firmware(release,current.release,super);
+                trusted("/usr/libexec/senemos-uke/uke-install-profile");
+                (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","clock-save-required"},4096);
             }
             return 0;
         }

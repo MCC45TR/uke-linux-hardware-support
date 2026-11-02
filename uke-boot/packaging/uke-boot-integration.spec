@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.32
+Version: 1.8.33
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -231,6 +231,7 @@ install -Dm644 src/profiles/80-uke-boot.preset %{buildroot}%{_presetdir}/80-uke-
 install -Dm644 src/units/uke-userdata-accept.service %{buildroot}%{_unitdir}/uke-userdata-accept.service
 install -Dm644 src/units/uke-userdata-fallback.service %{buildroot}%{_unitdir}/uke-userdata-fallback.service
 install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
+install -Dm644 src/units/75-uke-clock-floor.conf %{buildroot}%{_unitdir}/chronyd.service.d/75-uke-clock-floor.conf
 install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm644 src/units/uke-root-grow.service %{buildroot}%{_unitdir}/uke-root-grow.service
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
@@ -380,6 +381,7 @@ fi
 %license LICENSE
 %doc docs/USERDATA-AB.md
 %{_libexecdir}/senemos-uke/uke-install-profile
+%{_unitdir}/chronyd.service.d/75-uke-clock-floor.conf
 %{_unitdir}/uke-install-profile.service
 %{_unitdir}/uke-root-grow.service
 
@@ -395,6 +397,10 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.33-1
+- Persist only NTP-synchronized clock floors and restore before Chrony startup.
+- Refresh the saved floor after a signed kernel firmware import.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.32-1
 - Load the normal system DMA heap and grant its active seat access.
 - Include the original libcamera IPA dependency with the desktop camera plugin.

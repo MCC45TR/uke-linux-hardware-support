@@ -237,6 +237,16 @@ update does not enable automatic activation, write an RTC, repair a filesystem
 or establish a successful reboot.
 # Device-local video firmware
 
+The installation profile also keeps a zero-byte `clock-floor` state file whose
+mtime is advanced only while the kernel reports NTP synchronization. Chrony's
+profile-owned startup/shutdown drop-in restores that verified lower bound before
+Chrony and saves it after shutdown. An admitted new-kernel firmware import must
+refresh the floor with NTP synchronization before normal slot staging. The state
+is monotonic, root-only and separate from the packaged early epoch; it performs
+no RTC access. This covers signatures made later on the same day than RPM's
+clamped packaged epoch. Boot and offline-clock acceptance still need device
+verification after reboot.
+
 `uke-kernel-update check-oem-video` inspects the physical Uke super partition
 read-only and reports a candidate without installing it. The importer admits
 mirrored, SHA256-checked Android LP metadata, the measured single-device linear

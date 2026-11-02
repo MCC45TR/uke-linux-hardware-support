@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <sys/xattr.h>
 #include <sys/random.h>
+#include <sys/timex.h>
 #include <linux/magic.h>
 #include <unistd.h>
 
@@ -276,20 +277,71 @@ static void reconcile_journal_policy() {
     // The vendor's separate journal ownership, ACL and retention rules remain active.
     journal_policy(etc.value, journal_nocow_unavailable(filesystem.f_type));
 }
+struct ClockSample {timespec now; bool synchronized;};
+static ClockSample clock_sample() {
+    timespec now{}; struct timex status{};
+    require(clock_gettime(CLOCK_REALTIME, &now) == 0, "Cannot read the system clock");
+    const int result = adjtimex(&status);
+    require(result >= 0, "Cannot inspect clock synchronization");
+    return {now, !(status.status & STA_UNSYNC) && result != TIME_ERROR};
+}
+static bool clock_before(timespec a, timespec b) {
+    return a.tv_sec < b.tv_sec || (a.tv_sec == b.tv_sec && a.tv_nsec < b.tv_nsec);
+}
+static void clock_bounds(timespec value) {
+    require(value.tv_sec >= 1793577600 && value.tv_sec < 4102444800 &&
+            value.tv_nsec >= 0 && value.tv_nsec < 1000000000, "Clock floor is outside supported bounds");
+}
+static timespec read_clock_floor(int state_fd) {
+    const int raw = openat(state_fd, "clock-floor", O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
+    if (raw < 0 && errno == ENOENT) return {};
+    ProfileFd input(raw); trusted(input.value, false); struct stat st{};
+    require(fstat(input.value, &st) == 0 && st.st_size == 0, "Invalid clock-floor state");
+    clock_bounds(st.st_mtim); return st.st_mtim;
+}
+static bool save_clock_floor(int state_fd, ClockSample sample = clock_sample()) {
+    if (!sample.synchronized) return false;
+    clock_bounds(sample.now);
+    const auto previous = read_clock_floor(state_fd);
+    if (!clock_before(previous, sample.now)) return false;
+    int raw = openat(state_fd, "clock-floor", O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+    if (raw < 0 && errno == EEXIST) raw = openat(state_fd, "clock-floor", O_WRONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    ProfileFd output(raw); trusted(output.value, false); struct stat st{};
+    require(fstat(output.value, &st) == 0 && st.st_size == 0, "Clock-floor state changed");
+    timespec stamps[2]{{0, UTIME_OMIT}, sample.now};
+    require(futimens(output.value, stamps) == 0 && fsync(output.value) == 0 && fsync(state_fd) == 0,
+            "Cannot persist the synchronized clock floor");
+    return true;
+}
+template<class SetTime>
+static bool restore_clock_floor(int state_fd, ClockSample sample, SetTime set_time) {
+    const auto saved = read_clock_floor(state_fd);
+    if (!saved.tv_sec || !clock_before(sample.now, saved)) return false;
+    require(set_time(saved) == 0, "Cannot restore the synchronized clock floor");
+    return true;
+}
 #ifndef UKE_INSTALL_PROFILE_TEST
 int main(int argc, char **argv) {
     try {
-        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow");
+        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow|clock-save|clock-save-required|clock-restore");
         const std::string action = argv[1];
-        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow", "Unknown profile operation");
+        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore", "Unknown profile operation");
         if (action != "status") require(uke_device(observation("/sys/firmware/devicetree/base/compatible", 4096)), "Exact Uke/SM7675 device required");
         if (action == "check") { std::cout << uke_install::name(inspect_root()) << '\n'; return 0; }
         require(geteuid() == 0, "Root privileges required for system installation state");
-        auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow");
+        auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore");
         if (action == "status") { std::cout << uke_install::name(stored_profile(state.value)) << '\n'; return 0; }
         ProfileFd lock(openat(state.value, "lock", O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, 0600));
         trusted(lock.value, false);
         require(flock(lock.value, LOCK_EX | LOCK_NB) == 0, "Installation classification already running");
+        if (action == "clock-save" || action == "clock-save-required" || action == "clock-restore") {
+            const auto sample = clock_sample();
+            if (action == "clock-save-required") require(sample.synchronized, "NTP synchronization required before staging a new signed kernel");
+            const bool changed = action == "clock-restore" ?
+                restore_clock_floor(state.value, sample, [](timespec value){return clock_settime(CLOCK_REALTIME, &value);}) : save_clock_floor(state.value, sample);
+            std::cout << action << (changed ? ": synchronized floor applied\n" : ": no clock/state change required\n");
+            return 0;
+        }
         if (action == "grow") {
             require(inspect_root() == uke_install::Profile::userdata, "Online growth requires the provisioned userdata root");
             const auto root = uke_install::root_mount(observation("/proc/self/mountinfo", 1024 * 1024));
@@ -326,6 +378,8 @@ int main(int argc, char **argv) {
             std::cout << "Completed the empty default clock configuration with UTC; no RTC access.\n";
         if (action == "reconcile" && repair_persist_context(etc.value))
             std::cout << "Added the Fedora context to the legacy read-only persist mount; effective on next mount, OEM labels unchanged.\n";
+        if (action == "reconcile" && save_clock_floor(state.value))
+            std::cout << "Persisted the NTP-synchronized clock floor; no RTC access.\n";
         if (profile == uke_install::Profile::linux) {
             mask_unit(units.value, "uke-userdata-update.service");
             mask_unit(units.value, "uke-userdata-accept.service");
