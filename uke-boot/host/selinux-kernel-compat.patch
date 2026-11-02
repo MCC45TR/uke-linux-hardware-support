@@ -1,0 +1,120 @@
+diff --git a/policy/flask/access_vectors b/policy/flask/access_vectors
+index ede4b06..843c66a 100644
+--- a/policy/flask/access_vectors
++++ b/policy/flask/access_vectors
+@@ -444,6 +444,11 @@ class system
+ 	syslog_console
+ 	module_request
+ 	module_load
++	firmware_load
++	kexec_image_load
++	kexec_initramfs_load
++	policy_load
++	x509_certificate_load
+ 	# these are overloaded userspace
+ 	# permissions from systemd
+ 	halt
+@@ -1077,6 +1082,8 @@ class bpf
+ 	map_write
+ 	prog_load
+ 	prog_run
++	map_create_as
++	prog_load_as
+ }
+ 
+ class xdp_socket
+@@ -1100,9 +1107,17 @@ class io_uring
+     override_creds
+     sqpoll
+     cmd
++    allowed
+ }
+ 
+ class user_namespace
+ {
+     create
+ }
++
++class memfd_file
++inherits file
++{
++    execute_no_trans
++    entrypoint
++}
+diff --git a/policy/flask/security_classes b/policy/flask/security_classes
+index 67ee15c..e65cc28 100644
+--- a/policy/flask/security_classes
++++ b/policy/flask/security_classes
+@@ -205,4 +205,6 @@ class io_uring
+ 
+ class user_namespace
+ 
++class memfd_file
++
+ # FLASK
+diff --git a/policy/modules/kernel/kernel.if b/policy/modules/kernel/kernel.if
+index 62fe74d..7a00ab2 100644
+--- a/policy/modules/kernel/kernel.if
++++ b/policy/modules/kernel/kernel.if
+@@ -4724,8 +4724,10 @@ interface(`kernel_io_uring_use_inherited',`
+ interface(`kernel_io_uring_use',`
+ 	gen_require(`
+ 		type io_uring_t;
++		class io_uring allowed;
+ 	')
+ 	kernel_io_uring_use_inherited($1)
++	allow $1 self:io_uring allowed;
+ 	allow $1 io_uring_t:anon_inode create;
+ ')
+ 
+diff --git a/policy/modules/kernel/kernel.te b/policy/modules/kernel/kernel.te
+index 513cde9..66efd5d 100644
+--- a/policy/modules/kernel/kernel.te
++++ b/policy/modules/kernel/kernel.te
+@@ -459,6 +459,7 @@ optional_policy(`
+ 
+ optional_policy(`
+ 	libs_use_ld_so(kernel_t)
++	libs_load_firmware(kernel_t)
+ 	libs_use_shared_libs(kernel_t)
+ ')
+ 
+@@ -591,6 +592,9 @@ if( ! secure_mode_insmod ) {
+ 	allow can_load_kernmodule self:capability sys_module;
+ 
+ 	files_load_kernel_modules(can_load_kernmodule)
++	optional_policy(`
++		libs_load_firmware(can_load_kernmodule)
++	')
+ 
+ 	# load_module() calls stop_machine() which
+ 	# calls sched_setscheduler()
+diff --git a/policy/modules/system/libraries.if b/policy/modules/system/libraries.if
+index 3043d95..f847b2b 100644
+--- a/policy/modules/system/libraries.if
++++ b/policy/modules/system/libraries.if
+@@ -1,5 +1,24 @@
+ ## <summary>Policy for system libraries.</summary>
+ 
++########################################
++## <summary>
++##	Load firmware files from the standard library tree.
++## </summary>
++## <param name="domain">
++##	<summary>
++##	Domain allowed access.
++##	</summary>
++## </param>
++#
++interface(`libs_load_firmware',`
++	gen_require(`
++		type lib_t;
++		class system firmware_load;
++	')
++
++	allow $1 lib_t:system firmware_load;
++')
++
+ ########################################
+ ## <summary>
+ ##	Execute ldconfig in the ldconfig domain.
