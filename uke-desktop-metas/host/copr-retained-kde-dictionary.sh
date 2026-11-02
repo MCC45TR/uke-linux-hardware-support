@@ -62,7 +62,11 @@ cmp "$stage/sections.before" "$stage/sections.after"
 [[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == 2.8.1-5.1.fc46 ]]
 rpmspec --target aarch64 -q --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "$output/uke-control.spec" > "$stage/identities"
 cat "$stage/identities"
-[[ $(wc -l < "$stage/identities") == 1 ]]
+# rpmspec also lists the source-named root even without a %files section.
+# The single selected %files section above controls binary production; inspect
+# COPR's actual built-package list separately after the native build.
+[[ $(wc -l < "$stage/identities") == 2 ]]
+grep -Fxq $'uke-control\t2.8.1-5.1.fc46' "$stage/identities"
 grep -Fxq $'uke-kde-plasma-meta\t1.0.0-35.1.fc46' "$stage/identities"
 commit=$(git -C "$here" rev-parse HEAD)
 jq -n --arg commit "$commit" '{source_commit:$commit,parent_copr_build:11240837,
