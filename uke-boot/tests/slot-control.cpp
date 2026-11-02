@@ -97,6 +97,28 @@ int main(int argc,char **argv) {
             slot::Disk healthy(fd.value,st.st_size,sector);healthy.success(1);healthy.commit();
         }
         const unsigned failed=1-good;
+        slot::Disk barrier(fd.value,st.st_size,sector);
+        const auto good_name=std::string("boot_")+(good?'b':'a');
+        const auto next_name=std::string("boot_")+(failed?'b':'a');
+        const auto accepted_before=barrier.parts.at(good_name);
+        assert(barrier.block_inactive(good,failed));barrier.commit();
+        auto blocked=barrier.reread(true);
+        blocked->require_selected(good);
+        assert(blocked->parts.at(good_name).attrs==accepted_before.attrs);
+        assert(blocked->parts.at(good_name).type==accepted_before.type);
+        assert(blocked->parts.at(next_name).type==barrier.parts.at(next_name).type);
+        const auto blocked_flags=blocked->parts.at(next_name).attrs;
+        assert((blocked_flags&slot::unbootable) && !(blocked_flags&(slot::successful|slot::retries|slot::priority|slot::active)));
+        assert(!blocked->block_inactive(good,failed));
+        reject([&]{blocked->block_inactive(failed,good);});
+        assert(blocked->reread()->observed==blocked->observed);
+        slot::Disk foreign(fd.value,st.st_size,sector);
+        assert(foreign.prepare(good,failed));foreign.commit();
+        reject([&]{blocked->reread();});
+        barrier.restore();
+        // Repeat the barrier, then resume a valid trial from the blocked slot.
+        slot::Disk again(fd.value,st.st_size,sector);
+        assert(again.block_inactive(good,failed));again.commit();
         slot::Disk stage(fd.value,st.st_size,sector);assert(stage.prepare(good,failed));stage.commit();
         const auto staged=slot::snapshot(fd.value,st.st_size,sector);
         auto stale_header=staged.backup;set32(stale_header,88,le32(stale_header,88)^1);header_crc(stale_header);

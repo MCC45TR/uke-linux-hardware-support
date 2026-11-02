@@ -240,8 +240,10 @@ struct SlotMetadata {
     std::string name;
     Fd fd;
     std::unique_ptr<slot::Disk> gpt;
+    uint64_t bytes=0;
+    unsigned sector=0;
     SlotMetadata(const std::string &name,dev_t expected,bool allow_backup_crc):name(name),fd(open(("/dev/"+name).c_str(),O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK)) {
-        struct stat st{};uint64_t bytes=0;unsigned sector=0;
+        struct stat st{};
         need(!fstat(fd.value,&st) && S_ISBLK(st.st_mode) && st.st_rdev==expected &&
              !ioctl(fd.value,BLKGETSIZE64,&bytes) && !ioctl(fd.value,BLKSSZGET,&sector),
              "Physical UFS GPT descriptor identity/capacity unavailable");
@@ -249,6 +251,7 @@ struct SlotMetadata {
             throw std::runtime_error(std::string("Cannot lock the physical UFS GPT descriptor: ")+std::strerror(errno));
         gpt=std::make_unique<slot::Disk>(fd.value,bytes,sector,allow_backup_crc);
     }
+    void reload(bool committed=false) {gpt=gpt->reread(committed);}
 };
 static std::vector<std::unique_ptr<SlotMetadata>> metadata(const std::string &controller,bool allow_backup_crc=false) {
     std::map<std::string,fs::path> labels;
@@ -504,7 +507,24 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     need(fs::space(state).available>32*1024*1024,"Insufficient durable slot metadata space");
     auto inhibitor=inhibit_shutdown();CriticalSignals signals;
     const auto transaction=state/(next+"-"+saved.candidate_image);auto transaction_dir=directory(transaction,true);
-    for(auto *disk:changed)disk->gpt->backup(transaction/(disk->name+".gpt"));
+    // Commit only the target's unbootable flag before touching its image. A
+    // power loss or partial image write must never leave a bootable candidate.
+    // Keep each descriptor locked while re-reading the admitted metadata.
+    changed.clear();
+    for(auto &disk:disks) {
+        disk->reload();
+        const bool blocked=disk->gpt->block_inactive(running,target);
+        if(blocked) {
+            disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
+            disk->gpt->commit();
+        }
+        disk->reload(blocked);
+        disk->gpt->require_selected(running);
+        if(disk->gpt->prepare(running,target)) {
+            disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
+            changed.push_back(disk.get());
+        }
+    }
     save_update(statefile,saved);
     // The proven accepted slot is the rollback image. Never copy either full
     // boot partition to the root filesystem for an inactive-slot transaction.

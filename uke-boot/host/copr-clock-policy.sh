@@ -36,8 +36,8 @@ for relative in src/install-profile.cpp src/touch-health.hpp src/shutdown-trace.
     cmp "$inner/$relative" "$owner/$relative"
 done
 for relative in src/units/70-uke-chronyd-clock.conf src/units/uke-userdata-accept.service \
-    src/profiles/clock-epoch src/kernel-update.cpp src/userdata-update.hpp \
-    tests/kernel-update.cpp tests/userdata-update.cpp docs/KERNEL-UPDATES.md docs/USERDATA-AB.md; do
+    src/profiles/clock-epoch src/kernel-update.cpp src/userdata-update.hpp src/slot-control.hpp \
+    tests/kernel-update.cpp tests/userdata-update.cpp tests/slot-control.cpp docs/KERNEL-UPDATES.md docs/USERDATA-AB.md; do
     install -Dm644 "$owner/$relative" "$inner/$relative"
 done
 rewrite_spec() {

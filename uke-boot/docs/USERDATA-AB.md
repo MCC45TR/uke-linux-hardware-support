@@ -161,7 +161,9 @@ Restoration verifies both headers, both arrays and the protective MBR.
 
 The accepted boot slot itself remains the rollback image; no full accepted or
 inactive boot image is copied to the root filesystem. Small synced GPT metadata
-journals retain the existing checked restoration contract. With at least
+journals retain the existing checked restoration contract. The inactive boot
+slot is durably marked unbootable before image writes, while the accepted slot
+and UFS selection remain unchanged. With at least
 50% measured battery, or 30% plus external power, the inactive boot slot is
 written, synced and fully read back. Only then are the QTI GPT type GUIDs and
 slot flags selected, followed by the UFS boot LUN and its readback. The accepted

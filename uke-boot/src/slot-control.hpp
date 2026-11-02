@@ -47,6 +47,7 @@ struct Snapshot {
     Bytes mbr,primary,backup,entries;
     uint64_t primary_entries,backup_entries,last;
     unsigned sector;
+    bool operator==(const Snapshot &) const = default;
 };
 static void header(const Bytes &bytes,uint64_t here,uint64_t other) {
     need(!memcmp(bytes.data(),"EFI PART",8) && le32(bytes,8)==0x10000 &&
@@ -144,6 +145,23 @@ public:
                  "GPT and UFS boot LUN selection differ");
         }
     }
+    bool block_inactive(unsigned running,unsigned target) {
+        need(running<2 && target==1-running,"Inactive slot required before writing");
+        require_selected(running);
+        const auto good=std::string("boot_")+(running?'b':'a');
+        const auto next=std::string("boot_")+(target?'b':'a');
+        if(!parts.contains(good) && !parts.contains(next))return false;
+        need(parts.contains(good) && parts.contains(next),"Unpaired boot slot");
+        need((parts.at(good).attrs&successful) && !(parts.at(good).attrs&unbootable),
+             "Accepted boot must be successful before writing the inactive slot");
+        const auto &p=parts.at(next);
+        const auto attrs=(p.attrs&~(successful|retries|priority))|unbootable;
+        if(attrs==p.attrs)return false;
+        need(!fdisk_gpt_set_partition_attrs(context.get(),p.number,attrs) && !warning,
+             "Cannot mark the inactive boot slot unbootable");
+        expected[next]={p.type,attrs};
+        return true;
+    }
     bool prepare(unsigned running,unsigned target) {
         need(running<2 && target==1-running,"Inactive slot required");bool changed=false;
         for(const auto &[name,a]:parts) {
@@ -233,6 +251,13 @@ public:
         need(committed.mbr==before.mbr && committed.primary==after.primary && committed.backup==after.backup &&
              committed.entries==after.entries,"Committed GPT metadata differs");
         if(needs_backup_crc_repair())std::cout<<"GPT backup-header CRC restored from matching validated partition arrays\n";
+    }
+    std::unique_ptr<Disk> reread(bool committed=false) const {
+        auto admitted=committed?snapshot(staged.value,size,sector):observed;
+        if(committed)admitted.mbr=before.mbr;
+        auto next=std::make_unique<Disk>(fd,size,sector);
+        need(next->observed==admitted,"GPT changed while reloading the checked transaction state");
+        return next;
     }
     void restore() const {
         write_metadata(fd,before);write_at(fd,0,before.mbr);
