@@ -63,7 +63,7 @@ int main(int argc,char **argv) {
     semantic([](Bytes &b){put64(b,tables+52,UINT64_MAX);});
     semantic([](Bytes &b){put64(b,tables+64,1);});
     semantic([](Bytes &b){put64(b,tables+140,total+512);});
-    for(const auto p:{geometry+8,header+12,tables+2,backup+12,8192+4}) {
+    for(const auto p:std::array<size_t,5>{geometry+8,header+12,tables+2,backup+12,8192+4}) {
         auto b=base;b[p]^=1;write_all(fd.value,b);reject([&]{uke_video::partitions(fd.value,total);});
     }
     auto vendor=layout();memcpy(vendor.data()+tables,"vendor_a",9);reseal(vendor);write_all(fd.value,vendor);

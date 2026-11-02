@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.29
+Version: 1.8.30
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -22,7 +22,7 @@ Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Requires: systemd-udev
 Requires: bluez
-Requires: realtek-firmware
+Requires: linux-firmware
 Requires: (pipewire-plugin-libcamera if wireplumber)
 Requires: uke-firmware >= 3.0.304.0
 Requires: senemos-uke-linux-kernel-mainline-modules >= 7.2.9-1.53.native53
@@ -389,6 +389,9 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.30-1
+- Require the original Fedora package that owns RTL8153 wired firmware.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.29-1
 - Add bounded device-local video import for non-running, signed kernel bundles.
 - Require original Fedora Realtek firmware and the conditional libcamera plugin.
