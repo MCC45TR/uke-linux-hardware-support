@@ -50,6 +50,10 @@ int main() {
     for(const std::string global:{"0","1"})for(const std::string profile:{"0","1"})
         assert(automatic_updates("# Local policy\n\nautomatic="+global+"\n","automatic="+profile+"\nvrr_min_hz=30\n")==
                (global=="1" && profile=="1"));
+    assert(userdata_policy("automatic=0\n").at("vrr_min_hz")=="0");
+    assert(!automatic_updates("automatic=0\n","automatic=0\n"));
+    assert(!automatic_updates("automatic=1\n","automatic=0\n"));
+    reject([&]{userdata_policy("automatic=0\nextra=1\n");});
     for(const std::string global:{"","automatic=2\n","automatic=true\n","automatic=1 \n","automatic=1\nautomatic=1\n","automatic=0\nextra=1\n"})
         reject([&]{automatic_updates(global,"automatic=1\nvrr_min_hz=30\n");});
     for(const std::string profile:{"","automatic=2\nvrr_min_hz=30\n","automatic=1\n","automatic=1\nvrr_min_hz=31\n","automatic=1\nautomatic=1\nvrr_min_hz=30\n"})

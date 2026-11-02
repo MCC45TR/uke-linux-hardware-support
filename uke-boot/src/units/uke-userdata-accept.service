@@ -2,16 +2,15 @@
 Description=Accept a healthy Uke userdata slot and stage installed updates
 ConditionFirmware=device-tree-compatible(xiaomi,uke)
 ConditionKernelCommandLine=root=PARTLABEL=userdata
-After=display-manager.service uke-install-profile.service uke-touchscreen.service uke-adaptive-display.target
-Wants=uke-adaptive-display.target
+After=chronyd.service time-set.target display-manager.service uke-install-profile.service uke-touchscreen.service uke-adaptive-display.target
+Wants=chronyd.service uke-adaptive-display.target
 OnFailure=uke-userdata-fallback.service
 StartLimitIntervalSec=infinity
 StartLimitBurst=5
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/uke-kernel-update accept
-ExecStart=/usr/bin/uke-kernel-update auto
+ExecStart=/usr/bin/uke-kernel-update boot
 TimeoutStartSec=120
 Restart=on-failure
 RestartMode=direct

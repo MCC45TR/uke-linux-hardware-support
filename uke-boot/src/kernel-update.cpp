@@ -215,7 +215,20 @@ static std::pair<std::string,dev_t> partition(const std::string &label,const fs:
     }
     need(!result.first.empty(),"Physical "+label+" partition unavailable"); return result;
 }
-[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo"),const std::string &label="linux") {
+static std::string read_mountinfo(const fs::path &path="/proc/self/mountinfo") {
+    Fd fd(open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW));
+    std::string value;
+    std::array<char,4096> chunk{};
+    for(;;) {
+        const auto count=read(fd.value,chunk.data(),chunk.size());
+        if(count<0 && errno==EINTR)continue;
+        need(count>=0,"Mount information read failed");
+        need(value.size()+static_cast<size_t>(count)<=1024*1024,"Mount information exceeds the read limit");
+        if(!count)return value;
+        value.append(chunk.data(),static_cast<size_t>(count));
+    }
+}
+[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_mountinfo(),const std::string &label="linux") {
     need(label=="linux"||label=="userdata","Unsupported root profile");
     const auto root=uke_install::root_mount(mounts);
     need(root.writable && makedev(root.major,root.minor)==expected &&
@@ -284,7 +297,10 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
     for(const auto &[suffix,files]:groups) {
         need(!files.empty(),"Missing package file set");
         const auto expected=base+suffix;
-        const auto p=package(query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n","--",files.begin()->first.string()}),expected);
+        const auto record=query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",files.begin()->first.string()});
+        const auto header_end=record.find('\n');
+        need(header_end!=std::string::npos,"Missing owning RPM header");
+        const auto p=package(record.substr(0,header_end),expected);
         need(!have_first||same_tuple(first,p),"Boot, core and modules RPM versions differ");first=p;have_first=true;
         const auto nevra=p.name+"-"+p.epoch+":"+p.version+"-"+p.release+"."+p.arch;
         if(suffix=="-core" && base!="senemos-uke-linux-kernel-mainline") {
@@ -293,10 +309,11 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
             while(std::getline(input,name))matches+=name=="kernel-uname-r("+release+")";
             need(matches==1,"Kernel variant RPM does not provide the exact Image ABI");
         }
-        const auto rows=query({"-q","--qf","[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",nevra});
-        std::map<fs::path,std::string> owned;std::istringstream input(rows);std::string row;
+        std::map<fs::path,std::string> owned;std::istringstream input(record.substr(header_end+1));std::string row;
         while(std::getline(input,row)) {
-            const auto tab=row.find('\t');need(tab!=std::string::npos,"Malformed installed RPM file inventory");
+            const auto tab=row.find('\t');
+            need(row.starts_with('/') && tab!=std::string::npos && row.find('\t',tab+1)==std::string::npos,
+                 "Malformed or multiple-owner installed RPM inventory");
             need(owned.emplace(row.substr(0,tab),row.substr(tab+1)).second,"Ambiguous installed RPM file inventory");
         }
         for(const auto &[path,hash]:files)need(owned.contains(path) && hex(owned.at(path)) && owned.at(path)==hash,
@@ -388,6 +405,17 @@ static bool replace_verified(int target,const Bytes &next,const fs::path &backup
     }
     return true;
 }
+template<class Validate,class Accept,class Policy,class Select,class Inspect,class Apply>
+static void boot_userdata(const fs::path &running,Validate validate,Accept accept,Policy enabled,
+                          Select select,Inspect inspect,Apply apply) {
+    auto bytes=validate(running);
+    accept(running,bytes);
+    if(!enabled())return;
+    const auto selected=select();
+    if(selected!=running)bytes=validate(selected);
+    inspect(selected,bytes);
+    if(selected!=running)apply(selected,bytes);
+}
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd inhibit_shutdown() {
     sd_bus *raw=nullptr;const auto opened=sd_bus_open_system(&raw);
@@ -409,13 +437,30 @@ static Fd inhibit_shutdown() {
     return retained;
 }
 #include "userdata-update.hpp"
+static bool activation_enabled(const std::string &label) {
+    const auto global=file("/etc/senemos/kernel-update.conf");
+    bool enabled=global_automatic_updates(std::string(global.begin(),global.end()));
+    if(label=="userdata") {
+        const auto profile=file("/etc/senemos/userdata-update.conf");
+        enabled=automatic_updates(std::string(global.begin(),global.end()),std::string(profile.begin(),profile.end()));
+    }
+    if(!enabled)std::cout<<"Automatic boot activation is disabled in /etc/senemos/kernel-update.conf or the selected profile policy; installed RPMs alone do not change the next boot\n";
+    return enabled;
+}
+static fs::path selected_userdata_bundle() {
+    auto parent=directory("/usr/lib/senemos");struct stat link{};
+    need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
+    const auto bundle=userdata_bundle(fs::read_symlink("/usr/lib/senemos/default-boot.img"));
+    std::cout<<"Selected userdata boot bundle: "<<bundle.filename().string()<<'\n';
+    return bundle;
+}
 int main(int argc,char **argv) {
     try {
         need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction")) ||
-             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | accept | fallback | auto | check-auto");
+             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | boot | accept | fallback | auto | check-auto");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
         const bool restore=action=="check-restore-current"||action=="restore-current";
@@ -428,42 +473,42 @@ int main(int argc,char **argv) {
         if(action=="auto" && label!="userdata")return 0;
         need(!preflight || label=="userdata","Automatic preflight is specific to the userdata profile");
         if(automatic || preflight) {
-            const auto global=file("/etc/senemos/kernel-update.conf");
-            bool enabled=global_automatic_updates(std::string(global.begin(),global.end()));
-            if(label=="userdata") {
-                const auto profile=file("/etc/senemos/userdata-update.conf");
-                enabled=automatic_updates(std::string(global.begin(),global.end()),std::string(profile.begin(),profile.end()));
-            }
-            if(!enabled) {
-                std::cout<<"Automatic boot activation is disabled in /etc/senemos/kernel-update.conf or the selected profile policy; installed RPMs alone do not change the next boot\n";
-                if(!preflight)return 0;
-            }
+            if(!activation_enabled(label) && !preflight)return 0;
         }
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
-        need(label=="userdata"||(action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
-        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_text("/proc/self/mountinfo"),label);
+        need(label=="userdata"||(action!="boot" && action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
+        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_mountinfo(),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
-        fs::path bundle=(action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
+        fs::path bundle=(action=="boot"||action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if((automatic || preflight) && label=="userdata") {
-            auto parent=directory("/usr/lib/senemos");struct stat link{};
-            need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
-            const auto target=fs::read_symlink("/usr/lib/senemos/default-boot.img");
-            bundle=userdata_bundle(target);
-            std::cout<<"Selected userdata boot bundle: "<<bundle.filename().string()<<'\n';
+            bundle=selected_userdata_bundle();
         }
         need(bundle.is_absolute() && bundle.parent_path()=="/usr/lib/senemos/kernel-updates" && token(bundle.filename()),"Only installed package bundle directories are accepted");
         const fs::path state="/var/lib/senemos/kernel-update";
         Fd state_dir=directory(state,true);need(!fchmod(state_dir.value,0700),"Cannot protect update state");
         Fd lock(openat(state_dir.value,"lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));trusted_fd(lock.value);
         need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update is active");
+        const auto inspect_userdata=[&](const fs::path &selected,const Bytes &bytes) {
+            const auto raw=file(selected/"manifest");
+            (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
+            verify_early_firmware();
+        };
+        if(action=="boot") {
+            boot_userdata(bundle,
+                [&](const fs::path &selected){return validate_bundle(selected,"/usr/lib/modules",label,current.release);},
+                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true);},
+                [&]{return activation_enabled(label);},
+                []{return selected_userdata_bundle();},inspect_userdata,
+                [&](const fs::path &selected,const Bytes &bytes){userdata_update("apply",selected,bytes,state,current.release,filesystem);});
+            return 0;
+        }
         auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release);
         if(label=="userdata" && !current_only) {
             if(automatic || preflight) {
-                const auto raw=file(bundle/"manifest");
-                (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
-                verify_early_firmware();
+                inspect_userdata(bundle,bytes);
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
-                const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
+                // The identical-default path returns below, so reuse its verified buffer.
+                const auto baseline=bundle==running_bundle?std::move(bytes):validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 const bool stable=fs::exists(state/"userdata.state") && decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::stable;
                 userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem);
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}

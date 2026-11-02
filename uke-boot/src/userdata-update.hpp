@@ -106,7 +106,11 @@ static unsigned identify_slot(const std::string &cmdline,const std::array<Bytes,
     need(matches[0]!=matches[1],"Current slot requires a unique matching running Image; active-slot guessing refused");return matches[1]?1:0;
 }
 static std::map<std::string,std::string> userdata_policy(const std::string &text) {
-    const auto config=properties(text);
+    auto config=properties(text);
+    // Old images wrote only the disabled policy. Preserve that opt-out without
+    // requiring a display override; enabling updates still needs an explicit policy.
+    if(config.size()==1 && config.contains("automatic") && config.at("automatic")=="0")
+        config.emplace("vrr_min_hz","0");
     need(config.size()==2 && config.contains("vrr_min_hz") && config.contains("automatic") &&
          (config.at("automatic")=="0"||config.at("automatic")=="1") &&
          (config.at("vrr_min_hz")=="0"||config.at("vrr_min_hz")=="30"),"Invalid userdata update policy");
@@ -287,8 +291,8 @@ static bool vrr_policy() {
     const auto raw=file("/etc/senemos/userdata-update.conf");const auto config=userdata_policy(std::string(raw.begin(),raw.end()));
     return config.at("vrr_min_hz")=="30";
 }
-static void health() {
-    for(const auto &unit:uke_touch::health_units("/")) {
+static void health(bool wait_for_touch) {
+    for(const auto &unit:uke_touch::health_units("/",wait_for_touch)) {
         sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Health check requires the system bus");
         std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);sd_bus_message *response=nullptr;
         need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound the unit health check");
@@ -314,7 +318,7 @@ static void request_fallback_reboot() {
                            "RebootWithFlags",nullptr,nullptr,"t",uint64_t(1))>=0,
          "Accepted slot selected; reboot refused or inhibited, retain trial state and reboot normally");
 }
-static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem) {
+static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem,bool startup=false) {
     need(read_text("/var/lib/senemos/installation/profile")=="format=1\nroot=userdata\n","A classified userdata installation is required");
     const auto statefile=state/"userdata.state";
     if(action=="fallback" && (!fs::exists(statefile) || decode(file(statefile)).policy.phase!=uke_install::Phase::trial)) {
@@ -380,7 +384,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
                 }
                 std::cout<<"Superseded unbooted trial "<<prior->policy.candidate<<"; accepted slot retained\n";
                 disks.clear();
-                userdata_update(action,bundle,package_bytes,state,release,filesystem);return;
+                userdata_update(action,bundle,package_bytes,state,release,filesystem,startup);return;
             }
         }
         if(action=="apply")std::cout<<"Uke kernel update complete: "<<prior->policy.candidate<<" is selected for next boot; rollback "<<prior->policy.good_release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
@@ -443,7 +447,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         std::cout<<"Previously accepted running baseline verified; no new boot-health acceptance\n";return;
     }
     if(action=="accept" || action=="check-accept") {
-        health();UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
+        health(startup && action=="accept");UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
             saved=decode(file(statefile));

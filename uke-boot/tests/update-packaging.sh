@@ -17,7 +17,7 @@ diff -u <(cat <<'HOOKS'
 %transfiletriggerin -n uke-kernel-update -- /usr/lib/senemos/kernel-updates /usr/lib/senemos/default-boot.img
 HOOKS
 ) <(grep -E '^%(pre|preun|pretrans|post|postun|posttrans|trigger[a-z]*|transfiletrigger[a-z]*)([[:space:]]|$)' packaging/uke-boot-integration.spec)
-grep -Fxq 'automatic=0' src/profiles/kernel-update.conf
+grep -Fxq 'automatic=1' src/profiles/kernel-update.conf
 diff -u <(printf 'automatic=1\nvrr_min_hz=30\n') src/profiles/userdata-update.conf
 grep -Fxq 'ConditionKernelCommandLine=root=PARTLABEL=userdata' src/units/uke-userdata-accept.service
 grep -Fxq 'OnFailure=uke-userdata-fallback.service' src/units/uke-userdata-accept.service
@@ -27,7 +27,7 @@ grep -Fxq 'RestartMode=direct' src/units/uke-userdata-accept.service
 grep -Fxq 'ConditionKernelCommandLine=root=PARTLABEL=userdata' src/units/uke-userdata-fallback.service
 grep -Fxq 'ExecStart=/usr/bin/uke-kernel-update fallback' src/units/uke-userdata-fallback.service
 ! grep -Eq '^(Restart|FailureAction|SuccessAction)=' src/units/uke-userdata-fallback.service
-diff -u <(printf 'ExecStart=/usr/bin/uke-kernel-update accept\nExecStart=/usr/bin/uke-kernel-update auto\n') \
+diff -u <(printf 'ExecStart=/usr/bin/uke-kernel-update boot\n') \
     <(grep '^ExecStart=' src/units/uke-userdata-accept.service)
 grep -Fxq 'ConditionPathExists=!/var/lib/senemos/installation/online-grow-complete' src/units/uke-root-grow.service
 grep -Fxq 'TimeoutStartSec=infinity' src/units/uke-root-grow.service

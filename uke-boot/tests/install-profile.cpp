@@ -18,6 +18,46 @@ int main() {
     {
         ProfileFd dir(open(root.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
         trusted(dir.value, true);
+        assert(!repair_default_clock_config(dir.value));
+        const auto clock_file = root / "adjtime";
+        std::ofstream(clock_file) << "0.0 0 0.0\n0\n";
+        assert(chmod(clock_file.c_str(), 0640) == 0);
+        struct stat clock_before{}, clock_after{};
+        assert(stat(clock_file.c_str(), &clock_before) == 0);
+        assert(repair_default_clock_config(dir.value));
+        assert(observation(clock_file, 32) == "0.0 0 0.0\n0\nUTC\n");
+        assert(!repair_default_clock_config(dir.value));
+        assert(stat(clock_file.c_str(), &clock_after) == 0);
+        assert(clock_before.st_ino == clock_after.st_ino && clock_before.st_mode == clock_after.st_mode);
+        std::ofstream(clock_file) << "0.0 0 0.0\n0\n";
+        {
+            ProfileFd locked(open(clock_file.c_str(), O_RDWR | O_CLOEXEC));
+            assert(flock(locked.value, LOCK_EX | LOCK_NB) == 0);
+            refuse([&] { repair_default_clock_config(dir.value); });
+            assert(observation(clock_file, 32) == "0.0 0 0.0\n0\n");
+        }
+        for (const auto *value : {"0.0 0 0.0\n0\nLOCAL\n", "1.5 123 0\n123\nUTC\n", "1.5 123 0\n0\n", "custom clock\n"}) {
+            std::ofstream(clock_file) << value;
+            assert(!repair_default_clock_config(dir.value));
+            assert(observation(clock_file, 64) == value);
+        }
+        fs::remove(clock_file);fs::create_symlink("outside", clock_file);
+        std::ofstream(root / "outside") << "0.0 0 0.0\n0\n";
+        refuse([&] { repair_default_clock_config(dir.value); });
+        assert(observation(root / "outside", 32) == "0.0 0 0.0\n0\n");
+        fs::remove(clock_file);fs::create_hard_link(root / "outside", clock_file);
+        refuse([&] { repair_default_clock_config(dir.value); });
+        assert(observation(root / "outside", 32) == "0.0 0 0.0\n0\n");
+        fs::remove(clock_file);
+        std::ofstream(clock_file) << "0.0 0 0.0\n0\n";
+        assert(chmod(clock_file.c_str(), 0666) == 0);
+        refuse([&] { repair_default_clock_config(dir.value); });
+        assert(observation(clock_file, 32) == "0.0 0 0.0\n0\n");
+        fs::remove(clock_file);
+        assert(mkfifo(clock_file.c_str(), 0600) == 0);
+        refuse([&] { repair_default_clock_config(dir.value); });
+        fs::remove(clock_file);
+        std::cout << "Default UTC completion, idempotence, inode/mode retention and custom/unsafe clock-file preservation passed; no RTC access.\n";
         for (const auto *type : {"ext4", "xfs", "btrfs", "f2fs"}) {
             grow_calls = 0;
             grow_once(dir.value, type, simulated_grow);
