@@ -1,5 +1,11 @@
 # Fedora policy compatibility candidate
 
+2 November 2026, 22:07 UTC: [COPR build 11246701](https://copr.fedorainfracloud.org/coprs/build/11246701)
+passed all three profile builds and the defined binary-policy comparisons on
+Fedora Rawhide AArch64. Its producing source is
+`ffff3352806f8bc8f95fde8e4705c588525e4e0b`. Installation uses Fedora's ordinary
+module-store composition and reload; raw policy source builds run in COPR.
+
 3 November 2026. This COPR-only producer retains Fedora's installed
 `selinux-policy-45.23-1.fc46` source package and advances its Release to `1.3`.
 The original source archive, contributed modules, policy capabilities, unknown
