@@ -56,6 +56,13 @@ linker package-note configuration requires. Restoring the normal RPM environment
 resolved that host-only invocation error without changing upstream code. The
 remaining application and test targets were not built on the host.
 
+COPR build 11246334 checked out the pinned source successfully but failed in
+the source-contract script inside its Fedora 44 AArch64 source chroot, before
+the binary build. The same script passes in Fedora 44 x86_64 and Rawhide x86_64.
+Source validation now reports its failing line and RPM identity mismatch;
+the dedicated CI checks both Fedora 44 and Rawhide. The native source-chroot
+failure remains under investigation; checksum and channel checks stay enabled.
+
 ## Channel boundary and next validation
 
 FreeCAD is a new optional package only for unstable. Its dedicated family is

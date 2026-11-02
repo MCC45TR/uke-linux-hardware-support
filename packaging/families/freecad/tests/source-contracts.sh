@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Source-only checks: no native compilation, RPM generation or COPR submission.
 set -Eeuo pipefail
+trap 'printf "FreeCAD source validation failed at line %s.\n" "$LINENO" >&2' ERR
 root=$(cd -- "$(dirname -- "$0")/.."; pwd)
 cd "$root"
 stage=$(mktemp -d)
@@ -27,7 +28,10 @@ jq -e '
 ' source-lock.json >/dev/null
 expected=$(jq -r '[.name,(.epoch|tostring),.version,(.release|tostring)]|join("|")' source-lock.json)
 actual=$(rpmspec --target aarch64 --undefine dist --query --srpm --queryformat '%{NAME}|%{EPOCHNUM}|%{VERSION}|%{RELEASE}' freecad.spec)
-[[ $actual == "$expected" ]]
+[[ $actual == "$expected" ]] || {
+  printf 'Unexpected source RPM identity: expected %s, got %s.\n' "$expected" "$actual" >&2
+  exit 1
+}
 rpmspec --target aarch64 --parse freecad.spec >"$stage/expanded.spec"
 awk '/^(Source[0-9]*|Patch[0-9]*):/ && $2 ~ /^https:/ {sub(/#\/.*/, "", $2); print $2}' "$stage/expanded.spec" | LC_ALL=C sort >"$stage/spec-inputs"
 jq -r '.inputs[].url' source-lock.json | LC_ALL=C sort >"$stage/locked-inputs"
