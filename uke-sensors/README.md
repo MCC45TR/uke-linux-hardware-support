@@ -363,24 +363,41 @@ Host checks cover signature interruptions, FE/FD paths, DPMS-off refusal and
 failed reloads. The original firmware reset trigger and physical continuity
 under VRR require separate tablet validation.
 
-3 November 2026. The retained libssc23 source still queues raw sensor pointers
+3 November 2026. The retained libssc 0.4.4-23 source still queues raw sensor pointers
 in six measurement classes. Patch0011 holds one sensor reference per pending
 measurement and releases it through the existing idle destroy notification.
 Wire formats, values, matrices, transport policy and public ABI are unchanged.
-The proposed libssc26 worker retains the exact23 SRPM and all previous checks.
+The release 26 worker retains the exact release 23 SRPM and all previous checks.
 It requires the old complete class source to fail pending ownership for each
 sensor, followed by real GLib dispatch/removal and weak-finalization checks
-normally and with ASan/UBSan. Native qualification and device results remain
-pending; no historical crash cause or physical effectiveness is established.
+normally and with ASan/UBSan. No historical crash cause or long-duration
+physical effectiveness is established.
 
-The24 native trial proves the old ownership failure in all six classes, then
-stops at a light-patch context mismatch before applying the correction. The25
+The release 24 native trial proves the old ownership failure in all six classes,
+then stops at a light-patch context mismatch before applying the correction. The release 25
 recipe preserves the earlier finite/accuracy light guard in that patch context;
 the intended ownership changes and lifetime fixtures are unchanged.
 
-The25 trial passes the original negative control for all six classes and all
+The release 25 trial passes the original negative control for all six classes and all
 corrected normal/sanitized lifetime tests. Its remaining decoder-only fixture
 does not model object references and stops compiling at the newly owned
-pointer. The26 recipe adds that existing fixture's synchronous borrowed-pointer
+pointer. The release 26 recipe adds that existing fixture's synchronous borrowed-pointer
 boundary; its old empty-data negative and all value-rejection cases remain.
 Real reference lifetime is still checked by the complete-class GLib tests.
+
+COPR [11251658](https://copr.fedorainfracloud.org/coprs/build/11251658/)
+passes for Fedora Rawhide AArch64 using source
+`170651b0601f47c128aca540082f9246189743fb`. Each original class fails the
+same ownership assertion with status 134. All 53 corrected scenarios pass normally and
+with ASan/UBSan, followed by the complete retained package checks. Both binary
+RPM signatures/digests pass; normalized dependencies, file metadata and ordered
+scripts match release 23. The real ELF SONAME and defined global symbol/type/version
+contract are unchanged. Tests and sanitizer runtimes are absent from the
+tablet payload.
+
+On 3 November 2026, the ordinary DNF update installs 0.4.4-26 on the tablet running
+Linux 7.3.1-1500. Installed library bytes match the reviewed signed artifact.
+SensorProxy is restarted and maps the current library; its observed state is
+active without automatic restarts. No sensor value, matrix, display mode or
+firmware setting is changed. A bounded startup observation does not establish
+the cause of a historical crash or complete physical sensor acceptance.
