@@ -61,11 +61,19 @@ pw-link -P fixture.sink:monitor_FR fixture.reference:input_FR
 # Input-only speech must continue producing frames while the output sink is idle.
 record() {
  local name=$1
- timeout 12s pw-cat --record --raw --rate 48000 --channels 1 --channel-map MONO --format f32 --target 0 --properties "{ node.name = $name node.autoconnect = false }" --sample-count 48000 - > "$stage/$name.raw" 2> "$stage/$name.log" &
+ stdbuf -o0 pw-cat --record --raw --rate 48000 --channels 1 --channel-map MONO --format f32 --target 0 --properties "{ node.name = $name node.autoconnect = false }" --sample-count 48000 - > "$stage/$name.raw" 2> "$stage/$name.log" &
  local client=$!;pids+=("$client")
  wait_port -i "$name:input_MONO"
  pw-link fixture.speech:capture_MONO "$name:input_MONO"
- if ! wait "$client"; then failure "$LINENO"; return 1; fi
+ local complete=false
+ for i in {1..120}; do
+   if [[ $(wc -c < "$stage/$name.raw") -eq 192000 ]]; then complete=true; break; fi
+   kill -0 "$client" 2>/dev/null || break
+   sleep .1
+ done
+ if [[ $complete != true ]]; then failure "$LINENO"; return 1; fi
+ kill -INT "$client" 2>/dev/null || :
+ wait "$client"
  test "$(wc -c < "$stage/$name.raw")" -eq 192000
  rm "$stage/$name.raw"
 }
