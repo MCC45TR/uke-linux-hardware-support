@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # COPR only: retain qualified37 and admit additive native touch statistics.
 set -Eeuo pipefail
+trap 'status=$?; printf "Source preparation failed at line %s (exit %s)\n" "$LINENO" "$status" >&2; exit "$status"' ERR
 export LC_ALL=C
 test ! -e /etc/senemos/kernel-update.conf
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 && $(rpm --eval '%{fedora}') == 46 ]]
@@ -13,12 +14,10 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
  curl -fLsS --get --data-urlencode ownername=mcc45tr --data-urlencode "projectname=$project" \
   --data-urlencode packagename=uke-boot-integration --data-urlencode limit=100 \
   https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
+ # Historical source-wrapper versions do not order the active retained cohort.
+ # Refuse every publication in this exact version, including canceled sources.
  jq -e '(.items|type)=="array" and (.items|length)<100 and all(.items[];
-   (.source_package.version // "") as $version |
-   if $version=="" then true
-   elif ($version|test("^[0-9]+[.][0-9]+[.][0-9]+-")) then
-     (($version|capture("^(?<a>[0-9]+)[.](?<b>[0-9]+)[.](?<c>[0-9]+)-")|[.a,.b,.c]|map(tonumber)) < [1,8,38])
-   else false end)' "$stage/builds.json" >/dev/null
+   ((.source_package.version // "")|test("^1[.]8[.]38-"))|not)' "$stage/builds.json" >/dev/null
 done
 curl -fLsS --retry 2 --proto '=https' --proto-redir '=https' \
  https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11251295/uke-boot-integration-1.8.37-1.fc46.src.rpm \
