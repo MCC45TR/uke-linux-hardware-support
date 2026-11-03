@@ -145,8 +145,16 @@ Json::Value snapshot() {
         const bool available = supported && backend && result["processing_policy_available"].asBool();
         auto &state = result["processing"][effect];
         state["supported"] = available;
-        state["enabled"] = available && (result["processing_profile"] == "calls" || result["processing_profile"] == "all") &&
+        state["requested"] = available && (result["processing_profile"] == "calls" || result["processing_profile"] == "all") &&
             (std::string_view(effect) != "agc" || result["agc_requested"].asBool());
+        state["enabled"] = false;
+        for (const auto &path : result["processing_paths"]) {
+            if (!path["physical_route_verified"].asBool() || path["state"] != "running") continue;
+            const auto effects = "," + path["effects_configured"].asString() + ",";
+            if (effects.find("," + std::string(effect) + ",") == std::string::npos) continue;
+            if (std::string_view(effect) == "aec" && !path["aec_reference_running"].asBool()) continue;
+            state["enabled"] = true;
+        }
         state["reason"] = available ? "webrtc_graph_inspection_required_for_active_route" : "processing_policy_or_backend_unavailable";
         state["acoustic_acceptance"] = "not_measured";
     }
