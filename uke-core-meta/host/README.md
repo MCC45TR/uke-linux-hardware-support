@@ -1,6 +1,19 @@
 # Retained Core audit and tracing tools
 
-3 November 2026: this COPR recipe adds original Fedora `audit`, `audit-rules`
+3 November 2026: COPR build 11247345 passed the retained metadata/XML and
+native QML/cache checks on Fedora Rawhide AArch64. It emitted only Core19.1
+and the source RPM. Full signatures passed; Core file contents, permissions,
+ownership and lifecycle scripts match the installed19. The only added runtime
+requirements are original Fedora audit collection and tracing tools.
+
+The exact DNF update installed Core19.1, audit/audit-rules4.2.1-2 and strace7.3-1
+on Fedora46. Targeted RPM verification passed. Auditd is active/enabled with
+zero lost/backlog counters and enforcing SELinux; default rotation is8MiB
+with5files. Fedora's default task-never rule retains hardwired-event collection
+while syscall auditing remains off. This does not recover past missing records
+or establish complete security coverage.
+
+This COPR recipe adds original Fedora `audit`, `audit-rules`
 and `strace` to the existing Core selection. The reviewed device had no audit
 collector or syscall tracing tool; kernel audit-print suppression limited its
 log investigation. No project daemon, new package name, backend or SDK is added.
@@ -20,3 +33,5 @@ short private tracing window. Do not infer those runtime results from source
 or build checks; no kernel activation or reboot is requested by this recipe.
 
 Retain these original Fedora dependencies in future Core selection revisions.
+Tested source: `4ce65b72eb41bc36cef62707b03192afd69b7ade`. Source5.2 and
+Core19.1 are reserved; future changed artifacts must advance their releases.
