@@ -14,7 +14,7 @@ curl -fLsS --max-time 40 \
     'https://copr.fedorainfracloud.org/api_3/build/list?ownername=mcc45tr&projectname=uke-linux-unstable&packagename=uke-video-integration&limit=100' \
     -o "$stage/history.json"
 jq -e '(.items|type)=="array" and (.items|length)<100 and all(.items[];
-    ((.source_package.version // "")|sub("[.]fc[0-9]+$";""))!="1.0.0-2")' \
+    ((.source_package.version // "")|sub("[.]fc[0-9]+$";""))!="1.0.0-3")' \
     "$stage/history.json" >/dev/null
 
 curl -fLsS --proto '=https' --proto-redir '=https' --max-time 90 \
@@ -41,10 +41,14 @@ cp "$stage/input/uke-video-integration-1.0.0.tar.xz" "$output/"
 cp "$stage/input/uke-video-integration.spec" "$output/uke-video-integration-published-spec.txt"
 cp "$here/../patches/0008-encoder-cpu-copy-default.patch" "$output/"
 cp "$here/ENCODER-COPY-FIX.md" "$output/"
+cp "$here/../config/60-uke-vaapi.conf" "$here/../config/uke-vaapi.sh" "$output/"
 awk -f "$here/retained-encoder-copy.awk" "$stage/input/uke-video-integration.spec" > "$output/uke-video-integration.spec"
 cmp "$stage/input/uke-video-integration-1.0.0.tar.xz" "$output/uke-video-integration-1.0.0.tar.xz"
 grep '^Requires:' "$stage/input/uke-video-integration.spec" > "$stage/requires.before"
+printf '%s\n' 'Requires: gstreamer1-plugins-bad-free' >> "$stage/requires.before"
 grep '^Requires:' "$output/uke-video-integration.spec" > "$stage/requires.after"
+sort -o "$stage/requires.before" "$stage/requires.before"
+sort -o "$stage/requires.after" "$stage/requires.after"
 cmp "$stage/requires.before" "$stage/requires.after"
 scriptlets() { awk '/^%(pre|post|preun|postun|pretrans|posttrans)([[:space:]]|$)/{p=1} /^%(files|changelog)([[:space:]]|$)/{p=0} p{print}' "$1"; }
 scriptlets "$stage/input/uke-video-integration.spec" > "$stage/scripts.before"
@@ -54,15 +58,17 @@ cmp "$stage/scripts.before" "$stage/scripts.after"
 [[ $(grep -c '^%files ' "$output/uke-video-integration.spec") == 2 ]]
 rpmspec --target aarch64 -q --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "$output/uke-video-integration.spec" > "$stage/identities"
 cat "$stage/identities"
-grep -Fxq $'uke-video-integration\t1.0.0-2.fc46' "$stage/identities"
-grep -Fxq $'uke-vaapi-v4l2\t1.0.0-12.fc46' "$stage/identities"
-grep -Fxq $'uke-video-session\t1.1.0-3.fc46' "$stage/identities"
+grep -Fxq $'uke-video-integration\t1.0.0-3.fc46' "$stage/identities"
+grep -Fxq $'uke-vaapi-v4l2\t1.0.0-13.fc46' "$stage/identities"
+grep -Fxq $'uke-video-session\t1.1.0-4.fc46' "$stage/identities"
 [[ $(wc -l < "$stage/identities") == 3 ]]
 commit=$(git -C "$here" rev-parse HEAD)
 jq -n --arg commit "$commit" '{source_commit:$commit,parent_copr_build:11239487,
     signed_parent_sha256:"75fc93dda6d9f5543d8d3e73e9a4bba2bedb1b097d361ff13fedfab327bdea6c",
-    retained_archive_unchanged:true,runtime_dependencies_unchanged:true,
+    retained_archive_unchanged:true,added_requirement:"gstreamer1-plugins-bad-free",
     lifecycle_scripts_unchanged:true,encoder_staging_default:"synchronized CPU copy",
+    packaged_environment:"GST_VA_ALL_DRIVERS=1",
+    environment_paths:["/usr/lib/environment.d/60-uke-vaapi.conf","/etc/profile.d/uke-vaapi.sh","/etc/xdg/plasma-workspace/env/uke-vaapi.sh"],
     hardware_encoding_retained:true,physical_candidate_acceptance:false}' \
     > "$output/encoder-copy-overlay.json"
-printf '%s\n' 'Retained video integration source, dependencies and lifecycle scripts verified.'
+printf '%s\n' 'Retained video source, exact VA plugin dependency and lifecycle scripts verified.'

@@ -15,3 +15,17 @@ policy. It does not identify or repair a general kernel coherency defect.
 Full codec/profile, browser, lifetime and sustained-performance qualification
 remains separate. The original README describes the preceding encoder policy;
 this note supersedes that default for this package revision.
+
+## Packaged GStreamer admission
+
+This package supplies `GST_VA_ALL_DRIVERS=1` in the vendor systemd user
+environment, standard login-shell settings and a system-wide Plasma environment
+hook. It requires the original Fedora `gstreamer1-plugins-bad-free` package
+that owns the modern VA plugin. These settings are installed and removed by
+RPM; no per-user export, local wrapper or modified GStreamer is required.
+
+The unchanged session package's standard systemd RPM triggers reload active
+user managers during a normal DNF upgrade. New logins load the packaged defaults
+through their normal startup paths. Already-running applications retain their
+old process environment until restarted. The existing CPU encoder staging
+correction remains in this release.

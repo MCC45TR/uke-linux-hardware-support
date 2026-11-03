@@ -7,11 +7,13 @@
 11239487 and keeps its original source archive, runtime dependencies, lifecycle
 scripts and native checks. The additional MIT patch selects the existing CPU
 fallback for the encoder's private staging copier. Decoder policy, direct
-imports, buffer lifetime and hardware encoding are preserved.
+imports, buffer lifetime and hardware encoding are preserved. Package-owned
+environment settings enable the original GStreamer VA plugin, which is a
+required original Fedora dependency. No GStreamer, KDE or GNOME fork is built.
 
-The source revision advances to `uke-video-integration-1.0.0-2.fc46`; the backend
-becomes `uke-vaapi-v4l2-1.0.0-12.fc46`. The unchanged session source receives
-`uke-video-session-1.1.0-3.fc46` so an existing binary identity is not reused.
+The source revision advances to `uke-video-integration-1.0.0-3.fc46`; the backend
+becomes `uke-vaapi-v4l2-1.0.0-13.fc46`. The unchanged session source receives
+`uke-video-session-1.1.0-4.fc46` so an existing binary identity is not reused.
 The one-time custom source worker must check out an immutable reviewed Git
 commit and call this script with its result directory. Do not run a build on
 the tablet or install a copied driver. Deliver signed results through DNF.
