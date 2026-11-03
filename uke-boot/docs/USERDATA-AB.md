@@ -318,7 +318,7 @@ identifiers, raw GPT backups, credentials or calibration are public payloads.
 
 ### Legacy disabled image defaults
 
-Boot integration 1.8.34 migrates the exact pair of legacy one-line disabled
+Boot integration 1.8.35 migrates the exact pair of legacy one-line disabled
 policies once during package installation, before the final transaction trigger.
 The existing A/B state machine and its rollback/health checks remain unchanged.
 A later administrator opt-out is preserved. No new refresh override is enabled

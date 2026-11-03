@@ -269,7 +269,7 @@ LP format reference: AOSP system/core commit
 
 ## One-time image policy migration
 
-3 November 2026, boot integration 1.8.34: the updater's package post-install
+3 November 2026, boot integration 1.8.35: the updater's package post-install
 migrates the exact legacy image pair `automatic=0` plus LF in both automatic
 policy files. Each original file is retained in the protected update state,
 then both policies are enabled with a durable migration journal. The legacy
