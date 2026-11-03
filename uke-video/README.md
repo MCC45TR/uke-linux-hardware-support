@@ -1,20 +1,26 @@
 # Uke stateful video integration
 
-3 November 2026. The installed correction is
-`uke-vaapi-v4l2-1.0.0-12.fc46`, built in native AArch64 COPR **11251033**
-under the existing `uke-video-integration` source producer. On POCO Pad X1 /
-Linux `7.3.1-1011`, its default hardware encoder passes 72 independently
-decoded H264 frames at 320x240, 640x360 and 1280x720. Minimum per-frame PSNR
-is 46.24, 48.03 and 48.92 dB respectively. All 30 decoder regression frames
-match the software reference exactly. These are bounded results, not full
-codec/profile, browser, lifecycle or sustained-performance acceptance.
+3 November 2026. Current delivery is `uke-vaapi-v4l2-1.0.0-13.fc46`, built
+in native AArch64 COPR **11251236** under the existing `uke-video-integration`
+source producer. The RPM ships `GST_VA_ALL_DRIVERS=1` through standard user
+environment/login/Plasma configuration and requires the original Fedora
+modern VA plugin. Normal DNF delivery needs no per-user export or wrapper.
+On POCO Pad X1 / Linux `7.3.1-1011`, fresh login and systemd user-service
+environments inherit the setting automatically, six VA elements register
+through the ordinary registry and all 30 decoded H264 frames match the
+independent reference without an extra environment option or cache removal.
 
 The encoder now prefers the existing synchronized CPU copy into private
-staging; Iris still performs hardware encoding. The current fix's source
+staging; Iris still performs hardware encoding. That correction, introduced
+in signed revision 12/COPR **11251033**, passed 72 independently decoded H264
+frames at three sizes and is retained here. These are bounded results, not
+full codec/profile, browser, lifecycle or sustained-performance acceptance.
+The current fix's source
 entrypoint is [the retained COPR recipe](host/README.md). Build through COPR
 and install with DNF; no tablet compilation or copied driver is required.
-GStreamer's upstream vendor filter remains application policy; the measured
-VA decoder uses its explicit `GST_VA_ALL_DRIVERS=1` diagnostic opt-in.
+The upstream vendor filter is unchanged; the packaged session configuration
+supplies its admission option. Already-running applications keep their old
+process environment until restarted or a new session is opened.
 
 ## Historical integration record — 26 October 2026
 

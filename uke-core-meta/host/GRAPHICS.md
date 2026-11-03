@@ -6,7 +6,8 @@ The minimum VA version includes the private encoder staging correction built
 in COPR 11251033. The installed backend passed 72 independently decoded H264
 frames at three sizes and a byte-exact 30-frame decoder regression on POCO
 Pad X1 / Linux 7.3.1-1011. Full codec/profile and sustained qualification is
-separate; GStreamer's upstream vendor admission remains application policy.
+separate. Normal updates to backend revision 13 additionally deliver its
+package-owned GStreamer admission defaults and the original VA plugin.
 
 The recipe retains the signed installed `uke-control-2.8.1-5.2.fc46` source,
 including Core audit tools, and emits only `uke-core-meta-1.0.7-19.2.fc46`.
