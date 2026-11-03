@@ -19,7 +19,7 @@ versioned firmware families. Contains no OEM firmware or calibration.
 
 %build
 %set_build_flags
-g++ %{build_cxxflags} -std=c++20 -Wall -Wextra -Werror -Wno-misleading-indentation +    uke-cdsp-pogo-firmware/src/import.cpp %{build_ldflags} -lcrypto -o uke-cdsp-pogo-firmware-bin
+g++ %{build_cxxflags} -std=c++20 -Wall -Wextra -Werror -Wno-misleading-indentation uke-cdsp-pogo-firmware/src/import.cpp %{build_ldflags} -lcrypto -o uke-cdsp-pogo-firmware-bin
 
 %check
 bash uke-cdsp-pogo-firmware/tests/check.sh
