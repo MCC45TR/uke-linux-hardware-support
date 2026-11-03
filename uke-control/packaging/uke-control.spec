@@ -15,6 +15,7 @@ BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 BuildRequires: pkgconfig(ncursesw)
 BuildRequires: pkgconfig(vterm)
+BuildRequires: pkgconfig(libspa-0.2) pipewire-libs pipewire-utils
 BuildRequires: xfsprogs-devel
 BuildRequires: e2fsprogs dosfstools f2fs-tools
 Requires: util-linux-core util-linux systemd procps-ng
@@ -32,6 +33,7 @@ Requires: uke-kernel-update >= 1.8.7
 Requires: uke-kernel-update(transaction-v1) >= 1
 Requires: (wireplumber >= 0.5.16 if wireplumber)
 Recommends: uke-battery-observer
+Recommends: /usr/lib64/spa-0.2/aec/libspa-aec-webrtc.so
 Recommends: uke-control-tui%{?_isa} = %{version}-%{release}
 Provides: uke-control(channel-api) = 1
 Provides: uke-control(fedora-returns-v1) = 1

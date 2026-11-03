@@ -32,3 +32,24 @@ assert(camera == "unknown" and purpose == "unknown")
 camera, purpose = p.context { ["media.role"]="Communication" }
 assert(camera == "unknown" and purpose == "call")
 print("Microphone identity, manual precedence, raw/external fallback and context checks passed")
+for _, profile in ipairs {"calls", "all"} do
+  assert(p.speech(profile,"auto",{channels=1,role="Communication"},true)=="uke-amic1")
+  for id in pairs(p.channels) do
+    assert(p.speech(profile,id,{channels=2,purpose="narration"},true)==id)
+  end
+  for _, field in ipairs {"explicit_target","internal","raw","dont_filter"} do
+    local stream={channels=2,role="Communication"};stream[field]=true
+    assert(not p.speech(profile,"auto",stream,true))
+  end
+  for _, count in ipairs {0,3,4,8} do
+    assert(not p.speech(profile,"auto",{channels=count,role="Communication"},true))
+  end
+  assert(not p.speech(profile,"auto",{channels=1,role="Production"},true))
+  assert(not p.speech(profile,"auto",{channels=1,role="Communication"},false))
+  assert(not p.speech(profile,"invalid",{channels=1,role="Communication"},true))
+end
+assert(not p.speech("calls","auto",{channels=2},true))
+assert(p.speech("all","auto",{channels=2},true)=="uke-amic1")
+assert(not p.speech("off","auto",{channels=1,role="Communication"},true))
+assert(not p.speech("unknown","auto",{channels=1,role="Communication"},true))
+print("Speech decision matrix passed: calls/all/off, raw/explicit/external and channel boundaries")

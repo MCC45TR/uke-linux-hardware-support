@@ -252,3 +252,5 @@ build/test-layout-safety: tests/layout-safety.cpp tests/layout-fixture.hpp src/l
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-safety.cpp src/layout-policy.cpp src/layout-runtime.cpp src/layout-shutdown.cpp $(layout_recovery) $(layout_libs)
 build/test-layout-shutdown-vm: tests/layout-shutdown-vm.cpp tests/layout-vm-common.hpp tests/layout-fixture.hpp src/layout.hpp $(layout_sources) $(layout_recovery) | build
 	$(CXX) $(CXXFLAGS) -UNDEBUG $(layout_flags) $(LDFLAGS) -Isrc -o $@ tests/layout-shutdown-vm.cpp src/layout-policy.cpp src/layout-runtime.cpp $(layout_recovery) $(layout_libs)
+
+include packaging/microphone-speech.mk

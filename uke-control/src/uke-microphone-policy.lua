@@ -24,6 +24,20 @@ function M.choose(selection, stream, qualified)
   -- shortcut: profiles remain uncalibrated; enable only after acoustic acceptance.
   return nil, "uncalibrated_auto_keeps_raw"
 end
+function M.speech(profile, selection, stream, qualified)
+  if not qualified then return nil, "unqualified_array" end
+  if stream.explicit_target or stream.internal or stream.raw or stream.dont_filter
+      or stream.role == "Production" or (stream.channels ~= 1 and stream.channels ~= 2) then
+    return nil, "explicit_or_raw_stream_preserved"
+  end
+  if profile ~= "calls" and profile ~= "all" then return nil, "processing_off_or_unknown" end
+  if profile == "calls" and stream.role ~= "Communication" and stream.purpose ~= "call"
+      and stream.purpose ~= "narration" then return nil, "non_speech_stream_preserved" end
+  if M.channels[selection] then return selection, "speech_manual_channel" end
+  -- A deterministic reference channel, not an acoustically optimized automatic choice.
+  if selection == "auto" then return "uke-amic1", "speech_reference_channel" end
+  return nil, "invalid_preference"
+end
 function M.context(p)
   local camera = p["uke.microphone.camera"]
   local purpose = p["uke.microphone.purpose"]

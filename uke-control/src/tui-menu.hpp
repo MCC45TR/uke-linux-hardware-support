@@ -53,6 +53,8 @@ inline std::string owner(const client::Action& a) {
         {"led.status","screen"},{"led.auto","screen"},{"led.color","screen"},
         {"usb.status","connections"},{"ethernet.status","connections"},{"nfc.status","connections"},{"nfc.state","connections"},
         {"microphone.status","media"},{"microphone.select","media"},{"overview.audio","media"},
+        {"microphone.streams","media"},{"microphone.processing.status","media"},
+        {"microphone.processing.verify","media"},{"microphone.processing.select","media"},{"microphone.processing.agc","media"},
         {"overview.camera","media"},{"sensors.list","media"},{"sensors.once","media"},
         {"channel.status","updates"},{"update.preview","updates"},{"update.apply","updates"}
     };

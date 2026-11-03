@@ -2,6 +2,8 @@
 #include "microphone.hpp"
 #include "backend.hpp"
 #include "cli.hpp"
+#include "microphone-graph.hpp"
+#include "microphone-engine.hpp"
 #include <json/json.h>
 #include <systemd/sd-login.h>
 #include <array>
@@ -17,6 +19,8 @@ namespace uke::microphone {
 namespace {
 constexpr std::array<const char *, 4> ids = {"uke-amic1", "uke-amic3", "uke-amic4", "uke-amic5"};
 constexpr auto setting = "uke.microphone.selection";
+constexpr auto processing_setting = "uke.microphone.processing";
+constexpr auto agc_setting = "uke.microphone.agc";
 bool valid(std::string_view id) {
     if (id == "auto") return true;
     for (auto candidate : ids) if (id == candidate) return true;
@@ -72,16 +76,21 @@ Json::Value snapshot() {
     result["local_session"] = local_session();
     result["supported"] = false;
     result["policy_available"] = false;
+    result["processing_policy_available"] = false;
+    result["processing_profile"] = "off";
+    result["agc_requested"] = false;
     result["ready"] = false;
     result["reason"] = "no_qualified_v4_array";
     result["cpu_acceptance"] = "not measured";
     result["energy_acceptance"] = "not measured";
     result["orientation_calibrated"] = false;
     result["camera_calibrated"] = false;
-    for (auto effect : {"aec", "ns", "agc", "occlusion"}) {
+    result["oem_dsp_algorithms"] = "not_observable_from_pipewire_definitions_are_not_runtime_evidence";
+    result["capture_streams"] = Json::Value(Json::arrayValue);
+    for (auto effect : {"aec", "ns", "hpf", "agc", "occlusion"}) {
         result["processing"][effect]["enabled"] = false;
         result["processing"][effect]["supported"] = false;
-        result["processing"][effect]["reason"] = "load_and_acoustic_acceptance_missing";
+        result["processing"][effect]["reason"] = "no_verified_processing_path";
     }
     if (!result["local_session"].asBool()) { result["reason"] = "requires_one_active_local_wayland_session"; return result; }
     const auto dump = execute({"/usr/bin/pw-dump"}, 5, 4 * 1024 * 1024);
@@ -100,20 +109,47 @@ Json::Value snapshot() {
                 result["components"] = props["alsa.components"];
                 result["capture_state"] = object["info"]["state"];
             }
-            if (props.get("uke.microphone.internal", "") == "true") internal.append(props);
+            if (graph::yes(props["uke.microphone.internal"])) internal.append(object);
         }
         if (type != "PipeWire:Interface:Metadata") continue;
         const auto name = object["props"].get("metadata.name", "").asString();
         for (const auto &entry : object["metadata"]) {
-            if (entry.get("subject", 1).asUInt() != 0 || entry.get("key", "") != setting) continue;
-            if (name == "schema-sm-settings") result["policy_available"] = true;
-            if (name == "sm-settings" && entry["value"].isString()) result["selection"] = entry["value"];
+            if (entry.get("subject", 1).asUInt() != 0) continue;
+            const auto key = entry.get("key", "").asString();
+            if (name == "schema-sm-settings" && key == setting) result["policy_available"] = true;
+            if (name == "schema-sm-settings" && key == processing_setting) result["processing_policy_available"] = true;
+            if (name != "sm-settings") continue;
+            if (key == setting && entry["value"].isString()) result["selection"] = entry["value"];
+            if (key == processing_setting && entry["value"].isString()) result["processing_profile"] = entry["value"];
+            if (key == agc_setting) result["agc_requested"] = graph::yes(entry["value"]);
         }
     }
     const bool supported = arrays == 1 && result["policy_available"].asBool();
     result["supported"] = supported;
     result["reason"] = arrays > 1 ? "ambiguous_array" : supported ? "qualified_policy" : arrays == 1 ? "policy_not_loaded" : "no_qualified_v4_array";
-    for (const auto &props : internal) if (supported && props.get("uke.microphone.id", "") == result["selection"]) result["ready"] = true;
+    const graph::Snapshot topology(objects);
+    result["capture_streams"] = topology.streams(arrays == 1 ? result["source_id"].asUInt() : 0);
+    const bool backend = access("/usr/lib64/spa-0.2/aec/libspa-aec-webrtc.so", R_OK) == 0;
+    result["processing_backend_available"] = backend;
+    result["processing_paths"] = Json::Value(Json::arrayValue);
+    for (const auto &object : internal) {
+        const auto &p = object["info"]["props"];
+        if (supported && p.get("uke.microphone.id", "") == result["selection"] &&
+            p.get("uke.microphone.stage", "") == "source" &&
+            p.get("uke.microphone.processing", "") == "none") result["ready"] = true;
+        if (p.get("uke.microphone.processing", "") != "webrtc" || p.get("uke.microphone.stage", "") != "source") continue;
+        auto path = topology.source(object["id"].asUInt(), arrays == 1 ? result["source_id"].asUInt() : 0);
+        result["processing_paths"].append(path);
+    }
+    for (auto effect : {"aec", "ns", "hpf", "agc"}) {
+        const bool available = supported && backend && result["processing_policy_available"].asBool();
+        auto &state = result["processing"][effect];
+        state["supported"] = available;
+        state["enabled"] = available && (result["processing_profile"] == "calls" || result["processing_profile"] == "all") &&
+            (std::string_view(effect) != "agc" || result["agc_requested"].asBool());
+        state["reason"] = available ? "webrtc_graph_inspection_required_for_active_route" : "processing_policy_or_backend_unavailable";
+        state["acoustic_acceptance"] = "not_measured";
+    }
     if (result["selection"] == "auto") result["ready"] = supported;
     Json::Value microphones(Json::arrayValue);
     try {
@@ -130,7 +166,8 @@ Json::Value snapshot() {
 }
 }
 int command(int argc, char **argv, bool as_json) {
-    if (argc == 1 && (std::string_view(argv[0]) == "status" || std::string_view(argv[0]) == "list")) {
+    if (argc == 1 && (std::string_view(argv[0]) == "status" || std::string_view(argv[0]) == "list" ||
+                     std::string_view(argv[0]) == "streams")) {
         cli::print(encode(snapshot()), as_json); return 0;
     }
     if (argc == 2 && std::string_view(argv[0]) == "select") {
@@ -149,8 +186,37 @@ int command(int argc, char **argv, bool as_json) {
     if (argc == 2 && std::string_view(argv[0]) == "processing" && std::string_view(argv[1]) == "status") {
         cli::print(encode(snapshot()), as_json); return 0;
     }
+    if (argc == 2 && std::string_view(argv[0]) == "processing" && std::string_view(argv[1]) == "verify") {
+        const auto verification = verify_engine();
+        cli::print(encode(verification), as_json); return verification["runnable"].asBool() ? 0 : 1;
+    }
+    if (argc == 3 && std::string_view(argv[0]) == "processing" && std::string_view(argv[1]) == "select") {
+        const std::string profile = argv[2];
+        if (profile != "off" && profile != "calls" && profile != "all")
+            throw cli::UsageError("expected processing select off|calls|all");
+        auto status = snapshot();
+        if (!status["local_session"].asBool() || !status["processing_policy_available"].asBool() ||
+            (profile != "off" && !status["processing"]["aec"]["supported"].asBool()))
+            throw std::runtime_error("Speech processing policy or WebRTC backend unavailable");
+        if (profile != "off" && !verify_engine()["runnable"].asBool())
+            throw std::runtime_error("WebRTC failed its synthetic runtime verification");
+        const auto applied = execute({"/usr/bin/wpctl", "settings", "--save", processing_setting, encode(profile)}, 5, 65536);
+        if (applied.status) throw std::runtime_error("WirePlumber refused the speech processing preference");
+        status = snapshot(); status["applies_to"] = "new_streams_existing_recordings_are_preserved";
+        cli::print(encode(status), as_json); return 0;
+    }
+    if (argc == 3 && std::string_view(argv[0]) == "processing" && std::string_view(argv[1]) == "agc") {
+        const std::string choice = argv[2];
+        if (choice != "off" && choice != "on") throw cli::UsageError("expected processing agc off|on");
+        const auto status = snapshot();
+        if (!status["local_session"].asBool() || !status["processing"]["agc"]["supported"].asBool())
+            throw std::runtime_error("Speech processing policy or WebRTC backend unavailable");
+        const auto applied = execute({"/usr/bin/wpctl", "settings", "--save", agc_setting, encode(choice == "on")}, 5, 65536);
+        if (applied.status) throw std::runtime_error("WirePlumber refused the digital AGC preference");
+        cli::print(encode(snapshot()), as_json); return 0;
+    }
     if (argc > 0 && (std::string_view(argv[0]) == "processing" || std::string_view(argv[0]) == "profile"))
-        throw std::runtime_error("Unsupported: processing and automatic profiles require separate calibration and load acceptance");
-    throw cli::UsageError("expected microphone status|list|select ID|processing status");
+        throw std::runtime_error("Unsupported processing option; beamforming and automatic acoustic profiles remain unavailable");
+    throw cli::UsageError("expected microphone status|list|streams|select ID|processing status|processing select off|calls|all|processing agc off|on");
 }
 }
