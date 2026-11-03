@@ -7,6 +7,15 @@ required. The first-DNF policy migration introduced in 1.8.36 is retained.
 See [userdata rollback](USERDATA-AB.md) for timing, terminal-health handling
 and the independent physical acceptance limits.
 
+Software validation on 3 November 2026: COPR
+[11251295](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11251295/)
+passed for Fedora Rawhide AArch64. Injected-clock qualification, both-direction
+512/4096-byte GPT fallback and the retained first-update RPM transaction fixtures
+passed. All six binary packages and the rebuilt SRPM verify with the COPR key;
+repository hashes and the delivered failure-unit policy were checked separately.
+[Artifact identities](rollback-health-20261103.json) distinguish those software
+checks from the unperformed physical update and rollback tests.
+
 1 November 2026. Source 1.8.22 runs startup acceptance and policy-gated staging
 through one `boot` command under the updater lock. An identical default reuses
 the running bundle's verified bytes. Disabled staging still performs health

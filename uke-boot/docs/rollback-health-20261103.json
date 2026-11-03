@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "date": "2026-11-03",
+  "project": "mcc45tr/uke-linux-unstable",
+  "target": "fedora-rawhide-aarch64",
+  "build_id": 11251295,
+  "source_commit": "aa82c59aa07d112d18f267ec4fc21e17ca2890b6",
+  "version": "1.8.37-1.fc46",
+  "parent_build": 11250994,
+  "parent_srpm_sha256": "8694a022acca7fe1009642724266237fe872d91fa55ef78c1b6c356a19a65e9d",
+  "rpm_signatures": "verified with COPR public key in private database",
+  "legacy_policy_migration": "retained; subsequent opt-out preserved",
+  "inactive_image_writer_unchanged": true,
+  "trial_health_stable_seconds": 30,
+  "trial_health_deadline_seconds": 90,
+  "trial_boot_attempts": 3,
+  "terminal_trial_exit_status": 78,
+  "normal_update_automatic_reboot": false,
+  "fallback_requests_normal_reboot": true,
+  "physical_update_test": "not_run",
+  "rpm_files": [
+    {
+      "file": "uke-boot-integration-1.8.37-1.fc46.aarch64.rpm",
+      "sha256": "0275f206625a4c0eff00db14cf58dffebfe88e71f0e17388223a5b5ec7692437"
+    },
+    {
+      "file": "uke-boot-integration-1.8.37-1.fc46.src.rpm",
+      "sha256": "6d7ab4eb42c3e64ba933d49b8b1ad22b983b5b6406f7ba2085ca3ad4fb781546"
+    },
+    {
+      "file": "uke-boot-recovery-1.8.37-1.fc46.aarch64.rpm",
+      "sha256": "e59e82438ddc5b8f72d7fe9161a15c06ae9284a66a4304fec6abc5ef86f58391"
+    },
+    {
+      "file": "uke-cdc-debug-1.8.37-1.fc46.aarch64.rpm",
+      "sha256": "89bdb522742a640faf83d0f211cbdea2410d69a2974e6f2d520ed5a244c9828c"
+    },
+    {
+      "file": "uke-esp32-cdc-1.8.37-1.fc46.aarch64.rpm",
+      "sha256": "e44a34c37f4b1632d5e776a6a5f21d3e075af1e244d39d24ccd8e02d1fff39dd"
+    },
+    {
+      "file": "uke-installation-profile-1.8.37-1.fc46.aarch64.rpm",
+      "sha256": "cd491658abed4d1c5dfeb58ddb47627aeb4f12ee9833209650c557bba12c0ab9"
+    },
+    {
+      "file": "uke-kernel-update-1.8.37-1.fc46.aarch64.rpm",
+      "sha256": "e7133b1cb8f444becf37f04502d2576a24306660836594877f21de9c4b2276e6"
+    }
+  ],
+  "software_checks": {
+    "native_trial_health": "passed (continuous window and timing faults)",
+    "gpt_fallback": "passed (both directions, 512/4096-byte sectors)",
+    "legacy_policy_fault_recovery": "passed (12 interruption points)",
+    "rpm_updater_only_upgrade": "passed (migration then activation once)",
+    "delivered_failure_unit": "verified (terminal status78 and OnFailure)",
+    "runtime_dependencies": "unchanged from actual parent 1.8.36 RPM",
+    "repository_visibility": "verified (all six binary hashes)",
+    "user_manager_runtime_fixture": "not_run"
+  }
+}
