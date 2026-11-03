@@ -24,3 +24,12 @@ Physical battery variants, cutoff, charging, thermal response and suspend
 remain untested by this build. Package installation/restart/reboot is separate
 from source generation. Retain the prior three matching release6 packages for
 a controlled rollback; package build success does not establish that rollback.
+
+COPR [11250670](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11250670/)
+completed on 3 November 2026 from source
+`f19db5a87e707271323a9e8fabf605e0aae60f0d`. All three AArch64 RPMs are
+`1.4.1-7.fc46`; software checks and downloaded RPM digest/signature checks pass.
+The initial source-only submission11250635 stopped at a dependency-order
+assertion before producing an SRPM. The corrected guard retains all three
+Fedora runtime dependencies, including the offline helper's leading systemd
+dependency. No tablet installation or physical qualification was performed.
