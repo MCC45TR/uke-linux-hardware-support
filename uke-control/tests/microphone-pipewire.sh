@@ -22,9 +22,9 @@ context.modules = [
  { name = libpipewire-module-echo-cancel args = {
    library.name = aec/libspa-aec-webrtc monitor.mode = true audio.rate = 48000 audio.position = [ MONO ]
    aec.args = { webrtc.high_pass_filter = true webrtc.noise_suppression = true webrtc.gain_control = false }
-   capture.props = { node.name = fixture.capture audio.position = [ AUX0 ] audio.rate = 48000 stream.dont-remix = true node.passive = true node.dont-fallback = true }
+   capture.props = { node.autoconnect = false node.name = fixture.capture audio.position = [ AUX0 ] audio.rate = 48000 stream.dont-remix = true node.passive = true node.dont-fallback = true }
    source.props = { node.name = fixture.speech media.class = Audio/Source/Internal audio.position = [ MONO ] audio.rate = 48000 node.hidden = true }
-   sink.props = { node.name = fixture.reference audio.position = [ FL FR ] audio.rate = 48000 node.passive = true stream.capture.sink = true stream.monitor = true }
+   sink.props = { node.autoconnect = false node.name = fixture.reference audio.position = [ FL FR ] audio.rate = 48000 node.passive = true stream.capture.sink = true stream.monitor = true }
  } }
 ]
 context.objects = [
@@ -35,8 +35,16 @@ CONF
 PIPEWIRE_CONFIG_DIR="$stage/config" pipewire -c test.conf > "$stage/server.log" 2>&1 & pids+=("$!")
 for i in {1..60}; do [[ -S $XDG_RUNTIME_DIR/pipewire-0 ]] && break; sleep .1; done
 [[ -S $XDG_RUNTIME_DIR/pipewire-0 ]] || { cat "$stage/server.log"; exit 1; }
+mkdir -p "$stage/config/wireplumber/wireplumber.conf.d"
+cat > "$stage/config/wireplumber/wireplumber.conf.d/90-fixture.conf" <<'WP'
+wireplumber.profiles = {
+ main = { monitor.alsa = disabled monitor.bluez = disabled monitor.bluez-midi = disabled
+          monitor.libcamera = disabled monitor.v4l2 = disabled }
+}
+WP
+dbus-run-session -- env XDG_CONFIG_HOME="$stage/config" wireplumber > "$stage/wp.log" 2>&1 & pids+=("$!")
 pw-cat --playback --raw --rate 48000 --channels 4 --channel-map AUX0,AUX1,AUX2,AUX3 --format f32 --target 0 --properties '{ node.name = fixture.raw media.class = Audio/Source node.autoconnect = false }' /dev/zero > "$stage/raw.log" 2>&1 & pids+=("$!")
-wait_port() { for i in {1..60}; do pw-link "$1" | grep -Fq "$2" && return; sleep .1; done; pw-link -o; pw-link -i; cat "$stage/server.log"; return 1; }
+wait_port() { for i in {1..60}; do pw-link "$1" | grep -Fq "$2" && return; sleep .1; done; pw-link -o; pw-link -i; cat "$stage/server.log" "$stage/wp.log" "$stage/raw.log"; return 1; }
 wait_port -o 'fixture.raw:output_AUX0'
 wait_port -i 'fixture.capture:input_AUX0'
 pw-link -P fixture.raw:output_AUX0 fixture.capture:input_AUX0

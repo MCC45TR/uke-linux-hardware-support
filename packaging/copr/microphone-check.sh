@@ -5,7 +5,7 @@ test ! -e /etc/senemos/kernel-update.conf
 owner=$(cd -- "$(dirname -- "$0")/../.." && pwd)
 output=$(realpath -m "${1:?COPR result directory}")
 mkdir -p "$output"
-make -C "$owner/uke-control" check-microphone
+make -C "$owner/uke-control" check-microphone check-microphone-flow
 stage=$(mktemp -d)
 trap 'find "$stage" -depth -delete' EXIT
 git -C "$owner" rev-parse HEAD > "$stage/SOURCE-COMMIT"

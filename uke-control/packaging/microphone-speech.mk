@@ -10,4 +10,7 @@ check-microphone: check-microphone-speech
 check-microphone-speech: build/test-microphone-graph build/test-microphone-engine
 	build/test-microphone-graph
 	build/test-microphone-engine
+.PHONY: check-microphone-flow
+check: check-microphone-flow
+check-microphone-flow:
 	bash tests/microphone-pipewire.sh

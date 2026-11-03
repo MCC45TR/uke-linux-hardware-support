@@ -15,7 +15,7 @@ BuildRequires: selinux-policy-devel
 BuildRequires: pkgconfig(jsoncpp) pkgconfig(blkid) pkgconfig(openssl)
 BuildRequires: pkgconfig(ncursesw)
 BuildRequires: pkgconfig(vterm)
-BuildRequires: pkgconfig(libspa-0.2) pipewire-libs pipewire-utils
+BuildRequires: pkgconfig(libspa-0.2) pipewire-libs pipewire-utils wireplumber dbus-daemon
 BuildRequires: xfsprogs-devel
 BuildRequires: e2fsprogs dosfstools f2fs-tools
 Requires: util-linux-core util-linux systemd procps-ng
