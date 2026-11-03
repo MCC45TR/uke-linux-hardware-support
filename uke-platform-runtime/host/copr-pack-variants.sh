@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # COPR only: publish the reviewed supplier observer without replacing charging policy.
 set -Eeuo pipefail
+trap 'printf "Battery source composition failed at line %s (status %s)\n" "$LINENO" "$?" >&2' ERR
 export LC_ALL=C
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 && $(rpm --eval '%{fedora}') == 46 ]]
 [[ ! -e /etc/senemos/kernel-update.conf ]]
@@ -61,7 +62,7 @@ tar --sort=name --mtime="@$(git -C "$owner" show -s --format=%ct HEAD)" --owner=
  -cJf "$output/uke-battery-observer-1.4.1.tar.xz" -C "$stage/battery" uke-battery-observer-1.4.1
 install -m644 "$input/uke-battery.conf" "$output/"
 [[ $(grep -c '^Release:' "$input/uke-battery-observer.spec") == 1 ]]
-[[ $(grep -c '^Requires: libstdc++%{?_isa} >= 16.2.1' "$input/uke-battery-observer.spec") == 3 ]]
+[[ $(grep -c '^Requires:.*libstdc++%{?_isa} >= 16.2.1' "$input/uke-battery-observer.spec") == 3 ]]
 sed -e 's/^Release: 1%{?dist}$/Release: 7%{?dist}/' \
  -e '/^%doc.*SOURCE-SHA256SUMS/s/$/ pack-variant-source.json/' \
  "$input/uke-battery-observer.spec" > "$output/uke-battery-observer.spec"
