@@ -45,9 +45,9 @@ WP
 dbus-run-session -- env XDG_CONFIG_HOME="$stage/config" wireplumber > "$stage/wp.log" 2>&1 & pids+=("$!")
 pw-cat --playback --raw --rate 48000 --channels 4 --channel-map AUX0,AUX1,AUX2,AUX3 --format f32 --target 0 --properties '{ node.name = fixture.raw media.class = Audio/Source node.autoconnect = false }' /dev/zero > "$stage/raw.log" 2>&1 & pids+=("$!")
 wait_port() { for i in {1..60}; do pw-link "$1" | grep -Fq "$2" && return; sleep .1; done; pw-link -o; pw-link -i; cat "$stage/server.log" "$stage/wp.log" "$stage/raw.log"; return 1; }
-wait_port -o 'fixture.raw:output_AUX0'
+wait_port -o 'fixture.raw:capture_AUX0'
 wait_port -i 'fixture.capture:input_AUX0'
-pw-link -P fixture.raw:output_AUX0 fixture.capture:input_AUX0
+pw-link -P fixture.raw:capture_AUX0 fixture.capture:input_AUX0
 pw-link -P fixture.sink:monitor_FL fixture.reference:input_FL
 pw-link -P fixture.sink:monitor_FR fixture.reference:input_FR
 # Input-only speech must continue producing frames while the output sink is idle.

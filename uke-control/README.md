@@ -1,5 +1,9 @@
 # Uke Control
 
+3 November 2026: [the microphone candidate](MICROPHONE.md) adds passive WebRTC
+speech paths, actual application-channel inspection and synthetic verification
+of the installed engine. COPR and physical acceptance are tracked separately.
+
 1 November 2026: the existing Control source now also builds the Core/desktop
 selections and native power/display children. All 12 RPMs retain their names,
 dependencies and optional selection. Native builds, 20 dependency plans and
