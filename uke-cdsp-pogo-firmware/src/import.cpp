@@ -115,20 +115,29 @@ static Bytes mcu_image(Source &super) {
     }
     throw std::runtime_error("No hash-admitted Uke MCU image found in stock ODM/vendor");
 }
-static int run(const std::string &release) {
+static std::pair<Family,Bytes> acquire() {
     need(geteuid()==0,"Administrator authentication is required for read-only stock partition access");
     const auto board=sysfile("/sys/firmware/devicetree/base/compatible",1024);
     need(compatible(board,"xiaomi,uke")&&compatible(board,"qcom,sm7675"),"Exact Uke/SM7675 identity required");
-    need(token(release)&&release.starts_with("7.3.1-"),"Invalid target kernel release");
-    utsname current{};need(!uname(&current)&&release!=current.release,"Only a non-running kernel may receive firmware");
-    need(fs::is_directory(fs::path("/usr/lib/modules")/release),"Target kernel modules are not installed");
     auto modem=source("modem_a"),super=source("super");
     need(modem.parent==super.parent,"Stock sources belong to different physical disks");
     struct stat root_stat{};need(!stat("/",&root_stat),"Cannot identify Fedora root filesystem");
     const auto root_sys=fs::canonical("/sys/dev/block/"+std::to_string(major(root_stat.st_dev))+":"+std::to_string(minor(root_stat.st_dev)));
     need(root_sys.parent_path()==super.parent,"Stock sources are outside the Fedora root disk");
-    Fat fat(modem.fd.value,modem.size);const auto cdsp=cdsp_family(fat);const auto mcu=mcu_image(super);
+    Fat fat(modem.fd.value,modem.size);auto cdsp=cdsp_family(fat);auto mcu=mcu_image(super);
     need(admit_mcu(mcu),"MCU identity differs");
+    return {std::move(cdsp),std::move(mcu)};
+}
+static int preflight() {
+    const auto files=acquire();
+    std::cout<<"Verified device-local CDSP metadata/split files and exact MCU image; no files were published or devices started\n";
+    return 0;
+}
+static int run(const std::string &release) {
+    need(token(release)&&release.starts_with("7.3.1-"),"Invalid target kernel release");
+    utsname current{};need(!uname(&current)&&release!=current.release,"Only a non-running kernel may receive firmware");
+    need(fs::is_directory(fs::path("/usr/lib/modules")/release),"Target kernel modules are not installed");
+    const auto [cdsp,mcu]=acquire();
     const auto parent=fs::path("/usr/lib/firmware")/release/"qcom/uke";
     publish_family(parent,"cdsp",cdsp);publish_family(parent,"nanosic",Family{{"MCU_Upgrade.bin",mcu}});
     std::cout<<"Verified and published device-local CDSP and MCU firmware for "<<release
@@ -139,7 +148,9 @@ static int run(const std::string &release) {
 }
 #ifndef UKE_LOCAL_FW_TEST
 int main(int argc,char **argv) {
-    try {need(argc==3&&std::string(argv[1])=="--import","Usage: uke-cdsp-pogo-firmware --import KERNEL_RELEASE");
+    try {
+        if(argc==2&&std::string(argv[1])=="--preflight")return uke_local_fw::preflight();
+        need(argc==3&&std::string(argv[1])=="--import","Usage: uke-cdsp-pogo-firmware --preflight | --import KERNEL_RELEASE");
         return uke_local_fw::run(argv[2]);}
     catch(const std::exception &e){std::cerr<<"uke-cdsp-pogo-firmware: "<<e.what()<<'\n';return 1;}
 }
