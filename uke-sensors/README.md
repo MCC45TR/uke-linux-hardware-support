@@ -1,5 +1,20 @@
 # Uke sensors
 
+3 November 2026, Fedora Rawhide AArch64: native COPR
+[11247548](https://copr.fedorainfracloud.org/coprs/build/11247548) verifies that
+an accuracy-only vendor response legally decodes to an empty repeated-data
+array. The original callback crashes on that input; the new count/pointer
+guard preserves the last accepted measurement. Actual callback fixtures,
+ASan/UBSan and the retained mount-matrix/light/context checks pass. Existing
+event dispatch, near/far mapping and unpack diagnostics are preserved.
+
+Signed `uke-libssc` 0.4.4-21 is installed on Linux 7.3.1-1010. After an explicit
+SensorProxy restart, bounded normal proximity queries succeed without new
+proximity warnings. Controlled near/far, physical rotation and the older
+unidentified 36-byte message remain unqualified. The build uses retained input
+`55626a7cf9de9b3c18c0d9b6dda9a7957a43c8fc`; its library and test files match
+this branch, while the newer main-branch packaging context needs its own build.
+
 23 October 2026: the optional native `uke-proximity-capture` package compares
 small/large report transport and empty-body presence using one metadata-gated
 default endpoint. Passive/non-wakeup is the default; fixed active modes use

@@ -8,6 +8,19 @@
   "scope": "SSC desktop package preview; physical automatic rotation and brightness pending",
   "libssc": {
     "version": "0.4.4",
+    "empty_vendor_data_guard": {
+      "date": "2026-11-03",
+      "copr_build": 11247548,
+      "source_commit": "55626a7cf9de9b3c18c0d9b6dda9a7957a43c8fc",
+      "source_context": "retained installed producer; newer main packaging context not built",
+      "runtime_nevra": "uke-libssc-0.4.4-21.fc46.aarch64",
+      "runtime_sha256": "3563b2906d525344d4b47d0994d2d465d45e325f5b9509c1a3e4417960b57215",
+      "patch": "0008-guard-empty-proximity-data.patch",
+      "native_checks": "actual protobuf empty-data parsing, original callback status139, corrected callback and ASan/UBSan; retained matrix/light/context checks",
+      "device_result": "installed on 7.3.1-1010; explicit SensorProxy restart and bounded normal proximity queries pass",
+      "physical_near_far_accepted": false,
+      "old_36_byte_event_identified": false
+    },
     "repository": "https://codeberg.org/DylanVanAssche/libssc",
     "archive_sha256": "716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587",
     "runtime_sha256": "ead6e1a0835b5c677c2fa3fd3debe9c66ff12cbcf1e2ada6bd117589b126b483",
