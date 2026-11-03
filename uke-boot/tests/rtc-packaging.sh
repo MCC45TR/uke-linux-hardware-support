@@ -13,5 +13,9 @@ stage=$(mktemp -d)
 trap 'find "$stage" -depth -delete' EXIT
 cp src/units/uke-rtc-sync.service src/units/uke-rtc-sync.timer "$stage/"
 sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/true|' "$stage/uke-rtc-sync.service"
-SYSTEMD_UNIT_PATH="$stage:/usr/lib/systemd/system" systemd-analyze verify --man=no "$stage/uke-rtc-sync.service" "$stage/uke-rtc-sync.timer"
+# The source worker is unprivileged and has no system-manager runtime directory.
+# Parse the same unit directives in a private user-manager test environment.
+mkdir -m700 "$stage/run"
+XDG_RUNTIME_DIR="$stage/run" SYSTEMD_UNIT_PATH="$stage:/usr/lib/systemd/system" \
+ systemd-analyze --user --generators=no verify --man=no "$stage/uke-rtc-sync.service" "$stage/uke-rtc-sync.timer"
 printf 'RTC unit capability/device/timing policy and syntax passed; no daemon or RTC operation\n'
