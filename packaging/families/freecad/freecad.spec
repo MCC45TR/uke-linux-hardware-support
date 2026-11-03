@@ -3,7 +3,7 @@
 Name:           freecad
 Epoch:          1
 Version:        1.1.4
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        A 3D parametric modeler
 
 License:        LGPL-2.1-or-later AND Zlib AND BSD-3-Clause AND Apache-2.0 AND EUPL-1.2 AND BSL-1.0 AND MIT AND Artistic-2.0 AND GPL-2.0-or-later AND CC-BY-SA-4.0
@@ -91,6 +91,8 @@ Shared resources, translations and workbench data for FreeCAD.
 
 %prep
 %autosetup -c -p1
+# RPM's special license-copy form requires source-tree-relative paths.
+install -pm0644 %{SOURCE2} nlohmann-json-LICENSE.MIT
 # External libraries come from Fedora. The stable branch does not support the
 # newer external JSON/kdtree options, so retain its original bundled headers.
 rm -r src/3rdParty/PyCXX src/3rdParty/OndselSolver src/3rdParty/libE57Format \
@@ -142,7 +144,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.freecad.FreeCAD.d
 appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/org.freecad.FreeCAD.metainfo.xml
 
 %files
-%license LICENSE src/3rdParty/libkdtree/COPYING %{SOURCE2}
+%license LICENSE src/3rdParty/libkdtree/COPYING nlohmann-json-LICENSE.MIT
 %doc README.md
 %{_bindir}/FreeCAD
 %{_bindir}/FreeCADCmd
@@ -163,6 +165,9 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/org.freecad.Fr
 %{_datadir}/freecad/
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1:1.1.4-3
+- Stage the pinned JSON license beside other source-tree license texts for RPM packaging.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1:1.1.4-2
 - Backport upstream PySide 6.12 header compatibility without removing Quantity conversion.
 

@@ -37,5 +37,7 @@ jobs:
           make -C packaging/families/freecad validate
       - name: Check stable-update and dispatch refusal fixtures
         run: make -C packaging/families/freecad test-automation
+      - name: Package and verify all license texts with RPM
+        run: make -C packaging/families/freecad test-packaging
       - name: Record the native build boundary
         run: echo 'FreeCAD source contracts passed. Native RPM compilation and tests require a separate unstable-only COPR submission.' >> "$GITHUB_STEP_SUMMARY"

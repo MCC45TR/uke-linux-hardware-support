@@ -26,6 +26,8 @@ package retains the stable branch's bundled headers and declares their licenses.
 Bundled SMESH and zipios++ remain FreeCAD's maintained implementations.
 Release 2 additionally backports upstream
 [PySide 6.12 compatibility fix #33408](https://github.com/FreeCAD/FreeCAD/pull/33408).
+Release 3 stages the pinned JSON license beside the other license texts so RPM
+can package them together using source-tree-relative paths.
 
 FreeCAD embeds upstream Python and imports Python workbenches at runtime. The
 user explicitly requested this optional application for the Fedora root. Its
@@ -70,6 +72,12 @@ packages entirely from the official Rawhide repositories. An x86_64 CMake
 configuration passed with GCC 16.2.1, Python 3.15.2 and Qt/PySide 6.12.0; SWIG/Pivy
 runtime compatibility passed. This is a source/configuration result. A native
 COPR build, published RPM dependency resolution and tablet testing remain separate.
+
+Native AArch64 build 11246564 subsequently completed compilation and its checks:
+CTest reported zero failures, with six upstream-disabled tests and three skipped
+tests. Desktop and AppStream validation passed. RPM file processing then failed
+because a license list mixed relative and absolute paths. Release 3 corrects
+that file-list syntax; a new native build and RPM publication remain required.
 
 The `freecad.yml` GitHub workflow checks this family's source contracts and
 does not submit COPR builds. The existing `uke-*` family registry is unchanged,

@@ -85,6 +85,21 @@ All four patches apply with zero fuzz, and the actual failing translation unit
 compiles against Fedora Rawhide's Qt/PySide 6.12 headers on the x86_64 host.
 The next native AArch64 build and its complete test suite remain separate.
 
+Build 11246564 completed all native AArch64 compilation and linking. CTest
+registered 1,436 tests and reported zero failures: six tests were disabled
+upstream, three were skipped, and 1,427 ran successfully in the build chroot.
+Desktop and AppStream validation passed. This supersedes the earlier statement
+that native compilation and the test suite were still unverified.
+
+The final RPM file-processing phase then rejected `%license` because the
+source-relative main/kdtree licenses were mixed with absolute `%{SOURCE2}`.
+The same error is reproducible in a small real RPM build without recompiling
+FreeCAD. Release 3 stages the already checksum-verified JSON license in the
+source directory and lists all three paths in the relative copy form. A real
+RPM regression fixture uses the family's license list and checks all three
+license flags and the JSON license digest. Full RPM publication and device
+validation remain unperformed until a corrected native build succeeds.
+
 ## Channel boundary and next validation
 
 FreeCAD is a new optional package only for unstable. Its dedicated family is

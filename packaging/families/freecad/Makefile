@@ -1,12 +1,14 @@
 SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
-.PHONY: validate test-automation srpm
+.PHONY: validate test-automation test-packaging srpm
 outdir ?= $(CURDIR)/build
 validate:
 	bash tests/source-contracts.sh
 test-automation:
 	bash tests/automation.sh
+test-packaging:
+	bash tests/rpm-licenses.sh
 srpm: validate
 	root="$(CURDIR)"
 	top="$$(realpath -m '$(outdir)/rpmbuild')"
