@@ -1,5 +1,28 @@
 # Userdata boot A/B updates
 
+3 November 2026, version 1.8.37: new trials require 30 continuous seconds of
+the existing display, touch and service health checks within a 90-second
+observation window. A failed sample or a sampling gap over five seconds resets
+the healthy interval. Suspend counts toward the deadline. Invalid, frozen and
+reversed clocks cannot admit a trial. Trial acceptance binds the current boot
+identity, then rechecks its package cohort, durable state and both boot images
+before recording success. Read-only preflight reports a health snapshot without
+claiming that the observation window passed.
+
+A terminal observation failure exits with status78. The acceptance service
+does not restart that status: its existing OnFailure handler requests the
+guarded return to the accepted slot. Other temporary failures retain the five
+bounded service starts. Fallback rechecks early firmware, all admitted GPT
+snapshots, the final fallback flags, UFS boot-LUN selection and the accepted
+boot image before requesting a normal reboot.
+
+Newly staged trials carry three bootloader attempts rather than seven. Existing
+armed trials retain their metadata. This change does not implement an ABL,
+watchdog or early-kernel recovery path: failure before the root/userspace starts
+still depends on the retained bootloader and reset path. A/B recovery restores
+the accepted kernel slot, while the shared userspace remains updated. Physical
+power-loss, hard-hang and rollback acceptance remain separate validation work.
+
 1 November 2026. Version 1.8.18 gives the original Fedora Power Profiles daemon
 its existing state directory as `HOME`. GIO file monitoring can then determine
 the home path without an NSS passwd lookup. No daemon rebuild or SELinux grant

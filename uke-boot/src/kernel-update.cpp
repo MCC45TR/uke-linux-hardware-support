@@ -2,6 +2,7 @@
 // Matched stock-ABL payloads only; Android v4 layout follows the existing boot-image codec.
 #include "boot-common.hpp"
 #include "installation-policy.hpp"
+#include "trial-health.hpp"
 #include <openssl/evp.h>
 #include <algorithm>
 #include <array>
@@ -23,6 +24,7 @@
 #include <sys/sysmacros.h>
 #include <sys/utsname.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <signal.h>
 #include <unistd.h>
 #include <vector>
@@ -620,6 +622,8 @@ int main(int argc,char **argv) {
         }
         std::cout<<"boot_b updated, synced and read back; previous image retained at "<<backup<<". Reboot manually.\n";
         return 0;
+    } catch(const TrialHealthFailure &e) {
+        std::cerr<<"uke-kernel-update: trial health rejected: "<<e.what()<<"; accepted rollback retained\n";return trial_health_rejected;
     } catch(const std::exception &e) {std::cerr<<"uke-kernel-update: "<<e.what()<<'\n';return 1;}
 }
 #endif

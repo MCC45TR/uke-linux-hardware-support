@@ -14,6 +14,8 @@ namespace slot {
 constexpr uint64_t active=uint64_t(1)<<50, successful=uint64_t(1)<<54,
                    unbootable=uint64_t(1)<<55, priority=uint64_t(3)<<48,
                    retries=uint64_t(7)<<51, flags=uint64_t(255)<<48;
+constexpr unsigned trial_attempts=3;
+constexpr uint64_t trial_flags=priority|active|(uint64_t(trial_attempts)<<51);
 static unsigned current(const std::string &cmdline) {
     std::istringstream words(cmdline);std::string word,value;
     while(words>>word)if(word.starts_with("androidboot.slot_suffix=")) {
@@ -175,7 +177,7 @@ public:
             if(name=="boot_a")need(old.attrs&priority,"Current boot slot has no priority");
             const auto old_flags=name=="boot_a"?
                 (old.attrs&~(priority|active))|(uint64_t(2)<<48):old.attrs&~active;
-            const auto next_flags=name=="boot_a"?(next.attrs&~flags)|(uint64_t(0x3f)<<48):next.attrs|active;
+            const auto next_flags=name=="boot_a"?(next.attrs&~flags)|trial_flags:next.attrs|active;
             auto set_type=[&](const Part &p,const std::string &type) {
                 std::unique_ptr<fdisk_parttype,decltype(&fdisk_unref_parttype)> value(fdisk_new_parttype(),fdisk_unref_parttype);
                 need(bool(value) && !fdisk_parttype_set_typestr(value.get(),type.c_str()) &&
@@ -210,6 +212,17 @@ public:
             need(!fdisk_gpt_set_partition_attrs(context.get(),parts.at(name).number,attrs),"Cannot stage fallback boot flags");
         }
         need(!warning,"libfdisk reported a fallback staging warning");return changed;
+    }
+    void require_fallback(unsigned failed,unsigned good) const {
+        need(failed<2 && good==1-failed,"Invalid fallback slot pair");
+        require_selected(good);
+        const auto accepted=std::string("boot_")+(good?'b':'a');
+        const auto rejected=std::string("boot_")+(failed?'b':'a');
+        if(!parts.contains(accepted) && !parts.contains(rejected))return;
+        need(parts.contains(accepted) && parts.contains(rejected),"Unpaired fallback boot slot");
+        const auto good_flags=parts.at(accepted).attrs,bad_flags=parts.at(rejected).attrs;
+        need((good_flags&successful) && (good_flags&priority) && !(good_flags&unbootable) && (bad_flags&unbootable) &&
+             !(bad_flags&(successful|retries|active)),"Fallback slot flags differ from the accepted return");
     }
     void commit(int(*writer)(fdisk_context*)=fdisk_write_disklabel) {
         const auto fresh=snapshot(fd,size,sector,needs_backup_crc_repair());

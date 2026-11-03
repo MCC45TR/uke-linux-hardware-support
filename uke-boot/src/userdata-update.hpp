@@ -178,6 +178,18 @@ static bool awaiting_ab_reboot(const UserdataUpdate &saved,unsigned running,cons
     need(release==saved.policy.good_release && image_hash==saved.good_image,"Pending-trial baseline identity differs");
     return true;
 }
+static bool accepting_trial(const UserdataUpdate &saved,unsigned running,const std::string &release,
+                            const std::string &image_hash,const std::string &boot_id) {
+    if(saved.policy.phase!=uke_install::Phase::current_slot_trial)
+        return booted_ab_trial(saved,running,release,image_hash,boot_id);
+    (void)encode(saved);
+    need(running==unsigned(saved.policy.good) && valid_boot_id(boot_id),"Current-slot acceptance identity differs");
+    if(release==saved.policy.good_release) {
+        need(image_hash==saved.good_image,"Current-slot baseline Image differs");return false;
+    }
+    need(release==saved.policy.candidate && image_hash==saved.candidate_image && boot_id!=saved.staged_boot_id,
+         "Acceptance requires the booted, recorded current-slot trial");return true;
+}
 static UserdataUpdate superseded_trial(UserdataUpdate saved,unsigned running,const std::string &release,
                                       const std::string &image_hash,const std::string &boot_id,const std::string &next) {
     need(awaiting_ab_reboot(saved,running,release,image_hash,boot_id),"Only an unbooted trial in this boot can be superseded");
@@ -294,11 +306,11 @@ static bool vrr_policy() {
     const auto raw=file("/etc/senemos/userdata-update.conf");const auto config=userdata_policy(std::string(raw.begin(),raw.end()));
     return config.at("vrr_min_hz")=="30";
 }
-static void health(bool wait_for_touch) {
+static void health(bool wait_for_touch,uint64_t timeout_usec=5*1000*1000) {
     for(const auto &unit:uke_touch::health_units("/",wait_for_touch)) {
         sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Health check requires the system bus");
         std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);sd_bus_message *response=nullptr;
-        need(sd_bus_set_method_call_timeout(bus.get(),5*1000*1000)>=0,"Cannot bound the unit health check");
+        need(sd_bus_set_method_call_timeout(bus.get(),timeout_usec)>=0,"Cannot bound the unit health check");
         need(sd_bus_call_method(bus.get(),"org.freedesktop.systemd1","/org/freedesktop/systemd1","org.freedesktop.systemd1.Manager","GetUnit",nullptr,&response,"s",unit.c_str())>=0,"Required health unit unavailable");
         std::unique_ptr<sd_bus_message,decltype(&sd_bus_message_unref)> reply(response,sd_bus_message_unref);const char *path=nullptr;
         need(sd_bus_message_read(reply.get(),"o",&path)>0,"Missing health unit path");char *state=nullptr;
@@ -307,6 +319,16 @@ static void health(bool wait_for_touch) {
         need(status>=0 && state && std::string(state)=="active",std::string("Boot health unit is not active: ")+unit);
     }
     need(display_enabled("/sys/class/drm"),"No supported connected DRM output is enabled");
+}
+static void trial_health() {
+    std::cout<<"Observing trial health for 30 continuous seconds; acceptance remains pending\n"<<std::flush;
+    qualify_trial_health([] {
+        try {health(false,1000*1000);return true;}
+        catch(const std::exception &) {return false;}
+    },[] {
+        timespec now{};need(!clock_gettime(CLOCK_BOOTTIME,&now),"Trial health boot clock unavailable");
+        return int64_t(now.tv_sec)*1000+now.tv_nsec/1000000;
+    },[] {std::this_thread::sleep_for(std::chrono::seconds(1));});
 }
 static void request_fallback_reboot() {
     sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Fallback selected; system bus unavailable for reboot");
@@ -405,6 +427,7 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         const auto accepted=validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/saved.policy.good_release,
                                             "/usr/lib/modules","userdata",saved.policy.good_release);
         need(boot_kernel(accepted)==boot_kernel(images[good]),"Fallback package Image differs from the accepted slot");
+        verify_early_firmware();
         const auto selected=slot::boot_lun(bsg.value)-1;
         std::vector<SlotMetadata*> changed;
         for(auto &disk:disks) {
@@ -435,6 +458,11 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
                 throw std::runtime_error("Fallback selection failed; trial metadata restored and verified");
             }
         }
+        for(auto &disk:disks) {
+            disk->reload(std::find(changed.begin(),changed.end(),disk.get())!=changed.end());
+            disk->gpt->require_fallback(running,good);
+        }
+        need(slot::boot_lun(bsg.value)==good+1,"Fallback UFS selection changed before reboot");
         auto retained=physical_boot(good?b:a);
         need(read_fd(retained.value,capacity)==images[good],"Accepted boot changed during fallback selection");
         std::cout<<"Accepted slot selected; trial state retained until the accepted kernel boots\n"<<std::flush;
@@ -450,7 +478,19 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         std::cout<<"Previously accepted running baseline verified; no new boot-health acceptance\n";return;
     }
     if(action=="accept" || action=="check-accept") {
-        health(startup && action=="accept");UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
+        const bool trial=prior && accepting_trial(*prior,running,release,good_hash,current_boot_id);
+        if(trial && action=="accept") {
+            trial_health();
+            need(read_text("/proc/sys/kernel/random/boot_id")==current_boot_id+"\n" &&
+                 encode(decode(file(statefile)))==encode(*prior),"Trial identity changed during health observation");
+            const auto checked=validate_bundle(bundle,"/usr/lib/modules","userdata",release);
+            need(boot_kernel(checked)==running_image,"Trial package Image changed during health observation");
+            for(unsigned i=0;i<2;++i) {
+                auto descriptor=physical_boot(i?b:a);
+                need(read_fd(descriptor.value,capacity)==images[i],"Trial or accepted boot changed during health observation");
+            }
+        } else health(startup && action=="accept");
+        UserdataUpdate saved{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(running),release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
         if(fs::exists(statefile)) {
             saved=decode(file(statefile));
@@ -479,7 +519,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         std::vector<SlotMetadata*> changed;
         for(auto &disk:disks)if(disk->gpt->needs_backup_crc_repair() || (disk->gpt.get()==boot_table && mark_success))changed.push_back(disk.get());
         if(action=="check-accept") {
-            std::cout<<"Running userdata boot, package, metadata and health checks passed; no hardware or acceptance-state writes\n";return;
+            if(trial)std::cout<<"Trial package, metadata and health snapshot passed; continuous health qualification remains required before acceptance; no writes\n";
+            else std::cout<<"Running userdata boot, package, metadata and health checks passed; no hardware or acceptance-state writes\n";
+            return;
         }
         if(!changed.empty()) {
             auto inhibitor=inhibit_shutdown();CriticalSignals signals;

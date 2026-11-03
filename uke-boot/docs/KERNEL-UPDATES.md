@@ -1,5 +1,12 @@
 # Stock-ABL kernel updates
 
+3 November 2026, source 1.8.37 adds continuous trial health qualification, a
+three-attempt bootloader budget for new trials, and final fallback readback.
+The updater package carries this policy; no new kernel Image or firmware is
+required. The first-DNF policy migration introduced in 1.8.36 is retained.
+See [userdata rollback](USERDATA-AB.md) for timing, terminal-health handling
+and the independent physical acceptance limits.
+
 1 November 2026. Source 1.8.22 runs startup acceptance and policy-gated staging
 through one `boot` command under the updater lock. An identical default reuses
 the running bundle's verified bytes. Disabled staging still performs health

@@ -108,6 +108,9 @@ int main() {
         reject([&]{awaiting_ab_reboot(trial,2,"7.2.11-14",trial.good_image,trial.staged_boot_id);});
         reject([&]{awaiting_ab_reboot(trial,unsigned(good),"7.2.11-14",trial.good_image,"bad");});
         assert(booted_ab_trial(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
+        assert(accepting_trial(trial,target,"7.2.11-16",trial.candidate_image,boot_id));
+        assert(!accepting_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,boot_id));
+        reject([&]{accepting_trial(trial,target,"7.2.11-16",trial.candidate_image,trial.staged_boot_id);});
         assert(!booted_ab_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,trial.staged_boot_id));
         assert(!booted_ab_trial(trial,unsigned(good),"7.2.11-14",trial.good_image,boot_id));
         reject([&]{booted_ab_trial(trial,target,"7.2.11-16",trial.candidate_image,trial.staged_boot_id);});
@@ -129,6 +132,11 @@ int main() {
         save_update(root/"manual",manual);manual=decode(file(root/"manual"));
         assert(manual.policy.phase==uke_install::Phase::current_slot_trial && manual.policy.good_release=="7.2.11-14" && manual.good_image==baseline.good_image);
         const std::string trial_boot_id="00000000-1234-5678-aaaa-eeeeeeeeeeee";
+        assert(accepting_trial(manual,1,"7.2.11-16",next_hash,trial_boot_id));
+        assert(!accepting_trial(manual,1,"7.2.11-14",baseline.good_image,boot_id));
+        reject([&]{accepting_trial(manual,1,"7.2.11-16",next_hash,boot_id);});
+        reject([&]{accepting_trial(manual,1,"7.2.11-16",baseline.good_image,trial_boot_id);});
+        reject([&]{accepting_trial(manual,0,"7.2.11-16",next_hash,trial_boot_id);});
         const auto unchanged=encode(manual);
         require_current_restore(manual,"7.2.11-16",next_hash,"7.2.11-14",baseline.good_image,trial_boot_id);
         assert(encode(manual)==unchanged);

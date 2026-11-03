@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.36
+Version: 1.8.37
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -104,6 +104,7 @@ Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
 Provides: uke-kernel-update(userdata-fallback-v1) = 1
+Provides: uke-kernel-update(trial-health-v2) = 1
 Provides: uke-kernel-update(qualified-firmware-cohort-v1) = 1
 Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1
 Provides: uke-kernel-update(device-local-video-import-v1) = 1
@@ -168,6 +169,8 @@ bash tests/startup-contract.sh
 bash tests/startup-native.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
 ./kernel-update-contract
+g++ -std=c++20 -O2 -Wall -Wextra -Werror tests/trial-health.cpp -o trial-health-contract
+./trial-health-contract
 bash tests/automatic-policy-rpm.sh "$PWD/kernel-update-contract"
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror -pthread tests/native-profile-ready.cpp -o native-profile-ready-contract $(pkg-config --cflags --libs libsystemd)
 bash tests/native-profile-ready.sh ./native-profile-ready-contract

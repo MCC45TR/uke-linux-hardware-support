@@ -13,6 +13,7 @@ Type=oneshot
 ExecStart=/usr/bin/uke-kernel-update boot
 TimeoutStartSec=120
 Restart=on-failure
+RestartPreventExitStatus=78
 RestartMode=direct
 RestartSec=30
 UMask=0077

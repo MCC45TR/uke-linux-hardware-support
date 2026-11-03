@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.8.36
+version := 1.8.37
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
@@ -46,6 +46,8 @@ test-startup:
 	bash tests/startup-native.sh
 test-kernel-update:
 	mkdir -p build/tests
+	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/trial-health.cpp -o build/tests/trial-health-contract
+	build/tests/trial-health-contract
 	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o build/tests/kernel-update-contract $$(pkg-config --cflags --libs openssl libsystemd)
 	build/tests/kernel-update-contract
 	bash tests/automatic-policy-rpm.sh build/tests/kernel-update-contract

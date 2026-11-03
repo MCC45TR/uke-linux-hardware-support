@@ -25,6 +25,7 @@ grep -Fxq 'OnFailure=uke-userdata-fallback.service' src/units/uke-userdata-accep
 grep -Fxq 'StartLimitIntervalSec=infinity' src/units/uke-userdata-accept.service
 grep -Fxq 'StartLimitBurst=5' src/units/uke-userdata-accept.service
 grep -Fxq 'RestartMode=direct' src/units/uke-userdata-accept.service
+grep -Fxq 'RestartPreventExitStatus=78' src/units/uke-userdata-accept.service
 grep -Fxq 'ConditionKernelCommandLine=root=PARTLABEL=userdata' src/units/uke-userdata-fallback.service
 grep -Fxq 'ExecStart=/usr/bin/uke-kernel-update fallback' src/units/uke-userdata-fallback.service
 ! grep -Eq '^(Restart|FailureAction|SuccessAction)=' src/units/uke-userdata-fallback.service
@@ -43,6 +44,7 @@ grep -Fxq 'Provides: uke-kernel-update(root-filesystem-v2) = 1' packaging/uke-bo
 grep -Fxq 'Provides: uke-kernel-update(current-slot-restore) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(kernel-touch-client-v1) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(userdata-fallback-v1) = 1' packaging/uke-boot-integration.spec
+grep -Fxq 'Provides: uke-kernel-update(trial-health-v2) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Provides: uke-kernel-update(qualified-firmware-cohort-v1) = 1' packaging/uke-boot-integration.spec
 grep -Fxq 'Requires: /usr/lib/systemd/systemd-growfs' packaging/uke-boot-integration.spec
 printf '%s\n' 'Bounded transaction hooks, separate Linux/userdata policy, unit ordering and source export checked'
