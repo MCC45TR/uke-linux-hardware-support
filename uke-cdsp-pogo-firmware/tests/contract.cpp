@@ -40,6 +40,7 @@ int main() {
     auto bytes=fat16();write_image(image.value,bytes);
     Fat fat(image.value,bytes.size());const auto payload=fat.image_file("CDSP.MDT");
     assert(payload.size()==700);for(unsigned i=0;i<payload.size();i++)assert(payload[i]==(i&255));
+    refused([&]{cdsp_family(fat);});
     refused([&]{fat.image_file("../CDSP.MDT");});
     refused([&]{fat.image_file("CDSP.MDT",699);});
     auto bad=bytes;put16(bad,33*512+6,5);write_image(image.value,bad);
