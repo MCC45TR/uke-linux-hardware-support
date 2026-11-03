@@ -8,6 +8,18 @@
   "scope": "SSC desktop package preview; physical automatic rotation and brightness pending",
   "libssc": {
     "version": "0.4.4",
+    "sample_rate_property_fix": {
+      "date": "2026-11-03",
+      "copr_build": 11247602,
+      "source_commit": "2b3341556491bf1291e0cd4d7dc61e00b8700205",
+      "source_context": "retained release21 archive with patch0009; newer main packaging context not built",
+      "runtime_nevra": "uke-libssc-0.4.4-22.fc46.aarch64",
+      "runtime_sha256": "e868edae28b8fe560ada5a6394dc66b2d160a48f4ce7a14bc9ae3ebe389112bd",
+      "property_type": "G_TYPE_FLOAT",
+      "native_checks": "real GObject metadata/default/read-only flags and both getters; original type assertion status134; corrected ordinary and ASan/UBSan checks; retained release21 tests",
+      "device_result": "installed on 7.3.1-1010; explicit SensorProxy reload, fresh accelerometer and normal proximity/desktop queries pass",
+      "physical_axes_accepted": false
+    },
     "empty_vendor_data_guard": {
       "date": "2026-11-03",
       "copr_build": 11247548,

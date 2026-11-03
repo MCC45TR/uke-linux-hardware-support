@@ -1,5 +1,16 @@
 # Uke sensors
 
+3 November 2026: native COPR
+[11247602](https://copr.fedorainfracloud.org/coprs/build/11247602) corrects the
+read-only sample-rate property from a string declaration to G_TYPE_FLOAT,
+matching its existing getter. Real GObject metadata, defaults and both getter
+APIs pass ordinary and ASan/UBSan checks; the uncorrected library fails the same
+type contract. Retained proximity, matrix, light and context tests also pass.
+The build retains release21's complete input archive and applies patch0009.
+Signed release22 is installed on Linux7.3.1-1010; explicit SensorProxy reload,
+fresh accelerometer samples and normal desktop/proximity queries pass.
+Controlled physical axes and near/far remain separate acceptance tests.
+
 3 November 2026, Fedora Rawhide AArch64: native COPR
 [11247548](https://copr.fedorainfracloud.org/coprs/build/11247548) verifies that
 an accuracy-only vendor response legally decodes to an empty repeated-data
@@ -11,9 +22,10 @@ event dispatch, near/far mapping and unpack diagnostics are preserved.
 Signed `uke-libssc` 0.4.4-21 is installed on Linux 7.3.1-1010. After an explicit
 SensorProxy restart, bounded normal proximity queries succeed without new
 proximity warnings. Controlled near/far, physical rotation and the older
-unidentified 36-byte message remain unqualified. The build uses retained input
-`55626a7cf9de9b3c18c0d9b6dda9a7957a43c8fc`; its library and test files match
-this branch, while the newer main-branch packaging context needs its own build.
+unidentified 36-byte message remain unqualified. That earlier build uses
+retained input `55626a7cf9de9b3c18c0d9b6dda9a7957a43c8fc`. Release22 extends
+its retained archive; the newer main-branch packaging context still needs its
+own build.
 
 23 October 2026: the optional native `uke-proximity-capture` package compares
 small/large report transport and empty-body presence using one metadata-gated
