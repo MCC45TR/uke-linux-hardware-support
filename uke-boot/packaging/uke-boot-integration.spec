@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.37
+Version: 1.8.38
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -121,6 +121,7 @@ recovery requires device validation.
 %package -n uke-installation-profile
 License: MIT
 Summary: Native classification of the Uke Linux root partition
+Provides: uke-installation-profile(rtc-secure-offset-v1) = 1
 Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1) systemd
 Requires: /usr/lib/systemd/systemd-growfs
 Requires: %{name} = %{version}-%{release}
@@ -146,6 +147,9 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/touch-launcher.cpp -o uke-touchscreen %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
 %check
+g++ -std=c++20 -O2 -Wall -Wextra -Werror tests/rtc-clock.cpp -o rtc-clock-contract
+./rtc-clock-contract
+bash tests/rtc-packaging.sh
 cmp src/profiles/60-uke-security.conf %{buildroot}%{_prefix}/lib/sysctl.d/60-uke-security.conf
 bash tests/shutdown-trace.sh
 bash tests/ppd-home.sh
@@ -240,6 +244,8 @@ install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-in
 install -Dm644 src/units/75-uke-clock-floor.conf %{buildroot}%{_unitdir}/chronyd.service.d/75-uke-clock-floor.conf
 install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm644 src/units/uke-root-grow.service %{buildroot}%{_unitdir}/uke-root-grow.service
+install -Dm644 src/units/uke-rtc-sync.service %{buildroot}%{_unitdir}/uke-rtc-sync.service
+install -Dm644 src/units/uke-rtc-sync.timer %{buildroot}%{_unitdir}/uke-rtc-sync.timer
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
 install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
 install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-reboot.conf
@@ -289,17 +295,17 @@ fi
 %systemd_postun uke-userdata-accept.service
 
 %post -n uke-installation-profile
-%systemd_post uke-root-grow.service
+%systemd_post uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer
 
 %preun -n uke-installation-profile
-%systemd_preun uke-root-grow.service
+%systemd_preun uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer
 # Retire only our generated policy, including when downgrading to an older classifier.
 if [ "$(readlink /etc/tmpfiles.d/journal-nocow.conf 2>/dev/null)" = '%{_datadir}/senemos/boot/uke/journal-nocow-disabled.conf' ]; then
     rm -f /etc/tmpfiles.d/journal-nocow.conf
 fi
 
 %postun -n uke-installation-profile
-%systemd_postun uke-root-grow.service
+%systemd_postun uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer
 
 %posttrans -n uke-installation-profile
 if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
@@ -379,6 +385,7 @@ fi
 %license LICENSE
 %doc docs/KERNEL-UPDATES.md
 %doc docs/USERDATA-AB.md
+%doc docs/RTC-PERSISTENCE.md
 %{_bindir}/uke-kernel-update
 %dir %{_sysconfdir}/senemos
 %config(noreplace) %{_sysconfdir}/senemos/kernel-update.conf
@@ -393,6 +400,8 @@ fi
 %{_unitdir}/chronyd.service.d/75-uke-clock-floor.conf
 %{_unitdir}/uke-install-profile.service
 %{_unitdir}/uke-root-grow.service
+%{_unitdir}/uke-rtc-sync.service
+%{_unitdir}/uke-rtc-sync.timer
 
 %files -n uke-boot-recovery
 %license LICENSE

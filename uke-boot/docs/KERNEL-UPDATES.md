@@ -1,5 +1,10 @@
 # Stock-ABL kernel updates
 
+3 November 2026, source1.8.38 pairs the secure RTC kernel with trusted UTC
+provisioning, readback and startup checks. The original Chrony package remains
+in use. See [RTC persistence](RTC-PERSISTENCE.md) for bootstrap, old-kernel
+compatibility, offline time and separate physical acceptance limits.
+
 3 November 2026, source 1.8.37 adds continuous trial health qualification, a
 three-attempt bootloader budget for new trials, and final fallback readback.
 The updater package carries this policy; no new kernel Image or firmware is

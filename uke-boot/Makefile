@@ -2,12 +2,13 @@ SHELL := /bin/bash
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 .PHONY: validate test-native test-startup test-kernel-update test-usb srpm
-version := 1.8.37
+version := 1.8.38
 outdir ?= $(CURDIR)/build/srpm
 validate:
 	jq -e '.schema_version == 1 and .device == "uke" and .soc == "SM7675" and .hardware_tested == false and .python_target_payload == false' manifests/component.json >/dev/null
 	jq -e '.device=="uke" and .partitions.esp=="esp" and .partitions.linux=="linux" and .filesystem_labels.esp=="UKE_ESP" and .filesystem_labels.linux=="UKE_LINUX" and .partition_offsets==null and .automatic_activation==false and .android_partition_writes==false and .uefi_binary_included==false and .handoff_accepted==false' src/profiles/image-contract.json >/dev/null
 	bash tests/update-packaging.sh
+	bash tests/rtc-packaging.sh
 	bash tests/shutdown-trace.sh
 	test "$$(grep -Fc '# @bluetooth-migration-save' packaging/uke-boot-integration.spec)" = 1
 	test "$$(grep -Fc '# @bluetooth-migration-restore' packaging/uke-boot-integration.spec)" = 1
@@ -46,6 +47,8 @@ test-startup:
 	bash tests/startup-native.sh
 test-kernel-update:
 	mkdir -p build/tests
+	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/rtc-clock.cpp -o build/tests/rtc-clock-contract
+	build/tests/rtc-clock-contract
 	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/trial-health.cpp -o build/tests/trial-health-contract
 	build/tests/trial-health-contract
 	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o build/tests/kernel-update-contract $$(pkg-config --cflags --libs openssl libsystemd)
@@ -74,7 +77,7 @@ srpm: validate
 	fi
 	touch_stage=$$(mktemp -d "$$top/touch.XXXXXX")
 	bash ../uke-sensors/src/prepare-touch-runtime.sh "$$cache" "$$touch_stage/touch-runtime" "$$(git rev-parse HEAD)"
-	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USERDATA-AB.md docs/USB-TYPEC.md docs/NATIVE-POWER-PROFILES.md docs/TOUCH-RUNTIME.md packaging/uke-boot-integration.spec -C ../uke-desktop-integration LICENSE.GPL-3.0 src/bluetooth-address.cpp tests/bluetooth-address.cpp packaging/uke-bluetooth-address.service packaging/70-uke-bluetooth.rules docs/BLUETOOTH.md -C "$$touch_stage" touch-runtime
+	tar --sort=name --mtime=@1791936000 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-boot-integration-$(version).tar.xz" --transform 's,^,uke-boot-integration-$(version)/,' LICENSE README.md src tests docs/KERNEL-UPDATES.md docs/USERDATA-AB.md docs/RTC-PERSISTENCE.md docs/USB-TYPEC.md docs/NATIVE-POWER-PROFILES.md docs/TOUCH-RUNTIME.md packaging/uke-boot-integration.spec -C ../uke-desktop-integration LICENSE.GPL-3.0 src/bluetooth-address.cpp tests/bluetooth-address.cpp packaging/uke-bluetooth-address.service packaging/70-uke-bluetooth.rules docs/BLUETOOTH.md -C "$$touch_stage" touch-runtime
 	awk -v fragment=../packaging/families/host/service-rename.sh -f host/expand-migrations.awk packaging/uke-boot-integration.spec > "$$top/SPECS/uke-boot-integration.spec"
 	! grep -qE '@(bluetooth|touch)-migration-' "$$top/SPECS/uke-boot-integration.spec"
 	rpmspec --parse --target aarch64 --define "_sourcedir $$top/SOURCES" "$$top/SPECS/uke-boot-integration.spec" > "$$top/parsed.spec"

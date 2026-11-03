@@ -3,6 +3,7 @@
 #include "installation-policy.hpp"
 #include "slot-control.hpp"
 #include "touch-health.hpp"
+#include "rtc-clock.hpp"
 struct UserdataUpdate {
     uke_install::Update policy;
     std::string good_image,candidate_image,staged_boot_id;
@@ -319,6 +320,10 @@ static void health(bool wait_for_touch,uint64_t timeout_usec=5*1000*1000) {
         need(status>=0 && state && std::string(state)=="active",std::string("Boot health unit is not active: ")+unit);
     }
     need(display_enabled("/sys/class/drm"),"No supported connected DRM output is enabled");
+    if(uke_rtc::requested()) {
+        trusted("/usr/libexec/senemos-uke/uke-install-profile");
+        (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","rtc-check"},4096);
+    }
 }
 static void trial_health() {
     std::cout<<"Observing trial health for 30 continuous seconds; acceptance remains pending\n"<<std::flush;

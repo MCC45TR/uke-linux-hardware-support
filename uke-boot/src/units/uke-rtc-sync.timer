@@ -1,0 +1,10 @@
+[Unit]
+Description=Verify and provision the Uke secure RTC from synchronized UTC
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/sys/firmware/devicetree/base/soc/qcom,spmi@c42d000/qcom,pmk8550@0/rtc@6100/qcom,uefi-rtc-info
+
+[Timer]
+OnBootSec=15
+OnUnitActiveSec=30
+AccuracySec=1
+Unit=uke-rtc-sync.service

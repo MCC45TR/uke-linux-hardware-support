@@ -1,5 +1,12 @@
 # Userdata boot A/B updates
 
+3 November 2026, version1.8.38: when the running DT requests the Uke secure
+RTC backend, boot health also requires a valid RTC calendar matching system
+UTC. Trusted-time provisioning runs through the original Chrony dependency and
+a native timer. The first-update migration and 30-second qualification window
+are retained. [RTC persistence](RTC-PERSISTENCE.md) separates initialization,
+write/readback and physical cold-start validation.
+
 3 November 2026, version 1.8.37: new trials require 30 continuous seconds of
 the existing display, touch and service health checks within a 90-second
 observation window. A failed sample or a sampling gap over five seconds resets

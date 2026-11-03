@@ -2,6 +2,7 @@
 // Classifies an installation and delegates explicit one-time growth to original systemd.
 #include "installation-policy.hpp"
 #include "boot-common.hpp"
+#include "rtc-clock.hpp"
 #include <array>
 #include <cerrno>
 #include <cstdint>
@@ -323,12 +324,29 @@ static bool restore_clock_floor(int state_fd, ClockSample sample, SetTime set_ti
 #ifndef UKE_INSTALL_PROFILE_TEST
 int main(int argc, char **argv) {
     try {
-        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow|clock-save|clock-save-required|clock-restore");
+        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow|clock-save|clock-save-required|clock-restore|rtc-sync|rtc-check");
         const std::string action = argv[1];
-        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore", "Unknown profile operation");
+        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore" || action == "rtc-sync" || action == "rtc-check", "Unknown profile operation");
         if (action != "status") require(uke_device(observation("/sys/firmware/devicetree/base/compatible", 4096)), "Exact Uke/SM7675 device required");
         if (action == "check") { std::cout << uke_install::name(inspect_root()) << '\n'; return 0; }
         require(geteuid() == 0, "Root privileges required for system installation state");
+        if(action=="rtc-sync" || action=="rtc-check") {
+            const auto sample=[] {const auto s=clock_sample();return uke_rtc::Sample{s.now.tv_sec,s.synchronized};};
+            if(action=="rtc-sync" && !uke_rtc::requested()) {
+                std::cout<<"rtc-sync: running kernel has no secure RTC backend; no RTC write\n";return 0;
+            }
+            uke_rtc::Device rtc(action=="rtc-sync");
+            if(action=="rtc-check") {
+                uke_rtc::check([&]{return rtc.read();},sample);
+                std::cout<<"rtc-check: admitted RTC calendar matches system UTC; no write\n";
+            } else {
+                const auto result=uke_rtc::synchronize([&]{return rtc.read();},[&](int64_t utc){rtc.write(utc);},sample);
+                std::cout<<(result==uke_rtc::Result::deferred?"rtc-sync: deferred until NTP-synchronized UTC\n":
+                           result==uke_rtc::Result::correct?"rtc-sync: UTC already correct; no write\n":
+                           "rtc-sync: trusted UTC written and read back through the secure RTC backend\n");
+            }
+            return 0;
+        }
         auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore");
         if (action == "status") { std::cout << uke_install::name(stored_profile(state.value)) << '\n'; return 0; }
         ProfileFd lock(openat(state.value, "lock", O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, 0600));
