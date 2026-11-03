@@ -15,6 +15,7 @@ BuildRequires: pkgconfig(fdisk) pkgconfig(zlib) util-linux
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: glib2 strace systemd
 BuildRequires: jq
+BuildRequires: rpm-build
 BuildRequires: e2fsprogs
 BuildRequires: dbus-daemon systemd-udev pkgconfig(umockdev-1.0)
 Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1)
@@ -167,6 +168,7 @@ bash tests/startup-contract.sh
 bash tests/startup-native.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
 ./kernel-update-contract
+bash tests/automatic-policy-rpm.sh "$PWD/kernel-update-contract"
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror -pthread tests/native-profile-ready.cpp -o native-profile-ready-contract $(pkg-config --cflags --libs libsystemd)
 bash tests/native-profile-ready.sh ./native-profile-ready-contract
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/native-profile-udev.cpp -o native-profile-udev-contract $(pkg-config --cflags --libs umockdev-1.0)

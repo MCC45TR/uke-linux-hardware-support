@@ -48,6 +48,7 @@ test-kernel-update:
 	mkdir -p build/tests
 	c++ -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o build/tests/kernel-update-contract $$(pkg-config --cflags --libs openssl libsystemd)
 	build/tests/kernel-update-contract
+	bash tests/automatic-policy-rpm.sh build/tests/kernel-update-contract
 	bash tests/installation-policy.sh
 	bash tests/slot-control.sh
 	bash tests/userdata-update.sh
