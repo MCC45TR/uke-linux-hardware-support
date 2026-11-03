@@ -17,7 +17,7 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
    --data-urlencode limit=100 --data-urlencode "offset=$offset" \
    https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
   jq -e '(.items|type)=="array" and all(.items[];
-    ((.source_package.version // "")|test("^0[.]4[.]4-24([.]|$)"))|not)' "$stage/builds.json" >/dev/null
+    ((.source_package.version // "")|test("^0[.]4[.]4-25([.]|$)"))|not)' "$stage/builds.json" >/dev/null
   count=$(jq -er '.items|length' "$stage/builds.json")
   ((count < 100)) && break
   offset=$((offset + 100))
@@ -45,8 +45,8 @@ done
 awk '
  /^%changelog$/ {section="changelog"}
  section!="changelog" && /^(Release:|Provides:|Obsoletes:|Requires:)/ {
-  gsub(/0[.]4[.]4-23[.]fc46/,"0.4.4-24.fc46")
-  sub(/^Release: 23[.]fc46$/,"Release: 24.fc46")
+  gsub(/0[.]4[.]4-23[.]fc46/,"0.4.4-25.fc46")
+  sub(/^Release: 23[.]fc46$/,"Release: 25.fc46")
  }
  /^Source6:/ {
   print
@@ -80,7 +80,7 @@ awk '
  }
  /^%changelog$/ {
   print
-  print "* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-24.fc46"
+  print "* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-25.fc46"
   print "- Own sensors until queued measurement dispatch or cancellation completes."
   print "- Qualify all six real measurement classes and retain prior regressions."
   print ""
@@ -93,4 +93,4 @@ sha256sum -c "$stage/retained.sha256"
 [[ $(grep -Fxc 'meson compile -C build' "$spec") == 4 ]]
 [[ $(grep -Fxc 'bash %{SOURCE8} src %{SOURCE9} %{SOURCE10}' "$spec") == 1 ]]
 [[ $(grep -Fxc 'SANITIZE=1 bash %{SOURCE4} src/libssc-sensor.c %{SOURCE5} %{SOURCE6}' "$spec") == 1 ]]
-[[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$spec") == 0.4.4-24.fc46 ]]
+[[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$spec") == 0.4.4-25.fc46 ]]

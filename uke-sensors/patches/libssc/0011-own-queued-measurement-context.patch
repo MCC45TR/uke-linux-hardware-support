@@ -55,7 +55,7 @@ values, mount matrices, report admission and public ABI unchanged.
  
 @@ -87,7 +88,7 @@
  			/* Emit signal in main context instead of thread's context if intensity is positive */
- 			if (intensity >= 0.0) {
+ 			if (isfinite (intensity) && intensity >= 0.0) {
  				ctx = g_slice_new0 (SignalContext);
 -				ctx->sensor = sensor;
 +				ctx->sensor = g_object_ref (sensor);
