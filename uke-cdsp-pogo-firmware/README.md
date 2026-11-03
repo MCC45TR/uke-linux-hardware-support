@@ -4,8 +4,10 @@
 stock files from modem_a and the hash-admitted MCU image in stock ODM/vendor.
 It never uploads OEM firmware to Git/COPR or writes a source partition.
 
-Production requires exact Uke/SM7675 identity, root-owned descriptors, stock
-sources on the Fedora root disk and a non-running installed kernel release.
+Production requires exact Uke/SM7675 identity, root-owned descriptors, both stock
+sources below the observed Uke UFS controller and a non-running installed kernel
+release. Modem and super occupy different UFS LUNs. Super must share the Fedora
+root disk; the modem LUN must belong to the same exact bound UFS controller.
 CDSP MDT identities are pinned to the retained Global304 ELF32 headers;
 split sizes follow that authenticated metadata. The kernel PAS loader still
 performs secure authentication. The MCU image has an exact whole-file hash.

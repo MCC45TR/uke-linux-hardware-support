@@ -35,6 +35,12 @@ static Bytes fat32() {
     return b;
 }
 int main() {
+    const fs::path controller="/sys/devices/platform/soc/1d84000.ufshc";
+    assert(below(controller/"host0/target0:0:0/0:0:0:4/block/sde/sde6",controller));
+    assert(below(controller/"host0/target0:0:0/0:0:0:0/block/sda/sda31",controller));
+    assert(!below("/sys/devices/platform/soc/1d84000.ufshc-other/sda31",controller));
+    assert(!below(controller/"../other/sda31",controller));
+    assert(!below(controller,controller));
     char name[]="/tmp/uke-fw-test-XXXXXX";const auto root=mkdtemp(name);assert(root);
     const fs::path dir=root;Fd image(open((dir/"fat.img").c_str(),O_RDWR|O_CREAT|O_EXCL,0600));
     auto bytes=fat16();write_image(image.value,bytes);

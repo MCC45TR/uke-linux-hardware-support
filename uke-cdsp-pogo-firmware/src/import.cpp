@@ -103,6 +103,9 @@ static Source source(const char *label) {
          "Stock source is not a readable block partition");
     const auto sys=fs::canonical("/sys/dev/block/"+std::to_string(major(st.st_rdev))+":"+std::to_string(minor(st.st_rdev)));
     need(fs::exists(sys/"partition"),"Stock source is not a partition");
+    const auto controller=fs::canonical("/sys/bus/platform/devices/1d84000.ufshc");
+    need(below(sys,controller)&&fs::canonical(controller/"driver")=="/sys/bus/platform/drivers/ufshcd-qcom",
+         "Stock source is outside the exact Uke UFS controller");
     return {std::move(fd),size,st.st_rdev,sys.parent_path()};
 }
 static Bytes mcu_image(Source &super) {
@@ -120,7 +123,6 @@ static std::pair<Family,Bytes> acquire() {
     const auto board=sysfile("/sys/firmware/devicetree/base/compatible",1024);
     need(compatible(board,"xiaomi,uke")&&compatible(board,"qcom,sm7675"),"Exact Uke/SM7675 identity required");
     auto modem=source("modem_a"),super=source("super");
-    need(modem.parent==super.parent,"Stock sources belong to different physical disks");
     struct stat root_stat{};need(!stat("/",&root_stat),"Cannot identify Fedora root filesystem");
     const auto root_sys=fs::canonical("/sys/dev/block/"+std::to_string(major(root_stat.st_dev))+":"+std::to_string(minor(root_stat.st_dev)));
     need(root_sys.parent_path()==super.parent,"Stock sources are outside the Fedora root disk");

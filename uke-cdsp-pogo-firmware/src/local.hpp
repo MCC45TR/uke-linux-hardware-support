@@ -38,6 +38,13 @@ static inline bool token(const std::string &s) {
     return !s.empty()&&s.size()<128&&s.front()!='.'&&
         s.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._+-")==std::string::npos;
 }
+static inline bool below(const fs::path &path,const fs::path &parent) {
+    if(!path.is_absolute()||!parent.is_absolute()||path.lexically_normal()!=path||parent.lexically_normal()!=parent)
+        return false;
+    auto child=path.begin();
+    for(const auto &part:parent){if(child==path.end()||*child!=part)return false;++child;}
+    return child!=path.end();
+}
 static inline void trusted_fd(int fd,bool dir=false) {
     struct stat st{};
 #ifdef UKE_LOCAL_FW_TEST
