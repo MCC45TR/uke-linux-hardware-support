@@ -362,3 +362,13 @@ long-duration physical input continuity still require validation.
 Host checks cover signature interruptions, FE/FD paths, DPMS-off refusal and
 failed reloads. The original firmware reset trigger and physical continuity
 under VRR require separate tablet validation.
+
+3 November 2026. The retained libssc23 source still queues raw sensor pointers
+in six measurement classes. Patch0011 holds one sensor reference per pending
+measurement and releases it through the existing idle destroy notification.
+Wire formats, values, matrices, transport policy and public ABI are unchanged.
+The proposed libssc24 worker retains the exact23 SRPM and all previous checks.
+It requires the old complete class source to fail pending ownership for each
+sensor, followed by real GLib dispatch/removal and weak-finalization checks
+normally and with ASan/UBSan. Native qualification and device results remain
+pending; no historical crash cause or physical effectiveness is established.
