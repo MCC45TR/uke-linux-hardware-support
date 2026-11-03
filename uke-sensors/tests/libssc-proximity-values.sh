@@ -27,6 +27,9 @@ static unsigned freed=0, delivered=0, warnings=0;
 static gboolean last_near;
 #define SSC_SENSOR(x) (x)
 #define SSC_SENSOR_PROXIMITY(x) static_cast<SSCSensorProximity *>(x)
+// This synchronous decoder fixture borrows a stack sensor. Complete-class
+// measurement lifetime tests separately exercise real GObject references.
+#define g_object_ref(x) (x)
 #define SSC_SENSOR_UID_HIGH "high"
 #define SSC_SENSOR_UID_LOW "low"
 #define SSC_MSG_REPORT_MEASUREMENT_PROXIMITY 1025

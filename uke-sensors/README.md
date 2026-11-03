@@ -367,7 +367,7 @@ under VRR require separate tablet validation.
 in six measurement classes. Patch0011 holds one sensor reference per pending
 measurement and releases it through the existing idle destroy notification.
 Wire formats, values, matrices, transport policy and public ABI are unchanged.
-The proposed libssc25 worker retains the exact23 SRPM and all previous checks.
+The proposed libssc26 worker retains the exact23 SRPM and all previous checks.
 It requires the old complete class source to fail pending ownership for each
 sensor, followed by real GLib dispatch/removal and weak-finalization checks
 normally and with ASan/UBSan. Native qualification and device results remain
@@ -377,3 +377,10 @@ The24 native trial proves the old ownership failure in all six classes, then
 stops at a light-patch context mismatch before applying the correction. The25
 recipe preserves the earlier finite/accuracy light guard in that patch context;
 the intended ownership changes and lifetime fixtures are unchanged.
+
+The25 trial passes the original negative control for all six classes and all
+corrected normal/sanitized lifetime tests. Its remaining decoder-only fixture
+does not model object references and stops compiling at the newly owned
+pointer. The26 recipe adds that existing fixture's synchronous borrowed-pointer
+boundary; its old empty-data negative and all value-rejection cases remain.
+Real reference lifetime is still checked by the complete-class GLib tests.

@@ -17,7 +17,7 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
    --data-urlencode limit=100 --data-urlencode "offset=$offset" \
    https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
   jq -e '(.items|type)=="array" and all(.items[];
-    ((.source_package.version // "")|test("^0[.]4[.]4-25([.]|$)"))|not)' "$stage/builds.json" >/dev/null
+    ((.source_package.version // "")|test("^0[.]4[.]4-26([.]|$)"))|not)' "$stage/builds.json" >/dev/null
   count=$(jq -er '.items|length' "$stage/builds.json")
   ((count < 100)) && break
   offset=$((offset + 100))
@@ -37,7 +37,7 @@ mkdir -p "$output"
 spec=$output/uke-libssc.spec
 find "$output" -maxdepth 1 -type f ! -name uke-libssc.spec -print0 | sort -z | xargs -0 sha256sum > "$stage/retained.sha256"
 install -m644 "$root/patches/libssc/0011-own-queued-measurement-context.patch" "$output/"
-for input in libssc-measurement-lifetime.sh libssc-measurement-lifetime-seam.c libssc-measurement-lifetime.cpp; do
+for input in libssc-measurement-lifetime.sh libssc-measurement-lifetime-seam.c libssc-measurement-lifetime.cpp libssc-proximity-values.sh; do
  install -m644 "$root/tests/$input" "$output/"
 done
 [[ $(grep -Fxc 'Release: 23.fc46' "$spec") == 2 ]]
@@ -45,8 +45,8 @@ done
 awk '
  /^%changelog$/ {section="changelog"}
  section!="changelog" && /^(Release:|Provides:|Obsoletes:|Requires:)/ {
-  gsub(/0[.]4[.]4-23[.]fc46/,"0.4.4-25.fc46")
-  sub(/^Release: 23[.]fc46$/,"Release: 25.fc46")
+  gsub(/0[.]4[.]4-23[.]fc46/,"0.4.4-26.fc46")
+  sub(/^Release: 23[.]fc46$/,"Release: 26.fc46")
  }
  /^Source6:/ {
   print
@@ -54,6 +54,7 @@ awk '
   print "Source8: libssc-measurement-lifetime.sh"
   print "Source9: libssc-measurement-lifetime-seam.c"
   print "Source10: libssc-measurement-lifetime.cpp"
+  print "Source11: libssc-proximity-values.sh"
   next
  }
  /^meson compile -C build$/ {
@@ -80,17 +81,20 @@ awk '
  }
  /^%changelog$/ {
   print
-  print "* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-25.fc46"
+  print "* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-26.fc46"
   print "- Own sensors until queued measurement dispatch or cancellation completes."
   print "- Qualify all six real measurement classes and retain prior regressions."
   print ""
   next
  }
- {print}
+ {
+  gsub(/%\{_builddir\}\/uke-libssc-0[.]4[.]4\/inputs\/libssc\/libssc-proximity-values[.]sh/,"%{SOURCE11}")
+  print
+ }
 ' "$spec" > "$stage/next.spec"
 mv "$stage/next.spec" "$spec"
 sha256sum -c "$stage/retained.sha256"
 [[ $(grep -Fxc 'meson compile -C build' "$spec") == 4 ]]
 [[ $(grep -Fxc 'bash %{SOURCE8} src %{SOURCE9} %{SOURCE10}' "$spec") == 1 ]]
 [[ $(grep -Fxc 'SANITIZE=1 bash %{SOURCE4} src/libssc-sensor.c %{SOURCE5} %{SOURCE6}' "$spec") == 1 ]]
-[[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$spec") == 0.4.4-25.fc46 ]]
+[[ $(rpmspec --target aarch64 -q --srpm --qf '%{VERSION}-%{RELEASE}' "$spec") == 0.4.4-26.fc46 ]]
