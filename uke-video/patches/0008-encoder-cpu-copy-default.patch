@@ -1,0 +1,27 @@
+Subject: [PATCH] Prefer synchronized CPU copies for encoder staging
+
+On POCO Pad X1, GPU writes into the private cached-coherent encoder staging
+allocation produce corrupt encoded pictures without a kernel error. On the
+same installed driver, selecting the existing synchronized CPU copy raises
+the 30-frame H264 control from 16.194250 to 46.542374 dB PSNR.
+
+Use the existing per-copier fallback already used by decoder exports. Keep
+explicit diagnostic overrides, coherent allocation, DMA-BUF access/fence
+handling, queue ownership and hardware encoding unchanged. This does not
+claim a general kernel coherency fix or disable GPU copying globally.
+
+Base: libva-v4l2 6d03c3f8fb19b86f84b2b6c60ff20d1402f0ac41 plus the seven
+patches in signed uke-video-integration-1.0.0-1.fc46.
+License: MIT, matching the modified upstream source.
+
+--- a/src/encoder.cpp
++++ b/src/encoder.cpp
+@@ -835,7 +835,7 @@
+                 m->origin = MemoryOrigin::MsmCoherent;
+                 e.staging[index] = m;
+                 if (!e.copier)
+-                    e.copier = std::make_unique<SurfaceCopier>(e.render_fd);
++                    e.copier = std::make_unique<SurfaceCopier>(e.render_fd, CopyDefault::Cpu);
+             }
+             e.copier->copy(e.staging[index], memory, e.width, e.height);
+             memory = e.staging[index];
