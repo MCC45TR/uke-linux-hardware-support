@@ -1,0 +1,345 @@
+Subject: [PATCH] Own SSC report subscriptions and tasks per asynchronous request
+
+Upstream: libssc 0.4.4, GPL-3.0-or-later, Dylan Van Assche.
+
+Keep each report listener and send acknowledgement alive independently.
+
+Complete only once and disconnect the exact request before task cleanup.
+
+--- a/src/libssc-sensor.c
++++ b/src/libssc-sensor.c
+@@ -43,6 +43,8 @@
+ typedef struct {
+ 	GTask *task;
+ 	SSCSensor *sensor;
++	SSCClient *client;
++	gulong report_id;
+ } ReportReceivedContext;
+ 
+ typedef struct _SSCSensorPrivate {
+@@ -57,7 +59,6 @@
+ 	gfloat mount_matrix[3][3];
+ 
+ 	SSCClient *client;
+-	guint report_id;
+ 	gboolean attr_populated;
+ 	gboolean service_available;
+ 	guint service_retries;
+@@ -65,11 +66,60 @@
+ 
+ static void async_initable_iface_init (GAsyncInitableIface *iface);
+ 
++static void
++report_received (SSCClient *self, guint32 msg_id, guint64 uid_high, guint64 uid_low, GArray *buf, gpointer user_data);
++
+ G_DEFINE_TYPE_WITH_CODE (SSCSensor, ssc_sensor, G_TYPE_OBJECT,
+ 			 G_ADD_PRIVATE (SSCSensor)
+ 			 G_IMPLEMENT_INTERFACE (G_TYPE_ASYNC_INITABLE, async_initable_iface_init))
+ 
+ static void
++report_context_free (gpointer data)
++{
++	ReportReceivedContext *ctx = data;
++	g_clear_object (&ctx->client);
++	g_slice_free (ReportReceivedContext, ctx);
++}
++
++static void
++report_closure_free (gpointer data, GClosure *closure)
++{
++	g_object_unref (data);
++}
++
++static void
++report_context_watch (SSCSensor *sensor, SSCClient *client, GTask *task)
++{
++	ReportReceivedContext *ctx = g_slice_new0 (ReportReceivedContext);
++	ctx->task = task; /* Borrowed from the task which owns this context. */
++	ctx->sensor = sensor; /* The task owns its source object. */
++	ctx->client = g_object_ref (client);
++	g_task_set_task_data (task, ctx, report_context_free);
++	ctx->report_id = g_signal_connect_data (client, "report",
++			G_CALLBACK (report_received), g_object_ref (task),
++			report_closure_free, 0);
++}
++
++static void
++report_complete (GTask *task, gboolean success, GError *error)
++{
++	ReportReceivedContext *ctx = g_task_get_task_data (task);
++	gulong report_id = ctx->report_id;
++
++	/* A report and its send acknowledgement may complete in either order. */
++	if (!report_id) {
++		g_clear_error (&error);
++		return;
++	}
++	ctx->report_id = 0;
++	g_signal_handler_disconnect (ctx->client, report_id);
++	if (error)
++		g_task_return_error (task, error);
++	else
++		g_task_return_boolean (task, success);
++}
++
++static void
+ wait_for_sensor_service (SSCSensor *self, GTask *task);
+ 
+ static void
+@@ -78,9 +128,6 @@
+ static void
+ attribute (SSCSensor *self, GTask *task);
+ 
+-static void
+-report_received (SSCClient *self, guint32 msg_id, guint64 uid_high, guint64 uid_low, GArray *buf, gpointer user_data);
+-
+ GQuark ssc_sensor_error_quark (void)
+ {
+   static GQuark quark = 0;
+@@ -106,9 +153,9 @@
+ 	GError *error = NULL;
+ 
+ 	if (!ssc_client_send_finish (self, result, &error)) {
++		g_debug ("Sensor disable request failed: %s", error->message);
+ 		g_task_return_error (task, error);
+ 		g_clear_object (&task);
+-		g_debug ("Sensor disable request failed: %s", error->message);
+ 		return;
+ 	}
+ 
+@@ -164,13 +211,12 @@
+ static void
+ sensor_open_ready (SSCClient *self, GAsyncResult *result, gpointer user_data)
+ {
+-	GTask *task = G_TASK (user_data);
++	g_autoptr (GTask) task = G_TASK (user_data);
+ 	GError *error = NULL;
+ 
+ 	if (!ssc_client_send_finish (self, result, &error)) {
+-		g_task_return_error (task, error);
+-		g_clear_object (&task);
+ 		g_debug ("Sensor enable request failed: %s", error->message);
++		report_complete (task, FALSE, error);
+ 		return;
+ 	}
+ 
+@@ -184,7 +230,6 @@
+ 	GTask *task = NULL;
+ 	SscEnableConfigRequest msg;
+ 	g_autoptr (GArray) buf = NULL;
+-	ReportReceivedContext *ctx;
+ 	guint32 msg_id;
+ 	GError *error = NULL;
+ 
+@@ -231,15 +276,8 @@
+ 	} else
+ 		g_assert_not_reached ();
+ 
+-	ctx = g_slice_new (ReportReceivedContext);
+-	ctx->task = task;
+-	ctx->sensor = self;
+-
+-	/* Start listening for report signals */
+-	priv->report_id = g_signal_connect (priv->client,
+-			"report",
+-			G_CALLBACK (report_received),
+-			ctx);
++	/* Each request owns its subscription, including overlapping opens. */
++	report_context_watch (self, priv->client, task);
+ 
+ 	ssc_client_send (priv->client,
+ 			 priv->uid_high,
+@@ -248,7 +286,8 @@
+ 			 buf,
+ 			 g_task_get_cancellable (task),
+ 			 (GAsyncReadyCallback)sensor_open_ready,
+-			 task);
++			 g_object_ref (task));
++	g_object_unref (task);
+ }
+ 
+ gboolean
+@@ -275,11 +314,14 @@
+ 	SscAttrResponse *attr_msg = NULL;
+ 	SscConfigResponse *config_msg = NULL;
+ 	SSCSensorPrivate *priv = NULL;
+-	ReportReceivedContext *ctx = user_data;
++	g_autoptr (GTask) task = g_object_ref (G_TASK (user_data));
++	ReportReceivedContext *ctx = g_task_get_task_data (task);
+ 	gboolean attributes_populated = FALSE;
+ 	gboolean mount_matrix_attribute_populated = FALSE;
+ 	GError *error = NULL;
+ 
++	if (!ctx->report_id)
++		return;
+ 	priv = ssc_sensor_get_instance_private (ctx->sensor);
+ 
+ 
+@@ -310,15 +352,10 @@
+ 
+ 			/* Fail to discover when service is not available after 100s */
+ 			if (priv->service_retries >= MAX_RETRIES) {
+-				g_signal_handler_disconnect (self, priv->report_id);
+-				priv->report_id = 0;
+-
+ 				g_set_error (&error, ssc_sensor_error_quark(), SSC_SENSOR_ERROR_NO_SERVICE,
+ 					     "Sensor service unavailable");
+ 				g_warning ("'registry' sensor unavailable, is hexagonrpcd running?");
+-				g_task_return_error (ctx->task, error);
+-				g_clear_object (&ctx->task);
+-				g_slice_free (ReportReceivedContext, ctx);
++				report_complete (task, FALSE, error);
+ 				return;
+ 			}
+ 
+@@ -351,12 +388,7 @@
+ 			g_debug ("No '%s' sensor available", priv->data_type);
+ 			ssc_suid_response__free_unpacked (suid_msg, NULL);
+ 
+-			g_signal_handler_disconnect (self, priv->report_id);
+-			priv->report_id = 0;
+-
+-			g_task_return_boolean (ctx->task, FALSE);
+-			g_clear_object (&ctx->task);
+-			g_slice_free (ReportReceivedContext, ctx);
++			report_complete (task, FALSE, NULL);
+ 
+ 			return;
+ 		}
+@@ -441,11 +473,7 @@
+ 
+ 		/* Sensor initialized, complete task and stop listening */
+ 		if (ctx->task) {
+-			g_signal_handler_disconnect (self, priv->report_id);
+-			priv->report_id = 0;
+-			g_task_return_boolean (ctx->task, attributes_populated);
+-			g_clear_object (&ctx->task);
+-			g_slice_free (ReportReceivedContext, ctx);
++			report_complete (task, attributes_populated, NULL);
+ 		}
+ 
+ 		ssc_attr_response__free_unpacked (attr_msg, NULL);
+@@ -469,11 +497,7 @@
+ 
+ 		/* Configuration updated, complete task and stop listening */
+ 		if (ctx->task) {
+-			g_signal_handler_disconnect (self, priv->report_id);
+-			priv->report_id = 0;
+-			g_task_return_boolean (ctx->task, TRUE);
+-			g_clear_object (&ctx->task);
+-			g_slice_free (ReportReceivedContext, ctx);
++			report_complete (task, TRUE, NULL);
+ 		}
+ 
+ 		ssc_config_response__free_unpacked (config_msg, NULL);
+@@ -488,11 +512,7 @@
+ 		g_debug ("Measurement received for '%s' sensor (%" G_GUINT64_FORMAT " %" G_GUINT64_FORMAT "), assuming enabled", priv->data_type, priv->uid_high, priv->uid_low);
+ 
+ 		if (ctx->task) {
+-			g_signal_handler_disconnect (self, priv->report_id);
+-			priv->report_id = 0;
+-			g_task_return_boolean (ctx->task, TRUE);
+-			g_clear_object (&ctx->task);
+-			g_slice_free (ReportReceivedContext, ctx);
++			report_complete (task, TRUE, NULL);
+ 		}
+ 	}
+ }
+@@ -503,9 +523,11 @@
+ attribute_ready (SSCClient *self, GAsyncResult *result, gpointer user_data)
+ {
+ 	g_autoptr (GError) error = NULL;
++	g_autoptr (GTask) task = G_TASK (user_data);
+ 
+ 	if (!ssc_client_send_finish (self, result, &error)) {
+ 		g_warning ("Sensor attribute request failed: %s", error->message);
++		report_complete (task, FALSE, g_steal_pointer (&error));
+ 		return;
+ 	}
+ 
+@@ -537,7 +559,7 @@
+ 			 buf,
+ 			 g_task_get_cancellable (task),
+ 			 (GAsyncReadyCallback)attribute_ready,
+-			 NULL);
++			 g_object_ref (task));
+ }
+ 
+ /*****************************************************************************/
+@@ -546,11 +568,10 @@
+ discovery_ready (SSCClient *self, GAsyncResult *result, gpointer user_data)
+ {
+ 	GError *error = NULL;
+-	GTask *task = G_TASK (user_data);
++	g_autoptr (GTask) task = G_TASK (user_data);
+ 
+ 	if (!ssc_client_send_finish (self, result, &error)) {
+-		g_task_return_error (task, error);
+-		g_clear_object (&task);
++		report_complete (task, FALSE, error);
+ 		return;
+ 	}
+ 
+@@ -591,7 +612,7 @@
+ 			 buf,
+ 			 g_task_get_cancellable (task),
+ 			 (GAsyncReadyCallback)discovery_ready,
+-			 task);
++			 g_object_ref (task));
+ }
+ 
+ /*****************************************************************************/
+@@ -600,11 +621,10 @@
+ wait_for_sensor_service_ready (SSCClient *self, GAsyncResult *result, gpointer user_data)
+ {
+ 	GError *error = NULL;
+-	GTask *task = G_TASK (user_data);
++	g_autoptr (GTask) task = G_TASK (user_data);
+ 
+ 	if (!ssc_client_send_finish (self, result, &error)) {
+-		g_task_return_error (task, error);
+-		g_clear_object (&task);
++		report_complete (task, FALSE, error);
+ 		return;
+ 	}
+ 
+@@ -646,7 +666,7 @@
+ 			 buf,
+ 			 g_task_get_cancellable (task),
+ 			 (GAsyncReadyCallback)wait_for_sensor_service_ready,
+-			 task); 
++			 g_object_ref (task));
+ }
+ 
+ /*****************************************************************************/
+@@ -654,8 +674,7 @@
+ static void
+ client_ready (SSCClient *client, GAsyncResult *result, gpointer user_data)
+ {
+-	GTask *task = G_TASK (user_data);
+-	ReportReceivedContext *ctx = NULL;
++	g_autoptr (GTask) task = G_TASK (user_data);
+ 	SSCSensorPrivate *priv = NULL;
+ 	GError *error = NULL;
+ 	SSCSensor *self = NULL;
+@@ -667,19 +686,10 @@
+ 	priv->client = ssc_client_new_finish (result, &error);
+ 	if (!priv->client) {
+ 		g_task_return_error (task, error);
+-		g_object_unref (task);
+ 		return;
+ 	}
+ 
+-	ctx = g_slice_new (ReportReceivedContext);
+-	ctx->task = task;
+-	ctx->sensor = self;
+-
+-	/* Start listening for report signals */
+-	priv->report_id = g_signal_connect (priv->client,
+-			"report",
+-			G_CALLBACK (report_received),
+-			ctx);
++	report_context_watch (self, priv->client, task);
+ 
+ 	/* Wait for sensor service before discovering sensor */
+ 	priv->service_available = FALSE;

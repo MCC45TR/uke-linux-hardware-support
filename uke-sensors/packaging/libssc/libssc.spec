@@ -1,6 +1,6 @@
 Name: libssc
 Version: 0.4.4
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: Native Qualcomm Sensor Core client library
 License: GPL-3.0-or-later
 URL: https://codeberg.org/DylanVanAssche/libssc
@@ -11,6 +11,9 @@ Source3: libssc-mount-matrix.sh
 Source4: libssc-proximity-values.sh
 Source5: libssc-proximity-empty.cpp
 Source6: libssc-sample-rate-property.cpp
+Source7: libssc-request-lifetime.sh
+Source8: libssc-request-lifetime-seam.c
+Source9: libssc-request-lifetime.cpp
 Patch0: 0001-optional-python-mocks.patch
 Patch1: 0002-report-qrtr-error.patch
 Patch2: 0003-gyroscope-cli-units.patch
@@ -20,6 +23,7 @@ Patch5: 0006-bounded-proximity-unpack-context.patch
 Patch6: 0007-reject-invalid-proximity-values.patch
 Patch7: 0008-guard-empty-proximity-data.patch
 Patch8: 0009-correct-sample-rate-property-type.patch
+Patch9: 0010-own-report-request-lifetime.patch
 BuildRequires: bash gcc gcc-c++ meson ninja-build pkgconf-pkg-config
 BuildRequires: python3 = 3.15.2-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
@@ -61,11 +65,21 @@ test "$sample_rate_before_status" = 134
 grep -Fq G_TYPE_FLOAT sample-rate-before.log
 %patch -P 8 -p1
 meson compile -C build
+set +e
+bash %{SOURCE7} src/libssc-sensor.c %{SOURCE8} %{SOURCE9} > lifecycle-before.log 2>&1
+lifecycle_before_status=$?
+set -e
+if test "$lifecycle_before_status" != 134; then cat lifecycle-before.log; exit 1; fi
+grep -Fq 'done.calls == 2' lifecycle-before.log
+%patch -P 9 -p1
+meson compile -C build
 
 %install
 DESTDIR=%{buildroot} meson install -C build --no-rebuild
 
 %check
+bash %{SOURCE7} src/libssc-sensor.c %{SOURCE8} %{SOURCE9}
+SANITIZE=1 bash %{SOURCE7} src/libssc-sensor.c %{SOURCE8} %{SOURCE9}
 LD_LIBRARY_PATH="$PWD/build/src" G_DEBUG=fatal-criticals ./sample-rate-property-test
 g++ -std=c++20 -UNDEBUG -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -fno-sanitize-recover=all -fno-omit-frame-pointer -I src %{SOURCE6} \
@@ -106,6 +120,9 @@ if find %{buildroot} -type f \( -name '*.py' -o -iname '*python*' \) | grep -q .
 %{_libdir}/pkgconfig/libssc.pc
 
 %changelog
+* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-9
+- Own report subscriptions and task lifetimes per asynchronous request.
+
 * Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-8
 - Declare the read-only sample-rate property with its actual float type.
 - Verify real GObject metadata and getters without opening a sensor connection.
