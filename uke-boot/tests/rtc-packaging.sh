@@ -16,6 +16,15 @@ sed -i 's|^ExecStart=.*|ExecStart=/usr/bin/true|' "$stage/uke-rtc-sync.service"
 # The source worker is unprivileged and has no system-manager runtime directory.
 # Parse the same unit directives in a private user-manager test environment.
 mkdir -m700 "$stage/run"
-XDG_RUNTIME_DIR="$stage/run" SYSTEMD_UNIT_PATH="$stage:/usr/lib/systemd/system" \
- systemd-analyze --user --generators=no verify --man=no "$stage/uke-rtc-sync.service" "$stage/uke-rtc-sync.timer"
+for target in basic.target sysinit.target shutdown.target timers.target; do
+ printf '[Unit]\nDefaultDependencies=no\n' > "$stage/$target"
+done
+for slice in app.slice user.slice -.slice; do
+ printf '[Unit]\nDefaultDependencies=no\n[Slice]\n' > "$stage/$slice"
+done
+XDG_RUNTIME_DIR="$stage/run" SYSTEMD_UNIT_PATH="$stage" \
+ systemd-analyze --user --generators=no verify --man=no "$stage/uke-rtc-sync.service" "$stage/uke-rtc-sync.timer" > "$stage/verify.log" 2>&1 || {
+ cat "$stage/verify.log" >&2;exit 1;
+}
+if grep -Eiq 'ordering cycle|Job .*deleted' "$stage/verify.log";then cat "$stage/verify.log" >&2;exit 1;fi
 printf 'RTC unit capability/device/timing policy and syntax passed; no daemon or RTC operation\n'
