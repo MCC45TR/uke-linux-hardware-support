@@ -57,6 +57,11 @@ for preset in 320x240:30 640x360:30 1280x720:12; do
         END { printf "%s frames=%d minimum_psnr=%.2f bad_frames=%d\n",size,n,min,bad;
               exit(n!=expected || bad>0) }
     ' "$prefix-frames.psnr" | tee -a "$output/summary.txt"
+    journalctl -k -b --after-cursor="$(cat "$output/kernel.cursor")" --no-pager > "$output/kernel.log"
+    if grep -Ei '(iris|adreno|GPU).*\b(error|fatal|fault|timeout|hang)\b' "$output/kernel.log"; then
+        printf '%s\n' 'Stop on a new codec/GPU kernel error.' >&2
+        exit 1
+    fi
     sha256sum "$prefix-source.nv12" "$prefix.h264" "$prefix-decoded.nv12" >> "$output/artifacts.sha256"
     rm -- "$prefix-source.nv12" "$prefix-decoded.nv12"
 done
