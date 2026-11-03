@@ -1,0 +1,27 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] sensor: declare sample-rate as the float returned by its getter
+
+The private sample_rate field and sensor_get_property use gfloat, but the
+property is registered as a string. GObject therefore supplies an incompatible
+GValue to g_value_set_float and advertises the wrong output type to callers.
+Declare the intended nonnegative floating-point rate, preserving its name,
+read-only flags and zero default. No sensor request or sampling policy changes.
+
+Reviewed against v0.4.4 and upstream main033e2a32095c024d6dbdfb1d4ae1db4a94be32f1.
+Existing GPL-3.0-or-later attribution remains.
+
+Signed-off-by: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+--- a/src/libssc-sensor.c
++++ b/src/libssc-sensor.c
+@@ -877,7 +877,9 @@
+ 	properties[PROP_SAMPLE_RATE] =
+-		g_param_spec_string (SSC_SENSOR_SAMPLE_RATE,
++		g_param_spec_float (SSC_SENSOR_SAMPLE_RATE,
+ 				     "Sample rate",
+ 				     "The sample rate in Hz supported by the sensor.",
+-				     NULL,
++				     0.0f,
++				     G_MAXFLOAT,
++				     0.0f,
+ 				     G_PARAM_READABLE);
+ 	g_object_class_install_property (object_class, PROP_SAMPLE_RATE, properties[PROP_SAMPLE_RATE]);

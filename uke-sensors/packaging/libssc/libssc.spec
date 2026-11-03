@@ -1,6 +1,6 @@
 Name: libssc
 Version: 0.4.4
-Release: 7%{?dist}
+Release: 8%{?dist}
 Summary: Native Qualcomm Sensor Core client library
 License: GPL-3.0-or-later
 URL: https://codeberg.org/DylanVanAssche/libssc
@@ -10,6 +10,7 @@ Source2: libssc-proximity-context.cpp
 Source3: libssc-mount-matrix.sh
 Source4: libssc-proximity-values.sh
 Source5: libssc-proximity-empty.cpp
+Source6: libssc-sample-rate-property.cpp
 Patch0: 0001-optional-python-mocks.patch
 Patch1: 0002-report-qrtr-error.patch
 Patch2: 0003-gyroscope-cli-units.patch
@@ -18,6 +19,7 @@ Patch4: 0005-preserve-nonzero-mount-matrix.patch
 Patch5: 0006-bounded-proximity-unpack-context.patch
 Patch6: 0007-reject-invalid-proximity-values.patch
 Patch7: 0008-guard-empty-proximity-data.patch
+Patch8: 0009-correct-sample-rate-property-type.patch
 BuildRequires: bash gcc gcc-c++ meson ninja-build pkgconf-pkg-config
 BuildRequires: python3 = 3.15.2-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
@@ -48,11 +50,27 @@ cp src/libssc-sensor-proximity.c src/libssc-sensor-proximity-before-guard.c
 %set_build_flags
 meson setup build --prefix=%{_prefix} --libdir=%{_lib} --buildtype=release -Dtests=false
 meson compile -C build
+g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -I src %{SOURCE6} \
+    $(pkg-config --cflags --libs gio-2.0) -L build/src -lssc -o sample-rate-property-test
+ulimit -c 0
+set +e
+LD_LIBRARY_PATH="$PWD/build/src" G_DEBUG=fatal-criticals ./sample-rate-property-test > sample-rate-before.log 2>&1
+sample_rate_before_status=$?
+set -e
+test "$sample_rate_before_status" = 134
+grep -Fq G_TYPE_FLOAT sample-rate-before.log
+%patch -P 8 -p1
+meson compile -C build
 
 %install
 DESTDIR=%{buildroot} meson install -C build --no-rebuild
 
 %check
+LD_LIBRARY_PATH="$PWD/build/src" G_DEBUG=fatal-criticals ./sample-rate-property-test
+g++ -std=c++20 -UNDEBUG -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -fno-sanitize-recover=all -fno-omit-frame-pointer -I src %{SOURCE6} \
+    $(pkg-config --cflags --libs gio-2.0) -L build/src -lssc -o sample-rate-property-sanitized
+LD_LIBRARY_PATH="$PWD/build/src" G_DEBUG=fatal-criticals ./sample-rate-property-sanitized
 gcc -Wall -Wextra -Werror -I build/data \
     $(pkg-config --cflags libprotobuf-c) -c build/data/ssc-sensor-proximity.pb-c.c -o proximity-generated.o
 g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -I build/data %{SOURCE5} \
@@ -88,6 +106,10 @@ if find %{buildroot} -type f \( -name '*.py' -o -iname '*python*' \) | grep -q .
 %{_libdir}/pkgconfig/libssc.pc
 
 %changelog
+* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-8
+- Declare the read-only sample-rate property with its actual float type.
+- Verify real GObject metadata and getters without opening a sensor connection.
+
 * Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-7
 - Reject absent repeated vendor data before dereferencing it.
 - Verify the real protobuf empty-data case and the original callback crash in COPR.
