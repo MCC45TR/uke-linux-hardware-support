@@ -49,3 +49,14 @@ the timer retries automatically. A missing RTC or firmware error is a failure,
 not a reason to enable direct PMIC writes. A correct live readback alone does
 not establish retention: warm restart, offline startup, suspend/alarm behavior
 and a cold power cycle need separate observations with the same package cohort.
+
+COPR [11251582](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11251582/)
+passed for Fedora Rawhide AArch64. The injected UTC/readback, continuous-health
+and actual first-update RPM fixtures pass. All six binary RPM signatures and
+the rebuilt SRPM signature verify; their repository SHA-256 values match.
+The rebuilt source file digests match the submitted source. Runtime updater
+dependencies are unchanged from1.8.38 after version normalization. See
+[artifact identities](rtc-persistence-20261103.json). The paired RTC kernel
+[7.3.1-1600](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11251559/)
+also passed native and signed-package checks. Physical RTC writes and cold
+retention remain independent acceptance gates.

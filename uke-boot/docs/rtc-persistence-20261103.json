@@ -42,5 +42,7 @@
       "file": "uke-kernel-update-1.8.39-1.fc46.aarch64.rpm",
       "sha256": "87fa416e496b285daa2c9c3901ff0e7f6a59cc221644a9c2aade2acf276b3127"
     }
-  ]
+  ],
+  "repository_sha256_match": true,
+  "rebuilt_source_files_match_submission": true
 }
