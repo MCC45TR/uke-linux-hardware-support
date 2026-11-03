@@ -1,6 +1,6 @@
 # Uke RTC provisioning and verification
 
-3 November 2026, boot integration1.8.38. This package pairs the Uke secure RTC
+3 November 2026, boot integration1.8.39. This package pairs the Uke secure RTC
 kernel candidate with UTC provisioning, readback and startup health checks.
 It retains first-update policy migration and the 1.8.37 rollback window.
 

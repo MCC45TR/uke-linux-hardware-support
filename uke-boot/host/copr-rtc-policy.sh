@@ -13,12 +13,12 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
  curl -fLsS --get --data-urlencode ownername=mcc45tr --data-urlencode "projectname=$project" \
   --data-urlencode packagename=uke-boot-integration --data-urlencode limit=100 \
   https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
- jq -e '(.items|length)<100 and all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+([.][0-9]+)*$";""))!="1.8.38-1")' "$stage/builds.json" >/dev/null
+ jq -e '(.items|length)<100 and all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+([.][0-9]+)*$";""))!="1.8.39-1")' "$stage/builds.json" >/dev/null
 done
 curl -fLsS --retry 2 --proto '=https' --proto-redir '=https' \
- https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11251295/uke-boot-integration-1.8.37-1.fc46.src.rpm \
+ https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11251496/uke-boot-integration-1.8.38-1.fc46.src.rpm \
  -o "$stage/base.src.rpm"
-parent=d5ff2a79b13edb64d8e8ce4276e4d68f5bcf5ee5900d95516bedc1cbe7961d2f
+parent=087528ce0594c9f729eca935c2104902b722ab268d525aedcbcce0b0f845b018
 printf '%s  %s\n' "$parent" "$stage/base.src.rpm" | sha256sum -c -
 rpm2cpio "$stage/base.src.rpm" > "$stage/base.cpio"
 cpio -t --quiet < "$stage/base.cpio" | awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}'
@@ -28,12 +28,12 @@ unpack() {
  tar -tJf "$1" | awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}'
  tar -xJf "$1" -C "$2"
 }
-unpack "$stage/sources/uke-boot-integration-1.8.37.tar.xz" "$stage/outer"
-outer=$stage/outer/uke-boot-integration-1.8.37
+unpack "$stage/sources/uke-boot-integration-1.8.38.tar.xz" "$stage/outer"
+outer=$stage/outer/uke-boot-integration-1.8.38
 (cd "$outer"; sha256sum --check --strict --quiet SOURCE-SHA256SUMS)
 input=$outer/inputs/uke-boot-integration
-unpack "$input/uke-boot-integration-1.8.37.tar.xz" "$stage/inner"
-inner=$stage/inner/uke-boot-integration-1.8.37
+unpack "$input/uke-boot-integration-1.8.38.tar.xz" "$stage/inner"
+inner=$stage/inner/uke-boot-integration-1.8.38
 (cd "$inner"; find . -type f -print0 | sort -z | xargs -0 sha256sum) > "$stage/before.sha256"
 cat > "$stage/overlays" <<'FILES'
 src/install-profile.cpp
@@ -55,7 +55,7 @@ done < "$stage/overlays"
 rewrite_spec() {
  awk '
  /^%changelog/ {history=1}
- !history {gsub(/1[.]8[.]37/,"1.8.38")}
+ !history {gsub(/1[.]8[.]38/,"1.8.39")}
  /^%systemd_(post|preun|postun) uke-root-grow.service$/ {$0=$0 " uke-rtc-sync.service uke-rtc-sync.timer"}
  /systemd-update-helper (install|remove)-system-units uke-root-grow[.]service/ {sub(/uke-root-grow[.]service/,"uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer")}
  {print}
@@ -90,15 +90,15 @@ rewrite_spec "$stage/sources/uke-boot-integration.spec" "$output/uke-boot-integr
 [[ $(grep -Fxc './rtc-clock-contract' "$output/uke-boot-integration.spec") == 1 ]]
 commit=$(git -C "$owner" rev-parse HEAD)
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
-mv "$inner" "$stage/inner/uke-boot-integration-1.8.38"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.38.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.38
-unlink "$input/uke-boot-integration-1.8.37.tar.xz"
+mv "$inner" "$stage/inner/uke-boot-integration-1.8.39"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.39.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.39
+unlink "$input/uke-boot-integration-1.8.38.tar.xz"
 jq -n --arg commit "$commit" --arg parent "$parent" \
- '{schema:1,source_commit:$commit,parent_build:11251295,parent_srpm_sha256:$parent,
+ '{schema:1,source_commit:$commit,parent_build:11251496,parent_srpm_sha256:$parent,
   rtc_trusted_utc_only:true,rtc_write_readback:true,rtc_boot_health_required:true,
   direct_pmic_or_sdam_writes:false,legacy_policy_migration_retained:true,
   rollback_health_retained:true,firmware_payload_included:false,physical_acceptance:false}' > "$outer/rtc-policy-overlay.json"
 (cd "$outer"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-mv "$outer" "$stage/outer/uke-boot-integration-1.8.38"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.38.tar.xz" -C "$stage/outer" uke-boot-integration-1.8.38
-[[ $(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.38-1.fc46 ]]
+mv "$outer" "$stage/outer/uke-boot-integration-1.8.39"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.39.tar.xz" -C "$stage/outer" uke-boot-integration-1.8.39
+[[ $(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.39-1.fc46 ]]
