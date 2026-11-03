@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.37
+Version: 1.8.38
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -105,6 +105,7 @@ Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
 Provides: uke-kernel-update(userdata-fallback-v1) = 1
 Provides: uke-kernel-update(trial-health-v2) = 1
+Provides: uke-kernel-update(touch-status-v2) = 1
 Provides: uke-kernel-update(qualified-firmware-cohort-v1) = 1
 Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1
 Provides: uke-kernel-update(device-local-video-import-v1) = 1

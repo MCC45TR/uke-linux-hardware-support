@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
-#include "../src/touch-health.hpp"
+#ifndef UKE_TOUCH_HEALTH_SOURCE
+#define UKE_TOUCH_HEALTH_SOURCE "../src/touch-health.hpp"
+#endif
+#include UKE_TOUCH_HEALTH_SOURCE
 #include <cassert>
 #include <iostream>
 #include <unistd.h>
@@ -36,6 +39,20 @@ int main() {
         units=uke_touch::health_units(root);
         assert(units.size()==4 && std::find(units.begin(),units.end(),"uke-touchscreen.service")==units.end());
         assert(uke_touch::health_units(root,true).size()==4);
+        // Exact additive layout emitted by kernel 7.3.1-1301.
+        put(node/"input_stats","packets=2 errors=0 active=0x0 calibrated=1 ready=1 io_errors=0 recoveries=0 fault=0 panel_ready=1 suspended=0 irq_enabled=1\n");
+        bool expanded_accepted=false;
+        try {expanded_accepted=uke_touch::native_healthy(root);}catch(const std::exception &){}
+        assert(expanded_accepted && "Additive touch statistics must retain readiness admission");
+        put(node/"input_stats","fault=0 io_errors=2 ready=1 packets=2 future_counter=42\n");
+        assert(uke_touch::native_healthy(root));
+        for(const auto &stats:{"packets=2 already=1\n","packets=2 ready=2\n",
+            "ready=1 ready=0\n","ready=0 ready=1\n","ready\n","ready=\n",
+            "ready=10\n","ready=1=0\n","ready=1 fault=2\n","ready=1 fault\n",
+            "fault=0 ready=1 fault=0\n","ready=1 fault=1\n"}) {
+            put(node/"input_stats",stats);refuses([&]{uke_touch::native_healthy(root);});
+        }
+        put(node/"input_stats","packets=2 errors=0 active=0x0 ready=1\n");
         put(input/"name","POCO Pad X1 Touchscreen\n");
         assert(uke_touch::native_healthy(root));
         put(input/"name","");refuses([&]{uke_touch::native_healthy(root);});
@@ -45,6 +62,11 @@ int main() {
         const auto panel=root/"sys/class/drm/card2-DSI-1";
         put(panel/"status","connected\n");put(panel/"enabled","disabled\n");
         assert(uke_touch::health_units(root).size()==4);
+        put(node/"input_stats","packets=2 errors=0 active=0x0 calibrated=0 ready=0 io_errors=0 recoveries=0 fault=0 panel_ready=0 suspended=0 irq_enabled=0\n");
+        assert(uke_touch::health_units(root).size()==4);
+        put(node/"input_stats","packets=2 errors=0 active=0x0 ready=0 fault=1\n");
+        refuses([&]{uke_touch::health_units(root);});
+        put(node/"input_stats","packets=0 errors=1 active=0x0 ready=0\n");
         put(panel/"enabled","enabled\n");refuses([&]{uke_touch::health_units(root);});
         const auto during_wait=[&](auto change,const std::string &expected_error="") {
             std::thread worker([&]{std::this_thread::sleep_for(std::chrono::milliseconds(250));change();});

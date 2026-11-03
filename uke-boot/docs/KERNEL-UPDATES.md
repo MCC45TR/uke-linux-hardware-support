@@ -318,3 +318,21 @@ RPMs and the rebuilt source RPM verify with the COPR public key; the delivered
 migration hook, final trigger and repository metadata were checked separately.
 [Artifact identities](seamless-policy-20261103.json) retain the build source and
 digests. No physical slot write, reboot or rollback was performed for this build.
+
+### Additive native touch status
+
+3 November 2026. Native touch status is a whitespace-separated set of named
+fields. Read `ready` independently of its position; kernel 7.3.1-1301 retains
+the original fields and appends value-free recovery diagnostics. Require one
+boolean readiness field, reject ambiguous or malformed readiness/fault flags,
+and reject an explicit fault. Exact device binding and MT capabilities remain
+required. Legacy status lines and deliberate single connected internal-panel
+disable retain their existing behavior; an active panel still polls calibration
+readiness for at most two seconds.
+
+The proposed 1.8.38 source recipe retains the complete qualified 1.8.37 cohort,
+including the no-full-image-backup A/B writer, trial health and rollback rules.
+It runs the same new consumer fixture against the actual old header as a
+negative control, then the corrected header normally and with ASan/UBSan.
+Native build, package and physical results remain separate. A new parser does
+not establish physical touch accuracy or eliminate an observed SPI timeout.
