@@ -101,9 +101,72 @@ static void boot_transaction_contract() {
     for(const auto &failure:different)exercise(true,true,failure);
     std::cout<<"Single-process boot: acceptance before policy, disabled-policy health, same-buffer reuse, candidate validation and every failure boundary passed; no device I/O\n";
 }
-int main() {
+static void automatic_policy_contract(const fs::path &root) {
+    const std::string old="automatic=0\n",enabled="automatic=1\n",profile="automatic=1\nvrr_min_hz=0\n";
+    for(int fault=-1;fault<12;fault++) {
+        const auto base=root/("migration-"+std::to_string(fault));
+        const auto config=base/"etc",state=base/"state";
+        text(config/"kernel-update.conf",old);text(config/"userdata-update.conf",old);
+        int step=0;bool failed=false;
+        try {
+            migrate_automatic_policy(config,state,[&](const auto &path,const auto &expected,const auto &value) {
+                if(step++==fault)throw std::runtime_error("before durable policy write");
+                replace_policy(path,expected,value);
+                if(step++==fault)throw std::runtime_error("after durable policy write");
+            });
+        }catch(const std::runtime_error &){failed=true;}
+        assert(failed==(fault>=0));
+        if(policy_text(config/"kernel-update.conf")==enabled && policy_text(config/"userdata-update.conf")==profile &&
+           policy_text(state/"automatic-policy-v1")==policy_prepared)
+            assert(!automatic_policy_ready(state));
+        (void)migrate_automatic_policy(config,state);
+        assert(automatic_policy_ready(state) && policy_text(state/"automatic-policy-v1")==policy_complete);
+        assert(policy_text(config/"kernel-update.conf")==enabled && policy_text(config/"userdata-update.conf")==profile);
+        assert(policy_text(state/"global-policy.before-v1")==old && policy_text(state/"userdata-policy.before-v1")==old);
+        text(config/"kernel-update.conf",old);text(config/"userdata-update.conf",old);
+        assert(!migrate_automatic_policy(config,state));
+        assert(policy_text(config/"kernel-update.conf")==old && policy_text(config/"userdata-update.conf")==old);
+    }
+    for(unsigned variant=0;variant<5;variant++) {
+        const auto base=root/("custom-"+std::to_string(variant));
+        const auto config=base/"etc",state=base/"state";
+        const std::string global=variant==0?enabled:variant==1?"# Keep disabled\nautomatic=0\n":old;
+        const std::string userdata=variant==2?"automatic=0\nvrr_min_hz=30\n":variant==3?"# Keep disabled\nautomatic=0\n":variant==4?profile:old;
+        text(config/"kernel-update.conf",global);text(config/"userdata-update.conf",userdata);
+        assert(!migrate_automatic_policy(config,state));
+        assert(policy_text(config/"kernel-update.conf")==global && policy_text(config/"userdata-update.conf")==userdata);
+        assert(policy_text(state/"automatic-policy-v1")==policy_retained);
+    }
+    for(unsigned fault=0;fault<6;fault++) {
+        const auto base=root/("unsafe-"+std::to_string(fault));
+        const auto config=base/"etc",state=base/"state";
+        text(config/"kernel-update.conf",old);text(config/"userdata-update.conf",old);
+        fs::create_directories(state);
+        if(fault==0) {fs::remove(config/"kernel-update.conf");fs::create_symlink(config/"userdata-update.conf",config/"kernel-update.conf");}
+        if(fault==1) {fs::remove(config/"kernel-update.conf");fs::create_hard_link(config/"userdata-update.conf",config/"kernel-update.conf");}
+        if(fault==2)assert(!chmod((config/"kernel-update.conf").c_str(),0666));
+        if(fault==3)text(config/"kernel-update.conf",std::string(4097,'x'));
+        if(fault==4)text(state/"automatic-policy-v1","unknown\n");
+        if(fault==5)text(state/"automatic-policy-v1",policy_prepared);
+        reject([&]{migrate_automatic_policy(config,state);});
+    }
+    std::cout<<"One-time legacy policy: exact pair, custom opt-outs, durable backups, 12 interruption points, recovery and unsafe-file refusals passed; no slot I/O\n";
+}
+int main(int argc,char **argv) {
+    // Test-only entry points let the RPM fixture use the real migration I/O.
+    if(argc==4 && std::string(argv[1])=="--policy-migrate-fixture") {
+        (void)migrate_automatic_policy(argv[2],argv[3]);return 0;
+    }
+    if(argc==4 && std::string(argv[1])=="--policy-enabled-fixture") {
+        assert(automatic_policy_ready(argv[3]));
+        assert(policy_text(fs::path(argv[2])/"kernel-update.conf")=="automatic=1\n");
+        assert(policy_text(fs::path(argv[2])/"userdata-update.conf")=="automatic=1\nvrr_min_hz=0\n");
+        return 0;
+    }
+    assert(argc==1);
     boot_transaction_contract();
     char dir[]="/tmp/uke-kernel-update.XXXXXX";assert(mkdtemp(dir));const fs::path root=dir;
+    automatic_policy_contract(root);
     assert(root_label("console=tty0 root=PARTLABEL=linux rw")=="linux");
     assert(root_label("root=PARTLABEL=userdata rw")=="userdata");reject([]{root_label("root=UUID=123");});
     reject([]{root_label("root=PARTLABEL=linux root=PARTLABEL=linux");});

@@ -18,6 +18,7 @@ diff -u <(cat <<'HOOKS'
 HOOKS
 ) <(grep -E '^%(pre|preun|pretrans|post|postun|posttrans|trigger[a-z]*|transfiletrigger[a-z]*)([[:space:]]|$)' packaging/uke-boot-integration.spec)
 grep -Fxq 'automatic=1' src/profiles/kernel-update.conf
+grep -Fq '%{_bindir}/uke-kernel-update migrate-automatic-policy || exit 1' packaging/uke-boot-integration.spec
 diff -u <(printf 'automatic=1\nvrr_min_hz=30\n') src/profiles/userdata-update.conf
 grep -Fxq 'ConditionKernelCommandLine=root=PARTLABEL=userdata' src/units/uke-userdata-accept.service
 grep -Fxq 'OnFailure=uke-userdata-fallback.service' src/units/uke-userdata-accept.service

@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.33
+Version: 1.8.34
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -98,6 +98,7 @@ Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
 Provides: uke-kernel-update(transaction-v1) = 1
 Provides: uke-kernel-update(final-transaction-v2) = 1
+Provides: uke-kernel-update(automatic-policy-migration-v1) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
@@ -271,6 +272,9 @@ fi
 # @touch-migration-restore
 
 %post -n uke-kernel-update
+if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
+    %{_bindir}/uke-kernel-update migrate-automatic-policy || exit 1
+fi
 %systemd_post uke-userdata-accept.service
 
 %preun -n uke-kernel-update

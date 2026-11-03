@@ -135,6 +135,7 @@ static void save_new(const fs::path &path,const Bytes &data) {
     write_fd(fd.value,data);
     need(fsync(dir.value)==0,"State directory sync failed");
 }
+#include "automatic-policy.hpp"
 static uint32_t le32(const Bytes &b,size_t i) {return uint32_t(b.at(i))|uint32_t(b.at(i+1))<<8|uint32_t(b.at(i+2))<<16|uint32_t(b.at(i+3))<<24;}
 static uint64_t le64(const Bytes &b,size_t i) {return uint64_t(le32(b,i))|uint64_t(le32(b,i+4))<<32;}
 static Bytes boot_kernel(const Bytes &b) {
@@ -464,6 +465,9 @@ static Fd inhibit_shutdown() {
 }
 #include "userdata-update.hpp"
 static bool activation_enabled(const std::string &label) {
+    if(label=="userdata" && !automatic_policy_ready("/var/lib/senemos/kernel-update")) {
+        std::cout<<"Automatic policy migration is incomplete; boot activation deferred\n";return false;
+    }
     const auto global=file("/etc/senemos/kernel-update.conf");
     bool enabled=global_automatic_updates(std::string(global.begin(),global.end()));
     if(label=="userdata") {
@@ -485,20 +489,31 @@ int main(int argc,char **argv) {
         need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
-             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video");
+             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
+        const bool migrating=action=="migrate-automatic-policy";
         const bool restore=action=="check-restore-current"||action=="restore-current";
         const bool current_only=restore||action=="check-current"||action=="apply-current";
         const bool apply=action=="restore-current"||action=="apply"||action=="apply-current"||action=="transaction";
-        if(automatic && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
+        if((automatic || migrating) && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
         const auto label=root_label(read_text("/proc/cmdline"));
+        if(migrating) {
+            if(label!="userdata")return 0;
+            (void)selected_userdata_bundle();
+            const bool changed=migrate_automatic_policy("/etc/senemos","/var/lib/senemos/kernel-update");
+            std::cout<<(changed?"Legacy image automatic-update policy enabled once; existing A/B validation remains required\n":
+                               "Automatic-update migration already recorded or custom policy retained\n");
+            return 0;
+        }
         if(action=="auto" && label!="userdata")return 0;
         need(!preflight || label=="userdata","Automatic preflight is specific to the userdata profile");
         if(automatic || preflight) {
+            if(automatic && label=="userdata" && !automatic_policy_ready("/var/lib/senemos/kernel-update"))
+                (void)migrate_automatic_policy("/etc/senemos","/var/lib/senemos/kernel-update");
             if(!activation_enabled(label) && !preflight)return 0;
         }
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");

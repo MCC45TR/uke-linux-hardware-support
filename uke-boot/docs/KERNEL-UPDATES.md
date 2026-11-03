@@ -266,3 +266,29 @@ PAS authentication, HFI compatibility or codec operation on hardware.
 LP format reference: AOSP system/core commit
 `a3b721a32242006b59cb12bd62c9133632af3a2d`,
 `fs_mgr/liblp/include/liblp/metadata_format.h` (Apache-2.0).
+
+## One-time image policy migration
+
+3 November 2026, boot integration 1.8.34: the updater's package post-install
+migrates the exact legacy image pair `automatic=0` plus LF in both automatic
+policy files. Each original file is retained in the protected update state,
+then both policies are enabled with a durable migration journal. The legacy
+display override remains disabled (`vrr_min_hz=0`). The existing final RPM file
+trigger stages the complete selected kernel, verifies the inactive boot slot
+and changes the next-boot slot through the existing A/B state machine. There
+is no automatic reboot. Installing the new updater also runs that final trigger
+against already installed kernel bundles; a new kernel need not be reinstalled.
+
+This is a one-time migration of the old image default. Custom policies are
+retained. Once recorded, a later explicit `automatic=0` remains disabled across
+upgrades. An interrupted migration can resume only with its admitted original
+backups and expected old/new bytes. Unknown, writable, linked or replaced files
+are refused. Pending policy writes do not admit boot activation.
+
+Use the normal `sudo dnf update --refresh -y` transaction after the new packages
+are published. It installs the updated policy/updater and uses the existing
+signature, tuple, firmware, root/UFS, accepted-slot, power and readback checks.
+The source update adds no current-slot writer and performs no tablet operation
+while building. Source/package fixtures and physical acceptance remain separate.
+
+RPM trigger semantics: [rpm-scriptlets(7)](https://rpm.org/docs/latest/manual/file_triggers.html).

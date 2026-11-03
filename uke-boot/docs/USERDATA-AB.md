@@ -315,3 +315,12 @@ non-atomic under power loss. Host tests do not qualify physical recovery.
 
 Private lessons retain the comparison details and failed trials. No device
 identifiers, raw GPT backups, credentials or calibration are public payloads.
+
+### Legacy disabled image defaults
+
+Boot integration 1.8.34 migrates the exact pair of legacy one-line disabled
+policies once during package installation, before the final transaction trigger.
+The existing A/B state machine and its rollback/health checks remain unchanged.
+A later administrator opt-out is preserved. No new refresh override is enabled
+by this migration. See the one-time migration in `KERNEL-UPDATES.md` for its
+backup, interruption and custom-policy behavior.
