@@ -1,0 +1,30 @@
+From: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] proximity: check repeated vendor data before dereferencing it
+
+The Davinci response defines repeated bytes data and required accuracy. A
+protobuf message containing only accuracy therefore unpacks successfully
+with n_data zero and data NULL. Check the count and pointers before reading
+the first element or copying its bytes. Free the decoded message and retain
+the last accepted measurement when data is absent.
+
+Keep both existing event dispatch paths and unpack diagnostics unchanged.
+This does not identify the old Uke 36-byte event or alter near/far mapping.
+Reviewed against v0.4.4 and upstream main033e2a32095c024d6dbdfb1d4ae1db4a94be32f1.
+Existing GPL-3.0-or-later attribution remains.
+
+Signed-off-by: MCC45TR <75160848+MCC45TR@users.noreply.github.com>
+--- a/src/libssc-sensor-proximity.c
++++ b/src/libssc-sensor-proximity.c
+@@ -106,6 +106,12 @@ report_received (SSCClient *client,
+ 				return;
+ 			}
+ 
++			if (msg->n_data == 0 || msg->data == NULL || msg->data->data == NULL) {
++				ssc_proximity_response_davinci__free_unpacked (msg, NULL);
++				g_warning ("Missing Xiaomi Davinci proximity data");
++				return;
++			}
++
+ 			if (msg->data->len != sizeof(ProximityDataDavinci)) {
+ 				/* Not observed and unlikely to ever happen due to reserved fields in the data struct */
+ 				ssc_proximity_response_davinci__free_unpacked (msg, NULL);

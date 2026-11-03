@@ -17,11 +17,11 @@ struct SSCSensorProximityPrivate { gboolean near=false, reported_once=false; };
 struct SSCSensorProximity { SSCSensorProximityPrivate state; };
 struct SignalContext { SSCSensorProximity *sensor; gboolean near; };
 struct SscProximityResponse { gint32 near; };
-struct SscProximityResponseDavinci { GArray *data; };
+struct SscProximityResponseDavinci { gsize n_data; GArray *data; };
 static SscProximityResponse ordinary;
 static ProximityDataDavinci vendor_data;
 static GArray vendor_bytes{reinterpret_cast<gchar *>(&vendor_data),sizeof(vendor_data)};
-static SscProximityResponseDavinci vendor{&vendor_bytes};
+static SscProximityResponseDavinci vendor{1,&vendor_bytes};
 static bool unpack=true;
 static unsigned freed=0, delivered=0, warnings=0;
 static gboolean last_near;
@@ -71,6 +71,19 @@ int main() {
         vendor_data.near=value; sample(769,false); assert(warnings);
     }
     vendor_bytes.len=0; sample(769,false); vendor_bytes.len=sizeof(vendor_data);
+    vendor.n_data=0; vendor.data=nullptr;
+    sample(769,false); assert(warnings);
+    vendor.n_data=1;
+    sample(769,false); assert(warnings);
+    vendor.data=&vendor_bytes; vendor_bytes.data=nullptr;
+    sample(769,false); assert(warnings);
+    vendor_bytes.data=reinterpret_cast<gchar *>(&vendor_data);
+    vendor.n_data=0;
+    sample(769,false); assert(warnings);
+    vendor.n_data=1;
+    vendor_bytes.len=sizeof(vendor_data)-1; sample(769,false);
+    vendor_bytes.len=sizeof(vendor_data)+1; sample(769,false);
+    vendor_bytes.len=sizeof(vendor_data);
     SSCSensorProximity sensor; GArray payload{nullptr,0};
     ordinary.near=1; freed=delivered=0;
     report_received(nullptr,1025,42,43,&payload,&sensor);
@@ -97,4 +110,4 @@ if [[ ${SANITIZE:-0} == 1 ]]; then flags+=(-fsanitize=address,undefined,float-ca
 "${CXX:-c++}" "${flags[@]}" -I "$(dirname -- "$source")" "$work/check.cpp" \
     $(pkg-config --cflags --libs glib-2.0) -o "$work/check"
 "$work/check"
-echo 'Actual proximity callback preserves near/far delivery, rejects invalid integer/float states and releases decoded messages; no device input'
+echo 'Actual proximity callback preserves near/far delivery, rejects missing vendor data and invalid states, and releases decoded messages; no device input'

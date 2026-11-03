@@ -1,6 +1,6 @@
 Name: libssc
 Version: 0.4.4
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Native Qualcomm Sensor Core client library
 License: GPL-3.0-or-later
 URL: https://codeberg.org/DylanVanAssche/libssc
@@ -9,6 +9,7 @@ Source1: libssc-light-constructor.cpp
 Source2: libssc-proximity-context.cpp
 Source3: libssc-mount-matrix.sh
 Source4: libssc-proximity-values.sh
+Source5: libssc-proximity-empty.cpp
 Patch0: 0001-optional-python-mocks.patch
 Patch1: 0002-report-qrtr-error.patch
 Patch2: 0003-gyroscope-cli-units.patch
@@ -16,6 +17,7 @@ Patch3: 0004-light-data-type-and-validity.patch
 Patch4: 0005-preserve-nonzero-mount-matrix.patch
 Patch5: 0006-bounded-proximity-unpack-context.patch
 Patch6: 0007-reject-invalid-proximity-values.patch
+Patch7: 0008-guard-empty-proximity-data.patch
 BuildRequires: bash gcc gcc-c++ meson ninja-build pkgconf-pkg-config
 BuildRequires: python3 = 3.15.2-1.fc46
 BuildRequires: meson = 1.12.1-2.fc46
@@ -37,7 +39,10 @@ Headers and pkg-config metadata for native SSC clients.
 
 %prep
 echo '716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587  %{SOURCE0}' | sha256sum -c -
-%autosetup -n libssc -p1
+%autosetup -n libssc -p1 -N
+%autopatch -p1 -M 6
+cp src/libssc-sensor-proximity.c src/libssc-sensor-proximity-before-guard.c
+%patch -P 7 -p1
 
 %build
 %set_build_flags
@@ -48,6 +53,18 @@ meson compile -C build
 DESTDIR=%{buildroot} meson install -C build --no-rebuild
 
 %check
+gcc -Wall -Wextra -Werror -I build/data \
+    $(pkg-config --cflags libprotobuf-c) -c build/data/ssc-sensor-proximity.pb-c.c -o proximity-generated.o
+g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -I build/data %{SOURCE5} \
+    proximity-generated.o $(pkg-config --cflags --libs libprotobuf-c) -o proximity-empty-test
+./proximity-empty-test
+ulimit -c 0
+set +e
+bash %{SOURCE4} src/libssc-sensor-proximity-before-guard.c > proximity-before-guard.log 2>&1
+before_status=$?
+set -e
+test "$before_status" = 139
+echo 'Actual unpatched callback reproduces the empty-data crash (expected status 139)'
 bash %{SOURCE3} src/libssc-sensor.c
 test -s build/src/libssc.so.2
 g++ -std=c++20 -UNDEBUG -Wall -Wextra -Werror -I src %{SOURCE1} \
@@ -71,6 +88,10 @@ if find %{buildroot} -type f \( -name '*.py' -o -iname '*python*' \) | grep -q .
 %{_libdir}/pkgconfig/libssc.pc
 
 %changelog
+* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-7
+- Reject absent repeated vendor data before dereferencing it.
+- Verify the real protobuf empty-data case and the original callback crash in COPR.
+
 * Wed Oct 21 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 0.4.4-6
 - Reject invalid proximity states without aborting the sensor client.
 - Exercise the actual callback with ordinary and sanitized host fault fixtures.
