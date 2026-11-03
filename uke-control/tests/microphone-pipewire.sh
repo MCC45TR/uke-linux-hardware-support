@@ -6,6 +6,14 @@ stage=$(mktemp -d)
 pids=()
 cleanup() { for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null || :; done; wait 2>/dev/null || :; rm -r -- "$stage"; }
 trap cleanup EXIT
+failure() {
+ printf 'Headless fixture failed at line %s\n' "$1"
+ for file in "$stage"/*.log; do [[ ! -f $file ]] || tail -15 "$file"; done
+ for file in "$stage"/*.raw; do [[ ! -f $file ]] || wc -c "$file"; done
+ pw-link -l || :
+ pw-cli ls Node || :
+}
+trap 'failure "$LINENO"' ERR
 export XDG_RUNTIME_DIR=$stage/runtime
 mkdir -m700 "$XDG_RUNTIME_DIR" "$stage/config"
 cat > "$stage/config/test.conf" <<'CONF'
@@ -57,7 +65,7 @@ record() {
  local client=$!;pids+=("$client")
  wait_port -i "$name:input_MONO"
  pw-link fixture.speech:capture_MONO "$name:input_MONO"
- if ! wait "$client"; then cat "$stage/$name.log" "$stage/server.log"; return 1; fi
+ if ! wait "$client"; then failure "$LINENO"; return 1; fi
  test "$(wc -c < "$stage/$name.raw")" -eq 192000
  rm "$stage/$name.raw"
 }
