@@ -72,8 +72,14 @@ record() {
    sleep .1
  done
  if [[ $complete != true ]]; then failure "$LINENO"; return 1; fi
- kill -INT "$client" 2>/dev/null || :
- wait "$client"
+ kill -TERM "$client" 2>/dev/null || :
+ for i in {1..30}; do kill -0 "$client" 2>/dev/null || break; sleep .1; done
+ if kill -0 "$client" 2>/dev/null; then kill -KILL "$client"; return 1; fi
+ # PipeWire 1.6.11 returns 1 when a recording is deliberately stopped without
+ # a playback drain. Exact frame delivery was checked before sending TERM.
+ local result=0
+ wait "$client" || result=$?
+ [[ $result -eq 0 || $result -eq 1 ]]
  test "$(wc -c < "$stage/$name.raw")" -eq 192000
  rm "$stage/$name.raw"
 }
