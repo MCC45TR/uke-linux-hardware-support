@@ -1,0 +1,21 @@
+# Device-local Uke CDSP and pogo firmware
+
+4 November 2026: candidate native C++ provisioning helper. It reads only fixed
+stock files from modem_a and the hash-admitted MCU image in stock ODM/vendor.
+It never uploads OEM firmware to Git/COPR or writes a source partition.
+
+Production requires exact Uke/SM7675 identity, root-owned descriptors, stock
+sources on the Fedora root disk and a non-running installed kernel release.
+CDSP MDT identities are pinned to the retained Global304 ELF32 headers;
+split sizes follow that authenticated metadata. The kernel PAS loader still
+performs secure authentication. The MCU image has an exact whole-file hash.
+
+Firmware families publish atomically to the versioned firmware directory.
+Existing differing files or symlinks are refused. No DSP or MCU is started,
+no trusted app is loaded and no calibration is accessed. The helper does not
+provide a DSP program/runtime or keyboard authentication token provider.
+
+The read-only LP/loop/debugfs path reuses the original Uke boot updater header
+at a96607f. FAT parsing and bounded publication are original MIT C++ code.
+Synthetic native/sanitizer tests run on COPR. Tablet provisioning and physical
+operation remain separate acceptance gates.

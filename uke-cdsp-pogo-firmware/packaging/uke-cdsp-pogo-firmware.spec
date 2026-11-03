@@ -1,0 +1,37 @@
+Name: uke-cdsp-pogo-firmware
+Version: 0.1
+Release: 1%{?dist}
+Summary: Read-only device-local Uke CDSP and pogo firmware provisioning
+License: MIT
+Source0: %{name}-%{version}.tar.gz
+BuildRequires: gcc-c++
+BuildRequires: openssl-devel
+Requires: e2fsprogs
+ExclusiveArch: aarch64
+
+%description
+Native C++ helper that reads fixed stock CDSP files and the exact Uke MCU
+image from local read-only stock partitions. Publishes only non-running,
+versioned firmware families. Contains no OEM firmware or calibration.
+
+%prep
+%setup -q
+
+%build
+%set_build_flags
+g++ %{build_cxxflags} -std=c++20 -Wall -Wextra -Werror -Wno-misleading-indentation +    uke-cdsp-pogo-firmware/src/import.cpp %{build_ldflags} -lcrypto -o uke-cdsp-pogo-firmware-bin
+
+%check
+bash uke-cdsp-pogo-firmware/tests/check.sh
+
+%install
+install -Dm755 uke-cdsp-pogo-firmware-bin %{buildroot}%{_libexecdir}/uke-cdsp-pogo-firmware
+install -Dm644 uke-cdsp-pogo-firmware/README.md %{buildroot}%{_docdir}/%{name}/README.md
+
+%files
+%{_libexecdir}/uke-cdsp-pogo-firmware
+%doc %{_docdir}/%{name}/README.md
+
+%changelog
+* Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1-1
+- Add bounded read-only stock firmware provisioning without OEM redistribution.
