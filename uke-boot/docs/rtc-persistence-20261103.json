@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "date": "2026-11-03",
+  "project": "mcc45tr/uke-linux-unstable",
+  "build_id": 11251582,
+  "source_commit": "d03d854032dd7c0b011ac1be2ff1089850af0403",
+  "version": "1.8.39-1.fc46",
+  "parent_build": 11251496,
+  "parent_srpm_sha256": "087528ce0594c9f729eca935c2104902b722ab268d525aedcbcce0b0f845b018",
+  "signatures": "all six binaries and rebuilt SRPM verified with COPR key",
+  "target_payload_checks": true,
+  "native_rtc_fixture": true,
+  "legacy_migration_and_rollback_retained": true,
+  "physical_rtc_writes": false,
+  "physical_acceptance": false,
+  "rpm_files": [
+    {
+      "file": "uke-boot-integration-1.8.39-1.fc46.aarch64.rpm",
+      "sha256": "0addc4a0202d09527f3076e9cbd8d630ed39e90c78aa9346b364ea064ccabea9"
+    },
+    {
+      "file": "uke-boot-integration-1.8.39-1.fc46.src.rpm",
+      "sha256": "2ba80383be7775029779b31a7288ce6cfec592d48ea88f1a1865509034005b4d"
+    },
+    {
+      "file": "uke-boot-recovery-1.8.39-1.fc46.aarch64.rpm",
+      "sha256": "afb816d0d7a55fd9bea81b3425524c9109e264dda45b295bebb355bcd4d9c2f4"
+    },
+    {
+      "file": "uke-cdc-debug-1.8.39-1.fc46.aarch64.rpm",
+      "sha256": "c430958ca959f2a366c49b0a0b6c66bdac3486f61e7e0c22c2ac816be7072a37"
+    },
+    {
+      "file": "uke-esp32-cdc-1.8.39-1.fc46.aarch64.rpm",
+      "sha256": "a2810ba16cdf5b7059e0dda62d87e9cd76aa4eef3ad9be0c62b9f64ffaa9a67f"
+    },
+    {
+      "file": "uke-installation-profile-1.8.39-1.fc46.aarch64.rpm",
+      "sha256": "fdfacd50be80a70b5d11607ac9f93297a2626eac544b2ce0ced19fcc1a263d9b"
+    },
+    {
+      "file": "uke-kernel-update-1.8.39-1.fc46.aarch64.rpm",
+      "sha256": "87fa416e496b285daa2c9c3901ff0e7f6a59cc221644a9c2aade2acf276b3127"
+    }
+  ]
+}

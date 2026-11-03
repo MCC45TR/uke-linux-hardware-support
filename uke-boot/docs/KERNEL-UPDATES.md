@@ -1,6 +1,6 @@
 # Stock-ABL kernel updates
 
-3 November 2026, source1.8.38 pairs the secure RTC kernel with trusted UTC
+3 November 2026, source1.8.39 pairs the secure RTC kernel with trusted UTC
 provisioning, readback and startup checks. The original Chrony package remains
 in use. See [RTC persistence](RTC-PERSISTENCE.md) for bootstrap, old-kernel
 compatibility, offline time and separate physical acceptance limits.

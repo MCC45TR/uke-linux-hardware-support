@@ -41,3 +41,11 @@ not silently accept the new kernel as healthy. No normal-update reboot is added.
 Delivery uses COPR and a normal DNF transaction. Native injected-I/O and unit
 syntax fixtures are software evidence; real ioctl persistence, alarms, reboot,
 offline startup and complete power-loss behavior have independent test gates.
+
+After booting the paired kernel, inspect `journalctl -b -u uke-rtc-sync.service`
+and run `sudo /usr/libexec/senemos-uke/uke-install-profile rtc-check` for a
+read-only calendar comparison. An initial deferred result requires NTP UTC;
+the timer retries automatically. A missing RTC or firmware error is a failure,
+not a reason to enable direct PMIC writes. A correct live readback alone does
+not establish retention: warm restart, offline startup, suspend/alarm behavior
+and a cold power cycle need separate observations with the same package cohort.

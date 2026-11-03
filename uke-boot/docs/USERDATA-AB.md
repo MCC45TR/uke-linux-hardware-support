@@ -1,6 +1,6 @@
 # Userdata boot A/B updates
 
-3 November 2026, version1.8.38: when the running DT requests the Uke secure
+3 November 2026, version1.8.39: when the running DT requests the Uke secure
 RTC backend, boot health also requires a valid RTC calendar matching system
 UTC. Trusted-time provisioning runs through the original Chrony dependency and
 a native timer. The first-update migration and 30-second qualification window
