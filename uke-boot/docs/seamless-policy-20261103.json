@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "date": "2026-11-03",
+  "project": "mcc45tr/uke-linux-unstable",
+  "target": "fedora-rawhide-aarch64",
+  "build_id": 11250994,
+  "source_commit": "6f8edbc24412f8c79e0a5097cc3037f9935ab20e",
+  "version": "1.8.36-1.fc46",
+  "parent_build": 11246494,
+  "parent_srpm_sha256": "8b26eaaf49fffe7a2871d7cac309a8d9d257001c727f408387e9d5a2a6d71cc9",
+  "rpm_signatures": "verified with COPR public key in private database",
+  "legacy_policy_migration": "exact disabled pair once; subsequent opt-out retained",
+  "slot_writer_unchanged": true,
+  "automatic_reboot": false,
+  "physical_update_test": "not_run",
+  "rpm_files": [
+    {
+      "file": "uke-boot-integration-1.8.36-1.fc46.aarch64.rpm",
+      "sha256": "7cb982e44d41a5448e087336954131dcde87657130e8bac64a33da5605df2b08"
+    },
+    {
+      "file": "uke-boot-integration-1.8.36-1.fc46.src.rpm",
+      "sha256": "cafb4b762163597c4bbe33d86e5ada7f0f74bf216b782661edcdbafa821b5184"
+    },
+    {
+      "file": "uke-boot-recovery-1.8.36-1.fc46.aarch64.rpm",
+      "sha256": "3687783d09b4fbb59ed86ce8a63eb4221f682daa7089817b44f1d46d126fc62c"
+    },
+    {
+      "file": "uke-cdc-debug-1.8.36-1.fc46.aarch64.rpm",
+      "sha256": "ddd8dd2338f334045b9fff8a18c21d4ef941fbb0f88cd3e53c26dedeae872925"
+    },
+    {
+      "file": "uke-esp32-cdc-1.8.36-1.fc46.aarch64.rpm",
+      "sha256": "ab7197b0f46ead7097967434b97238bd5d84bc3370e29fe0f8f635d8763676bb"
+    },
+    {
+      "file": "uke-installation-profile-1.8.36-1.fc46.aarch64.rpm",
+      "sha256": "3c322164ca364008d2a3177169d270edbb3f5691a18e839f284f20581ce2c97b"
+    },
+    {
+      "file": "uke-kernel-update-1.8.36-1.fc46.aarch64.rpm",
+      "sha256": "5ef05f27a489db4e741ab370862d329d2f394b11f35e2117d4220eacde58646e"
+    }
+  ],
+  "software_checks": {
+    "native_policy_fault_recovery": "passed (12 interruption points)",
+    "rpm_updater_only_upgrade": "passed (migration then activation once)",
+    "existing_boot_update_contracts": "passed",
+    "delivered_rpm_hooks": "verified",
+    "runtime_dependencies": "unchanged from retained 1.8.33",
+    "repository_visibility": "verified"
+  }
+}

@@ -292,3 +292,13 @@ The source update adds no current-slot writer and performs no tablet operation
 while building. Source/package fixtures and physical acceptance remain separate.
 
 RPM trigger semantics: [rpm-scriptlets(7)](https://rpm.org/docs/latest/manual/file_triggers.html).
+
+Software validation on 3 November 2026: COPR
+[11250994](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11250994/)
+completed for Fedora Rawhide AArch64. Native policy/recovery and existing A/B
+contracts passed. An isolated RPM upgrade with an already installed boot bundle
+recorded migration before exactly one final activation trigger. All six binary
+RPMs and the rebuilt source RPM verify with the COPR public key; the delivered
+migration hook, final trigger and repository metadata were checked separately.
+[Artifact identities](seamless-policy-20261103.json) retain the build source and
+digests. No physical slot write, reboot or rollback was performed for this build.
