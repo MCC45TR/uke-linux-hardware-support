@@ -13,7 +13,7 @@ for project in uke-linux-unstable uke-linux-test uke-linux; do
  curl -fLsS --get --data-urlencode ownername=mcc45tr --data-urlencode "projectname=$project" \
   --data-urlencode packagename=uke-boot-integration --data-urlencode limit=100 \
   https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
- jq -e '(.items|length)<100 and all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+([.][0-9]+)*$";""))!="1.8.35-1")' "$stage/builds.json" >/dev/null
+ jq -e '(.items|length)<100 and all(.items[]; ((.source_package.version // "")|sub("[.]fc[0-9]+([.][0-9]+)*$";""))!="1.8.36-1")' "$stage/builds.json" >/dev/null
 done
 curl -fLsS --retry 2 --proto '=https' --proto-redir '=https' \
  https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11246494/uke-boot-integration-1.8.33-1.fc46.src.rpm \
@@ -51,7 +51,7 @@ done < "$stage/overlays"
 rewrite_spec() {
  awk '
  /^%changelog/ {history=1}
- !history {gsub(/1[.]8[.]33/,"1.8.35")}
+ !history {gsub(/1[.]8[.]33/,"1.8.36")}
  {print}
  /^BuildRequires: jq$/ {print "BuildRequires: rpm-build"}
  /^Provides: uke-kernel-update\(final-transaction-v2\) = 1$/ {print "Provides: uke-kernel-update(automatic-policy-migration-v1) = 1"}
@@ -75,14 +75,14 @@ rewrite_spec "$stage/sources/uke-boot-integration.spec" "$output/uke-boot-integr
 [[ $(grep -Fc 'bash tests/automatic-policy-rpm.sh' "$output/uke-boot-integration.spec") == 1 ]]
 commit=$(git -C "$owner" rev-parse HEAD)
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
-mv "$inner" "$stage/inner/uke-boot-integration-1.8.35"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.35.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.35
+mv "$inner" "$stage/inner/uke-boot-integration-1.8.36"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$input/uke-boot-integration-1.8.36.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.36
 unlink "$input/uke-boot-integration-1.8.33.tar.xz"
 jq -n --arg commit "$commit" --arg parent "$parent" \
  '{schema:1,source_commit:$commit,parent_build:11246494,parent_srpm_sha256:$parent,
   one_time_legacy_policy_migration:true,future_opt_out_preserved:true,automatic_reboot:false,
   slot_writer_unchanged:true,firmware_payload_included:false,physical_acceptance:false}' > "$outer/seamless-policy-overlay.json"
 (cd "$outer"; find . -type f ! -name SOURCE-SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SOURCE-SHA256SUMS)
-mv "$outer" "$stage/outer/uke-boot-integration-1.8.35"
-tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.35.tar.xz" -C "$stage/outer" uke-boot-integration-1.8.35
-[[ $(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.35-1.fc46 ]]
+mv "$outer" "$stage/outer/uke-boot-integration-1.8.36"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-1.8.36.tar.xz" -C "$stage/outer" uke-boot-integration-1.8.36
+[[ $(rpmspec --target aarch64 --define 'dist %{nil}' -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.36-1.fc46 ]]

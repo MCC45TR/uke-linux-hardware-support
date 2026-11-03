@@ -32,7 +32,9 @@ printf 'fixture\n' > %{buildroot}@PREFIX@/usr/lib/senemos/kernel-updates/fixture
 SPEC
 sed -i "s|@PREFIX@|$prefix|g" "$top/SPECS/fixture.spec"
 rpmbuild -bb --quiet --define "_topdir $top" --define "_rpmdir $top/RPMS" --define "_srcrpmdir $top/SRPMS" --define "_builddir $top/BUILD" --define "_buildrootdir $top/BUILDROOT" --define '_rpmfilename %{ARCH}/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm' --define 'debug_package %{nil}' "$top/SPECS/fixture.spec"
-rpm --dbpath "$work/rpmdb" --nodeps -i "$top/RPMS/noarch/uke-policy-fixture-boot-1-1.noarch.rpm"
+# These unsigned packages exist only in this temporary database. Keep digest
+# verification enabled; production packages are signed by COPR after %check.
+rpm --dbpath "$work/rpmdb" --nosignature --nodeps -i "$top/RPMS/noarch/uke-policy-fixture-boot-1-1.noarch.rpm"
 for release in 1 2; do
  cat > "$top/SPECS/fixture.spec" <<'SPEC'
 Name: uke-policy-fixture-updater
@@ -63,7 +65,7 @@ printf 'auto\n' >> $work/events
 SPEC
  fi
  rpmbuild -bb --quiet --define "_topdir $top" --define "_rpmdir $top/RPMS" --define "_srcrpmdir $top/SRPMS" --define "_builddir $top/BUILD" --define "_buildrootdir $top/BUILDROOT" --define '_rpmfilename %{ARCH}/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm' --define 'debug_package %{nil}' "$top/SPECS/fixture.spec"
- rpm --dbpath "$work/rpmdb" --nodeps -U "$top/RPMS/noarch/uke-policy-fixture-updater-1-$release.noarch.rpm"
+ rpm --dbpath "$work/rpmdb" --nosignature --nodeps -U "$top/RPMS/noarch/uke-policy-fixture-updater-1-$release.noarch.rpm"
  if [[ $release == 1 ]]; then
   printf 'automatic=0\n' > "$config/kernel-update.conf"
   printf 'automatic=0\n' > "$config/userdata-update.conf"
