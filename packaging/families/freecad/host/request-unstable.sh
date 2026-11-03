@@ -10,25 +10,27 @@ cd "$root"
 family=packaging/families/freecad
 bash "$family/tests/source-contracts.sh"
 version=$(jq -er '(.epoch|tostring)+":"+.version+"-"+(.release|tostring)' "$family/source-lock.json")
+package=$(jq -er '.name|select(.=="uke-freecad")' "$family/source-lock.json")
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
 api=https://copr.fedorainfracloud.org/api_3
 get() { curl --fail --silent --show-error --proto '=https' --max-time 45 "$1" -o "$2"; }
 get "$api/project?ownername=mcc45tr&projectname=uke-linux-unstable" "$stage/project.json"
 jq -e '.ownername=="mcc45tr" and .name=="uke-linux-unstable" and .enable_net==false and .additional_repos==[] and (.chroot_repos|has("fedora-rawhide-aarch64"))' "$stage/project.json" >/dev/null
-get "$api/build/list?ownername=mcc45tr&projectname=uke-linux-unstable&packagename=freecad&limit=100" "$stage/named.json"
+get "$api/build/list?ownername=mcc45tr&projectname=uke-linux-unstable&packagename=$package&limit=100" "$stage/named.json"
+get "$api/build/list?ownername=mcc45tr&projectname=uke-linux-unstable&packagename=freecad&limit=100" "$stage/legacy.json"
 get "$api/build/list?ownername=mcc45tr&projectname=uke-linux-unstable&limit=100" "$stage/recent.json"
-jq -s '{items:([.[].items[]]|unique_by(.id)|sort_by(.id)|reverse)}' "$stage/named.json" "$stage/recent.json" >"$stage/builds.json"
+jq -s '{items:([.[].items[]]|unique_by(.id)|sort_by(.id)|reverse)}' "$stage/named.json" "$stage/legacy.json" "$stage/recent.json" >"$stage/builds.json"
 jq -e 'all(.items[]; .ownername=="mcc45tr" and .projectname=="uke-linux-unstable")' "$stage/builds.json" >/dev/null
-if jq -e --arg v "$version" 'any(.items[]; .source_package.name=="freecad" and (.state|IN("succeeded","forked")) and ((.source_package.version==$v) or (.source_package.version|startswith($v+"."))))' "$stage/builds.json" >/dev/null; then
+if jq -e --arg name "$package" --arg v "$version" 'any(.items[]; .source_package.name==$name and (.state|IN("succeeded","forked")) and ((.source_package.version==$v) or (.source_package.version|startswith($v+"."))))' "$stage/builds.json" >/dev/null; then
   echo 'This FreeCAD release is already published; no duplicate requested.'; exit 0
 fi
-mapfile -t ids < <(jq -r '.items[]|select(.source_package.name=="freecad" or .source_package.name==null)|.id' "$stage/builds.json")
+mapfile -t ids < <(jq -r --arg name "$package" '.items[]|select(.source_package.name==$name or .source_package.name=="freecad" or .source_package.name==null)|.id' "$stage/builds.json")
 for id in "${ids[@]}"; do
   [[ $id =~ ^[0-9]+$ ]]
   state=$(jq -er --argjson id "$id" '.items[]|select(.id==$id)|.state' "$stage/builds.json")
   name=$(jq -r --argjson id "$id" '.items[]|select(.id==$id)|.source_package.name' "$stage/builds.json")
-  if [[ $name == freecad ]]; then
+  if [[ $name == "$package" || $name == freecad ]]; then
     case "$state" in running|pending|starting|importing|waiting)
       printf 'FreeCAD build %s is active; no duplicate requested.\n' "$id"; exit 0;;
     esac
@@ -37,7 +39,7 @@ for id in "${ids[@]}"; do
   jq -e '.source_type|type=="string"' "$stage/source.json" >/dev/null
   if ! jq -e '.source_type=="scm" and .source_dict.clone_url=="https://github.com/MCC45TR/uke-linux-hardware-support.git" and .source_dict.subdirectory=="packaging/families/freecad"' "$stage/source.json" >/dev/null; then
     prior_version=$(jq -r --argjson id "$id" '.items[]|select(.id==$id)|.source_package.version' "$stage/builds.json")
-    if [[ $name == freecad && ( $state == failed || $state == canceled ) && ( $prior_version == "$version" || $prior_version == "$version".* ) ]]; then
+    if [[ ( $name == "$package" || $name == freecad ) && ( $state == failed || $state == canceled ) && ( $prior_version == "$version" || $prior_version == "$version".* ) ]]; then
       echo 'A matching FreeCAD release failed from an uncomparable source; inspect it before resubmission.' >&2; exit 1
     fi
     continue

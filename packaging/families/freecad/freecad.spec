@@ -1,9 +1,9 @@
 # Based on Elaine Gibson's Fedora package review, rhbz#2386504.
-# Keep the upstream application name and Fedora runtime dependencies.
-Name:           freecad
+# Prefix RPM names for Uke repository filters; preserve upstream launch paths.
+Name:           uke-freecad
 Epoch:          1
 Version:        1.1.4
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        A 3D parametric modeler
 
 License:        LGPL-2.1-or-later AND Zlib AND BSD-3-Clause AND Apache-2.0 AND EUPL-1.2 AND BSL-1.0 AND MIT AND Artistic-2.0 AND GPL-2.0-or-later AND CC-BY-SA-4.0
@@ -65,6 +65,12 @@ Requires:       python3-typing-extensions
 Requires:       hicolor-icon-theme
 Requires:       shared-mime-info
 
+# Replace older unprefixed packages and satisfy their existing consumers.
+Provides:       freecad = %{epoch}:%{version}-%{release}
+Provides:       freecad%{?_isa} = %{epoch}:%{version}-%{release}
+Obsoletes:      freecad <= %{epoch}:%{version}-%{release}
+Conflicts:      freecad > %{epoch}:%{version}-%{release}
+
 Provides:       bundled(zipios++)
 Provides:       bundled(SMESH) = 7.7.1.0
 Provides:       bundled(nlohmann_json) = 3.11.3
@@ -85,6 +91,9 @@ Python, Qt and engineering libraries.
 Summary:        Data files for FreeCAD
 License:        LGPL-2.1-or-later AND GPL-2.0-or-later AND CC-BY-3.0 AND CC-BY-4.0 AND CC-BY-SA-4.0
 BuildArch:      noarch
+Provides:       freecad-data = %{epoch}:%{version}-%{release}
+Obsoletes:      freecad-data <= %{epoch}:%{version}-%{release}
+Conflicts:      freecad-data > %{epoch}:%{version}-%{release}
 
 %description data
 Shared resources, translations and workbench data for FreeCAD.
@@ -165,6 +174,10 @@ appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/org.freecad.Fr
 %{_datadir}/freecad/
 
 %changelog
+* Tue Nov 03 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1:1.1.4-4
+- Prefix RPM names for the Uke include filter while preserving FreeCAD launch paths.
+- Provide compatibility names and replace older unprefixed packages safely.
+
 * Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1:1.1.4-3
 - Stage the pinned JSON license beside other source-tree license texts for RPM packaging.
 

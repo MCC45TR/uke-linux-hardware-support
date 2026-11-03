@@ -139,3 +139,38 @@ exposed. Publication to main and actual automatic dispatch remain unverified
 until the reviewed changes are merged, credentials are configured and a real
 workflow run succeeds. Local tests and a real unchanged-release provenance
 check do not establish that automatic COPR access is enabled.
+
+## Uke RPM names and repository include filtering, 3 November 2026
+
+Native build 11247905 published signed `freecad` and `freecad-data` release-3
+RPMs. Their signatures, ELF64 AArch64 executables, repository checksums and a
+508-package official-Rawhide/unstable dependency transaction passed. The device
+repository later supplied `includepkgs=uke-*,senemos-uke-linux-kernel-*` as a
+required policy. DNF removes unmatching real package names before dependency
+resolution; a compatibility provide cannot make a filtered RPM visible.
+
+Release 4 names the real source/binary packages `uke-freecad` and
+`uke-freecad-data`. The freecad family directory, upstream source pins, commands,
+desktop identity, private libraries and data paths retain their existing names.
+The main package requires the real Uke data package at the identical epoch,
+version and release. Versioned compatibility provides satisfy existing consumers;
+obsoletes cover older/equal unprefixed packages and conflicts cover newer ones.
+The existing epoch 1 is preserved for upgrades.
+
+The real RPM/DNF fixture test takes these relationships from the expanded spec.
+It contains the legacy RPMs in the same local repository and applies the exact
+include filter, then checks installation, compatibility consumers, upgrades and
+newer-upstream conflicts. Locally generated unsigned fixtures seed only a
+temporary RPM database with digest verification and no payload or scripts.
+That fixture policy does not change published COPR signature requirements.
+The native renamed build and its signed, filtered dependency transaction must
+be verified separately. No device filter or tablet installation is changed.
+On Fedora 44 and Rawhide host containers, the source contracts, license RPM
+fixture, automation fixtures and exact-filter DNF tests passed. DNF used
+`--forcearch=aarch64`; no fixture application payload was installed. Source RPM
+generation and all four zero-fuzz patches also passed under the Uke source name.
+
+Future dispatch checks both `uke-freecad` and legacy `freecad` build history.
+An active legacy build still prevents a concurrent request, while an older
+successful unprefixed release does not suppress the Uke-named build. Automatic
+main publication and credential activation remain subject to their existing hold.

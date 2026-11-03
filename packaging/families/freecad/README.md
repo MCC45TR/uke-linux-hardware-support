@@ -3,10 +3,18 @@
 This optional application is built from FreeCAD 1.1.4's upstream release source
 for `mcc45tr/uke-linux-unstable`, `fedora-rawhide-aarch64` only. All FreeCAD spec,
 source pins, checks and source-generation rules live in this separate `freecad`
-family. Its single source package produces `freecad` and `freecad-data`, plus
-RPM-generated debug packages. It is separate from the `uke-*` hardware families,
-their automatic COPR hooks and release-image package selections. Testing and
+family. Its `uke-freecad` source package produces `uke-freecad` and
+`uke-freecad-data`, plus RPM-generated debug packages. Hardware-family COPR
+hooks and release-image package selections are managed separately. Testing and
 stable promotion require separate test results and authorization.
+
+The real RPM names match `includepkgs=uke-*,senemos-uke-linux-kernel-*`.
+Versioned `freecad`, `freecad(aarch-64)` and `freecad-data` provides retain
+dependency compatibility. Older or equal-version unprefixed packages are
+replaced during upgrades; newer upstream packages conflict to prevent mixed
+ownership of the same application files. The `FreeCAD`, `FreeCADCmd` and
+`freecad` commands, `org.freecad.FreeCAD` desktop identity, and upstream data and
+configuration paths retain their existing names.
 
 ## Source provenance
 
@@ -28,6 +36,7 @@ Release 2 additionally backports upstream
 [PySide 6.12 compatibility fix #33408](https://github.com/FreeCAD/FreeCAD/pull/33408).
 Release 3 stages the pinned JSON license beside the other license texts so RPM
 can package them together using source-tree-relative paths.
+Release 4 applies the Uke RPM naming rule and upgrade relationships.
 
 FreeCAD embeds upstream Python and imports Python workbenches at runtime. The
 user explicitly requested this optional application for the Fedora root. Its
@@ -77,18 +86,23 @@ Native AArch64 build 11246564 subsequently completed compilation and its checks:
 CTest reported zero failures, with six upstream-disabled tests and three skipped
 tests. Desktop and AppStream validation passed. RPM file processing then failed
 because a license list mixed relative and absolute paths. Release 3 corrects
-that file-list syntax; a new native build and RPM publication remain required.
+that file-list syntax. Build 11247905 subsequently published signed unprefixed
+RPMs; their executable architecture, repository checksums and Rawhide dependency
+closure passed. That transaction did not include the device's Uke-only repository
+filter. Release 4 addresses that newly supplied constraint; its native build,
+signed publication and filtered dependency transaction remain separate checks.
 
 The `freecad.yml` GitHub workflow checks this family's source contracts and
 does not submit COPR builds. The existing `uke-*` family registry is unchanged,
 so its test/stable hooks do not pick up FreeCAD. See the family's
 [lesson record](docs/lessons/2026-11-02-freecad-rawhide.md) for evidence and limits.
 
-After a successful native build and repository verification, install with:
+After a successful Uke-named native build and filtered repository verification,
+install with:
 
 ```sh
-sudo dnf copr enable mcc45tr/uke-linux-unstable
-sudo dnf install freecad
+sudo dnf5 copr enable mcc45tr/uke-linux-unstable fedora-rawhide-aarch64
+sudo dnf5 --refresh install uke-freecad
 ```
 
 Review the transaction before accepting it. Launch `FreeCAD` or `freecad`.
@@ -123,9 +137,17 @@ Synthetic updater and dispatch tests run with:
 
 ```sh
 make -C packaging/families/freecad test-automation
+make -C packaging/families/freecad test-filtering
 ```
 
 They cover stable-release idempotence, prerelease/regression/checksum refusals,
 rollback after source-preparation or dependency failures, active/published/failed
 build deduplication, pinned unstable requests and a single uncertain POST. They
 make no external requests. Native builds and device tests remain separate.
+The filter test builds local AArch64 RPM fixtures from the actual rename
+metadata and runs DNF against the exact Uke include filter. It covers fresh
+installation, compatibility consumers, older/equal-version upgrades and refusal
+to mix a newer upstream package. Its RPM database fixtures do not install or
+execute application payloads. Published RPM signature and full dependency checks
+must still pass after the native build.
+These local filter fixtures additionally require `dnf5` and `createrepo_c`.

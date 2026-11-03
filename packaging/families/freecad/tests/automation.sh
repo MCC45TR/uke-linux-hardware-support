@@ -148,8 +148,8 @@ run_dispatch() {
     GITHUB_STEP_SUMMARY='' bash "$family/host/request-unstable.sh" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >"$FREECAD_FIXTURE/log" 2>&1
 }
 build_fixture() {
-  local state=$1 version=${2:-$(jq -r '(.epoch|tostring)+":"+.version+"-"+(.release|tostring)+".fc46"' "$family/source-lock.json")}
-  jq -n --arg state "$state" --arg version "$version" '{items:[{id:7,ownername:"mcc45tr",projectname:"uke-linux-unstable",state:$state,submitted_on:1793600000,source_package:{name:"freecad",version:$version}}]}' >"$FREECAD_FIXTURE/builds.json"
+  local state=$1 version=${2:-$(jq -r '(.epoch|tostring)+":"+.version+"-"+(.release|tostring)+".fc46"' "$family/source-lock.json")} package=${3:-uke-freecad}
+  jq -n --arg name "$package" --arg state "$state" --arg version "$version" '{items:[{id:7,ownername:"mcc45tr",projectname:"uke-linux-unstable",state:$state,submitted_on:1793600000,source_package:{name:$name,version:$version}}]}' >"$FREECAD_FIXTURE/builds.json"
 }
 fixture active 1.1.4
 build_fixture running
@@ -163,6 +163,13 @@ if run_dispatch; then echo 'Uncomparable failed upload was retried' >&2; exit 1;
 fixture published 1.1.4
 build_fixture succeeded
 run_dispatch; [[ ! -f $FREECAD_FIXTURE/posts ]]
+fixture legacy_active 1.1.4
+build_fixture running 1:1.1.4-3.fc46 freecad
+run_dispatch; [[ ! -f $FREECAD_FIXTURE/posts ]]
+fixture legacy_published 1.1.4
+build_fixture succeeded 1:1.1.4-3.fc46 freecad
+jq '.source_dict.committish="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"' "$FREECAD_FIXTURE/source.json" >"$FREECAD_FIXTURE/tmp"; mv "$FREECAD_FIXTURE/tmp" "$FREECAD_FIXTURE/source.json"
+run_dispatch; [[ $(wc -l <"$FREECAD_FIXTURE/posts") == 1 ]]
 fixture attempted 1.1.4
 build_fixture failed
 if run_dispatch; then echo 'Failed commit was retried' >&2; exit 1; fi

@@ -8,7 +8,7 @@ cd "$root"
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
 jq -e '
-  .schema_version==1 and .family=="freecad" and .name=="freecad" and
+  .schema_version==1 and .family=="freecad" and .name=="uke-freecad" and
   (.version|test("^[0-9]+([.][0-9]+){2}$")) and
   (.epoch|type=="number") and (.release|type=="number") and
   (.upstream_commit|test("^[a-f0-9]{40}$")) and
@@ -34,6 +34,9 @@ actual=$(rpmspec --target aarch64 --define 'dist %{nil}' --query --srpm --queryf
   printf 'Unexpected source RPM identity: expected %s, got %s.\n' "$expected" "$actual" >&2
   exit 1
 }
+rpmspec --target aarch64 --query --queryformat '%{NAME}\n' freecad.spec | LC_ALL=C sort >"$stage/binary-names"
+printf '%s\n' uke-freecad uke-freecad-data | LC_ALL=C sort >"$stage/expected-names"
+cmp "$stage/binary-names" "$stage/expected-names"
 rpmspec --target aarch64 --parse freecad.spec >"$stage/expanded.spec"
 rpmspec --target aarch64 --define '_smp_build_ncpus 999999' --parse freecad.spec >"$stage/limited.spec"
 if grep -Eq '^[[:space:]]*-j[0-9]+[[:space:]]*$' "$stage/limited.spec"; then
