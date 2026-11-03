@@ -7,8 +7,7 @@ pids=()
 cleanup() { for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null || :; done; wait 2>/dev/null || :; rm -r -- "$stage"; }
 trap cleanup EXIT
 export XDG_RUNTIME_DIR=$stage/runtime
-export PIPEWIRE_CONFIG_DIR=$stage/config
-mkdir -m700 "$XDG_RUNTIME_DIR" "$PIPEWIRE_CONFIG_DIR"
+mkdir -m700 "$XDG_RUNTIME_DIR" "$stage/config"
 cat > "$stage/config/test.conf" <<'CONF'
 context.properties = { core.daemon = true core.name = pipewire-0 default.clock.rate = 48000 }
 context.spa-libs = { audio.convert.* = audioconvert/libspa-audioconvert support.* = support/libspa-support }
@@ -33,7 +32,7 @@ context.objects = [
  { factory = adapter args = { factory.name = support.null-audio-sink node.name = fixture.sink media.class = Audio/Sink audio.position = [ FL FR ] object.linger = true adapter.auto-port-config = { mode = dsp monitor = true position = preserve } } }
 ]
 CONF
-pipewire -c test.conf > "$stage/server.log" 2>&1 & pids+=("$!")
+PIPEWIRE_CONFIG_DIR="$stage/config" pipewire -c test.conf > "$stage/server.log" 2>&1 & pids+=("$!")
 for i in {1..60}; do [[ -S $XDG_RUNTIME_DIR/pipewire-0 ]] && break; sleep .1; done
 [[ -S $XDG_RUNTIME_DIR/pipewire-0 ]] || { cat "$stage/server.log"; exit 1; }
 pw-cat --playback --raw --rate 48000 --channels 4 --channel-map AUX0,AUX1,AUX2,AUX3 --format f32 --target 0 --properties '{ node.name = fixture.raw media.class = Audio/Source node.autoconnect = false }' /dev/zero > "$stage/raw.log" 2>&1 & pids+=("$!")

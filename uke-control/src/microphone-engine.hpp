@@ -66,10 +66,15 @@ inline Json::Value verify_engine() {
     const float *microphone[] = {input.data()}, *render[] = {left.data(), right.data()};
     // Two bounded buffers also contain a backend with incompatible output semantics.
     float *destination[] = {processed.data(), unexpected_output.data()};
-    double input_energy = 0, output_energy = 0;
+    double input_energy = 0, output_energy = 0, signal_energy = 0;
     for (unsigned block = 0; block < 100; ++block) {
-        // A fixed DC offset exercises the enabled high-pass filter deterministically.
-        input.fill(0.05f); processed.fill(NAN); unexpected_output.fill(NAN);
+        // First require a nonzero response, then exercise the high-pass DC rejection.
+        for (size_t frame = 0; frame < input.size(); ++frame) {
+            const auto time = double(block * input.size() + frame) / 48000.0;
+            input[frame] = block < 20 ? float(0.05 * (std::sin(1884.955592 * time) +
+                0.5 * std::sin(4209.734156 * time))) : 0.05f;
+        }
+        processed.fill(NAN); unexpected_output.fill(NAN);
         if (spa_audio_aec_run(aec, microphone, render, destination, input.size()) < 0) {
             result["reason"] = "aec_processing_failed"; return result;
         }
@@ -81,9 +86,11 @@ inline Json::Value verify_engine() {
                 result["reason"] = "invalid_backend_output"; return result;
             }
             if (block >= 80) output_energy += double(value) * value;
+            if (block < 20) signal_energy += double(value) * value;
         }
         if (block >= 80) input_energy += input.size() * 0.05 * 0.05;
     }
+    if (signal_energy < 1e-6) { result["reason"] = "backend_discarded_the_signal"; return result; }
     if (output_energy >= input_energy * 0.1) { result["reason"] = "high_pass_response_missing"; return result; }
     result["runnable"] = true;
     result["processed_frames"] = 48000;
