@@ -330,9 +330,24 @@ required. Legacy status lines and deliberate single connected internal-panel
 disable retain their existing behavior; an active panel still polls calibration
 readiness for at most two seconds.
 
-The proposed 1.8.38 source recipe retains the complete qualified 1.8.37 cohort,
+The 1.8.38 source recipe retains the complete qualified 1.8.37 cohort,
 including the no-full-image-backup A/B writer, trial health and rollback rules.
 It runs the same new consumer fixture against the actual old header as a
 negative control, then the corrected header normally and with ASan/UBSan.
 Native build, package and physical results remain separate. A new parser does
 not establish physical touch accuracy or eliminate an observed SPI timeout.
+
+COPR [11251496](https://copr.fedorainfracloud.org/coprs/build/11251496/)
+completed on 3 November 2026 for Fedora Rawhide AArch64, using source
+`518b53296d0c4f4460b76a037efa87839ea3d8af`. The actual old consumer fails
+the additive-readiness assertion with status134; the corrected normal and
+ASan/UBSan fixtures and all retained package checks pass. All six runtime RPM
+signatures and digests pass. Requirements, file metadata and ordered lifecycle
+scripts match the parent after version normalization; the updater adds
+`uke-kernel-update(touch-status-v2) = 1`.
+
+The ordinary DNF update installs the three existing 1.8.38 packages together
+with kernel7.3.1-1303, which retains the bounded touch recovery from1301.
+Inactive-slot readback passes and the accepted1011 slot is retained. Running
+kernel1011 is unchanged; a new-kernel boot and physical touch/gesture recovery
+are still required. No reboot or full boot-image file backup is performed.
