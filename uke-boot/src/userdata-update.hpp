@@ -575,6 +575,11 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     }
     if(action=="accept" || action=="check-accept") {
         const bool trial=prior && accepting_trial(*prior,running,release,good_hash,current_boot_id);
+        if(skip_off_acceptance(mode,prior && (trial || (unsigned(prior->policy.good)==running &&
+                 prior->policy.good_release==release && prior->good_image==good_hash)))) {
+            std::cout<<"Rollback off: running boot identity verified; health acceptance skipped; protected state unchanged\n";
+            return;
+        }
         if(trial && action=="accept") {
             try {trial_health();}
             catch(const TrialHealthFailure &failure) {

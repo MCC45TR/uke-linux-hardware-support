@@ -174,6 +174,7 @@ static std::map<std::string,std::string> properties(const std::string &text) {
     }
     return result;
 }
+#include "seamless-policy.hpp"
 static std::string root_label(const std::string &cmdline) {
     std::istringstream input(cmdline);std::string word,result;
     while(input>>word) if(word.rfind("root=",0)==0) {
@@ -510,11 +511,11 @@ int main(int argc,char **argv) {
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
                          std::string(argv[1])=="check-trial"||std::string(argv[1])=="replace-trial" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
-             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-trial|replace-trial|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
+             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy"||std::string(argv[1])=="enable-seamless-policy")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-trial|replace-trial|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy | enable-seamless-policy");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
-        const bool migrating=action=="migrate-automatic-policy";
+        const bool migrating=action=="migrate-automatic-policy" || action=="enable-seamless-policy";
         const bool restore=action=="check-restore-current"||action=="restore-current";
         const bool current_only=restore||action=="check-current"||action=="apply-current";
         const bool apply=action=="restore-current"||action=="apply"||action=="apply-current"||action=="transaction";
@@ -523,7 +524,7 @@ int main(int argc,char **argv) {
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
         const auto rollback=read_rollback_policy();
         if((action=="fallback" && rollback!=RollbackMode::enforced) ||
-           ((action=="boot" || action=="accept") && rollback==RollbackMode::off)) {
+           (action=="accept" && rollback==RollbackMode::off)) {
             std::cout<<"Rollback mode "<<rollback_name(rollback)<<": automatic acceptance/fallback skipped; no slot change or reboot\n";
             return 0;
         }
@@ -535,6 +536,12 @@ int main(int argc,char **argv) {
         }
         if(migrating) {
             if(label!="userdata")return 0;
+            if(action=="enable-seamless-policy") {
+                const auto changed=enable_seamless_policy("/etc/senemos","/var/lib/senemos/kernel-update");
+                std::cout<<(changed?"Seamless update policy enabled; local rollback choice preserved\n":
+                                    "Seamless update policy already enabled; local rollback choice preserved\n");
+                return 0;
+            }
             (void)selected_userdata_bundle();
             const bool changed=migrate_automatic_policy("/etc/senemos","/var/lib/senemos/kernel-update");
             std::cout<<(changed?"Legacy image automatic-update policy enabled once; existing A/B validation remains required\n":
@@ -585,26 +592,62 @@ int main(int argc,char **argv) {
             (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
             verify_early_firmware();
         };
+        const auto boot_id=[&] {
+            auto value=read_text("/proc/sys/kernel/random/boot_id");
+            need(value.ends_with('\n'),"Missing boot identity");value.pop_back();
+            need(valid_boot_id(value),"Invalid boot identity");return value;
+        }();
+        if(label=="userdata" && rollback==RollbackMode::off && (automatic || preflight || action=="boot") &&
+           fs::exists(state/"userdata.state")) {
+            const auto saved=decode(file(state/"userdata.state"));
+            if(pending_development_reboot(rollback,saved.policy,saved.staged_boot_id,boot_id,current.release)) {
+                std::cout<<"A development trial is already recorded in this boot; automatic staging awaits its reboot; policy remains enabled\n";
+                return 0;
+            }
+        }
+        const auto stage_selected=[&](const fs::path &selected,const Bytes &bytes,bool dry) {
+            need(fs::exists(state/"userdata.state"),"Seamless staging requires protected baseline state");
+            const auto saved=decode(file(state/"userdata.state"));
+            const auto raw=file(selected/"manifest");const auto next=properties(std::string(raw.begin(),raw.end())).at("kernel_release");
+            const auto plan=seamless_stage(rollback,saved.policy,saved.staged_boot_id,boot_id,current.release,next);
+            if(plan==SeamlessStage::current || plan==SeamlessStage::pending || plan==SeamlessStage::older || plan==SeamlessStage::deferred) {
+                std::cout<<"Seamless policy enabled; current, pending or older development selection needs no additional staging\n";return;
+            }
+            const bool replacing=plan==SeamlessStage::replace_trial;
+            if(!dry) {
+                const auto super=partition("super");
+                need(ufs_controller(fs::path("/sys/class/block")/super.first)==ufs_controller(fs::path("/sys/class/block")/root.first),
+                     "Seamless firmware import requires the measured userdata UFS controller");
+                uke_video::import_firmware(next,current.release,super);
+                trusted("/usr/libexec/senemos-uke/uke-install-profile");
+                (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","clock-save-required"},4096);
+            }
+            userdata_update(replacing?(dry?"check-trial":"replace-trial"):(dry?"check":"apply"),selected,bytes,state,
+                            current.release,filesystem,false,rollback==RollbackMode::off);
+        };
         if(action=="boot") {
             boot_userdata(bundle,
                 [&](const fs::path &selected){return validate_bundle(selected,"/usr/lib/modules",label,current.release);},
-                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true);},
+                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true,rollback==RollbackMode::off);},
                 [&]{return activation_enabled(label);},
                 []{return selected_userdata_bundle();},inspect_userdata,
-                [&](const fs::path &selected,const Bytes &bytes){userdata_update("apply",selected,bytes,state,current.release,filesystem);});
+                [&](const fs::path &selected,const Bytes &bytes){stage_selected(selected,bytes,false);});
             return 0;
         }
-        const bool development=label=="userdata" && rollback==RollbackMode::off && (action=="check" || action=="apply");
+        const bool development=label=="userdata" && rollback==RollbackMode::off &&
+            (action=="check" || action=="apply" || automatic || preflight);
         auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release,rpm,development);
         if(label=="userdata" && !current_only) {
             if(automatic || preflight) {
                 inspect_userdata(bundle,bytes);
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
                 // The identical-default path returns below, so reuse its verified buffer.
-                const auto baseline=bundle==running_bundle?std::move(bytes):validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 const bool stable=fs::exists(state/"userdata.state") && decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::stable;
-                userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem);
+                const bool removed=rollback==RollbackMode::off && stable && !fs::exists(running_bundle);
+                const auto baseline=removed?Bytes{}:bundle==running_bundle?std::move(bytes):validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
+                userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem,false,rollback==RollbackMode::off);
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
+                stage_selected(bundle,bytes,preflight);return 0;
             }
             userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem,false,
                             !automatic && !preflight && (action=="check" || action=="apply" || action=="check-trial" || action=="replace-trial"));return 0;
