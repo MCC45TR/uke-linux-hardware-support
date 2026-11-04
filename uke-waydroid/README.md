@@ -36,6 +36,14 @@ device qualification.
 The original Binderfs mount is ordered before daemon preparation, so dynamic
 device allocation does not race the boot-time mount.
 
+Revision5 also supplies `mesa.fd.dev.features=enable_tp_ubwc_flag_hint=0`
+and `ro.hardware.vulkan=freedreno` only on `xiaomi,uke`. The installed Android
+image has Mesa26.0.8 and the native Freedreno Vulkan library, while the original
+Waydroid GPU map does not recognize the separated kernel driver name `adreno`.
+The hint must agree with the installed host Mesa correction. This setting
+retains UBWC storage and hardware acceleration; it needs a separate physical
+corruption/restart check. See [Mesa Android properties](https://docs.mesa3d.org/android.html#android-system-properties).
+
 References: [Fedora Binder labels](https://github.com/fedora-selinux/selinux-policy/blob/rawhide/policy/modules/kernel/devices.te),
 [Waydroid installation](https://docs.waydro.id/usage/install-on-desktops) and
 [Binderfs lifecycle](https://docs.kernel.org/admin-guide/binderfs.html).

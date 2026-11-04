@@ -1,6 +1,6 @@
 Name:           uke-waydroid-integration
 Version:        0.1.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Fedora Binderfs labels for Waydroid on Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-waydroid
@@ -73,6 +73,9 @@ fi
 %{_libexecdir}/uke-waydroid-prepare
 
 %changelog
+* Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-5
+- Align the Uke Android Mesa UBWC hint with the host and select native Turnip.
+
 * Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Use Fedora's normalized interpreter path and order startup after Binderfs.
 

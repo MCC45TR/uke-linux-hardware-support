@@ -5,6 +5,7 @@ set -eu
 export LC_ALL=C
 work=${1:-/var/lib/waydroid}
 defaults=${2:-/etc/waydroid/uke-defaults.conf}
+compatible=${3:-/proc/device-tree/compatible}
 [ -f "$work/waydroid.cfg" ] || exit 0
 value=$(awk -F= '
     /^[[:space:]]*persist\.waydroid\.multi_windows[[:space:]]*=/ {
@@ -12,6 +13,14 @@ value=$(awk -F= '
     }
     END { if (count != 1 || (v != "true" && v != "false")) exit 1; print v }
 ' "$defaults")
+settings="persist.waydroid.multi_windows=$value"
+# Uke's host Mesa uses hint0. Keep the Android driver in agreement while
+# retaining UBWC buffers, GLES hardware acceleration and native Turnip.
+if [ -r "$compatible" ] && tr '\000' '\n' < "$compatible" | grep -qx 'xiaomi,uke'; then
+    settings="$settings
+mesa.fd.dev.features=enable_tp_ubwc_flag_hint=0
+ro.hardware.vulkan=freedreno"
+fi
 temporary=
 trap '[ -z "$temporary" ] || rm -f -- "$temporary"' EXIT HUP INT TERM
 for name in waydroid.cfg waydroid_base.prop; do
@@ -20,32 +29,41 @@ for name in waydroid.cfg waydroid_base.prop; do
     [ -f "$file" ] && [ ! -L "$file" ] || exit 1
     temporary=$(mktemp "$work/.uke-waydroid.XXXXXX")
     cp --preserve=all -- "$file" "$temporary"
-    if [ "$name" = waydroid.cfg ]; then
-        awk -v value="$value" '
-            /^[[:space:]]*\[/ {
-                if (section && !written) {
-                    print "persist.waydroid.multi_windows = " value; written=1
+    awk -v settings="$settings" -v ini="$name" '
+        BEGIN {
+            count=split(settings, lines, "\n")
+            for (i=1; i<=count; i++) {
+                eq=index(lines[i], "=")
+                keys[i]=substr(lines[i], 1, eq-1)
+                values[keys[i]]=substr(lines[i], eq+1)
+            }
+            if (ini != "waydroid.cfg") section=1
+        }
+        function emit(   j,k) {
+            for (j=1; j<=count; j++) {
+                k=keys[j]
+                if (!(k in written)) {
+                    print k (ini == "waydroid.cfg" ? " = " : "=") values[k]
+                    written[k]=1
                 }
-                section=($0 ~ /^[[:space:]]*\[properties\][[:space:]]*$/)
-                if (section) found=1
             }
-            section && /^[[:space:]]*persist\.waydroid\.multi_windows[[:space:]]*=/ {
-                if (!written) print "persist.waydroid.multi_windows = " value
-                written=1; next
-            }
-            {print}
-            END {
-                if (!found) print "\n[properties]"
-                if (!written) print "persist.waydroid.multi_windows = " value
-            }
-        ' "$file" > "$temporary"
-    else
-        awk -v value="$value" '
-            /^[[:space:]]*persist\.waydroid\.multi_windows[[:space:]]*=/ {next}
-            {print}
-            END {print "persist.waydroid.multi_windows=" value}
-        ' "$file" > "$temporary"
-    fi
+        }
+        ini == "waydroid.cfg" && /^[[:space:]]*\[/ {
+            if (section) emit()
+            section=($0 ~ /^[[:space:]]*\[properties\][[:space:]]*$/)
+            if (section) found=1
+        }
+        section && index($0, "=") {
+            key=substr($0, 1, index($0, "=")-1)
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", key)
+            if (key in values) next
+        }
+        {print}
+        END {
+            if (ini == "waydroid.cfg" && !found) print "\n[properties]"
+            emit()
+        }
+    ' "$file" > "$temporary"
     if ! cmp -s -- "$file" "$temporary"; then
         mv -fT -- "$temporary" "$file"
     else
