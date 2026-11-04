@@ -20,7 +20,7 @@ for path in src/main.cpp src/cli.cpp src/rollback.hpp tests/rollback.cpp packagi
 done
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-control-rollback.tar.xz" -C "$stage/overlay" .
-sed 's/12[.]fc46/21.fc46/g' "$output/uke-control.spec" > "$stage/base.spec"
+sed 's/12[.]fc46/22.fc46/g' "$output/uke-control.spec" > "$stage/base.spec"
 awk '
  /^Source5:/ {print "Source6: uke-control-rollback.tar.xz"}
  /^Requires: uke-kernel-update\(transaction-v1\)/ {print "Requires: uke-kernel-update(rollback-policy-v1) >= 1"}
@@ -38,4 +38,4 @@ awk '
  }
  {print}
 ' "$stage/base.spec" > "$output/uke-control.spec"
-[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == 2.8.1-21.fc46 ]]
+[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == 2.8.1-22.fc46 ]]

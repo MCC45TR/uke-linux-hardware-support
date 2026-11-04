@@ -7,7 +7,7 @@ int main() {
         auto plan=uke::rollback::plan({"set","rollback-"+mode});
         assert(plan==std::vector<std::string>({"/usr/bin/uke-kernel-update","rollback-policy","set",mode}));
     }
-    for(const std::vector<std::string> words:std::vector<std::vector<std::string>>{
+    for(const std::vector<std::string> &words:std::vector<std::vector<std::string>>{
             {"set"},{"set","rollback-on"},{"set","rollback-off","extra"},{"rollback","off"}}) {
         bool refused=false;try{uke::rollback::plan(words);}catch(const uke::cli::UsageError &){refused=true;}assert(refused);
     }
