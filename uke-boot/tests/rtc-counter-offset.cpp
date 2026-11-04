@@ -64,8 +64,11 @@ int main() {
     }
     for(unsigned fault=0;fault<5;++fault) {
         Model m;m.mutate=[=](unsigned n,cc::Sample &s){if(n==2) {
-            if(fault==0)--s.boot_ns;if(fault==1)s.boot_ns+=2000000000;
-            if(fault==2)--s.utc;if(fault==3)s.utc+=3;if(fault==4)s.utc=INT64_MAX;
+            if(fault==0)--s.boot_ns;
+            if(fault==1)s.boot_ns+=2000000000;
+            if(fault==2)--s.utc;
+            if(fault==3)s.utc+=3;
+            if(fault==4)s.utc=INT64_MAX;
         }};
         reject([&]{m.sync();});assert(!m.writes);
     }

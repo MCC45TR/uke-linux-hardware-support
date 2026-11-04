@@ -18,12 +18,12 @@ jq -e '.items|type=="array" and length>0' "$stage/builds.json" >/dev/null
 jq -r '.items[]|select(.source_package.name=="uke-boot-integration" and .source_package.url!=null)|
  select(.project_dirname=="uke-linux-unstable" or
  .project_dirname=="uke-linux-unstable:custom:rtc-counter-offset-20261105" or
- .source_package.version=="1.8.91-1.fc46")|.source_package.version' "$stage/builds.json" > "$stage/versions"
+ .source_package.version=="1.8.92-1.fc46")|.source_package.version' "$stage/builds.json" > "$stage/versions"
 while IFS= read -r published; do
  [[ $published =~ ^[0-9]+([.][0-9]+)*-[0-9]+([.][a-zA-Z0-9]+)*$ ]]
- comparison=$(rpm --eval "%{lua:print(rpm.vercmp(\"$published\", \"1.8.91-1.fc46\"))}")
+ comparison=$(rpm --eval "%{lua:print(rpm.vercmp(\"$published\", \"1.8.92-1.fc46\"))}")
  [[ $comparison =~ ^-?[0-9]+$ && $comparison -lt 0 ]] || {
-  printf 'Counter-clock candidate1.8.91 is already published or superseded; use a fresh version\n' >&2;exit 1;
+  printf 'Counter-clock candidate1.8.92 is already published or superseded; use a fresh version\n' >&2;exit 1;
  }
 done < "$stage/versions"
 curl -fLsS --retry 2 --max-time 90 --proto '=https' --proto-redir '=https' \
@@ -84,7 +84,7 @@ awk '
  }
  {print}
  END {if(checks!=1 || installs!=1 || files!=1 || trigger!=1)exit 1}
-' "$stage/rpm/uke-boot-integration.spec" | sed 's/1[.]8[.]90/1.8.91/g' > "$spec"
+' "$stage/rpm/uke-boot-integration.spec" | sed 's/1[.]8[.]90/1.8.92/g' > "$spec"
 # Start only the new userspace timer, after the existing profile reconciliation.
 awk '
  /^%posttrans -n uke-installation-profile$/ {section=1}
@@ -100,7 +100,7 @@ awk '
 mv "$stage/final.spec" "$spec"
 awk '
  function entry() {
-   print "* Thu Nov 05 2026 Uke contributors - 1.8.91-1"
+   print "* Thu Nov 05 2026 Uke contributors - 1.8.92-1"
    print "- Save trusted UTC with the read-only PMIC counter and restore elapsed time at startup."
    print "- Retain original secure RTC, seamless staging and persistent rollback preferences."
    print ""
@@ -110,20 +110,20 @@ awk '
  END {if(!found){print "%changelog";entry()}}
 ' "$spec" > "$stage/changelog.spec"
 mv "$stage/changelog.spec" "$spec"
-mv "$native" "$stage/inner/uke-boot-integration-1.8.91"
+mv "$native" "$stage/inner/uke-boot-integration-1.8.92"
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
 rm "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.90.tar.xz"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf \
- "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.91.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.91
+ "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.92.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.92
 cp "$spec" "$outer/inputs/uke-boot-integration/uke-boot-integration.spec"
 jq -n --arg source "$(git -C "$owner" rev-parse HEAD)" \
  '{schema_version:1,parent_build:11260223,parent_srpm_sha256:"07bcfb2598878b184f4f8df44a610f16fa653d56346fd328e14cd4b0bf9edc5c",
  source_commit:$source,backend:"private-ntp-anchor-plus-readonly-pmic-counter",pmic_writes:false,oem_persist_writes:false,
  retained_native_sources_unchanged_except:["src/install-profile.cpp","src/units/75-uke-clock-floor.conf"],
  automatic_staging_preserved:true,rollback_default:"enforced",physical_acceptance:false}' > "$outer/rtc-counter-offset-overlay.json"
-mv "$outer" "$stage/outer/uke-boot-integration-1.8.91"
+mv "$outer" "$stage/outer/uke-boot-integration-1.8.92"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf \
- "$output/uke-boot-integration-1.8.91.tar.xz" -C "$stage/outer" uke-boot-integration-1.8.91
+ "$output/uke-boot-integration-1.8.92.tar.xz" -C "$stage/outer" uke-boot-integration-1.8.92
 candidate=$(rpmspec --define 'dist %{nil}' -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec")
 printf 'Counter-clock source candidate: %s\n' "$candidate"
-[[ $candidate == uke-boot-integration-1.8.91-1.fc46 ]]
+[[ $candidate == uke-boot-integration-1.8.92-1.fc46 ]]
