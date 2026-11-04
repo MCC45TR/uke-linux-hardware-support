@@ -44,6 +44,22 @@ The hint must agree with the installed host Mesa correction. This setting
 retains UBWC storage and hardware acceleration; it needs a separate physical
 corruption/restart check. See [Mesa Android properties](https://docs.mesa3d.org/android.html#android-system-properties).
 
+On4 November, revision5 on kernel7200 reaches Android13 boot completion and
+reports hardware Freedreno GLES3.2. Calculator and Settings have separate KWin
+window identities and normal taskbar admission. Visual stability still needs
+the physical observer's result. Kernel7200 lacks Android's multiple-table
+routing and in-container legacy filter support, blocking external networking;
+the separate unstable kernel candidate supplies those requirements.
+
+Revision6 pulls the small `uke-waydroid-diagnostics` package through DNF. Its
+Android-side C++ tool reports the actual Vulkan device/version and compares a
+4KiB GPU buffer fill. The old Android13 `vkjson` serializer has no device-format
+case above Vulkan1.3, so an empty device object alone is not a driver failure.
+The diagnostic is installed in the original Waydroid overlay and runs only
+when explicitly invoked with `waydroid shell -- /system/bin/uke-vulkan-check`.
+Its NDK sysroot and native compiler are confined to COPR. No SDK/compiler is
+installed on the tablet, and this bounded check does not establish conformance.
+
 References: [Fedora Binder labels](https://github.com/fedora-selinux/selinux-policy/blob/rawhide/policy/modules/kernel/devices.te),
 [Waydroid installation](https://docs.waydro.id/usage/install-on-desktops) and
 [Binderfs lifecycle](https://docs.kernel.org/admin-guide/binderfs.html).
