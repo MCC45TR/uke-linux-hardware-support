@@ -42,7 +42,7 @@ ColumnLayout {
             description: i18n("The existing authentication and device checks remain in the terminal.")
             icon.name: themeIcons.names["system-run"]
             Accessible.name: text
-            enabled: !backend.observation.running
+            enabled: !backend.observation.running && backend.settings.topic.canApply !== false
             onClicked: backend.submit()
         }
     }

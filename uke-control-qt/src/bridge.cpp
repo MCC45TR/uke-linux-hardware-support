@@ -152,7 +152,7 @@ bool Bridge::openAction(const QString &id) {
       if (choices.isEmpty() && (kind=="interface"||kind=="usb_device"||kind=="input_device")) choices=settings_.choices(kind);
       parameters << QVariantMap{
           {"key", q(p.id)},
-          {"title", localized(p.title)},
+          {"title", a.id=="flashlight.level"&&p.id=="percent"?i18n("Brightness level"):localized(p.title)},
           {"description", localized(p.description)},
           {"value", q(p.initial)},
           {"choices", choices},

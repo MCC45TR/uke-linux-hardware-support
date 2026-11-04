@@ -765,3 +765,6 @@ msgstr "Onaylanmadı"
 
 msgid "No candidate recorded"
 msgstr "Kayıtlı aday yok"
+
+msgid "Brightness level"
+msgstr "Parlaklık kademesi"

@@ -276,8 +276,8 @@ private slots:
         snapshot(window,"settings-battery");
       }
       if(topic.id=="flashlight") {
-        auto *edit=visualItem(window->contentItem(),"topicAction_flashlight.level");QVERIFY(edit);QVERIFY(QMetaObject::invokeMethod(edit,"clicked"));
         QTRY_VERIFY(visualItem(window->contentItem(),"parameter_percent"));
+        QVERIFY(!visualItem(window->contentItem(),"topicAction_flashlight.level"));
         snapshot(window,"settings-flashlight");
       }
       if(topic.id=="kernel")snapshot(window,"settings-kernel");

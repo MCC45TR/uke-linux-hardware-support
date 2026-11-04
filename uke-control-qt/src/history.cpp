@@ -116,10 +116,15 @@ void HistoryPlot::paint(QPainter *p) {
   p->setFont(QGuiApplication::font());
   const QRectF plot(42,12,std::max(1.,width()-56),std::max(1.,height()-42));
   const auto start=report_.value("start").toLongLong(),end=report_.value("end").toLongLong();
-  p->setPen(palette.color(QPalette::Mid));
-  for(int n:{0,50,100}) {const auto y=plot.bottom()-plot.height()*n/100.;p->drawLine(QPointF(plot.left(),y),QPointF(plot.right(),y));p->drawText(QRectF(0,y-10,36,20),Qt::AlignRight|Qt::AlignVCenter,QString::number(n)+"%");}
+  const auto textColor=palette.color(QPalette::Active,QPalette::WindowText);
+  auto gridColor=textColor;gridColor.setAlpha(64);
+  for(int n:{0,50,100}) {
+    const auto y=plot.bottom()-plot.height()*n/100.;
+    p->setPen(gridColor);p->drawLine(QPointF(plot.left(),y),QPointF(plot.right(),y));
+    p->setPen(textColor);p->drawText(QRectF(0,y-10,36,20),Qt::AlignRight|Qt::AlignVCenter,QString::number(n)+"%");
+  }
   if(end<=start)return;
-  p->setPen(palette.color(QPalette::Text));
+  p->setPen(textColor);
   const auto fmt=QLocale().timeFormat(QLocale::ShortFormat);
   p->drawText(QRectF(plot.left(),plot.bottom()+8,110,24),Qt::AlignLeft,QDateTime::fromSecsSinceEpoch(start).toString(fmt));
   p->drawText(QRectF(plot.right()-110,plot.bottom()+8,110,24),Qt::AlignRight,QDateTime::fromSecsSinceEpoch(end).toString(fmt));

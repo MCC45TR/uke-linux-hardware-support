@@ -54,3 +54,16 @@ the exact incomplete status and disables its daily slot-change entry. The
 installed read test compares the adapter with the actual report, rather than
 requiring a trial to have stable acceptance. This is a pre-existing boot status,
 not evidence of a UI-induced transition.
+
+COPR 11260220 passed all four suites for 1.2.0-3. DNF upgraded only the Qt
+application/test pair on the tablet. Installed Wayland checks passed 15 widget,
+11 appearance and 12 Kirigami cases without skips, including five real provider
+reads and actual UPower history. The installed SDK exposed 134 actions; all
+remained reachable. RPM payload verification passed and the running/next slots
+remained A with the same unapproved trial kernel and incomplete report.
+
+Visual inspection found weak dark-theme axis labels and an unnecessary
+preference-opening row for single-control topics. The next revision uses the
+native foreground colour for axes, displays a single preference directly and
+keeps requested values when refreshing observations. Application/authentication
+still require the existing review. No device write was performed by these tests.

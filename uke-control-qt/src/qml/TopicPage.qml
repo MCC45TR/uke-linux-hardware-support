@@ -13,9 +13,22 @@ FormCard.FormCardPage {
     readonly property var settings: backend.settings
     property string editAction: ""
     readonly property bool editing: editAction.length > 0 && backend.guide.id === editAction
+    function edit(id) {
+        if (backend.openAction(id)) {
+            editAction = id
+            if ((backend.guide.parameters || []).length === 0) backend.submit()
+        }
+    }
+    function showSinglePreference() {
+        if (page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false) return
+        const choices = settings.topic.changes || []
+        if (choices.length === 1 && !editing) edit(choices[0].id)
+    }
+    Component.onCompleted: Qt.callLater(showSinglePreference)
+    Connections { target: page.settings; function onChanged() { page.showSinglePreference() } }
     title: settings.topic.title || ""
     actions: [
-        Kirigami.Action { text: i18n("Refresh"); icon.name: themeIcons.names["view-refresh"]; enabled: !settings.busy; onTriggered: { backend.leaveGuide(); page.editAction = ""; settings.refresh() } },
+        Kirigami.Action { text: i18n("Refresh"); icon.name: themeIcons.names["view-refresh"]; enabled: !settings.busy; onTriggered: { backend.cancelReview(); backend.cancelRead(); settings.refresh() } },
         Kirigami.Action { text: i18n("Stop"); icon.name: themeIcons.names["media-playback-stop"]; enabled: settings.busy || settings.history.busy || false; onTriggered: settings.stop() }
     ]
     Kirigami.InlineMessage {
@@ -93,7 +106,7 @@ FormCard.FormCardPage {
         active: page.topicId === "battery"
         sourceComponent: Component { BatteryHistoryView {} }
     }
-    FormCard.FormHeader { visible: (settings.topic.changes || []).length > 0; title: i18n("Preferences and actions") }
+    FormCard.FormHeader { visible: (settings.topic.changes || []).length > 1; title: i18n("Preferences and actions") }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
         visible: settings.topic.canApply === false
@@ -101,7 +114,7 @@ FormCard.FormCardPage {
         text: settings.topic.blockedReason || ""
     }
     FormCard.FormCard {
-        visible: (settings.topic.changes || []).length > 0
+        visible: (settings.topic.changes || []).length > 1 || ((settings.topic.changes || []).length === 1 && !page.editing)
         Repeater {
             model: settings.topic.changes || []
             delegate: FormCard.FormButtonDelegate {
@@ -111,7 +124,7 @@ FormCard.FormCardPage {
                 icon.name: themeIcons.names["configure"]
                 Accessible.name: text
                 enabled: settings.topic.canApply !== false
-                onClicked: { settings.stop(); if (backend.openAction(modelData.id)) page.editAction = modelData.id }
+                onClicked: { settings.stop(); page.edit(modelData.id) }
             }
         }
     }
