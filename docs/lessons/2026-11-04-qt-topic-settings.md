@@ -72,3 +72,24 @@ The 1.2.0-4 native suites passed in COPR 11260247. The chart now receives its
 foreground/accent from the enclosing Kirigami theme: the application QWidget
 palette can differ from the Quick page's colour context, so relying on its
 WindowText alone is insufficient. This is kept separate from icon-theme fallback.
+
+## Final delivery
+
+COPR [11260277](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11260277/)
+built 1.2.0-5 from 306ab5a6c9d93329d7b3666b72ebd18730dba8b5; all four native
+suites passed. The custom producer pins that exact successful source. DNF
+upgraded only the Qt application/test pair. Installed Wayland checks passed
+15 widget, 11 appearance and 12 Kirigami cases without skips, including all
+134 installed catalog actions, all topics, five real provider reads and existing
+UPower history. The final Turkish light/Adwaita topic walkthrough passed all
+three cases. RPM verification passed for both Qt payloads.
+
+Window-only screenshots confirm readable chart axes in the actual dark Quick
+theme, direct single-preference controls and native themed category rows. No
+undefined-property, type, binding-loop or QML load errors were observed.
+The running kernel remained 7.3.1-7200-unstable and the next selection remained A.
+Independent boot integration updates occurred during the UI work; the final
+read could not prove the running slot and retained its incomplete trial report.
+The Qt frontend preserves that uncertainty and disables daily slot changes.
+No kernel/slot write, reboot, hardware actuation or calibration access was part
+of the Qt installation or checks. Physical hardware acceptance remains separate.

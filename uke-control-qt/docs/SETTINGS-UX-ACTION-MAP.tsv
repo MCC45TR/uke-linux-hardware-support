@@ -128,3 +128,8 @@ expert.tests	expert	Attended tests; device selectors	test.touch
 expert.tests	expert	Attended tests; device selectors	test.sensors
 expert.tests	expert	Attended tests; device selectors	test.discover
 expert.tests	expert	Attended tests; device selectors	test.sample
+audio.processing	expert	Typed speech controls and observations	microphone.processing.agc
+audio.processing	expert	Typed speech controls and observations	microphone.processing.select
+audio.processing	expert	Typed speech controls and observations	microphone.processing.status
+audio.processing	expert	Typed speech controls and observations	microphone.processing.verify
+audio.processing	expert	Typed speech controls and observations	microphone.streams

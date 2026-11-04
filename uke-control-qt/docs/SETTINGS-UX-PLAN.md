@@ -2,6 +2,14 @@
 
 Date: 4 November 2026. Status: proposal for review; no application implementation.
 
+Implementation update: the user approved this plan. Qt 1.2.0-5 delivery and
+its observed validation are recorded in the
+[implementation lesson](../../docs/lessons/2026-11-04-qt-topic-settings.md).
+The 129-action inventory below is the planning snapshot. The installed SDK later
+exposed 134 actions; the map additionally assigns its five speech-processing
+actions to the expert Sound tools. The runtime catalog is discovered rather
+than limited to the original snapshot.
+
 ## Evidence and scope
 
 The tablet currently has Qt 1.1.0-2, Control/client 2.8.1-23,
