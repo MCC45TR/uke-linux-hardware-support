@@ -35,6 +35,7 @@ class Appearance : public QObject {
                                                          QFile::WriteOwner |
                                                          QFile::ExeOwner);
     environment.insert("XDG_CONFIG_HOME", state.filePath("config"));
+    environment.insert("XDG_CONFIG_DIRS", state.filePath("config"));
     environment.insert("XDG_CACHE_HOME", state.filePath("cache"));
     environment.insert("XDG_DATA_HOME", state.filePath("data"));
     environment.insert("XDG_RUNTIME_DIR", state.filePath("runtime"));

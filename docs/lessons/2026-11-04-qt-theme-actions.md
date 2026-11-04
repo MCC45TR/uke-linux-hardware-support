@@ -50,3 +50,26 @@ empty accessible names on FormButtonDelegate despite visible text. Explicit
 names now cover catalog and guide actions, review details and raw output.
 Plain-text information delegates also expose their label and description.
 This is a frontend accessibility correction; release 5 was not installed.
+
+## COPR and tablet results
+
+COPR build 11255293 produced `1.0.0-6.fc46.aarch64` after all four CTest suites
+passed. DNF installed the GUI and optional tests RPM on POCO Pad X1, replacing
+GUI release 3 without other package or kernel changes. The normal Wayland
+session reports Breeze, `org.kde.desktop`, the selected `breeze-dark` icon theme,
+and 48 renderable icons. Native charging/flashlight names resolve to the expected
+Breeze aliases. The dark narrow-window Updates page, channel form, read result
+and review sheet were visually inspected from fixture screenshots.
+
+The installed Kirigami suite passed all eight tests on Wayland, including all
+126 guides, fixture request routing, review refusal and four real read-only
+queries: battery, charging, selected channel and microphone status. Each query
+reported exit zero; this does not establish physical acceptance, EEPROM
+calibration, focus, charging cutoff or any destructive operation.
+
+The installed appearance suite exposed a test-isolation defect: the session's
+`XDG_CONFIG_DIRS` included KDE defaults selecting Breeze Dark even though the
+probe isolated `XDG_CONFIG_HOME`. Release 7 isolates both configuration search
+paths in its temporary subprocess. The real application continues to inherit
+the user's configuration; only the test probe is isolated. The other ten
+appearance checks and the retained widget checks passed before this correction.

@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.0.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -79,6 +79,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.0.0-7
+- Isolate appearance tests from session-wide KDE default configuration paths.
+
 * Wed Nov 04 2026 Uke contributors - 1.0.0-6
 - Give native form actions and plain-text information explicit accessible names.
 - Clarify terminal read options and clear stale errors before related reads.
