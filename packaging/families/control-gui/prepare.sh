@@ -54,8 +54,8 @@ cp "$root/uke-control/src/"{frontend.hpp,frontend-request.cpp,client.hpp} "$stag
 cp "$root/uke-desktop-metas/src/gnome.json" "$stage/contract/"
 tar --sort=name --mtime=@1793577600 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-frontend-contract.tar.xz" -C "$stage/contract" .
 mkdir -p "$stage/packages/src" "$stage/packages/tests"
-cp "$root/uke-control/src/"{packages.cpp,package-operation.hpp} "$stage/packages/src/"
-cp "$root/uke-control/tests/packages.cpp" "$stage/packages/tests/"
+cp "$root/uke-control/src/"{packages.cpp,package-operation.hpp,cli.cpp,client-catalog.cpp} "$stage/packages/src/"
+cp "$root/uke-control/tests/"{packages.cpp,package-operation.cpp,package-policy.cpp,package-policy.sh,package-policy.mk} "$stage/packages/tests/"
 tar --sort=name --mtime=@1793664000 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-package-update.tar.xz" -C "$stage/packages" .
 package=uke-control
 if [[ $phase == metas ]]; then package=uke-desktop-metas; fi
@@ -63,7 +63,7 @@ component=uke-control
 if [[ $phase == metas ]]; then component=uke-meta-integration; fi
 tar -xOf "$stage/input/uke-control-2.8.1.tar.xz" "uke-control-2.8.1/inputs/$component/$component.spec" > "$stage/selected-input.spec"
 grep '^BuildRequires:' "$stage/selected-input.spec" > "$stage/buildrequires"
-if [[ $phase == backend ]]; then printf '%s\n' 'BuildRequires: findutils' >> "$stage/buildrequires"; fi
+if [[ $phase == backend ]]; then printf '%s\n' 'BuildRequires: findutils createrepo_c rpm-sign gnupg2' >> "$stage/buildrequires"; fi
 awk -v build_phase="$phase" -f "$here/rewrite.awk" "$stage/identities" "$stage/input/uke-control.spec" > "$stage/complete.spec"
 awk -v build_phase="$phase" -v requirements="$stage/buildrequires" -f "$here/select-phase.awk" "$stage/complete.spec" > "$top/SPECS/$package.spec"
 rpmspec --target "$arch" -q --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "$top/SPECS/$package.spec" > "$top/package-identities.tsv"

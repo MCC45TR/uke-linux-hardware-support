@@ -8,6 +8,10 @@ template<class F>void refused(F&& call){bool denied=false;try{call();}catch(cons
 int main() {
     const Record initial{std::string(32,'0'),"stable","prepared","7.2.11-fixture",true};
     assert(encode(decode(encode(initial)))==encode(initial));
+    auto legacy=encode(initial);legacy.replace(0,8,"format=1");legacy.erase(legacy.find("mode="));
+    assert(decode(legacy).mode=="sync");
+    for(const auto* mode:{"set","update","sync"}){auto selected=initial;selected.mode=mode;assert(decode(encode(selected)).mode==mode);}
+    auto bad_mode=initial;bad_mode.mode="unknown";refused([&]{encode(bad_mode);});
     refused([&]{decode(encode(initial)+"phase=complete\n");});
     refused([&]{decode(encode(initial).substr(0,20));});
     auto invalid=initial;invalid.kernel="../../boot";refused([&]{encode(invalid);});
@@ -25,7 +29,7 @@ int main() {
         actions.select=[&]{edge();selected=true;edge();};
         actions.clear=[&]{edge();pending=false;edge();};
         try{apply(record,actions);}catch(const std::exception&){++interrupted;}
-        record=decode(durable);inject=false;
+        record=decode(durable);assert(record.mode==initial.mode);inject=false;
         const auto before=rpm_calls;
         if(resume(record.phase)==Resume::review) {
             refused([&]{apply(record,actions);});refused([&]{finish(record,actions);});

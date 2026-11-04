@@ -1,4 +1,6 @@
 SHELL := /bin/bash
+.DEFAULT_GOAL := all
+include tests/package-policy.mk
 .SHELLFLAGS := -Eeuo pipefail -c
 .ONESHELL:
 CXX ?= g++

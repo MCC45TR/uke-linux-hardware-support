@@ -1,5 +1,20 @@
 # Package channels
 
+4 November 2026, 2.8.1-10: `channel set`, `branch`/`brunch` and `update`
+use conservative upgrades. They retain newer installed versions and installed
+extras absent from the destination, listing each package and retention reason
+in the plan. Retained packages cannot be replaced or removed indirectly by
+dependency resolution. Kernel version locks remain effective; unchanged or
+newer installed kernels require no updater call. An empty update with unchanged
+repository policy completes without confirmation, RPM execution or journal/boot
+writes. This supersedes earlier descriptions of set/update as exact version
+synchronization.
+
+`channel sync` remains the explicit exact-version operation: it can downgrade
+project packages and refuses missing target replacements. It also resumes a
+verified pending operation. Ordinary channel selection is not a userspace
+rollback and does not erase installed applications to fit a destination.
+
 4 November 2026: package operations report repository refresh, downloads,
 RPM installation, scriptlets and guarded finalization on standard error.
 Explicit JSON results remain on standard output. Multiple enabled aliases of

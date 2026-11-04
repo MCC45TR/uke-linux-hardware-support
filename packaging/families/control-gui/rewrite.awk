@@ -13,6 +13,7 @@ function finish_phase() {
             print "test ${#package_sources[@]} = 1"
             print "package_root=${package_sources[0]%/src/packages.cpp}"
             print "tar -xJf %{SOURCE5} -C \"$package_root\""
+            print "printf '%s\\n' 'include tests/package-policy.mk' >> \"$package_root/Makefile\""
         }
     } else if(phase=="build" && build_phase=="backend") {
         print "contract=%{_builddir}/uke-control-frontend-contract"
@@ -158,9 +159,9 @@ END {
     }
     print ""
     print "%changelog"
-    if(build_phase=="backend") print "* Wed Nov 04 2026 Uke contributors - 2.8.1-9"
-    else print "* Wed Nov 04 2026 Uke contributors - 1.0.0-39"
-    print "- Report download, RPM and scriptlet progress on standard error."
-    print "- Infer normal channel aliases and list missing transition packages."
-    print "- Retain the published sources, frontend contract and maintainer scripts."
+    if(build_phase=="backend") print "* Wed Nov 04 2026 Uke contributors - 2.8.1-10"
+    else print "* Wed Nov 04 2026 Uke contributors - 1.0.0-40"
+    print "- Preserve newer installed versions and unavailable extras during channel changes."
+    print "- Honor kernel version locks and skip boot work for unchanged selections."
+    print "- Keep exact synchronization explicit and add signed offline solver tests."
 }

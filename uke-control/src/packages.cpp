@@ -249,7 +249,7 @@ std::string operation_id() {
 std::string operation_json(const operation::Record& record) {
     return "{\"schema\":\"org.uke.control.operation.v1\",\"operation_id\":"+sysfs::quote(record.id)+",\"kind\":\"packages\",\"phase\":"+sysfs::quote(record.phase)+
         ",\"needs_recovery\":"+(operation::resume(record.phase)==operation::Resume::review?"true":"false")+",\"resume_action\":"+sysfs::quote(operation::next(record.phase))+
-        ",\"physical_boot_verified\":null}";
+        ",\"mode\":"+sysfs::quote(record.mode)+",\"physical_boot_verified\":null}";
 }
 struct CriticalSignals {
     sigset_t previous{};
@@ -397,9 +397,16 @@ bool original_fedora(const Package& pkg,const FedoraReturn& entry,const std::str
         pkg.get_vendor()=="Fedora Project"&&pkg.get_source_name()==entry.source&&pkg.get_epoch()=="0"&&
         fedora_package_release(pkg.get_release(),".fc46")&&rpmvercmp(pkg.get_version().c_str(),entry.version)>=0;
 }
-struct Plan {std::map<std::string,Package> targets;std::map<std::string,std::string> renames;std::set<std::string> scope,returns;bool fallback=false,originals=false,cxx=false;std::string kernel_nevra,krel;};
-Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids,const std::string& dist={}) {
-    Plan p;const auto repo=prefix+project(selected);
+struct Plan {
+    std::map<std::string,Package> targets;
+    std::map<std::string,std::string> renames,retained;
+    std::set<std::string> scope,returns,retained_keys;
+    bool fallback=false,originals=false,cxx=false,synchronize=true;
+    std::string kernel_nevra,krel,selected_krel,kernel_retention_reason;
+};
+Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::string>& ids,const std::string& dist={},bool synchronize=true) {
+    Plan p;p.synchronize=synchronize;const auto repo=prefix+project(selected);
+    const auto retain=[&](const Package& pkg,const std::string& reason){p.retained.emplace(pkg.get_nevra(),reason);p.retained_keys.insert(key(pkg));};
     libdnf5::rpm::PackageQuery installed(base);installed.filter_installed();
     libdnf5::rpm::PackageQuery available(base);available.filter_available();available.filter_repo_id(repo);
     for(const auto& pkg:available)if(selected=="unstable"&&pkg.get_name()=="uke-core-meta")
@@ -446,6 +453,7 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
             libdnf5::rpm::PackageQuery fedora(base);fedora.filter_available();fedora.filter_repo_id(std::vector<std::string>{"fedora","updates","rawhide"});fedora.filter_name("fastfetch");fedora.filter_arch(pkg.get_arch());
             need(!fedora.empty(),"Original Fedora Fastfetch is unavailable; keep the installed package until its signed replacement is available");
             const auto target=*std::max_element(fedora.begin(),fedora.end(),older);
+            if(!synchronize&&older(target,pkg)){retain(pkg,"newer_installed");continue;}
             p.scope.insert(k);p.targets.insert_or_assign(k,target);continue;
         }
         std::vector<Package> renamed;
@@ -454,10 +462,14 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         const bool ours=ids.contains(pkg.get_from_repo_id())||managed_repo(pkg.get_from_repo_id())||pkg.get_name().starts_with("uke-")||pkg.get_name().starts_with("senemos-uke-");
         if(!ours&&!candidates.contains(k)&&renamed.empty())continue;
         p.scope.insert(k);need(++counts[k]==1,"Duplicate installed package requires repair: "+k);
-        if(!candidates.contains(k)&&renamed.empty()){missing.insert(k);continue;}
+        if(!candidates.contains(k)&&renamed.empty()) {
+            if(synchronize)missing.insert(k);else retain(pkg,"not_available_in_channel");
+            continue;
+        }
         const auto& list=renamed.empty()?candidates.at(k):renamed;
         const auto target=*std::max_element(list.begin(),list.end(),older);
         for(const auto& candidate:renamed)need(candidate.get_name()==target.get_name(),"Ambiguous renamed replacement for "+k);
+        if(!synchronize&&older(target,pkg)){retain(pkg,"newer_installed");continue;}
         if(!renamed.empty())p.renames.emplace(pkg.get_nevra(),target.get_nevra());
         p.scope.insert(key(target));p.targets.insert_or_assign(key(target),target);
         if(pkg.get_name()=="uke-control")need(channel_api(target),"Target uke-control lacks channel API 1; promote a compatible manager first so the return path remains available");
@@ -478,6 +490,22 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         }
         p.fallback=selected=="unstable"&&rc.empty();
         const auto& choices=selected=="unstable"&&!rc.empty()?rc:stable;
+        if(!synchronize) {
+            // A channel change is not consent to downgrade a kernel or bypass
+            // a version lock. Only a genuinely newer admitted tuple reaches
+            // the boot updater; an unchanged selection requires no boot work.
+            std::vector<Package> existing;
+            for(const auto& pkg:installed)if(pkg.get_name()==kernel)existing.push_back(pkg);
+            if(existing.empty())for(const auto& pkg:installed)if(pkg.get_name()==kernel+"-core")existing.push_back(pkg);
+            need(!existing.empty(),"Cannot identify the installed kernel selection");
+            const auto newest=*std::max_element(existing.begin(),existing.end(),older);
+            if(choices.empty()||!older(newest,*std::max_element(choices.begin(),choices.end(),older))) {
+                p.kernel_nevra=newest.get_nevra();
+                p.kernel_retention_reason=choices.empty()?"no_admitted_candidate":"installed_kernel_current_or_newer";
+                for(const auto& pkg:installed)if(pkg.get_name()==kernel+"-core"&&pkg.get_evr()==newest.get_evr())p.selected_krel=kernel_release(pkg);
+                return p;
+            }
+        }
         need(!choices.empty(),"Target channel has no eligible kernel");
         const auto chosen=*std::max_element(choices.begin(),choices.end(),older);
         p.kernel_nevra=chosen.get_nevra();
@@ -489,7 +517,7 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         }
         // Reusing an installed uname/module directory would destroy a retained tuple.
         for(const auto& [unused,target]:p.targets)if(target.get_name().ends_with("-core")&&kernel_package(target.get_name())) {
-            p.krel=kernel_release(target);need(!p.krel.empty(),"Kernel core lacks an exact kernel-uname-r provide");
+            p.krel=kernel_release(target);p.selected_krel=p.krel;need(!p.krel.empty(),"Kernel core lacks an exact kernel-uname-r provide");
             for(const auto& old:installed)if(kernel_package(old.get_name())&&old.get_name().ends_with("-core")&&old.get_nevra()!=target.get_nevra())
                 need(kernel_release(old)!=p.krel,"Candidate overwrites an installed module directory; use a distinct kernel release");
         }
@@ -505,7 +533,7 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
         const auto k=key(pkg);auto chosen=p.targets.find(k);
         const auto original=fedora_original(pkg.get_name(),p.cxx);
         // Factory calibration belongs to the device, including when a public repo advertises its name.
-        if((p.originals&&(fedora_return(pkg.get_name(),p.cxx)||(original&&!original_fedora(pkg,*original,pkg.get_arch()))))||private_package(pkg.get_name())||
+        if(p.retained_keys.contains(k)||(p.originals&&(fedora_return(pkg.get_name(),p.cxx)||(original&&!original_fedora(pkg,*original,pkg.get_arch()))))||private_package(pkg.get_name())||
            (kernel_package(pkg.get_name())&&(chosen==p.targets.end()||chosen->second.get_id()!=pkg.get_id()))||
            (p.scope.contains(k)&&pkg.get_repo_id()!=(chosen==p.targets.end()?prefix+project(selected):chosen->second.get_repo_id())))excluded.add(pkg);
     }
@@ -533,6 +561,8 @@ libdnf5::base::Transaction resolve(libdnf5::Base& base,const Plan& p,const std::
     std::set<std::string> renamed_outbound;
     for(const auto& item:tx.get_transaction_packages()) {
         const auto pkg=item.get_package();const auto action=item.get_action();
+        need(!p.retained_keys.contains(key(pkg)),"Transaction would alter a retained package: "+pkg.get_nevra());
+        need(p.synchronize||action!=Action::DOWNGRADE,"An update would downgrade "+pkg.get_nevra()+"; use channel sync explicitly for version synchronization");
         need(action!=Action::REMOVE||p.returns.contains(pkg.get_nevra()),"Transaction would remove "+pkg.get_nevra()+"; refusing");
         if((action==Action::REPLACED||action==Action::REMOVE)&&p.renames.contains(pkg.get_nevra())) {
             renamed_outbound.insert(pkg.get_nevra());
@@ -646,11 +676,19 @@ void run(Options o) {
     progress("Refreshing repositories for "+o.selected);
     base.get_repo_sack()->load_repos();
     progress("Resolving package transaction");
-    const auto p=plan(base,o.selected,repos.ids,dist);auto tx=resolve(base,p,o.selected,o.update);
+    if(!pending.empty()&&previous_operation)o.update=previous_operation->mode=="update";
+    const bool synchronize=!pending.empty()&&previous_operation?previous_operation->mode=="sync":o.sync&&!o.update;
+    const auto p=plan(base,o.selected,repos.ids,dist,synchronize);auto tx=resolve(base,p,o.selected,o.update);
     utsname current{};need(uname(&current)==0,"Cannot read running kernel identity");
     std::string plan="{\"schema\":\"org.uke.control.packages.v1\",\"channel\":"+sysfs::quote(o.selected)+",\"copr\":"+sysfs::quote(project(o.selected))+
         ",\"selected_kernels\":"+sysfs::quote(p.kernel_nevra)+",\"test_kernel_fallback\":"+(p.fallback?"true":"false")+
-        ",\"kernel_activation_pending\":"+(!p.krel.empty()&&p.krel!=current.release?"true":"false")+",\"packages\":[";
+        ",\"kernel_activation_pending\":"+(!p.selected_krel.empty()&&p.selected_krel!=current.release?"true":"false")+
+        ",\"mode\":"+sysfs::quote(synchronize?"synchronize":"upgrade")+",\"kernel_retention_reason\":"+sysfs::quote(p.kernel_retention_reason)+",\"retained_packages\":[";
+    for(const auto& [name,reason]:p.retained) {
+        if(plan.back()!='[')plan+=',';
+        plan+="{\"package\":"+sysfs::quote(name)+",\"reason\":"+sysfs::quote(reason)+"}";
+    }
+    plan+="],\"packages\":[";
     uint64_t download_bytes=0,inbound_bytes=0,outbound_bytes=0;
     const auto add=[](uint64_t& total,uint64_t bytes){need(bytes<=std::numeric_limits<uint64_t>::max()-total,"Package size estimate overflow");total+=bytes;};
     for(const auto& item:tx.get_transaction_packages()) {
@@ -672,6 +710,15 @@ void run(Options o) {
         ",\"rpm_payload_outbound_bytes\":"+std::to_string(outbound_bytes)+",\"staging_peak_bytes\":null,\"estimate_complete\":false,\"native_rpm_space_checks_required\":true,\"kernel_removal_planned\":false,\"filesystems\":["+
         space_observation("/")+","+space_observation(base.get_config().get_cachedir_option().get_value())+","+space_observation("/usr/lib/senemos/kernel-updates")+","+space_observation("/run")+"]}";
     if(o.dry){cli::print(plan+",\"preview_only\":true,\"operation_completed\":false,\"reboot_requested\":false}",o.json,"Package plan");return;}
+    if(tx.get_transaction_packages().empty()&&p.krel.empty()&&pending.empty()&&(!previous_operation||previous_operation->phase=="complete")&&
+       saved(config/"channel")==o.selected&&repos.definitions.empty()&&read_file("/etc/dnf/repos.override.d/zz-uke-control.repo")==repos.overrides) {
+        bool current_policy=false;
+        try{verify_repositories(repos.ids,o.selected);current_policy=true;}catch(const std::exception&){/* Normalize repository policy through the journal below. */}
+        if(current_policy) {
+            progress("No package or channel changes required");
+            cli::print(plan+",\"preview_only\":false,\"operation_completed\":true,\"up_to_date\":true,\"reboot_requested\":false}",o.json,"Packages are up to date");return;
+        }
+    }
     Maintenance maintenance;
     need(!fs::exists("/run/initramfs/etc/uke-layout/request.json")&&!fs::exists("/run/initramfs/etc/uke-resize-system.request"),"Offline storage maintenance is prepared; resolve it before package changes");
     need(!helper_required||helper_ready||helper_in_transaction,"The boot helper is missing or untrusted and this plan does not provide it. No packages changed");
@@ -681,7 +728,7 @@ void run(Options o) {
     progress("Verifying package signatures");need(tx.check_gpg_signatures(),"Package signature check failed; no channel changes");
     trusted_directory(config,0755);trusted_directory("/etc/yum.repos.d",0755);trusted_directory("/etc/dnf/repos.override.d",0755);
     CriticalSignals critical;
-    operation::Record record{pending.empty()?operation_id():previous_operation->id,o.selected,"prepared",p.krel,helper_required};
+    operation::Record record{pending.empty()?operation_id():previous_operation->id,o.selected,"prepared",p.krel,helper_required,synchronize?"sync":o.update?"update":"set"};
     operation::Actions actions;
     actions.checkpoint=[&](const auto& current){atomic_write(state/"channel-operation",operation::encode(current),0600);};
     actions.checkpoint(record);
@@ -698,7 +745,7 @@ void run(Options o) {
     verify_repositories(repos.ids,o.selected);
     atomic_write(state/"channel-transaction.json",tx.serialize(),0600);
     };
-    tx.set_description("uke-control channel "+o.selected+(o.update?" update":" sync"));
+    tx.set_description("uke-control channel "+o.selected+(o.update?" update":synchronize?" sync":" set"));
     tx.set_callbacks(std::make_unique<RpmProgress>());
     actions.rpm=[&]{
     progress("Applying RPM transaction; waiting for package scriptlets");

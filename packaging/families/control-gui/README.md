@@ -1,5 +1,12 @@
 # Control frontend package contract
 
+4 November 2026, follow-up candidate `2.8.1-10.fc46`: normal channel selection
+and updates preserve newer installed versions and unavailable extras. Exact
+version reconciliation remains in `channel sync`. The source overlay includes
+matching help/catalog text and signed offline solver fixtures. An unchanged
+normal update skips RPM, journal and boot work. COPR/device results are tracked
+in the [channel-policy record](../../../docs/lessons/2026-11-04-channel-policy.md).
+
 4 November 2026: the backend candidate advances to `2.8.1-9.fc46`.
 The original source archives and existing maintainer scripts remain unchanged.
 A separate source overlay contains the package manager, its operation-status

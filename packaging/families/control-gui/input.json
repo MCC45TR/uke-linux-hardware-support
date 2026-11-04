@@ -7,8 +7,8 @@
   "source_builder_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11240837/uke-control-2.8.1-5.fc46.src.rpm",
   "sha256": "44755d1c58f919bcd76c2a13c6dabefe2cf574464542bfa58fb29309fca5881a",
   "signing_key": "2204A661EA630A5303500085538797E72A3E4ECA",
-  "output_evr": "2.8.1-9.fc46",
-  "release_increment": 4,
-  "desktop_meta_evr": "1.0.0-39.fc46",
-  "policy": "Preserve the published source archives and maintainer scripts; overlay reviewed package progress, normal-channel alias inference, complete transition diagnostics and their tests. Retain the typed frontend contract."
+  "output_evr": "2.8.1-10.fc46",
+  "release_increment": 5,
+  "desktop_meta_evr": "1.0.0-40.fc46",
+  "policy": "Preserve published source archives and maintainer scripts; overlay conservative channel/update planning, progress and signed offline policy tests. Explicit channel sync retains exact-version synchronization."
 }
