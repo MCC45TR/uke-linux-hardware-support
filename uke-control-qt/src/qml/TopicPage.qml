@@ -106,6 +106,16 @@ FormCard.FormCardPage {
         active: page.topicId === "battery"
         sourceComponent: Component { BatteryHistoryView {} }
     }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "nfc"
+        sourceComponent: Component { NfcView {} }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "usb"
+        sourceComponent: Component { UsbRoleView { topicPage: page } }
+    }
     FormCard.FormHeader { visible: (settings.topic.changes || []).length > 1; title: i18n("Preferences and actions") }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
@@ -120,6 +130,7 @@ FormCard.FormCardPage {
             delegate: FormCard.FormButtonDelegate {
                 required property var modelData
                 objectName: "topicAction_" + modelData.id
+                visible: modelData.id !== "usb.role"
                 text: modelData.title
                 icon.name: themeIcons.names["configure"]
                 Accessible.name: text

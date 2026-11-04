@@ -768,3 +768,498 @@ msgstr "Kayıtlı aday yok"
 
 msgid "Brightness level"
 msgstr "Parlaklık kademesi"
+
+msgid "Charge limit and policy"
+msgstr "Şarj sınırı ve politikası"
+
+
+msgid "Firmware thresholds, control support and charging preference"
+msgstr "Firmware eşikleri, kontrol desteği ve şarj tercihi"
+
+
+msgid "USB and dock"
+msgstr "USB ve dock"
+
+
+msgid "Accessories, link speeds, Ethernet, displays and automatic role handling"
+msgstr "Aksesuarlar, bağlantı hızları, Ethernet, ekranlar ve otomatik rol yönetimi"
+
+
+msgid "NFC tags and reading"
+msgstr "NFC etiketleri ve okuma"
+
+
+msgid "Built-in tag information and connected NDEF readers"
+msgstr "Yerleşik etiket bilgileri ve bağlı NDEF okuyucuları"
+
+
+msgid "Kernel information"
+msgstr "Çekirdek bilgileri"
+
+
+msgid "Not exported by this driver"
+msgstr "Bu sürücü tarafından sunulmuyor"
+
+
+msgid "Firmware settings read"
+msgstr "Firmware ayarları okundu"
+
+
+msgid "Charge limit enabled"
+msgstr "Şarj sınırı etkin"
+
+
+msgid "Start charging below"
+msgstr "Bu düzeyin altında şarja başla"
+
+
+msgid "Stop charging at"
+msgstr "Şarjı durdurma düzeyi"
+
+
+msgid "Meaning of these thresholds"
+msgstr "Bu eşiklerin anlamı"
+
+
+msgid "Saved firmware settings. Values alone do not prove that charging stops at the threshold."
+msgstr "Kayıtlı firmware ayarları. Bu değerler tek başına şarjın eşikte durduğunu kanıtlamaz."
+
+
+msgid "Settings read unavailable"
+msgstr "Ayarlar okunamadı"
+
+
+msgid "The charging driver did not provide a verified settings snapshot. Refresh to retry."
+msgstr "Şarj sürücüsü doğrulanmış bir ayar okuması sunmadı. Yenile ile tekrar deneyin."
+
+
+msgid "Charge limit reported by firmware"
+msgstr "Firmware tarafından bildirilen şarj sınırı"
+
+
+msgid "This kernel profile has not been qualified for charge control"
+msgstr "Bu çekirdek profili şarj kontrolü için henüz doğrulanmamış"
+
+
+msgid "Administrator access is required to inspect control admission"
+msgstr "Kontrol iznini incelemek için yönetici yetkisi gerekiyor"
+
+
+msgid "Changing charging settings"
+msgstr "Şarj ayarlarını değiştirme"
+
+
+msgid "Threshold changes admitted"
+msgstr "Eşik değişikliklerine izin veriliyor"
+
+
+msgid "Automatic control admitted"
+msgstr "Otomatik kontrole izin veriliyor"
+
+
+msgid "No admission result was returned"
+msgstr "Kontrol izni sonucu alınamadı"
+
+
+msgid "Physical cutoff verified"
+msgstr "Fiziksel şarj kesimi doğrulandı"
+
+
+msgid "This kernel's charging profile has not been qualified for changes. Saved firmware thresholds can still be read. Installing a qualified provider is required before changing the limit."
+msgstr "Bu çekirdeğin şarj profili değişiklikler için henüz doğrulanmamış. Kayıtlı firmware eşikleri okunabilir. Sınırı değiştirmek için doğrulanmış bir sağlayıcı kurulması gerekiyor."
+
+
+msgid "Charging changes are not admitted. Check the provider information below and refresh; the charging helper retains its own checks."
+msgstr "Şarj değişikliklerine izin verilmiyor. Aşağıdaki sağlayıcı bilgilerini inceleyip yenileyin; şarj yardımcısının kendi denetimleri de uygulanır."
+
+
+msgid "Built-in NFC tag detected"
+msgstr "Yerleşik NFC etiketi algılandı"
+
+
+msgid "Device function"
+msgstr "Aygıtın işlevi"
+
+
+msgid "FM19511 Type 2 tag; external tag/card reading requires a separate reader"
+msgstr "FM19511 Tip 2 etiket; harici etiket/kart okumak için ayrı bir okuyucu gerekiyor"
+
+
+msgid "Bound driver"
+msgstr "Bağlı sürücü"
+
+
+msgid "Wake permission"
+msgstr "Uyandırma izni"
+
+
+msgid "Runtime power state"
+msgstr "Çalışma zamanı güç durumu"
+
+
+msgid "Driver capability query"
+msgstr "Sürücü yetenek sorgusu"
+
+
+msgid "Read successfully"
+msgstr "Başarıyla okundu"
+
+
+msgid "This kernel does not expose the capability query"
+msgstr "Bu çekirdek yetenek sorgusunu sunmuyor"
+
+
+msgid "The tag is in use by another application"
+msgstr "Etiket başka bir uygulama tarafından kullanılıyor"
+
+
+msgid "The driver capability query could not be read"
+msgstr "Sürücü yetenek sorgusu okunamadı"
+
+
+msgid "Read-only memory interface"
+msgstr "Salt okunur bellek arayüzü"
+
+
+msgid "RF event interface"
+msgstr "RF olay arayüzü"
+
+
+msgid "Tag contents"
+msgstr "Etiket içeriği"
+
+
+msgid "No EEPROM contents are read or written by this information page."
+msgstr "Bu bilgi sayfasında EEPROM içeriği okunmaz veya yazılmaz."
+
+
+msgid "Built-in NFC tag"
+msgstr "Yerleşik NFC etiketi"
+
+
+msgid "USB-C connection · %1"
+msgstr "USB-C bağlantısı · %1"
+
+
+msgid "Partner connected"
+msgstr "Karşı aygıt bağlı"
+
+
+msgid "Current data role"
+msgstr "Güncel veri rolü"
+
+
+msgid "Current power role"
+msgstr "Güncel güç rolü"
+
+
+msgid "Reported power operation mode"
+msgstr "Bildirilen güç çalışma kipi"
+
+
+msgid "Port PD capability revision"
+msgstr "Portun desteklediği PD sürümü"
+
+
+msgid "Connection handling"
+msgstr "Bağlantı yönetimi"
+
+
+msgid "Automatic — managed by the kernel Type-C controller"
+msgstr "Otomatik — çekirdek Type-C denetleyicisi yönetiyor"
+
+
+msgid "Automatic role ownership could not be verified"
+msgstr "Otomatik rol yönetimi doğrulanamadı"
+
+
+msgid "Role interpretation"
+msgstr "Rollerin anlamı"
+
+
+msgid "Host carries USB data. Sink receives power. These roles are independent."
+msgstr "Host USB verisini yönetir. Sink güç alır. Bu roller birbirinden bağımsızdır."
+
+
+msgid "Connected accessories"
+msgstr "Bağlı aksesuarlar"
+
+
+msgid "USB devices detected"
+msgstr "Algılanan USB aygıtları"
+
+
+msgid "Link speed interpretation"
+msgstr "Bağlantı hızının anlamı"
+
+
+msgid "Each accessory reports its current USB link speed. This is not a measured transfer rate or the dock's advertised maximum."
+msgstr "Her aksesuar güncel USB bağlantı hızını bildirir. Bu, ölçülmüş aktarım hızı veya dock'un tanıtılan en yüksek hızı değildir."
+
+
+msgid "USB accessory"
+msgstr "USB aksesuarı"
+
+
+msgid "Current USB link speed"
+msgstr "Güncel USB bağlantı hızı"
+
+
+msgid "USB specification reported by device"
+msgstr "Aygıtın bildirdiği USB sürümü"
+
+
+msgid "Driver"
+msgstr "Sürücü"
+
+
+msgid "Power saving policy"
+msgstr "Güç tasarrufu politikası"
+
+
+msgid "Advertised maximum current"
+msgstr "Bildirilen en yüksek akım"
+
+
+msgid "Vendor / product ID"
+msgstr "Üretici / ürün kimliği"
+
+
+msgid "Connection state"
+msgstr "Bağlantı durumu"
+
+
+msgid "Carrier detected"
+msgstr "Taşıyıcı algılandı"
+
+
+msgid "Negotiated Ethernet speed"
+msgstr "Anlaşılan Ethernet hızı"
+
+
+msgid "Duplex"
+msgstr "Çift yönlülük"
+
+
+msgid "Received"
+msgstr "Alınan"
+
+
+msgid "Sent"
+msgstr "Gönderilen"
+
+
+msgid "Receive errors"
+msgstr "Alma hataları"
+
+
+msgid "Transmit errors"
+msgstr "Gönderme hataları"
+
+
+msgid "Receive drops"
+msgstr "Alma düşümleri"
+
+
+msgid "Transmit drops"
+msgstr "Gönderme düşümleri"
+
+
+msgid "Counter period"
+msgstr "Sayaç dönemi"
+
+
+msgid "Since the interface was created; counters are not a speed test."
+msgstr "Arayüz oluşturulduğundan beri; sayaçlar hız testi değildir."
+
+
+msgid "Dock Ethernet · %1"
+msgstr "Dock Ethernet · %1"
+
+
+msgid "External display · %1"
+msgstr "Harici ekran · %1"
+
+
+msgid "Connection"
+msgstr "Bağlantı"
+
+
+msgid "Output enabled"
+msgstr "Çıkış etkin"
+
+
+msgid "Advertised resolutions"
+msgstr "Bildirilen çözünürlükler"
+
+
+msgid "Display interpretation"
+msgstr "Ekran bilgilerinin anlamı"
+
+
+msgid "Supported resolutions do not identify the active mode, refresh rate or a verified image. Use KDE display settings for the active layout."
+msgstr "Desteklenen çözünürlükler etkin kipi, yenileme hızını veya görüntünün doğrulandığını belirtmez. Etkin düzen için KDE ekran ayarlarını kullanın."
+
+
+msgid "USB-C connection"
+msgstr "USB-C bağlantısı"
+
+
+msgid "Type-C ports"
+msgstr "Type-C portları"
+
+
+msgid "No Type-C port is currently exported by the kernel"
+msgstr "Çekirdek şu anda bir Type-C portu sunmuyor"
+
+
+msgid "Automatic connection handling belongs to the kernel Type-C controller. Host and Device request a role for the attached partner; they do not save a forced mode. Reconnecting negotiates the role again."
+msgstr "Otomatik bağlantıyı çekirdeğin Type-C denetleyicisi yönetir. Host ve Device bağlı karşı aygıt için rol ister; kalıcı zorlanmış kip kaydetmez. Yeniden bağlantıda rol tekrar belirlenir."
+
+
+msgid "Host mode and automatic handling"
+msgstr "Host kipi ve otomatik yönetim"
+
+
+msgid "Automatic handling is active"
+msgstr "Otomatik yönetim etkin"
+
+
+msgid "Automatic handling has not been verified"
+msgstr "Otomatik yönetim doğrulanmadı"
+
+
+msgid "Check kernel management and current roles. Keeps the attached connection intact."
+msgstr "Çekirdek yönetimini ve güncel rolleri kontrol eder. Bağlı bağlantıyı korur."
+
+
+msgid "Request Host or Device"
+msgstr "Host veya Device rolü iste"
+
+
+msgid "A one-time role request. Active dock storage, Ethernet and displays can prevent a change."
+msgstr "Tek seferlik rol isteği. Etkin dock depolaması, Ethernet ve ekranlar değişikliği engelleyebilir."
+
+
+msgid "Read an NFC tag"
+msgstr "NFC etiketi oku"
+
+
+msgid "Connected NFC reader"
+msgstr "Bağlı NFC okuyucu"
+
+
+msgid "Check reader"
+msgstr "Okuyucuyu kontrol et"
+
+
+msgid "Read NDEF tag"
+msgstr "NDEF etiketi oku"
+
+
+msgid "Use a supported external reader. No card authentication, payment or memory writes are performed."
+msgstr "Desteklenen bir harici okuyucu kullanın. Kart kimlik doğrulaması, ödeme veya belleğe yazma yapılmaz."
+
+
+msgid "Stop reading"
+msgstr "Okumayı durdur"
+
+
+msgid "Clear read content"
+msgstr "Okunan içeriği temizle"
+
+
+msgid "Read limit"
+msgstr "Okuma sınırı"
+
+
+msgid "Additional or oversized records were omitted"
+msgstr "Ek veya çok büyük kayıtlar gösterilmedi"
+
+
+msgid "Text"
+msgstr "Metin"
+
+
+msgid "Address (display only)"
+msgstr "Adres (yalnızca gösterim)"
+
+
+msgid "Other NDEF record"
+msgstr "Diğer NDEF kaydı"
+
+
+msgid "Type %1 · %2 bytes"
+msgstr "Tür %1 · %2 bayt"
+
+
+msgid "Reading timed out. Bring a supported tag closer and try again."
+msgstr "Okuma zaman aşımına uğradı. Desteklenen bir etiketi yaklaştırıp tekrar deneyin."
+
+
+msgid "Check for a connected NFC reader before scanning."
+msgstr "Taramadan önce bağlı bir NFC okuyucu olup olmadığını kontrol edin."
+
+
+msgid "Simulation does not access NFC hardware."
+msgstr "Benzetim NFC donanımına erişmez."
+
+
+msgid "A tag was detected, but this reader cannot read its NDEF records."
+msgstr "Bir etiket algılandı ancak bu okuyucu etiketin NDEF kayıtlarını okuyamıyor."
+
+
+msgid "The tag returned an empty NDEF message."
+msgstr "Etiket boş bir NDEF iletisi döndürdü."
+
+
+msgid "NDEF records read. Content is displayed locally and is not opened automatically."
+msgstr "NDEF kayıtları okundu. İçerik yerel olarak gösterilir ve otomatik açılmaz."
+
+
+msgid "The reader could not read this tag. Check its format and position."
+msgstr "Okuyucu bu etiketi okuyamadı. Etiket biçimini ve konumunu kontrol edin."
+
+
+msgid "Tag detected; reading NDEF records…"
+msgstr "Etiket algılandı; NDEF kayıtları okunuyor…"
+
+
+msgid "The reader refused the NDEF read request."
+msgstr "Okuyucu NDEF okuma isteğini reddetti."
+
+
+msgid "The tag moved out of range before the read finished."
+msgstr "Okuma bitmeden etiket menzil dışına çıktı."
+
+
+msgid "A compatible NFC reader is available."
+msgstr "Uyumlu bir NFC okuyucu kullanılabilir."
+
+
+msgid "No compatible NFC reader is available. The built-in FM19511 is a tag, not a reader. Connect a supported USB NFC reader for NDEF reading."
+msgstr "Uyumlu NFC okuyucu yok. Yerleşik FM19511 bir etikettir, okuyucu değildir. NDEF okumak için desteklenen bir USB NFC okuyucu bağlayın."
+
+
+msgid "Could not start NFC detection. Check the reader service and access permissions."
+msgstr "NFC algılama başlatılamadı. Okuyucu hizmetini ve erişim izinlerini kontrol edin."
+
+
+msgid "Hold an NDEF tag near the connected reader. Reading stops after 30 seconds."
+msgstr "NDEF etiketini bağlı okuyucuya yaklaştırın. Okuma 30 saniye sonra durur."
+
+
+msgid "NFC reading stopped."
+msgstr "NFC okuması durduruldu."
+
+
+msgid "Read content cleared."
+msgstr "Okunan içerik temizlendi."
+
+
+msgid "KDE energy saving settings"
+msgstr "KDE enerji tasarrufu ayarları"
+
+
+msgid "KDE screen locking settings"
+msgstr "KDE ekran kilidi ayarları"

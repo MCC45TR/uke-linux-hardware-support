@@ -5,7 +5,7 @@ namespace uq {
 const QList<Topic> &settingTopics() {
   static const QList<Topic> topics{
     {"battery",i18n("Battery use"),i18n("Level, temperature and recorded history"),"battery",1,{"battery.status"},{}},
-    {"charging",i18n("Charging preference"),i18n("Reported limits, support and requested policy"),"battery-charging",1,{"charge.status","charge.admission"},{"charge.mode"}},
+    {"charging",i18n("Charge limit and policy"),i18n("Firmware thresholds, control support and charging preference"),"battery-charging",1,{"kernel.charging"},{"charge.limit","charge.mode"}},
     {"health",i18n("Battery health"),i18n("Reported capacity, cycles and cell topology"),"battery",1,{"battery.health","battery.cells"},{}},
     {"charger",i18n("Charger"),i18n("Reported source and protocol"),"drive-removable-media-usb",1,{"battery.protocol","charge.protocols"},{}},
     {"sleep",i18n("Sleep and wake"),i18n("Sleep observations; advanced wake permissions"),"preferences-system-power-management",1,{"overview.sleep"},{}},
@@ -13,8 +13,8 @@ const QList<Topic> &settingTopics() {
     {"flashlight",i18n("Flashlight"),i18n("Off, low or high brightness"),"camera-flash",2,{"flashlight.status"},{"flashlight.level"}},
     {"led",i18n("Notification light"),i18n("Automatic policy or a requested colour"),"preferences-desktop-color",2,{"led.status"},{"led.auto","led.color","led.test"}},
     {"external",i18n("External display"),i18n("Connection and supported link profiles"),"video-display",2,{"display.bits","display.profiles"},{"display.profile"}},
-    {"usb",i18n("USB accessories"),i18n("Connected devices, role and power policy"),"drive-removable-media-usb",3,{"usb.status"},{"usb.role","usb.power"}},
-    {"nfc",i18n("NFC"),i18n("Controller and radio permission"),"network-wireless",3,{"nfc.status"},{"nfc.state"}},
+    {"usb",i18n("USB and dock"),i18n("Accessories, link speeds, Ethernet, displays and automatic role handling"),"drive-removable-media-usb",3,{"kernel.dock"},{"usb.role","usb.power","display.profile"}},
+    {"nfc",i18n("NFC tags and reading"),i18n("Built-in tag information and connected NDEF readers"),"network-wireless",3,{"kernel.tag"},{}},
     {"ethernet",i18n("Ethernet"),i18n("Choose a detected interface to inspect or configure"),"network-wired",3,{}, {"ethernet.status","ethernet.profile"}},
     {"sound",i18n("Sound and microphone"),i18n("Audio devices and microphone preference"),"audio-input-microphone",4,{"microphone.status","overview.audio"},{"microphone.select"}},
     {"storage",i18n("Storage"),i18n("Used and available filesystem space"),"drive-harddisk",5,{"overview.storage"},{}},

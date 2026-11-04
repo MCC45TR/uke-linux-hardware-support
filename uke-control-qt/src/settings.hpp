@@ -6,6 +6,8 @@
 #include <QQuickPaintedItem>
 #include <QColor>
 #include <functional>
+#include <QProcess>
+#include "nfc-reader.hpp"
 namespace uq {
 struct Topic {
   QString id, title, subtitle, icon;
@@ -15,6 +17,7 @@ struct Topic {
 const QList<Topic> &settingTopics();
 QVariantMap topicMap(const Topic &topic);
 QVariantList informationRows(const QString &id, const QJsonObject &data);
+QVariantList kernelInformationSections(const QString &id, const QJsonObject &data);
 QVariantMap normaliseHistory(const QVariantList &records, qint64 start, qint64 end);
 class Settings : public QObject {
   Q_OBJECT
@@ -25,6 +28,8 @@ class Settings : public QObject {
   Q_PROPERTY(bool busy READ busy NOTIFY changed)
   Q_PROPERTY(QString notice READ notice NOTIFY changed)
   Q_PROPERTY(QString updated READ updated NOTIFY changed)
+  Q_PROPERTY(QObject* nfc READ nfc CONSTANT)
+  Q_PROPERTY(QVariantMap usbPolicy READ usbPolicy NOTIFY changed)
   Fixture fixture_;
   bool restricted_ = false;
   const Topic *topic_ = nullptr;
@@ -36,6 +41,11 @@ class Settings : public QObject {
   QTimer poll_, simulated_;
   QVariantMap history_;
   unsigned historyGeneration_ = 0;
+  NfcReader nfc_;
+  QProcess *kernel_ = nullptr;
+  QTimer kernelTimeout_;
+  QByteArray kernelOutput_;
+  void readKernel(const QString &kind);
   void next();
   void finish(const Result &result);
   void call(const QString &path, const QString &interface, const QString &method,
@@ -50,6 +60,8 @@ public:
   QVariantList information() const;
   QVariantMap history() const { return history_; }
   QVariantMap bootReport() const;
+  QObject *nfc() { return &nfc_; }
+  QVariantMap usbPolicy() const;
   bool busy() const { return !current_.isEmpty(); }
   QString notice() const { return notice_; }
   QString updated() const { return updated_; }
