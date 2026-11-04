@@ -37,3 +37,25 @@ Pure contract tests cover no-op, trial, cancellation, failed return, rollback,
 inconsistent selection, failed/same release and incomplete phases. Injected
 record/GPT/UFS/readback failures require restoration; restoration failure reports
 recovery explicitly. Build and device results will be recorded after observation.
+
+## Observed delivery and limits
+
+COPR [11259613](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11259613/)
+built source df2609c05674a33a7dba561daf18e09e77b3f090 as 1.8.40-1.fc46. The existing
+GPT/slot, trial-health, RTC and touch checks passed, together with the new
+existing-slot selection and injected-failure transaction contracts. The custom
+package producer was pinned to that source recipe after successful publication.
+
+On 4 November, DNF upgraded only boot integration, kernel updater and installation
+profile from 1.8.39 to 1.8.40. No kernel-image package was included. The retained
+postinstall reported the existing 7.3.1-1500 userdata bundle and disabled automatic
+boot activation policy. The running kernel remained 7.3.1-1500, UFS next boot
+remained B, and the approval record remained stable with no candidate.
+
+With Control 2.8.1-12, real B preview and already-selected B selection returned
+success without a change. Both A and `next` previews resolved the stored
+7.3.1-7008-unstable image and refused its recorded previous failure. Invalid
+targets, JSON/automatic confirmation and status transaction flags were rejected.
+No real nontrivial slot transition or reboot was performed: A is a failed image,
+so the guarded refusal was preserved. Trial/cancellation/rollback write-path
+results remain remote synthetic evidence, not tablet boot acceptance.
