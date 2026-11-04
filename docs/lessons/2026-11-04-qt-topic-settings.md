@@ -41,3 +41,16 @@ The correction leaves the picker unselected and displays the actual requested
 path separately. No warning was suppressed. The next release also retains Home
 in Back navigation, distinguishes unsupported summaries from failed reads and
 collapses secondary measurements. Device validation remains pending.
+
+COPR 11260202 built 1.2.0-2 from d3863328f4b6ba1719770d26dcc96633064dfb19;
+all four native suites passed, including the complete topic and catalog scene
+walkthrough. A source request with a short commit pin was canceled before use
+and replaced with the full immutable source identity.
+
+Read-only pre-delivery observation found A/7.3.1-7200-unstable running in trial,
+with incomplete GPT/UFS evidence and an unverified recorded accepted fallback.
+No repair or slot selection was attempted. The next frontend release preserves
+the exact incomplete status and disables its daily slot-change entry. The
+installed read test compares the adapter with the actual report, rather than
+requiring a trial to have stable acceptance. This is a pre-existing boot status,
+not evidence of a UI-induced transition.

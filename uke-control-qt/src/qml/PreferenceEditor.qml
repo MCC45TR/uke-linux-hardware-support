@@ -19,6 +19,12 @@ ColumnLayout {
         visible: (backend.guide.parameters || []).length > 0
         SafeText { text: i18n("Requested preference"); description: i18n("These values are a request. They do not represent a verified current setting.") }
         RequestFields { Layout.fillWidth: true; pageWidth: editor.pageWidth }
+        FormCard.FormButtonDelegate {
+            visible: backend.guide.id === "boot.set-slot" && ["a", "b"].includes(backend.settings.bootReport.current_slot)
+            text: i18n("Select the other slot")
+            Accessible.name: text
+            onClicked: backend.setDraft("slot", backend.settings.bootReport.current_slot === "a" ? "b" : "a")
+        }
     }
     FormCard.FormCard {
         visible: backend.guide.preview || false

@@ -232,6 +232,8 @@ private slots:
     QVERIFY(settings);
     QVERIFY(settings->choices("interface").isEmpty());
     QCOMPARE(settings->topics(1).size(),5);
+    QVERIFY(!settings->topics(-1,"pil").isEmpty());
+    QVERIFY(!settings->topics(-1,"charge.mode").isEmpty());
     QVERIFY(!settings->open("unknown-topic"));
     QVERIFY(settings->open("charging"));
     settings->stop();
@@ -306,10 +308,11 @@ private slots:
       if (QString(id) == "update.status") {
         const auto report = bridge.observation().value("bootReport").toMap();
         QVERIFY(!report.isEmpty());
-        QVERIFY2(report.value("complete").toBool(), qPrintable(bridge.observation().value("raw").toString()));
+        const auto original=QJsonDocument::fromJson(bridge.observation().value("raw").toString().toUtf8()).object().toVariantMap();
+        QCOMPARE(report,original);
+        if(!report.value("complete").toBool())QVERIFY(!report.value("issues").toList().isEmpty());
         QCOMPARE(report.value("slots").toList().size(), 2);
-        QVERIFY(report.value("current_slot").toString() == "a" || report.value("current_slot").toString() == "b");
-        for (const auto &slot : report.value("slots").toList()) QVERIFY(!slot.toMap().value("kernel_release").toString().isEmpty());
+        QVERIFY(report.value("current_slot").isNull() || report.value("current_slot").toString() == "a" || report.value("current_slot").toString() == "b");
       }
       qInfo("Device read completed: %s", id);
     }

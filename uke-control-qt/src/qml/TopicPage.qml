@@ -98,7 +98,7 @@ FormCard.FormCardPage {
         Layout.fillWidth: true
         visible: settings.topic.canApply === false
         type: Kirigami.MessageType.Information
-        text: i18n("The provider has not admitted charging changes. Information remains available; expert tools keep their own checks.")
+        text: settings.topic.blockedReason || ""
     }
     FormCard.FormCard {
         visible: (settings.topic.changes || []).length > 0

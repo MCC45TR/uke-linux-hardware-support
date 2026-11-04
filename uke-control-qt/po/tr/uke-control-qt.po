@@ -684,3 +684,84 @@ msgstr "İstenen yol"
 
 msgid "No location selected"
 msgstr "Konum seçilmedi"
+
+msgid "Select the other slot"
+msgstr "Diğer slotu seç"
+
+msgid "Read stopped; previous information may be out of date"
+msgstr "Okuma durduruldu; önceki bilgi güncel olmayabilir"
+
+msgid "Boot metadata is incomplete. Slot changes require consistent recovery checks; the reported status remains visible."
+msgstr "Açılış metaverisi eksik veya tutarsız. Slot değişikliği tutarlı kurtarma denetimleri gerektirir; bildirilen durum görüntülenmeye devam eder."
+
+msgid "Current boot & next selection"
+msgstr "Çalışan açılış ve sonraki seçim"
+
+msgid "Running now"
+msgstr "Şu anda çalışan"
+
+msgid "Selected for the next boot"
+msgstr "Sonraki açılış için seçili"
+
+msgid "Pending slot change"
+msgstr "Bekleyen slot değişikliği"
+
+msgid "Kernels stored in A & B"
+msgstr "A ve B'de kayıtlı çekirdekler"
+
+msgid "Stored kernel"
+msgstr "Kayıtlı çekirdek"
+
+msgid "Bootable"
+msgstr "Açılabilir"
+
+msgid "Bootloader successful flag"
+msgstr "Bootloader başarılı açılış işareti"
+
+msgid "Matches the running kernel Image"
+msgstr "Çalışan çekirdek imajıyla eşleşiyor"
+
+msgid "Recorded previous failure"
+msgstr "Önceki başarısızlık kaydı"
+
+msgid "This release is listed as the failed candidate."
+msgstr "Bu sürüm başarısız aday olarak kayıtlı."
+
+msgid "Kernel approval"
+msgstr "Çekirdek onayı"
+
+msgid "Running kernel approval"
+msgstr "Çalışan çekirdeğin onayı"
+
+msgid "Recorded accepted kernel"
+msgstr "Kayıtlı onaylı çekirdek"
+
+msgid "Accepted record matches the stored image"
+msgstr "Onay kaydı kayıtlı imajla eşleşiyor"
+
+msgid "Update phase"
+msgstr "Güncelleme aşaması"
+
+msgid "Pending candidate kernel"
+msgstr "Bekleyen aday çekirdek"
+
+msgid "Latest recorded attempt approved"
+msgstr "Son kayıtlı deneme onaylandı"
+
+msgid "Previous failed candidate (history)"
+msgstr "Önceki başarısız aday (geçmiş)"
+
+msgid "Some information could not be verified"
+msgstr "Bazı bilgiler doğrulanamadı"
+
+msgid "Unknown"
+msgstr "Bilinmiyor"
+
+msgid "Accepted"
+msgstr "Onaylı"
+
+msgid "Not accepted"
+msgstr "Onaylanmadı"
+
+msgid "No candidate recorded"
+msgstr "Kayıtlı aday yok"

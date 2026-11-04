@@ -137,7 +137,7 @@ bool Bridge::openAction(const QString &id) {
                    QVariantMap{{"title",i18n("Low")},{"value","50"},{"description",QString()}},
                    QVariantMap{{"title",i18n("High")},{"value","100"},{"description",QString()}}};
       }
-      if(a.id=="boot.set-slot"&&p.id=="slot") {
+      if(a.id=="boot.set-slot"&&p.id=="slot"&&!settings_.bootReport().value("current_slot").toString().isEmpty()) {
         QVariantList explicitSlots;for(const auto &v:choices)if(v.toMap().value("value").toString()!="next")explicitSlots<<v;choices=explicitSlots;
       }
       QString kind;

@@ -161,7 +161,12 @@ QVariantMap Settings::topic()const {
   bool admitted=true;
   if(topic_->id=="charging") {
     const auto a=data_.value("charge.admission");
-    admitted=a.value("threshold_admission_ready").toBool()||a.value("automatic_admission_ready").toBool()||a.value("standard_client_admission_ready").toBool();
+    admitted=!busy()&&!errors_.contains("charge.admission")&&(a.value("threshold_admission_ready").toBool()||a.value("automatic_admission_ready").toBool()||a.value("standard_client_admission_ready").toBool());
+    map["blockedReason"]=i18n("The provider has not admitted charging changes. Information remains available; expert tools keep their own checks.");
+  }
+  if(topic_->id=="kernel") {
+    admitted=!busy()&&!errors_.contains("update.status")&&data_.value("update.status").value("complete").toBool();
+    map["blockedReason"]=i18n("Boot metadata is incomplete. Slot changes require consistent recovery checks; the reported status remains visible.");
   }
   map["canApply"]=admitted;return map;
 }
@@ -171,7 +176,10 @@ QVariantList Settings::topics(int area,const QString &search)const {
     if(area>=0&&t.area!=area)continue;
     bool matches=true;
     for(const auto &word:search.simplified().split(' ',Qt::SkipEmptyParts)) {
-      const auto hay=t.id+" "+t.title+" "+t.subtitle;
+      QString hay=t.id+" "+t.title+" "+t.subtitle;
+      const QMap<QString,QString> aliases{{"battery","pil batarya güç geçmiş"},{"charging","şarj sınır politika"},{"health","sağlık döngü kapasite"},{"kernel","çekirdek slot açılış"},{"updates","güncelleme yazılım kanal"},{"storage","depolama alan"},{"memory","bellek ram"},{"flashlight","fener ışık"},{"sound","ses mikrofon"},{"display","ekran parlaklık döndürme"}};
+      hay+=' '+aliases.value(t.id);
+      for(const auto &id:t.reads+t.changes)try{const auto &a=action(id.toStdString());hay+=' '+QString::fromStdString(a.id+" "+a.title.en+" "+a.title.tr+" "+a.description.en+" "+a.description.tr);}catch(const std::exception &){}
       if(!hay.contains(word,Qt::CaseInsensitive))matches=false;
     }
     if(matches)out<<topicMap(t);
@@ -211,6 +219,7 @@ void Settings::refresh() {
   queue_=topic_->reads;next();
 }
 void Settings::stop() {
+  if(!current_.isEmpty())errors_[current_]=i18n("Read stopped; previous information may be out of date");
   poll_.stop();simulated_.stop();queue_.clear();
   if(query_){query_->cancel();query_.reset();}current_.clear();
   ++historyGeneration_;if(history_.value("busy").toBool()){history_["busy"]=false;history_["message"]=i18n("History read stopped");emit historyChanged();}
@@ -218,6 +227,7 @@ void Settings::stop() {
 }
 void Settings::close(){stop();topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
 void Settings::next() {
+  if(!current_.isEmpty())return;
   if(!topic_||queue_.isEmpty()){current_.clear();emit changed();return;}
   current_=queue_.takeFirst();emit changed();
   try {
@@ -228,6 +238,7 @@ void Settings::next() {
   } catch(const std::exception &e){Result r;r.action_id=current_.toStdString();r.exit_status=69;r.error=e.what();finish(r);}
 }
 void Settings::finish(const Result &r) {
+  if(current_.isEmpty()||QString::fromStdString(r.action_id)!=current_)return;
   const auto id=current_;
   QJsonParseError e;const auto document=QJsonDocument::fromJson(QByteArray::fromStdString(r.output),&e);
   const auto d=document.object();

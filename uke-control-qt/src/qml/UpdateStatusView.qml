@@ -9,9 +9,9 @@ ColumnLayout {
     required property var report
     readonly property var approval: report.kernel_approval || ({})
     spacing: Kirigami.Units.smallSpacing
-    function value(text) { return text === null || text === undefined || text === "" ? "Unknown" : String(text) }
+    function value(text) { return text === null || text === undefined || text === "" ? i18n("Unknown") : String(text) }
     function slot(text) { return text === "a" ? "A" : text === "b" ? "B" : "Unknown" }
-    function yesNo(flag) { return flag === true ? "Yes" : flag === false ? "No" : "Unknown" }
+    function yesNo(flag) { return flag === true ? i18n("Yes") : flag === false ? i18n("No") : i18n("Unknown") }
     FormCard.FormHeader { title: "Current boot & next selection" }
     FormCard.FormCard {
         Layout.fillWidth: true
@@ -55,10 +55,10 @@ ColumnLayout {
                 contentItem: ColumnLayout {
                     spacing: 0
                     Kirigami.Heading { level: 4; text: "Slot " + view.slot(modelData.slot); Layout.leftMargin: Kirigami.Units.largeSpacing }
-                    SafeText { text: "Stored kernel"; description: view.value(modelData.kernel_release); icon.name: themeIcons.names["cpu"] }
-                    SafeText { text: "Bootable"; description: view.yesNo(modelData.bootable) }
-                    SafeText { text: "Bootloader successful flag"; description: view.yesNo(modelData.boot_successful) }
-                    SafeText { text: "Matches the running kernel Image"; description: view.yesNo(modelData.matches_running_kernel) }
+                    SafeText { text: i18n("Stored kernel"); description: view.value(modelData.kernel_release); icon.name: themeIcons.names["cpu"] }
+                    SafeText { text: i18n("Bootable"); description: view.yesNo(modelData.bootable) }
+                    SafeText { text: i18n("Bootloader successful flag"); description: view.yesNo(modelData.boot_successful) }
+                    SafeText { text: i18n("Matches the running kernel Image"); description: view.yesNo(modelData.matches_running_kernel) }
                     SafeText {
                         visible: Boolean(modelData.kernel_release && view.approval.last_failed_kernel === modelData.kernel_release)
                         text: i18n("Recorded previous failure")
@@ -75,20 +75,20 @@ ColumnLayout {
         SafeText {
             objectName: "bootApproval"
             text: i18n("Running kernel approval")
-            description: view.approval.running_kernel_approved === true ? "Accepted" : view.approval.running_kernel_approved === false ? "Not accepted" : "Unknown"
+            description: view.approval.running_kernel_approved === true ? i18n("Accepted") : view.approval.running_kernel_approved === false ? i18n("Not accepted") : i18n("Unknown")
             icon.name: themeIcons.names[view.approval.running_kernel_approved === true ? "dialog-ok" : "dialog-information"]
         }
         SafeText {
             text: i18n("Recorded accepted kernel")
             description: view.value(view.approval.accepted_kernel) + " · Slot " + view.slot(view.approval.accepted_slot)
         }
-        SafeText { text: "Accepted record matches the stored image"; description: view.yesNo(view.approval.accepted_kernel_verified) }
-        SafeText { text: "Update phase"; description: view.value(view.approval.phase).replace(/-/g, " ") }
+        SafeText { text: i18n("Accepted record matches the stored image"); description: view.yesNo(view.approval.accepted_kernel_verified) }
+        SafeText { text: i18n("Update phase"); description: view.value(view.approval.phase).replace(/-/g, " ") }
         SafeText {
             text: i18n("Pending candidate kernel")
-            description: view.approval.candidate_kernel === null ? "No candidate recorded" : view.value(view.approval.candidate_kernel)
+            description: view.approval.candidate_kernel === null ? i18n("No candidate recorded") : view.value(view.approval.candidate_kernel)
         }
-        SafeText { text: "Latest recorded attempt approved"; description: view.yesNo(view.approval.latest_update_approved) }
+        SafeText { text: i18n("Latest recorded attempt approved"); description: view.yesNo(view.approval.latest_update_approved) }
         SafeText {
             visible: Boolean(view.approval.last_failed_kernel)
             text: i18n("Previous failed candidate (history)")
