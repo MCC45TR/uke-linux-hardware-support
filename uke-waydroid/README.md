@@ -60,6 +60,23 @@ when explicitly invoked with `waydroid shell -- /system/bin/uke-vulkan-check`.
 Its NDK sysroot and native compiler are confined to COPR. No SDK/compiler is
 installed on the tablet, and this bounded check does not establish conformance.
 
+Diagnostics revision3 also draws sixteen alternating red/green triangles into
+a32×32 offscreen Vulkan attachment. Independently calculated pixel coverage
+checks both the triangle and cleared background after every GPU submission.
+Shader compilation/validation runs only in COPR. This exercises vertex/fragment
+shaders, graphics-pipeline creation, render-pass synchronization and image
+readback; it does not measure game performance or test Android window/swapchain
+presentation, textures, protected content or full API conformance.
+
+On4 November, the physical observer confirms separate Calculator/Settings
+windows without corruption in the bounded integration6/kernel7200 trial.
+After a separate boot into8101, the hardware buffer check again passes with
+zero mismatches and GLES remains Freedreno3.2. Policy routing and legacy
+filtering remain unavailable on8101; Play Store access requires the capable
+network kernel and a separate application test. Android13 and the available
+community ARM64 Android16 image both report aFebruary2026 security baseline;
+an image's build date alone is not its security patch date.
+
 On the Uke unstable channel, revision7 requires the selected singleboot profile
 to provide `uke-kernel-default(waydroid-netd) >= 1`. This lets a normal DNF update
 pull the matching network-capable kernel cohort and prevents replacement of
