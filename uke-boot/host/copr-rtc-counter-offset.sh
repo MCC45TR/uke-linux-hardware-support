@@ -12,13 +12,20 @@ mkdir -p "$output" "$stage/rpm" "$stage/outer" "$stage/inner"
 curl -fLsS --max-time 45 --get --data-urlencode ownername=mcc45tr \
  --data-urlencode projectname=uke-linux-unstable --data-urlencode packagename=uke-boot-integration \
  --data-urlencode limit=100 https://copr.fedorainfracloud.org/api_3/build/list > "$stage/builds.json"
+jq -e '.items|type=="array" and length>0' "$stage/builds.json" >/dev/null
+# Other custom directories contain independent version experiments. Reject
+# this exact NVR everywhere, and superseding releases in the intended cohort.
+jq -r '.items[]|select(.source_package.name=="uke-boot-integration" and .source_package.url!=null)|
+ select(.project_dirname=="uke-linux-unstable" or
+ .project_dirname=="uke-linux-unstable:custom:rtc-counter-offset-20261105" or
+ .source_package.version=="1.8.91-1.fc46")|.source_package.version' "$stage/builds.json" > "$stage/versions"
 while IFS= read -r published; do
  [[ $published =~ ^[0-9]+([.][0-9]+)*-[0-9]+([.][a-zA-Z0-9]+)*$ ]]
  comparison=$(rpm --eval "%{lua:print(rpm.vercmp(\"$published\", \"1.8.91-1.fc46\"))}")
  [[ $comparison =~ ^-?[0-9]+$ && $comparison -lt 0 ]] || {
   printf 'Counter-clock candidate1.8.91 is already published or superseded; use a fresh version\n' >&2;exit 1;
  }
-done < <(jq -r '.items[]|select(.source_package.name=="uke-boot-integration" and .source_package.url!=null)|.source_package.version' "$stage/builds.json")
+done < "$stage/versions"
 curl -fLsS --retry 2 --max-time 90 --proto '=https' --proto-redir '=https' \
  https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11260223/uke-boot-integration-1.8.90-1.fc46.src.rpm \
  -o "$stage/parent.src.rpm"
