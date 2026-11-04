@@ -6,7 +6,7 @@ kernel 7.3.1-1500. Native compilation is restricted to COPR.
 
 ## Source and device evidence
 
-The installed `uke-kernel-update` is 1.8.39. Its producer pins source
+At initial inspection, the installed `uke-kernel-update` was 1.8.39. Its producer pinned source
 `d03d854032dd7c0b011ac1be2ff1089850af0403`; earlier kernel-helper sources must not
 replace its retained RTC, touch-health, rollback and inactive-image safeguards.
 The existing QTI flag contract is in `uke-boot/src/slot-control.hpp`; the
@@ -62,3 +62,20 @@ rollback transactions were exercised only by remote contract fixtures.
 Release 2.8.1-13 distinguishes a known empty candidate/failure record from missing
 evidence in terminal text, and no longer advertises unsupported JSON on slot
 selection help. The versioned status schema and SDK are unchanged.
+
+COPR [11259667](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11259667/)
+passed all backend/package checks and published 2.8.1-13 from
+dd7d48de255ec38af1796eeba8faa2beb1489dcb. The producer now pins that successful
+recipe. DNF upgraded only Control and its client. The default redirected report
+remained human text, with `Pending candidate: None`, proven B/7.3.1-1500 acceptance
+and no pending switch. Slot help advertised only supported options. Control,
+client and Qt RPM verification passed; updater verification differed only at
+the two retained customized policy configuration files, which were preserved.
+
+Installed `update --check` and `brunch unstable --dry-run` succeeded without a
+package transaction, slot selection or reboot. The final Qt 1.1.0-2 five-provider
+live-read check also passed with SDK/backend 2.8.1-13. A concurrent status reader
+briefly held the shared updater lock and the selection preview safely refused
+its exclusive lock. Repeating B preview after the read completed passed. This
+is a serialization boundary, not permission to bypass the updater lock. UFS
+selection and running kernel remained B and 7.3.1-1500 throughout these checks.
