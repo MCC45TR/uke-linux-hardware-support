@@ -1,0 +1,55 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Apply the packaged desktop preference to the original Waydroid configuration.
+set -eu
+export LC_ALL=C
+work=${1:-/var/lib/waydroid}
+defaults=${2:-/etc/waydroid/uke-defaults.conf}
+[ -f "$work/waydroid.cfg" ] || exit 0
+value=$(awk -F= '
+    /^[[:space:]]*persist\.waydroid\.multi_windows[[:space:]]*=/ {
+        v=$2; gsub(/[[:space:]]/, "", v); count++
+    }
+    END { if (count != 1 || (v != "true" && v != "false")) exit 1; print v }
+' "$defaults")
+temporary=
+trap '[ -z "$temporary" ] || rm -f -- "$temporary"' EXIT HUP INT TERM
+for name in waydroid.cfg waydroid_base.prop; do
+    file=$work/$name
+    [ -e "$file" ] || continue
+    [ -f "$file" ] && [ ! -L "$file" ] || exit 1
+    temporary=$(mktemp "$work/.uke-waydroid.XXXXXX")
+    cp --preserve=all -- "$file" "$temporary"
+    if [ "$name" = waydroid.cfg ]; then
+        awk -v value="$value" '
+            /^[[:space:]]*\[/ {
+                if (section && !written) {
+                    print "persist.waydroid.multi_windows = " value; written=1
+                }
+                section=($0 ~ /^[[:space:]]*\[properties\][[:space:]]*$/)
+                if (section) found=1
+            }
+            section && /^[[:space:]]*persist\.waydroid\.multi_windows[[:space:]]*=/ {
+                if (!written) print "persist.waydroid.multi_windows = " value
+                written=1; next
+            }
+            {print}
+            END {
+                if (!found) print "\n[properties]"
+                if (!written) print "persist.waydroid.multi_windows = " value
+            }
+        ' "$file" > "$temporary"
+    else
+        awk -v value="$value" '
+            /^[[:space:]]*persist\.waydroid\.multi_windows[[:space:]]*=/ {next}
+            {print}
+            END {print "persist.waydroid.multi_windows=" value}
+        ' "$file" > "$temporary"
+    fi
+    if ! cmp -s -- "$file" "$temporary"; then
+        mv -fT -- "$temporary" "$file"
+    else
+        rm -f -- "$temporary"
+    fi
+    temporary=
+done
