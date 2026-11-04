@@ -65,3 +65,21 @@ is preserved. Guarded selection and preview share the Software updates area;
 the frontend keeps its existing terminal review path. New fixture checks cover
 the report and selection guide, and the opt-in installed suite additionally
 requires complete real A/B status. Validation of that release remains pending.
+
+COPR [11259655](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11259655/)
+built release 1.1.0-2 from ec711bc16c14ab4a7a2cb8ff3dd321a0a2811c5c; all four CTest
+suites passed. DNF upgraded only the GUI/test pair. Installed Wayland checks,
+launched by the active desktop user manager, passed 15 widget, 11 appearance and
+10 Kirigami cases without skips. Five opt-in live reads passed, including complete
+real slot status with both kernel releases and a proven running slot. An isolated
+light/Adwaita walkthrough passed all three cases. The status schema and frozen
+terminal selection route remained shared with Control 2.8.1-12 and boot owner
+1.8.40. The COPR producer now pins this successful Qt source.
+
+Private screenshots covered all nine areas, drawer, wide overview, catalog,
+update/channel guides, status, selection and review. The mobile kernel report
+uses vertical cards, and the Software updates page groups status, preview and
+selection before package tasks. Visual inspection found readable labels and
+native themed icons. These checks do not apply slot changes, reboot the tablet
+or certify every physical device provider. Kernel approval/history findings are
+recorded separately in [the status lesson](2026-11-04-update-slot-status.md).
