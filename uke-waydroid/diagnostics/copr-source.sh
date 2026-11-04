@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 export LC_ALL=C
 test ! -e /etc/senemos/kernel-update.conf
-owner=$(cd -- "$(dirname -- "$0")/../../.." && pwd)
+owner=$(cd -- "$(dirname -- "$0")/../.." && pwd)
 output=$(realpath -m "${1:?COPR result directory}")
 stage=$(mktemp -d)
 trap 'find "$stage" -depth -delete' EXIT
@@ -12,6 +12,7 @@ curl -fLsS --retry 2 --proto '=https' --proto-redir '=https' \
  https://dl.google.com/android/repository/android-ndk-r27d-linux.zip -o "$stage/ndk.zip"
 [[ $(stat -c %s "$stage/ndk.zip") == 663956036 ]]
 printf '%s  %s\n' 22105e410cf29afcf163760cc95522b9fb981121 "$stage/ndk.zip" | sha1sum -c --strict
+printf '%s  %s\n' 601246087a682d1944e1e16dd85bc6e49560fe8b6d61255be2829178c8ed15d9 "$stage/ndk.zip" | sha256sum -c --strict
 sha256sum "$stage/ndk.zip"
 unzip -q "$stage/ndk.zip" \
  'android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/*' \
