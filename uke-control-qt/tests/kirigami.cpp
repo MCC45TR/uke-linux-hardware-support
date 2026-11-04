@@ -4,6 +4,7 @@
 #include <KIconTheme>
 #include <KIconLoader>
 #include <KLocalizedQmlContext>
+#include <KLocalizedString>
 #include <KStyleManager>
 #include <QAccessible>
 #include <QApplication>
@@ -590,6 +591,7 @@ private slots:
 int main(int argc, char **argv) {
   KIconTheme::initTheme();
   QApplication app(argc, argv);
+  KLocalizedString::setApplicationDomain("uke-control-qt");
   KStyleManager::initStyle();
   QQuickStyle::setStyle("org.kde.desktop");
   qmlRegisterType<HistoryPlot>("org.uke.settings",1,0,"HistoryPlot");

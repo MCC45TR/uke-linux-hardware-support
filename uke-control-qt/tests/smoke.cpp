@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "../src/ui.hpp"
 #include <QtTest>
+#include <KLocalizedString>
 #include <unistd.h>
 using namespace uq;
 class Smoke : public QObject {
@@ -8,6 +9,7 @@ class Smoke : public QObject {
   Fixture fixture;
 private slots:
   void initTestCase() {
+    KLocalizedString::setApplicationDomain("uke-control-qt");
     fixture = Fixture::load(qEnvironmentVariable("UKE_QT_TEST_FIXTURE", FIXTURE_PATH));
     QVERIFY(fixture.enabled);
   }
