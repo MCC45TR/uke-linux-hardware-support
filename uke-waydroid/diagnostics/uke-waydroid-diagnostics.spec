@@ -1,6 +1,6 @@
 Name:           uke-waydroid-diagnostics
 Version:        0.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Bounded Android-side Vulkan checks for Waydroid
 License:        MIT AND BSD-2-Clause AND BSD-3-Clause AND Apache-2.0
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
@@ -42,7 +42,13 @@ readelf -h uke-vulkan-check | grep -F AArch64
 readelf -l uke-vulkan-check | grep -F '/system/bin/linker64'
 readelf -d uke-vulkan-check | grep -F '[libvulkan.so]'
 readelf -d uke-vulkan-check | grep -F '[libc.so]'
-cmp uke-vulkan-check %{buildroot}/var/lib/waydroid/overlay/system/bin/uke-vulkan-check
+# Fedora strips non-runtime ELF metadata after installation. Verify the actual
+# executable code, constants, dynamic symbols and relocations instead.
+for section in .text .rodata .dynamic .dynsym .dynstr .rela.plt; do
+ readelf -x "$section" uke-vulkan-check > expected-section
+ readelf -x "$section" %{buildroot}/var/lib/waydroid/overlay/system/bin/uke-vulkan-check > installed-section
+ cmp expected-section installed-section
+done
 
 %files
 %license LICENSE NDK-NOTICE
@@ -50,5 +56,8 @@ cmp uke-vulkan-check %{buildroot}/var/lib/waydroid/overlay/system/bin/uke-vulkan
 /var/lib/waydroid/overlay/system/bin/uke-vulkan-check
 
 %changelog
+* Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
+- Compare runtime ELF sections across Fedora's normal metadata stripping.
+
 * Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-1
 - Build a hardware-device and bounded GPU fill/readback check for Android.
