@@ -1,0 +1,21 @@
+[Unit]
+Description=Uke pogo keyboard authentication provider candidate
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/dev/tee0
+After=systemd-udev-trigger.service
+
+[Service]
+Type=notify
+ExecStart=/usr/libexec/uke-pogo-auth --serve
+TimeoutStartSec=10
+TimeoutStopSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+DevicePolicy=closed
+DeviceAllow=/dev/tee0 rw
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+
+# Static manual unit: no install target, preset or automatic activation.

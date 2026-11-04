@@ -1,0 +1,15 @@
+{
+  "scope": "Selected original library sources; no OEM firmware and no donor authentication executable",
+  "sources": [
+    {"name":"minkipc","commit":"5e3c6951d13162a262ea65ea8e8351228f092b58","url":"https://codeload.github.com/qualcomm/minkipc/tar.gz/5e3c6951d13162a262ea65ea8e8351228f092b58","sha256":"2da103029796465773fa77746cf10799ff1fb43c62ba8dbb1efc51b62e3dd36f"},
+    {"name":"quic-teec","commit":"736419e25a2036aac3292a10a93e394a90750ca3","url":"https://codeload.github.com/qualcomm/quic-teec/tar.gz/736419e25a2036aac3292a10a93e394a90750ca3","sha256":"887ace80e98c0dc67163a44fdd280c9a9cf0e46a9671ebf33643def261fc405a"},
+    {"name":"qcbor","commit":"d80c5c3f6ed0235993b7f4ca6528ee3c0c5d29d5","url":"https://codeload.github.com/laurencelundblade/QCBOR/tar.gz/d80c5c3f6ed0235993b7f4ca6528ee3c0c5d29d5","sha256":"93fa4b2e56a2fe5af32be5e3c05a95d4563daea4b127023d6f77beb2274bf6ae"}
+  ],
+  "protocol_reference": {
+    "url":"https://github.com/ianchb/sheng_devauth/tree/bac03b5bcfefa1467ebad490edd910a6cef8a207",
+    "classification":"Shared protocol and functional object-ABI reference; different board",
+    "main_source_copied":false,
+    "generated_headers_copied":false,
+    "precompiled_libraries_used":false
+  }
+}
