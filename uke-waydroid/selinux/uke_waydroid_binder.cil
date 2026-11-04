@@ -1,0 +1,5 @@
+; SPDX-License-Identifier: MIT
+; Match Waydroid's dynamic Binder names to Fedora's existing Binder type.
+(genfscon binder "/anbox-binder" (system_u object_r binder_device_t ((s0) (s0))))
+(genfscon binder "/anbox-hwbinder" (system_u object_r binder_device_t ((s0) (s0))))
+(genfscon binder "/anbox-vndbinder" (system_u object_r binder_device_t ((s0) (s0))))
