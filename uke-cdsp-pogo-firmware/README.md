@@ -47,8 +47,8 @@ operation remain separate acceptance gates.
 
 Version0.2-5 uses the complete CDSP/TA identities measured on the current device
 by both the production native reader and original Fedora mtools/readelf. The
-exact provenance and historical reference-only hashes are recorded in
-manifests/current-stock-identities-20261104.json. The current OTA release and
-whole-volume identity remain unidentified. They are useful provenance data;
-import admission still checks the same exact complete files. Secure signature,
+exact provenance, measured whole-volume identity and historical reference-only
+hashes are recorded in manifests/current-stock-identities-20261104.json. The
+current OTA release remains unidentified. Source-volume identity provides
+additional provenance; import admission checks the exact complete files. Secure signature,
 loader, workload and accessory acceptance remain separate device gates.

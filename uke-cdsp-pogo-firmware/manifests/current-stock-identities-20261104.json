@@ -5,9 +5,11 @@
   "observed_running_kernel": "7.3.1-7200-unstable",
   "source": "Device-local modem_a below the admitted Uke UFS controller; read-only descriptors",
   "source_ota_release": null,
-  "source_volume_sha256": null,
+  "source_volume_bytes": 211812352,
+  "source_volume_sha256": "a52e5ead91f080955bbe0d9cace7fd5eaa2c1b40da83c1cc9af0fa0aa3dae4b1",
   "evidence": [
     "Installed original native FAT/VFAT reader 0.2-3",
+    "Installed native reader 0.2-4 streaming hash of the declared FAT volume",
     "Original Fedora mtools 4.0.50-1 extraction and independent readelf/offset reconstruction"
   ],
   "complete_files": [
