@@ -145,7 +145,7 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
   };
   walk(d,0);return rows;
 }
-Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted),nfc_(fixture_.enabled,this) {
+Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted),nfc_(fixture_.enabled,this,restricted) {
   kernelTimeout_.setSingleShot(true);
   connect(&kernelTimeout_,&QTimer::timeout,this,[this]{if(kernel_)kernel_->kill();});
   poll_.setInterval(50);

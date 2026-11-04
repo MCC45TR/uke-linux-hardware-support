@@ -13,7 +13,7 @@ QVariantList ndefRows(const QNdefMessage &message);
 class NfcReader : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantMap report READ report NOTIFY changed)
-    bool simulation_, scanning_=false;
+    bool simulation_, restricted_, scanning_=false;
     QNearFieldManager *manager_=nullptr;
     QPointer<QNearFieldTarget> target_;
     QTimer timeout_;
@@ -22,7 +22,7 @@ class NfcReader : public QObject {
     void release();
     void complete(const QString &message);
 public:
-    explicit NfcReader(bool simulation,QObject *parent=nullptr);
+    explicit NfcReader(bool simulation,QObject *parent=nullptr,bool restricted=false);
     ~NfcReader() override;
     QVariantMap report() const {return report_;}
     Q_INVOKABLE void inspect();

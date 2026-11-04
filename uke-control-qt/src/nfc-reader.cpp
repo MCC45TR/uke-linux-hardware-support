@@ -24,7 +24,7 @@ QVariantList ndefRows(const QNdefMessage &message) {
     }
     return rows;
 }
-NfcReader::NfcReader(bool simulation,QObject *parent):QObject(parent),simulation_(simulation) {
+NfcReader::NfcReader(bool simulation,QObject *parent,bool restricted):QObject(parent),simulation_(simulation),restricted_(restricted) {
     timeout_.setSingleShot(true);timeout_.setInterval(30000);
     connect(&timeout_,&QTimer::timeout,this,[this]{complete(i18n("Reading timed out. Bring a supported tag closer and try again."));});
     report_={{"busy",false},{"supported",false},{"message",i18n("Check for a connected NFC reader before scanning.")}};
@@ -61,7 +61,7 @@ void NfcReader::inspect(){
     report_["message"]=supported?i18n("A compatible NFC reader is available."):i18n("No compatible NFC reader is available. The built-in FM19511 is a tag, not a reader. Connect a supported USB NFC reader for NDEF reading.");emit changed();
 }
 void NfcReader::startService(){
-    if(simulation_||scanning_||service_)return;
+    if(simulation_||restricted_||scanning_||service_)return;
     service_=new QProcess(this);auto *p=service_;
     auto done=[this,p](bool success){
         if(service_!=p)return;service_=nullptr;p->deleteLater();report_["busy"]=false;report_["startingService"]=false;

@@ -22,7 +22,7 @@ ColumnLayout {
             text: i18n("Start NFC reader service")
             description: i18n("Start the distribution neard service. Administrator authorization may be requested.")
             icon.name: themeIcons.names["system-run"]
-            enabled: !backend.simulation && !reader.report.busy
+            enabled: !backend.simulation && !backend.readOnly && !reader.report.busy
             onClicked: reader.startService()
         }
         FormCard.FormButtonDelegate {

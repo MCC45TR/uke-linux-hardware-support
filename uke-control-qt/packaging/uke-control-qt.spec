@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.3.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -91,6 +91,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.3.0-4
+- Enforce read-only mode for explicit reader-service startup in C++ and QML.
+
 * Wed Nov 04 2026 Uke contributors - 1.3.0-3
 - Align the executable version and add opt-in rendering of actual installed kernel information.
 
