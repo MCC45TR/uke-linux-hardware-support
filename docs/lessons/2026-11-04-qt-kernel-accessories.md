@@ -59,3 +59,9 @@ systemd/PolicyKit authentication. No reader daemon is automatically enabled at
 boot by this application. Root read cancellation is asynchronous even after
 pkexec drops the caller's kill permission; the helper itself has an 18-second
 process deadline and each fixed charge-owner subcommand is bounded.
+
+COPR11260672 compiled the first candidate and passed helper, CLI, widget and
+appearance checks. The complete QML topic walk rejected an undefined optional
+timestamp binding on the new information cards. The binding now supplies an
+empty fallback; the failing candidate was not installed. The remaining kernel
+fact, NDEF decoding, bounded-content and action-routing cases passed.

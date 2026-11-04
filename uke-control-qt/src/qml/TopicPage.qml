@@ -97,7 +97,7 @@ FormCard.FormCardPage {
                     Accessible.name: text
                     onClicked: informationSection.expanded = !informationSection.expanded
                 }
-                SafeText { visible: modelData.stale; text: i18n("Previous information — refresh failed"); description: modelData.stamp }
+                SafeText { visible: modelData.stale || false; text: i18n("Previous information — refresh failed"); description: modelData.stamp || "" }
             }
         }
     }

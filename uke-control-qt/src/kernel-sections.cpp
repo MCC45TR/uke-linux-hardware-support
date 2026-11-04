@@ -7,7 +7,8 @@ namespace {
 QString text(const QJsonValue &v) {
     if(v.isNull()||v.isUndefined())return i18n("Not exported by this driver");
     if(v.isBool())return v.toBool()?i18n("Yes"):i18n("No");
-    return safe(v.toVariant().toString().left(4096).toStdString());
+    const auto result=safe(v.toVariant().toString().left(4096).toStdString());
+    return result.isEmpty()?i18n("Not exported by this driver"):result;
 }
 QVariantMap fact(const QString &title,const QJsonValue &v) {return {{"title",title},{"value",text(v)},{"progress",-1}};}
 QVariantMap section(const QString &title,const QVariantList &rows) {return {{"title",title},{"rows",rows}};}
