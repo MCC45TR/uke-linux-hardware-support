@@ -91,10 +91,21 @@ Its final native log gzip SHA256 is
 42ab3b2398a31d304c3cfb60cf4c5a9e594f6e78faad8469c1ef27d3cc13fc85.
 All three complete signed RPMs pass the same key/payload/script/unit/default
 audit.1.8.92 and1.8.93 are immutable. Coordinated device delivery and actual
-private-anchor validation are still pending.
+private-anchor validation initially remain pending.
 Delivery uses DNF; copied executables are not installed or run on the tablet.
 Physical provisioning,
 read-only comparison, offline boot and long-run drift remain separate gates.
 The raw RTC class remains a counter. This does not establish a hardware UTC
 calendar, alarm delivery, suspend/wake, full camera/calibration/focus or complete
 device acceptance.
+
+5 November 2026 local, same running11003: the coordinator installs the three
+audited1.8.93 packages through DNF. Installed headers/payloads match the signed
+artifacts. The two intentional configuration differences and automatic1/local
+rollback-off are retained, with unchanged kernel/slot state. Actual root
+`clock-counter-check` passes; the private record is32bytes,0600, UID0 and one
+link. The sandboxed timer runs successfully. A subsequent natural save keeps
+the anchor inode/mtime/size/permissions unchanged and the read-only UTC check
+passes again. No raw record values or live clock restore are used. This
+establishes deployed synchronized provisioning and periodic/idempotent behavior;
+offline/cold-power retention, long-run drift and alarm/wake remain unqualified.
