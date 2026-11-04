@@ -1,5 +1,10 @@
 # Uke boot integration
 
+4 November 2026. The [explicit development-trial replacement candidate](DEVELOPMENT-TRIALS.md)
+preserves the recorded B image while updating an unaccepted unstable A trial.
+It requires rollback mode `off` and does not grant health approval. Remote
+qualification and physical validation remain pending.
+
 30 October 2026. Version `1.8.6` adds vendor defaults that restrict kernel
 pointers and kernel logs. Installation applies these two keys using the
 effective sysctl.d configuration, including administrative overrides.

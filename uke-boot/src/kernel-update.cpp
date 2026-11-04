@@ -508,9 +508,10 @@ int main(int argc,char **argv) {
         need((argc==4 && (std::string(argv[1])=="select-slot" || std::string(argv[1])=="check-select-slot")) ||
              (argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
+                         std::string(argv[1])=="check-trial"||std::string(argv[1])=="replace-trial" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
              (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-trial|replace-trial|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
         const bool migrating=action=="migrate-automatic-policy";
@@ -548,6 +549,7 @@ int main(int argc,char **argv) {
             if(!activation_enabled(label) && !preflight)return 0;
         }
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
+        need(label=="userdata" || (action!="check-trial" && action!="replace-trial"),"Development trial replacement requires userdata");
         need(label=="userdata"||(action!="boot" && action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
         const auto root=partition(label);const auto filesystem=root_mount(root.second,read_mountinfo(),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
@@ -605,7 +607,7 @@ int main(int argc,char **argv) {
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
             }
             userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem,false,
-                            !automatic && !preflight && (action=="check" || action=="apply"));return 0;
+                            !automatic && !preflight && (action=="check" || action=="apply" || action=="check-trial" || action=="replace-trial"));return 0;
         }
         const auto target=partition("boot_b");
         need(ufs_controller(fs::path("/sys/class/block")/target.first)==ufs_controller(fs::path("/sys/class/block")/root.first),"Root and boot_b must share the measured UFS controller");

@@ -43,6 +43,7 @@ int main(int argc,char **argv) {
     std::fill(pmbr.begin()+458,pmbr.begin()+462,0xff);slot::write_at(fd.value,0,pmbr);
     slot::Disk a(fd.value,st.st_size,sector);assert(a.parts.size()==5);
     a.require_selected(0);reject([&]{a.require_selected(1);});reject([&]{a.require_selected(2);});
+    reject([&]{a.development_trial(false);}); // An accepted A is not a development trial.
     const auto original=a.before;
     const auto backup=path.string()+".metadata";a.backup(backup);a.backup(backup);
     assert(a.prepare(0,1));a.commit();
@@ -50,7 +51,9 @@ int main(int argc,char **argv) {
     b.require_selected(1);reject([&]{b.require_selected(0);});
     assert(b.parts.at("boot_b").type==a.parts.at("boot_a").type);
     assert(b.parts.at("boot_a").type==a.parts.at("boot_b").type);
-    assert(b.parts.at("boot_b").attrs==(uint64_t(0x3f)<<48));
+    assert(b.parts.at("boot_b").attrs==(uint64_t(0x1f)<<48));
+    assert(((b.parts.at("boot_b").attrs&slot::retries)>>51)==3);
+    reject([&]{b.require_fallback(0,1);});
     assert(b.parts.at("abl_b").attrs==(a.parts.at("abl_b").attrs|slot::active));
     assert(b.parts.at("abl_a").attrs==(a.parts.at("abl_a").attrs&~slot::active));
     assert(!(b.parts.at("boot_a").attrs&slot::active) && (b.parts.at("boot_a").attrs&slot::successful));
@@ -62,6 +65,33 @@ int main(int argc,char **argv) {
     slot::Disk back(fd.value,st.st_size,sector);
     assert(back.parts.at("boot_a").type==a.parts.at("boot_a").type);
     assert(back.parts.at("boot_b").type==a.parts.at("boot_b").type);
+    {
+        // A is now an unaccepted trial; B retains its successful baseline.
+        const auto retained=back.parts.at("boot_b");
+        const auto paired=back.parts.at("abl_a");
+        slot::Disk quarantine(fd.value,st.st_size,sector);
+        reject([&]{quarantine.development_trial(true);});
+        assert(quarantine.development_trial(false));quarantine.commit();
+        auto blocked=quarantine.reread(true);blocked->require_selected(0);
+        assert(blocked->parts.at("boot_b").attrs==retained.attrs && blocked->parts.at("boot_b").type==retained.type);
+        assert(blocked->parts.at("abl_a").attrs==paired.attrs && blocked->parts.at("abl_a").type==paired.type);
+        assert(blocked->parts.at("boot_a").attrs&slot::unbootable);
+        assert(!(blocked->parts.at("boot_a").attrs&(slot::successful|slot::retries|slot::priority)));
+        reject([&]{blocked->development_trial(false);});
+        auto restore_context=blocked->reread();
+        assert(blocked->development_trial(true));blocked->commit();
+        auto armed=blocked->reread(true);armed->require_selected(0);
+        assert((armed->parts.at("boot_a").attrs&slot::flags)==slot::trial_flags);
+        assert(armed->parts.at("boot_b").attrs==retained.attrs && armed->parts.at("boot_b").type==retained.type);
+        for(const auto &[name,part]:back.parts)if(name!="boot_a") {
+            assert(armed->parts.at(name).attrs==part.attrs && armed->parts.at(name).type==part.type);
+        }
+        restore_context->restore();assert(slot::snapshot(fd.value,st.st_size,sector)==restore_context->before);
+        back.restore();assert(slot::snapshot(fd.value,st.st_size,sector)==back.before);
+        slot::Disk accepted_b(fd.value,st.st_size,sector);assert(accepted_b.fallback(0,1));accepted_b.commit();
+        reject([&]{slot::Disk wrong(fd.value,st.st_size,sector);wrong.development_trial(false);});
+        back.restore();
+    }
     // Simulate a torn backup header; admission must stop before any new slot write.
     auto corrupt=back.before.backup;corrupt[16]^=1;slot::write_at(fd.value,back.before.last*sector,corrupt);
     reject([&]{slot::Disk damaged(fd.value,st.st_size,sector);});back.restore();
@@ -97,7 +127,31 @@ int main(int argc,char **argv) {
             slot::Disk healthy(fd.value,st.st_size,sector);healthy.success(1);healthy.commit();
         }
         const unsigned failed=1-good;
+        slot::Disk barrier(fd.value,st.st_size,sector);
+        const auto good_name=std::string("boot_")+(good?'b':'a');
+        const auto next_name=std::string("boot_")+(failed?'b':'a');
+        const auto accepted_before=barrier.parts.at(good_name);
+        assert(barrier.block_inactive(good,failed));barrier.commit();
+        auto blocked=barrier.reread(true);
+        blocked->require_selected(good);
+        assert(blocked->parts.at(good_name).attrs==accepted_before.attrs);
+        assert(blocked->parts.at(good_name).type==accepted_before.type);
+        assert(blocked->parts.at(next_name).type==barrier.parts.at(next_name).type);
+        const auto blocked_flags=blocked->parts.at(next_name).attrs;
+        assert((blocked_flags&slot::unbootable) && !(blocked_flags&(slot::successful|slot::retries|slot::priority|slot::active)));
+        assert(!blocked->block_inactive(good,failed));
+        reject([&]{blocked->block_inactive(failed,good);});
+        assert(blocked->reread()->before==blocked->before);
+        slot::Disk foreign(fd.value,st.st_size,sector);
+        assert(foreign.prepare(good,failed));foreign.commit();
+        reject([&]{blocked->reread();});
+        barrier.restore();
+        // Repeat the barrier, then resume a valid trial from the blocked slot.
+        slot::Disk again(fd.value,st.st_size,sector);
+        assert(again.block_inactive(good,failed));again.commit();
         slot::Disk stage(fd.value,st.st_size,sector);assert(stage.prepare(good,failed));stage.commit();
+        slot::Disk retry_budget(fd.value,st.st_size,sector);
+        assert(((retry_budget.parts.at(next_name).attrs&slot::retries)>>51)==3);
         const auto staged=slot::snapshot(fd.value,st.st_size,sector);
         auto stale_header=staged.backup;set32(stale_header,88,le32(stale_header,88)^1);header_crc(stale_header);
         slot::write_at(fd.value,staged.last*sector,stale_header);
@@ -106,6 +160,8 @@ int main(int argc,char **argv) {
         assert(trial.fallback(failed,good));trial.commit();
         slot::Disk returned(fd.value,st.st_size,sector);
         returned.require_selected(good);
+        returned.require_fallback(failed,good);
+        reject([&]{returned.require_fallback(good,failed);});
         const auto good_flags=returned.parts.at(good?"boot_b":"boot_a").attrs;
         const auto failed_flags=returned.parts.at(failed?"boot_b":"boot_a").attrs;
         assert((good_flags&slot::active) && (good_flags&slot::successful) && !(good_flags&slot::unbootable));
@@ -131,5 +187,5 @@ int main(int argc,char **argv) {
     reject([&]{concurrent.commit();});other.restore();
     reject([&]{slot::snapshot(fd.value,st.st_size,1024);});
     fs::remove(backup);
-    std::cout<<"GPT "<<sector<<"-byte sectors: both slot directions, OEM PMBR preservation, healthy acceptance, CRC/concurrent/unrelated-write refusal, isolated serialization failure and exact metadata restoration passed on a regular file\n";
+    std::cout<<"GPT "<<sector<<"-byte sectors: both slot directions, current-trial quarantine/rearm with unchanged B, OEM PMBR preservation, healthy acceptance, CRC/concurrent/unrelated-write refusal, isolated serialization failure and exact metadata restoration passed on a regular file\n";
 }

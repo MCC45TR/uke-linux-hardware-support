@@ -14,6 +14,8 @@ namespace slot {
 constexpr uint64_t active=uint64_t(1)<<50, successful=uint64_t(1)<<54,
                    unbootable=uint64_t(1)<<55, priority=uint64_t(3)<<48,
                    retries=uint64_t(7)<<51, flags=uint64_t(255)<<48;
+constexpr unsigned trial_attempts=3;
+constexpr uint64_t trial_flags=priority|active|(uint64_t(trial_attempts)<<51);
 static unsigned current(const std::string &cmdline) {
     std::istringstream words(cmdline);std::string word,value;
     while(words>>word)if(word.starts_with("androidboot.slot_suffix=")) {
@@ -47,6 +49,7 @@ struct Snapshot {
     Bytes mbr,primary,backup,entries;
     uint64_t primary_entries,backup_entries,last;
     unsigned sector;
+    bool operator==(const Snapshot &) const = default;
 };
 static void header(const Bytes &bytes,uint64_t here,uint64_t other) {
     need(!memcmp(bytes.data(),"EFI PART",8) && le32(bytes,8)==0x10000 &&
@@ -144,6 +147,40 @@ public:
                  "GPT and UFS boot LUN selection differ");
         }
     }
+    bool block_inactive(unsigned running,unsigned target) {
+        need(running<2 && target==1-running,"Inactive slot required before writing");
+        require_selected(running);
+        const auto good=std::string("boot_")+(running?'b':'a');
+        const auto next=std::string("boot_")+(target?'b':'a');
+        if(!parts.contains(good) && !parts.contains(next))return false;
+        need(parts.contains(good) && parts.contains(next),"Unpaired boot slot");
+        need((parts.at(good).attrs&successful) && !(parts.at(good).attrs&unbootable),
+             "Accepted boot must be successful before writing the inactive slot");
+        const auto &p=parts.at(next);
+        const auto attrs=(p.attrs&~(successful|retries|priority))|unbootable;
+        if(attrs==p.attrs)return false;
+        need(!fdisk_gpt_set_partition_attrs(context.get(),p.number,attrs) && !warning,
+             "Cannot mark the inactive boot slot unbootable");
+        expected[next]={p.type,attrs};
+        return true;
+    }
+    bool development_trial(bool rearm) {
+        // Keep every B attribute, type GUID, paired firmware and UFS selection.
+        // Only an explicit updater action may call this current-A operation.
+        require_selected(0);
+        if(!parts.contains("boot_a") && !parts.contains("boot_b"))return false;
+        need(parts.contains("boot_a") && parts.contains("boot_b"),"Unpaired development boot slots");
+        const auto &a=parts.at("boot_a"),&b=parts.at("boot_b");
+        need((b.attrs&successful) && !(b.attrs&unbootable),"Retained B must remain successful and bootable");
+        need(!(a.attrs&successful) && (rearm?
+             ((a.attrs&unbootable) && !(a.attrs&(priority|retries))):
+             (!(a.attrs&unbootable) && (a.attrs&priority))),"Current A is not the expected unaccepted development trial");
+        const auto attrs=rearm?(a.attrs&~flags)|trial_flags:
+                              (a.attrs&~(priority|retries|successful))|unbootable;
+        need(!fdisk_gpt_set_partition_attrs(context.get(),a.number,attrs) && !warning,
+             "Cannot stage development trial quarantine or retry flags");
+        expected["boot_a"]={a.type,attrs};return true;
+    }
     bool prepare(unsigned running,unsigned target) {
         need(running<2 && target==1-running,"Inactive slot required");bool changed=false;
         for(const auto &[name,a]:parts) {
@@ -157,7 +194,7 @@ public:
             if(name=="boot_a")need(old.attrs&priority,"Current boot slot has no priority");
             const auto old_flags=name=="boot_a"?
                 (old.attrs&~(priority|active))|(uint64_t(2)<<48):old.attrs&~active;
-            const auto next_flags=name=="boot_a"?(next.attrs&~flags)|(uint64_t(0x3f)<<48):next.attrs|active;
+            const auto next_flags=name=="boot_a"?(next.attrs&~flags)|trial_flags:next.attrs|active;
             auto set_type=[&](const Part &p,const std::string &type) {
                 std::unique_ptr<fdisk_parttype,decltype(&fdisk_unref_parttype)> value(fdisk_new_parttype(),fdisk_unref_parttype);
                 need(bool(value) && !fdisk_parttype_set_typestr(value.get(),type.c_str()) &&
@@ -192,6 +229,17 @@ public:
             need(!fdisk_gpt_set_partition_attrs(context.get(),parts.at(name).number,attrs),"Cannot stage fallback boot flags");
         }
         need(!warning,"libfdisk reported a fallback staging warning");return changed;
+    }
+    void require_fallback(unsigned failed,unsigned good) const {
+        need(failed<2 && good==1-failed,"Invalid fallback slot pair");
+        require_selected(good);
+        const auto accepted=std::string("boot_")+(good?'b':'a');
+        const auto rejected=std::string("boot_")+(failed?'b':'a');
+        if(!parts.contains(accepted) && !parts.contains(rejected))return;
+        need(parts.contains(accepted) && parts.contains(rejected),"Unpaired fallback boot slot");
+        const auto good_flags=parts.at(accepted).attrs,bad_flags=parts.at(rejected).attrs;
+        need((good_flags&successful) && (good_flags&priority) && !(good_flags&unbootable) && (bad_flags&unbootable) &&
+             !(bad_flags&(successful|retries|active)),"Fallback slot flags differ from the accepted return");
     }
     void commit(int(*writer)(fdisk_context*)=fdisk_write_disklabel) {
         const auto fresh=snapshot(fd,size,sector,needs_backup_crc_repair());
@@ -233,6 +281,13 @@ public:
         need(committed.mbr==before.mbr && committed.primary==after.primary && committed.backup==after.backup &&
              committed.entries==after.entries,"Committed GPT metadata differs");
         if(needs_backup_crc_repair())std::cout<<"GPT backup-header CRC restored from matching validated partition arrays\n";
+    }
+    std::unique_ptr<Disk> reread(bool committed=false) const {
+        auto admitted=committed?snapshot(staged.value,size,sector):observed;
+        if(committed)admitted.mbr=before.mbr;
+        auto next=std::make_unique<Disk>(fd,size,sector);
+        need(next->observed==admitted,"GPT changed while reloading the checked transaction state");
+        return next;
     }
     void restore() const {
         write_metadata(fd,before);write_at(fd,0,before.mbr);

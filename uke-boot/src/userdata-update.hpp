@@ -230,6 +230,7 @@ static bool lock_metadata_fd(int fd) {
         usleep(100000);
     }
 }
+#include "development-trial.hpp"
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd physical_boot(const std::pair<std::string,dev_t> &part,bool write=false) {
     Fd fd(open(("/dev/"+part.first).c_str(),(write?O_RDWR:O_RDONLY)|O_NOFOLLOW|O_CLOEXEC|O_NONBLOCK|O_EXCL));
@@ -383,10 +384,76 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
     const auto good_hash=digest(images[running]);
     auto current_boot_id=read_text("/proc/sys/kernel/random/boot_id");need(current_boot_id.ends_with('\n'),"Missing current boot identity");current_boot_id.pop_back();
     const bool awaiting=prior && awaiting_ab_reboot(*prior,running,release,good_hash,current_boot_id);
-    auto disks=metadata(controller,!awaiting && (action=="accept" || action=="fallback"));slot::Disk *boot_table=nullptr;
+    const bool replacing=action=="check-trial" || action=="replace-trial";
+    need(!replacing || (explicit_request && mode==RollbackMode::off && prior),"Trial replacement requires an explicit rollback-off request and protected state");
+    auto disks=metadata(controller,!awaiting && (action=="accept" || action=="fallback" || replacing));slot::Disk *boot_table=nullptr;
     for(auto &disk:disks)if(disk->gpt->parts.contains("boot_a") && disk->gpt->parts.contains("boot_b"))boot_table=disk->gpt.get();
     need(boot_table,"Boot slot GPT unavailable");
     if(std::any_of(disks.begin(),disks.end(),[](const auto &disk){return disk->gpt->needs_backup_crc_repair();}))verify_early_firmware();
+    if(replacing) {
+        const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+        const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);
+        auto saved=replacement_trial(*prior,mode,running,release,good_hash,digest(images[1]),
+                                     manifest.at("kernel_release"),digest(bytes),current_boot_id);
+        const auto baseline_kernel=boot_kernel(images[1]);
+        const auto banner="Linux version "+prior->policy.good_release+" ";
+        need(std::search(baseline_kernel.begin(),baseline_kernel.end(),banner.begin(),banner.end())!=baseline_kernel.end(),
+             "Retained B release differs from the protected baseline");
+        need(slot::boot_lun(bsg.value)==1,"Development replacement requires UFS to select A");
+        verify_early_firmware();
+        for(auto &disk:disks)(void)disk->gpt->development_trial(false);
+        if(action=="check-trial") {
+            std::cout<<"Explicit current-A trial replacement admitted; retained B image and flags verified; no hardware writes or health acceptance\n";return;
+        }
+        need(charging(),"Development replacement requires at least 50% battery, or 30% with external power");
+        need(fs::space(state).available>32*1024*1024,"Insufficient durable state space");
+        auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+        need(read_rollback_policy()==RollbackMode::off,"Rollback policy changed before development replacement");
+        auto retained=physical_boot(b),destination=physical_boot(a,true);
+        need(read_fd(retained.value,capacity)==images[1] && read_fd(destination.value,capacity)==images[0],
+             "Development boot images changed after admission");
+        std::vector<std::unique_ptr<slot::Disk>> original,quarantined;
+        // Preserve separate restoration contexts. A committed Disk must be
+        // reloaded before another mutation; its original snapshot stays in RAM.
+        for(auto &disk:disks) {
+            auto working=std::make_unique<slot::Disk>(disk->fd.value,disk->bytes,disk->sector,true);
+            need(working->before==disk->gpt->before,"Development GPT changed after admission");
+            original.push_back(std::move(disk->gpt));disk->gpt=std::move(working);
+        }
+        replace_trial_transaction([&] {
+            for(auto &disk:disks) {
+                const bool changed=disk->gpt->development_trial(false) || disk->gpt->needs_backup_crc_repair();
+                if(changed)disk->gpt->commit();
+                disk->reload(changed);
+            }
+            for(auto &disk:disks)quarantined.push_back(disk->gpt->reread());
+        },[&] {save_update(statefile,saved);},[&] {
+            replace_inactive_verified(destination.value,retained.value,bytes,images[1]);
+        },[&] {
+            need(read_fd(retained.value,capacity)==images[1] && read_fd(destination.value,capacity)==bytes,
+                 "Development candidate or retained B readback differs");
+            need(slot::boot_lun(bsg.value)==1,"UFS selection changed during development replacement");
+        },[&] {
+            for(auto &disk:disks) {
+                const bool changed=disk->gpt->development_trial(true);
+                if(changed)disk->gpt->commit();
+                disk->reload(changed);disk->gpt->require_selected(0);
+            }
+        },[&] {
+            uke_install::verified(saved.policy);(void)uke_install::arm(saved.policy);save_update(statefile,saved);
+        },[&] {
+            need(quarantined.size()==disks.size(),"Missing development quarantine restoration context");
+            for(auto &disk:quarantined)disk->restore();
+        },[&] {
+            need(read_fd(retained.value,capacity)==images[1],"Retained B changed before development restoration");
+            write_fd(destination.value,images[0]);
+            need(read_fd(destination.value,capacity)==images[0],"Original development A image restoration differs");
+        },[&] {for(auto &disk:original)disk->restore();},[&] {
+            need(read_fd(retained.value,capacity)==images[1],"Retained B changed during development restoration");
+            save_update(statefile,*prior);
+        });
+        std::cout<<"Development candidate "<<saved.policy.candidate<<" verified in A; B image retained, health remains unaccepted, no reboot requested\n";return;
+    }
     if(awaiting) {
         const auto target=1-running;
         need(slot::boot_lun(bsg.value)==target+1 && digest(images[target])==prior->candidate_image,
