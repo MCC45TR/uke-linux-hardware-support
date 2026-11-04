@@ -59,3 +59,9 @@ Configuration digests and the installed RPM inventory remained identical across
 both refused transitions. A `brunch unstable --dry-run` succeeded with zero
 actions. Complete stable/test transition acceptance remains open until their
 compatible package graphs are published; the missing-package guard is retained.
+
+Superseding result, 4 November 2026: Control 2.8.1-11 separates conservative
+channel selection/updates from explicit exact synchronization. All six directed
+normal channel transitions and repeated updates now pass on the tablet. Exact
+`channel sync` retains its stricter missing-package contract. See the
+[channel-policy and receipt verification record](2026-11-04-channel-policy.md).
