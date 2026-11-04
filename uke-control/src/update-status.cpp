@@ -315,8 +315,8 @@ void print(const J &value, bool json) {
         << "\nRecorded accepted kernel verified: " << display(a["accepted_kernel_verified"])
         << "\nAccepted kernel: " << display(a["accepted_kernel"]) << " (slot " << upper_slot(a["accepted_slot"]) << ")"
         << "\nKernel update phase: " << display(a["phase"])
-        << "\nPending candidate: " << display(a["candidate_kernel"])
-        << "\nPrevious failed candidate: " << display(a["last_failed_kernel"]) << '\n';
+        << "\nPending candidate: " << (a["phase"] == "stable" && a["candidate_kernel"].isNull() ? "None" : display(a["candidate_kernel"]))
+        << "\nPrevious failed candidate: " << (!a["phase"].isNull() && a["last_failed_kernel"].isNull() ? "None recorded" : display(a["last_failed_kernel"])) << '\n';
     if (!a["history_note"].isNull()) std::cout << "Approval history: " << a["history_note"].asString() << '\n';
     for (const auto &issue : value["issues"]) std::cout << "Status incomplete: " << issue.asString() << '\n';
 }

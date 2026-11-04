@@ -43,3 +43,22 @@ acceptance mismatches, missing records, retained failure history, parser refusal
 bounded boot-image parsing and output privacy. Build, installation and device
 results will be recorded after observation. Slot-selection work remains separate
 and must use the current guarded boot helper rather than a second raw writer.
+
+COPR [11259624](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11259624/)
+passed the backend package checks and produced 2.8.1-12. DNF upgraded only
+`uke-control` and its client. Root status and a normal desktop-manager process
+both returned complete evidence: B is running and selected, 7.3.1-1500 is accepted,
+A holds 7.3.1-7008-unstable and is unbootable, and no switch is pending. Historical
+attempt order remains unknown as designed. The remote agent process has no
+controlling terminal/local session and requires sudo; it does not receive the
+desktop's PolicyKit grant. A service launched by the desktop user manager reads
+the fixed status helper successfully without administrator authentication.
+
+With boot owner 1.8.40, B preview and the actual already-selected B no-op passed.
+A and `next` previews refused the recorded failed release. No real slot change,
+reboot or boot-image write was requested. The underlying trial/cancellation/
+rollback transactions were exercised only by remote contract fixtures.
+
+Release 2.8.1-13 distinguishes a known empty candidate/failure record from missing
+evidence in terminal text, and no longer advertises unsupported JSON on slot
+selection help. The versioned status schema and SDK are unchanged.
