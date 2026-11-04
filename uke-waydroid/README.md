@@ -24,7 +24,7 @@ but exposes missing `/dev/anbox-*` links and a Binderfs directory-read denial.
 Revision2 addresses those observed startup prerequisites. Android boot and
 graphics results still require separate device validation.
 
-Revision3 enables the upstream `persist.waydroid.multi_windows` preference
+Revision4 enables the upstream `persist.waydroid.multi_windows` preference
 for separate application windows on KDE Wayland. A small POSIX shell helper
 merges that preference into the original configuration and generated base
 properties during RPM installation and before daemon startup. It preserves
@@ -33,6 +33,8 @@ change `/etc/waydroid/uke-defaults.conf`; later updates preserve that file.
 The package does not start an Android window before the user launches an app.
 Repeated startup, hardware rendering and actual window behavior still need
 device qualification.
+The original Binderfs mount is ordered before daemon preparation, so dynamic
+device allocation does not race the boot-time mount.
 
 References: [Fedora Binder labels](https://github.com/fedora-selinux/selinux-policy/blob/rawhide/policy/modules/kernel/devices.te),
 [Waydroid installation](https://docs.waydro.id/usage/install-on-desktops) and

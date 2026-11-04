@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/sh
 # SPDX-License-Identifier: MIT
 # Apply the packaged desktop preference to the original Waydroid configuration.
 set -eu
