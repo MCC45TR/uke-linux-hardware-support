@@ -22,14 +22,14 @@ inline std::string rollback_name(RollbackMode mode) {
 inline bool rollback_retry(RollbackMode mode,bool explicit_request) {
     return explicit_request && mode!=RollbackMode::enforced;
 }
-static RollbackMode read_rollback_policy(const fs::path &path="/etc/senemos/rollback.conf") {
+inline RollbackMode read_rollback_policy(const fs::path &path="/etc/senemos/rollback.conf") {
     if(!policy_exists(path))return RollbackMode::enforced;
     const auto value=policy_text(path);
     for(const auto mode:{RollbackMode::enforced,RollbackMode::permissive,RollbackMode::off})
         if(value=="mode="+rollback_name(mode)+"\n")return mode;
     throw std::runtime_error("Invalid rollback policy; expected canonical mode=enforced, permissive or off");
 }
-static void set_rollback_policy(RollbackMode mode,const fs::path &path="/etc/senemos/rollback.conf") {
+inline void set_rollback_policy(RollbackMode mode,const fs::path &path="/etc/senemos/rollback.conf") {
     auto dir=directory(path.parent_path());
     Fd lock(openat(dir.value,"rollback.lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));trusted_fd(lock.value);
     need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another rollback policy change is active");

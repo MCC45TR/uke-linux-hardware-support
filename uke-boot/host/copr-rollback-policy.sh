@@ -23,7 +23,7 @@ for path in src/kernel-update.cpp src/userdata-update.hpp src/installation-polic
  tests/rollback-policy.cpp src/profiles/rollback.conf; do
  install -Dm644 "$owner/$path" "$native/$path"
 done
-sed 's/1[.]8[.]40/1.8.52/g' "$stage/rpm/uke-boot-integration.spec" > "$output/uke-boot-integration.spec"
+sed 's/1[.]8[.]40/1.8.53/g' "$stage/rpm/uke-boot-integration.spec" > "$output/uke-boot-integration.spec"
 awk '
  /^Provides: uke-kernel-update\(slot-selection-v1\)/ {print "Provides: uke-kernel-update(rollback-policy-v1) = 1"}
  /^install -Dm644 src\/profiles\/kernel-update.conf / {
@@ -40,14 +40,14 @@ awk '
 ' "$output/uke-boot-integration.spec" > "$stage/next.spec"
 mv "$stage/next.spec" "$output/uke-boot-integration.spec"
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
-mv "$native" "$stage/inner/uke-boot-integration-1.8.52"
+mv "$native" "$stage/inner/uke-boot-integration-1.8.53"
 rm "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.40.tar.xz"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf \
- "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.52.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.52
+ "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.53.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.53
 cp "$output/uke-boot-integration.spec" "$outer/inputs/uke-boot-integration/uke-boot-integration.spec"
 jq -n --arg producer "$(git -C "$owner" rev-parse HEAD)" \
  '{schema_version:1,parent_build:11259613,producer_commit:$producer,default_rollback:"enforced",physical_acceptance:false}' > "$outer/rollback-policy-overlay.json"
-mv "$outer" "$stage/uke-boot-integration-1.8.52"
+mv "$outer" "$stage/uke-boot-integration-1.8.53"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf \
- "$output/uke-boot-integration-1.8.52.tar.xz" -C "$stage" uke-boot-integration-1.8.52
-[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.52-1.fc46 ]]
+ "$output/uke-boot-integration-1.8.53.tar.xz" -C "$stage" uke-boot-integration-1.8.53
+[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.53-1.fc46 ]]
