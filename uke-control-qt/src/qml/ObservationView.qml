@@ -65,6 +65,7 @@ ColumnLayout {
     FormCard.FormCard {
         Layout.fillWidth: true
         FormCard.FormButtonDelegate {
+            Accessible.name: text
             objectName: "toggleRawDetails"
             text: "Raw output & errors"
             icon.name: themeIcons.names["utilities-terminal"]

@@ -40,6 +40,7 @@ FormCard.FormCardPage {
                 Repeater {
                     model: groupColumn.modelData.entries
                     delegate: FormCard.FormButtonDelegate {
+            Accessible.name: text
                         required property var modelData
                         objectName: "action_" + modelData.id
                         text: modelData.title
@@ -69,6 +70,7 @@ FormCard.FormCardPage {
             id: searchResults
             model: backend.section === 6 ? backend.search(searchField.text) : []
             delegate: FormCard.FormButtonDelegate {
+            Accessible.name: text
                 required property var modelData
                 text: modelData.title
                 description: modelData.description

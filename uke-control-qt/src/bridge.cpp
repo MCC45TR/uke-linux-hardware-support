@@ -273,6 +273,7 @@ void Bridge::submit() {
   }
 }
 void Bridge::readRelated(const QString &relation) {
+  clearMessage();
   try {
     const auto &a = action(guide_.value("id").toString().toStdString());
     const auto id = relation == "inspect"   ? a.inspect

@@ -46,7 +46,7 @@ FormCard.FormCardPage {
         visible: parameters.count > 0
         SafeText {
             text: backend.guide.read ? "Read options" : "Draft preference"
-            description: backend.guide.read ? "Choose what to inspect, then select Read information." : "These are requested values. Inspect the current state below before reviewing a change."
+            description: backend.guide.read ? (backend.guide.capture ? "Choose what to inspect, then select Read information." : "Choose what to inspect, then review terminal access.") : "These are requested values. Inspect the current state below before reviewing a change."
         }
         Repeater {
             id: parameters
@@ -108,6 +108,7 @@ FormCard.FormCardPage {
     FormCard.FormCard {
         visible: Boolean(backend.guide.inspect || backend.guide.preview)
         FormCard.FormButtonDelegate {
+            Accessible.name: text
             objectName: "inspectCurrent"
             visible: backend.guide.inspect || false
             text: "Inspect current state"
@@ -117,6 +118,7 @@ FormCard.FormCardPage {
             onClicked: backend.readRelated("inspect")
         }
         FormCard.FormButtonDelegate {
+            Accessible.name: text
             objectName: "previewRequest"
             visible: backend.guide.preview || false
             text: "Preview requested values"
@@ -128,6 +130,7 @@ FormCard.FormCardPage {
     }
     FormCard.FormCard {
         FormCard.FormButtonDelegate {
+            Accessible.name: text
             objectName: "submitRequest"
             text: page.submitText
             description: backend.guide.read && backend.guide.capture ? "Read this information now. No preference is changed." : "Check the values and access requirements before continuing in the terminal."
@@ -139,6 +142,7 @@ FormCard.FormCardPage {
     ObservationView { Layout.fillWidth: true; visible: backend.observation.title !== undefined }
     FormCard.FormCard {
         FormCard.FormButtonDelegate {
+            Accessible.name: text
             objectName: "toggleAccessDetails"
             text: "Details & access requirements"
             icon.name: themeIcons.names["dialog-information"]

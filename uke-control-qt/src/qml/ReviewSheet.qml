@@ -51,6 +51,7 @@ FormCard.FormCardDialog {
         description: backend.review.reason || ""
     }
     FormCard.FormButtonDelegate {
+            Accessible.name: text
         text: "Validated arguments"
         icon.name: themeIcons.names["document-properties"]
         Accessible.description: exact.visible ? "Arguments expanded" : "Arguments collapsed"
@@ -63,6 +64,7 @@ FormCard.FormCardDialog {
         description: backend.review.command || ""
     }
     FormCard.FormButtonDelegate {
+            Accessible.name: text
         objectName: "launchTerminal"
         text: "Continue in terminal"
         description: "The terminal requests any required authentication and shows the operation's result."

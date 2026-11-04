@@ -44,3 +44,9 @@ the transition completes, avoiding a stale pointer to a departing page.
 This failed package was not installed. Semantic charging and flashlight keys
 also gained the installed Breeze aliases `battery-100-charging` and
 `flashlight-on`; those two abstract names are not direct Breeze filenames.
+
+Build 11255273 passed the full typed request loop and theme tests, then exposed
+empty accessible names on FormButtonDelegate despite visible text. Explicit
+names now cover catalog and guide actions, review details and raw output.
+Plain-text information delegates also expose their label and description.
+This is a frontend accessibility correction; release 5 was not installed.
