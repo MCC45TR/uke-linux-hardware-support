@@ -27,7 +27,7 @@ inline bool enable_seamless_policy(const fs::path &configuration,const fs::path 
          (p.at("automatic")=="0" || p.at("automatic")=="1") &&
          (p.size()==1 || (p.contains("vrr_min_hz") && (p.at("vrr_min_hz")=="0" || p.at("vrr_min_hz")=="30"))),
          "Unrecognized userdata seamless policy");
-    const auto next_profile=p.at("automatic")=="1"?before_profile:
+    const auto next_profile=p.at("automatic")=="1" && p.contains("vrr_min_hz")?before_profile:
         "automatic=1\nvrr_min_hz="+(p.contains("vrr_min_hz")?p.at("vrr_min_hz"):std::string("0"))+"\n";
     replace_policy(profile,before_profile,next_profile);
     const auto next_global=g.at("automatic")=="1"?before_global:std::string("automatic=1\n");

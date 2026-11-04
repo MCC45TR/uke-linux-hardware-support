@@ -32,6 +32,8 @@ int main() {
     assert(!enable_seamless_policy(config,state));
     text(global,"automatic=0\n");text(profile,"automatic=0\n");assert(enable_seamless_policy(config,state));
     assert(policy_text(profile)=="automatic=1\nvrr_min_hz=0\n");
+    text(profile,"automatic=1\n");assert(enable_seamless_policy(config,state));
+    assert(policy_text(profile)=="automatic=1\nvrr_min_hz=0\n" && !enable_seamless_policy(config,state));
     text(profile,"automatic=1\nvrr_min_hz=17\n");rejects([&]{enable_seamless_policy(config,state);});
     text(profile,"automatic=1\nvrr_min_hz=0\n");fs::remove(global);fs::create_symlink(profile,global);
     rejects([&]{enable_seamless_policy(config,state);});
