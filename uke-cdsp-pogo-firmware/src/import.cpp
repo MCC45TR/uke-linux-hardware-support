@@ -3,8 +3,10 @@
 namespace uke_local_fw {
 using Family=std::map<std::string,Bytes>;
 static constexpr const char *mcu_sha="b17fa938cf5613dfa550179d6fc40cfbaa831d534a16a22282e2904e845fa7c4";
-static constexpr const char *main_sha="cdd2ae8de5b47b534439ccdf2ebc696123f42f166990dd704601ca5a3cc03e39";
-static constexpr const char *dtb_sha="cf0a4f5e994bb766fb2edbc2c1b0ce39ca9aff0ff127de0fe01e587d7a919dbb";
+// Complete current stock files, independently measured by native FAT and mtools.
+// Provenance and historical reference-only identities are in manifests/.
+static constexpr const char *main_sha="a09aef39a76724011483fc2450c2cdbf00b7bead7d35aedaa0ff0e91956d27e2";
+static constexpr const char *dtb_sha="e2d7230f7850c42e66a04087dd4b94256bc505943e12e86085620c734c177110";
 static uint16_t le16(const Bytes &b,size_t p) {
     need(p<=b.size()&&b.size()-p>=2,"Truncated firmware field");return b[p]|uint16_t(b[p+1])<<8;
 }

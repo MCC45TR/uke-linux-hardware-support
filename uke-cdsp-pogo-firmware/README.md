@@ -8,7 +8,7 @@ Production requires exact Uke/SM7675 identity, root-owned descriptors, both stoc
 sources below the observed Uke UFS controller and a non-running installed kernel
 release. Modem and super occupy different UFS LUNs. Super must share the Fedora
 root disk; the modem LUN must belong to the same exact bound UFS controller.
-CDSP MDT identities are pinned to the retained Global304 ELF32 headers;
+CDSP MDT identities are pinned to independently measured complete current stock files;
 split sizes follow that authenticated metadata. The kernel PAS loader still
 performs secure authentication. The MCU image has an exact whole-file hash.
 
@@ -44,3 +44,11 @@ The read-only LP/loop/debugfs path reuses the original Uke boot updater header
 at a96607f. FAT parsing and bounded publication are original MIT C++ code.
 Synthetic native/sanitizer tests run on COPR. Tablet provisioning and physical
 operation remain separate acceptance gates.
+
+Version0.2-5 uses the complete CDSP/TA identities measured on the current device
+by both the production native reader and original Fedora mtools/readelf. The
+exact provenance and historical reference-only hashes are recorded in
+manifests/current-stock-identities-20261104.json. The current OTA release and
+whole-volume identity remain unidentified. They are useful provenance data;
+import admission still checks the same exact complete files. Secure signature,
+loader, workload and accessory acceptance remain separate device gates.

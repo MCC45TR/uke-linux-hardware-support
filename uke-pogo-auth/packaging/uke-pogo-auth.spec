@@ -1,6 +1,6 @@
 Name: uke-pogo-auth
 Version: 0.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Bounded native Uke pogo keyboard authentication candidate
 License: MIT AND BSD-2-Clause AND BSD-3-Clause
 Source0: %{name}-%{version}.tar.gz
@@ -10,7 +10,7 @@ Source3: qcbor.tar.gz
 ExclusiveArch: aarch64
 BuildRequires: gcc gcc-c++ openssl-devel systemd-rpm-macros patch
 BuildRequires: pkgconfig(libsystemd)
-Requires: uke-cdsp-pogo-firmware >= 0.2
+Requires: uke-cdsp-pogo-firmware >= 0.2-5
 Provides: bundled(minkipc) = 1.0.0
 Provides: bundled(quic-teec) = 0.1.0
 Provides: bundled(qcbor) = 1.7.0
@@ -56,6 +56,10 @@ install -Dm644 upstream/quic-teec/libqcomtee/src/linux/tee.h %{buildroot}%{_lice
 %license %{_licensedir}/%{name}/*
 
 %changelog
+* Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1-3
+- Use the complete current Uke TA identity measured by independent native readers.
+- Require the matching local provisioning version; preserve all TA result checks.
+
 * Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1-2
 - Refuse QCOMTEE credential encoding failures and release their allocation.
 - Exercise the actual upstream C encoder with GCC/Clang sanitizers in COPR.

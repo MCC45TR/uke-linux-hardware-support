@@ -3,7 +3,7 @@
 #include "fat.hpp"
 namespace uke_local_fw {
 inline constexpr size_t auth_bytes=147544;
-inline constexpr const char *auth_sha="ae066b0126626b446c0bcafc486180227fb5e0e52b7907b7aee05c28f056ebe4";
+inline constexpr const char *auth_sha="00ac86c1fab57ef36de58816d303d13eb576f2f0a466309cdd73e149ff3d9ef6";
 static inline uint64_t auth_field(const Bytes &b,size_t p,unsigned width) {
     need((width==2||width==4||width==8)&&p<=b.size()&&width<=b.size()-p,"Truncated authentication ELF field");
     uint64_t value=0;for(unsigned i=0;i<width;i++)value|=uint64_t(b[p+i])<<(i*8);return value;

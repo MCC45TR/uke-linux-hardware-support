@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-04",
+  "device": "xiaomi,uke / SM7675",
+  "observed_running_kernel": "7.3.1-7200-unstable",
+  "source": "Device-local modem_a below the admitted Uke UFS controller; read-only descriptors",
+  "source_ota_release": null,
+  "source_volume_sha256": null,
+  "evidence": [
+    "Installed original native FAT/VFAT reader 0.2-3",
+    "Original Fedora mtools 4.0.50-1 extraction and independent readelf/offset reconstruction"
+  ],
+  "complete_files": [
+    {
+      "path": "image/cdsp.mdt",
+      "bytes": 5084,
+      "sha256": "a09aef39a76724011483fc2450c2cdbf00b7bead7d35aedaa0ff0e91956d27e2"
+    },
+    {
+      "path": "image/cdsp_dtb.mdt",
+      "bytes": 4044,
+      "sha256": "e2d7230f7850c42e66a04087dd4b94256bc505943e12e86085620c734c177110"
+    },
+    {
+      "path": "image/devauth.mdt",
+      "bytes": 4752,
+      "sha256": "5acc06d18a5808da29138f3fad52b09d84c70a00d8d675b63fc679dc723fafcc"
+    }
+  ],
+  "joined_authentication": {
+    "parts": 9,
+    "bytes": 147544,
+    "sha256": "00ac86c1fab57ef36de58816d303d13eb576f2f0a466309cdd73e149ff3d9ef6"
+  },
+  "mcu": {
+    "bytes": 82740,
+    "sha256": "b17fa938cf5613dfa550179d6fc40cfbaa831d534a16a22282e2904e845fa7c4"
+  },
+  "historical_reference_only": {
+    "declared_release": "Global OS3.0.304.0",
+    "modem_sha256": "86a94de96e827642f3ca625463cbbc96fe0d521d39a3ccd08de9b3a346013c35",
+    "cdsp_mdt_sha256": "cdd2ae8de5b47b534439ccdf2ebc696123f42f166990dd704601ca5a3cc03e39",
+    "cdsp_dtb_mdt_sha256": "cf0a4f5e994bb766fb2edbc2c1b0ce39ca9aff0ff127de0fe01e587d7a919dbb",
+    "joined_auth_sha256": "ae066b0126626b446c0bcafc486180227fb5e0e52b7907b7aee05c28f056ebe4",
+    "current_device_match": false,
+    "admitted_by_this_version": false
+  },
+  "firmware_bytes_distributed": false,
+  "calibration_accessed": false,
+  "secure_signature_verified": false,
+  "physical_acceptance": false
+}
