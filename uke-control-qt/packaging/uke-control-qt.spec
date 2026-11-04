@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.2.0
-Release:        5%{?dist}
+Version:        1.3.0
+Release:        6%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -13,6 +13,7 @@ BuildRequires:  make
 BuildRequires:  gettext
 BuildRequires:  qt6-qtbase-devel
 BuildRequires:  qt6-qtdeclarative-devel
+BuildRequires:  qt6-qtconnectivity-devel
 BuildRequires:  extra-cmake-modules >= 6.6
 BuildRequires:  cmake(KF6I18n) >= 6.8
 BuildRequires:  kf6-kirigami
@@ -38,6 +39,10 @@ Requires:       plasma-breeze-qt6
 Requires:       plasma-integration
 Requires:       breeze-icon-theme
 Requires:       qt6-qtdeclarative
+Requires:       qt6-qtconnectivity
+Requires:       neard >= 0.14
+Requires:       polkit
+Requires:       uke-charge-control >= 1.4.1-7
 Requires:       kf6-kirigami
 Requires:       kf6-kirigami-addons >= 1.9
 Requires:       kf6-qqc2-desktop-style
@@ -75,6 +80,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %license LICENSE
 %doc README.md
 %{_bindir}/uke-control-qt
+%{_libexecdir}/uke-control-qt/kernel-information
+%{_datadir}/polkit-1/actions/org.senemos.uke.qt-kernel-information.policy
 %{_datadir}/applications/org.uke.ControlQt.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.uke.ControlQt.svg
 %{_datadir}/locale/*/LC_MESSAGES/uke-control-qt.mo
@@ -84,6 +91,28 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.3.0-6
+- Convert the observed Qt role value to the shared SDK's string type.
+
+* Wed Nov 04 2026 Uke contributors - 1.3.0-5
+- Keep role and reader controls above detailed cards and start role requests from observed state.
+- Condense accessory details behind native disclosure controls.
+
+* Wed Nov 04 2026 Uke contributors - 1.3.0-4
+- Enforce read-only mode for explicit reader-service startup in C++ and QML.
+
+* Wed Nov 04 2026 Uke contributors - 1.3.0-3
+- Align the executable version and add opt-in rendering of actual installed kernel information.
+
+* Wed Nov 04 2026 Uke contributors - 1.3.0-2
+- Require the original neard backend and offer explicit authorized service startup.
+- Bound privileged reads independently and keep cancellation asynchronous.
+
+* Wed Nov 04 2026 Uke contributors - 1.3.0-1
+- Show kernel-backed dock details and verified charging settings through a fixed read-only helper.
+- Add bounded explicit NDEF reading through the original Qt NFC backend and distinguish the built-in tag.
+- Expose the charge-limit request and explain automatic Type-C handling without disabling the connection.
+
 * Wed Nov 04 2026 Uke contributors - 1.2.0-5
 - Bind chart colours to the actual inherited Kirigami theme context.
 

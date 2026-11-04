@@ -145,7 +145,9 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
   };
   walk(d,0);return rows;
 }
-Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted) {
+Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted),nfc_(fixture_.enabled,this,restricted) {
+  kernelTimeout_.setSingleShot(true);
+  connect(&kernelTimeout_,&QTimer::timeout,this,[this]{if(kernel_)kernel_->kill();});
   poll_.setInterval(50);
   connect(&poll_,&QTimer::timeout,this,[this] {
     if(!query_)return;query_->poll();const auto r=query_->result();
@@ -160,9 +162,10 @@ QVariantMap Settings::topic()const {
   auto map=topicMap(*topic_);
   bool admitted=true;
   if(topic_->id=="charging") {
-    const auto a=data_.value("charge.admission");
-    admitted=!busy()&&!errors_.contains("charge.admission")&&(a.value("threshold_admission_ready").toBool()||a.value("automatic_admission_ready").toBool()||a.value("standard_client_admission_ready").toBool());
-    map["blockedReason"]=i18n("The provider has not admitted charging changes. Information remains available; expert tools keep their own checks.");
+    const auto a=data_.value("kernel.charging").value("admission").toObject();
+    admitted=!busy()&&!errors_.contains("kernel.charging")&&(a.value("threshold_admission_ready").toBool()||a.value("automatic_admission_ready").toBool()||a.value("standard_client_admission_ready").toBool());
+    const auto reason=a.value("reason").toString();
+    map["blockedReason"]=reason=="control_profile_unqualified"?i18n("This kernel's charging profile has not been qualified for changes. Saved firmware thresholds can still be read. Installing a qualified provider is required before changing the limit."):i18n("Charging changes are not admitted. Check the provider information below and refresh; the charging helper retains its own checks.");
   }
   if(topic_->id=="kernel") {
     admitted=!busy()&&!errors_.contains("update.status")&&data_.value("update.status").value("complete").toBool();
@@ -197,6 +200,13 @@ QString Settings::summary(int area)const {
 QVariantList Settings::information()const {
   QVariantList out;if(!topic_)return out;
   for(const auto &id:topic_->reads) {
+    if(id.startsWith("kernel.")) {
+      if(data_.contains(id)) {
+        auto sections=kernelInformationSections(id,data_.value(id));
+        for(auto &section:sections){auto s=section.toMap();s["id"]=id;s["stale"]=errors_.contains(id);s["stamp"]=stamps_.value(id);out<<s;}
+      } else out<<QVariantMap{{"title",i18n("Kernel information")},{"rows",QVariantList{row(i18n("Status"),errors_.contains(id)?errors_.value(id):i18n("Reading…"))}}};
+      continue;
+    }
     if(id=="update.status"&&!bootReport().isEmpty())continue;
     QString title=id;try{title=friendlyTitle(action(id.toStdString()));}catch(const std::exception &){}
     auto rows=informationRows(id,data_.value(id));
@@ -221,16 +231,28 @@ void Settings::refresh() {
 void Settings::stop() {
   if(!current_.isEmpty())errors_[current_]=i18n("Read stopped; previous information may be out of date");
   poll_.stop();simulated_.stop();queue_.clear();
+  kernelTimeout_.stop();if(kernel_){
+    auto *p=kernel_;kernel_=nullptr;p->disconnect(this);
+    // pkexec may already have dropped the caller's kill permission. Let the
+    // bounded read finish without blocking the GUI in QProcess's destructor.
+    connect(p,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),p,&QObject::deleteLater);
+    p->kill();if(p->state()==QProcess::NotRunning)p->deleteLater();
+  }
   if(query_){query_->cancel();query_.reset();}current_.clear();
   ++historyGeneration_;if(history_.value("busy").toBool()){history_["busy"]=false;history_["message"]=i18n("History read stopped");emit historyChanged();}
   emit changed();
 }
-void Settings::close(){stop();topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
+void Settings::close(){stop();nfc_.clear();topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
 void Settings::next() {
   if(!current_.isEmpty())return;
   if(!topic_||queue_.isEmpty()){current_.clear();emit changed();return;}
   current_=queue_.takeFirst();emit changed();
   try {
+    if(current_.startsWith("kernel.")) {
+      if(fixture_.enabled)simulated_.start(fixture_.delay(current_.toStdString()));
+      else readKernel(current_.mid(7));
+      return;
+    }
     const auto p=plan(current_.toStdString(),{});
     if(p.effect!=Effect::read||p.presentation!=Presentation::capture||!p.values.empty())throw std::runtime_error("This observation requires explicit options or terminal access");
     if(fixture_.enabled)simulated_.start(fixture_.delay(current_.toStdString()));
@@ -246,9 +268,39 @@ void Settings::finish(const Result &r) {
     errors_[id]=i18n("The provider could not return usable information. Refresh to try again.");
     notice_=errors_.value(id);
   } else {
-    data_[id]=d;errors_.remove(id);updated_=QDateTime::currentDateTime().toString(QLocale().timeFormat(QLocale::ShortFormat));stamps_[id]=updated_;
+    data_[id]=id.startsWith("kernel.")&&d.value("schema").toString()=="org.uke.qt.kernel-information.v1"?d.value("data").toObject():d;errors_.remove(id);updated_=QDateTime::currentDateTime().toString(QLocale().timeFormat(QLocale::ShortFormat));stamps_[id]=updated_;
   }
   current_.clear();emit changed();QTimer::singleShot(0,this,&Settings::next);
+}
+void Settings::readKernel(const QString &kind) {
+  auto *p=new QProcess(this);kernel_=p;kernelOutput_.clear();
+  const auto id=current_;
+  connect(p,&QProcess::readyReadStandardOutput,this,[this,p]{
+    kernelOutput_+=p->readAllStandardOutput();if(kernelOutput_.size()>131072)p->kill();
+  });
+  connect(p,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,[this,p,id](int code,QProcess::ExitStatus status){
+    if(kernel_!=p)return;kernelTimeout_.stop();kernelOutput_+=p->readAllStandardOutput();
+    Result r;r.action_id=id.toStdString();r.exit_status=status==QProcess::NormalExit?code:70;
+    r.truncated=kernelOutput_.size()>131072;r.output=kernelOutput_.left(131072).toStdString();
+    kernel_=nullptr;p->deleteLater();finish(r);
+  });
+  connect(p,&QProcess::errorOccurred,this,[this,p,id](QProcess::ProcessError error){
+    if(error!=QProcess::FailedToStart||kernel_!=p)return;kernelTimeout_.stop();kernel_=nullptr;p->deleteLater();Result r;r.action_id=id.toStdString();r.exit_status=69;finish(r);
+  });
+  const QString helper="/usr/libexec/uke-control-qt/kernel-information";
+  if(kind=="charging"||kind=="tag")p->start("/usr/bin/pkexec",{helper,kind});
+  else p->start(helper,{kind});
+  kernelTimeout_.start(20000);
+}
+QVariantMap Settings::usbPolicy()const {
+  const auto d=data_.value("kernel.dock");
+  QString currentRole;
+  const auto ports=d.value("ports").toArray();
+  if(ports.size()==1){const auto match=QRegularExpression("\\[([^]]+)\\]").match(ports.first().toObject().value("data_role").toString());if(match.hasMatch())currentRole=match.captured(1);}
+  return {{"known",data_.contains("kernel.dock")&&!errors_.contains("kernel.dock")},
+          {"role",currentRole},
+          {"automatic",d.value("kernel_managed").toBool()},
+          {"message",i18n("Automatic connection handling belongs to the kernel Type-C controller. Host and Device request a role for the attached partner; they do not save a forced mode. Reconnecting negotiates the role again.")}};
 }
 QVariantList Settings::choices(const QString &kind)const {
   QVariantList out;
@@ -270,6 +322,8 @@ QVariantList Settings::nativeLinks(int area)const {
   if(fixture_.enabled)return {};
   QVariantList out;
   const QList<QVariantMap> entries{
+    {{"id","kcm_powerdevilprofilesconfig"},{"title",i18n("KDE energy saving settings")},{"area",1}},
+    {{"id","kcm_screenlocker"},{"title",i18n("KDE screen locking settings")},{"area",2}},
     {{"id","kcm_kscreen"},{"title",i18n("KDE display settings")},{"area",2}},
     {{"id","kcm_pulseaudio"},{"title",i18n("KDE sound settings")},{"area",4}},
     {{"id","kcm_networkmanagement"},{"title",i18n("KDE network settings")},{"area",3}},
@@ -279,7 +333,7 @@ QVariantList Settings::nativeLinks(int area)const {
 }
 bool Settings::openNative(const QString &id) {
   if(fixture_.enabled||restricted_)return false;
-  for(int area:{2,3,4})for(const auto &entry:nativeLinks(area))if(entry.toMap().value("id").toString()==id)
+  for(int area:{1,2,3,4})for(const auto &entry:nativeLinks(area))if(entry.toMap().value("id").toString()==id)
     return QProcess::startDetached("/usr/bin/systemsettings",{id});
   return false;
 }

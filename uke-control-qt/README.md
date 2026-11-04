@@ -89,3 +89,16 @@ Source builds use CMake, Qt Widgets/Qml/Quick/QuickControls2/DBus/Network,
 KI18n and the existing pkg-config uke-control-client SDK. No Python runtime or
 privileged GUI is introduced. Fixture/source checks are not physical acceptance
 of every hardware provider, charge cutoff, camera focus or a boot transition.
+
+The USB and dock page groups actual kernel accessory link speeds, runtime power,
+USB Ethernet counters, Type-C data/power roles and advertised display modes.
+Automatic connection handling is owned by UCSI; Host/Device requests are single
+swaps rather than a saved forced mode. The charge page reads verified firmware
+settings separately from write admission and offers the existing guarded limit
+request when admitted. A fixed read-only PolicyKit helper handles protected
+charging information and the fitted NFC tag's capability query.
+
+The built-in FM19511 is a Type 2 tag, not an NFC reader. Explicit external NDEF
+reading uses the original Qt NFC backend, with a 30-second deadline and local
+plain-text presentation. A supported external reader is required. No EEPROM
+contents are read or written by the built-in tag information page.

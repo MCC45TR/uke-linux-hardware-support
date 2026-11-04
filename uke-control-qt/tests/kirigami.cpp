@@ -14,6 +14,8 @@
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QtTest>
+#include <QNdefNfcTextRecord>
+#include <QNdefNfcUriRecord>
 using namespace uq;
 static QQuickItem *visualItem(QQuickItem *parent, const QString &name) {
   if (!parent->isVisible())
@@ -243,6 +245,44 @@ private slots:
     QVERIFY(bridge.openAction("flashlight.level"));
     QCOMPARE(bridge.guide().value("parameters").toList().first().toMap().value("choices").toList().size(),3);
   }
+  void kernelInformationAndNdef() {
+    const QJsonObject dock{{"kernel_managed",true},{"ports",QJsonArray{QJsonObject{{"name","port0"},{"data_role","[host] device"},{"power_role","source [sink]"},{"partner",true}}}},
+      {"devices",QJsonArray{QJsonObject{{"name","2-1"},{"product","USB hub"},{"speed","5000"},{"version","3.20"}}}},
+      {"networks",QJsonArray{QJsonObject{{"name","en-test"},{"speed","1000"},{"statistics/rx_bytes","4096"}}}},
+      {"displays",QJsonArray{QJsonObject{{"name","card2-DP-1"},{"status","connected"},{"modes","2560x1440\n1920x1080"}}}}};
+    const auto sections=kernelInformationSections("kernel.dock",dock);
+    QCOMPARE(sections.size(),5);
+    const auto port=sections.first().toMap().value("rows").toList();
+    QCOMPARE(port[1].toMap().value("value").toString(),QString("host"));
+    QCOMPARE(port[2].toMap().value("value").toString(),QString("sink"));
+    QVERIFY(sections[2].toMap().value("rows").toList()[1].toMap().value("value").toString().contains("5 Gbit/s"));
+    // An unqualified profile must not hide successfully read firmware settings
+    // or turn a disabled cap into a claim of physical cutoff.
+    const auto charging=kernelInformationSections("kernel.charging",QJsonObject{
+      {"settings",QJsonObject{{"firmware_get_complete",true},{"exit_status",0},{"reported_enabled",false},{"reported_start_percent",70},{"reported_end_percent",80}}},
+      {"admission",QJsonObject{{"reason","control_profile_unqualified"},{"threshold_admission_ready",false}}}});
+    QCOMPARE(charging.size(),2);
+    QVERIFY(charging.first().toMap().value("rows").toList()[3].toMap().value("value").toString().contains("80"));
+    auto rich=fixture;rich.results["kernel.charging"]=QJsonObject{{"data",QJsonObject{{"admission",QJsonObject{{"threshold_admission_ready",false},{"reason","control_profile_unqualified"}}}}}};
+    Settings settings(rich);QVERIFY(settings.open("charging"));QTRY_VERIFY(!settings.busy());
+    QVERIFY(!settings.topic().value("canApply").toBool());
+    QVERIFY(settings.topic().value("changes").toList().size()>=2);
+    rich.results["kernel.dock"]=QJsonObject{{"data",dock}};
+    Bridge roleBridge(rich,false);auto *roleSettings=qobject_cast<Settings *>(roleBridge.settings());
+    QVERIFY(roleSettings->open("usb"));QTRY_VERIFY(!roleSettings->busy());
+    QVERIFY(roleBridge.openAction("usb.role"));QCOMPARE(roleBridge.draftValues().value("role").toString(),QString("host"));
+    NfcReader reader(true);reader.start();reader.startService();QVERIFY(!reader.report().value("busy").toBool());reader.clear();
+    NfcReader restricted(false,nullptr,true);restricted.startService();QVERIFY(!restricted.report().value("busy").toBool());
+    QNdefNfcTextRecord record;record.setText("<script>alert(1)</script>");
+    QNdefNfcUriRecord uri;uri.setUri(QUrl("file:///private/example"));
+    QNdefMessage message;message<<record<<uri;
+    const auto rows=ndefRows(message);QCOMPARE(rows.size(),2);
+    QCOMPARE(rows[0].toMap().value("value").toString(),QString("<script>alert(1)</script>"));
+    QVERIFY(rows[1].toMap().value("title").toString().contains("display only"));
+    QNdefRecord oversized;oversized.setPayload(QByteArray(5000,'x'));message.clear();message<<oversized;
+    QCOMPARE(ndefRows(message).size(),1);
+    QVERIFY(ndefRows(message).first().toMap().value("title").toString().contains("limit"));
+  }
   void qmlSettingsTopics() {
     auto rich=fixture;
     for(const auto &t:settingTopics())for(const auto &id:t.reads)
@@ -281,6 +321,8 @@ private slots:
         snapshot(window,"settings-flashlight");
       }
       if(topic.id=="kernel")snapshot(window,"settings-kernel");
+      if(topic.id=="nfc") {QVERIFY(visualItem(window->contentItem(),"nfcInspect"));snapshot(window,"settings-nfc");}
+      if(topic.id=="usb") {QVERIFY(visualItem(window->contentItem(),"usbAutomatic"));snapshot(window,"settings-dock");}
     }
     QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,0)));snapshot(window,"settings-home");
     QVERIFY(QMetaObject::invokeMethod(window,"openSearch"));
@@ -323,6 +365,30 @@ private slots:
     QVERIFY(settings->history().value("points").toInt()>=2);
     qInfo("Existing UPower history completed with valid points and explicit gaps");
     settings->close();
+    // Render actual installed read-only pages, separately from simulated scenes.
+    QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);
+    engine.rootContext()->setContextProperty("backend",&bridge);
+    engine.rootContext()->setContextProperty("themeIcons",&themeIcons);
+    engine.rootContext()->setContextProperty("styleNotice",QString());
+    QStringList warnings;
+    connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});
+    engine.loadFromModule("org.uke.ControlQtTest","Main");
+    QVERIFY(!engine.rootObjects().isEmpty());
+    auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
+    window->resize(720,960);window->show();
+    for(const auto *topic:{"usb","charging","nfc"}) {
+      QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,QString(topic)=="charging"?1:3)));
+      QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString(topic))));
+      QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),30000);
+      QVERIFY2(settings->notice().isEmpty(),qPrintable(settings->notice()));
+      QVERIFY(!settings->information().isEmpty());
+      if(QString(topic)=="nfc")qobject_cast<NfcReader *>(settings->nfc())->inspect();
+      snapshot(window,"device-"+QString(topic));
+      qInfo("Installed kernel information page completed: %s",topic);
+    }
+    window->close();
+    warnings.removeIf([](const QString &w){return w.contains("Main.qml:")&&w.endsWith("Created graphical object was not placed in the graphics scene.");});
+    QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
   }
   void typedReadsAndCancellation() {
     Bridge bridge(fixture, false);
