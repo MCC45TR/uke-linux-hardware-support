@@ -16,6 +16,10 @@ inline bool enable_seamless_policy(const fs::path &configuration,const fs::path 
     need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update or policy migration is active");
     const auto global=configuration/"kernel-update.conf",profile=configuration/"userdata-update.conf";
     const auto before_global=policy_text(global),before_profile=policy_text(profile);
+    const auto marker=state/"automatic-policy-v1";
+    const auto before_marker=policy_exists(marker)?policy_text(marker):std::string{};
+    need(before_marker.empty() || before_marker==policy_prepared || before_marker==policy_complete || before_marker==policy_retained,
+         "Unrecognized legacy automatic-policy marker");
     const auto g=seamless_values(before_global),p=properties(before_profile);
     need(g.size()==1 && g.contains("automatic") && (g.at("automatic")=="0" || g.at("automatic")=="1"),
          "Unrecognized global seamless policy");
@@ -28,7 +32,9 @@ inline bool enable_seamless_policy(const fs::path &configuration,const fs::path 
     replace_policy(profile,before_profile,next_profile);
     const auto next_global=g.at("automatic")=="1"?before_global:std::string("automatic=1\n");
     replace_policy(global,before_global,next_global);
-    return before_global!=next_global || before_profile!=next_profile;
+    const bool retire=!before_marker.empty() && before_marker!=policy_complete;
+    if(retire)replace_policy(marker,before_marker,policy_complete);
+    return before_global!=next_global || before_profile!=next_profile || retire;
 }
 
 enum class SeamlessStage {current,apply,replace_trial,pending,older,deferred};

@@ -25,6 +25,11 @@ int main() {
     text(global,"# Enabled user policy\nautomatic=1\n");text(profile,"automatic=1\nvrr_min_hz=0\n");
     assert(!enable_seamless_policy(config,state));
     assert(policy_text(global)=="# Enabled user policy\nautomatic=1\n" && policy_text(profile)=="automatic=1\nvrr_min_hz=0\n");
+    text(state/"automatic-policy-v1",policy_prepared);
+    text(global,"automatic=0\n");text(profile,"automatic=1\nvrr_min_hz=30\n");text(rollback,"mode=off\n");
+    assert(enable_seamless_policy(config,state) && automatic_policy_ready(state));
+    assert(policy_text(state/"automatic-policy-v1")==policy_complete && policy_text(rollback)=="mode=off\n");
+    assert(!enable_seamless_policy(config,state));
     text(global,"automatic=0\n");text(profile,"automatic=0\n");assert(enable_seamless_policy(config,state));
     assert(policy_text(profile)=="automatic=1\nvrr_min_hz=0\n");
     text(profile,"automatic=1\nvrr_min_hz=17\n");rejects([&]{enable_seamless_policy(config,state);});

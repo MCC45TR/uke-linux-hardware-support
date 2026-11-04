@@ -25,7 +25,7 @@ for path in src/kernel-update.cpp src/userdata-update.hpp src/seamless-policy.hp
 done
 [[ $(cat "$native/src/profiles/rollback.conf") == mode=enforced ]]
 grep -Fxq '%config(noreplace) /etc/senemos/rollback.conf' "$stage/rpm/uke-boot-integration.spec"
-sed 's/1[.]8[.]60/1.8.70/g' "$stage/rpm/uke-boot-integration.spec" > "$stage/version.spec"
+sed 's/1[.]8[.]60/1.8.71/g' "$stage/rpm/uke-boot-integration.spec" > "$stage/version.spec"
 awk '
  /^Provides: uke-kernel-update\(current-trial-replacement-v1\)/ {print "Provides: uke-kernel-update(seamless-policy-v2) = 1"}
  /    \/usr\/bin\/uke-kernel-update migrate-automatic-policy \|\| exit 1/ {
@@ -43,16 +43,16 @@ awk '
  END {if(migrated!=1)exit 1}
 ' "$stage/version.spec" > "$output/uke-boot-integration.spec"
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
-mv "$native" "$stage/inner/uke-boot-integration-1.8.70"
+mv "$native" "$stage/inner/uke-boot-integration-1.8.71"
 rm "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.60.tar.xz"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf \
- "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.70.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.70
+ "$outer/inputs/uke-boot-integration/uke-boot-integration-1.8.71.tar.xz" -C "$stage/inner" uke-boot-integration-1.8.71
 cp "$output/uke-boot-integration.spec" "$outer/inputs/uke-boot-integration/uke-boot-integration.spec"
 jq -n --arg producer "$(git -C "$owner" rev-parse HEAD)" \
  '{schema_version:1,parent_build:11260007,producer_commit:$producer,seamless_default:true,
  rollback_default:"enforced",rollback_local_config_preserved:true,
  automatic_development_replacement_requires_local_off:true,physical_acceptance:false}' > "$outer/seamless-policy-v2-overlay.json"
-mv "$outer" "$stage/uke-boot-integration-1.8.70"
+mv "$outer" "$stage/uke-boot-integration-1.8.71"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf \
- "$output/uke-boot-integration-1.8.70.tar.xz" -C "$stage" uke-boot-integration-1.8.70
-[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.70-1.fc46 ]]
+ "$output/uke-boot-integration-1.8.71.tar.xz" -C "$stage" uke-boot-integration-1.8.71
+[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-boot-integration.spec") == 1.8.71-1.fc46 ]]
