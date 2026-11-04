@@ -3,6 +3,7 @@
 #include "cli.hpp"
 #include "maintenance.hpp"
 #include "package-operation.hpp"
+#include "update-status-command.hpp"
 #include "sysfs.hpp"
 #include <libdnf5/base/base.hpp>
 #include <libdnf5/base/goal.hpp>
@@ -263,12 +264,15 @@ void ignore_broken_pipes() {
     struct sigaction action{};action.sa_handler=SIG_IGN;sigemptyset(&action.sa_mask);
     need(sigaction(SIGPIPE,&action,nullptr)==0,"Cannot configure package pipe-error handling");
 }
-struct Options {std::string selected;bool sync=false,update=false,dry=false,yes=false,status=false,json=false;};
+struct Options {std::string selected;bool sync=false,update=false,dry=false,yes=false,status=false,json=false,boot_status=false;};
 Options parse(int argc,char** argv) {
     const auto usage=[](bool ok,const std::string& text){if(!ok)throw cli::UsageError(text);};
     usage(argc>=1,"Missing package command");
     Options o;int i=1;const std::string command=argv[0];
-    if(command=="update"){o.sync=true;o.update=true;}
+    if(command=="update") {
+        if(i<argc && std::string_view(argv[i])=="status"){o.boot_status=true;++i;}
+        else {o.sync=true;o.update=true;}
+    }
     else {
         usage(command=="channel"||command=="brunch"||command=="branch","Unknown package command");
         usage(argc>=2,"Usage: uke-control channel status|set CHANNEL|sync [--dry-run] [--yes]");
@@ -284,8 +288,8 @@ Options parse(int argc,char** argv) {
         else if(flag=="--json"){if(o.json)throw cli::UsageError("duplicate --json");o.json=true;}
         else throw cli::UsageError("Unknown package option: "+flag);
     }
-    usage(!(o.status&&(o.dry||o.yes)),"status accepts no transaction options");
-    if(o.json && !o.status && !o.dry && !o.yes)throw cli::UsageError("--json package changes require --yes; use --dry-run or --check for a preview");
+    usage(!((o.status||o.boot_status)&&(o.dry||o.yes)),"status accepts no transaction options");
+    if(o.json && !o.status && !o.boot_status && !o.dry && !o.yes)throw cli::UsageError("--json package changes require --yes; use --dry-run or --check for a preview");
     return o;
 }
 std::string signing_key(const std::string& p) {
@@ -619,6 +623,7 @@ std::string space_observation(fs::path path) {
         ",\"available_bytes\":"+std::to_string(uint64_t(space.f_bavail)*space.f_frsize)+",\"available_inodes\":"+std::to_string(space.f_favail)+"}";
 }
 void run(Options o) {
+    if(o.boot_status){uke::update_status::command(o.json);return;}
     const fs::path state="/var/lib/uke-control", config="/etc/uke-control";
     if(o.status) {
         auto current=saved(config/"channel");const auto pending=geteuid()==0?saved(state/"channel-pending"):std::string{};

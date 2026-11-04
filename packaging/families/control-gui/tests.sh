@@ -48,8 +48,8 @@ grep -Fx 'Provides: uke-control(frontend-v1) = 1' "$new"
 grep -Fx 'Provides: uke-control(frontend-sdk-v1) = 1' "$new"
 grep -Fx 'Provides: /usr/include/uke-control/frontend.hpp' "$new"
 grep -Fx 'Provides: /usr/libexec/uke-control/frontend-request' "$new"
-grep -Fx 'Requires: uke-control(aarch-64) = 2.8.1-11.fc46' "$new"
-grep -Fx 'Recommends: uke-control-tui(aarch-64) = 2.8.1-11.fc46' "$new"
+grep -Fx 'Requires: uke-control(aarch-64) = 2.8.1-12.fc46' "$new"
+grep -Fx 'Recommends: uke-control-tui(aarch-64) = 2.8.1-12.fc46' "$new"
 mkdir "$stage/overlay"
 tar -xJf "$top/SOURCES/uke-control-package-update.tar.xz" -C "$stage/overlay"
 cmp "$stage/overlay/src/packages.cpp" "$here/../../../uke-control/src/packages.cpp"
@@ -58,6 +58,9 @@ cmp "$stage/overlay/tests/packages.cpp" "$here/../../../uke-control/tests/packag
 cmp "$stage/overlay/src/cli.cpp" "$here/../../../uke-control/src/cli.cpp"
 cmp "$stage/overlay/src/client-catalog.cpp" "$here/../../../uke-control/src/client-catalog.cpp"
 for fixture in package-operation.cpp package-policy.cpp package-policy.sh package-policy.mk; do cmp "$stage/overlay/tests/$fixture" "$here/../../../uke-control/tests/$fixture"; done
+for source in update-status.cpp update-status-command.hpp; do cmp "$stage/overlay/src/$source" "$here/../../../uke-control/src/$source"; done
+for source in update-status.cpp update-status.mk; do cmp "$stage/overlay/tests/$source" "$here/../../../uke-control/tests/$source"; done
+cmp "$stage/overlay/packaging/org.senemos.uke.update-status.policy" "$here/../../../uke-control/packaging/org.senemos.uke.update-status.policy"
 for rpm in "$top"/SRPMS/*.src.rpm "$metatop"/SRPMS/*.src.rpm; do
     rpm2cpio "$rpm" | cpio -t --quiet > "$stage/generated-members"
     [[ $(grep -c '[.]spec$' "$stage/generated-members") == 1 ]]

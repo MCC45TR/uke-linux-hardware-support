@@ -14,6 +14,7 @@ function finish_phase() {
             print "package_root=${package_sources[0]%/src/packages.cpp}"
             print "tar -xJf %{SOURCE5} -C \"$package_root\""
             print "printf '%s\\n' 'include tests/package-policy.mk' >> \"$package_root/Makefile\""
+            print "printf '%s\\n' 'include tests/update-status.mk' >> \"$package_root/Makefile\""
         }
     } else if(phase=="build" && build_phase=="backend") {
         print "contract=%{_builddir}/uke-control-frontend-contract"
@@ -28,6 +29,9 @@ function finish_phase() {
         if(build_phase=="backend") {
             print "install -Dm644 \"$contract/frontend.hpp\" %{buildroot}%{_includedir}/uke-control/frontend.hpp"
             print "install -Dm755 \"$contract/frontend-request\" %{buildroot}%{_libexecdir}/uke-control/frontend-request"
+            print "package_root=$(dirname \"$(cat \"$contract/library-directory\")\")"
+            print "install -Dm755 \"$package_root/build/update-status\" %{buildroot}%{_libexecdir}/uke-control/update-status"
+            print "install -Dm644 \"$package_root/packaging/org.senemos.uke.update-status.policy\" %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.update-status.policy"
         } else {
             print "install -Dm644 \"$contract/gnome.json\" %{buildroot}%{_datadir}/senemos/uke/desktops/gnome.json"
         }
@@ -114,6 +118,7 @@ function gnome_preamble() {
     print
     if(current=="uke-control") {
         print "Provides: uke-control(frontend-v1) = 1"
+        print "Provides: uke-control(update-status-v1) = 1"
         print "Provides: /usr/libexec/uke-control/frontend-request"
         print "Requires: uke-control-client%{?_isa} = " version["uke-control"] "-" newer["uke-control"]
     }
@@ -131,7 +136,7 @@ current=="uke-kde-plasma-meta" && /^Requires: glibc-all-langpacks$/ {
 /^%(pre|post|preun|postun|pretrans|posttrans|files|changelog)([[:space:]]|$)/ {
     finish_phase(); phase=""
 }
-/^%files -n uke-control$/ {root_files=1;print; print "%{_libexecdir}/uke-control/frontend-request"; next}
+/^%files -n uke-control$/ {root_files=1;print; print "%{_libexecdir}/uke-control/frontend-request"; print "%{_libexecdir}/uke-control/update-status"; print "%{_datadir}/polkit-1/actions/org.senemos.uke.update-status.policy"; next}
 /^%files/ {root_files=0}
 root_files && /^\/usr\/lib64\/libuke-control-client[.]so([.]1)?$/ {next}
 root_files && /^\/usr\/lib64\/pkgconfig\/uke-control-client[.]pc$/ {next}

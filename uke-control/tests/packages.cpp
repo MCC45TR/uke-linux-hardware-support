@@ -97,6 +97,12 @@ int main() {
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
     assert(options({"update"}).update);assert(options({"update","--check"}).dry);
+    assert(options({"update","status"}).boot_status);
+    assert(!options({"update","status"}).update);
+    assert(options({"update","status","--json"}).json);
+    for(auto input:{std::initializer_list<const char*>{"update","status","--yes"},{"update","status","--check"},{"update","status","--dry-run"},{"update","status","bad"}}) {
+        bool refused=false;try{options(input);}catch(const uke::cli::UsageError&){refused=true;}assert(refused);
+    }
     assert(options({"channel","set","stable","--json","--yes"}).json);
     assert(options({"channel","status","--json"}).status);
     assert(options({"channel","set","test","--dry-run","--json"}).dry);
