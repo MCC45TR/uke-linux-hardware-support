@@ -48,6 +48,15 @@ int main() {
     }
     const auto auth_read=[&](const auto &name,size_t maximum){assert(maximum==auth_bytes);return auth_parts.at(name);};
     assert(join_auth_parts(auth_mdt,auth_read)==joined_expected);
+    Bytes auth64(64+9*56);memcpy(auth64.data(),"\177ELF",4);
+    auth64[4]=2;auth64[5]=auth64[6]=1;put16(auth64,18,183);put32(auth64,32,64);
+    put16(auth64,52,64);put16(auth64,54,56);put16(auth64,56,9);
+    for(unsigned i=0;i<9;i++) {
+        put32(auth64,64+i*56,1);put32(auth64,64+i*56+8,i?4096+i*128:0);
+        put32(auth64,64+i*56+32,i?64:340);
+    }
+    assert(join_auth_parts(auth64,auth_read)==joined_expected);
+    auto bad64=auth64;put32(bad64,64+56+12,1);refused([&]{join_auth_parts(bad64,auth_read);});
     assert(!admitted_auth(joined_expected));
     auto broken_auth=auth_mdt;put32(broken_auth,52+32+4,auth_bytes);refused([&]{join_auth_parts(broken_auth,auth_read);});
     broken_auth=auth_mdt;put16(broken_auth,44,8);refused([&]{join_auth_parts(broken_auth,auth_read);});
