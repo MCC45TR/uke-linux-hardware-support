@@ -354,18 +354,36 @@ private slots:
       qInfo("Device read completed: %s", id);
     }
     auto *settings=qobject_cast<Settings *>(bridge.settings());
-    for(const auto *topic:{"usb","charging","nfc"}) {
-      QVERIFY(settings->open(topic));QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),30000);
-      QVERIFY2(settings->notice().isEmpty(),qPrintable(settings->notice()));
-      QVERIFY(!settings->information().isEmpty());
-      qInfo("Kernel information completed: %s",topic);
-    }
     QVERIFY(settings->open("battery"));QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),30000);
     settings->loadHistory();QTRY_VERIFY_WITH_TIMEOUT(!settings->history().value("busy").toBool(),30000);
     QVERIFY2(settings->history().value("available").toBool(),qPrintable(settings->history().value("message").toString()));
     QVERIFY(settings->history().value("points").toInt()>=2);
     qInfo("Existing UPower history completed with valid points and explicit gaps");
     settings->close();
+    // Render actual installed read-only pages, separately from simulated scenes.
+    QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);
+    engine.rootContext()->setContextProperty("backend",&bridge);
+    engine.rootContext()->setContextProperty("themeIcons",&themeIcons);
+    engine.rootContext()->setContextProperty("styleNotice",QString());
+    QStringList warnings;
+    connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});
+    engine.loadFromModule("org.uke.ControlQtTest","Main");
+    QVERIFY(!engine.rootObjects().isEmpty());
+    auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
+    window->resize(720,960);window->show();
+    for(const auto *topic:{"usb","charging","nfc"}) {
+      QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,QString(topic)=="charging"?1:3)));
+      QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString(topic))));
+      QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),30000);
+      QVERIFY2(settings->notice().isEmpty(),qPrintable(settings->notice()));
+      QVERIFY(!settings->information().isEmpty());
+      if(QString(topic)=="nfc")qobject_cast<NfcReader *>(settings->nfc())->inspect();
+      snapshot(window,"device-"+QString(topic));
+      qInfo("Installed kernel information page completed: %s",topic);
+    }
+    window->close();
+    warnings.removeIf([](const QString &w){return w.contains("Main.qml:")&&w.endsWith("Created graphical object was not placed in the graphics scene.");});
+    QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
   }
   void typedReadsAndCancellation() {
     Bridge bridge(fixture, false);
