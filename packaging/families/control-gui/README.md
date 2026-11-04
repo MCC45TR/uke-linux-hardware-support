@@ -11,6 +11,13 @@ desktop selections remain usable; the optional metadata source recipe has its
 own advanced revision. COPR compilation and tablet results are recorded
 separately in the integration lesson journal.
 
+[COPR 11254211](https://copr.fedorainfracloud.org/coprs/build/11254211/) passed
+Rawhide AArch64 compilation and the retained native tests. DNF installation,
+real update progress, repeated empty updates and normal-alias inference passed
+on POCO Pad X1 with Linux 7.3.1-1500. Stable/test transitions still refuse their
+eight missing installed components before mutation; full transition acceptance
+remains open. See the [dated verification record](../../../docs/lessons/2026-11-04-control-update.md).
+
 This source recipe preserves the signed published `uke-control-2.8.1-5.fc46`
 cohort, including its DNF fixes, and advances the native backend to
 `2.8.1-7.fc46`. `input.json` pins COPR build 11240837, its source digest and the
