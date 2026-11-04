@@ -267,6 +267,10 @@ private slots:
     Settings settings(rich);QVERIFY(settings.open("charging"));QTRY_VERIFY(!settings.busy());
     QVERIFY(!settings.topic().value("canApply").toBool());
     QVERIFY(settings.topic().value("changes").toList().size()>=2);
+    rich.results["kernel.dock"]=QJsonObject{{"data",dock}};
+    Bridge roleBridge(rich,false);auto *roleSettings=qobject_cast<Settings *>(roleBridge.settings());
+    QVERIFY(roleSettings->open("usb"));QTRY_VERIFY(!roleSettings->busy());
+    QVERIFY(roleBridge.openAction("usb.role"));QCOMPARE(roleBridge.draftValues().value("role").toString(),QString("host"));
     NfcReader reader(true);reader.start();reader.startService();QVERIFY(!reader.report().value("busy").toBool());reader.clear();
     NfcReader restricted(false,nullptr,true);restricted.startService();QVERIFY(!restricted.report().value("busy").toBool());
     QNdefNfcTextRecord record;record.setText("<script>alert(1)</script>");

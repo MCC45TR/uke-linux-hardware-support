@@ -66,7 +66,9 @@ QJsonObject dock() {
     }
     for(const auto &name:QDir("/sys/class/drm").entryList(QDir::Dirs|QDir::NoDotAndDotDot)) {
         if(displays.size()>=16)break;if(!name.contains("-DP-")&&!name.contains("-HDMI-A-"))continue;
-        auto o=fields("/sys/class/drm/"+name,{"status","enabled","modes","dpms"});o["name"]=name;displays.append(o);
+        auto o=fields("/sys/class/drm/"+name,{"status","enabled","modes","dpms"});
+        if(o["modes"].isString()){auto modes=o["modes"].toString().split('\n',Qt::SkipEmptyParts);modes.removeDuplicates();o["modes"]=modes.join('\n');}
+        o["name"]=name;displays.append(o);
     }
     out["devices"]=devices;out["ports"]=ports;out["networks"]=net;out["displays"]=displays;out["roles"]=roles;
     out["usb_profile"]=attribute("/sys/firmware/devicetree/base/chosen/senemos,usb-profile");

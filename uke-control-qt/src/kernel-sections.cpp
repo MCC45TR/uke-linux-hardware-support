@@ -11,7 +11,7 @@ QString text(const QJsonValue &v) {
     return result.isEmpty()?i18n("Not exported by this driver"):result;
 }
 QVariantMap fact(const QString &title,const QJsonValue &v) {return {{"title",title},{"value",text(v)},{"progress",-1}};}
-QVariantMap section(const QString &title,const QVariantList &rows) {return {{"title",title},{"rows",rows}};}
+QVariantMap section(const QString &title,const QVariantList &rows,bool compact=false) {return {{"title",title},{"rows",rows},{"compact",compact}};}
 QString role(const QJsonValue &v) {
     const auto s=v.toString();const auto m=QRegularExpression("\\[([^]]+)\\]").match(s);return m.hasMatch()?m.captured(1):text(v);
 }
@@ -63,20 +63,20 @@ QVariantList kernelInformationSections(const QString &id,const QJsonObject &d) {
     for(const auto &v:devices) {
         const auto p=v.toObject();const auto name=text(p.value("name"));
         const auto label=p.value("product").isString()?text(p.value("product")):i18n("USB accessory");
-        out<<section(label+" · "+name,{fact(i18n("Manufacturer"),p.value("manufacturer")),fact(i18n("Current USB link speed"),speed(p.value("speed"))),fact(i18n("USB specification reported by device"),p.value("version")),fact(i18n("Driver"),p.value("driver")),fact(i18n("Power saving policy"),p.value("power/control")),fact(i18n("Runtime power state"),p.value("power/runtime_status")),fact(i18n("Advertised maximum current"),p.value("bMaxPower")),fact(i18n("Vendor / product ID"),text(p.value("idVendor"))+" / "+text(p.value("idProduct")))});
+        out<<section(label+" · "+name,{fact(i18n("Manufacturer"),p.value("manufacturer")),fact(i18n("Current USB link speed"),speed(p.value("speed"))),fact(i18n("USB specification reported by device"),p.value("version")),fact(i18n("Driver"),p.value("driver")),fact(i18n("Power saving policy"),p.value("power/control")),fact(i18n("Runtime power state"),p.value("power/runtime_status")),fact(i18n("Advertised maximum current"),p.value("bMaxPower")),fact(i18n("Vendor / product ID"),text(p.value("idVendor"))+" / "+text(p.value("idProduct")))},true);
     }
     for(const auto &v:d.value("networks").toArray()) {
-        const auto p=v.toObject();QVariantList rows{fact(i18n("Connection state"),p.value("operstate")),fact(i18n("Carrier detected"),p.value("carrier")),fact(i18n("Negotiated Ethernet speed"),speed(p.value("speed"))),fact(i18n("Duplex"),p.value("duplex")),fact(i18n("Driver"),p.value("driver"))};
+        const auto p=v.toObject();QVariantList rows{fact(i18n("Connection state"),p.value("operstate")),fact(i18n("Negotiated Ethernet speed"),speed(p.value("speed"))),fact(i18n("Carrier detected"),p.value("carrier")),fact(i18n("Duplex"),p.value("duplex")),fact(i18n("Driver"),p.value("driver"))};
         for(const auto &key:{"rx_bytes","tx_bytes","rx_errors","tx_errors","rx_dropped","tx_dropped"}) {
             const QMap<QString,QString> labels{{"rx_bytes",i18n("Received")},{"tx_bytes",i18n("Sent")},{"rx_errors",i18n("Receive errors")},{"tx_errors",i18n("Transmit errors")},{"rx_dropped",i18n("Receive drops")},{"tx_dropped",i18n("Transmit drops")}};
             const auto value=p.value("statistics/"+QString(key));bool ok=false;const auto n=value.toString().toULongLong(&ok);
             rows<<fact(labels.value(key),ok&&QString(key).endsWith("bytes")?QLocale().formattedDataSize(qint64(n)):text(value));
         }
         rows<<fact(i18n("Counter period"),i18n("Since the interface was created; counters are not a speed test."));
-        out<<section(i18n("Dock Ethernet · %1",text(p.value("name"))),rows);
+        out<<section(i18n("Dock Ethernet · %1",text(p.value("name"))),rows,true);
     }
     for(const auto &v:d.value("displays").toArray()) {
-        const auto p=v.toObject();out<<section(i18n("External display · %1",text(p.value("name"))),{fact(i18n("Connection"),p.value("status")),fact(i18n("Output enabled"),p.value("enabled")),fact(i18n("Advertised resolutions"),p.value("modes")),fact(i18n("Display interpretation"),i18n("Supported resolutions do not identify the active mode, refresh rate or a verified image. Use KDE display settings for the active layout."))});
+        const auto p=v.toObject();out<<section(i18n("External display · %1",text(p.value("name"))),{fact(i18n("Connection"),p.value("status")),fact(i18n("Output enabled"),p.value("enabled")),fact(i18n("Advertised resolutions"),p.value("modes")),fact(i18n("Display interpretation"),i18n("Supported resolutions do not identify the active mode, refresh rate or a verified image. Use KDE display settings for the active layout."))},true);
     }
     if(d.value("ports").toArray().isEmpty())out<<section(i18n("USB-C connection"),{fact(i18n("Type-C ports"),i18n("No Type-C port is currently exported by the kernel"))});
     return out;

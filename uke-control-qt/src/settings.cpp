@@ -294,7 +294,11 @@ void Settings::readKernel(const QString &kind) {
 }
 QVariantMap Settings::usbPolicy()const {
   const auto d=data_.value("kernel.dock");
+  QString currentRole;
+  const auto ports=d.value("ports").toArray();
+  if(ports.size()==1){const auto match=QRegularExpression("\\[([^]]+)\\]").match(ports.first().toObject().value("data_role").toString());if(match.hasMatch())currentRole=match.captured(1);}
   return {{"known",data_.contains("kernel.dock")&&!errors_.contains("kernel.dock")},
+          {"role",currentRole},
           {"automatic",d.value("kernel_managed").toBool()},
           {"message",i18n("Automatic connection handling belongs to the kernel Type-C controller. Host and Device request a role for the attached partner; they do not save a forced mode. Reconnecting negotiates the role again.")}};
 }

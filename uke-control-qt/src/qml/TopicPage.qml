@@ -59,12 +59,23 @@ FormCard.FormCardPage {
         active: Object.keys(settings.bootReport).length > 0
         sourceComponent: Component { UpdateStatusView { report: settings.bootReport } }
     }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "usb"
+        sourceComponent: Component { UsbRoleView { topicPage: page } }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "nfc"
+        sourceComponent: Component { NfcView {} }
+    }
     Repeater {
         model: settings.information
         delegate: ColumnLayout {
             id: informationSection
             required property var modelData
             property bool expanded: false
+            readonly property int previewRows: modelData.compact ? 2 : 6
             Layout.fillWidth: true
             spacing: 0
             FormCard.FormHeader { title: modelData.title }
@@ -76,7 +87,7 @@ FormCard.FormCardPage {
                         required property var modelData
                         required property int index
                         Layout.fillWidth: true
-                        visible: informationSection.expanded || (!modelData.detail && index < 6)
+                        visible: informationSection.expanded || (!modelData.detail && index < informationSection.previewRows)
                         spacing: 0
                         SafeText { Layout.fillWidth: true; text: modelData.title; description: modelData.value }
                         Controls.ProgressBar {
@@ -91,7 +102,7 @@ FormCard.FormCardPage {
                     }
                 }
                 FormCard.FormButtonDelegate {
-                    visible: informationSection.modelData.rows.length > 6 || informationSection.modelData.rows.some(r => r.detail)
+                    visible: informationSection.modelData.rows.length > informationSection.previewRows || informationSection.modelData.rows.some(r => r.detail)
                     text: informationSection.expanded ? i18n("Less information") : i18n("More information")
                     icon.name: themeIcons.names["view-list-details"]
                     Accessible.name: text
@@ -105,16 +116,6 @@ FormCard.FormCardPage {
         Layout.fillWidth: true
         active: page.topicId === "battery"
         sourceComponent: Component { BatteryHistoryView {} }
-    }
-    Loader {
-        Layout.fillWidth: true
-        active: page.topicId === "nfc"
-        sourceComponent: Component { NfcView {} }
-    }
-    Loader {
-        Layout.fillWidth: true
-        active: page.topicId === "usb"
-        sourceComponent: Component { UsbRoleView { topicPage: page } }
     }
     FormCard.FormHeader { visible: (settings.topic.changes || []).length > 1; title: i18n("Preferences and actions") }
     Kirigami.InlineMessage {

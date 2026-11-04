@@ -98,6 +98,10 @@ bool Bridge::openAction(const QString &id) {
     const auto &a = action(id.toStdString());
     leaveGuide();
     draft_ = defaults(a);
+    if(a.id=="usb.role") {
+      const auto role=settings_.usbPolicy().value("role").toString();
+      if(role=="host"||role=="device")draft_["role"]=role;
+    }
     if(a.id=="boot.set-slot") {
       const auto running=settings_.bootReport().value("current_slot").toString();
       if(running=="a"||running=="b")draft_["slot"]=running=="a"?"b":"a";
