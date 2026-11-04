@@ -82,4 +82,4 @@ uses vertical cards, and the Software updates page groups status, preview and
 selection before package tasks. Visual inspection found readable labels and
 native themed icons. These checks do not apply slot changes, reboot the tablet
 or certify every physical device provider. Kernel approval/history findings are
-recorded separately in [the status lesson](2026-11-04-update-slot-status.md).
+recorded separately in the [Control status change](https://github.com/MCC45TR/uke-linux-hardware-support/pull/24).
