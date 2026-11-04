@@ -1,5 +1,22 @@
 # Uke Control for Qt
 
+Version 1.2.0 presents six daily settings categories with native information
+tiles: Battery and charging, Display and lights, Connections, Sound, Storage and
+memory, and System and updates. Help and Advanced are secondary destinations.
+Topic pages combine readable passive observations and reviewed preferences;
+Ctrl+K searches topics. The complete installed command catalog remains under
+Advanced. Older navigation descriptions below document the retained expert and
+regression paths; the topic interface supersedes their everyday placement.
+
+Battery history reads the original UPower service asynchronously. The actual
+power-supply battery is discovered; timestamps, unknown-state gaps and measured
+coverage remain explicit. The native Qt plot inherits the desktop palette. No
+recording service or history database is added. Flashlight choices reflect the
+two real lit steps. Small choices, colour/file/folder pickers and device choices
+use native FormCard controls; requested values are separate from observed state.
+Existing confirmation and terminal authorization remain authoritative. Opening
+a terminal does not establish completion or successful hardware application.
+
 A native Qt 6 Kirigami application for the existing Uke Control client. The
 application, typed models, validation and device adapter are C++20; the presentation
 uses Qt Quick/QML and original Kirigami/FormCard components. It respects KDE

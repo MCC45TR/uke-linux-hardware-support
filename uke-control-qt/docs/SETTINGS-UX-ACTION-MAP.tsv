@@ -1,0 +1,130 @@
+feature	surface	control	action_id
+home.summary	internal	Summary tiles	status
+home.summary	internal	Summary tiles	overview.all
+battery.readings	daily	Read-only metric tiles	overview.battery
+battery.readings	daily	Read-only metric tiles	battery.status
+battery.health	detail	Reported health rows	battery.health
+battery.cells	detail	Topology disclosure	battery.cells
+battery.source	detail	Reported protocol rows	battery.protocol
+battery.source	detail	Reported protocol rows	charge.protocols
+charge.state	daily	Actual and saved state	overview.charge
+charge.state	daily	Actual and saved state	charge.status
+charge.state	daily	Actual and saved state	charge.settings
+charge.policy	daily	Supported preset; preview/apply	charge.mode
+charge.policy	daily	Supported preset; preview/apply	charge.limit
+charge.policy	daily	Supported preset; preview/apply	charge.plan
+charge.policy	daily	Supported preset; preview/apply	charge.modes
+charge.availability	integrated	Inline support and reason	charge.capabilities
+charge.availability	integrated	Inline support and reason	charge.admission
+charge.availability	integrated	Inline support and reason	charge.protection
+charge.availability	integrated	Inline support and reason	charge.protection-status
+charge.temporary	deferred	No activation control	charge.temporary-preview
+charge.engineering	expert	Explicit expert operation	charge.review
+charge.engineering	expert	Explicit expert operation	charge.restore-current
+charge.engineering	expert	Explicit expert operation	charge.enable-cap80
+charge.engineering	expert	Explicit expert operation	charge.apply-cap80
+charge.engineering	expert	Explicit expert operation	charge.moisture-enable
+charge.engineering	expert	Explicit expert operation	charge.protocol-inspect
+charge.engineering	expert	Explicit expert operation	charge.notifications
+battery.sleep	detail	Summary; advanced wake permissions	overview.sleep
+battery.sleep	detail	Summary; advanced wake permissions	wake.status
+battery.sleep	detail	Summary; advanced wake permissions	wake.set
+battery.sleep	detail	Summary; advanced wake permissions	wake.apply
+display.session	daily	Status; deferred boolean preference	overview.display
+display.session	daily	Status; deferred boolean preference	overview.desktop
+display.session	daily	Status; deferred boolean preference	desktop.status
+display.session	daily	Status; deferred boolean preference	desktop.plasma
+display.session	daily	Status; deferred boolean preference	desktop.rotation
+display.session	daily	Status; deferred boolean preference	desktop.brightness
+display.flashlight	daily	Off / low / high	flashlight.status
+display.flashlight	daily	Off / low / high	flashlight.state
+display.flashlight	daily	Off / low / high	flashlight.level
+display.notification	detail	Automatic/manual; colour picker	led.status
+display.notification	detail	Automatic/manual; colour picker	led.color
+display.notification	detail	Automatic/manual; colour picker	led.auto
+display.notification	detail	Automatic/manual; colour picker	led.test
+display.external	conditional	Connection details; profile choice	display.bits
+display.external	conditional	Connection details; profile choice	display.profiles
+display.external	conditional	Connection details; profile choice	display.profile
+display.engineering	expert	Exact input; explicit apply	display.sensor
+display.engineering	expert	Exact input; explicit apply	display.lanes
+display.engineering	expert	Exact input; explicit apply	display.compression
+display.engineering	expert	Exact input; explicit apply	display.compression-set
+display.engineering	expert	Exact input; explicit apply	display.vrr-status
+display.engineering	expert	Exact input; explicit apply	display.vrr-configured
+display.engineering	expert	Exact input; explicit apply	display.vrr-set
+connections.usb	daily	Accessory list; role and policy choices	overview.usb
+connections.usb	daily	Accessory list; role and policy choices	usb.status
+connections.usb	daily	Accessory list; role and policy choices	usb.watch
+connections.usb	daily	Accessory list; role and policy choices	usb.role
+connections.usb	daily	Accessory list; role and policy choices	usb.power
+connections.ethernet	conditional	Interface and profile selection	ethernet.status
+connections.ethernet	conditional	Interface and profile selection	ethernet.profile
+connections.nfc	daily	State; deferred boolean preference	overview.nfc
+connections.nfc	daily	State; deferred boolean preference	nfc.status
+connections.nfc	daily	State; deferred boolean preference	nfc.state
+connections.serial	expert	Session versus saved policy	cdc.session
+connections.serial	expert	Session versus saved policy	cdc.persistent
+connections.recovery	conditional	Recovery information and action	usb.transition-status
+connections.recovery	conditional	Recovery information and action	usb.transition-recover
+audio.microphone	daily	Audio summary; microphone selection	overview.audio
+audio.microphone	daily	Audio summary; microphone selection	microphone.status
+audio.microphone	daily	Audio summary; microphone selection	microphone.select
+system.camera	detail	Capability and availability rows	overview.camera
+system.sensors	detail	List; manual finite live view	overview.sensors
+system.sensors	detail	List; manual finite live view	sensors.list
+system.sensors	detail	List; manual finite live view	sensors.once
+system.sensors	detail	List; manual finite live view	sensors.watch
+system.about	detail	Device and provider facts	overview.hardware
+system.about	detail	Device and provider facts	hardware.status
+system.about	detail	Device and provider facts	firmware.status
+system.about	detail	Device and provider facts	capabilities
+system.about	detail	Device and provider facts	api.version
+storage.capacity	daily	Usage bar; volume list	overview.storage
+storage.capacity	daily	Usage bar; volume list	inventory
+storage.capacity	daily	Usage bar; volume list	inventory.refresh
+storage.memory	daily	Memory summary; advanced swap	overview.workload
+storage.memory	daily	Memory summary; advanced swap	swap.status
+storage.memory	daily	Memory summary; advanced swap	swap.set
+storage.memory	daily	Memory summary; advanced swap	swap.apply
+storage.roots	expert	Discovered-root picker	roots.list
+storage.roots	expert	Discovered-root picker	roots.inspect
+storage.maintenance	expert	Guarded inspection and wizard	resize.check
+storage.maintenance	expert	Guarded inspection and wizard	resize.prepare
+storage.maintenance	expert	Guarded inspection and wizard	singleboot.status
+storage.maintenance	expert	Guarded inspection and wizard	singleboot.preview
+storage.maintenance	expert	Guarded inspection and wizard	singleboot.wizard
+storage.maintenance	expert	Guarded inspection and wizard	multiboot.status
+storage.maintenance	expert	Guarded inspection and wizard	multiboot.preview
+storage.maintenance	expert	Guarded inspection and wizard	multiboot.wizard
+updates.software	daily	Check; preview; install	overview.updates
+updates.software	daily	Check; preview; install	channel.status
+updates.software	daily	Check; preview; install	update.preview
+updates.software	daily	Check; preview; install	update.apply
+updates.channel	detail	Three channel choices; review	channel.preview
+updates.channel	detail	Three channel choices; review	channel.set
+updates.recovery	conditional	Pending-work banner and recovery	overview.recovery
+updates.recovery	conditional	Pending-work banner and recovery	channel.private-status
+updates.recovery	conditional	Pending-work banner and recovery	channel.sync-preview
+updates.recovery	conditional	Pending-work banner and recovery	channel.sync
+updates.kernel	detail	Current/next tiles; A/B radios	update.status
+updates.kernel	detail	Current/next tiles; A/B radios	boot.slot-preview
+updates.kernel	detail	Current/next tiles; A/B radios	boot.set-slot
+support.snapshots	detail	Component selector; file dialogs	snapshot.save
+support.snapshots	detail	Component selector; file dialogs	snapshot.save-all
+support.snapshots	detail	Component selector; file dialogs	snapshot.compare
+support.logs	detail	Topic selector; collect button	diagnostics.collect
+support.logs	detail	Topic selector; collect button	diagnostics.collect-root
+support.logs	detail	Topic selector; collect button	report.collect
+support.sharing	detail	Review; export or publish	support.export
+support.sharing	detail	Review; export or publish	report.publish
+expert.reference	expert	Technical reference	api.catalog
+expert.reference	expert	Technical reference	api.help
+expert.tests	expert	Attended tests; device selectors	test.desktop
+expert.tests	expert	Attended tests; device selectors	test.hardware
+expert.tests	expert	Attended tests; device selectors	test.display
+expert.tests	expert	Attended tests; device selectors	test.cadence
+expert.tests	expert	Attended tests; device selectors	test.touch
+expert.tests	expert	Attended tests; device selectors	test.sensors
+expert.tests	expert	Attended tests; device selectors	test.discover
+expert.tests	expert	Attended tests; device selectors	test.sample

@@ -31,7 +31,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: backend.observation.stale || false
         type: Kirigami.MessageType.Warning
-        text: "The options have changed since this read. Refresh to use the current options."
+        text: i18n("The options have changed since this read. Refresh to use the current options.")
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
@@ -45,7 +45,7 @@ ColumnLayout {
         Item { Layout.fillWidth: true }
         Controls.Button {
             objectName: "refreshRead"
-            text: "Refresh"
+            text: i18n("Refresh")
             Accessible.name: text
             icon.name: themeIcons.names["view-refresh"]
             enabled: !backend.observation.running
@@ -53,7 +53,7 @@ ColumnLayout {
         }
         Controls.Button {
             objectName: "stopRead"
-            text: "Stop"
+            text: i18n("Stop")
             Accessible.name: text
             icon.name: themeIcons.names["media-playback-stop"]
             enabled: backend.observation.running || false
@@ -108,7 +108,7 @@ ColumnLayout {
             Controls.Label { text: "Raw output"; Layout.leftMargin: Kirigami.Units.largeSpacing }
             Controls.TextArea {
                 objectName: "rawOutput"
-                Accessible.name: "Raw output"
+                Accessible.name: i18n("Raw output")
                 Layout.fillWidth: true
                 text: backend.observation.raw || "No stdout reported."
                 textFormat: TextEdit.PlainText
@@ -119,7 +119,7 @@ ColumnLayout {
             Controls.Label { text: "Errors · exit " + backend.observation.exitStatus; Layout.leftMargin: Kirigami.Units.largeSpacing }
             Controls.TextArea {
                 objectName: "errorOutput"
-                Accessible.name: "Error output"
+                Accessible.name: i18n("Error output")
                 Layout.fillWidth: true
                 text: backend.observation.error || "No stderr reported."
                 textFormat: TextEdit.PlainText

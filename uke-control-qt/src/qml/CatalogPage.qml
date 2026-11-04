@@ -16,12 +16,12 @@ FormCard.FormCardPage {
         for (let group of filteredGroups) count += group.entries.length
         return count
     }
-    title: "All actions"
+    title: i18n("All actions")
     function focusSearch() { search.forceActiveFocus() }
     Component.onCompleted: { if (initialArea < 0) Qt.callLater(focusSearch) }
     SafeText {
-        text: "Find a task"
-        description: "Search titles, descriptions or action identifiers. Filter by category and the kind of work you want to do."
+        text: i18n("Find a task")
+        description: i18n("Search titles, descriptions or action identifiers. Filter by category and the kind of work you want to do.")
         icon.name: themeIcons.names["edit-find"]
     }
     Kirigami.SearchField {
@@ -32,14 +32,14 @@ FormCard.FormCardPage {
         Layout.alignment: Qt.AlignHCenter
         Layout.leftMargin: Kirigami.Units.largeSpacing
         Layout.rightMargin: Kirigami.Units.largeSpacing
-        placeholderText: "Search actions…"
-        Accessible.name: "Search all actions"
+        placeholderText: i18n("Search actions…")
+        Accessible.name: i18n("Search all actions")
     }
     FormCard.FormCard {
         FormCard.FormComboBoxDelegate {
             id: category
             objectName: "catalogCategory"
-            text: "Category"
+            text: i18n("Category")
             Accessible.name: text
             model: [{title: "All categories", value: -1}].concat(backend.areas.map(area => ({title: area.title, value: area.index})))
             textRole: "title"
@@ -50,7 +50,7 @@ FormCard.FormCardPage {
         FormCard.FormComboBoxDelegate {
             id: kind
             objectName: "catalogKind"
-            text: "Action type"
+            text: i18n("Action type")
             Accessible.name: text
             model: [
                 {title: "All types", value: "all"},
@@ -69,13 +69,13 @@ FormCard.FormCardPage {
     FormCard.FormCard {
         visible: page.resultCount === 0
         SafeText {
-            text: "No matching actions"
-            description: "Try a shorter phrase or reset the filters."
+            text: i18n("No matching actions")
+            description: i18n("Try a shorter phrase or reset the filters.")
             icon.name: themeIcons.names["edit-find"]
         }
         FormCard.FormButtonDelegate {
             objectName: "resetCatalog"
-            text: "Reset search & filters"
+            text: i18n("Reset search & filters")
             icon.name: themeIcons.names["edit-clear"]
             Accessible.name: text
             onClicked: { search.text = ""; category.currentIndex = 0; kind.currentIndex = 0; search.forceActiveFocus() }

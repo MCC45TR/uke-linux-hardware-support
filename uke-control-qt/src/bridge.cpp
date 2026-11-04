@@ -7,8 +7,10 @@
 #include <uke-control/frontend.hpp>
 #endif
 #include <climits>
+#include <KLocalizedString>
 namespace uq {
 static QString q(const std::string &s) { return QString::fromStdString(s); }
+static QString localized(const Text &t) { return q(QLocale().language()==QLocale::Turkish?t.tr:t.en); }
 QVariantList Bridge::areas() const { return areaModel(); }
 QVariantList Bridge::groups() const { return taskGroups(section_); }
 int Bridge::areaForAction(const QString &id) const {
@@ -41,7 +43,7 @@ QVariantList Bridge::catalog(const QString &text, int area, const QString &kind)
   return groups;
 }
 Bridge::Bridge(Fixture fixture, bool readOnly, QObject *parent)
-    : QObject(parent), fixture_(std::move(fixture)), readOnly_(readOnly) {
+    : QObject(parent), fixture_(std::move(fixture)), settings_(fixture_, this, readOnly), readOnly_(readOnly) {
   poll_.setInterval(40);
   connect(&poll_, &QTimer::timeout, this, [this] {
     if (!query_)
@@ -96,19 +98,23 @@ bool Bridge::openAction(const QString &id) {
     const auto &a = action(id.toStdString());
     leaveGuide();
     draft_ = defaults(a);
-    QString details = q(a.description.en);
+    if(a.id=="boot.set-slot") {
+      const auto running=settings_.bootReport().value("current_slot").toString();
+      if(running=="a"||running=="b")draft_["slot"]=running=="a"?"b":"a";
+    }
+    QString details = localized(a.description);
     QVariantList parameters;
     for (const auto &p : a.parameters) {
-      details += "\n\n" + q(p.title.en) + ": " + q(p.description.en);
+      details += "\n\n" + localized(p.title) + ": " + localized(p.description);
       if (p.kind == Kind::integer)
         details += QString("\nAllowed range: %1–%2")
                        .arg(qulonglong(p.minimum))
                        .arg(qulonglong(p.maximum));
       QVariantList choices;
       for (const auto &c : p.choices) {
-        details += "\n" + q(c.title.en) + " — " + q(c.description.en);
-        QString help = q(c.description.en);
-        if (a.id == "charge.mode" && p.id == "mode") {
+        details += "\n" + localized(c.title) + " — " + localized(c.description);
+        QString help = localized(c.description);
+        if (a.id == "charge.mode" && p.id == "mode" && QLocale().language()!=QLocale::Turkish) {
           if (c.value == "firmware")
             help = "Let firmware manage charging.";
           else if (c.value == "charge80")
@@ -122,16 +128,35 @@ bool Bridge::openAction(const QString &id) {
           else
             help = "Use the charging provider's reviewed automatic limits.";
         }
-        choices << QVariantMap{{"title", q(c.title.en)},
+        choices << QVariantMap{{"title", localized(c.title)},
                                {"value", q(c.value)},
                                {"description", help}};
       }
+      if (a.id == "flashlight.level" && p.id == "percent") {
+        choices = {QVariantMap{{"title",i18n("Off")},{"value","0"},{"description",QString()}},
+                   QVariantMap{{"title",i18n("Low")},{"value","50"},{"description",QString()}},
+                   QVariantMap{{"title",i18n("High")},{"value","100"},{"description",QString()}}};
+      }
+      if(a.id=="boot.set-slot"&&p.id=="slot") {
+        QVariantList explicitSlots;for(const auto &v:choices)if(v.toMap().value("value").toString()!="next")explicitSlots<<v;choices=explicitSlots;
+      }
+      QString kind;
+      switch(p.kind) {
+        case Kind::interface:kind="interface";break;
+        case Kind::usb_device:kind="usb_device";break;
+        case Kind::input_device:kind="input_device";break;
+        case Kind::path:case Kind::absolute_path:kind=p.id=="directory"?"directory":"path";break;
+        case Kind::color:kind="color";break;
+        default:break;
+      }
+      if (choices.isEmpty() && (kind=="interface"||kind=="usb_device"||kind=="input_device")) choices=settings_.choices(kind);
       parameters << QVariantMap{
           {"key", q(p.id)},
-          {"title", q(p.title.en)},
-          {"description", q(p.description.en)},
+          {"title", localized(p.title)},
+          {"description", localized(p.description)},
           {"value", q(p.initial)},
           {"choices", choices},
+          {"kind",kind},
           {"integer", p.kind == Kind::integer && p.maximum <= INT_MAX},
           {"minimum", int(std::min<std::uint64_t>(p.minimum, INT_MAX))},
           {"maximum", int(std::min<std::uint64_t>(p.maximum, INT_MAX))}};
@@ -156,6 +181,7 @@ bool Bridge::openAction(const QString &id) {
               {"previewTerminal", !a.preview.empty() && action(a.preview).presentation == Presentation::terminal},
               {"preview", !a.preview.empty()}};
     emit guideChanged();
+    emit draftChanged();
     return true;
   } catch (const std::exception &error) {
     fail(error);
@@ -171,6 +197,7 @@ void Bridge::setDraft(const QString &key, const QString &value) {
   cancelReview();
   if (draft_[key.toStdString()] == value.toStdString()) return;
   draft_[key.toStdString()] = value.toStdString();
+  emit draftChanged();
   if (!readId_.empty() && (readOrigin_ != "inspect" || readValues_.contains(key.toStdString()))) {
     observationStale_ = true;
     showResult(result_);
@@ -366,8 +393,8 @@ void Bridge::showResult(const Result &result) {
     if (!readValues_.contains(p.id) || readValues_.at(p.id).empty()) continue;
     QString value = safe(readValues_.at(p.id));
     for (const auto &choice : p.choices)
-      if (choice.value == readValues_.at(p.id)) value = q(choice.title.en);
-    options << QVariantMap{{"title", q(p.title.en)}, {"value", value}};
+      if (choice.value == readValues_.at(p.id)) value = localized(choice.title);
+    options << QVariantMap{{"title", localized(p.title)}, {"value", value}};
   }
   observation_ = {{"title", friendlyTitle(action(result.action_id))},
                   {"bootReport", result.action_id == "update.status" && document.isObject() &&
@@ -391,6 +418,7 @@ void Bridge::showResult(const Result &result) {
   emit observationChanged();
 }
 void Bridge::prepare(const Plan &request) {
+  settings_.stop();
   const auto &a = action(request.action_id);
   reviewed_ = request;
   QVariantList values;
@@ -398,8 +426,8 @@ void Bridge::prepare(const Plan &request) {
     QString value = safe(request.values.at(p.id));
     for (const auto &choice : p.choices)
       if (choice.value == request.values.at(p.id))
-        value = q(choice.title.en);
-    values << QVariantMap{{"title", q(p.title.en)}, {"value", value}};
+        value = localized(choice.title);
+    values << QVariantMap{{"title", localized(p.title)}, {"value", value}};
   }
   const bool blocked =
       fixture_.enabled || (readOnly_ && request.effect != Effect::read);

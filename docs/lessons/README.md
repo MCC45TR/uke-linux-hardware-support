@@ -1,5 +1,9 @@
 # Integration lessons
 
+- [UKE-QT-TOPICS-20261104: present daily settings as grouped topics](2026-11-04-qt-topic-settings.md)
+
+- [UKE-QT-SETTINGS-PLAN-20261104: merge command guides into user topics](2026-11-04-qt-settings-plan.md)
+
 - [UKE-QT-UX-20261104: organize native Qt pages around tasks and observation context](2026-11-04-qt-task-pages.md)
 
 - [UKE-QT-THEMES-20261104: keep semantic icons and request routing native](2026-11-04-qt-theme-actions.md)
