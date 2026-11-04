@@ -36,6 +36,9 @@ or admits an unknown image and never loads a TA or starts a DSP. Use this
 read-only report to investigate a preflight mismatch before changing any pin.
 The report also hashes the declared modem FAT volume in one-MiB memory chunks,
 with a 512-MiB limit, excluding any unused partition tail. No image copy is made.
+packaging/inspect-stock-copr.sh --preview prints the exact audited0.2-4 DNF and
+inspection commands. --apply runs them in an administrator terminal. It preserves
+firmware admission and refuses an unreviewed installed helper version.
 
 The read-only LP/loop/debugfs path reuses the original Uke boot updater header
 at a96607f. FAT parsing and bounded publication are original MIT C++ code.
