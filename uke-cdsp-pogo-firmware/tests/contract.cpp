@@ -95,6 +95,10 @@ int main() {
     const fs::path dir=root;Fd image(open((dir/"fat.img").c_str(),O_RDWR|O_CREAT|O_EXCL,0600));
     auto bytes=fat16();write_image(image.value,bytes);
     Fat fat(image.value,bytes.size());const auto payload=fat.image_file("CDSP.MDT");
+    assert(fat.volume_bytes()==bytes.size()&&fat.volume_digest()==digest(bytes));
+    auto padded_volume=bytes;padded_volume.resize(bytes.size()+512,0x55);write_image(image.value,padded_volume);
+    assert(Fat(image.value,padded_volume.size()).volume_digest()==digest(bytes));
+    write_image(image.value,bytes);
     assert(payload.size()==700);for(unsigned i=0;i<payload.size();i++)assert(payload[i]==(i&255));
     refused([&]{cdsp_family(fat);});
     refused([&]{fat.image_file("../CDSP.MDT");});

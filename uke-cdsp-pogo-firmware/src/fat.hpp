@@ -110,6 +110,21 @@ public:
         root_=mirror_+uint64_t(fat_sectors)*sector;root_bytes_=root_sectors*sector;data_=first*sector;
         root_cluster_=fat32_?u32(boot,44):0;
     }
+    uint64_t volume_bytes()const{return limit_;}
+    std::string volume_digest()const {
+        need(limit_<=512*1024*1024,"Stock FAT identity hashing exceeds its bounded volume");
+        std::unique_ptr<EVP_MD_CTX,decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(),EVP_MD_CTX_free);
+        need(bool(context)&&EVP_DigestInit_ex(context.get(),EVP_sha256(),nullptr)==1,"Cannot initialize stock volume identity");
+        for(uint64_t offset=0;offset<limit_;) {
+            const auto size=std::min<uint64_t>(1024*1024,limit_-offset);
+            const auto bytes=range(offset,size);
+            need(EVP_DigestUpdate(context.get(),bytes.data(),bytes.size())==1,"Cannot hash stock volume identity");offset+=size;
+        }
+        std::array<unsigned char,32> hash{};unsigned size=0;
+        need(EVP_DigestFinal_ex(context.get(),hash.data(),&size)==1&&size==hash.size(),"Cannot finish stock volume identity");
+        constexpr char digits[]="0123456789abcdef";std::string result;
+        for(auto byte:hash){result+=digits[byte>>4];result+=digits[byte&15];}return result;
+    }
     Bytes image_file(const std::string &name,size_t maximum=24*1024*1024)const {
         need(name.size()<=12&&name.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.")==std::string::npos,
              "Only fixed CDSP short filenames are admitted");

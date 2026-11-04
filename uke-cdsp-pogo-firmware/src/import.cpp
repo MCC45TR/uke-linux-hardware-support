@@ -161,6 +161,7 @@ static int preflight_auth() {
 static int inspect_stock() {
     auto [modem,super]=stock_sources();Fat fat(modem.fd.value,modem.size);
     std::cout<<"Read-only identity inspection; no unknown image is admitted or published\n";
+    std::cout<<"modem.fat-volume bytes="<<fat.volume_bytes()<<" sha256="<<fat.volume_digest()<<'\n';
     for(const auto &name:{"CDSP.MDT","CDSP_DTB.MDT"})
         std::cout<<name<<' '<<mdt_summary(fat.image_file(name,1024*1024))<<'\n';
     const auto metadata=fat.image_file("DEVAUTH.MDT",1024*1024);
