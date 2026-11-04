@@ -14,6 +14,7 @@ FormCard.FormCardPage {
     readonly property int reviewStep: 1 + (hasInspection ? 1 : 0) + (hasOptions ? 1 : 0)
     readonly property string submitText: {
         if (backend.guide.read) return backend.guide.capture ? "Read information" : "Review terminal access…"
+        if (backend.guide.id === "boot.set-slot") return "Review slot selection…"
         if (backend.guide.diagnostic) return "Review diagnostic…"
         if (backend.guide.id === "channel.set") return "Review channel change…"
         if (backend.guide.id === "update.apply") return "Review installation…"
@@ -96,7 +97,7 @@ FormCard.FormCardPage {
         FormCard.FormButtonDelegate {
             objectName: "previewRequest"
             text: backend.guide.previewTerminal ? "Preview in terminal…" : "Preview requested values"
-            description: backend.guide.previewTerminal ? "Review access, then inspect the software plan before applying." : "Check the requested values before applying a change."
+            description: backend.guide.previewTerminal ? "Review access, then inspect the plan in the terminal before applying." : "Check the requested values before applying a change."
             Accessible.name: text
             icon.name: themeIcons.names["document-preview"]
             enabled: !backend.observation.running

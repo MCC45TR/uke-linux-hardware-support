@@ -61,10 +61,12 @@ const QList<Area> &areas() {
          {"sensors.list", "sensors.once", "sensors.watch"}},
         {"Input diagnostics", "Read input information without changing device preferences.",
          {"test.touch", "test.sensors"}}}},
-      {"updates", "Software updates", "system-software-update", "Channels, previews & installation",
-       "Choose a software channel and review updates before installing.",
-       "Check the selected channel and unfinished work first. Preview the software plan, then review installation and wait for the terminal to finish.",
-       {{"Current software state", "Check the selected channel before planning a change.",
+      {"updates", "Software updates", "system-software-update", "Kernel slots, channels & installation",
+       "Inspect kernel approval, manage the next boot and review software updates.",
+       "Read the running and stored kernels before choosing a boot slot. Channel and package changes have their own previews and review steps.",
+       {{"Kernel & boot slots", "Running slot, stored kernels, pending selection and recorded approval.",
+         {"update.status", "boot.set-slot", "boot.slot-preview"}},
+        {"Current software state", "Check the selected channel before planning a change.",
          {"channel.status"}},
         {"Choose a channel", "Select Stable, Test or Unstable and preview its plan.",
          {"channel.set", "channel.preview"}},
@@ -115,6 +117,7 @@ QString accessLabel(const Action &a) {
 }
 int actionArea(const Action &a) {
   const auto &id = a.id;
+  if (id == "boot.set-slot" || id == "boot.slot-preview") return 6;
   if (a.effect == Effect::maintenance || a.category == "recovery" ||
       (a.category == "storage" && !id.starts_with("overview."))) return 8;
   if (a.category == "charge" || a.category == "battery" || a.category == "wake") return 1;

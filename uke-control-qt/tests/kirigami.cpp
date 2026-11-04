@@ -41,6 +41,17 @@ class KirigamiTests : public QObject {
 private slots:
   void initTestCase() {
     fixture = Fixture::load(qEnvironmentVariable("UKE_QT_TEST_FIXTURE", FIXTURE_PATH));
+    const auto boot = QJsonDocument::fromJson(R"({
+      "schema":"org.uke.control.update-status.v1","available":true,"complete":true,"read_only":true,
+      "running_kernel":"7.3.1-1500","current_slot":"b","next_boot_slot":"b","pending_slot_switch":false,
+      "slots":[
+        {"slot":"a","kernel_release":"7.3.1-1400","bootable":true,"boot_successful":false,"matches_running_kernel":false},
+        {"slot":"b","kernel_release":"7.3.1-1500","bootable":true,"boot_successful":true,"matches_running_kernel":true}],
+      "kernel_approval":{"state":"accepted","running_kernel_approved":true,"latest_update_approved":true,
+        "accepted_kernel":"7.3.1-1500","accepted_slot":"b","accepted_kernel_verified":true,
+        "phase":"stable","candidate_kernel":null,"last_failed_kernel":null},"issues":[]
+    })").object();
+    fixture.results.insert("update.status", QJsonObject{{"data",boot}});
   }
   void themedCatalogAndEveryRequest() {
     QVERIFY(themeIcons.names().size() >= 40);
@@ -200,7 +211,7 @@ private slots:
       QSKIP("Live read-only device checks require explicit opt-in");
     Bridge bridge({}, true);
     for (const auto *id : {"battery.status", "charge.status", "channel.status",
-                           "microphone.status"}) {
+                           "microphone.status", "update.status"}) {
       QVERIFY(bridge.openAction(id));
       bridge.submit();
       QVERIFY2(bridge.message().isEmpty(), qPrintable(bridge.message()));
@@ -210,6 +221,14 @@ private slots:
       // These installed providers must report successfully. Individual device
       // values and physical acceptance may still be unavailable or unknown.
       QCOMPARE(status, 0);
+      if (QString(id) == "update.status") {
+        const auto report = bridge.observation().value("bootReport").toMap();
+        QVERIFY(!report.isEmpty());
+        QVERIFY2(report.value("complete").toBool(), qPrintable(bridge.observation().value("raw").toString()));
+        QCOMPARE(report.value("slots").toList().size(), 2);
+        QVERIFY(report.value("current_slot").toString() == "a" || report.value("current_slot").toString() == "b");
+        for (const auto &slot : report.value("slots").toList()) QVERIFY(!slot.toMap().value("kernel_release").toString().isEmpty());
+      }
       qInfo("Device read completed: %s", id);
     }
   }
@@ -446,6 +465,19 @@ private slots:
     QVERIFY(QMetaObject::invokeMethod(review, "reject"));
     QCoreApplication::processEvents();
     QVERIFY(bridge.review().isEmpty());
+    QVERIFY(QMetaObject::invokeMethod(window, "openGuide", Q_ARG(QVariant, QString("update.status"))));
+    bridge.submit();
+    QTRY_VERIFY(!bridge.observation().value("running").toBool());
+    QQuickItem *bootCurrent = nullptr;
+    QTRY_VERIFY((bootCurrent = visualItem(window->contentItem(), "bootCurrent")));
+    QVERIFY(bootCurrent->property("description").toString().contains("Slot B"));
+    auto *pending = visualItem(window->contentItem(), "bootPending");
+    QVERIFY(pending);
+    QCOMPARE(pending->property("description").toString(), QString("No"));
+    snapshot(window, "kernel-slot-status");
+    QVERIFY(QMetaObject::invokeMethod(window, "openGuide", Q_ARG(QVariant, QString("boot.set-slot"))));
+    QCoreApplication::processEvents();
+    snapshot(window, "slot-selection");
     QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, 0)));
     window->resize(1100, 760);
     QTest::qWait(100);

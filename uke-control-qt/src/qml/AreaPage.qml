@@ -32,7 +32,7 @@ FormCard.FormCardPage {
     }
     SafeText {
         icon.name: themeIcons.names[page.area.icon]
-        text: page.area.description
+        text: page.area.caption
         description: page.area.detail
     }
     FormCard.FormHeader {

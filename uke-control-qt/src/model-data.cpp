@@ -210,6 +210,9 @@ QString friendlyTitle(const Action &a) {
 }
 QString summary(const Action &a) {
   static const QMap<QString, QString> taskHelp{
+      {"update.status", "Read which kernel is running, both slot kernels, the next boot selection and recorded approval."},
+      {"boot.set-slot", "Choose A, B or the other running slot. Review the exact kernel in the terminal before confirming; reboot is separate."},
+      {"boot.slot-preview", "Check the target slot and its kernel without changing boot selection."},
       {"status", "Check the reported charging, memory and USB state."},
       {"overview.battery", "See the battery snapshot and which measurements are available."},
       {"overview.workload", "Check current CPU, memory and workload information."},

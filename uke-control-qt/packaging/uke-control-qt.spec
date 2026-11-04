@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -25,9 +25,12 @@ BuildRequires:  desktop-file-utils
 BuildRequires:  plasma-breeze-qt6 plasma-integration breeze-icon-theme
 BuildRequires:  adwaita-icon-theme
 BuildRequires:  pkgconfig(uke-control-client) >= 2.8.0
+BuildRequires:  uke-control-client-devel >= 2.8.1-12
 BuildRequires:  %{_includedir}/uke-control/frontend.hpp
 BuildRequires:  uke-control(frontend-sdk-v1) >= 1
-Requires:       uke-control >= 2.8.1-11
+Requires:       uke-control >= 2.8.1-12
+Requires:       uke-control(update-status-v1) >= 1
+Requires:       uke-control(slot-selection-v1) >= 1
 Requires:       uke-control(frontend-v1) >= 1
 Requires:       %{_libexecdir}/uke-control/frontend-request
 Requires:       plasma-breeze-qt6
@@ -79,6 +82,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.1.0-2
+- Add readable A/B kernel status cards and reviewed next-boot selection guides.
+- Require the matched status/selection backend and retain native field wrapping.
+
 * Wed Nov 04 2026 Uke contributors - 1.1.0-1
 - Redesign Qt navigation around nine task areas and a responsive overview.
 - Add a filtered action catalog and staged read, preference and review guides.

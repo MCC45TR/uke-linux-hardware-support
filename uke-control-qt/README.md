@@ -41,6 +41,15 @@ options used. Provider unavailability remains separate from a completed read
 with available values. Existing terminal review, consent and authentication
 remain authoritative.
 
+**Kernel & boot slots** shows the running kernel and slot, both stored kernels,
+the next boot selection, pending switch and approval record as native cards.
+Unknown or incomplete evidence remains explicit. A retained failed-candidate
+record does not establish whether it happened before or after the accepted
+kernel; the report explains that limitation. Slot selection offers A, B and
+`next` (the slot opposite the running one), an inspection and a preview before
+the attended terminal confirmation. The guarded boot owner verifies the stored
+image and recovery state. Selecting a slot never reboots the device.
+
 Opening a page or guide does not query devices. Select **Read information**
 or an inspection button to read. Requested defaults are drafts rather than current
 measurements. **Details** reveals the full catalog explanation, parameter limits,

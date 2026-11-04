@@ -7,6 +7,7 @@ import org.kde.kirigamiaddons.formcard as FormCard
 
 ColumnLayout {
     id: view
+    readonly property bool isBootReport: Boolean(backend.observation.bootReport && backend.observation.bootReport.schema === "org.uke.control.update-status.v1")
     spacing: Kirigami.Units.smallSpacing
     FormCard.FormHeader {
         title: backend.observation.title || "Result"
@@ -72,6 +73,11 @@ ColumnLayout {
             }
         }
     }
+    Loader {
+        Layout.fillWidth: true
+        active: view.isBootReport
+        sourceComponent: Component { UpdateStatusView { report: backend.observation.bootReport } }
+    }
     FormCard.FormCard {
         Layout.fillWidth: true
         Repeater {
@@ -83,6 +89,7 @@ ColumnLayout {
                 leftPadding: Kirigami.Units.largeSpacing + Math.min(modelData.depth, 6) * Kirigami.Units.largeSpacing
             }
         }
+        visible: !view.isBootReport
     }
     FormCard.FormCard {
         Layout.fillWidth: true

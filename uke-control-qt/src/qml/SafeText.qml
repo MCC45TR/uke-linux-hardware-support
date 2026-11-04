@@ -7,5 +7,6 @@ FormCard.FormTextDelegate {
     Accessible.name: text
     Accessible.description: description
     textItem.textFormat: Text.PlainText
+    textItem.wrapMode: Text.WordWrap
     descriptionItem.textFormat: Text.PlainText
 }

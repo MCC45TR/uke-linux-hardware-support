@@ -370,6 +370,9 @@ void Bridge::showResult(const Result &result) {
     options << QVariantMap{{"title", q(p.title.en)}, {"value", value}};
   }
   observation_ = {{"title", friendlyTitle(action(result.action_id))},
+                  {"bootReport", result.action_id == "update.status" && document.isObject() &&
+                      document.object().value("schema").toString() == "org.uke.control.update-status.v1" &&
+                      document.object().value("available").toBool() ? document.object().toVariantMap() : QVariantMap{}},
                   {"origin", readOrigin_},
                   {"stale", observationStale_},
                   {"options", options},

@@ -17,7 +17,8 @@ CardsLayout controls. Sound/cameras and sensors/input are separate, as are
 diagnostics/files and guarded recovery. The complete installed SDK catalog
 remains available through a separate searchable page with category/type filters.
 English and Turkish metadata participate in multiword searches. No GTK or
-backend command/policy implementation is changed.
+desktop theme package is changed. The separate CLI/boot-owner changes supply
+the new status and guarded slot-selection catalog actions.
 
 Guides separate direct reads from numbered inspection, preference and review
 stages. Field help and ranges appear alongside inputs. Draft reset restores SDK
@@ -48,3 +49,19 @@ category/type/multiword filters, retained search state, draft reset, stale
 observations and refresh validation, alongside the previous all-guide and theme
 checks. Build, DNF installation, screenshots and tablet results will be recorded
 after they are observed. Fixture navigation is not physical provider acceptance.
+
+COPR build [11256192](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11256192/)
+produced Qt 1.1.0-1 and passed all four native CTest suites. DNF installed the
+application and optional test RPM on the tablet. Installed Wayland checks passed
+15 widget, 11 appearance and 10 Kirigami cases, including four opt-in live
+read-only provider checks. Fixture screenshots covered all nine areas, the
+drawer, wide overview, catalog filtering, update/channel guides and review.
+Inspection found an overlong overview action label; the next release uses the
+short category caption and allows native FormCard labels to wrap.
+
+Release 1.1.0-2 adds a schema-checked kernel/slot report with separate current,
+next-selection, A/B-image and approval sections. Historical failure uncertainty
+is preserved. Guarded selection and preview share the Software updates area;
+the frontend keeps its existing terminal review path. New fixture checks cover
+the report and selection guide, and the opt-in installed suite additionally
+requires complete real A/B status. Validation of that release remains pending.
