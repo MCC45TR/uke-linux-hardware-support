@@ -23,6 +23,9 @@ mv "$stage/unpacked/android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/sysro
 install -m644 "$stage/unpacked/android-ndk-r27d/NOTICE" "$source/NDK-NOTICE"
 install -m644 "$stage/unpacked/android-ndk-r27d/source.properties" "$source/ndk-source.properties"
 install -m644 "$owner/uke-waydroid/diagnostics/vulkan-check.cpp" "$source/vulkan-check.cpp"
+for asset in render-check.h triangle.vert triangle.frag; do
+ install -m644 "$owner/uke-waydroid/diagnostics/$asset" "$source/$asset"
+done
 install -m644 "$owner/uke-waydroid/LICENSE" "$source/LICENSE"
 git -C "$owner" rev-parse HEAD > "$source/source-commit"
 tar -cJf "$output/uke-waydroid-diagnostics-0.1.0.tar.xz" -C "$stage/source" uke-waydroid-diagnostics-0.1.0

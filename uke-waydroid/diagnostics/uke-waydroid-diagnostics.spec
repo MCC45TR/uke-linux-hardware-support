@@ -1,12 +1,12 @@
 Name:           uke-waydroid-diagnostics
 Version:        0.1.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Bounded Android-side Vulkan checks for Waydroid
 License:        MIT AND BSD-2-Clause AND BSD-3-Clause AND Apache-2.0
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
 Source0:        %{name}-%{version}.tar.xz
 ExclusiveArch:  aarch64
-BuildRequires:  clang lld binutils
+BuildRequires:  clang lld binutils glslang
 Requires:       waydroid
 %global debug_package %{nil}
 %global _build_id_links none
@@ -15,9 +15,11 @@ Requires:       waydroid
 %global __provides_exclude_from ^/var/lib/waydroid/overlay/system/bin/uke-vulkan-check$
 
 %description
-Enumerate an actual hardware Vulkan device and compare a 4 KiB GPU buffer fill
+Enumerate an actual hardware Vulkan device, compare a 4 KiB GPU buffer fill,
+and verify every pixel of sixteen alternating offscreen shader-rendered frames
 inside the original Android container. This manual diagnostic does not start a
-service or replace Android drivers. It does not establish full API conformance.
+service or replace Android drivers. It does not establish game compatibility,
+display presentation, performance or full API conformance.
 
 %prep
 %setup -q
@@ -25,6 +27,8 @@ service or replace Android drivers. It does not establish full API conformance.
 %build
 sdk="$PWD/sysroot"
 libs="$sdk/usr/lib/aarch64-linux-android/30"
+glslangValidator --target-env vulkan1.1 --spirv-val --vn uke_triangle_vertex -o triangle-vertex.h triangle.vert
+glslangValidator --target-env vulkan1.1 --spirv-val --vn uke_triangle_fragment -o triangle-fragment.h triangle.frag
 clang++ --target=aarch64-linux-android30 --sysroot="$sdk" -fuse-ld=lld \
  -std=c++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
  -nostdlib -nostdinc++ -fPIE -pie -Wl,-z,relro,-z,now,-z,max-page-size=16384 \
@@ -56,6 +60,9 @@ done
 /var/lib/waydroid/overlay/system/bin/uke-vulkan-check
 
 %changelog
+* Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-3
+- Render alternating shader-driven frames and compare every output pixel.
+
 * Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-2
 - Compare runtime ELF sections across Fedora's normal metadata stripping.
 

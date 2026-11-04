@@ -29,6 +29,8 @@ static int failed(const char *step, VkResult result) {
     return 1;
 }
 
+#include "render-check.h"
+
 int main() {
     Resources r;
     VkApplicationInfo app{};
@@ -73,8 +75,8 @@ int main() {
     vkGetPhysicalDeviceQueueFamilyProperties(gpu, &queue_count, queues);
     uint32_t family = UINT32_MAX;
     for (uint32_t i = 0; i < queue_count; ++i)
-        if (queues[i].queueCount && (queues[i].queueFlags & VK_QUEUE_COMPUTE_BIT)) { family = i; break; }
-    if (family == UINT32_MAX) return failed("compute-queue", VK_ERROR_INITIALIZATION_FAILED);
+        if (queues[i].queueCount && (queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) { family = i; break; }
+    if (family == UINT32_MAX) return failed("graphics-queue", VK_ERROR_INITIALIZATION_FAILED);
     float priority = 1.0f;
     VkDeviceQueueCreateInfo queue_info{};
     queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -176,5 +178,6 @@ int main() {
     vkUnmapMemory(r.device, r.memory);
     printf("{\"gpu_fill_bytes\":4096,\"mismatches\":%u,\"passed\":%s}\n",
            mismatches, mismatches ? "false" : "true");
-    return mismatches ? 1 : 0;
+    if (mismatches) return 1;
+    return render_check(r, gpu, queue, command, memories, memory_type);
 }

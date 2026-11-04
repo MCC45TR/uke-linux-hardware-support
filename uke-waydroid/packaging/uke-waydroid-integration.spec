@@ -10,7 +10,7 @@ Requires:       waydroid waydroid-selinux selinux-policy-targeted
 Requires(post): /usr/bin/semodule
 Requires(post): /usr/bin/systemd-tmpfiles
 Requires:       coreutils gawk
-Requires:       uke-waydroid-diagnostics >= 0.1.0-2
+Requires:       uke-waydroid-diagnostics >= 0.1.0-3
 Requires:       (uke-kernel-default(waydroid-netd) >= 1 if senemos-uke-linux-kernel-mainline-unstable-singleboot)
 Requires(postun): /usr/bin/semodule
 Supplements:    (waydroid and uke-core-meta)
