@@ -57,3 +57,33 @@ deferred user cancellation, flushes receipts before signal restoration and check
 final stdout completion. A subprocess fixture generates EPIPE under the actual
 critical guard and verifies a complete JSON receipt larger than the stream buffer
 with a zero exit status. Full device round trips remain pending this correction.
+
+Verification update, 4 November 2026: this supersedes the pending acceptance
+status above. Source commit `5c762212f86260daa4ede1311242f8fa73eb5441` produced
+Control 2.8.1-11 in [unstable build 11254600](https://copr.fedorainfracloud.org/coprs/build/11254600/),
+[test build 11254623](https://copr.fedorainfracloud.org/coprs/build/11254623/) and
+[stable build 11254624](https://copr.fedorainfracloud.org/coprs/build/11254624/).
+All three native builds and complete retained test suites passed. The five
+backend/SDK RPMs were signed by each destination project. DNF installed the
+backend/client pair; no copied executable or tablet compilation was used.
+
+The installed tablet completed all six directed transitions, with one additional
+test-to-unstable return. Each transition was followed by a successful update and
+an empty repeated update. The repeated calls preserved the operation receipt and
+repository/selection file digests. A normal confirmation through `sudo uke-control
+branch stable` and both branch/brunch aliases passed. The final ordinary sudo
+update succeeded with closed stdin and no unnecessary confirmation.
+
+| Channel pair | Both directions | Updates and empty repeats |
+|---|---|---|
+| stable / test | Passed | Passed |
+| stable / unstable | Passed | Passed |
+| test / unstable | Passed | Passed |
+
+Every structured transition receipt parsed successfully; observed full receipts
+were 9098–10945 bytes, exceeding the previous 8192-byte truncation point. The
+acceptance script returned zero. RPM verification of Control and its client was
+clean. Final selection is unstable, phase complete, no pending channel and no
+recovery action. Linux 7.3.1-1500 remained running. Kernel version-lock, automatic
+policy and userdata boot-state file digests were unchanged across every tested
+transition. No reboot, slot update or new physical hardware acceptance occurred.

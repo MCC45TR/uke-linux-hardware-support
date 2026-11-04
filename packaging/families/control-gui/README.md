@@ -9,6 +9,14 @@ in the [channel-policy record](../../../docs/lessons/2026-11-04-channel-policy.m
 The follow-up also prevents internal scriptlet pipe errors from terminating a
 completed transaction and truncating its buffered JSON receipt.
 
+Version `2.8.1-11.fc46` passed COPR and POCO Pad X1 acceptance in all three
+Rawhide AArch64 channels: [unstable 11254600](https://copr.fedorainfracloud.org/coprs/build/11254600/),
+[test 11254623](https://copr.fedorainfracloud.org/coprs/build/11254623/) and
+[stable 11254624](https://copr.fedorainfracloud.org/coprs/build/11254624/).
+All six directed channel transitions, normal confirmation, branch/brunch aliases
+and repeated empty updates passed. Linux 7.3.1-1500, version locks and boot policy
+remained unchanged. No new boot or physical hardware qualification is implied.
+
 4 November 2026: the backend candidate advances to `2.8.1-9.fc46`.
 The original source archives and existing maintainer scripts remain unchanged.
 A separate source overlay contains the package manager, its operation-status
@@ -70,7 +78,11 @@ binary build or installation transaction.
 
 ## COPR build sequence
 
-Use only `mcc45tr/uke-linux-unstable`, chroot `fedora-rawhide-aarch64`.
+The 2.8.1-11 backend/SDK cohort is published in `mcc45tr/uke-linux`,
+`mcc45tr/uke-linux-test` and `mcc45tr/uke-linux-unstable`, restricted to
+`fedora-rawhide-aarch64` for this release.
+For the separate GUI/desktop sequence below, use `mcc45tr/uke-linux-unstable`
+with chroot `fedora-rawhide-aarch64`.
 All Git source definitions must use the same reviewed immutable commit:
 
 1. `uke-control`: source subdirectory `packaging/families/control-gui`.
