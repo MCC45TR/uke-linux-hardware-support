@@ -43,13 +43,13 @@ cmp uke-waydroid/config/50-uke-waydroid.conf \
     %{buildroot}%{_prefix}/lib/systemd/system/waydroid-container.service.d/50-uke-waydroid.conf
 
 %post
-%{_bindir}/semodule -X 400 -i %{_datadir}/selinux/packages/uke_waydroid_binder.cil
-%{_bindir}/systemd-tmpfiles --create %{_prefix}/lib/tmpfiles.d/uke-waydroid.conf
+%{_bindir}/semodule -X 400 -i %{_datadir}/selinux/packages/uke_waydroid_binder.cil || exit 1
+%{_bindir}/systemd-tmpfiles --create %{_prefix}/lib/tmpfiles.d/uke-waydroid.conf || exit 1
 %{_bindir}/systemctl daemon-reload
 
 %postun
 if [ "$1" -eq 0 ]; then
-    %{_bindir}/semodule -X 400 -r uke_waydroid_binder
+    %{_bindir}/semodule -X 400 -r uke_waydroid_binder || exit 1
 fi
 %{_bindir}/systemctl daemon-reload
 
