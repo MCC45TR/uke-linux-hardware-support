@@ -167,6 +167,7 @@ int Fixture::delay(const std::string &id) const {
   return results.value(q(id)).toObject().value("delay_ms").toInt();
 }
 QString friendlyTitle(const Action &a) {
+  if (QLocale().language()==QLocale::Turkish) return q(a.title.tr);
   static const std::map<std::string, QString> names = {
       {"status", "Device status"},
       {"overview.battery", "Battery overview"},
@@ -209,6 +210,7 @@ QString friendlyTitle(const Action &a) {
   return found == names.end() ? q(a.title.en) : found->second;
 }
 QString summary(const Action &a) {
+  if (QLocale().language()==QLocale::Turkish) return q(a.description.tr);
   static const QMap<QString, QString> taskHelp{
       {"update.status", "Read which kernel is running, both slot kernels, the next boot selection and recorded approval."},
       {"boot.set-slot", "Choose A, B or the other running slot. Review the exact kernel in the terminal before confirming; reboot is separate."},

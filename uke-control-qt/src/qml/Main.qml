@@ -6,7 +6,7 @@ import org.kde.kirigami as Kirigami
 Kirigami.ApplicationWindow {
     id: root
     objectName: "kirigamiWindow"
-    title: "Uke Control"
+    title: i18n("Uke Control")
     visible: true
     width: Kirigami.Units.gridUnit * 60
     height: Kirigami.Units.gridUnit * 42
@@ -20,16 +20,23 @@ Kirigami.ApplicationWindow {
     pageStack.onCurrentItemChanged: {
         if (!initialized || changingPage) return
         if (!pageStack.currentItem || pageStack.currentItem.objectName !== "guidePage") backend.leaveGuide()
-        if (pageStack.currentItem && pageStack.currentItem.objectName === "areaPage") browsingCatalog = false
+        backend.settings.stop()
+        if (pageStack.currentItem && pageStack.currentItem.objectName === "topicPage") backend.settings.open(pageStack.currentItem.topicId)
+        if (pageStack.currentItem && pageStack.currentItem.objectName === "areaPage") {
+            browsingCatalog = false
+            backend.selectArea(pageStack.currentItem.areaIndex)
+        }
     }
     pageStack.onPageRemoved: page => page.destroy()
     function showArea(index) {
         changingPage = true
         try {
             browsingCatalog = false
+            backend.settings.close()
             backend.selectArea(index)
             pageStack.clear()
-            pageStack.push(areaPage)
+            pageStack.push(areaPage, {areaIndex: 0})
+            if (index > 0) pageStack.push(areaPage, {areaIndex: index})
             if (globalDrawer.modal) globalDrawer.close()
         } finally { changingPage = false }
     }
@@ -37,6 +44,7 @@ Kirigami.ApplicationWindow {
         changingPage = true
         try {
             backend.leaveGuide()
+            backend.settings.stop()
             if (pageStack.currentItem && pageStack.currentItem.objectName === "guidePage") pageStack.pop()
             browsingCatalog = true
             if (pageStack.currentItem && pageStack.currentItem.objectName === "catalogPage") pageStack.currentItem.focusSearch()
@@ -47,9 +55,22 @@ Kirigami.ApplicationWindow {
     function openGuide(id) {
         changingPage = true
         try {
+            backend.settings.stop()
             if (pageStack.currentItem && pageStack.currentItem.objectName === "guidePage") pageStack.pop()
             if (backend.openAction(id)) pageStack.push(guidePage)
         } finally { changingPage = false }
+    }
+    function openTopic(id) {
+        changingPage = true
+        try {
+            backend.leaveGuide()
+            if (backend.settings.open(id)) pageStack.push(topicPage, {topicId: id})
+        } finally { changingPage = false }
+    }
+    function openSearch() {
+        changingPage = true
+        try { backend.leaveGuide(); backend.settings.stop(); pageStack.push(searchPage) }
+        finally { changingPage = false }
     }
     Component {
         id: navigationAction
@@ -66,15 +87,15 @@ Kirigami.ApplicationWindow {
     Kirigami.Action { id: catalogSeparator; separator: true }
     Kirigami.Action {
         id: catalogAction
-        text: "All actions"
+        text: i18n("Search settings")
         icon.name: themeIcons.names["edit-find"]
         checkable: true
         checked: root.browsingCatalog
-        onTriggered: root.openCatalog()
+        onTriggered: root.openSearch()
     }
     globalDrawer: Kirigami.GlobalDrawer {
         objectName: "navigationDrawer"
-        title: "Uke Control"
+        title: i18n("Uke Control")
         titleIcon: themeIcons.names["preferences-system"]
         handleClosedIcon.name: themeIcons.names["application-menu"]
         handleOpenIcon.name: themeIcons.names["window-close"]
@@ -89,6 +110,8 @@ Kirigami.ApplicationWindow {
     Component { id: areaPage; AreaPage { parent: root.pageStack; appWindow: root } }
     Component { id: catalogPage; CatalogPage { parent: root.pageStack; appWindow: root } }
     Component { id: guidePage; GuidePage { parent: root.pageStack; appWindow: root } }
+    Component { id: topicPage; TopicPage { parent: root.pageStack; appWindow: root } }
+    Component { id: searchPage; SettingsSearchPage { parent: root.pageStack; appWindow: root } }
     ReviewSheet { id: reviewSheet }
     Connections {
         target: backend
@@ -98,9 +121,9 @@ Kirigami.ApplicationWindow {
         }
     }
     Shortcut { sequence: StandardKey.Quit; onActivated: root.close() }
-    Shortcut { sequence: "Ctrl+K"; onActivated: root.openCatalog() }
+    Shortcut { sequence: "Ctrl+K"; onActivated: root.openSearch() }
     Shortcut { sequence: "Alt+Left"; enabled: pageStack.depth > 1; onActivated: pageStack.pop() }
-    onClosing: backend.cancelRead()
+    onClosing: { backend.cancelRead(); backend.settings.close() }
     Component.onCompleted: {
         let items = []
         for (let area of backend.areas) items.push(navigationAction.createObject(root, {areaIndex: area.index}))

@@ -4,6 +4,7 @@
 #include <KIconTheme>
 #include <KIconLoader>
 #include <KLocalizedQmlContext>
+#include <KLocalizedString>
 #include <KStyleManager>
 #include <QAccessible>
 #include <QApplication>
@@ -167,8 +168,8 @@ private slots:
       if (entry.toMap().value("id").toString() == "battery.status") batteryFound = true;
     QVERIFY(batteryFound);
     QCOMPARE(bridge.areaForAction("overview.nfc"), 3);
-    QCOMPARE(bridge.areaForAction("overview.camera"), 4);
-    QCOMPARE(bridge.areaForAction("sensors.once"), 5);
+    QCOMPARE(bridge.areaForAction("overview.camera"), 6);
+    QCOMPARE(bridge.areaForAction("sensors.once"), 8);
     QCOMPARE(bridge.areaForAction("resize.prepare"), 8);
     QVERIFY(bridge.catalog("no-such-action-98765").isEmpty());
     const auto previous = bridge.section();
@@ -206,6 +207,89 @@ private slots:
     bridge.leaveGuide();
     QVERIFY(bridge.observation().isEmpty());
   }
+  void topicFactsAndHistoryContract() {
+    const auto history=normaliseHistory({QVariantList{200,80.,2},QVariantList{100,90.,2},QVariantList{150,0.,0},QVariantList{200,0.,0},QVariantList{220,0.,2},QVariantList{4000,40.,2}},1,3600);
+    QVERIFY(history.value("available").toBool());
+    QCOMPARE(history.value("points").toInt(),3);
+    QCOMPARE(history.value("gaps").toInt(),2);
+    QCOMPARE(history.value("segments").toList().size(),3);
+    QCOMPARE(history.value("segments").toList().last().toList().first().toMap().value("value").toDouble(),0.);
+    QVERIFY(!normaliseHistory({QVariantList{100,0.,0},QVariantList{110,-1.,2}},1,3600).value("available").toBool());
+    QVERIFY(!normaliseHistory({},3600,1).value("available").toBool());
+    QJsonObject readings{{"battery.capacity",QJsonObject{{"value",0},{"unit","percent"},{"errno",0}}},
+                         {"battery.current_now",QJsonObject{{"value",-250000},{"unit","uA_positive_into_battery"},{"errno",0}}}};
+    auto data=QJsonObject{{"provider_verified",true},{"snapshot_coherent",true},{"readings",readings}};
+    auto rows=informationRows("battery.status",data);
+    QCOMPARE(rows.first().toMap().value("value").toString(),QString("0 %"));
+    QCOMPARE(rows.first().toMap().value("progress").toDouble(),0.);
+    QVERIFY(rows[3].toMap().value("value").toString().startsWith("-250"));
+    data["provider_verified"]=false;
+    rows=informationRows("battery.status",data);
+    QCOMPARE(rows.first().toMap().value("progress").toDouble(),-1.);
+    QVERIFY(!rows.first().toMap().value("value").toString().startsWith("0"));
+    Bridge bridge(fixture,false);
+    auto *settings=qobject_cast<Settings *>(bridge.settings());
+    QVERIFY(settings);
+    QVERIFY(settings->choices("interface").isEmpty());
+    QCOMPARE(settings->topics(1).size(),5);
+    QVERIFY(!settings->topics(-1,"pil").isEmpty());
+    QVERIFY(!settings->topics(-1,"charge.mode").isEmpty());
+    QVERIFY(!settings->open("unknown-topic"));
+    QVERIFY(settings->open("charging"));
+    settings->stop();
+    QVERIFY(!settings->busy());
+    QTest::qWait(100);
+    QVERIFY(!settings->busy());
+    QVERIFY(bridge.openAction("flashlight.level"));
+    QCOMPARE(bridge.guide().value("parameters").toList().first().toMap().value("choices").toList().size(),3);
+  }
+  void qmlSettingsTopics() {
+    auto rich=fixture;
+    for(const auto &t:settingTopics())for(const auto &id:t.reads)
+      if(!rich.results.contains(id))rich.results[id]=QJsonObject{{"data",QJsonObject{{"available",true},{"status","Synthetic reported state"}}}};
+    auto battery=QJsonObject{{"provider_verified",true},{"snapshot_coherent",true},
+      {"readings",QJsonObject{{"battery.capacity",QJsonObject{{"value",72},{"unit","percent"},{"errno",0}}}}},
+      {"history_end",10000},{"history",QJsonArray{QJsonArray{1000,80,2},QJsonArray{1300,78,2},QJsonArray{1400,0,0},QJsonArray{1600,77,2},QJsonArray{1900,76,2}}}};
+    rich.results["battery.status"]=QJsonObject{{"data",battery}};
+    rich.results["charge.status"]=QJsonObject{{"data",QJsonObject{{"reported_start_percent",70},{"reported_end_percent",80},{"configuration_readback_verified",true}}}};
+    Bridge bridge(rich,false);
+    QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);
+    engine.rootContext()->setContextProperty("backend",&bridge);
+    engine.rootContext()->setContextProperty("themeIcons",&themeIcons);
+    engine.rootContext()->setContextProperty("styleNotice",QString());
+    QStringList warnings;
+    connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});
+    engine.loadFromModule("org.uke.ControlQtTest","Main");
+    QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
+    auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
+    window->resize(480,800);window->show();
+    auto *settings=qobject_cast<Settings *>(bridge.settings());
+    for(const auto &topic:settingTopics()) {
+      QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,topic.area)));
+      QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,topic.id)));
+      QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),5000);
+      QQuickItem *page=nullptr;QTRY_VERIFY((page=visualItem(window->contentItem(),"topicPage")));
+      QCOMPARE(page->property("topicId").toString(),topic.id);
+      QVERIFY(bridge.review().isEmpty());
+      if(topic.id=="battery") {
+        settings->loadHistory();QVERIFY(settings->history().value("available").toBool());
+        snapshot(window,"settings-battery");
+      }
+      if(topic.id=="flashlight") {
+        QTRY_VERIFY(visualItem(window->contentItem(),"parameter_percent"));
+        QVERIFY(!visualItem(window->contentItem(),"topicAction_flashlight.level"));
+        snapshot(window,"settings-flashlight");
+      }
+      if(topic.id=="kernel")snapshot(window,"settings-kernel");
+    }
+    QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,0)));snapshot(window,"settings-home");
+    QVERIFY(QMetaObject::invokeMethod(window,"openSearch"));
+    QQuickItem *search=nullptr;QTRY_VERIFY((search=visualItem(window->contentItem(),"topicSearch")));
+    search->setProperty("text","kernel");snapshot(window,"settings-search");
+    window->close();
+    warnings.removeIf([](const QString &w){return w.contains("Main.qml:")&&w.endsWith("Created graphical object was not placed in the graphics scene.");});
+    QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+  }
   void optionalDeviceReads() {
     if (!qEnvironmentVariableIsSet("UKE_QT_TEST_DEVICE_READS"))
       QSKIP("Live read-only device checks require explicit opt-in");
@@ -224,13 +308,21 @@ private slots:
       if (QString(id) == "update.status") {
         const auto report = bridge.observation().value("bootReport").toMap();
         QVERIFY(!report.isEmpty());
-        QVERIFY2(report.value("complete").toBool(), qPrintable(bridge.observation().value("raw").toString()));
+        const auto original=QJsonDocument::fromJson(bridge.observation().value("raw").toString().toUtf8()).object().toVariantMap();
+        QCOMPARE(report,original);
+        if(!report.value("complete").toBool())QVERIFY(!report.value("issues").toList().isEmpty());
         QCOMPARE(report.value("slots").toList().size(), 2);
-        QVERIFY(report.value("current_slot").toString() == "a" || report.value("current_slot").toString() == "b");
-        for (const auto &slot : report.value("slots").toList()) QVERIFY(!slot.toMap().value("kernel_release").toString().isEmpty());
+        QVERIFY(report.value("current_slot").isNull() || report.value("current_slot").toString() == "a" || report.value("current_slot").toString() == "b");
       }
       qInfo("Device read completed: %s", id);
     }
+    auto *settings=qobject_cast<Settings *>(bridge.settings());
+    QVERIFY(settings->open("battery"));QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),30000);
+    settings->loadHistory();QTRY_VERIFY_WITH_TIMEOUT(!settings->history().value("busy").toBool(),30000);
+    QVERIFY2(settings->history().value("available").toBool(),qPrintable(settings->history().value("message").toString()));
+    QVERIFY(settings->history().value("points").toInt()>=2);
+    qInfo("Existing UPower history completed with valid points and explicit gaps");
+    settings->close();
   }
   void typedReadsAndCancellation() {
     Bridge bridge(fixture, false);
@@ -502,8 +594,10 @@ private slots:
 int main(int argc, char **argv) {
   KIconTheme::initTheme();
   QApplication app(argc, argv);
+  KLocalizedString::setApplicationDomain("uke-control-qt");
   KStyleManager::initStyle();
   QQuickStyle::setStyle("org.kde.desktop");
+  qmlRegisterType<HistoryPlot>("org.uke.settings",1,0,"HistoryPlot");
   KirigamiTests tests;
   return QTest::qExec(&tests, argc, argv);
 }

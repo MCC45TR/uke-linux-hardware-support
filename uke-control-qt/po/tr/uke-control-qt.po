@@ -1,0 +1,770 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: uke-control-qt 1.2.0\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Settings"
+msgstr "Ayarlar"
+
+msgid "Device settings and information"
+msgstr "Cihaz ayarları ve bilgileri"
+
+msgid "Battery and charging"
+msgstr "Pil ve şarj"
+
+msgid "Battery use, charging and health"
+msgstr "Pil kullanımı, şarj ve sağlık"
+
+msgid "Display and lights"
+msgstr "Ekran ve ışıklar"
+
+msgid "Brightness, rotation and lights"
+msgstr "Parlaklık, döndürme ve ışıklar"
+
+msgid "Connections"
+msgstr "Bağlantılar"
+
+msgid "USB, NFC and Ethernet"
+msgstr "USB, NFC ve Ethernet"
+
+msgid "Sound"
+msgstr "Ses"
+
+msgid "Audio devices and microphone"
+msgstr "Ses aygıtları ve mikrofon"
+
+msgid "Storage and memory"
+msgstr "Depolama ve bellek"
+
+msgid "Available space and memory"
+msgstr "Kullanılabilir alan ve bellek"
+
+msgid "System and updates"
+msgstr "Sistem ve güncellemeler"
+
+msgid "Software, kernels and device information"
+msgstr "Yazılım, çekirdek ve cihaz bilgileri"
+
+msgid "Help and diagnostics"
+msgstr "Yardım ve tanılama"
+
+msgid "Local reports and saved observations"
+msgstr "Yerel raporlar ve kayıtlı gözlemler"
+
+msgid "Advanced"
+msgstr "Gelişmiş"
+
+msgid "Specialist controls and guarded maintenance"
+msgstr "Uzman araçları ve korumalı bakım"
+
+msgid "Battery use"
+msgstr "Pil kullanımı"
+
+msgid "Level, temperature and recorded history"
+msgstr "Seviye, sıcaklık ve kayıtlı geçmiş"
+
+msgid "Charging preference"
+msgstr "Şarj tercihi"
+
+msgid "Reported limits, support and requested policy"
+msgstr "Bildirilen eşikler, destek ve istenen politika"
+
+msgid "Battery health"
+msgstr "Pil sağlığı"
+
+msgid "Reported capacity, cycles and cell topology"
+msgstr "Bildirilen kapasite, döngü ve hücre topolojisi"
+
+msgid "Charger"
+msgstr "Şarj cihazı"
+
+msgid "Reported source and protocol"
+msgstr "Bildirilen kaynak ve protokol"
+
+msgid "Sleep and wake"
+msgstr "Uyku ve uyanma"
+
+msgid "Sleep observations; advanced wake permissions"
+msgstr "Uyku gözlemleri; gelişmiş uyanma izinleri"
+
+msgid "Display preferences"
+msgstr "Ekran tercihleri"
+
+msgid "Automatic brightness and rotation"
+msgstr "Otomatik parlaklık ve döndürme"
+
+msgid "Flashlight"
+msgstr "Fener"
+
+msgid "Off, low or high brightness"
+msgstr "Kapalı, düşük veya yüksek parlaklık"
+
+msgid "Notification light"
+msgstr "Bildirim ışığı"
+
+msgid "Automatic policy or a requested colour"
+msgstr "Otomatik politika veya istenen renk"
+
+msgid "External display"
+msgstr "Harici ekran"
+
+msgid "Connection and supported link profiles"
+msgstr "Bağlantı ve desteklenen hat profilleri"
+
+msgid "USB accessories"
+msgstr "USB aksesuarları"
+
+msgid "Connected devices, role and power policy"
+msgstr "Bağlı aygıtlar, rol ve güç politikası"
+
+msgid "Controller and radio permission"
+msgstr "Denetleyici ve radyo izni"
+
+msgid "Ethernet"
+msgstr "Ethernet"
+
+msgid "Choose a detected interface to inspect or configure"
+msgstr "İncelemek veya yapılandırmak için bulunan bir arayüz seçin"
+
+msgid "Sound and microphone"
+msgstr "Ses ve mikrofon"
+
+msgid "Audio devices and microphone preference"
+msgstr "Ses aygıtları ve mikrofon tercihi"
+
+msgid "Storage"
+msgstr "Depolama"
+
+msgid "Used and available filesystem space"
+msgstr "Kullanılan ve kullanılabilir dosya sistemi alanı"
+
+msgid "Memory"
+msgstr "Bellek"
+
+msgid "Available memory and swap information"
+msgstr "Kullanılabilir bellek ve swap bilgisi"
+
+msgid "Software updates"
+msgstr "Yazılım güncellemeleri"
+
+msgid "Selected channel, available updates and installation"
+msgstr "Seçili kanal, mevcut güncellemeler ve kurulum"
+
+msgid "Kernel and boot slots"
+msgstr "Çekirdek ve açılış slotları"
+
+msgid "Running kernel, approval and next boot selection"
+msgstr "Çalışan çekirdek, onay ve sonraki açılış seçimi"
+
+msgid "Device information"
+msgstr "Cihaz bilgileri"
+
+msgid "Hardware, cameras, sensors and firmware"
+msgstr "Donanım, kameralar, sensörler ve firmware"
+
+msgid "Logs and support files"
+msgstr "Günlükler ve destek dosyaları"
+
+msgid "Collect a focused local report"
+msgstr "Konulu bir yerel rapor oluşturun"
+
+msgid "Saved observations"
+msgstr "Kayıtlı gözlemler"
+
+msgid "Save or compare component snapshots"
+msgstr "Bileşen gözlemlerini kaydedin veya karşılaştırın"
+
+msgid "Wake permissions"
+msgstr "Uyanma izinleri"
+
+msgid "Advanced per-source policy"
+msgstr "Kaynaklara özel gelişmiş politika"
+
+msgid "Swap policy"
+msgstr "Swap politikası"
+
+msgid "Advanced storage allocation; not a speed guarantee"
+msgstr "Gelişmiş depolama tahsisi; hız garantisi değildir"
+
+msgid "Display engineering"
+msgstr "Ekran mühendisliği"
+
+msgid "Saved VRR floor, lanes and compression"
+msgstr "Kayıtlı VRR alt sınırı, hatlar ve sıkıştırma"
+
+msgid "Recovery and maintenance"
+msgstr "Kurtarma ve bakım"
+
+msgid "Pending work and guarded storage operations"
+msgstr "Bekleyen işler ve korumalı depolama işlemleri"
+
+msgid "Serial connection"
+msgstr "Seri bağlantı"
+
+msgid "Separate session and saved boot policies"
+msgstr "Ayrı oturum ve kayıtlı açılış politikaları"
+
+msgid "Live sensor inspection"
+msgstr "Canlı sensör incelemesi"
+
+msgid "Explicit finite observations and attended tests"
+msgstr "Sonlu gözlemler ve katılımlı testler"
+
+msgid "Not reported"
+msgstr "Bildirilmedi"
+
+msgid "On"
+msgstr "Açık"
+
+msgid "Off"
+msgstr "Kapalı"
+
+msgid "Low"
+msgstr "Düşük"
+
+msgid "High"
+msgstr "Yüksek"
+
+msgid "Battery level"
+msgstr "Pil seviyesi"
+
+msgid "Reported battery state"
+msgstr "Bildirilen pil durumu"
+
+msgid "Temperature"
+msgstr "Sıcaklık"
+
+msgid "Battery current"
+msgstr "Pil akımı"
+
+msgid "Battery voltage"
+msgstr "Pil voltajı"
+
+msgid "Measurement basis"
+msgstr "Ölçüm kaynağı"
+
+msgid "Reported by the battery provider; sample age may be unknown"
+msgstr "Pil sağlayıcısının bildirdiği değerler; örneğin yaşı bilinmeyebilir"
+
+msgid "Reported hardware cycles"
+msgstr "Bildirilen donanım döngü sayısı"
+
+msgid "Qualified capacity retention"
+msgstr "Doğrulanmış kapasite korunumu"
+
+msgid "Individual cell health"
+msgstr "Tekil hücre sağlığı"
+
+msgid "Not measured by this provider"
+msgstr "Bu sağlayıcı tarafından ölçülmüyor"
+
+msgid "Used storage"
+msgstr "Kullanılan depolama"
+
+msgid "Available storage"
+msgstr "Kullanılabilir depolama"
+
+msgid "Memory in use"
+msgstr "Kullanılan bellek"
+
+msgid "Available memory"
+msgstr "Kullanılabilir bellek"
+
+msgid "Memory accounting"
+msgstr "Bellek hesabı"
+
+msgid "Available memory includes reclaimable cache"
+msgstr "Kullanılabilir bellek, geri kazanılabilir önbelleği de içerir"
+
+msgid "Automatic brightness"
+msgstr "Otomatik parlaklık"
+
+msgid "Automatic rotation"
+msgstr "Otomatik döndürme"
+
+msgid "Rotation policy"
+msgstr "Döndürme politikası"
+
+msgid "Display output"
+msgstr "Ekran çıkışı"
+
+msgid "Selected channel"
+msgstr "Seçili kanal"
+
+msgid "Pending operation"
+msgstr "Bekleyen işlem"
+
+msgid "Channel"
+msgstr "Kanal"
+
+msgid "Running kernel"
+msgstr "Çalışan çekirdek"
+
+msgid "Reported charging feature"
+msgstr "Bildirilen şarj özelliği"
+
+msgid "Reported start threshold"
+msgstr "Bildirilen başlangıç eşiği"
+
+msgid "Reported end threshold"
+msgstr "Bildirilen bitiş eşiği"
+
+msgid "Settings readback verified"
+msgstr "Ayarların geri okuması doğrulandı"
+
+msgid "Physical charge stop verified"
+msgstr "Fiziksel şarj durması doğrulandı"
+
+msgid "Charging profile qualified"
+msgstr "Şarj profili doğrulanmış"
+
+msgid "Threshold requests admitted"
+msgstr "Eşik isteklerine izin veriliyor"
+
+msgid "Automatic requests admitted"
+msgstr "Otomatik isteklere izin veriliyor"
+
+msgid "Provider ready"
+msgstr "Sağlayıcı hazır"
+
+msgid "Available"
+msgstr "Kullanılabilir"
+
+msgid "Supported"
+msgstr "Destekleniyor"
+
+msgid "Enabled"
+msgstr "Etkin"
+
+msgid "Brightness"
+msgstr "Parlaklık"
+
+msgid "Reported level"
+msgstr "Bildirilen seviye"
+
+msgid "Colour"
+msgstr "Renk"
+
+msgid "Policy"
+msgstr "Politika"
+
+msgid "Mode"
+msgstr "Kip"
+
+msgid "Accessory"
+msgstr "Aksesuar"
+
+msgid "Manufacturer"
+msgstr "Üretici"
+
+msgid "Name"
+msgstr "Ad"
+
+msgid "Data role"
+msgstr "Veri rolü"
+
+msgid "Network interface"
+msgstr "Ağ arayüzü"
+
+msgid "Microphone preference"
+msgstr "Mikrofon tercihi"
+
+msgid "Description"
+msgstr "Açıklama"
+
+msgid "Status"
+msgstr "Durum"
+
+msgid "Provider explanation"
+msgstr "Sağlayıcı açıklaması"
+
+msgid "Radio state"
+msgstr "Radyo durumu"
+
+msgid "Reported state"
+msgstr "Bildirilen durum"
+
+msgid "Reported USB type"
+msgstr "Bildirilen USB türü"
+
+msgid "Running slot"
+msgstr "Çalışan slot"
+
+msgid "Next boot slot"
+msgstr "Sonraki açılış slotu"
+
+msgid "Microphone"
+msgstr "Mikrofon"
+
+msgid "Label"
+msgstr "Etiket"
+
+msgid "Connected"
+msgstr "Bağlı"
+
+msgid "Information"
+msgstr "Bilgi"
+
+msgid "Unavailable"
+msgstr "Kullanılamıyor"
+
+msgid "Reading…"
+msgstr "Okunuyor…"
+
+msgid "Not checked"
+msgstr "Kontrol edilmedi"
+
+msgid "The provider could not return usable information. Refresh to try again."
+msgstr "Sağlayıcı kullanılabilir bilgi döndüremedi. Tekrar denemek için yenileyin."
+
+msgid "History read stopped"
+msgstr "Geçmiş okuması durduruldu"
+
+msgid "Invalid history response"
+msgstr "Geçersiz geçmiş yanıtı"
+
+msgid "Recorded battery percentage. Gaps are not measurements."
+msgstr "Kayıtlı pil yüzdesi. Boş aralıklar ölçüm değildir."
+
+msgid "Not enough valid history yet"
+msgstr "Henüz yeterli geçerli geçmiş yok"
+
+msgid "Reading existing battery history…"
+msgstr "Mevcut pil geçmişi okunuyor…"
+
+msgid "Battery history is unavailable from UPower"
+msgstr "UPower pil geçmişini sunamıyor"
+
+msgid "Multiple battery histories found; no source was guessed"
+msgstr "Birden fazla pil geçmişi bulundu; kaynak varsayılmadı"
+
+msgid "The battery provider has no recorded history"
+msgstr "Pil sağlayıcısında kayıtlı geçmiş yok"
+
+msgid "Refresh"
+msgstr "Yenile"
+
+msgid "Stop"
+msgstr "Durdur"
+
+msgid "Simulation — sample data only. Changes are disabled."
+msgstr "Simülasyon — yalnız örnek veriler. Değişiklikler devre dışı."
+
+msgid "Read-only session"
+msgstr "Salt okunur oturum"
+
+msgid "Read at %1"
+msgstr "Okunma zamanı: %1"
+
+msgid "Previous information — refresh failed"
+msgstr "Önceki bilgi — yenileme başarısız"
+
+msgid "Preferences and actions"
+msgstr "Tercihler ve işlemler"
+
+msgid "The provider has not admitted charging changes. Information remains available; expert tools keep their own checks."
+msgstr "Sağlayıcı şarj değişikliklerine izin vermiyor. Bilgiler görüntülenebilir; uzman araçları kendi denetimlerini korur."
+
+msgid "Technical tools"
+msgstr "Teknik araçlar"
+
+msgid "Additional observations and expert actions"
+msgstr "Ek gözlemler ve uzman işlemleri"
+
+msgid "Requested preference"
+msgstr "İstenen tercih"
+
+msgid "These values are a request. They do not represent a verified current setting."
+msgstr "Bu değerler bir istektir. Doğrulanmış mevcut ayarı göstermez."
+
+msgid "Preview"
+msgstr "Önizleme"
+
+msgid "Read information"
+msgstr "Bilgileri oku"
+
+msgid "Review and apply…"
+msgstr "İncele ve uygula…"
+
+msgid "The existing authentication and device checks remain in the terminal."
+msgstr "Mevcut kimlik doğrulama ve aygıt denetimleri terminalde sürer."
+
+msgid "Battery history"
+msgstr "Pil geçmişi"
+
+msgid "Time range"
+msgstr "Zaman aralığı"
+
+msgid "Last hour"
+msgstr "Son bir saat"
+
+msgid "Last 24 hours"
+msgstr "Son 24 saat"
+
+msgid "Read existing history"
+msgstr "Mevcut geçmişi oku"
+
+msgid "History is read from the existing power service. No additional recording service is started."
+msgstr "Geçmiş mevcut güç hizmetinden okunur. Ek kayıt hizmeti başlatılmaz."
+
+msgid "%1 valid points · %2 gaps"
+msgstr "%1 geçerli nokta · %2 boşluk"
+
+msgid "Recorded battery percentage over time"
+msgstr "Zaman içinde kayıtlı pil yüzdesi"
+
+msgid "Recorded observations"
+msgstr "Kayıtlı gözlemler"
+
+msgid "Search settings"
+msgstr "Ayarlarda ara"
+
+msgid "More"
+msgstr "Diğer"
+
+msgid "Expert action catalog"
+msgstr "Uzman eylem kataloğu"
+
+msgid "All installed technical actions, including diagnostics and maintenance"
+msgstr "Tanılama ve bakım dahil tüm kurulu teknik eylemler"
+
+msgid "Battery, USB, kernel…"
+msgstr "Pil, USB, çekirdek…"
+
+msgid "No matching settings"
+msgstr "Eşleşen ayar yok"
+
+msgid "Try a shorter search or open the expert catalog."
+msgstr "Daha kısa arama deneyin veya uzman kataloğunu açın."
+
+msgid "KDE display settings"
+msgstr "KDE ekran ayarları"
+
+msgid "KDE sound settings"
+msgstr "KDE ses ayarları"
+
+msgid "KDE network settings"
+msgstr "KDE ağ ayarları"
+
+msgid "KDE Bluetooth settings"
+msgstr "KDE Bluetooth ayarları"
+
+msgid "Open the original KDE settings application"
+msgstr "Özgün KDE Ayarlar uygulamasını aç"
+
+msgid "Attended diagnostic"
+msgstr "Katılımlı tanılama"
+
+msgid "Read in terminal"
+msgstr "Terminalde oku"
+
+msgid "Preference"
+msgstr "Tercih"
+
+msgid "Software operation"
+msgstr "Yazılım işlemi"
+
+msgid "Files"
+msgstr "Dosyalar"
+
+msgid "Maintenance"
+msgstr "Bakım"
+
+msgid "External publication"
+msgstr "Harici yayımlama"
+
+msgid "Administrator access"
+msgstr "Yönetici erişimi"
+
+msgid "Desktop session"
+msgstr "Masaüstü oturumu"
+
+msgid "Standard user access"
+msgstr "Standart kullanıcı erişimi"
+
+msgid "Technical actions in this category"
+msgstr "Bu kategorideki teknik eylemler"
+
+msgid "Review read access"
+msgstr "Okuma erişimini incele"
+
+msgid "Review request"
+msgstr "İsteği incele"
+
+msgid "Type %1 to confirm"
+msgstr "Onaylamak için %1 yazın"
+
+msgid "I reviewed why terminal access is needed."
+msgstr "Terminal erişiminin neden gerektiğini inceledim."
+
+msgid "I reviewed the request and its effects."
+msgstr "İsteği ve etkilerini inceledim."
+
+msgid "Access & effects"
+msgstr "Erişim ve etkiler"
+
+msgid "Action disabled"
+msgstr "İşlem devre dışı"
+
+msgid "Command details"
+msgstr "Komut ayrıntıları"
+
+msgid "Validated command"
+msgstr "Doğrulanmış komut"
+
+msgid "Continue in terminal"
+msgstr "Terminalde devam et"
+
+msgid "The terminal requests any required authentication and shows the operation's result."
+msgstr "Terminal gerekli kimlik doğrulamasını ister ve işlemin sonucunu gösterir."
+
+msgid "No matching connected device was found. Refresh after connecting it."
+msgstr "Uygun bağlı aygıt bulunamadı. Bağladıktan sonra yenileyin."
+
+msgid "Yes"
+msgstr "Evet"
+
+msgid "No"
+msgstr "Hayır"
+
+msgid "Full"
+msgstr "Dolu"
+
+msgid "Charging"
+msgstr "Şarj oluyor"
+
+msgid "Discharging"
+msgstr "Pil kullanılıyor"
+
+msgid "Automatic"
+msgstr "Otomatik"
+
+msgid "Reported design capacity"
+msgstr "Bildirilen tasarım kapasitesi"
+
+msgid "Reported full capacity"
+msgstr "Bildirilen tam kapasite"
+
+msgid "Applied brightness"
+msgstr "Uygulanan parlaklık"
+
+msgid "Negotiated protocol"
+msgstr "Anlaşılan protokol"
+
+msgid "Negotiated PD revision"
+msgstr "Anlaşılan PD sürümü"
+
+msgid "Display connector"
+msgstr "Ekran bağlantısı"
+
+msgid "Active"
+msgstr "Etkin"
+
+msgid "Bits per colour component"
+msgstr "Renk bileşeni başına bit"
+
+msgid "No supported summary fields were reported. Technical tools contain the original output."
+msgstr "Desteklenen özet alanı bildirilmedi. Özgün çıktı teknik araçlarda bulunur."
+
+msgid "More information"
+msgstr "Daha fazla bilgi"
+
+msgid "Less information"
+msgstr "Daha az bilgi"
+
+msgid "Refresh history"
+msgstr "Geçmişi yenile"
+
+msgid "Requested path"
+msgstr "İstenen yol"
+
+msgid "No location selected"
+msgstr "Konum seçilmedi"
+
+msgid "Select the other slot"
+msgstr "Diğer slotu seç"
+
+msgid "Read stopped; previous information may be out of date"
+msgstr "Okuma durduruldu; önceki bilgi güncel olmayabilir"
+
+msgid "Boot metadata is incomplete. Slot changes require consistent recovery checks; the reported status remains visible."
+msgstr "Açılış metaverisi eksik veya tutarsız. Slot değişikliği tutarlı kurtarma denetimleri gerektirir; bildirilen durum görüntülenmeye devam eder."
+
+msgid "Current boot & next selection"
+msgstr "Çalışan açılış ve sonraki seçim"
+
+msgid "Running now"
+msgstr "Şu anda çalışan"
+
+msgid "Selected for the next boot"
+msgstr "Sonraki açılış için seçili"
+
+msgid "Pending slot change"
+msgstr "Bekleyen slot değişikliği"
+
+msgid "Kernels stored in A & B"
+msgstr "A ve B'de kayıtlı çekirdekler"
+
+msgid "Stored kernel"
+msgstr "Kayıtlı çekirdek"
+
+msgid "Bootable"
+msgstr "Açılabilir"
+
+msgid "Bootloader successful flag"
+msgstr "Bootloader başarılı açılış işareti"
+
+msgid "Matches the running kernel Image"
+msgstr "Çalışan çekirdek imajıyla eşleşiyor"
+
+msgid "Recorded previous failure"
+msgstr "Önceki başarısızlık kaydı"
+
+msgid "This release is listed as the failed candidate."
+msgstr "Bu sürüm başarısız aday olarak kayıtlı."
+
+msgid "Kernel approval"
+msgstr "Çekirdek onayı"
+
+msgid "Running kernel approval"
+msgstr "Çalışan çekirdeğin onayı"
+
+msgid "Recorded accepted kernel"
+msgstr "Kayıtlı onaylı çekirdek"
+
+msgid "Accepted record matches the stored image"
+msgstr "Onay kaydı kayıtlı imajla eşleşiyor"
+
+msgid "Update phase"
+msgstr "Güncelleme aşaması"
+
+msgid "Pending candidate kernel"
+msgstr "Bekleyen aday çekirdek"
+
+msgid "Latest recorded attempt approved"
+msgstr "Son kayıtlı deneme onaylandı"
+
+msgid "Previous failed candidate (history)"
+msgstr "Önceki başarısız aday (geçmiş)"
+
+msgid "Some information could not be verified"
+msgstr "Bazı bilgiler doğrulanamadı"
+
+msgid "Unknown"
+msgstr "Bilinmiyor"
+
+msgid "Accepted"
+msgstr "Onaylı"
+
+msgid "Not accepted"
+msgstr "Onaylanmadı"
+
+msgid "No candidate recorded"
+msgstr "Kayıtlı aday yok"
+
+msgid "Brightness level"
+msgstr "Parlaklık kademesi"

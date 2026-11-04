@@ -129,7 +129,7 @@ FormCard.FormCardPage {
     FormCard.FormCard {
         FormCard.FormButtonDelegate {
             objectName: "toggleAccessDetails"
-            text: "Technical details & requirements"
+            text: i18n("Technical details & requirements")
             icon.name: themeIcons.names["dialog-information"]
             Accessible.name: text
             Accessible.description: details.visible ? "Details expanded" : "Details collapsed"

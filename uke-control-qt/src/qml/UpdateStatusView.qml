@@ -9,26 +9,26 @@ ColumnLayout {
     required property var report
     readonly property var approval: report.kernel_approval || ({})
     spacing: Kirigami.Units.smallSpacing
-    function value(text) { return text === null || text === undefined || text === "" ? "Unknown" : String(text) }
+    function value(text) { return text === null || text === undefined || text === "" ? i18n("Unknown") : String(text) }
     function slot(text) { return text === "a" ? "A" : text === "b" ? "B" : "Unknown" }
-    function yesNo(flag) { return flag === true ? "Yes" : flag === false ? "No" : "Unknown" }
+    function yesNo(flag) { return flag === true ? i18n("Yes") : flag === false ? i18n("No") : i18n("Unknown") }
     FormCard.FormHeader { title: "Current boot & next selection" }
     FormCard.FormCard {
         Layout.fillWidth: true
         SafeText {
             objectName: "bootCurrent"
-            text: "Running now"
+            text: i18n("Running now")
             description: "Slot " + view.slot(view.report.current_slot) + " · " + view.value(view.report.running_kernel)
             icon.name: themeIcons.names["system-run"]
         }
         SafeText {
-            text: "Selected for the next boot"
+            text: i18n("Selected for the next boot")
             description: "Slot " + view.slot(view.report.next_boot_slot)
             icon.name: themeIcons.names["system-reboot"]
         }
         SafeText {
             objectName: "bootPending"
-            text: "Pending slot change"
+            text: i18n("Pending slot change")
             description: view.yesNo(view.report.pending_slot_switch)
         }
     }
@@ -55,14 +55,14 @@ ColumnLayout {
                 contentItem: ColumnLayout {
                     spacing: 0
                     Kirigami.Heading { level: 4; text: "Slot " + view.slot(modelData.slot); Layout.leftMargin: Kirigami.Units.largeSpacing }
-                    SafeText { text: "Stored kernel"; description: view.value(modelData.kernel_release); icon.name: themeIcons.names["cpu"] }
-                    SafeText { text: "Bootable"; description: view.yesNo(modelData.bootable) }
-                    SafeText { text: "Bootloader successful flag"; description: view.yesNo(modelData.boot_successful) }
-                    SafeText { text: "Matches the running kernel Image"; description: view.yesNo(modelData.matches_running_kernel) }
+                    SafeText { text: i18n("Stored kernel"); description: view.value(modelData.kernel_release); icon.name: themeIcons.names["cpu"] }
+                    SafeText { text: i18n("Bootable"); description: view.yesNo(modelData.bootable) }
+                    SafeText { text: i18n("Bootloader successful flag"); description: view.yesNo(modelData.boot_successful) }
+                    SafeText { text: i18n("Matches the running kernel Image"); description: view.yesNo(modelData.matches_running_kernel) }
                     SafeText {
                         visible: Boolean(modelData.kernel_release && view.approval.last_failed_kernel === modelData.kernel_release)
-                        text: "Recorded previous failure"
-                        description: "This release is listed as the failed candidate."
+                        text: i18n("Recorded previous failure")
+                        description: i18n("This release is listed as the failed candidate.")
                         icon.name: themeIcons.names["dialog-warning"]
                     }
                 }
@@ -74,24 +74,24 @@ ColumnLayout {
         Layout.fillWidth: true
         SafeText {
             objectName: "bootApproval"
-            text: "Running kernel approval"
-            description: view.approval.running_kernel_approved === true ? "Accepted" : view.approval.running_kernel_approved === false ? "Not accepted" : "Unknown"
+            text: i18n("Running kernel approval")
+            description: view.approval.running_kernel_approved === true ? i18n("Accepted") : view.approval.running_kernel_approved === false ? i18n("Not accepted") : i18n("Unknown")
             icon.name: themeIcons.names[view.approval.running_kernel_approved === true ? "dialog-ok" : "dialog-information"]
         }
         SafeText {
-            text: "Recorded accepted kernel"
+            text: i18n("Recorded accepted kernel")
             description: view.value(view.approval.accepted_kernel) + " · Slot " + view.slot(view.approval.accepted_slot)
         }
-        SafeText { text: "Accepted record matches the stored image"; description: view.yesNo(view.approval.accepted_kernel_verified) }
-        SafeText { text: "Update phase"; description: view.value(view.approval.phase).replace(/-/g, " ") }
+        SafeText { text: i18n("Accepted record matches the stored image"); description: view.yesNo(view.approval.accepted_kernel_verified) }
+        SafeText { text: i18n("Update phase"); description: view.value(view.approval.phase).replace(/-/g, " ") }
         SafeText {
-            text: "Pending candidate kernel"
-            description: view.approval.candidate_kernel === null ? "No candidate recorded" : view.value(view.approval.candidate_kernel)
+            text: i18n("Pending candidate kernel")
+            description: view.approval.candidate_kernel === null ? i18n("No candidate recorded") : view.value(view.approval.candidate_kernel)
         }
-        SafeText { text: "Latest recorded attempt approved"; description: view.yesNo(view.approval.latest_update_approved) }
+        SafeText { text: i18n("Latest recorded attempt approved"); description: view.yesNo(view.approval.latest_update_approved) }
         SafeText {
             visible: Boolean(view.approval.last_failed_kernel)
-            text: "Previous failed candidate (history)"
+            text: i18n("Previous failed candidate (history)")
             description: view.value(view.approval.last_failed_kernel)
             icon.name: themeIcons.names["dialog-warning"]
         }
@@ -107,7 +107,7 @@ ColumnLayout {
             required property var modelData
             Layout.fillWidth: true
             SafeText {
-                text: "Some information could not be verified"
+                text: i18n("Some information could not be verified")
                 description: modelData
                 icon.name: themeIcons.names["dialog-warning"]
             }

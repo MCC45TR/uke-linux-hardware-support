@@ -1,215 +1,91 @@
 # Uke Control for Qt
 
-A native Qt 6 Kirigami application for the existing Uke Control client. The
-application, typed models, validation and device adapter are C++20; the presentation
-uses Qt Quick/QML and original Kirigami/FormCard components. It respects KDE
-appearance preferences and uses Breeze with KDE's desktop Quick Controls style.
-There is no Python, WebView, replacement desktop service or privileged GUI.
+A native Qt 6 Kirigami frontend for the existing typed Uke Control client.
+Application logic and the device adapter are C++; presentation uses original
+Kirigami/FormCard controls, the desktop palette and inherited theme icons.
+GTK and the existing CLI/device writers are separate components.
 
-Navigation, catalog actions, read states and request controls use semantic icon
-names from the desktop theme. KDE's configured icon theme remains selected;
-inherited themes and the installed Breeze fallback fill missing names. No Breeze
-artwork is copied into the application. Theme changes refresh the name bindings.
-`--appearance-info` reports every resolved icon name and whether it renders.
+## Everyday settings
 
-The Qt navigation has nine task areas: Overview, Battery & power, Display &
-lights, Connections, Sound & cameras, Sensors & input, Software updates,
-Diagnostics & files, and Recovery & maintenance. Overview offers responsive
-Kirigami category cards and quick checks. Each category provides a short guide
-and task groups with descriptions. Rows identify reads, preferences, file work,
-software operations or attended diagnostics, including administrator access.
+Home contains six category tiles: Battery and charging, Display and lights,
+Connections, Sound, Storage and memory, and System and updates. Help and
+Advanced are secondary destinations. Ctrl+K searches topics, including English
+and Turkish aliases. The complete installed SDK catalog remains searchable in
+Advanced. Back retains the category/home path and cancels owned observations.
 
-**All actions** and Ctrl+K open a separate catalog with text, category and action
-type filters. Search matches English/Turkish metadata and identifiers, including
-multiple words. It retains its filters and scroll position when returning from
-an action guide. Category pages link to additional tools scoped to that category.
-All installed catalog actions remain reachable, including advanced operations.
+Topic pages show related information directly, with readable labels, units,
+availability and read times. Secondary measurements expand on request. The
+battery, charging and software interfaces keep reported, requested and saved
+values separate. Missing data is never interpreted as zero, Off or acceptance.
+Unsupported charging requests and inconsistent boot metadata disable the daily
+change entry; the expert backend retains its independent safeguards.
 
-Kirigami's page stack, responsive drawer and page actions provide navigation;
-FormCard pages group related controls. The drawer becomes modal in a narrow
-window, and choice controls use native selection dialogs. **Back** or Alt+Left
-returns to the previous catalog or category. See the
-[Kirigami FormCard documentation](https://api.kde.org/org-kde-kirigamiaddons-formcard-qmlmodule.html).
+Preferences are edited within their topic and then reviewed. Small choice sets
+use radio buttons, longer sets use native selection dialogs, and exact numeric
+requests use bounded spin boxes. The flashlight offers its actual Off/Low/High
+steps. File, folder and colour requests use native pickers. Available network,
+USB and input identities are discovered without asking users to invent node
+names. Original KDE settings modules are linked only when installed; their
+applications and packages are not copied or forked.
 
-Software updates separates current state, channel selection, installation and
-unfinished work. Change guides present numbered stages: inspect the current
-state, choose requested values, then preview and review. Read guides show options
-and the result directly. Field help includes available ranges; reset restores
-suggested draft values rather than claiming they are current device settings.
-Observations appear next to their inspection/preview stage and identify the
-options used. Provider unavailability remains separate from a completed read
-with available values. Existing terminal review, consent and authentication
-remain authoritative.
+## Battery history
 
-**Kernel & boot slots** shows the running kernel and slot, both stored kernels,
-the next boot selection, pending switch and approval record as native cards.
-Unknown or incomplete evidence remains explicit. A retained failed-candidate
-record does not establish whether it happened before or after the accepted
-kernel; the report explains that limitation. Slot selection offers A, B and
-`next` (the slot opposite the running one), an inspection and a preview before
-the attended terminal confirmation. The guarded boot owner verifies the stored
-image and recovery state. Selecting a slot never reboots the device.
+The page discovers the actual power-supply battery through original UPower,
+checks history support and reads bounded existing charge history asynchronously.
+It does not assume that the composite DisplayDevice has history. Records use
+actual timestamps and percentage/state values. Unknown-state markers, duplicate
+timestamps and long uncovered spans break the line. Values outside the requested
+window, malformed samples and invalid percentages are omitted; memory is bounded.
 
-Opening a page or guide does not query devices. Select **Read information**
-or an inspection button to read. Requested defaults are drafts rather than current
-measurements. **Details** reveals the full catalog explanation, parameter limits,
-action identifier, access requirements and, during review, exact validated arguments.
-Maintenance and external-publication warnings remain visible before confirmation.
-
-## Build and run
-
-On POCO Pad X1, build native packages in COPR and install them through DNF.
-The source build commands below are for a separate build environment.
-
-Install a C++ compiler, CMake, Qt 6.6 or newer (Widgets, Qml, Quick and
-QuickControls2), ECM, KDE Frameworks (IconThemes, ConfigWidgets, I18n 6.8 or newer),
-Kirigami, Kirigami Addons FormCard 1.1 or newer, and the existing Uke Control package
-providing `pkgconfig(uke-control-client)`, `client.hpp` and `frontend.hpp`.
-On Fedora, development packages include `qt6-qtbase-devel`, `qt6-qtdeclarative-devel`,
-`extra-cmake-modules`, `kf6-kwidgetsaddons-devel`, `kf6-kiconthemes-devel`,
-`kf6-kconfigwidgets-devel`, `kf6-ki18n-devel` and `kf6-kirigami-addons-devel`.
-Runtime integration uses `plasma-breeze-qt6`, `plasma-integration`,
-`breeze-icon-theme`, `kf6-kirigami`, `kf6-kirigami-addons`,
-`kf6-qqc2-desktop-style` and the original `konsole` for authenticated foreground
-operations. The source-tree build also
-finds the sibling `uke-control/build/libuke-control-client.so.1` when pkg-config
-is unavailable.
-Repository integration can explicitly select the current source SDK with
-`-DUKE_CONTROL_SOURCE=/path/to/uke-control`; this takes precedence over the
-installed headers and library. Standalone package builds use pkg-config.
-
-```sh
-cmake -S uke-control-qt -B uke-control-qt/build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-cmake --build uke-control-qt/build -j4
-uke-control-qt/build/uke-control-qt
-uke-control-qt/build/uke-control-qt --read-only --start battery.status
-```
-
-Run as the normal graphical session user. A root GUI is refused. `--help`,
-`--version`, `--appearance-info`, and strictly isolated fixture sessions are
-exceptions. `--appearance-info` prints the actual style class, resolved icons,
-font, palette and Quick Controls style without constructing the frontend or querying any device. If Breeze
-is absent, a native warning identifies the installed fallback style and the
-missing package; the application does not imitate Breeze with a custom stylesheet.
-`KIconTheme::initTheme()` and `KStyleManager::initStyle()` provide KDE's supported
-startup behavior. `org.kde.desktop` is the default Quick Controls style unless
-`QT_QUICK_CONTROLS_STYLE` is explicitly set. User appearance preferences remain effective.
+The native Qt plot uses the desktop palette and font, with a fixed percentage
+axis and actual time coordinates. It does not resample missing periods into
+zero or imply continuous coverage. No additional recording service, sleep poll,
+history database or per-application energy estimate is added.
 
 ## Reads and reviewed changes
 
-Captured observations use the shared read-only `Query` on the Qt event loop.
-Stop, Back, changing pages and closing the window cancel the owned read. Each
-query retains its backend timeout and bounded stdout/stderr. Refresh validates
-matching current form options before rereading the same observation; it cannot
-replay a mutation. Results are marked out of date when relevant options change.
-Structured values, original
-bounded output and errors have separate sections. Null, false, zero, negative values,
-unavailable providers, cancellation, timeout and truncation remain distinct.
-Control and directional override characters are rendered visibly. Large structured
-views are bounded to 2,000 values and 16 levels; the raw bounded result remains
-available.
+Only fixed, allowlisted topic observations run on entry. Queries are read-only,
+bounded, serialized and cancellable; cached observations are shared with home
+summaries. Sensor acquisition, firmware interrogation and attended tests remain
+explicit expert actions. Raw provider output remains in the expert view.
 
-Changes pass shared typed validation and open a separate native review dialog.
-The requested values are visible before continuing. Package operations require
-`APPLY`, maintenance requires its action ID, and publication requires its exact
-repository, in addition to separate consent. Read-only sessions block changes.
-The shared `frontend.hpp` adapter revalidates the ID and values, then opens
-an original distribution terminal. Its small, unprivileged native
-`frontend-request` wrapper revalidates the request and uses the existing
-`run_terminal` path, with `sudo --` only when required. It uses no shell.
-Authentication and all existing backend admission and interactive confirmations
-remain in that terminal. The wrapper displays the exit status and waits for
-Enter, preserving the result for inspection. Opening a
-terminal establishes neither command completion nor hardware success. The GUI
-never retries writes, refreshes them, or interrupts an independently handed-off
-terminal operation when it closes.
+The C++ adapter validates typed IDs and values before every request. Reviews
+retain the frozen request, separate consent and required confirmation tokens.
+All writes still use the existing frontend-request terminal path, authorization
+and backend qualification. There are no optimistic instant switches.
+A terminal opening is not reported as operation completion, verified application
+or physical hardware success. The GUI never automatically retries a mutation
+or terminates an independently handed-off terminal operation when closed.
 
-## Simulation and tests
+Run as the normal graphical-session user. A root GUI is refused. Simulation
+uses the bounded org.uke.control.tui-fixture.v1 file, never falls through to real
+queries and blocks all real mutations, native settings launches and handoffs.
+Read-only mode independently refuses writes. Control characters remain escaped.
+
+## Packaging and validation
+
+On POCO Pad X1, all native compilation belongs in COPR. Install the application
+and optional tests through DNF. Do not compile on the tablet or install copied
+binaries. The RPM requires the matched Control SDK/frontend capabilities and
+original Fedora Qt/KDE packages, including Kirigami Addons 1.9 or newer for the
+native file/folder delegates. Turkish messages use the application's KI18n
+translation domain.
+
+The optional uke-control-gui-qt-tests RPM provides:
 
 ```sh
-uke-control-qt/build/uke-control-qt \
-  --fixture uke-control/tests/fixtures/tui.json --start charge.mode
-ctest --test-dir uke-control-qt/build --output-on-failure
+/usr/libexec/uke-control-qt/tests/run-installed.sh
 ```
 
-Fixture mode shows a persistent **SIMULATION** indicator and blocks every real
-query, command, terminal handoff, mutation and receipt save. It accepts the existing
-`org.uke.control.tui-fixture.v1` schema from a non-symlink regular file of at most
-1 MiB. Results use known action IDs with `data` or `stdout`, optional `stderr`,
-exit status 0–255 and delay 0–3,000 ms. Unknown fields and incompatible fields
-are rejected. Missing results stay unavailable and never fall through to a real
-query. No executable callbacks are supported.
+The native suites cover every catalog guide, all topics, typed validation,
+discrete controls, history ordering/gaps, zero/negative/unknown values, review
+refusal, cancellation, theme icons and real QML scene placement. Set
+UKE_QT_TEST_SCREENSHOTS to a private directory for window-only fixture captures.
+Opt-in UKE_QT_TEST_DEVICE_READS=1 additionally reads installed providers and
+existing UPower history. Device tests preserve incomplete reported boot evidence
+rather than requiring a trial kernel to be accepted.
 
-The optional `uke-control-gui-qt-tests` RPM installs the native checks and bounded
-fixture. Run `/usr/libexec/uke-control-qt/tests/run-installed.sh` as the graphical
-session user to test the installed package without compiling on the device.
-The suites cover all task areas and catalog filters, typed request routing,
-draft reset and result freshness, review refusal, read/stop/refresh, retained
-catalog navigation, accessibility and Breeze/Adwaita/incomplete themes.
-Set `UKE_QT_TEST_SCREENSHOTS` to a private output directory to capture the fixture
-walkthrough. These checks establish frontend behavior, not physical acceptance
-of every provider or completion of destructive maintenance operations.
-
-The C++ Qt tests load the actual Kirigami pages and exercise typed values, separate errors, read refresh, unavailable
-fixtures, cancellation, page/search/form navigation, native approval requirements,
-read-only and simulation blocking, close cleanup, all action guides at 480 pixels,
-and page cleanup after repeated navigation. They check scene placement, accessible
-control names, native review refusal and QML runtime errors. The previous widget
-view tests remain as migration regressions; that view is not linked into the
-shipped executable. A separate native appearance suite
-verifies the actual Breeze class and icons, explicit style overrides and KDE
-font/palette settings; install the runtime integration packages before running it.
-The shell test checks CLI
-help/version, invalid fixtures and root refusal. Tests use the sibling TUI fixture;
-source archives built against an installed client may disable tests with
-`-DBUILD_TESTING=OFF`.
-
-## Packaging and observed validation
-
-`packaging/uke-control-qt.spec` builds the independent `uke-control-gui-qt` RPM against
-the existing monolithic `uke-control` package. CMake installs the executable,
-desktop entry and scalable icon using standard GNU installation directories.
-It does not change the existing family package metadata.
-The RPM additionally requires the package-owned
-`/usr/libexec/uke-control/frontend-request` helper: an older package with the same
-2.8.0 version may lack that addition. Building requires the package-owned
-`/usr/include/uke-control/frontend.hpp` header and `pkgconfig(uke-control-client)`
-2.8.0 or newer. Manually copied SDK files do not satisfy RPM dependency checks;
-a `--nodeps` assembly build alone does not establish installability.
-
-On 1 November 2026, the Fedora 46/rawhide software container built the application
-with GCC 16.2.1 and Qt 6.12.0. The installed native Breeze plugin was
-`plasma-breeze-qt6-6.8.2-1.fc46`. Native Xvfb screenshots were inspected at
-1120×800 and 780×720, including charging preferences, simulated observations,
-review blocking and an actual nonroot charging read. The actual read returned
-`available: false`; this was displayed as provider unavailable. A staged CMake
-installation was executed against the installed shared client.
-
-Dependency verification on the same date built the current core RPM with normal
-RPM dependency checks and `--nocheck`. A default-repository `dnf --assumeno install`
-preview of the two GUI RPMs could not find the core package. Including the actual
-local core RPM supplied the helper and shared-library providers, but resolution
-still stopped on external `uke-kernel-update >= 1.8.7` and
-`uke-kernel-update(transaction-v1) >= 1` requirements. The preview ran no
-transaction or scriptlets; complete installation remains unverified.
-
-Screenshots and logs stay under ignored `build/`. These are source, build and
-synthetic desktop checks. No tablet, physical touch acceptance, charging cutoff,
-display receiver, storage mutation or package transaction was tested.
-
-On 2 November 2026, the local KDE redesign built with Qt 6.12, KDE Frameworks 6.31
-and Breeze 6.8.2 in the disposable Fedora 46 container. The three Qt CTest suites
-passed. The original distribution System Settings and KInfoCenter were run as
-visual references; their code was not copied or modified. Real Xcb/Xvfb runs
-used the KDE platform plugin as a normal user, with inspected wide and 480-pixel
-views. Evidence remains under ignored `build-redesign/`. These desktop checks do
-not qualify the interface for inclusion in a release image. Full package transaction and
-physical-device acceptance remain subject to the limitations above.
-
-The subsequent Kirigami migration supersedes that widget presentation, following
-explicit approval for a QML presentation layer with C++ logic. Four CTest suites
-cover the new bridge and actual QML pages as well as the retained migration
-regressions. Source/runtime dependency checks find the real Kirigami, FormCard and
-desktop Controls modules; the library version and QML import version are checked
-separately because they are different version namespaces. The previous widget
-sources and a complete local recovery patch remain available for comparison.
+Source builds use CMake, Qt Widgets/Qml/Quick/QuickControls2/DBus/Network,
+KI18n and the existing pkg-config uke-control-client SDK. No Python runtime or
+privileged GUI is introduced. Fixture/source checks are not physical acceptance
+of every hardware provider, charge cutoff, camera focus or a boot transition.

@@ -1,21 +1,25 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 #include "model-data.hpp"
+#include "settings.hpp"
 #include <optional>
 namespace uq {
 class Bridge : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool simulation READ simulation CONSTANT)
   Q_PROPERTY(bool readOnly READ readOnly CONSTANT)
+  Q_PROPERTY(QObject *settings READ settings CONSTANT)
   Q_PROPERTY(QVariantList areas READ areas CONSTANT)
   Q_PROPERTY(int section READ section NOTIFY sectionChanged)
   Q_PROPERTY(QVariantList groups READ groups NOTIFY sectionChanged)
   Q_PROPERTY(QVariantMap guide READ guide NOTIFY guideChanged)
+  Q_PROPERTY(QVariantMap draftValues READ draftValues NOTIFY draftChanged)
   Q_PROPERTY(QVariantMap observation READ observation NOTIFY observationChanged)
   Q_PROPERTY(QVariantMap review READ review NOTIFY reviewChanged)
   Q_PROPERTY(QString message READ message NOTIFY messageChanged)
   Q_PROPERTY(bool messageError READ messageError NOTIFY messageChanged)
   Fixture fixture_;
+  Settings settings_;
   bool readOnly_;
   int section_ = 0;
   QVariantMap guide_, observation_, review_;
@@ -39,11 +43,13 @@ public:
   explicit Bridge(Fixture fixture, bool readOnly, QObject *parent = nullptr);
   ~Bridge() override;
   bool simulation() const { return fixture_.enabled; }
+  QObject *settings() { return &settings_; }
   bool readOnly() const { return readOnly_; }
   int section() const { return section_; }
   QVariantList areas() const;
   QVariantList groups() const;
   QVariantMap guide() const { return guide_; }
+  QVariantMap draftValues() const { QVariantMap result;for(const auto &[k,v]:draft_)result[QString::fromStdString(k)]=QString::fromStdString(v);return result; }
   QVariantMap observation() const { return observation_; }
   QVariantMap review() const { return review_; }
   QString message() const { return message_; }
@@ -67,6 +73,7 @@ public:
 signals:
   void sectionChanged();
   void guideChanged();
+  void draftChanged();
   void observationChanged();
   void reviewChanged();
   void messageChanged();

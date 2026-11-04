@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.1.0
-Release:        2%{?dist}
+Version:        1.2.0
+Release:        5%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -10,13 +10,14 @@ Obsoletes:      uke-control-qt < 1.0.0-3
 BuildRequires:  gcc-c++
 BuildRequires:  cmake
 BuildRequires:  make
+BuildRequires:  gettext
 BuildRequires:  qt6-qtbase-devel
 BuildRequires:  qt6-qtdeclarative-devel
 BuildRequires:  extra-cmake-modules >= 6.6
 BuildRequires:  cmake(KF6I18n) >= 6.8
 BuildRequires:  kf6-kirigami
-BuildRequires:  kf6-kirigami-addons >= 1.1
-BuildRequires:  cmake(KF6KirigamiAddons) >= 1.1
+BuildRequires:  kf6-kirigami-addons >= 1.9
+BuildRequires:  cmake(KF6KirigamiAddons) >= 1.9
 BuildRequires:  kf6-qqc2-desktop-style
 BuildRequires:  cmake(KF6WidgetsAddons) >= 6.6
 BuildRequires:  cmake(KF6IconThemes) >= 6.6
@@ -25,10 +26,10 @@ BuildRequires:  desktop-file-utils
 BuildRequires:  plasma-breeze-qt6 plasma-integration breeze-icon-theme
 BuildRequires:  adwaita-icon-theme
 BuildRequires:  pkgconfig(uke-control-client) >= 2.8.0
-BuildRequires:  uke-control-client-devel >= 2.8.1-12
+BuildRequires:  uke-control-client-devel >= 2.8.1-23
 BuildRequires:  %{_includedir}/uke-control/frontend.hpp
 BuildRequires:  uke-control(frontend-sdk-v1) >= 1
-Requires:       uke-control >= 2.8.1-12
+Requires:       uke-control >= 2.8.1-23
 Requires:       uke-control(update-status-v1) >= 1
 Requires:       uke-control(slot-selection-v1) >= 1
 Requires:       uke-control(frontend-v1) >= 1
@@ -38,7 +39,7 @@ Requires:       plasma-integration
 Requires:       breeze-icon-theme
 Requires:       qt6-qtdeclarative
 Requires:       kf6-kirigami
-Requires:       kf6-kirigami-addons >= 1.1
+Requires:       kf6-kirigami-addons >= 1.9
 Requires:       kf6-qqc2-desktop-style
 Requires:       konsole
 
@@ -76,12 +77,32 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_bindir}/uke-control-qt
 %{_datadir}/applications/org.uke.ControlQt.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.uke.ControlQt.svg
+%{_datadir}/locale/*/LC_MESSAGES/uke-control-qt.mo
 
 %files tests
 %{_libexecdir}/uke-control-qt/tests/
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.2.0-5
+- Bind chart colours to the actual inherited Kirigami theme context.
+
+* Wed Nov 04 2026 Uke contributors - 1.2.0-4
+- Improve plot-axis contrast using native foreground colours.
+- Show single preferences directly and preserve drafts when refreshing observations.
+
+* Wed Nov 04 2026 Uke contributors - 1.2.0-3
+- Keep incomplete boot evidence visible and block daily slot changes until consistent.
+- Preserve topic-read ownership during rapid navigation and retain explicit other-slot requests.
+
+* Wed Nov 04 2026 Uke contributors - 1.2.0-2
+- Preserve native Back navigation and avoid invalid initial file selections.
+- Refine reported measurements, unsupported-state handling and topic information density.
+
+* Wed Nov 04 2026 Uke contributors - 1.2.0-1
+- Replace command-oriented daily pages with grouped settings topics and information tiles.
+- Add bounded read-only UPower battery history and semantic preference controls.
+
 * Wed Nov 04 2026 Uke contributors - 1.1.0-2
 - Add readable A/B kernel status cards and reviewed next-boot selection guides.
 - Require the matched status/selection backend and retain native field wrapping.
