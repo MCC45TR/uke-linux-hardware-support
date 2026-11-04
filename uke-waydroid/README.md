@@ -84,6 +84,15 @@ that default profile by a candidate missing the capability. Installed/default
 profile selection and the actually running kernel remain separate: existing
 administrator boot-activation policy is respected.
 
+The4 November11003 unstable boot retains integration7 and diagnostics3 through
+normal DNF delivery. Android boots, IPv4/IPv6 policy rules and legacy filter
+tables work, and guest HTTPS connectivity returns204 with an Android VALIDATED
+network. The hardware probe passes all16384 pixels in16 shader-rendered frames
+with zero mismatches. Google-account registration/sign-in, prolonged physical
+display stability and real game performance remain separate acceptance steps.
+The existing automatic staging and user-selected rollback policy are preserved;
+this result does not promote the normal/stable kernel family.
+
 References: [Fedora Binder labels](https://github.com/fedora-selinux/selinux-policy/blob/rawhide/policy/modules/kernel/devices.te),
 [Waydroid installation](https://docs.waydro.id/usage/install-on-desktops) and
 [Binderfs lifecycle](https://docs.kernel.org/admin-guide/binderfs.html).
