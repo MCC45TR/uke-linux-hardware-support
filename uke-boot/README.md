@@ -1,5 +1,13 @@
 # Uke boot integration
 
+4 November 2026. A selected-profile-only DNF update on Fedora 46 with RPM 6.1.0
+changed the profile link without invoking the registered file trigger. The
+1.8.90 packaging candidate watches the containing `/usr/lib/senemos` directory
+instead of the link filename. It retains the qualified 1.8.71 native code and
+tests, enabled seamless policy, enforced package default and persistent local
+rollback choice. Remote qualification and the actual DNF trigger test remain
+pending; the selected camera candidate has not booted.
+
 4 November 2026. The [explicit development-trial replacement candidate](DEVELOPMENT-TRIALS.md)
 preserves the recorded B image while updating an unaccepted unstable A trial.
 It requires rollback mode `off` and does not grant health approval. Remote
