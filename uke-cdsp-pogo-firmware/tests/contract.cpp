@@ -34,6 +34,24 @@ static Bytes fat32() {
     for(unsigned i=0;i<700;i++)b[data+1024+i]=i;
     return b;
 }
+static void with_long_name(Bytes &b,size_t p,const std::string &long_name,const std::string &alias) {
+    assert(alias.size()==11&&!long_name.empty()&&long_name.size()<=255);
+    Bytes entry(b.begin()+p,b.begin()+p+32);memcpy(entry.data(),alias.data(),11);
+    unsigned char sum=0;
+    for(unsigned char c:alias)sum=static_cast<unsigned char>(((sum&1)?0x80:0)+(sum>>1)+c);
+    const size_t slots=(long_name.size()+12)/13;
+    constexpr std::array<unsigned,13> offsets={1,3,5,7,9,14,16,18,20,22,24,28,30};
+    for(size_t i=0;i<slots;i++) {
+        const auto at=p+i*32,order=slots-i;
+        std::fill_n(b.begin()+at,32,0);b[at]=order|(i?0:0x40);b[at+11]=0x0f;b[at+13]=sum;
+        for(size_t j=0;j<13;j++) {
+            const auto character=(order-1)*13+j;
+            const uint16_t value=character<long_name.size()?static_cast<unsigned char>(long_name[character]):character==long_name.size()?0:0xffff;
+            put16(b,at+offsets[j],value);
+        }
+    }
+    std::copy(entry.begin(),entry.end(),b.begin()+p+slots*32);
+}
 int main() {
     Bytes auth_mdt(52+9*32);memcpy(auth_mdt.data(),"\177ELF",4);
     auth_mdt[4]=auth_mdt[5]=auth_mdt[6]=1;put16(auth_mdt,18,183);
@@ -81,6 +99,34 @@ int main() {
     refused([&]{cdsp_family(fat);});
     refused([&]{fat.image_file("../CDSP.MDT");});
     refused([&]{fat.image_file("CDSP.MDT",699);});
+    const size_t root_at=65*512,files_at=66*512;
+    auto long_files=bytes;
+    // Actual stock uses a hashed 8.3 alias for the ASCII long directory "image".
+    with_long_name(long_files,root_at,"image","PCAFUI~2   ");
+    with_long_name(long_files,files_at,"cdsp.mdt","PCAFUI~3MDT");
+    // A valid unrelated multi-slot name must not alter fixed-name lookup.
+    memcpy(long_files.data()+files_at+64,bytes.data()+files_at,32);
+    with_long_name(long_files,files_at+64,"unrelated-long-firmware-name","OTHER~1 BIN");
+    write_image(image.value,long_files);
+    assert(Fat(image.value,long_files.size()).image_file("CDSP.MDT")==payload);
+    for(const size_t at:{root_at+13,root_at+12,root_at+26,files_at+13,files_at+12,files_at+26}) {
+        auto malformed=long_files;malformed[at]^=1;write_image(image.value,malformed);
+        refused([&]{Fat(image.value,malformed.size()).image_file("CDSP.MDT");});
+    }
+    for(const auto order:{0x40,0x42,0x61,0x81,0x01}) {
+        auto malformed=long_files;malformed[root_at]=order;write_image(image.value,malformed);
+        refused([&]{Fat(image.value,malformed.size()).image_file("CDSP.MDT");});
+    }
+    auto malformed=long_files;put16(malformed,root_at+16,0x41);write_image(image.value,malformed);
+    refused([&]{Fat(image.value,malformed.size()).image_file("CDSP.MDT");}); // Bad padding after NUL.
+    malformed=long_files;malformed[root_at]=0xe5;write_image(image.value,malformed);
+    refused([&]{Fat(image.value,malformed.size()).image_file("CDSP.MDT");}); // Deleted long name cannot supply identity.
+    malformed=long_files;malformed[files_at+64+32]=1;write_image(image.value,malformed);
+    refused([&]{Fat(image.value,malformed.size()).image_file("CDSP.MDT");}); // Reordered multi-slot sequence.
+    malformed=long_files;
+    std::copy_n(long_files.begin()+files_at,64,malformed.begin()+files_at+64);malformed[files_at+128]=0;
+    write_image(image.value,malformed);
+    refused([&]{Fat(image.value,malformed.size()).image_file("CDSP.MDT");}); // Duplicate fixed identity.
     auto bad=bytes;put16(bad,33*512+6,5);write_image(image.value,bad);
     refused([&]{Fat f(image.value,bad.size());f.image_file("CDSP.MDT");});
     bad=bytes;for(size_t base:{512U,33U*512})put16(bad,base+8,3);write_image(image.value,bad);
@@ -104,5 +150,5 @@ int main() {
     refused([&]{publish_family(dir/"out","nanosic",Family{{"../bad",Bytes{1}}});});
     need(!fs::exists(dir/"out/bad"),"Unsafe filename escaped stage");
     fs::remove_all(dir);
-    std::cout<<"PASS: actual read-only FAT, nine-part TA assembly/overlaps/bounds, exact identity refusal and atomic no-replace publication; synthetic files only\n";
+    std::cout<<"PASS: actual read-only FAT with checked VFAT identity/order/checksum/padding, nine-part TA assembly/overlaps/bounds, exact identity refusal and atomic no-replace publication; synthetic files only\n";
 }

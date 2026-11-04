@@ -23,6 +23,12 @@ overlaps and admit only the retained 147,544-byte Uke image by its complete
 SHA-256. They do not load the trusted app. Candidate publication now requires
 a non-running installed -unstable kernel ABI.
 
+The read-only FAT parser validates VFAT slot order, checksums, termination and
+padding before resolving the same fixed ASCII names. Stock Uke's image directory
+uses a generated short alias, so short-name-only lookup cannot find it. Duplicate
+identities and malformed long-name chains are refused; firmware hashes remain
+unchanged.
+
 The read-only LP/loop/debugfs path reuses the original Uke boot updater header
 at a96607f. FAT parsing and bounded publication are original MIT C++ code.
 Synthetic native/sanitizer tests run on COPR. Tablet provisioning and physical
