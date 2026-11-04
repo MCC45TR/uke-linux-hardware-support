@@ -22,7 +22,10 @@ Kirigami.ApplicationWindow {
         if (!pageStack.currentItem || pageStack.currentItem.objectName !== "guidePage") backend.leaveGuide()
         backend.settings.stop()
         if (pageStack.currentItem && pageStack.currentItem.objectName === "topicPage") backend.settings.open(pageStack.currentItem.topicId)
-        if (pageStack.currentItem && pageStack.currentItem.objectName === "areaPage") browsingCatalog = false
+        if (pageStack.currentItem && pageStack.currentItem.objectName === "areaPage") {
+            browsingCatalog = false
+            backend.selectArea(pageStack.currentItem.areaIndex)
+        }
     }
     pageStack.onPageRemoved: page => page.destroy()
     function showArea(index) {
@@ -32,7 +35,8 @@ Kirigami.ApplicationWindow {
             backend.settings.close()
             backend.selectArea(index)
             pageStack.clear()
-            pageStack.push(areaPage)
+            pageStack.push(areaPage, {areaIndex: 0})
+            if (index > 0) pageStack.push(areaPage, {areaIndex: index})
             if (globalDrawer.modal) globalDrawer.close()
         } finally { changingPage = false }
     }

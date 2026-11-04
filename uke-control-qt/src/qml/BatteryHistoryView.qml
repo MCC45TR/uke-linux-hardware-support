@@ -10,6 +10,7 @@ ColumnLayout {
     readonly property var report: backend.settings.history
     Layout.fillWidth: true
     spacing: 0
+    Component.onCompleted: backend.settings.loadHistory(86400)
     FormCard.FormHeader { title: i18n("Battery history") }
     FormCard.FormCard {
         Layout.fillWidth: true
@@ -21,10 +22,11 @@ ColumnLayout {
             valueRole: "value"
             currentIndex: 1
             Accessible.name: text
+            onActivated: backend.settings.loadHistory(currentValue)
         }
         FormCard.FormButtonDelegate {
             objectName: "loadBatteryHistory"
-            text: i18n("Read existing history")
+            text: i18n("Refresh history")
             icon.name: themeIcons.names["view-refresh"]
             Accessible.name: text
             enabled: !view.report.busy

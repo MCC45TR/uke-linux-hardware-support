@@ -621,3 +621,66 @@ msgstr "Terminalde devam et"
 
 msgid "The terminal requests any required authentication and shows the operation's result."
 msgstr "Terminal gerekli kimlik doğrulamasını ister ve işlemin sonucunu gösterir."
+
+msgid "No matching connected device was found. Refresh after connecting it."
+msgstr "Uygun bağlı aygıt bulunamadı. Bağladıktan sonra yenileyin."
+
+msgid "Yes"
+msgstr "Evet"
+
+msgid "No"
+msgstr "Hayır"
+
+msgid "Full"
+msgstr "Dolu"
+
+msgid "Charging"
+msgstr "Şarj oluyor"
+
+msgid "Discharging"
+msgstr "Pil kullanılıyor"
+
+msgid "Automatic"
+msgstr "Otomatik"
+
+msgid "Reported design capacity"
+msgstr "Bildirilen tasarım kapasitesi"
+
+msgid "Reported full capacity"
+msgstr "Bildirilen tam kapasite"
+
+msgid "Applied brightness"
+msgstr "Uygulanan parlaklık"
+
+msgid "Negotiated protocol"
+msgstr "Anlaşılan protokol"
+
+msgid "Negotiated PD revision"
+msgstr "Anlaşılan PD sürümü"
+
+msgid "Display connector"
+msgstr "Ekran bağlantısı"
+
+msgid "Active"
+msgstr "Etkin"
+
+msgid "Bits per colour component"
+msgstr "Renk bileşeni başına bit"
+
+msgid "No supported summary fields were reported. Technical tools contain the original output."
+msgstr "Desteklenen özet alanı bildirilmedi. Özgün çıktı teknik araçlarda bulunur."
+
+msgid "More information"
+msgstr "Daha fazla bilgi"
+
+msgid "Less information"
+msgstr "Daha az bilgi"
+
+msgid "Refresh history"
+msgstr "Geçmişi yenile"
+
+msgid "Requested path"
+msgstr "İstenen yol"
+
+msgid "No location selected"
+msgstr "Konum seçilmedi"

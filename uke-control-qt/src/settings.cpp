@@ -11,9 +11,12 @@ namespace {
 QString unknown() { return i18n("Not reported"); }
 QString value(const QJsonValue &v) {
   if(v.isNull() || v.isUndefined()) return unknown();
-  if(v.isBool()) return v.toBool()?i18n("On"):i18n("Off");
+  if(v.isBool()) return v.toBool()?i18n("Yes"):i18n("No");
   if(v.isDouble()) return QLocale().toString(v.toDouble(),'g',8);
-  if(v.isString()) return safe(v.toString().left(500).toStdString());
+  if(v.isString()) {
+    const QMap<QString,QString> states{{"Full",i18n("Full")},{"Charging",i18n("Charging")},{"Discharging",i18n("Discharging")},{"Unknown",unknown()},{"auto",i18n("Automatic")},{"on",i18n("On")},{"off",i18n("Off")}};
+    return states.value(v.toString(),safe(v.toString().left(500).toStdString()));
+  }
   return unknown();
 }
 QVariantMap row(const QString &name,const QString &text,double progress=-1) {
@@ -33,7 +36,8 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
     const bool coherent=data.value("provider_verified").toBool() && data.value("snapshot_coherent").toBool();
     auto measure=[&](const char *key,const QString &title,const char *unit,double scale,const QString &suffix,bool level=false) {
       const auto r=readings.value(key).toObject();const auto v=r.value("value");
-      const bool valid=coherent && r.value("errno").toInt(-1)==0 && r.value("unit").toString()==unit && v.isDouble() && std::isfinite(v.toDouble());
+      const auto validity=r.value("validity").toString();
+      const bool valid=coherent && validity!="stale" && validity!="invalid" && validity!="unavailable" && r.value("errno").toInt(-1)==0 && r.value("unit").toString()==unit && v.isDouble() && std::isfinite(v.toDouble());
       const auto n=v.toDouble()/scale;
       rows << row(title,valid?QLocale().toString(n,'f',scale==1?0:1)+suffix:unknown(),valid&&level&&n>=0&&n<=100?n/100:-1);
     };
@@ -44,13 +48,40 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
       measure("battery.current_now",i18n("Battery current"),"uA_positive_into_battery",1000," mA");
       measure("battery.voltage_now",i18n("Battery voltage"),"uV",1000000," V");
       rows << row(i18n("Measurement basis"),i18n("Reported by the battery provider; sample age may be unknown"));
+      for(int i=3;i<rows.size();++i){auto r=rows[i].toMap();r["detail"]=true;rows[i]=r;}
     } else {
       if(id=="battery.health") {
         rows << row(i18n("Reported hardware cycles"),value(data.value("battery.cycle_count").toObject().value("value")));
         const auto h=data.value("health").toObject();
         rows << row(i18n("Qualified capacity retention"),h.value("learned_capacity_qualified").toBool()&&h.value("capacity_retention_percent").isDouble()?value(h.value("capacity_retention_percent"))+" %":unknown());
+        for(const auto &key:{"battery.charge_full","battery.charge_full_design"}) {
+          const auto capacity=data.value(key).toObject();
+          const bool valid=coherent&&capacity.value("value").isDouble()&&capacity.value("unit").toString()=="uAh"&&capacity.value("errno").toInt(-1)==0;
+          rows<<row(QString(key).endsWith("design")?i18n("Reported design capacity"):i18n("Reported full capacity"),valid?QLocale().toString(capacity.value("value").toDouble()/1000,'f',0)+" mAh":unknown());
+        }
       }
       rows << row(i18n("Individual cell health"),i18n("Not measured by this provider"));
+    }
+    return rows;
+  }
+  if(id=="flashlight.status") {
+    const auto f=data.value("flashlight").toObject();
+    rows<<row(i18n("Available"),value(f.value("available")));
+    rows<<row(i18n("Flashlight"),f.value("on").isBool()?(f.value("on").toBool()?i18n("On"):i18n("Off")):unknown());
+    rows<<row(i18n("Applied brightness"),f.value("brightness_percent").isDouble()?value(f.value("brightness_percent"))+" %":unknown());
+    return rows;
+  }
+  if(id=="battery.protocol") {
+    rows<<row(i18n("Reported USB type"),value(data.value("reported_usb_type")));
+    rows<<row(i18n("Negotiated protocol"),value(data.value("negotiated_protocol")));
+    rows<<row(i18n("Negotiated PD revision"),value(data.value("negotiated_pd_revision")));
+    return rows;
+  }
+  if(id=="sensors.list") {
+    for(const auto &entry:data.value("readings").toArray()) {
+      if(rows.size()>=24)break;
+      const auto r=entry.toObject();const auto label=safe(r.value("label").toString().left(120).toStdString());
+      if(!label.isEmpty())rows<<row(label,r.value("value").isNull()||r.value("value").isUndefined()?value(r.value("status")):value(r.value("value"))+" "+safe(r.value("unit").toString().left(32).toStdString()));
     }
     return rows;
   }
@@ -91,12 +122,13 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
     {"profile_qualified",i18n("Charging profile qualified")},{"control_profile_qualified",i18n("Charging profile qualified")},
     {"threshold_admission_ready",i18n("Threshold requests admitted")},{"automatic_admission_ready",i18n("Automatic requests admitted")},
     {"ready",i18n("Provider ready")},{"available",i18n("Available")},{"supported",i18n("Supported")},
-    {"enabled",i18n("Enabled")},{"brightness",i18n("Brightness")},{"percent",i18n("Reported level")},
+    {"enabled",i18n("Enabled")},{"brightness",i18n("Brightness")},{"brightness_percent",i18n("Reported level")},{"percent",i18n("Reported level")},
     {"color",i18n("Colour")},{"policy",i18n("Policy")},{"mode",i18n("Mode")},
     {"product",i18n("Accessory")},{"manufacturer",i18n("Manufacturer")},{"name",i18n("Name")},
     {"role",i18n("Data role")},{"interface",i18n("Network interface")},{"selection",i18n("Microphone preference")},
     {"description",i18n("Description")},{"status",i18n("Status")},{"reason",i18n("Provider explanation")},
-    {"radio",i18n("Radio state")},{"state",i18n("Reported state")},{"usb_type",i18n("Reported USB type")},
+    {"radio",i18n("Radio state")},{"powered",i18n("Radio state")},{"state",i18n("Reported state")},{"usb_type",i18n("Reported USB type")},
+    {"connector",i18n("Display connector")},{"active",i18n("Active")},{"bits_per_component",i18n("Bits per colour component")},
     {"current_slot",i18n("Running slot")},{"next_boot_slot",i18n("Next boot slot")},
     {"microphone",i18n("Microphone")},{"label",i18n("Label")},{"connected",i18n("Connected")}
   };
@@ -150,7 +182,7 @@ QString Settings::summary(int area)const {
   for(const auto &t:settingTopics())if(t.area==area)
     for(const auto &id:t.reads)if(data_.contains(id)) {
       const auto rows=informationRows(id,data_.value(id));
-      if(!rows.isEmpty()) {const auto r=rows.first().toMap();return r.value("title").toString()+": "+r.value("value").toString();}
+      if(!rows.isEmpty()) {const auto r=rows.first().toMap();return r.value("title").toString()+": "+r.value("value").toString()+" · "+i18n("Read at %1",stamps_.value(id));}
     }
   return {};
 }
@@ -160,7 +192,7 @@ QVariantList Settings::information()const {
     if(id=="update.status"&&!bootReport().isEmpty())continue;
     QString title=id;try{title=friendlyTitle(action(id.toStdString()));}catch(const std::exception &){}
     auto rows=informationRows(id,data_.value(id));
-    if(rows.isEmpty())rows<<row(i18n("Information"),errors_.contains(id)?i18n("Unavailable"):current_==id?i18n("Reading…"):i18n("Not checked"));
+    if(rows.isEmpty())rows<<row(i18n("Information"),errors_.contains(id)?i18n("Unavailable"):current_==id?i18n("Reading…"):data_.contains(id)?i18n("No supported summary fields were reported. Technical tools contain the original output."):i18n("Not checked"));
     out<<QVariantMap{{"id",id},{"title",title},{"rows",rows},{"error",errors_.value(id)},
                     {"stale",errors_.contains(id)&&data_.contains(id)},{"stamp",stamps_.value(id)}};
   }
@@ -199,7 +231,7 @@ void Settings::finish(const Result &r) {
   const auto id=current_;
   QJsonParseError e;const auto document=QJsonDocument::fromJson(QByteArray::fromStdString(r.output),&e);
   const auto d=document.object();
-  if(r.exit_status||r.cancelled||r.timed_out||r.truncated||e.error!=QJsonParseError::NoError||!document.isObject()||(d.contains("available")&&d.value("available").isBool()&&!d.value("available").toBool())) {
+  if(r.exit_status||r.cancelled||r.timed_out||r.truncated||e.error!=QJsonParseError::NoError||!document.isObject()) {
     errors_[id]=i18n("The provider could not return usable information. Refresh to try again.");
     notice_=errors_.value(id);
   } else {

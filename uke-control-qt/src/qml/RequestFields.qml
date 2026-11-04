@@ -24,6 +24,7 @@ ColumnLayout {
                     : fieldRow.modelData.kind === "color" ? colorField
                     : fieldRow.modelData.kind === "path" ? fileField
                     : fieldRow.modelData.kind === "directory" ? folderField
+                    : ["interface", "usb_device", "input_device"].includes(fieldRow.modelData.kind) ? missingDevice
                     : fieldRow.modelData.integer ? integerField : textField
                 Component {
                     id: radioField
@@ -47,6 +48,14 @@ ColumnLayout {
                                 onClicked: backend.setDraft(fieldRow.modelData.key, modelData.value)
                             }
                         }
+                    }
+                }
+                Component {
+                    id: missingDevice
+                    SafeText {
+                        objectName: "parameter_" + fieldRow.modelData.key
+                        text: fieldRow.modelData.title
+                        description: i18n("No matching connected device was found. Refresh after connecting it.")
                     }
                 }
                 Component {
@@ -96,7 +105,7 @@ ColumnLayout {
                         label: fieldRow.modelData.title
                         Accessible.name: label
                         fileMode: ["before", "after", "snapshot", "review"].includes(fieldRow.modelData.key) ? FileDialog.OpenFile : FileDialog.SaveFile
-                        selectedFile: fieldRow.selectedValue.startsWith("/") ? "file://" + fieldRow.selectedValue : ""
+                        enabled: !backend.simulation
                         onSelectedFileChanged: if (selectedFile.toString().length) backend.setDraft(fieldRow.modelData.key, backend.settings.localPath(selectedFile))
                     }
                 }
@@ -106,6 +115,7 @@ ColumnLayout {
                         objectName: "parameter_" + fieldRow.modelData.key
                         label: fieldRow.modelData.title
                         Accessible.name: label
+                        enabled: !backend.simulation
                         onSelectedFolderChanged: if (selectedFolder.toString().length) backend.setDraft(fieldRow.modelData.key, backend.settings.localPath(selectedFolder))
                     }
                 }
@@ -120,6 +130,11 @@ ColumnLayout {
                         onTextEdited: backend.setDraft(fieldRow.modelData.key, text)
                     }
                 }
+            }
+            SafeText {
+                visible: fieldRow.modelData.kind === "path" || fieldRow.modelData.kind === "directory"
+                text: i18n("Requested path")
+                description: fieldRow.selectedValue.length ? fieldRow.selectedValue : i18n("No location selected")
             }
         }
     }

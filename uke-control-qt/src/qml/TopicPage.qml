@@ -49,7 +49,9 @@ FormCard.FormCardPage {
     Repeater {
         model: settings.information
         delegate: ColumnLayout {
+            id: informationSection
             required property var modelData
+            property bool expanded: false
             Layout.fillWidth: true
             spacing: 0
             FormCard.FormHeader { title: modelData.title }
@@ -59,7 +61,9 @@ FormCard.FormCardPage {
                     model: modelData.rows
                     delegate: ColumnLayout {
                         required property var modelData
+                        required property int index
                         Layout.fillWidth: true
+                        visible: informationSection.expanded || (!modelData.detail && index < 6)
                         spacing: 0
                         SafeText { Layout.fillWidth: true; text: modelData.title; description: modelData.value }
                         Controls.ProgressBar {
@@ -72,6 +76,13 @@ FormCard.FormCardPage {
                             Accessible.name: modelData.title
                         }
                     }
+                }
+                FormCard.FormButtonDelegate {
+                    visible: informationSection.modelData.rows.length > 6 || informationSection.modelData.rows.some(r => r.detail)
+                    text: informationSection.expanded ? i18n("Less information") : i18n("More information")
+                    icon.name: themeIcons.names["view-list-details"]
+                    Accessible.name: text
+                    onClicked: informationSection.expanded = !informationSection.expanded
                 }
                 SafeText { visible: modelData.stale; text: i18n("Previous information — refresh failed"); description: modelData.stamp }
             }

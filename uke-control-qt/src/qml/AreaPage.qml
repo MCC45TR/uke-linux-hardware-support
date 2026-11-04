@@ -7,7 +7,8 @@ FormCard.FormCardPage {
     id: page
     objectName: "areaPage"
     required property var appWindow
-    readonly property var area: backend.areas[backend.section]
+    property int areaIndex: 0
+    readonly property var area: backend.areas[areaIndex]
     title: area.title
     actions: [Kirigami.Action {
         text: i18n("Search settings")
@@ -21,7 +22,7 @@ FormCard.FormCardPage {
         text: backend.simulation ? i18n("Simulation — sample data only. Changes are disabled.") : i18n("Read-only session")
     }
     Repeater {
-        model: backend.section === 0 ? backend.areas.filter(a => a.index >= 1 && a.index <= 6) : []
+        model: page.areaIndex === 0 ? backend.areas.filter(a => a.index >= 1 && a.index <= 6) : []
         delegate: FormCard.FormCard {
             required property var modelData
             Layout.fillWidth: true
@@ -35,9 +36,9 @@ FormCard.FormCardPage {
             }
         }
     }
-    FormCard.FormHeader { visible: backend.section === 0; title: i18n("More") }
+    FormCard.FormHeader { visible: page.areaIndex === 0; title: i18n("More") }
     FormCard.FormCard {
-        visible: backend.section === 0
+        visible: page.areaIndex === 0
         Repeater {
             model: backend.areas.filter(a => a.secondary)
             delegate: FormCard.FormButtonDelegate {
@@ -51,7 +52,7 @@ FormCard.FormCardPage {
         }
     }
     FormCard.FormCard {
-        visible: backend.section === 8
+        visible: page.areaIndex === 8
         FormCard.FormButtonDelegate {
             objectName: "browseAllActions"
             text: i18n("Expert action catalog")
@@ -62,7 +63,7 @@ FormCard.FormCardPage {
         }
     }
     Repeater {
-        model: backend.section > 0 ? backend.settings.topics(backend.section) : []
+        model: page.areaIndex > 0 ? backend.settings.topics(page.areaIndex) : []
         delegate: FormCard.FormCard {
             required property var modelData
             Layout.fillWidth: true
@@ -77,9 +78,9 @@ FormCard.FormCardPage {
         }
     }
     FormCard.FormCard {
-        visible: backend.settings.nativeLinks(backend.section).length > 0
+        visible: backend.settings.nativeLinks(page.areaIndex).length > 0
         Repeater {
-            model: backend.settings.nativeLinks(backend.section)
+            model: backend.settings.nativeLinks(page.areaIndex)
             delegate: FormCard.FormButtonDelegate {
                 required property var modelData
                 text: modelData.title

@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.2.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -84,6 +84,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.2.0-2
+- Preserve native Back navigation and avoid invalid initial file selections.
+- Refine reported measurements, unsupported-state handling and topic information density.
+
 * Wed Nov 04 2026 Uke contributors - 1.2.0-1
 - Replace command-oriented daily pages with grouped settings topics and information tiles.
 - Add bounded read-only UPower battery history and semantic preference controls.

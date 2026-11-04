@@ -33,3 +33,11 @@ history ordering and discontinuities, cancellation, real discrete choices and
 every topic in the real QML scene. Fixture history cannot contact the system bus.
 Opt-in installed checks additionally request existing UPower history. Native
 compilation and RPM testing take place in COPR; device installation uses DNF.
+
+COPR 11260183 compiled 1.2.0-1 and passed CLI, appearance and retained widget
+checks. The Kirigami suite passed the new topic/history tests but rejected native
+FileDialog warnings from assigning an empty/nonexistent initial selection.
+The correction leaves the picker unselected and displays the actual requested
+path separately. No warning was suppressed. The next release also retains Home
+in Back navigation, distinguishes unsupported summaries from failed reads and
+collapses secondary measurements. Device validation remains pending.
