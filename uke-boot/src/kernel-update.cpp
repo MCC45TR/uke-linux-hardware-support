@@ -335,7 +335,7 @@ static void rollback_modules(const Package &core,Query query=rpm) {
     need(same_tuple(core,modules),"Rollback core/modules RPM versions differ");
     need(query({"-V","--noscripts","--nomtime","--nomode","--nouser","--nogroup","--",nevra}).empty(),"Rollback modules RPM verification failed");
 }
-static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,const std::string &label,const std::string &running,Query query=rpm) {
+static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,const std::string &label,const std::string &running,Query query=rpm,bool development=false) {
     need(label=="linux"||label=="userdata","Unsupported boot bundle root profile");
     trusted(bundle,true);trusted(bundle/"manifest");trusted(bundle/"modules.sha256");
     const auto raw_manifest=file(bundle/"manifest");
@@ -350,7 +350,7 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
     for(const auto &key:keys) need(manifest.contains(key),"Missing manifest field");
     need(manifest.at("format")=="1" && token(manifest.at("kernel_release")),"Unsupported bundle format");
     const auto release=manifest.at("kernel_release");
-    need(fs::is_directory(modules/running/"kernel"),"Keep the running kernel modules installed for rollback");
+    need(development || fs::is_directory(modules/running/"kernel"),"Keep the running kernel modules installed for rollback");
     const auto inventory=file(bundle/"modules.sha256");
     need(digest(inventory)==manifest.at("modules_sha256"),"Module inventory digest mismatch");
     const auto expected=module_inventory(std::string(inventory.begin(),inventory.end()));
@@ -561,7 +561,8 @@ int main(int argc,char **argv) {
                 std::cout<<"Device-local video candidate verified: "<<bytes.size()<<" bytes, SHA256 "<<digest(bytes)<<"; no firmware file installed\n";
             } else {
                 const std::string release=argv[2];need(token(release),"Invalid firmware release");
-                (void)validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/release,"/usr/lib/modules",label,current.release);
+                (void)validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/release,"/usr/lib/modules",label,current.release,rpm,
+                                      rollback==RollbackMode::off);
                 uke_video::import_firmware(release,current.release,super);
                 trusted("/usr/libexec/senemos-uke/uke-install-profile");
                 (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","clock-save-required"},4096);
@@ -591,7 +592,8 @@ int main(int argc,char **argv) {
                 [&](const fs::path &selected,const Bytes &bytes){userdata_update("apply",selected,bytes,state,current.release,filesystem);});
             return 0;
         }
-        auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release);
+        const bool development=rollback==RollbackMode::off && (action=="check" || action=="apply");
+        auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release,rpm,development);
         if(label=="userdata" && !current_only) {
             if(automatic || preflight) {
                 inspect_userdata(bundle,bytes);
