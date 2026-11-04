@@ -3,3 +3,5 @@
 (genfscon binder "/anbox-binder" (system_u object_r binder_device_t ((s0) (s0))))
 (genfscon binder "/anbox-hwbinder" (system_u object_r binder_device_t ((s0) (s0))))
 (genfscon binder "/anbox-vndbinder" (system_u object_r binder_device_t ((s0) (s0))))
+; The original daemon enumerates binderfs while allocating dynamic devices.
+(allow waydroid_t binderfs_t (dir (read)))

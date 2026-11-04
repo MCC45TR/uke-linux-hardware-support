@@ -21,7 +21,8 @@ rpmkeys --checksig --nosignature --verbose "${policy_rpms[0]}"
 install -Dm644 /etc/selinux/config "$stage/root/etc/selinux/config"
 # Link against all original modules without loading worker or host policy.
 semodule -p "$stage/root" -S /var/lib/selinux -s targeted -n -X 400 \
-    -i "$owner/uke-waydroid/selinux/uke_waydroid_binder.cil"
+    -X 200 -i /usr/share/selinux/targeted/waydroid.pp \
+    -X 400 -i "$owner/uke-waydroid/selinux/uke_waydroid_binder.cil"
 semodule -p "$stage/root" -S /var/lib/selinux -s targeted -lfull | \
     awk '$2=="uke_waydroid_binder" {found=1;print} END {exit !found}'
 printf 'Complete Fedora policy links the Waydroid Binder genfscon module\n'
