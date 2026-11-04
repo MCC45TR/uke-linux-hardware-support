@@ -1,0 +1,11 @@
+[Unit]
+Description=Maintain the Uke UTC anchor without writing the PMIC counter
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/sys/firmware/devicetree/base/soc/qcom,spmi@c42d000/qcom,pmk8550@0/rtc@6100
+ConditionPathExists=!/sys/firmware/devicetree/base/soc/qcom,spmi@c42d000/qcom,pmk8550@0/rtc@6100/qcom,uefi-rtc-info
+
+[Timer]
+OnBootSec=20
+OnUnitActiveSec=5min
+AccuracySec=5
+Unit=uke-rtc-counter-sync.service

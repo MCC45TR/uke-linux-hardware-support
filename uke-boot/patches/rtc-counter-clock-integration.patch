@@ -1,0 +1,125 @@
+--- a/src/install-profile.cpp
++++ b/src/install-profile.cpp
+@@ -3,6 +3,7 @@
+ #include "installation-policy.hpp"
+ #include "boot-common.hpp"
+ #include "rtc-clock.hpp"
++#include "rtc-counter-offset.hpp"
+ #include <array>
+ #include <cerrno>
+ #include <cstdint>
+@@ -321,12 +322,63 @@
+     require(set_time(saved) == 0, "Cannot restore the synchronized clock floor");
+     return true;
+ }
++static uke_counter_clock::Sample counter_clock_sample() {
++    const auto value=clock_sample();timespec boot{};
++    require(clock_gettime(CLOCK_BOOTTIME,&boot)==0 && boot.tv_sec>=0 && boot.tv_nsec>=0 &&
++            boot.tv_nsec<1000000000 && uint64_t(boot.tv_sec)<=UINT64_MAX/1000000000,
++            "Cannot read the startup clock for counter qualification");
++    return {value.now.tv_sec,uint64_t(boot.tv_sec)*1000000000+uint64_t(boot.tv_nsec),value.synchronized};
++}
++static bool save_counter_clock(int state_fd) {
++    if(!uke_counter_clock::Counter::available())return false;
++    try {
++        uke_counter_clock::Counter counter;
++        const auto result=uke_counter_clock::synchronize([&]{return counter.read();},counter_clock_sample,
++            [&]{return uke_counter_clock::read_for_sync(state_fd);},
++            [&](const auto &record){uke_counter_clock::write_record(state_fd,record);},[]{usleep(250000);});
++        if(result==uke_counter_clock::Result::saved) {
++            std::cout<<"Persisted and verified the synchronized PMIC counter anchor; hardware counter and OEM persist unchanged.\n";
++            return true;
++        }
++    } catch(const std::exception &error) {
++        std::cerr<<"Counter clock anchor deferred: "<<error.what()<<"; existing clock-floor path retained.\n";
++    }
++    return false;
++}
++static bool restore_counter_clock(int state_fd) {
++    if(!uke_counter_clock::Counter::available())return false;
++    try {
++        const auto record=uke_counter_clock::read_record(state_fd);
++        if(!record)return false;
++        uke_counter_clock::Counter counter;
++        const auto result=uke_counter_clock::restore(*record,[&]{return counter.read();},counter_clock_sample,
++            [](int64_t utc){const timespec value{utc,0};return clock_settime(CLOCK_REALTIME,&value);},[]{usleep(250000);});
++        if(result==uke_counter_clock::Result::restored) {
++            std::cout<<"Restored startup UTC from the advancing read-only PMIC counter and private synchronized anchor.\n";
++            return true;
++        }
++    } catch(const std::exception &error) {
++        std::cerr<<"Counter clock restore deferred: "<<error.what()<<"; existing clock-floor path retained.\n";
++    }
++    return false;
++}
++static void check_counter_clock(int state_fd) {
++    const auto record=uke_counter_clock::read_record(state_fd);
++    require(record.has_value(),"Counter clock anchor is not provisioned from trusted UTC");
++    uke_counter_clock::Counter counter;
++    (void)uke_counter_clock::advancing([&]{return counter.read();},[]{usleep(250000);});
++    const auto before=counter_clock_sample();const auto value=counter.read();const auto after=counter_clock_sample();
++    uke_counter_clock::pair_ok(before,after,false);
++    require(uke_counter_clock::gap(uke_counter_clock::mapped(*record,value),after.utc)<=2,
++            "Counter-derived UTC differs from the current system clock");
++    std::cout<<"clock-counter-check: private counter anchor and current UTC match; no clock, PMIC or persist write.\n";
++}
+ #ifndef UKE_INSTALL_PROFILE_TEST
+ int main(int argc, char **argv) {
+     try {
+-        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow|clock-save|clock-save-required|clock-restore|rtc-sync|rtc-check");
++        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow|clock-save|clock-save-required|clock-restore|clock-counter-check|rtc-sync|rtc-check");
+         const std::string action = argv[1];
+-        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore" || action == "rtc-sync" || action == "rtc-check", "Unknown profile operation");
++        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore" || action == "clock-counter-check" || action == "rtc-sync" || action == "rtc-check", "Unknown profile operation");
+         if (action != "status") require(uke_device(observation("/sys/firmware/devicetree/base/compatible", 4096)), "Exact Uke/SM7675 device required");
+         if (action == "check") { std::cout << uke_install::name(inspect_root()) << '\n'; return 0; }
+         require(geteuid() == 0, "Root privileges required for system installation state");
+@@ -349,15 +401,28 @@
+         }
+         auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore");
+         if (action == "status") { std::cout << uke_install::name(stored_profile(state.value)) << '\n'; return 0; }
++        if(action=="clock-counter-check") {
++            ProfileFd lock(openat(state.value,"lock",O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK));
++            trusted(lock.value,false);
++            require(flock(lock.value,LOCK_SH|LOCK_NB)==0,"Installation state is busy");
++            check_counter_clock(state.value);return 0;
++        }
+         ProfileFd lock(openat(state.value, "lock", O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, 0600));
+         trusted(lock.value, false);
+         require(flock(lock.value, LOCK_EX | LOCK_NB) == 0, "Installation classification already running");
+         if (action == "clock-save" || action == "clock-save-required" || action == "clock-restore") {
+             const auto sample = clock_sample();
+             if (action == "clock-save-required") require(sample.synchronized, "NTP synchronization required before staging a new signed kernel");
+-            const bool changed = action == "clock-restore" ?
+-                restore_clock_floor(state.value, sample, [](timespec value){return clock_settime(CLOCK_REALTIME, &value);}) : save_clock_floor(state.value, sample);
+-            std::cout << action << (changed ? ": synchronized floor applied\n" : ": no clock/state change required\n");
++            bool changed=false;
++            if(action=="clock-restore") {
++                changed=restore_counter_clock(state.value);
++                // Counter qualification may wait for a tick; never reuse the older wall-clock sample.
++                changed=restore_clock_floor(state.value,clock_sample(),[](timespec value){return clock_settime(CLOCK_REALTIME,&value);}) || changed;
++            } else {
++                changed=save_clock_floor(state.value,sample);
++                changed=save_counter_clock(state.value) || changed;
++            }
++            std::cout << action << (changed ? ": verified clock state applied\n" : ": no clock/state change required\n");
+             return 0;
+         }
+         if (action == "grow") {
+@@ -398,6 +463,7 @@
+             std::cout << "Added the Fedora context to the legacy read-only persist mount; effective on next mount, OEM labels unchanged.\n";
+         if (action == "reconcile" && save_clock_floor(state.value))
+             std::cout << "Persisted the NTP-synchronized clock floor; no RTC access.\n";
++        if(action=="reconcile")(void)save_counter_clock(state.value);
+         if (profile == uke_install::Profile::linux) {
+             mask_unit(units.value, "uke-userdata-update.service");
+             mask_unit(units.value, "uke-userdata-accept.service");
+--- a/src/units/75-uke-clock-floor.conf
++++ b/src/units/75-uke-clock-floor.conf
+@@ -1,5 +1,6 @@
+ [Unit]
+ Wants=uke-rtc-sync.timer
++Wants=uke-rtc-counter-sync.timer
+ 
+ [Service]
+ # Restore a verified disk floor before Chrony; save only kernel-synchronized UTC.
