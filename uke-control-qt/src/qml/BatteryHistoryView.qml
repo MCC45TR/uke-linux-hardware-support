@@ -45,6 +45,8 @@ ColumnLayout {
             Layout.rightMargin: Kirigami.Units.largeSpacing
             visible: view.report.available || false
             report: view.report
+            foreground: Kirigami.Theme.textColor
+            accent: Kirigami.Theme.highlightColor
             Accessible.role: Accessible.Graphic
             Accessible.name: i18n("Recorded battery percentage over time")
             Accessible.description: view.report.message || ""

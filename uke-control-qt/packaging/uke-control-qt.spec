@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.2.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -84,6 +84,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.2.0-5
+- Bind chart colours to the actual inherited Kirigami theme context.
+
 * Wed Nov 04 2026 Uke contributors - 1.2.0-4
 - Improve plot-axis contrast using native foreground colours.
 - Show single preferences directly and preserve drafts when refreshing observations.

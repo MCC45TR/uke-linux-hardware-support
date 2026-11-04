@@ -116,7 +116,7 @@ void HistoryPlot::paint(QPainter *p) {
   p->setFont(QGuiApplication::font());
   const QRectF plot(42,12,std::max(1.,width()-56),std::max(1.,height()-42));
   const auto start=report_.value("start").toLongLong(),end=report_.value("end").toLongLong();
-  const auto textColor=palette.color(QPalette::Active,QPalette::WindowText);
+  const auto textColor=foreground_.isValid()?foreground_:palette.color(QPalette::Active,QPalette::WindowText);
   auto gridColor=textColor;gridColor.setAlpha(64);
   for(int n:{0,50,100}) {
     const auto y=plot.bottom()-plot.height()*n/100.;
@@ -129,7 +129,7 @@ void HistoryPlot::paint(QPainter *p) {
   p->drawText(QRectF(plot.left(),plot.bottom()+8,110,24),Qt::AlignLeft,QDateTime::fromSecsSinceEpoch(start).toString(fmt));
   p->drawText(QRectF(plot.right()-110,plot.bottom()+8,110,24),Qt::AlignRight,QDateTime::fromSecsSinceEpoch(end).toString(fmt));
   p->save();p->setClipRect(plot.adjusted(-3,-3,3,3));
-  const auto color=palette.color(QPalette::Highlight);p->setPen(QPen(color,2));p->setBrush(color);
+  const auto color=accent_.isValid()?accent_:palette.color(QPalette::Highlight);p->setPen(QPen(color,2));p->setBrush(color);
   for(const auto &entry:report_.value("segments").toList()) {
     QPolygonF points;
     for(const auto &item:entry.toList()) {const auto v=item.toMap();points<<QPointF(plot.left()+plot.width()*(v.value("time").toLongLong()-start)/double(end-start),plot.bottom()-plot.height()*v.value("value").toDouble()/100.);}

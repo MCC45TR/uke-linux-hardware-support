@@ -67,3 +67,8 @@ preference-opening row for single-control topics. The next revision uses the
 native foreground colour for axes, displays a single preference directly and
 keeps requested values when refreshing observations. Application/authentication
 still require the existing review. No device write was performed by these tests.
+
+The 1.2.0-4 native suites passed in COPR 11260247. The chart now receives its
+foreground/accent from the enclosing Kirigami theme: the application QWidget
+palette can differ from the Quick page's colour context, so relying on its
+WindowText alone is insufficient. This is kept separate from icon-theme fallback.

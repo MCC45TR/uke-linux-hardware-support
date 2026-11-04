@@ -4,6 +4,7 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QQuickPaintedItem>
+#include <QColor>
 #include <functional>
 namespace uq {
 struct Topic {
@@ -70,13 +71,21 @@ signals:
 class HistoryPlot : public QQuickPaintedItem {
   Q_OBJECT
   Q_PROPERTY(QVariantMap report READ report WRITE setReport NOTIFY reportChanged)
+  Q_PROPERTY(QColor foreground READ foreground WRITE setForeground NOTIFY coloursChanged)
+  Q_PROPERTY(QColor accent READ accent WRITE setAccent NOTIFY coloursChanged)
   QVariantMap report_;
+  QColor foreground_, accent_;
 public:
   explicit HistoryPlot(QQuickItem *parent = nullptr);
   QVariantMap report() const { return report_; }
   void setReport(const QVariantMap &report);
+  QColor foreground() const { return foreground_; }
+  QColor accent() const { return accent_; }
+  void setForeground(const QColor &colour) { if(colour.isValid()&&colour!=foreground_){foreground_=colour;update();emit coloursChanged();} }
+  void setAccent(const QColor &colour) { if(colour.isValid()&&colour!=accent_){accent_=colour;update();emit coloursChanged();} }
   void paint(QPainter *painter) override;
 signals:
   void reportChanged();
+  void coloursChanged();
 };
 } // namespace uq
