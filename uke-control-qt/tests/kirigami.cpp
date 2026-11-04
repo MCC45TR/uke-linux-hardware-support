@@ -2,6 +2,7 @@
 #include "../src/bridge.hpp"
 #include "../src/theme-icons.hpp"
 #include <KIconTheme>
+#include <KIconLoader>
 #include <KLocalizedQmlContext>
 #include <KStyleManager>
 #include <QAccessible>
@@ -14,6 +15,8 @@
 #include <QtTest>
 using namespace uq;
 static QQuickItem *visualItem(QQuickItem *parent, const QString &name) {
+  if (!parent->isVisible())
+    return nullptr;
   if (parent->objectName() == name)
     return parent;
   for (auto *child : parent->childItems())
@@ -44,6 +47,9 @@ private slots:
     QSignalSpy changed(&themeIcons, &ThemeIcons::changed);
     themeIcons.refresh();
     QCOMPARE(changed.size(), 1);
+    QVERIFY(QMetaObject::invokeMethod(KIconLoader::global(), "iconChanged",
+                                      Q_ARG(int, int(KIconLoader::Small))));
+    QCOMPARE(changed.size(), 2);
     QSet<QString> semanticIcons;
     Bridge bridge(fixture, false);
     for (const auto &entry : actions()) {
@@ -98,6 +104,24 @@ private slots:
     for (const auto &id : {"channel.set", "channel.preview", "channel.status",
                            "update.preview", "update.apply"})
       QVERIFY(updates.contains(id));
+  }
+  void optionalDeviceReads() {
+    if (!qEnvironmentVariableIsSet("UKE_QT_TEST_DEVICE_READS"))
+      QSKIP("Live read-only device checks require explicit opt-in");
+    Bridge bridge({}, true);
+    for (const auto *id : {"battery.status", "charge.status", "channel.status",
+                           "microphone.status"}) {
+      QVERIFY(bridge.openAction(id));
+      bridge.submit();
+      QVERIFY2(bridge.message().isEmpty(), qPrintable(bridge.message()));
+      QTRY_VERIFY_WITH_TIMEOUT(!bridge.observation().value("running").toBool(), 30000);
+      QVERIFY(!bridge.observation().isEmpty());
+      const auto status = bridge.observation().value("exitStatus").toInt();
+      // These installed providers must report successfully. Individual device
+      // values and physical acceptance may still be unavailable or unknown.
+      QCOMPARE(status, 0);
+      qInfo("Device read completed: %s", id);
+    }
   }
   void typedReadsAndCancellation() {
     Bridge bridge(fixture, false);
@@ -161,6 +185,14 @@ private slots:
     QVERIFY(!bridge.confirmReview(false, "APPLY"));
     QVERIFY(!bridge.confirmReview(
         true, "APPLY")); // fixture remains blocked even with exact consent
+    auto unavailable = fixture;
+    unavailable.results.insert("status", QJsonObject{{"data", QJsonObject{{"available", false}}}});
+    Bridge unavailableBridge(unavailable, false);
+    QVERIFY(unavailableBridge.openAction("status"));
+    unavailableBridge.submit();
+    QTRY_VERIFY(!unavailableBridge.observation().value("running").toBool());
+    QCOMPARE(unavailableBridge.observation().value("state").toString(), QString("Provider unavailable"));
+    QCOMPARE(unavailableBridge.observation().value("icon").toString(), QString("dialog-warning"));
   }
   void startupGuideRemainsVisible() {
     Bridge bridge(fixture, false);
@@ -232,9 +264,12 @@ private slots:
       QVERIFY2(inScene, entry.id.c_str());
       QVERIFY(bridge.observation().isEmpty());
       QVERIFY(bridge.review().isEmpty());
-      auto *submit = visualItem(window->contentItem(), "submitRequest");
-      QVERIFY2(submit, entry.id.c_str());
-      QVERIFY(submit->isEnabled());
+      QQuickItem *submit = nullptr;
+      // Kirigami disables pages during transitions. Reacquire the visible
+      // control while waiting: the outgoing page may be destroyed meanwhile.
+      QTRY_VERIFY_WITH_TIMEOUT(
+          (submit = visualItem(window->contentItem(), "submitRequest")) &&
+              submit->isEnabled(), 1500);
       auto *submitAccess = QAccessible::queryAccessibleInterface(submit);
       QVERIFY(submitAccess);
       QVERIFY(!submitAccess->text(QAccessible::Name).isEmpty());

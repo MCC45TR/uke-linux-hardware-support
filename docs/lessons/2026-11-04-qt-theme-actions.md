@@ -36,3 +36,11 @@ installation without compilation or copied executables on the tablet.
 Fixture review remains blocked even with exact consent and confirmation tokens.
 Build, package installation and physical provider results must be recorded
 separately below after they are observed.
+
+COPR build 11255240 compiled successfully and passed CLI, appearance and retained
+widget checks. The QML test inspected an incoming page while Kirigami still
+disabled it for animation. The check now reacquires the visible control until
+the transition completes, avoiding a stale pointer to a departing page.
+This failed package was not installed. Semantic charging and flashlight keys
+also gained the installed Breeze aliases `battery-100-charging` and
+`flashlight-on`; those two abstract names are not direct Breeze filenames.

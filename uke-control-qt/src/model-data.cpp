@@ -195,6 +195,40 @@ QString friendlyTitle(const Action &a) {
   return found == names.end() ? q(a.title.en) : found->second;
 }
 QString summary(const Action &a) {
+  static const QMap<QString, QString> taskHelp{
+      {"status", "Check the reported charging, memory and USB state."},
+      {"overview.battery", "See the battery snapshot and which measurements are available."},
+      {"overview.workload", "Check current CPU, memory and workload information."},
+      {"hardware.status", "Inspect the detected hardware and available device endpoints."},
+      {"overview.desktop", "See the current desktop session and display information."},
+      {"overview.storage", "Inspect storage and filesystem information."},
+      {"battery.status", "Read the battery's reported charge, voltage, current and temperature."},
+      {"battery.health", "Inspect reported battery health and the source of those values."},
+      {"charge.status", "Check the charging provider and its reported policy."},
+      {"charge.admission", "Check whether the provider can accept a charging request."},
+      {"overview.sleep", "Inspect the reported sleep state and available information."},
+      {"wake.status", "See which wake sources are available and their saved permissions."},
+      {"desktop.plasma", "Inspect the current Plasma desktop settings."},
+      {"flashlight.status", "Check whether the flashlight is available and its reported state."},
+      {"led.status", "Read the notification light's reported state."},
+      {"display.bits", "Inspect display link capabilities and reported connection details."},
+      {"usb.status", "Check connected USB devices and the current USB role."},
+      {"ethernet.status", "Inspect the Ethernet interface, connection and reported link."},
+      {"overview.nfc", "Check NFC availability and the reported state."},
+      {"overview.audio", "Inspect available audio devices and routing information."},
+      {"microphone.status", "Check the microphone array and saved channel preference without recording."},
+      {"overview.camera", "Inspect camera availability and reported support limits."},
+      {"sensors.list", "List sensors and the readings each provider can report."},
+      {"sensors.once", "Read one sample from the selected sensor."},
+      {"sensors.watch", "Observe the selected sensor for a limited interval."},
+      {"channel.status", "Check the selected software channel and any unfinished update."},
+      {"channel.set", "Choose Stable, Test or Unstable, preview the plan, then review the change."},
+      {"channel.preview", "Review the selected channel's software plan in the terminal without installing it."},
+      {"update.preview", "Check available updates in the terminal without installing them."},
+      {"update.apply", "Review and install updates for the selected channel. Wait for completion before rebooting."}};
+  const auto help = taskHelp.constFind(q(a.id));
+  if (help != taskHelp.cend())
+    return *help;
   if (a.effect == Effect::maintenance)
     return q(a.description.en);
   if (a.effect == Effect::publish)

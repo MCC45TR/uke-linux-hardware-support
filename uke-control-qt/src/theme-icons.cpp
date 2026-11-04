@@ -31,8 +31,12 @@ void ThemeIcons::refresh() {
       "media-playback-stop"};
   QVariantMap names;
   for (const auto &name : standardNames) {
-    const auto candidates = QStringList{name, "preferences-system",
-                                        "dialog-information"};
+    QStringList candidates{name};
+    if (name == "battery-charging")
+      candidates << "battery-100-charging" << "battery-full-charging" << "battery";
+    if (name == "camera-flash")
+      candidates << "flashlight-on" << "camera-photo";
+    candidates << "preferences-system" << "dialog-information";
     for (const auto &candidate : candidates)
       if (QIcon::hasThemeIcon(candidate)) {
         names.insert(name, candidate);

@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.0.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -79,6 +79,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.0.0-5
+- Refine daily task guidance and charging/flashlight theme aliases.
+- Wait for native page transitions and add optional installed provider reads.
+
 * Wed Nov 04 2026 Uke contributors - 1.0.0-4
 - Add semantic theme icons, clearer request controls and daily channel selection.
 - Verify alternative themes and ship optional installed UI regression checks.
