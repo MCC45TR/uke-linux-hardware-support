@@ -5,8 +5,9 @@ stock files from modem_a and the hash-admitted MCU image in stock ODM/vendor.
 It never uploads OEM firmware to Git/COPR or writes a source partition.
 
 Production requires exact Uke/SM7675 identity, root-owned descriptors, both stock
-sources below the observed Uke UFS controller and a non-running installed kernel
-release. Modem and super occupy different UFS LUNs. Super must share the Fedora
+sources below the observed Uke UFS controller. Normal imports target a non-running
+installed kernel; the audited idle-current mode below is a separate bounded path.
+Modem and super occupy different UFS LUNs. Super must share the Fedora
 root disk; the modem LUN must belong to the same exact bound UFS controller.
 CDSP MDT identities are pinned to independently measured complete current stock files;
 split sizes follow that authenticated metadata. The kernel PAS loader still
@@ -36,7 +37,7 @@ or admits an unknown image and never loads a TA or starts a DSP. Use this
 read-only report to investigate a preflight mismatch before changing any pin.
 The report also hashes the declared modem FAT volume in one-MiB memory chunks,
 with a 512-MiB limit, excluding any unused partition tail. No image copy is made.
-packaging/inspect-stock-copr.sh --preview prints the exact audited0.2-4 DNF and
+packaging/inspect-stock-copr.sh --preview prints the exact audited 0.2-6 DNF and
 inspection commands. --apply runs them in an administrator terminal. It preserves
 firmware admission and refuses an unreviewed installed helper version.
 
