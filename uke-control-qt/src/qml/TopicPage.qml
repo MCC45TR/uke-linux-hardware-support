@@ -20,7 +20,7 @@ FormCard.FormCardPage {
         }
     }
     function showSinglePreference() {
-        if (page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false) return
+        if (page.appWindow.changingPage || page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false) return
         const choices = settings.topic.changes || []
         if (choices.length === 1 && !editing) edit(choices[0].id)
     }
