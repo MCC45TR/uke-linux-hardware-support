@@ -53,6 +53,10 @@ mkdir "$stage/contract"
 cp "$root/uke-control/src/"{frontend.hpp,frontend-request.cpp,client.hpp} "$stage/contract/"
 cp "$root/uke-desktop-metas/src/gnome.json" "$stage/contract/"
 tar --sort=name --mtime=@1793577600 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-frontend-contract.tar.xz" -C "$stage/contract" .
+mkdir -p "$stage/packages/src" "$stage/packages/tests"
+cp "$root/uke-control/src/"{packages.cpp,package-operation.hpp} "$stage/packages/src/"
+cp "$root/uke-control/tests/packages.cpp" "$stage/packages/tests/"
+tar --sort=name --mtime=@1793664000 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-package-update.tar.xz" -C "$stage/packages" .
 package=uke-control
 if [[ $phase == metas ]]; then package=uke-desktop-metas; fi
 component=uke-control

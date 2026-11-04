@@ -18,6 +18,7 @@ inline Resume resume(const std::string& phase) {
     return Resume::review;
 }
 inline const char* next(const std::string& phase) {
+    if(phase=="complete")return "none";
     switch(resume(phase)) {
     case Resume::replan:return "review_new_plan";
     case Resume::finish_boot:return "resume_boot_finalization";

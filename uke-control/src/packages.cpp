@@ -9,10 +9,12 @@
 #include <libdnf5/repo/repo_query.hpp>
 #include <libdnf5/repo/repo_sack.hpp>
 #include <libdnf5/repo/repo_callbacks.hpp>
+#include <libdnf5/repo/download_callbacks.hpp>
 #include <libdnf5/rpm/rpm_signature.hpp>
 #include <libdnf5/rpm/package_query.hpp>
 #include <libdnf5/rpm/package_sack.hpp>
 #include <libdnf5/transaction/transaction_item_action.hpp>
+#include <libdnf5/rpm/transaction_callbacks.hpp>
 #include <rpm/rpmver.h>
 #include <algorithm>
 #include <array>
@@ -22,6 +24,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <chrono>
+#include <list>
 #include <map>
 #include <limits>
 #include <optional>
@@ -75,6 +79,70 @@ std::string infer_channel(const std::set<std::string>& enabled) {
         if(*enabled.begin()==project(selection)||*enabled.begin()==prefix+project(selection))return selection;
     return {};
 }
+// Repository aliases are identities only when their URLs name a normal COPR
+// chroot. Custom build directories must never become an implicit channel.
+std::string source_channel(const std::string& id,const std::vector<std::string>& urls) {
+    std::set<std::string> found;
+    for(const auto& url:urls) {
+        bool recognized=false;
+        for(const auto* selection:{"stable","test","unstable"}) {
+            const auto root="https://download.copr.fedorainfracloud.org/results/mcc45tr/"+project(selection)+"/";
+            if(!url.starts_with(root))continue;
+            auto path=url.substr(root.size());if(path.ends_with('/'))path.pop_back();
+            if(path.starts_with("fedora-")&&path.find('/')==path.npos){found.insert(selection);recognized=true;}
+        }
+        if(!recognized)return {};
+    }
+    if(found.size()==1)return *found.begin();
+    if(urls.empty())return infer_channel({id});
+    return {};
+}
+std::string infer_channel(libdnf5::Base& base) {
+    std::set<std::string> found;
+    for(const auto& repo:libdnf5::repo::RepoQuery(base)) {
+        const auto& config=repo->get_config();
+        if(!config.get_enabled_option().get_value()||!managed_source(repo->get_id(),config.get_baseurl_option().get_value()))continue;
+        const auto selection=source_channel(repo->get_id(),config.get_baseurl_option().get_value());
+        if(selection.empty())return {};
+        found.insert(selection);
+    }
+    return found.size()==1?*found.begin():std::string{};
+}
+void progress(const std::string& message) {std::cerr<<"uke-control: "<<message<<'\n';}
+class Downloads:public libdnf5::repo::DownloadCallbacks {
+    struct Transfer {std::string name;std::chrono::steady_clock::time_point last;};
+    std::list<Transfer> transfers;
+public:
+    void* add_new_download(void*,const char* description,double) override {
+        transfers.push_back({description?description:"repository data",std::chrono::steady_clock::now()});
+        uke::packages::progress("Downloading "+transfers.back().name);return &transfers.back();
+    }
+    int progress(void* data,double total,double downloaded) override {
+        if(!data)return 0;
+        auto& transfer=*static_cast<Transfer*>(data);const auto now=std::chrono::steady_clock::now();
+        if(now-transfer.last>=std::chrono::seconds(5)) {
+            const auto percent=total>0?std::to_string(int(std::clamp(downloaded/total,0.0,1.0)*100))+"%":"in progress";
+            uke::packages::progress("Downloading "+transfer.name+": "+percent);transfer.last=now;
+        }
+        return 0;
+    }
+    int end(void* data,TransferStatus status,const char* message) override {
+        if(data)uke::packages::progress(std::string(status==TransferStatus::ERROR?"Download failed: ":"Downloaded ")+static_cast<Transfer*>(data)->name+(status==TransferStatus::ERROR&&message?": "+std::string(message):""));
+        return 0;
+    }
+};
+class RpmProgress:public libdnf5::rpm::TransactionCallbacks {
+public:
+    void install_start(const libdnf5::base::TransactionPackage& item,uint64_t) override {
+        progress("Installing "+item.get_package().get_nevra());
+    }
+    void uninstall_start(const libdnf5::base::TransactionPackage& item,uint64_t) override {
+        progress("Replacing "+item.get_package().get_nevra());
+    }
+    void script_start(const libdnf5::base::TransactionPackage*,libdnf5::rpm::Nevra nevra,ScriptType type) override {
+        progress(std::string("Running ")+script_type_to_string(type)+" for "+nevra.get_name());
+    }
+};
 bool kernel_package(const std::string& name){return name.starts_with("senemos-uke-linux-kernel-");}
 bool private_package(const std::string& name){return name=="uke-local-touch-data"||name=="uke-video-firmware-local";}
 bool kernel_userspace(const std::string& name) {
@@ -356,7 +424,7 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         }
     }
     std::map<std::string,unsigned> counts;
-    bool has_kernel=false;std::set<std::string> kernel_arches;
+    bool has_kernel=false;std::set<std::string> kernel_arches,missing;
     for(const auto& pkg:installed)if(pkg.get_name()==kernel+"-core")kernel_arches.insert(pkg.get_arch());
     for(const auto& pkg:installed) {
         if(kernel_package(pkg.get_name())){if(pkg.get_name()==kernel||pkg.get_name()==kernel+"-core")has_kernel=true;continue;}
@@ -386,13 +454,18 @@ Plan plan(libdnf5::Base& base,const std::string& selected,const std::set<std::st
         const bool ours=ids.contains(pkg.get_from_repo_id())||managed_repo(pkg.get_from_repo_id())||pkg.get_name().starts_with("uke-")||pkg.get_name().starts_with("senemos-uke-");
         if(!ours&&!candidates.contains(k)&&renamed.empty())continue;
         p.scope.insert(k);need(++counts[k]==1,"Duplicate installed package requires repair: "+k);
-        need(candidates.contains(k)||!renamed.empty(),"Target channel has no replacement for "+k+"; nothing was removed");
+        if(!candidates.contains(k)&&renamed.empty()){missing.insert(k);continue;}
         const auto& list=renamed.empty()?candidates.at(k):renamed;
         const auto target=*std::max_element(list.begin(),list.end(),older);
         for(const auto& candidate:renamed)need(candidate.get_name()==target.get_name(),"Ambiguous renamed replacement for "+k);
         if(!renamed.empty())p.renames.emplace(pkg.get_nevra(),target.get_nevra());
         p.scope.insert(key(target));p.targets.insert_or_assign(key(target),target);
         if(pkg.get_name()=="uke-control")need(channel_api(target),"Target uke-control lacks channel API 1; promote a compatible manager first so the return path remains available");
+    }
+    if(!missing.empty()) {
+        std::string message="Target channel "+selected+" is incomplete. Missing replacements:";
+        for(const auto& name:missing)message+='\n'+name;
+        throw std::runtime_error(message+"\nPublish compatible packages to "+project(selected)+" before switching. Current channel retained; no packages removed");
     }
     if(has_kernel) {
         std::vector<Package> stable,rc;
@@ -513,7 +586,7 @@ void run(Options o) {
     if(o.status) {
         auto current=saved(config/"channel");const auto pending=geteuid()==0?saved(state/"channel-pending"):std::string{};
         libdnf5::Base base;base.load_config();base.setup();unique_repository_ids(base);base.get_repo_sack()->create_repos_from_system_configuration();
-        const bool inferred=current.empty();if(inferred)current=infer_channel(enabled_managed_repos(base));
+        const bool inferred=current.empty();if(inferred)current=infer_channel(base);
         utsname u{};uname(&u);
         std::string result="{\"schema\":\"org.uke.control.channel.v1\",\"selected\":"+(current.empty()?std::string("null"):sysfs::quote(current))+
             ",\"inferred\":"+(inferred?"true":"false")+",\"pending\":"+(geteuid()!=0?std::string("null"):sysfs::quote(pending))+
@@ -564,12 +637,15 @@ void run(Options o) {
     base.get_config().get_best_option().set(priority,true);
     base.get_config().get_skip_unavailable_option().set(priority,false);
     base.setup();unique_repository_ids(base);base.get_repo_sack()->create_repos_from_system_configuration();
-    if(o.selected.empty())o.selected=infer_channel(enabled_managed_repos(base));
+    if(o.selected.empty())o.selected=infer_channel(base);
     need(channel(o.selected),"No unambiguous saved or enabled main COPR channel; choose brunch stable|test|unstable explicitly");
     const auto dist=fedora_dist(release,base.get_vars()->get_value("releasever"));
     auto repos=configure(base,o.selected);
     need(base.lock_system_repo(libdnf5::utils::LockAccess::WRITE,libdnf5::utils::LockBlocking::NON_BLOCKING),"Another package manager holds the system repository lock");
+    base.set_download_callbacks(std::make_unique<Downloads>());
+    progress("Refreshing repositories for "+o.selected);
     base.get_repo_sack()->load_repos();
+    progress("Resolving package transaction");
     const auto p=plan(base,o.selected,repos.ids,dist);auto tx=resolve(base,p,o.selected,o.update);
     utsname current{};need(uname(&current)==0,"Cannot read running kernel identity");
     std::string plan="{\"schema\":\"org.uke.control.packages.v1\",\"channel\":"+sysfs::quote(o.selected)+",\"copr\":"+sysfs::quote(project(o.selected))+
@@ -601,7 +677,8 @@ void run(Options o) {
     need(!helper_required||helper_ready||helper_in_transaction,"The boot helper is missing or untrusted and this plan does not provide it. No packages changed");
     if(!o.json)cli::print(plan+"}",false,"Package plan");
     if(!o.yes){std::cout<<"Apply these package and repository changes? [y/N] "<<std::flush;std::string answer;std::getline(std::cin,answer);need(answer=="y"||answer=="Y","Cancelled; no channel changes");}
-    tx.download();need(tx.check_gpg_signatures(),"Package signature check failed; no channel changes");
+    progress("Downloading transaction packages");tx.download();
+    progress("Verifying package signatures");need(tx.check_gpg_signatures(),"Package signature check failed; no channel changes");
     trusted_directory(config,0755);trusted_directory("/etc/yum.repos.d",0755);trusted_directory("/etc/dnf/repos.override.d",0755);
     CriticalSignals critical;
     operation::Record record{pending.empty()?operation_id():previous_operation->id,o.selected,"prepared",p.krel,helper_required};
@@ -622,7 +699,9 @@ void run(Options o) {
     atomic_write(state/"channel-transaction.json",tx.serialize(),0600);
     };
     tx.set_description("uke-control channel "+o.selected+(o.update?" update":" sync"));
+    tx.set_callbacks(std::make_unique<RpmProgress>());
     actions.rpm=[&]{
+    progress("Applying RPM transaction; waiting for package scriptlets");
     const auto result=tx.run();
     if(result!=libdnf5::base::Transaction::TransactionRunResult::SUCCESS) {
         std::string errors=libdnf5::base::Transaction::transaction_result_to_string(result);
@@ -633,10 +712,11 @@ void run(Options o) {
     }
     };
     // The updater owns automatic policy and the selected userdata profile.
-    actions.boot=[&]{boot_kernel(record.kernel,o.json);};
+    actions.boot=[&]{progress("Finalizing guarded kernel selection");boot_kernel(record.kernel,o.json);};
     actions.select=[&]{atomic_write(config/"channel",o.selected+'\n');};
     actions.clear=[&]{need(unlink((state/"channel-pending").c_str())==0,"Cannot clear completed channel journal");Fd dir(open(state.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC));need(dir.n>=0&&fsync(dir.n)==0,"Cannot sync channel journal");};
     operation::apply(record,actions);
+    progress("Package transaction completed; channel "+o.selected);
     cli::print(plan+",\"preview_only\":false,\"operation_id\":"+sysfs::quote(record.id)+",\"operation_completed\":true,\"retained_kernels_preserved\":true,\"reboot_requested\":false,\"physical_boot_verified\":null}",o.json,"Channel synchronized");
 }
 }

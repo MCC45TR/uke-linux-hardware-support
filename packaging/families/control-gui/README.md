@@ -1,5 +1,16 @@
 # Control frontend package contract
 
+4 November 2026: the backend candidate advances to `2.8.1-9.fc46`.
+The original source archives and existing maintainer scripts remain unchanged.
+A separate source overlay contains the package manager, its operation-status
+header and regression tests. It adds stderr progress, normal COPR alias
+inference and complete missing-component diagnostics. It retains signature,
+package-removal, version-lock and boot-selection admission.
+Only the five backend/SDK packages need rebuilding for this update. Existing
+desktop selections remain usable; the optional metadata source recipe has its
+own advanced revision. COPR compilation and tablet results are recorded
+separately in the integration lesson journal.
+
 This source recipe preserves the signed published `uke-control-2.8.1-5.fc46`
 cohort, including its DNF fixes, and advances the native backend to
 `2.8.1-7.fc46`. `input.json` pins COPR build 11240837, its source digest and the

@@ -8,6 +8,12 @@ function finish_phase() {
     if(phase=="prep") {
         print "mkdir -p %{_builddir}/uke-control-frontend-contract"
         print "tar -xJf %{SOURCE1} -C %{_builddir}/uke-control-frontend-contract"
+        if(build_phase=="backend") {
+            print "mapfile -t package_sources < <(find %{_builddir}/uke-control-2.8.1/work -type f -path '*/src/packages.cpp')"
+            print "test ${#package_sources[@]} = 1"
+            print "package_root=${package_sources[0]%/src/packages.cpp}"
+            print "tar -xJf %{SOURCE5} -C \"$package_root\""
+        }
     } else if(phase=="build" && build_phase=="backend") {
         print "contract=%{_builddir}/uke-control-frontend-contract"
         print "mapfile -t client_libraries < <(find %{_builddir}/uke-control-2.8.1/work -type f -path '*/build/libuke-control-client.so.1')"
@@ -93,6 +99,7 @@ function gnome_preamble() {
     print "Source2: uke-control-published-spec.txt"
     print "Source3: input.json"
     print "Source4: copr-public-key.asc"
+    print "Source5: uke-control-package-update.tar.xz"
     next
 }
 /^(Requires|Recommends|Suggests):/ {
@@ -151,8 +158,9 @@ END {
     }
     print ""
     print "%changelog"
-    if(build_phase=="backend") print "* Tue Nov 03 2026 Uke contributors - 2.8.1-7"
-    else print "* Tue Nov 03 2026 Uke contributors - 1.0.0-37"
-    print "- Preserve the published backend and add the typed GUI client contract."
-    print "- Require the corresponding native application in each desktop selection."
+    if(build_phase=="backend") print "* Wed Nov 04 2026 Uke contributors - 2.8.1-9"
+    else print "* Wed Nov 04 2026 Uke contributors - 1.0.0-39"
+    print "- Report download, RPM and scriptlet progress on standard error."
+    print "- Infer normal channel aliases and list missing transition packages."
+    print "- Retain the published sources, frontend contract and maintainer scripts."
 }

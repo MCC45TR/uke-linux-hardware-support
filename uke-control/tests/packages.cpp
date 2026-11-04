@@ -108,6 +108,35 @@ int main() {
     assert(infer_channel({prefix+"uke-linux-test:custom:experiment"}).empty());
     assert(infer_channel({"uke-linux",prefix+"uke-linux"}).empty());
     assert(managed_source("legacy-candidate",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/custom/"}));
+    assert(source_channel("uke-selected",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-$basearch/"})=="unstable");
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/custom/"}).empty());
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-fake/fedora-rawhide-aarch64/"}).empty());
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/fedora-rawhide-aarch64/","https://example.invalid/"}).empty());
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux/fedora-rawhide-aarch64/","https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/fedora-rawhide-aarch64/"}).empty());
+    {
+        libdnf5::Base base;base.get_config().get_plugins_option().set(false);base.setup();
+        const auto add=[&](const std::string& name,const std::string& selection) {
+            auto repo=base.get_repo_sack()->create_repo(name);
+            repo->get_config().get_baseurl_option().set(std::vector<std::string>{"https://download.copr.fedorainfracloud.org/results/mcc45tr/"+project(selection)+"/fedora-rawhide-aarch64/"});
+            return repo;
+        };
+        add("uke-selected","unstable");add("uke-policy","unstable");
+        assert(infer_channel(base)=="unstable");
+        auto other=add("different-channel","test");assert(infer_channel(base).empty());
+        other->get_config().get_enabled_option().set(false);assert(infer_channel(base)=="unstable");
+        auto custom=base.get_repo_sack()->create_repo("custom");
+        custom->get_config().get_baseurl_option().set(std::vector<std::string>{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/custom/"});
+        assert(infer_channel(base).empty());
+    }
+    {
+        std::ostringstream output,errors;auto* old_output=std::cout.rdbuf(output.rdbuf());auto* old_errors=std::cerr.rdbuf(errors.rdbuf());
+        Downloads downloads;auto* transfer=downloads.add_new_download(nullptr,"fixture-package",1024);
+        assert(downloads.progress(transfer,1024,512)==0);
+        assert(downloads.end(transfer,Downloads::TransferStatus::SUCCESSFUL,nullptr)==0);
+        std::cout.rdbuf(old_output);std::cerr.rdbuf(old_errors);
+        assert(output.str().empty()&&errors.str().find("Downloaded fixture-package")!=std::string::npos);
+        assert(std::string(operation::next("complete"))=="none");
+    }
     for(const auto& arch:{"aarch64","noarch","x86_64"}) {
         const auto stable=kernel+"-core-7.2.11-1.fc46."+arch;
         const auto rc=kernel+"-core-7.4~rc7-1.fc46."+arch;

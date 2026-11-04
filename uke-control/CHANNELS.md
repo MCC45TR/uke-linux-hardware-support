@@ -1,5 +1,13 @@
 # Package channels
 
+4 November 2026: package operations report repository refresh, downloads,
+RPM installation, scriptlets and guarded finalization on standard error.
+Explicit JSON results remain on standard output. Multiple enabled aliases of
+one normal COPR channel can supply an implicit selection; custom directories
+and mixed channels cannot. An incomplete target reports all missing installed
+components before any package or persistent channel change. It still requires
+compatible target packages; missing components are never silently removed.
+
 30 October 2026: a failed native transaction reports its RPM, signature and
 transaction diagnostics while retaining the pending channel. Correct the
 reported problem before running `channel sync`. Failure before RPM execution
