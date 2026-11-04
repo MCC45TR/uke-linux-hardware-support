@@ -43,8 +43,9 @@ buffer contracts and DC rejection without opening audio hardware or saving audio
 This is not an acoustic echo-convergence, intelligibility, latency or power test.
 
 The retained COPR source producer overlays the microphone/catalog changes onto
-control 2.8.1-7 after verifying the exact original file hashes. It preserves that
-cohort's newer backend, TUI and frontend contracts. Development and installation
+control 2.8.1-11 after verifying the exact original file hashes. Only the microphone
+catalog fragment is replaced; newer package upgrade/recovery actions and backend,
+TUI and frontend contracts are retained. Development and installation
 use COPR and DNF; no native tablet compilation or copied binary installation is
 part of this workflow. The separate check package carries only a source receipt.
 
