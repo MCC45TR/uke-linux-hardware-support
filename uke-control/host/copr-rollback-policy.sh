@@ -9,8 +9,8 @@ stage=$(mktemp -d)
 trap 'find "$stage" -depth -delete' EXIT
 mkdir -p "$output" "$stage/overlay"
 curl -fLsS --retry 2 --proto '=https' --proto-redir '=https' \
- https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11259624/uke-control-2.8.1-12.fc46.src.rpm -o "$stage/parent.rpm"
-printf '%s  %s\n' 88d195c007eeace31fcd3d8d0a8ac8960e34cac2aca9bb27f7160416953200f0 "$stage/parent.rpm" | sha256sum -c --strict
+ https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11259667/uke-control-2.8.1-13.fc46.src.rpm -o "$stage/parent.rpm"
+printf '%s  %s\n' d1968e50fc7e8a330fdb2a1572794e6ce01667fc7dc5179a67e0444c554ed6c8 "$stage/parent.rpm" | sha256sum -c --strict
 rpm2cpio "$stage/parent.rpm" > "$stage/input.cpio"
 cpio -t --quiet < "$stage/input.cpio" > "$stage/entries"
 awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}' "$stage/entries"
@@ -20,7 +20,7 @@ for path in src/main.cpp src/cli.cpp src/rollback.hpp tests/rollback.cpp packagi
 done
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-control-rollback.tar.xz" -C "$stage/overlay" .
-sed 's/12[.]fc46/22.fc46/g' "$output/uke-control.spec" > "$stage/base.spec"
+sed 's/13[.]fc46/23.fc46/g' "$output/uke-control.spec" > "$stage/base.spec"
 awk '
  /^Source5:/ {print "Source6: uke-control-rollback.tar.xz"}
  /^Requires: uke-kernel-update\(transaction-v1\)/ {print "Requires: uke-kernel-update(rollback-policy-v1) >= 1"}
@@ -38,4 +38,4 @@ awk '
  }
  {print}
 ' "$stage/base.spec" > "$output/uke-control.spec"
-[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == 2.8.1-22.fc46 ]]
+[[ $(rpmspec -q --srpm --qf '%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == 2.8.1-23.fc46 ]]

@@ -181,7 +181,9 @@ std::string help(std::string_view group) {
             out<<line<<'\n';first=false;
         }
     }
-    out<<"\nOptions:\n  -h, --help    Show help without running a device operation\n  --version     Show version\n  --json        Machine-readable output; explicit even when redirected\n\n";
+    out<<"\nOptions:\n  -h, --help    Show help without running a device operation\n  --version     Show version\n";
+    if(group!="set-slot")out<<"  --json        Machine-readable output; explicit even when redirected\n";
+    out<<'\n';
     if(group.empty() || group=="channel" || group=="update")out<<"Package changes require root. With --json, use --dry-run/--check or explicit --yes.\n";
     out<<"Hardware changes retain their existing privilege and qualification checks.\n"
           "Exit status: 0 success; 64 command usage; other nonzero values report operation failure.\n";
