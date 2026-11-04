@@ -10,10 +10,12 @@ FormCard.FormCardPage {
     objectName: "guidePage"
     required property var appWindow
     title: backend.guide.title || "Device settings"
+    readonly property string submitText: backend.guide.read ? (backend.guide.capture ? "Read information" : "Review access…") : "Review changes…"
+    readonly property string submitIcon: backend.guide.read && backend.guide.capture ? "view-refresh" : "document-preview"
     actions: [
         Kirigami.Action {
-            text: backend.guide.read ? (backend.guide.capture ? "Read information" : "Review access…") : "Review changes…"
-            icon.name: backend.guide.read ? "view-refresh" : "dialog-ok-apply"
+            text: page.submitText
+            icon.name: themeIcons.names[page.submitIcon]
             enabled: !backend.observation.running
             onTriggered: backend.submit()
         }
@@ -28,9 +30,11 @@ FormCard.FormCardPage {
     Kirigami.InlineMessage {
         Layout.fillWidth: true
         visible: backend.message.length > 0
+        type: backend.messageError ? Kirigami.MessageType.Error : Kirigami.MessageType.Information
         text: backend.message
     }
     SafeText {
+        icon.name: themeIcons.names[backend.guide.icon || "dialog-information"]
         text: backend.guide.title || ""
         description: backend.guide.description || ""
     }
@@ -41,8 +45,8 @@ FormCard.FormCardPage {
     FormCard.FormCard {
         visible: parameters.count > 0
         SafeText {
-            text: "Draft preference"
-            description: "Nothing changes until you review and continue."
+            text: backend.guide.read ? "Read options" : "Draft preference"
+            description: backend.guide.read ? "Choose what to inspect, then select Read information." : "These are requested values. Inspect the current state below before reviewing a change."
         }
         Repeater {
             id: parameters
@@ -99,7 +103,7 @@ FormCard.FormCardPage {
     }
     FormCard.FormHeader {
         visible: Boolean(backend.guide.inspect || backend.guide.preview)
-        title: "Before applying"
+        title: backend.guide.read ? "Related information" : "Check before changing"
     }
     FormCard.FormCard {
         visible: Boolean(backend.guide.inspect || backend.guide.preview)
@@ -107,21 +111,38 @@ FormCard.FormCardPage {
             objectName: "inspectCurrent"
             visible: backend.guide.inspect || false
             text: "Inspect current state"
-            icon.name: "view-list-details"
+            description: "Read the device's reported settings."
+            icon.name: themeIcons.names["view-list-details"]
+            enabled: !backend.observation.running
             onClicked: backend.readRelated("inspect")
         }
         FormCard.FormButtonDelegate {
+            objectName: "previewRequest"
             visible: backend.guide.preview || false
             text: "Preview requested values"
-            icon.name: "document-preview"
+            description: "Check the request without applying changes."
+            icon.name: themeIcons.names["document-preview"]
+            enabled: !backend.observation.running
             onClicked: backend.readRelated("preview")
+        }
+    }
+    FormCard.FormCard {
+        FormCard.FormButtonDelegate {
+            objectName: "submitRequest"
+            text: page.submitText
+            description: backend.guide.read && backend.guide.capture ? "Read this information now. No preference is changed." : "Check the values and access requirements before continuing in the terminal."
+            icon.name: themeIcons.names[page.submitIcon]
+            enabled: !backend.observation.running
+            onClicked: backend.submit()
         }
     }
     ObservationView { Layout.fillWidth: true; visible: backend.observation.title !== undefined }
     FormCard.FormCard {
         FormCard.FormButtonDelegate {
+            objectName: "toggleAccessDetails"
             text: "Details & access requirements"
-            icon.name: "dialog-information"
+            icon.name: themeIcons.names["dialog-information"]
+            Accessible.description: details.visible ? "Details expanded" : "Details collapsed"
             onClicked: details.visible = !details.visible
         }
         SafeText {

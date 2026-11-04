@@ -6,6 +6,12 @@ uses Qt Quick/QML and original Kirigami/FormCard components. It respects KDE
 appearance preferences and uses Breeze with KDE's desktop Quick Controls style.
 There is no Python, WebView, replacement desktop service or privileged GUI.
 
+Navigation, catalog actions, read states and request controls use semantic icon
+names from the desktop theme. KDE's configured icon theme remains selected;
+inherited themes and the installed Breeze fallback fill missing names. No Breeze
+artwork is copied into the application. Theme changes refresh the name bindings.
+`--appearance-info` reports every resolved icon name and whether it renders.
+
 The daily pages are Status, Power, Display & lights, Connections, Audio & sensors,
 and Updates. Advanced provides searchable access to the complete installed action
 catalog. Kirigami's page stack, responsive drawer and page actions provide
@@ -14,6 +20,13 @@ narrow window, and choice controls use native selection dialogs. **Back** or
 Alt+Left returns to the current area. Daily pages keep recovery and diagnostics
 in Advanced. See the [Kirigami FormCard documentation](https://api.kde.org/org-kde-kirigamiaddons-formcard-qmlmodule.html).
 
+Updates includes the selected channel, channel selection and preview, update
+preview, and installation. Each guide has a labeled action inside the page as
+well as its toolbar action. Read options and requested preferences have distinct
+instructions. Advanced uses the native search field with clear control and a
+result count. Provider unavailability remains visibly separate from a completed
+read with available values.
+
 Opening a page or guide does not query devices. Select **Read information**
 or an inspection button to read. Requested defaults are drafts rather than current
 measurements. **Details** reveals the full catalog explanation, parameter limits,
@@ -21,6 +34,9 @@ action identifier, access requirements and, during review, exact validated argum
 Maintenance and external-publication warnings remain visible before confirmation.
 
 ## Build and run
+
+On POCO Pad X1, build native packages in COPR and install them through DNF.
+The source build commands below are for a separate build environment.
 
 Install a C++ compiler, CMake, Qt 6.6 or newer (Widgets, Qml, Quick and
 QuickControls2), ECM, KDE Frameworks (IconThemes, ConfigWidgets, I18n 6.8 or newer),
@@ -98,6 +114,15 @@ query, command, terminal handoff, mutation and receipt save. It accepts the exis
 exit status 0–255 and delay 0–3,000 ms. Unknown fields and incompatible fields
 are rejected. Missing results stay unavailable and never fall through to a real
 query. No executable callbacks are supported.
+
+The optional `uke-control-gui-qt-tests` RPM installs the native checks and bounded
+fixture. Run `/usr/libexec/uke-control-qt/tests/run-installed.sh` as the graphical
+session user to test the installed package without compiling on the device.
+The suites cover the full catalog, typed request routing, review refusal,
+read/stop/refresh, navigation, accessibility and Breeze/Adwaita/incomplete themes.
+Set `UKE_QT_TEST_SCREENSHOTS` to a private output directory to capture the fixture
+walkthrough. These checks establish frontend behavior, not physical acceptance
+of every provider or completion of destructive maintenance operations.
 
 The C++ Qt tests load the actual Kirigami pages and exercise typed values, separate errors, read refresh, unavailable
 fixtures, cancellation, page/search/form navigation, native approval requirements,

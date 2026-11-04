@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-QT-THEMES-20261104: keep semantic icons and request routing native](2026-11-04-qt-theme-actions.md)
+
 - [UKE-GUI-PACKAGES-20261102: publish matched SDK, GUI and desktop dependencies](2026-11-02-gui-packages.md)
 - [UKE-KIRIGAMI-20261102: separate presentation from guarded C++ operations](2026-11-02-kirigami-interface.md)
 - [UKE-QT-KDE-20261102: use native KDE appearance and responsive settings](2026-11-02-qt-kde-interface.md)

@@ -32,18 +32,18 @@ Kirigami.ApplicationWindow {
     }
     globalDrawer: Kirigami.GlobalDrawer {
         title: "Uke Control"
-        titleIcon: "preferences-system"
+        titleIcon: themeIcons.names["preferences-system"]
         isMenu: false
         modal: !root.wideScreen
         drawerOpen: !modal
         actions: [
-            Kirigami.Action { text: "Status"; icon.name: "dialog-information"; checked: backend.section === 0; onTriggered: root.showArea(0) },
-            Kirigami.Action { text: "Power"; icon.name: "battery"; checked: backend.section === 1; onTriggered: root.showArea(1) },
-            Kirigami.Action { text: "Display & lights"; icon.name: "video-display"; checked: backend.section === 2; onTriggered: root.showArea(2) },
-            Kirigami.Action { text: "Connections"; icon.name: "network-wired"; checked: backend.section === 3; onTriggered: root.showArea(3) },
-            Kirigami.Action { text: "Audio & sensors"; icon.name: "audio-card"; checked: backend.section === 4; onTriggered: root.showArea(4) },
-            Kirigami.Action { text: "Updates"; icon.name: "system-software-update"; checked: backend.section === 5; onTriggered: root.showArea(5) },
-            Kirigami.Action { text: "Advanced"; icon.name: "preferences-system"; checked: backend.section === 6; onTriggered: root.showArea(6) }
+            Kirigami.Action { text: "Status"; icon.name: themeIcons.names["dialog-information"]; checked: backend.section === 0; onTriggered: root.showArea(0) },
+            Kirigami.Action { text: "Power"; icon.name: themeIcons.names["battery"]; checked: backend.section === 1; onTriggered: root.showArea(1) },
+            Kirigami.Action { text: "Display & lights"; icon.name: themeIcons.names["video-display"]; checked: backend.section === 2; onTriggered: root.showArea(2) },
+            Kirigami.Action { text: "Connections"; icon.name: themeIcons.names["network-wired"]; checked: backend.section === 3; onTriggered: root.showArea(3) },
+            Kirigami.Action { text: "Audio & sensors"; icon.name: themeIcons.names["audio-card"]; checked: backend.section === 4; onTriggered: root.showArea(4) },
+            Kirigami.Action { text: "Updates"; icon.name: themeIcons.names["system-software-update"]; checked: backend.section === 5; onTriggered: root.showArea(5) },
+            Kirigami.Action { text: "Advanced"; icon.name: themeIcons.names["preferences-system"]; checked: backend.section === 6; onTriggered: root.showArea(6) }
         ]
     }
     pageStack.initialPage: areaPage

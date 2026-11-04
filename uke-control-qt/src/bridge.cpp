@@ -14,7 +14,7 @@ static QVariantMap item(const std::string &id) {
       {"id", q(id)},
       {"title", friendlyTitle(a)},
       {"description", summary(a)},
-      {"icon", a.effect == Effect::read ? "view-list-details" : "configure"}};
+      {"icon", actionIcon(a)}};
 }
 QVariantList Bridge::areas() const {
   QVariantList result;
@@ -25,9 +25,18 @@ QVariantList Bridge::areas() const {
                           "video-display",      "network-wired",
                           "audio-card",         "system-software-update",
                           "preferences-system"};
+  const QStringList descriptions{
+      "Read device health, battery, workload and system information.",
+      "Check charging and battery health, then review charging or wake preferences.",
+      "Manage the desktop, display, flashlight and notification light.",
+      "Inspect USB accessories, Ethernet and NFC availability.",
+      "Inspect audio, microphones, cameras and sensor readings.",
+      "Choose a software channel, preview available updates and review installation.",
+      "Search diagnostics, recovery and every action in the installed catalog."};
   for (int i = 0; i < names.size(); ++i)
     result << QVariantMap{
-        {"title", names[i]}, {"icon", icons[i]}, {"index", i}};
+        {"title", names[i]}, {"icon", icons[i]}, {"index", i},
+        {"description", descriptions[i]}};
   return result;
 }
 QVariantList Bridge::groups() const {
@@ -69,8 +78,8 @@ QVariantList Bridge::groups() const {
     add("Sensors", {"sensors.list", "sensors.once", "sensors.watch"});
     break;
   case 5:
-    add("Channel & update review", {"channel.status", "update.preview"});
-    add("Apply reviewed work", {"update.apply"});
+    add("Software channel", {"channel.status", "channel.set", "channel.preview"});
+    add("System updates", {"update.preview", "update.apply"});
     break;
   }
   return result;
@@ -106,10 +115,12 @@ Bridge::Bridge(Fixture fixture, bool readOnly, QObject *parent)
 Bridge::~Bridge() { cancelRead(); }
 void Bridge::clearMessage() {
   message_.clear();
+  messageError_ = false;
   emit messageChanged();
 }
 void Bridge::fail(const std::exception &error) {
   message_ = safe(error.what());
+  messageError_ = true;
   emit messageChanged();
 }
 void Bridge::selectArea(int index) {
@@ -192,6 +203,7 @@ bool Bridge::openAction(const QString &id) {
           {"maximum", int(std::min<std::uint64_t>(p.maximum, INT_MAX))}};
     }
     guide_ = {{"id", id},
+              {"icon", actionIcon(a)},
               {"title", friendlyTitle(a)},
               {"description", summary(a)},
               {"details", details},
@@ -346,6 +358,10 @@ void Bridge::showResult(const Result &result) {
                   : result.timed_out        ? "Read timed out"
                   : result.exit_status == 0 ? "Read complete"
                                             : "Information unavailable";
+  QString icon = result.running ? "view-refresh"
+                 : result.cancelled ? "media-playback-stop"
+                 : result.timed_out || result.exit_status != 0 ? "dialog-warning"
+                 : "dialog-ok";
   QString notice;
   if (result.cancelled)
     notice = "Read cancelled. Output may be partial.";
@@ -362,9 +378,12 @@ void Bridge::showResult(const Result &result) {
     const auto object = document.object();
     if (!result.running && !result.cancelled && result.exit_status == 0 &&
         object.contains("available") && object.value("available").isBool() &&
-        !object.value("available").toBool())
+        !object.value("available").toBool()) {
       notice = "This provider is unavailable in the current session. No device "
                "values can be shown.";
+      state = "Provider unavailable";
+      icon = "dialog-warning";
+    }
     for (auto it = object.begin(); it != object.end(); ++it)
       add(it.key(), it.value(), 0);
   } else if (document.isArray())
@@ -376,6 +395,7 @@ void Bridge::showResult(const Result &result) {
   if (count >= 2000)
     notice += " Showing the first 2,000 values.";
   observation_ = {{"title", friendlyTitle(action(result.action_id))},
+                  {"icon", icon},
                   {"running", result.running},
                   {"state", state},
                   {"notice", notice},
@@ -442,6 +462,7 @@ bool Bridge::confirmReview(bool consent, const QString &token) {
     cancelReview();
     const auto result =
         uke::frontend::launch_terminal(request.action_id, request.values, true);
+    messageError_ = !result.launched;
     message_ = result.launched
                    ? "Continue in the terminal and inspect its final result. "
                      "Opening it does not establish device success."

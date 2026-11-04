@@ -7,7 +7,7 @@ import org.kde.kirigamiaddons.formcard as FormCard
 FormCard.FormCardDialog {
     id: dialog
     objectName: "requestReview"
-    title: "Review changes"
+    title: "Review request"
     width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 32)
     height: Math.min(implicitHeight, parent.height - Kirigami.Units.largeSpacing * 2)
     standardButtons: Controls.Dialog.Cancel
@@ -27,6 +27,7 @@ FormCard.FormCardDialog {
     }
     SafeText {
         visible: (backend.review.warning || "").length > 0
+        icon.name: themeIcons.names["dialog-warning"]
         text: "Access & effects"
         description: backend.review.warning || ""
     }
@@ -45,11 +46,14 @@ FormCard.FormCardDialog {
     }
     SafeText {
         visible: backend.review.blocked || false
+        icon.name: themeIcons.names["security-high"]
         text: "Action disabled"
         description: backend.review.reason || ""
     }
     FormCard.FormButtonDelegate {
         text: "Validated arguments"
+        icon.name: themeIcons.names["document-properties"]
+        Accessible.description: exact.visible ? "Arguments expanded" : "Arguments collapsed"
         onClicked: exact.visible = !exact.visible
     }
     SafeText {
@@ -61,7 +65,8 @@ FormCard.FormCardDialog {
     FormCard.FormButtonDelegate {
         objectName: "launchTerminal"
         text: "Continue in terminal"
-        icon.name: "utilities-terminal"
+        description: "The terminal requests any required authentication and shows the operation's result."
+        icon.name: themeIcons.names["utilities-terminal"]
         enabled: !(backend.review.blocked || false) && consent.checked && confirmation.text === (backend.review.token || "")
         onClicked: backend.confirmReview(consent.checked, confirmation.text)
     }

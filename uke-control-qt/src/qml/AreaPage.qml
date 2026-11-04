@@ -23,8 +23,9 @@ FormCard.FormCardPage {
         text: styleNotice
     }
     SafeText {
-        text: backend.section === 6 ? "Expert tools" : "Device settings"
-        description: backend.section === 6 ? "Diagnostics, recovery and the full action catalog. Each operation keeps its own review and access requirements." : "Choose an item to inspect its current state or review a preference. Opening a page does not run device commands."
+        icon.name: themeIcons.names[backend.areas[backend.section].icon]
+        text: backend.section === 6 ? "Expert tools" : backend.areas[backend.section].title
+        description: backend.areas[backend.section].description
     }
     Repeater {
         model: backend.groups
@@ -43,20 +44,24 @@ FormCard.FormCardPage {
                         objectName: "action_" + modelData.id
                         text: modelData.title
                         description: modelData.description
-                        icon.name: modelData.icon
+                        icon.name: themeIcons.names[modelData.icon]
                         onClicked: page.appWindow.openGuide(modelData.id)
                     }
                 }
             }
         }
     }
-    Controls.TextField {
+    Kirigami.SearchField {
         id: searchField
         objectName: "advancedSearch"
         Layout.fillWidth: true
         visible: backend.section === 6
         placeholderText: "Search all actions…"
         Accessible.name: "Search all actions"
+    }
+    FormCard.FormHeader {
+        visible: backend.section === 6
+        title: searchResults.count + (searchResults.count === 1 ? " action" : " actions")
     }
     FormCard.FormCard {
         visible: backend.section === 6
@@ -66,8 +71,8 @@ FormCard.FormCardPage {
             delegate: FormCard.FormButtonDelegate {
                 required property var modelData
                 text: modelData.title
-                description: modelData.id
-                icon.name: modelData.icon
+                description: modelData.description
+                icon.name: themeIcons.names[modelData.icon]
                 onClicked: page.appWindow.openGuide(modelData.id)
             }
         }

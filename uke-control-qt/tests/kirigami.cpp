@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "../src/bridge.hpp"
+#include "../src/theme-icons.hpp"
 #include <KIconTheme>
 #include <KLocalizedQmlContext>
 #include <KStyleManager>
@@ -23,8 +24,81 @@ static QQuickItem *visualItem(QQuickItem *parent, const QString &name) {
 class KirigamiTests : public QObject {
   Q_OBJECT
   Fixture fixture;
+  ThemeIcons themeIcons;
+  void snapshot(QQuickWindow *window, const QString &name) {
+    const auto directory = qEnvironmentVariable("UKE_QT_TEST_SCREENSHOTS");
+    if (directory.isEmpty())
+      return;
+    QVERIFY(QDir().mkpath(directory));
+    QTest::qWait(350);
+    const auto image = window->grabWindow();
+    QVERIFY2(!image.isNull(), qPrintable(name));
+    QVERIFY(image.save(directory + "/" + name + ".png"));
+  }
 private slots:
-  void initTestCase() { fixture = Fixture::load(FIXTURE_PATH); }
+  void initTestCase() {
+    fixture = Fixture::load(qEnvironmentVariable("UKE_QT_TEST_FIXTURE", FIXTURE_PATH));
+  }
+  void themedCatalogAndEveryRequest() {
+    QVERIFY(themeIcons.names().size() >= 40);
+    QSignalSpy changed(&themeIcons, &ThemeIcons::changed);
+    themeIcons.refresh();
+    QCOMPARE(changed.size(), 1);
+    QSet<QString> semanticIcons;
+    Bridge bridge(fixture, false);
+    for (const auto &entry : actions()) {
+      const auto id = QString::fromStdString(entry.id);
+      const auto icon = actionIcon(entry);
+      semanticIcons.insert(icon);
+      QVERIFY2(themeIcons.names().contains(icon), qPrintable(id + ": " + icon));
+      QVERIFY2(!QIcon::fromTheme(themeIcons.names().value(icon).toString())
+                    .pixmap(32, 32).isNull(), qPrintable(id));
+      QVERIFY(bridge.openAction(id));
+      QVERIFY(bridge.observation().isEmpty());
+      QVERIFY(bridge.review().isEmpty());
+      // Supply syntactically valid draft identifiers only. Fixture mode never
+      // opens these paths, contacts hardware or launches a terminal.
+      for (const auto &p : entry.parameters) {
+        if (!p.initial.empty() || p.optional)
+          continue;
+        QString value;
+        switch (p.kind) {
+        case Kind::choice: value = QString::fromStdString(p.choices.front().value); break;
+        case Kind::integer: value = QString::number(qulonglong(p.minimum)); break;
+        case Kind::path: case Kind::absolute_path: value = "/tmp/uke-synthetic-test"; break;
+        case Kind::interface: value = "eth0"; break;
+        case Kind::usb_device: value = "1-1"; break;
+        case Kind::input_device: value = "/dev/input/event0"; break;
+        case Kind::partition_uuid: value = "12345678-abcd"; break;
+        case Kind::color: value = "#102030"; break;
+        case Kind::swap_size: value = "half"; break;
+        case Kind::repository: value = "example/synthetic-test"; break;
+        case Kind::identifier: value = "synthetic"; break;
+        }
+        bridge.setDraft(QString::fromStdString(p.id), value);
+      }
+      bridge.submit();
+      QVERIFY2(bridge.message().isEmpty(), qPrintable(id + ": " + bridge.message()));
+      if (entry.effect == Effect::read && entry.presentation == Presentation::capture) {
+        QTRY_VERIFY_WITH_TIMEOUT(!bridge.observation().value("running").toBool(), 4000);
+        QVERIFY2(!bridge.observation().isEmpty(), qPrintable(id));
+        QVERIFY(bridge.review().isEmpty());
+      } else {
+        QVERIFY2(!bridge.review().isEmpty(), qPrintable(id));
+        QVERIFY(bridge.review().value("blocked").toBool());
+        QVERIFY(!bridge.confirmReview(true, bridge.review().value("token").toString()));
+      }
+    }
+    QVERIFY(semanticIcons.size() >= 20);
+    bridge.selectArea(5);
+    QSet<QString> updates;
+    for (const auto &group : bridge.groups())
+      for (const auto &entry : group.toMap().value("entries").toList())
+        updates.insert(entry.toMap().value("id").toString());
+    for (const auto &id : {"channel.set", "channel.preview", "channel.status",
+                           "update.preview", "update.apply"})
+      QVERIFY(updates.contains(id));
+  }
   void typedReadsAndCancellation() {
     Bridge bridge(fixture, false);
     QVERIFY(bridge.openAction("status"));
@@ -94,6 +168,7 @@ private slots:
     QQmlApplicationEngine engine;
     KLocalization::setupLocalizedContext(&engine);
     engine.rootContext()->setContextProperty("backend", &bridge);
+    engine.rootContext()->setContextProperty("themeIcons", &themeIcons);
     engine.rootContext()->setContextProperty("styleNotice", QString());
     engine.loadFromModule("org.uke.ControlQtTest", "Main");
     QVERIFY(!engine.rootObjects().isEmpty());
@@ -111,6 +186,7 @@ private slots:
     QQmlApplicationEngine engine;
     KLocalization::setupLocalizedContext(&engine);
     engine.rootContext()->setContextProperty("backend", &bridge);
+    engine.rootContext()->setContextProperty("themeIcons", &themeIcons);
     engine.rootContext()->setContextProperty("styleNotice", QString());
     QStringList warnings;
     connect(&engine, &QQmlEngine::warnings, this,
@@ -127,6 +203,12 @@ private slots:
     QTest::qWait(100);
     QCOMPARE(bridge.search("").size(), int(actions().size()));
     QCOMPARE(bridge.search("no-such-action-98765").size(), 0);
+    for (int area = 0; area < 7; ++area) {
+      QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, area)));
+      QCoreApplication::processEvents();
+      QCOMPARE(bridge.section(), area);
+      snapshot(window, "area-" + QString::number(area));
+    }
     for (const auto &entry : actions()) {
       QVERIFY(QMetaObject::invokeMethod(
           window, "openGuide",
@@ -148,11 +230,44 @@ private slots:
         if (guide->window() == window && guide->isVisible())
           inScene = true;
       QVERIFY2(inScene, entry.id.c_str());
+      QVERIFY(bridge.observation().isEmpty());
+      QVERIFY(bridge.review().isEmpty());
+      auto *submit = visualItem(window->contentItem(), "submitRequest");
+      QVERIFY2(submit, entry.id.c_str());
+      QVERIFY(submit->isEnabled());
+      auto *submitAccess = QAccessible::queryAccessibleInterface(submit);
+      QVERIFY(submitAccess);
+      QVERIFY(!submitAccess->text(QAccessible::Name).isEmpty());
+      if (entry.id == "channel.set" || entry.id == "update.apply")
+        snapshot(window, QString::fromStdString(entry.id));
     }
     QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, 6)));
     QCoreApplication::processEvents();
     QCOMPARE(bridge.section(), 6);
     QVERIFY(bridge.guide().isEmpty());
+    auto *search = visualItem(window->contentItem(), "advancedSearch");
+    QVERIFY(search);
+    search->setProperty("text", "no-such-action-98765");
+    QCoreApplication::processEvents();
+    QCOMPARE(search->property("text").toString(), QString("no-such-action-98765"));
+    search->setProperty("text", "");
+    QVERIFY(QMetaObject::invokeMethod(window, "openGuide", Q_ARG(QVariant, QString("status"))));
+    QCoreApplication::processEvents();
+    auto *submit = visualItem(window->contentItem(), "submitRequest");
+    QVERIFY(submit);
+    QVERIFY(QMetaObject::invokeMethod(submit, "clicked"));
+    QVERIFY(bridge.observation().value("running").toBool());
+    QVERIFY(!submit->isEnabled());
+    QTRY_VERIFY(!bridge.observation().value("running").toBool());
+    snapshot(window, "read-complete");
+    auto *refresh = visualItem(window->contentItem(), "refreshRead");
+    QVERIFY(refresh);
+    QVERIFY(QMetaObject::invokeMethod(refresh, "clicked"));
+    QVERIFY(bridge.observation().value("running").toBool());
+    auto *stop = visualItem(window->contentItem(), "stopRead");
+    QVERIFY(stop);
+    QVERIFY(QMetaObject::invokeMethod(stop, "clicked"));
+    QVERIFY(bridge.observation().value("cancelled").toBool());
     QVERIFY(QMetaObject::invokeMethod(window, "openGuide",
                                       Q_ARG(QVariant, QString("charge.mode"))));
     bridge.submit();
@@ -169,6 +284,7 @@ private slots:
     auto *launch = review->findChild<QObject *>("launchTerminal");
     QVERIFY(launch);
     QVERIFY(!launch->property("enabled").toBool());
+    snapshot(window, "review-charge");
     QVERIFY(QMetaObject::invokeMethod(review, "reject"));
     QCoreApplication::processEvents();
     QVERIFY(bridge.review().isEmpty());

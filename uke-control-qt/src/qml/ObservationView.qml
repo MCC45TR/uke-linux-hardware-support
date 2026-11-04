@@ -11,10 +11,20 @@ ColumnLayout {
     FormCard.FormHeader {
         title: backend.observation.title || "Observation"
     }
-    Controls.Label {
+    RowLayout {
         Layout.fillWidth: true
-        text: (backend.observation.state || "") + " · " + (backend.observation.stamp || "")
-        wrapMode: Text.WordWrap
+        Kirigami.Icon {
+            source: themeIcons.names[backend.observation.icon || "dialog-information"]
+            implicitWidth: Kirigami.Units.iconSizes.smallMedium
+            implicitHeight: implicitWidth
+            Accessible.ignored: true
+        }
+        Controls.Label {
+            objectName: "observationState"
+            Layout.fillWidth: true
+            text: (backend.observation.state || "") + " · " + (backend.observation.stamp || "")
+            wrapMode: Text.WordWrap
+        }
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
@@ -29,14 +39,14 @@ ColumnLayout {
         Controls.Button {
             objectName: "refreshRead"
             text: "Refresh"
-            icon.name: "view-refresh"
+            icon.name: themeIcons.names["view-refresh"]
             enabled: !backend.observation.running
             onClicked: backend.refresh()
         }
         Controls.Button {
             objectName: "stopRead"
             text: "Stop"
-            icon.name: "process-stop"
+            icon.name: themeIcons.names["media-playback-stop"]
             enabled: backend.observation.running || false
             onClicked: backend.cancelRead()
         }
@@ -55,8 +65,10 @@ ColumnLayout {
     FormCard.FormCard {
         Layout.fillWidth: true
         FormCard.FormButtonDelegate {
+            objectName: "toggleRawDetails"
             text: "Raw output & errors"
-            icon.name: "utilities-terminal"
+            icon.name: themeIcons.names["utilities-terminal"]
+            Accessible.description: rawDetails.visible ? "Details expanded" : "Details collapsed"
             onClicked: rawDetails.visible = !rawDetails.visible
         }
         ColumnLayout {
@@ -66,6 +78,7 @@ ColumnLayout {
             Controls.Label { text: "Raw output"; Layout.leftMargin: Kirigami.Units.largeSpacing }
             Controls.TextArea {
                 objectName: "rawOutput"
+                Accessible.name: "Raw output"
                 Layout.fillWidth: true
                 text: backend.observation.raw || "No stdout reported."
                 textFormat: TextEdit.PlainText
@@ -76,6 +89,7 @@ ColumnLayout {
             Controls.Label { text: "Errors · exit " + backend.observation.exitStatus; Layout.leftMargin: Kirigami.Units.largeSpacing }
             Controls.TextArea {
                 objectName: "errorOutput"
+                Accessible.name: "Error output"
                 Layout.fillWidth: true
                 text: backend.observation.error || "No stderr reported."
                 textFormat: TextEdit.PlainText

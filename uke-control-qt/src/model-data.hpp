@@ -17,5 +17,6 @@ struct Fixture {
 };
 QString safe(const std::string &text);
 QString friendlyTitle(const Action &action);
+QString actionIcon(const Action &action);
 QString summary(const Action &action);
 } // namespace uq

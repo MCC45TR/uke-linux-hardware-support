@@ -14,11 +14,13 @@ class Bridge : public QObject {
   Q_PROPERTY(QVariantMap observation READ observation NOTIFY observationChanged)
   Q_PROPERTY(QVariantMap review READ review NOTIFY reviewChanged)
   Q_PROPERTY(QString message READ message NOTIFY messageChanged)
+  Q_PROPERTY(bool messageError READ messageError NOTIFY messageChanged)
   Fixture fixture_;
   bool readOnly_;
   int section_ = 0;
   QVariantMap guide_, observation_, review_;
   QString message_;
+  bool messageError_ = false;
   Values draft_, readValues_;
   std::string readId_;
   std::optional<Plan> reviewed_;
@@ -43,6 +45,7 @@ public:
   QVariantMap observation() const { return observation_; }
   QVariantMap review() const { return review_; }
   QString message() const { return message_; }
+  bool messageError() const { return messageError_; }
   Q_INVOKABLE QVariantList search(const QString &text) const;
   Q_INVOKABLE bool openAction(const QString &id);
   Q_INVOKABLE void selectArea(int index);

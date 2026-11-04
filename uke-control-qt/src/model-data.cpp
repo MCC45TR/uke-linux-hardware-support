@@ -4,6 +4,40 @@
 #include <sys/stat.h>
 #include <unistd.h>
 namespace uq {
+QString actionIcon(const Action &a) {
+  const auto id = QString::fromStdString(a.id);
+  // The same semantic names serve daily pages and the complete SDK catalog.
+  for (const auto &[part, icon] :
+       std::initializer_list<std::pair<const char *, const char *>>{
+           {"microphone", "audio-input-microphone"},
+           {"battery", "battery"}, {"charge", "battery-charging"},
+           {"brightness", "video-display"}, {"display", "video-display"},
+           {"desktop", "preferences-desktop"}, {"flashlight", "camera-flash"},
+           {"led", "preferences-desktop-color"}, {"usb", "drive-removable-media-usb"},
+           {"ethernet", "network-wired"}, {"nfc", "network-wireless"},
+           {"audio", "audio-card"}, {"camera", "camera-photo"},
+           {"sensors", "utilities-system-monitor"}, {"wake", "preferences-system-time"},
+           {"sleep", "preferences-system-power-management"},
+           {"channel", "system-switch-user"}, {"update", "system-software-update"},
+           {"hardware", "cpu"}, {"firmware", "cpu"},
+           {"workload", "utilities-system-monitor"}, {"touch", "input-touchpad"},
+           {"storage", "drive-harddisk"}, {"roots", "drive-harddisk"},
+           {"swap", "drive-harddisk"}, {"resize", "drive-harddisk"},
+           {"snapshot", "document-save"}, {"support", "document-export"},
+           {"diagnostics", "document-properties"}, {"report", "document-send"},
+           {"recovery", "security-high"}, {"boot", "system-reboot"}})
+    if (id.contains(QString::fromLatin1(part)))
+      return QString::fromLatin1(icon);
+  if (a.effect == Effect::maintenance)
+    return "security-high";
+  if (a.effect == Effect::publish)
+    return "document-send";
+  if (a.effect == Effect::local_file)
+    return "document-save";
+  if (a.effect == Effect::read)
+    return "dialog-information";
+  return "configure";
+}
 static QString q(const std::string &s) {
   return QString::fromUtf8(s.data(), int(s.size()));
 }
