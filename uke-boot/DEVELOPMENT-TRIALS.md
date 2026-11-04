@@ -1,7 +1,9 @@
 # Explicit replacement of a development trial
 
-4 November 2026. Source candidate; remote qualification and physical validation
-remain required. The normal stable kernel family is updated only on an explicit
+4 November 2026. Version1.8.60 passes native AArch64 COPR tests, including
+ASan/UBSan fault injection. Signed DNF delivery and read-only admission pass on
+POCO Pad X1 with Fedora46 and7200-unstable. Actual trial replacement, interruption
+and recovery remain unqualified. The normal stable kernel family is updated only on an explicit
 request, after physical validation. Camera development uses the unstable family.
 
 `uke-kernel-update check-trial BUNDLE` inspects an installed, RPM-verified

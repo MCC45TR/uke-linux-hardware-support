@@ -1,9 +1,10 @@
 # Uke boot integration
 
-4 November 2026. The [explicit development-trial replacement candidate](DEVELOPMENT-TRIALS.md)
+4 November 2026. The [explicit development-trial replacement interface](DEVELOPMENT-TRIALS.md)
 preserves the recorded B image while updating an unaccepted unstable A trial.
-It requires rollback mode `off` and does not grant health approval. Remote
-qualification and physical validation remain pending.
+It requires rollback mode `off` and does not grant health approval. Version1.8.60
+passes AArch64 COPR fixtures, signed DNF delivery and read-only admission on
+POCO Pad X1/Fedora46/7200-unstable. Actual replacement and recovery remain pending.
 
 30 October 2026. Version `1.8.6` adds vendor defaults that restrict kernel
 pointers and kernel logs. Installation applies these two keys using the
