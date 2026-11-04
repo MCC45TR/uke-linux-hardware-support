@@ -628,8 +628,8 @@ int main(int argc,char **argv) {
         need(std::search(old_kernel.begin(),old_kernel.end(),banner.begin(),banner.end())!=old_kernel.end(),"Existing boot_b does not match the running kernel; rollback is unqualified");
         const fs::path old_core=fs::path("/usr/lib/modules")/current.release/"vmlinuz";
         need(file(old_core)==old_kernel,"Installed rollback Image differs from the current boot partition");
-        const auto rollback=installed_files({{"-core",{{old_core,digest(old_kernel)}}}},current.release);
-        rollback_modules(rollback);
+        const auto rollback_core=installed_files({{"-core",{{old_core,digest(old_kernel)}}}},current.release);
+        rollback_modules(rollback_core);
         need(le32(previous,16)==le32(bytes,16),"Boot OS metadata differs; a separately reviewed update is required");
         const auto previous_hash=digest(previous),next_hash=digest(bytes);
         std::optional<UserdataUpdate> accepted,current_trial;

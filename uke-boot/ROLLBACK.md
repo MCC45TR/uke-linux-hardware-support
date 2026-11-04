@@ -29,7 +29,7 @@ Switching exclusive families removes the opposite family's RPMs; development
 off mode must be selected before doing so. Returning to enforced operation
 requires a healthy installed cohort and acceptance on a subsequent boot.
 
-COPR producers retain the published 1.8.40 boot integration and 2.8.1-11 control
+COPR producers retain the published 1.8.40 boot integration and 2.8.1-12 control
 sources by SHA-256, overlay the policy changes, and run the native fixtures in
 COPR. No native compilation is performed on the tablet. Source/build results
 do not establish physical health or recovery from an early bootloader hang.
