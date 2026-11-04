@@ -466,6 +466,7 @@ static Fd inhibit_shutdown() {
     return retained;
 }
 #include "userdata-update.hpp"
+#include "select-existing-slot.hpp"
 static bool activation_enabled(const std::string &label) {
     if(label=="userdata" && !automatic_policy_ready("/var/lib/senemos/kernel-update")) {
         std::cout<<"Automatic policy migration is incomplete; boot activation deferred\n";return false;
@@ -488,11 +489,12 @@ static fs::path selected_userdata_bundle() {
 }
 int main(int argc,char **argv) {
     try {
-        need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
+        need((argc==4 && (std::string(argv[1])=="select-slot" || std::string(argv[1])=="check-select-slot")) ||
+             (argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
              (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
         const bool migrating=action=="migrate-automatic-policy";
@@ -503,6 +505,11 @@ int main(int argc,char **argv) {
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
         const auto label=root_label(read_text("/proc/cmdline"));
+        if(action=="select-slot" || action=="check-select-slot") {
+            need(label=="userdata", "Manual A/B selection requires the proven userdata profile");
+            select_existing_slot(argv[2],argv[3],action=="select-slot");
+            return 0;
+        }
         if(migrating) {
             if(label!="userdata")return 0;
             (void)selected_userdata_bundle();
