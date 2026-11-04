@@ -40,3 +40,20 @@ so the expected architecture-subdirectory path was absent. Fixture builds now
 set both `_rpmdir` and `_rpmfilename` explicitly. No binary candidate was
 published or installed from that failed trial; native policy validation remains
 pending the corrected build.
+
+Builds 11254574 (unstable), 11254580 (test) and 11254581 (stable) passed native
+tests and published 2.8.1-10. The first real unstable-to-test transaction then
+completed its RPM and channel phases but exited 141. Its JSON output ended at
+the 8192-byte stream boundary. The operation receipt was complete, pending state
+was cleared and protected boot/version-lock files were unchanged. This is a
+process-output failure after a completed transaction, not an unknown RPM result;
+the completed transaction must not be replayed to diagnose it.
+
+The coordinator had blocked SIGPIPE together with user cancellation signals.
+An internal scriptlet pipe could therefore leave SIGPIPE pending until signal
+mask restoration, killing the process before the remaining JSON buffer flushed.
+The 2.8.1-11 correction ignores SIGPIPE for the coordinator lifetime, retains
+deferred user cancellation, flushes receipts before signal restoration and checks
+final stdout completion. A subprocess fixture generates EPIPE under the actual
+critical guard and verifies a complete JSON receipt larger than the stream buffer
+with a zero exit status. Full device round trips remain pending this correction.

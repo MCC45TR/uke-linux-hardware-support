@@ -159,9 +159,10 @@ END {
     }
     print ""
     print "%changelog"
-    if(build_phase=="backend") print "* Wed Nov 04 2026 Uke contributors - 2.8.1-10"
-    else print "* Wed Nov 04 2026 Uke contributors - 1.0.0-40"
+    if(build_phase=="backend") print "* Wed Nov 04 2026 Uke contributors - 2.8.1-11"
+    else print "* Wed Nov 04 2026 Uke contributors - 1.0.0-41"
     print "- Preserve newer installed versions and unavailable extras during channel changes."
     print "- Honor kernel version locks and skip boot work for unchanged selections."
     print "- Keep exact synchronization explicit and add signed offline solver tests."
+    print "- Handle scriptlet pipe errors without truncating successful receipts."
 }

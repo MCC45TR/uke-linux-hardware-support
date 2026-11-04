@@ -253,9 +253,16 @@ std::string operation_json(const operation::Record& record) {
 }
 struct CriticalSignals {
     sigset_t previous{};
-    CriticalSignals(){sigset_t blocked;sigemptyset(&blocked);for(int signal:{SIGTERM,SIGHUP,SIGINT,SIGPIPE})sigaddset(&blocked,signal);need(!sigprocmask(SIG_BLOCK,&blocked,&previous),"Cannot protect package mutation from terminal loss");}
-    ~CriticalSignals(){sigprocmask(SIG_SETMASK,&previous,nullptr);}
+    CriticalSignals(){sigset_t blocked;sigemptyset(&blocked);for(int signal:{SIGTERM,SIGHUP,SIGINT})sigaddset(&blocked,signal);need(!sigprocmask(SIG_BLOCK,&blocked,&previous),"Cannot protect package mutation from terminal loss");}
+    ~CriticalSignals(){std::cout.flush();std::cerr.flush();sigprocmask(SIG_SETMASK,&previous,nullptr);}
 };
+void ignore_broken_pipes() {
+    // RPM/libdnf may encounter closed internal scriptlet pipes. SIGPIPE is an
+    // I/O error, not user cancellation; a deferred signal must not kill an
+    // already committed transaction or truncate its buffered JSON receipt.
+    struct sigaction action{};action.sa_handler=SIG_IGN;sigemptyset(&action.sa_mask);
+    need(sigaction(SIGPIPE,&action,nullptr)==0,"Cannot configure package pipe-error handling");
+}
 struct Options {std::string selected;bool sync=false,update=false,dry=false,yes=false,status=false,json=false;};
 Options parse(int argc,char** argv) {
     const auto usage=[](bool ok,const std::string& text){if(!ok)throw cli::UsageError(text);};
@@ -764,12 +771,18 @@ void run(Options o) {
     actions.clear=[&]{need(unlink((state/"channel-pending").c_str())==0,"Cannot clear completed channel journal");Fd dir(open(state.c_str(),O_RDONLY|O_DIRECTORY|O_CLOEXEC));need(dir.n>=0&&fsync(dir.n)==0,"Cannot sync channel journal");};
     operation::apply(record,actions);
     progress("Package transaction completed; channel "+o.selected);
-    cli::print(plan+",\"preview_only\":false,\"operation_id\":"+sysfs::quote(record.id)+",\"operation_completed\":true,\"retained_kernels_preserved\":true,\"reboot_requested\":false,\"physical_boot_verified\":null}",o.json,"Channel synchronized");
+    cli::print(plan+",\"preview_only\":false,\"operation_id\":"+sysfs::quote(record.id)+",\"operation_completed\":true,\"retained_kernels_preserved\":true,\"reboot_requested\":false,\"physical_boot_verified\":null}",o.json,synchronize?"Channel synchronized":o.update?"Packages updated":"Channel selected");
 }
 }
 #ifndef UKE_PACKAGES_TEST
 int main(int argc,char** argv) {
-    try {uke::packages::run(uke::packages::parse(argc,argv));return 0;}
+    try {
+        uke::packages::ignore_broken_pipes();
+        uke::packages::run(uke::packages::parse(argc,argv));
+        std::cout.flush();
+        uke::packages::need(bool(std::cout),"Cannot write package output; inspect channel status before retrying package changes");
+        return 0;
+    }
     catch(const uke::cli::UsageError& e){return uke::cli::error(e.what(),uke::cli::json_requested(argc,argv),64);}
     catch(const std::exception& e){return uke::cli::error(e.what(),uke::cli::json_requested(argc,argv),1);}
 }

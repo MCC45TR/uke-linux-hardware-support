@@ -15,6 +15,28 @@ static bool rawhide_repository_fixture_host(const std::string& release) {
     catch(const std::runtime_error&){return false;}
 }
 int main() {
+    {
+        char pattern[]="/tmp/uke-package-pipe-XXXXXX";assert(mkdtemp(pattern));
+        const fs::path root=pattern,receipt=root/"receipt.json";
+        const std::string payload="{\"payload\":\""+std::string(20000,'x')+"\"}";
+        std::cout.flush();const auto child=fork();assert(child>=0);
+        if(child==0) {
+            ignore_broken_pipes();
+            const auto output=open(receipt.c_str(),O_WRONLY|O_CREAT|O_EXCL,0600);
+            assert(output>=0&&dup2(output,STDOUT_FILENO)>=0);close(output);
+            {
+                CriticalSignals critical;
+                int descriptors[2];assert(pipe(descriptors)==0);close(descriptors[0]);
+                assert(write(descriptors[1],"x",1)==-1&&errno==EPIPE);close(descriptors[1]);
+                uke::cli::print(payload,true,"Receipt");
+            }
+            // Deliberately bypass global iostream destruction: the coordinator
+            // must flush its complete receipt before restoring deferred signals.
+            _exit(0);
+        }
+        int status=0;assert(waitpid(child,&status,0)==child&&WIFEXITED(status)&&WEXITSTATUS(status)==0);
+        assert(read_file(receipt)==payload+'\n');fs::remove_all(root);
+    }
     const std::string container_release="ID=fedora\nVERSION_ID=46\nVERSION=\"46 (Container Image Prerelease)\"\n";
     bool container_refused=false;try{fedora_target(container_release);}catch(const std::runtime_error&){container_refused=true;}
     assert(container_refused);
