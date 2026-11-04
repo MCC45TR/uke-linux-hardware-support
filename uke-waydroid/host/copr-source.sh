@@ -19,8 +19,10 @@ mapfile -t policy_rpms < <(find "$stage/rpms" -maxdepth 1 -type f -name '*.rpm')
 rpmkeys --checksig --nosignature --verbose "${policy_rpms[0]}"
 (cd "$stage/root"; rpm2cpio "${policy_rpms[0]}" | cpio -idm --quiet --no-absolute-filenames)
 install -Dm644 /etc/selinux/config "$stage/root/etc/selinux/config"
+bzip2 -dc /usr/share/selinux/packages/container.pp.bz2 > "$stage/container.pp"
 # Link against all original modules without loading worker or host policy.
 semodule -p "$stage/root" -S /var/lib/selinux -s targeted -n \
+    -X 200 -i "$stage/container.pp" \
     -X 200 -i /usr/share/selinux/targeted/waydroid.pp \
     -X 400 -i "$owner/uke-waydroid/selinux/uke_waydroid_binder.cil"
 semodule -p "$stage/root" -S /var/lib/selinux -s targeted -lfull | \
