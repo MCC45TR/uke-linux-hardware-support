@@ -60,7 +60,7 @@ bool array(const Json::Value &props) {
     if (props.get("media.class", "") != "Audio/Source" || props.get("device.api", "") != "alsa" ||
         props.get("audio.channels", 0).asUInt() != 4) return false;
     const auto components = props.get("alsa.components", "").asString();
-    static const std::regex marker(R"(^mic:uke-4ch-v4 kernel:[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$)");
+    static const std::regex marker(R"(^mic:uke-4ch-v4 kernel:[0-9]+\.[0-9]+\.[0-9]+-[0-9]+(-unstable)?$)");
     if (!std::regex_match(components, marker) ||
         (props.get("alsa.card_name", "") != "POCO-Pad-X1" && props.get("alsa.long_card_name", "") != "Xiaomi Pad 7")) return false;
     const auto position = parse(props.get("audio.position", "[]").asString());

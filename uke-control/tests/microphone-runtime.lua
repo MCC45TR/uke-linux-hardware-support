@@ -54,7 +54,7 @@ function LocalModule(name)
 end
 dofile(arg[2]);assert(allocations==0)
 local raw={properties={["media.class"]="Audio/Source",["device.api"]="alsa",
-  ["alsa.card_name"]="POCO-Pad-X1",["alsa.components"]="mic:uke-4ch-v4 kernel:7.3.1-1500",
+  ["alsa.card_name"]="POCO-Pad-X1",["alsa.components"]="mic:uke-4ch-v4 kernel:7.3.1-7200-unstable",
   ["audio.channels"]="4",["audio.position"]="fixture",["object.serial"]="81"}}
 objects={raw};callbacks["object-added"](nil,raw);assert(allocations==0)
 selection="uke-amic4";update();assert(allocations==1 and arguments["capture.props"]["audio.position"][1]=="AUX2")

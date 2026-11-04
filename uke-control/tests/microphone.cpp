@@ -18,6 +18,12 @@ int main() {
     props["alsa.components"] = "mic:uke-4ch-v4 kernel:7.3.1-106";
     props["audio.position"] = "[\"AUX0\",\"AUX1\",\"AUX2\",\"AUX3\"]";
     assert(array(props));
+    props["alsa.components"] = "mic:uke-4ch-v4 kernel:7.3.1-7200-unstable";
+    assert(array(props));
+    for (const auto *suffix : {"-unstable-extra", "-rc1", "-unstable-unstable"}) {
+        props["alsa.components"] = std::string("mic:uke-4ch-v4 kernel:7.3.1-7200") + suffix;
+        assert(!array(props));
+    }
     props["alsa.components"] = "mic:uke-4ch-v3"; assert(!array(props));
     props["alsa.components"] = "mic:uke-4ch-v4 kernel:7.3.1-106";
     props["audio.position"] = "[\"AUX1\",\"AUX0\",\"AUX2\",\"AUX3\"]"; assert(!array(props));

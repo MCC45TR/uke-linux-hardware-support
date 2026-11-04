@@ -43,7 +43,7 @@ buffer contracts and DC rejection without opening audio hardware or saving audio
 This is not an acoustic echo-convergence, intelligibility, latency or power test.
 
 The retained COPR source producer overlays the microphone/catalog changes onto
-control 2.8.1-11 after verifying the exact original file hashes. Only the microphone
+control 2.8.1-23 after verifying the exact original file hashes. Only the microphone
 catalog fragment is replaced; newer package upgrade/recovery actions and backend,
 TUI and frontend contracts are retained. Development and installation
 use COPR and DNF; no native tablet compilation or copied binary installation is
@@ -67,6 +67,9 @@ Identities and raw channel order do not rotate. Kernel-owned installed layout
 metadata supplies the list. Exactly one model-matched ALSA source with
 `mic:uke-4ch-v4 kernel:RELEASE` and AUX0–3 in order is required. Older markers,
 missing/ambiguous arrays and mismatched layouts preserve ordinary routing.
+Both numeric stable releases and their exact `-unstable` ABI suffix are accepted;
+arbitrary, repeated and release-candidate suffixes remain rejected. The CLI and
+WirePlumber policy apply the same qualification to the four-channel source.
 
 Applications may describe context with `uke.microphone.camera` (`front`, `rear`,
 `none`) and `uke.microphone.purpose` (`call`, `scene`, `narration`, `recording`).

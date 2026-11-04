@@ -5,7 +5,12 @@ local card = { ["media.class"] = "Audio/Source", ["device.api"] = "alsa",
   ["audio.channels"] = "4" }
 local positions = { "AUX0", "AUX1", "AUX2", "AUX3" }
 assert(p.qualified(card, positions))
-for _, marker in ipairs { "mic:uke-4ch-v3", "mic:uke-4ch-v4", "mic:uke-4ch-v4 kernel:evil" } do
+card["alsa.components"] = "mic:uke-4ch-v4 kernel:7.3.1-7200-unstable"
+assert(p.qualified(card, positions))
+for _, marker in ipairs { "mic:uke-4ch-v3", "mic:uke-4ch-v4", "mic:uke-4ch-v4 kernel:evil",
+ "mic:uke-4ch-v4 kernel:7.3.1-7200-unstable-extra",
+ "mic:uke-4ch-v4 kernel:7.3.1-7200-rc1",
+ "mic:uke-4ch-v4 kernel:7.3.1-7200-unstable-unstable" } do
   card["alsa.components"] = marker
   assert(not p.qualified(card, positions))
 end

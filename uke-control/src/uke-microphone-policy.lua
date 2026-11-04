@@ -4,10 +4,13 @@ local M = {}
 M.channels = { ["uke-amic1"] = "AUX0", ["uke-amic3"] = "AUX1",
                ["uke-amic4"] = "AUX2", ["uke-amic5"] = "AUX3" }
 function M.qualified(p, positions)
+  local marker = p["alsa.components"]
+  local versioned = type(marker) == "string" and
+    (marker:match("^mic:uke%-4ch%-v4 kernel:%d+%.%d+%.%d+%-%d+$") ~= nil or
+     marker:match("^mic:uke%-4ch%-v4 kernel:%d+%.%d+%.%d+%-%d+%-unstable$") ~= nil)
   return p["media.class"] == "Audio/Source" and p["device.api"] == "alsa"
     and (p["alsa.card_name"] == "POCO-Pad-X1" or p["alsa.long_card_name"] == "Xiaomi Pad 7")
-    and type(p["alsa.components"]) == "string"
-    and p["alsa.components"]:match("^mic:uke%-4ch%-v4 kernel:%d+%.%d+%.%d+%-%d+$") ~= nil
+    and versioned
     and tonumber(p["audio.channels"]) == 4 and type(positions) == "table"
     and #positions == 4 and positions[1] == "AUX0" and positions[2] == "AUX1"
     and positions[3] == "AUX2" and positions[4] == "AUX3"
