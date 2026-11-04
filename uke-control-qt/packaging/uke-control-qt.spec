@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.3.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -91,6 +91,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.3.0-6
+- Convert the observed Qt role value to the shared SDK's string type.
+
 * Wed Nov 04 2026 Uke contributors - 1.3.0-5
 - Keep role and reader controls above detailed cards and start role requests from observed state.
 - Condense accessory details behind native disclosure controls.

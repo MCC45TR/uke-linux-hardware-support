@@ -100,7 +100,7 @@ bool Bridge::openAction(const QString &id) {
     draft_ = defaults(a);
     if(a.id=="usb.role") {
       const auto role=settings_.usbPolicy().value("role").toString();
-      if(role=="host"||role=="device")draft_["role"]=role;
+      if(role=="host"||role=="device")draft_["role"]=role.toStdString();
     }
     if(a.id=="boot.set-slot") {
       const auto running=settings_.bootReport().value("current_slot").toString();
