@@ -83,3 +83,29 @@ the available menu/close symbolic aliases. Native drawer open/close and both
 bindings gain runtime checks. This uses the original distribution control;
 no Kirigami source is modified. See the upstream
 [OverlayDrawer properties](https://api.kde.org/qml-org-kde-kirigami-overlaydrawer.html).
+
+## Final delivery
+
+COPR build [11255477](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11255477/)
+built release `1.0.0-8.fc46.aarch64` from source commit
+`14096f160bbefb543b0a82c4aa22fa35642d044d`; all four CTest suites passed.
+The package's SCM producer is pinned to that same commit. Release 7's isolated
+appearance correction also passed COPR checks in build 11255430; it was not
+installed on the tablet.
+
+DNF upgraded only the GUI and its optional tests package from release 6 to 8.
+Installed RPM verification passed. The installed checks completed on the real
+Wayland session: 15 retained widget checks, 11 appearance checks and eight
+Kirigami checks passed, plus CLI policy. This includes all 126 guide/request
+routes in simulation and the four explicitly enabled real read-only queries.
+An additional isolated light/Adwaita QML walkthrough passed; its menu icon and
+drawer open/close were visually verified alongside the normal dark/Breeze UI.
+All 50 registered icon keys render, including both native navigation handles.
+
+Both root previews, `update --check --json` and
+`channel set unstable --dry-run --json`, returned zero after installation.
+Both report preview-only upgrade mode, no pending kernel activation and no
+reboot request. The final selected channel remains unstable, the pending marker
+is empty, the previous operation phase is complete, and the running kernel
+remains 7.3.1-1500. This GUI delivery does not repeat package application,
+partition, recovery, firmware or physical camera qualification operations.
