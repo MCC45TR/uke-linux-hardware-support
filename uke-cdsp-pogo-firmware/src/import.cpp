@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-#include "fat.hpp"
+#include "auth-image.hpp"
 namespace uke_local_fw {
 using Family=std::map<std::string,Bytes>;
 static constexpr const char *mcu_sha="b17fa938cf5613dfa550179d6fc40cfbaa831d534a16a22282e2904e845fa7c4";
@@ -50,7 +50,7 @@ static void verify_family(const fs::path &path,const Family &family) {
     }
 }
 static void publish_family(const fs::path &parent,const std::string &kind,const Family &family) {
-    need((kind=="cdsp"||kind=="nanosic")&&!family.empty(),"Invalid firmware family");
+    need((kind=="cdsp"||kind=="nanosic"||kind=="pogo-auth")&&!family.empty(),"Invalid firmware family");
     auto dir=directory(parent,true);const auto final=parent/kind;
     if(fs::exists(final)||fs::is_symlink(final)){verify_family(final,family);return;}
     uint64_t random=0;need(getrandom(&random,sizeof(random),0)==ssize_t(sizeof(random)),"Cannot create firmware stage name");
@@ -118,7 +118,7 @@ static Bytes mcu_image(Source &super) {
     }
     throw std::runtime_error("No hash-admitted Uke MCU image found in stock ODM/vendor");
 }
-static std::pair<Family,Bytes> acquire() {
+static std::pair<Source,Source> stock_sources() {
     need(geteuid()==0,"Administrator authentication is required for read-only stock partition access");
     const auto board=sysfile("/sys/firmware/devicetree/base/compatible",1024);
     need(compatible(board,"xiaomi,uke")&&compatible(board,"qcom,sm7675"),"Exact Uke/SM7675 identity required");
@@ -126,6 +126,10 @@ static std::pair<Family,Bytes> acquire() {
     struct stat root_stat{};need(!stat("/",&root_stat),"Cannot identify Fedora root filesystem");
     const auto root_sys=fs::canonical("/sys/dev/block/"+std::to_string(major(root_stat.st_dev))+":"+std::to_string(minor(root_stat.st_dev)));
     need(root_sys.parent_path()==super.parent,"Stock sources are outside the Fedora root disk");
+    return {std::move(modem),std::move(super)};
+}
+static std::pair<Family,Bytes> acquire() {
+    auto [modem,super]=stock_sources();
     Fat fat(modem.fd.value,modem.size);auto cdsp=cdsp_family(fat);auto mcu=mcu_image(super);
     need(admit_mcu(mcu),"MCU identity differs");
     return {std::move(cdsp),std::move(mcu)};
@@ -135,12 +139,28 @@ static int preflight() {
     std::cout<<"Verified device-local CDSP metadata/split files and exact MCU image; no files were published or devices started\n";
     return 0;
 }
-static int run(const std::string &release) {
-    need(token(release)&&release.starts_with("7.3.1-"),"Invalid target kernel release");
+static Bytes acquire_auth() {
+    auto [modem,super]=stock_sources();
+    Fat fat(modem.fd.value,modem.size);return auth_image(fat);
+}
+static int preflight_auth() {
+    const auto image=acquire_auth();
+    std::cout<<"Verified the exact reconstructed device-local Uke authentication image; no file was published or TA loaded\n";
+    return 0;
+}
+static int run(const std::string &release,bool authentication=false) {
+    need(token(release)&&release.starts_with("7.3.1-")&&release.ends_with("-unstable"),
+         "Firmware candidates require an -unstable kernel ABI");
     utsname current{};need(!uname(&current)&&release!=current.release,"Only a non-running kernel may receive firmware");
     need(fs::is_directory(fs::path("/usr/lib/modules")/release),"Target kernel modules are not installed");
-    const auto [cdsp,mcu]=acquire();
     const auto parent=fs::path("/usr/lib/firmware")/release/"qcom/uke";
+    if(authentication) {
+        const auto image=acquire_auth();publish_family(parent,"pogo-auth",Family{{"devauth.mbn",image}});
+        std::cout<<"Verified and published the device-local Uke authentication image for "<<release
+                 <<"; source partitions stayed read-only; no TA was loaded\n";
+        return 0;
+    }
+    const auto [cdsp,mcu]=acquire();
     publish_family(parent,"cdsp",cdsp);publish_family(parent,"nanosic",Family{{"MCU_Upgrade.bin",mcu}});
     std::cout<<"Verified and published device-local CDSP and MCU firmware for "<<release
              <<"; source partitions stayed read-only; no DSP or MCU was started\n";
@@ -152,8 +172,10 @@ static int run(const std::string &release) {
 int main(int argc,char **argv) {
     try {
         if(argc==2&&std::string(argv[1])=="--preflight")return uke_local_fw::preflight();
-        need(argc==3&&std::string(argv[1])=="--import","Usage: uke-cdsp-pogo-firmware --preflight | --import KERNEL_RELEASE");
-        return uke_local_fw::run(argv[2]);}
+        if(argc==2&&std::string(argv[1])=="--preflight-auth")return uke_local_fw::preflight_auth();
+        need(argc==3&&(std::string(argv[1])=="--import"||std::string(argv[1])=="--import-auth"),
+             "Usage: uke-cdsp-pogo-firmware --preflight | --preflight-auth | --import KERNEL_RELEASE | --import-auth KERNEL_RELEASE");
+        return uke_local_fw::run(argv[2],std::string(argv[1])=="--import-auth");}
     catch(const std::exception &e){std::cerr<<"uke-cdsp-pogo-firmware: "<<e.what()<<'\n';return 1;}
 }
 #endif

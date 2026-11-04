@@ -35,6 +35,29 @@ static Bytes fat32() {
     return b;
 }
 int main() {
+    Bytes auth_mdt(52+9*32);memcpy(auth_mdt.data(),"\177ELF",4);
+    auth_mdt[4]=auth_mdt[5]=auth_mdt[6]=1;put16(auth_mdt,18,183);
+    put32(auth_mdt,28,52);put16(auth_mdt,40,52);put16(auth_mdt,42,32);put16(auth_mdt,44,9);
+    std::map<std::string,Bytes> auth_parts;Bytes joined_expected(auth_bytes);
+    for(unsigned i=0;i<9;i++) {
+        const auto at=i?4096+i*128:0;const auto size=i?64:340;
+        put32(auth_mdt,52+i*32,1);put32(auth_mdt,52+i*32+4,at);put32(auth_mdt,52+i*32+16,size);
+        char part_name[16];snprintf(part_name,sizeof(part_name),"DEVAUTH.B%02u",i);
+        auth_parts[part_name]=Bytes(size,static_cast<unsigned char>(i+1));
+        std::fill(joined_expected.begin()+at,joined_expected.begin()+at+size,i+1);
+    }
+    const auto auth_read=[&](const auto &name,size_t maximum){assert(maximum==auth_bytes);return auth_parts.at(name);};
+    assert(join_auth_parts(auth_mdt,auth_read)==joined_expected);
+    assert(!admitted_auth(joined_expected));
+    auto broken_auth=auth_mdt;put32(broken_auth,52+32+4,auth_bytes);refused([&]{join_auth_parts(broken_auth,auth_read);});
+    broken_auth=auth_mdt;put16(broken_auth,44,8);refused([&]{join_auth_parts(broken_auth,auth_read);});
+    broken_auth=auth_mdt;put32(broken_auth,52+32+4,0);refused([&]{join_auth_parts(broken_auth,auth_read);});
+    auth_parts["DEVAUTH.B01"].pop_back();refused([&]{join_auth_parts(auth_mdt,auth_read);});
+    auth_parts["DEVAUTH.B01"].push_back(2);
+    broken_auth=auth_mdt;put32(broken_auth,52+32*2+4,4096+128);
+    auth_parts["DEVAUTH.B02"]=auth_parts["DEVAUTH.B01"];
+    assert(join_auth_parts(broken_auth,auth_read).size()==auth_bytes);
+    refused([&]{auth_field(auth_mdt,0,9);});
     const fs::path controller="/sys/devices/platform/soc/1d84000.ufshc";
     assert(below(controller/"host0/target0:0:0/0:0:0:4/block/sde/sde6",controller));
     assert(below(controller/"host0/target0:0:0/0:0:0:0/block/sda/sda31",controller));
@@ -72,5 +95,5 @@ int main() {
     refused([&]{publish_family(dir/"out","nanosic",Family{{"../bad",Bytes{1}}});});
     need(!fs::exists(dir/"out/bad"),"Unsafe filename escaped stage");
     fs::remove_all(dir);
-    std::cout<<"PASS: actual read-only FAT geometry/chains/mirrors, stock identity refusal and atomic no-replace publication; synthetic files only\n";
+    std::cout<<"PASS: actual read-only FAT, nine-part TA assembly/overlaps/bounds, exact identity refusal and atomic no-replace publication; synthetic files only\n";
 }

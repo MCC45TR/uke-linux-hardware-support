@@ -1,6 +1,6 @@
 Name: uke-cdsp-pogo-firmware
-Version: 0.1
-Release: 2%{?dist}
+Version: 0.2
+Release: 1%{?dist}
 Summary: Read-only device-local Uke CDSP and pogo firmware provisioning
 License: MIT
 Source0: %{name}-%{version}.tar.gz
@@ -33,6 +33,10 @@ install -Dm644 uke-cdsp-pogo-firmware/README.md %{buildroot}%{_docdir}/%{name}/R
 %doc %{_docdir}/%{name}/README.md
 
 %changelog
+* Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.2-1
+- Reconstruct only the exact Uke authentication image from bounded read-only splits.
+- Keep trusted-app loading separate and scope candidate imports to unstable ABIs.
+
 * Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1-2
 - Admit the observed modem and super LUNs only below the exact Uke UFS controller.
 

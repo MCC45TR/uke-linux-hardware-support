@@ -17,6 +17,12 @@ Existing differing files or symlinks are refused. No DSP or MCU is started,
 no trusted app is loaded and no calibration is accessed. The helper does not
 provide a DSP program/runtime or keyboard authentication token provider.
 
+Version 0.2 adds --preflight-auth and --import-auth KERNEL_RELEASE. They
+reconstruct the nine stock devauth parts in bounded memory, reject inconsistent
+overlaps and admit only the retained 147,544-byte Uke image by its complete
+SHA-256. They do not load the trusted app. Candidate publication now requires
+a non-running installed -unstable kernel ABI.
+
 The read-only LP/loop/debugfs path reuses the original Uke boot updater header
 at a96607f. FAT parsing and bounded publication are original MIT C++ code.
 Synthetic native/sanitizer tests run on COPR. Tablet provisioning and physical
