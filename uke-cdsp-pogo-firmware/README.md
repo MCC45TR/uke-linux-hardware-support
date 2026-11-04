@@ -52,3 +52,11 @@ hashes are recorded in manifests/current-stock-identities-20261104.json. The
 current OTA release remains unidentified. Source-volume identity provides
 additional provenance; import admission checks the exact complete files. Secure signature,
 loader, workload and accessory acceptance remain separate device gates.
+
+--provision-idle-current supports first preparation after the audited11003 kernel
+has booted. It requires that exact source commit, the exact bound native CDSP
+consumer offline, the exact pogo consumer unbound, and no CDSP FastRPC endpoint.
+It checks those states before and after acquiring the fully pinned stock files.
+Every existing family must already match before any missing family is added.
+Publication retains the no-replace atomic policy and starts no hardware or TA.
+The existing --import/--import-auth operations still require a non-running ABI.

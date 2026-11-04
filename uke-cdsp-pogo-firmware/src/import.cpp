@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "auth-image.hpp"
+#include "idle-current.hpp"
+#include <linux/magic.h>
+#include <sys/vfs.h>
 namespace uke_local_fw {
 using Family=std::map<std::string,Bytes>;
 static constexpr const char *mcu_sha="b17fa938cf5613dfa550179d6fc40cfbaa831d534a16a22282e2904e845fa7c4";
@@ -95,6 +98,8 @@ static void publish_family(const fs::path &parent,const std::string &kind,const 
 #ifndef UKE_LOCAL_FW_TEST
 static Bytes sysfile(const fs::path &path,size_t maximum) {
     Fd fd(open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW));Bytes out(maximum);
+    struct statfs filesystem{};
+    need(!fstatfs(fd.value,&filesystem)&&filesystem.f_type==SYSFS_MAGIC,"Kernel-owned sysfs descriptor required");
     const auto n=read(fd.value,out.data(),out.size());need(n>0&&size_t(n)<maximum,"Unexpected sysfs identity length");
     out.resize(n);return out;
 }
@@ -192,6 +197,31 @@ static int run(const std::string &release,bool authentication=false) {
              <<"; source partitions stayed read-only; no DSP or MCU was started\n";
     return 0;
 }
+static int provision_idle_current() {
+    need(geteuid()==0&&getuid()==0,"Administrator authentication is required");
+    utsname current{};need(!uname(&current),"Cannot identify the current kernel");
+    const std::string release=current.release;
+    need(release=="7.3.1-11003-unstable","Idle preparation is qualified only for the audited11003 cohort");
+    const auto identity=file(fs::path("/usr/share/senemos/uke")/release/"source-commit");
+    need(std::string(identity.begin(),identity.end())=="261d85e218906f78d37810db78a4aa80cd900067\n",
+         "The exact audited11003 source identity is required");
+    const auto idle=[] {
+        require_idle_consumers("/sys","/dev",[](const auto &path) {
+            const auto bytes=sysfile(path,64);return std::string(bytes.begin(),bytes.end());
+        });
+    };
+    idle();
+    const auto [cdsp,mcu]=acquire();const auto authentication=acquire_auth();
+    const auto parent=fs::path("/usr/lib/firmware")/release/"qcom/uke";
+    const std::array<std::pair<std::string,Family>,3> families={{{"cdsp",cdsp},
+        {"nanosic",Family{{"MCU_Upgrade.bin",mcu}}},{"pogo-auth",Family{{"devauth.mbn",authentication}}}}};
+    // Validate every existing family before adding any missing family.
+    for(const auto &[kind,files]:families)if(path_present(parent/kind))verify_family(parent/kind,files);
+    idle();
+    for(const auto &[kind,files]:families)publish_family(parent,kind,files);
+    std::cout<<"Exact current stock firmware prepared additively for audited11003; existing files were verified, source partitions stayed read-only; no DSP, MCU or TA was started\n";
+    return 0;
+}
 #endif
 }
 #ifndef UKE_LOCAL_FW_TEST
@@ -200,8 +230,9 @@ int main(int argc,char **argv) {
         if(argc==2&&std::string(argv[1])=="--preflight")return uke_local_fw::preflight();
         if(argc==2&&std::string(argv[1])=="--preflight-auth")return uke_local_fw::preflight_auth();
         if(argc==2&&std::string(argv[1])=="--inspect-stock")return uke_local_fw::inspect_stock();
+        if(argc==2&&std::string(argv[1])=="--provision-idle-current")return uke_local_fw::provision_idle_current();
         need(argc==3&&(std::string(argv[1])=="--import"||std::string(argv[1])=="--import-auth"),
-             "Usage: uke-cdsp-pogo-firmware --preflight | --preflight-auth | --inspect-stock | --import KERNEL_RELEASE | --import-auth KERNEL_RELEASE");
+             "Usage: uke-cdsp-pogo-firmware --preflight | --preflight-auth | --inspect-stock | --provision-idle-current | --import KERNEL_RELEASE | --import-auth KERNEL_RELEASE");
         return uke_local_fw::run(argv[2],std::string(argv[1])=="--import-auth");}
     catch(const std::exception &e){std::cerr<<"uke-cdsp-pogo-firmware: "<<e.what()<<'\n';return 1;}
 }
