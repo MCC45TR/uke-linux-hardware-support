@@ -7,7 +7,7 @@ import org.kde.kirigamiaddons.formcard as FormCard
 FormCard.FormCardDialog {
     id: dialog
     objectName: "requestReview"
-    title: "Review request"
+    title: backend.review.read ? "Review read access" : "Review request"
     width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 32)
     height: Math.min(implicitHeight, parent.height - Kirigami.Units.largeSpacing * 2)
     standardButtons: Controls.Dialog.Cancel
@@ -16,6 +16,11 @@ FormCard.FormCardDialog {
     SafeText {
         text: backend.review.title || ""
         description: backend.review.description || ""
+    }
+    SafeText {
+        text: backend.review.role || ""
+        description: backend.review.access || ""
+        icon.name: themeIcons.names["security-high"]
     }
     Repeater {
         model: backend.review.values || []
@@ -41,7 +46,7 @@ FormCard.FormCardDialog {
     FormCard.FormCheckDelegate {
         id: consent
         objectName: "reviewConsent"
-        text: "I reviewed the request and its effects."
+        text: backend.review.read ? "I reviewed why terminal access is needed." : "I reviewed the request and its effects."
         Accessible.name: text
     }
     SafeText {
@@ -52,7 +57,7 @@ FormCard.FormCardDialog {
     }
     FormCard.FormButtonDelegate {
             Accessible.name: text
-        text: "Validated arguments"
+        text: "Command details"
         icon.name: themeIcons.names["document-properties"]
         Accessible.description: exact.visible ? "Arguments expanded" : "Arguments collapsed"
         onClicked: exact.visible = !exact.visible
@@ -60,7 +65,7 @@ FormCard.FormCardDialog {
     SafeText {
         id: exact
         visible: false
-        text: "Command"
+        text: "Validated command"
         description: backend.review.command || ""
     }
     FormCard.FormButtonDelegate {

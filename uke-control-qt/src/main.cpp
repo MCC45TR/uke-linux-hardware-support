@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   KIconTheme::initTheme();
   QApplication app(argc, argv);
   QCoreApplication::setApplicationName("uke-control-qt");
-  QCoreApplication::setApplicationVersion("1.0.0");
+  QCoreApplication::setApplicationVersion("1.1.0");
   QCoreApplication::setOrganizationName("Uke");
   QGuiApplication::setDesktopFileName("org.uke.ControlQt");
   KStyleManager::initStyle();
@@ -116,9 +116,11 @@ int main(int argc, char **argv) {
       return 77;
     }
     uq::Bridge backend(fixture, parser.isSet("read-only"));
-    if (parser.isSet("start"))
+    if (parser.isSet("start")) {
+      backend.selectArea(backend.areaForAction(parser.value("start")));
       if (!backend.openAction(parser.value("start")))
         throw std::runtime_error(backend.message().toStdString());
+    }
     QQmlApplicationEngine engine;
     KLocalization::setupLocalizedContext(&engine);
     engine.rootContext()->setContextProperty("backend", &backend);

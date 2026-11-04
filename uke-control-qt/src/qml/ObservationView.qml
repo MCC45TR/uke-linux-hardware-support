@@ -9,7 +9,7 @@ ColumnLayout {
     id: view
     spacing: Kirigami.Units.smallSpacing
     FormCard.FormHeader {
-        title: backend.observation.title || "Observation"
+        title: backend.observation.title || "Result"
     }
     RowLayout {
         Layout.fillWidth: true
@@ -28,6 +28,12 @@ ColumnLayout {
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
+        visible: backend.observation.stale || false
+        type: Kirigami.MessageType.Warning
+        text: "The options have changed since this read. Refresh to use the current options."
+    }
+    Kirigami.InlineMessage {
+        Layout.fillWidth: true
         visible: (backend.observation.notice || "").length > 0
         text: backend.observation.notice || ""
         type: backend.observation.failed ? Kirigami.MessageType.Warning : Kirigami.MessageType.Information
@@ -39,6 +45,7 @@ ColumnLayout {
         Controls.Button {
             objectName: "refreshRead"
             text: "Refresh"
+            Accessible.name: text
             icon.name: themeIcons.names["view-refresh"]
             enabled: !backend.observation.running
             onClicked: backend.refresh()
@@ -46,9 +53,23 @@ ColumnLayout {
         Controls.Button {
             objectName: "stopRead"
             text: "Stop"
+            Accessible.name: text
             icon.name: themeIcons.names["media-playback-stop"]
             enabled: backend.observation.running || false
             onClicked: backend.cancelRead()
+        }
+    }
+    FormCard.FormCard {
+        Layout.fillWidth: true
+        visible: (backend.observation.options || []).length > 0
+        SafeText { text: "Options used for this result" }
+        Repeater {
+            model: backend.observation.options || []
+            delegate: SafeText {
+                required property var modelData
+                text: modelData.title
+                description: modelData.value
+            }
         }
     }
     FormCard.FormCard {
@@ -57,8 +78,9 @@ ColumnLayout {
             model: backend.observation.rows || []
             delegate: SafeText {
                 required property var modelData
-                text: "  ".repeat(modelData.depth) + modelData.key
+                text: modelData.label
                 description: modelData.value
+                leftPadding: Kirigami.Units.largeSpacing + Math.min(modelData.depth, 6) * Kirigami.Units.largeSpacing
             }
         }
     }
@@ -67,7 +89,7 @@ ColumnLayout {
         FormCard.FormButtonDelegate {
             Accessible.name: text
             objectName: "toggleRawDetails"
-            text: "Raw output & errors"
+            text: backend.observation.failed ? "Error details & original output" : "Original output & technical details"
             icon.name: themeIcons.names["utilities-terminal"]
             Accessible.description: rawDetails.visible ? "Details expanded" : "Details collapsed"
             onClicked: rawDetails.visible = !rawDetails.visible

@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.0.0
-Release:        8%{?dist}
+Version:        1.1.0
+Release:        1%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -79,6 +79,11 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.1.0-1
+- Redesign Qt navigation around nine task areas and a responsive overview.
+- Add a filtered action catalog and staged read, preference and review guides.
+- Track read options and stale observations while retaining native Kirigami controls.
+
 * Wed Nov 04 2026 Uke contributors - 1.0.0-8
 - Resolve native navigation handle icons across Breeze and Adwaita naming.
 - Exercise drawer opening, closing and the themed handle bindings.

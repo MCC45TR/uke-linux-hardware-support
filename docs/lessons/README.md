@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-QT-UX-20261104: organize native Qt pages around tasks and observation context](2026-11-04-qt-task-pages.md)
+
 - [UKE-QT-THEMES-20261104: keep semantic icons and request routing native](2026-11-04-qt-theme-actions.md)
 
 - [UKE-GUI-PACKAGES-20261102: publish matched SDK, GUI and desktop dependencies](2026-11-02-gui-packages.md)

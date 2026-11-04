@@ -23,13 +23,15 @@ class Bridge : public QObject {
   bool messageError_ = false;
   Values draft_, readValues_;
   std::string readId_;
+  QString readOrigin_;
+  bool observationStale_ = false;
   std::optional<Plan> reviewed_;
   std::unique_ptr<Query> query_;
   QTimer poll_, simulated_;
   QElapsedTimer elapsed_;
   Result result_;
   void showResult(const Result &result);
-  void startRead(const Plan &request);
+  void startRead(const Plan &request, const QString &origin = "read");
   void prepare(const Plan &request);
   void fail(const std::exception &error);
 
@@ -47,10 +49,14 @@ public:
   QString message() const { return message_; }
   bool messageError() const { return messageError_; }
   Q_INVOKABLE QVariantList search(const QString &text) const;
+  Q_INVOKABLE QVariantList catalog(const QString &text, int area = -1,
+                                   const QString &kind = "all") const;
+  Q_INVOKABLE int areaForAction(const QString &id) const;
   Q_INVOKABLE bool openAction(const QString &id);
   Q_INVOKABLE void selectArea(int index);
   Q_INVOKABLE void leaveGuide();
   Q_INVOKABLE void setDraft(const QString &key, const QString &value);
+  Q_INVOKABLE void resetDraft();
   Q_INVOKABLE void submit();
   Q_INVOKABLE void readRelated(const QString &relation);
   Q_INVOKABLE void refresh();

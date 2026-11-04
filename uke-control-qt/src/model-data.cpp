@@ -4,6 +4,20 @@
 #include <sys/stat.h>
 #include <unistd.h>
 namespace uq {
+QString fieldTitle(const QString &key) {
+  static const QMap<QString, QString> labels{
+      {"available", "Information available"}, {"physical_acceptance", "Physical validation"},
+      {"current_ma", "Current (mA)"}, {"voltage_mv", "Voltage (mV)"},
+      {"temperature_c", "Temperature (°C)"}, {"capacity_percent", "Charge (%)"},
+      {"cycles", "Charge cycles"}, {"schema", "Report format"},
+      {"usb", "USB"}, {"nfc", "NFC"}, {"cpu", "CPU"}, {"gpu", "GPU"}};
+  if (labels.contains(key)) return labels.value(key);
+  auto label = key;
+  label.replace('_', ' ');
+  label.replace('-', ' ');
+  if (!label.isEmpty()) label[0] = label[0].toUpper();
+  return safe(label.toStdString());
+}
 QString actionIcon(const Action &a) {
   const auto id = QString::fromStdString(a.id);
   // The same semantic names serve daily pages and the complete SDK catalog.

@@ -96,7 +96,7 @@ private slots:
       }
     }
     QVERIFY(semanticIcons.size() >= 20);
-    bridge.selectArea(5);
+    bridge.selectArea(6);
     QSet<QString> updates;
     for (const auto &group : bridge.groups())
       for (const auto &entry : group.toMap().value("entries").toList())
@@ -104,6 +104,96 @@ private slots:
     for (const auto &id : {"channel.set", "channel.preview", "channel.status",
                            "update.preview", "update.apply"})
       QVERIFY(updates.contains(id));
+  }
+  void taskTaxonomyAndCatalogFilters() {
+    Bridge bridge(fixture, false);
+    QCOMPARE(bridge.areas().size(), 9);
+    QSet<QString> areaIds;
+    for (const auto &value : bridge.areas()) {
+      const auto area = value.toMap();
+      const auto index = area.value("index").toInt();
+      QVERIFY(!area.value("description").toString().isEmpty());
+      QVERIFY(!area.value("detail").toString().isEmpty());
+      areaIds.insert(area.value("id").toString());
+      bridge.selectArea(index);
+      QVERIFY(!bridge.groups().isEmpty());
+      for (const auto &groupValue : bridge.groups()) {
+        const auto group = groupValue.toMap();
+        QVERIFY(!group.value("description").toString().isEmpty());
+        for (const auto &entryValue : group.value("entries").toList()) {
+          const auto entry = entryValue.toMap();
+          QVERIFY(!entry.value("role").toString().isEmpty());
+          QVERIFY(!entry.value("access").toString().isEmpty());
+          QCOMPARE(QString::fromStdString(action(entry.value("id").toString().toStdString()).id), entry.value("id").toString());
+        }
+      }
+    }
+    QCOMPARE(areaIds.size(), 9);
+    QSet<QString> catalogIds;
+    for (const auto &group : bridge.catalog(""))
+      for (const auto &entry : group.toMap().value("entries").toList()) {
+        const auto id = entry.toMap().value("id").toString();
+        QVERIFY(!catalogIds.contains(id));
+        catalogIds.insert(id);
+      }
+    QCOMPARE(catalogIds.size(), int(actions().size()));
+    for (const auto &kind : {"read", "change", "files", "maintenance"}) {
+      int count = 0;
+      for (const auto &group : bridge.catalog("", -1, kind))
+        for (const auto &entry : group.toMap().value("entries").toList()) {
+          const auto &a = action(entry.toMap().value("id").toString().toStdString());
+          if (QString(kind) == "read") QVERIFY(a.effect == Effect::read);
+          if (QString(kind) == "maintenance") QVERIFY(a.effect == Effect::maintenance);
+          if (QString(kind) == "files") QVERIFY(a.effect == Effect::local_file || a.effect == Effect::publish);
+          if (QString(kind) == "change") QVERIFY(a.effect == Effect::device || a.effect == Effect::packages);
+          ++count;
+        }
+      QVERIFY(count > 0);
+    }
+    QVERIFY(!bridge.search("şarj").isEmpty());
+    bool batteryFound = false;
+    for (const auto &entry : bridge.search("battery status"))
+      if (entry.toMap().value("id").toString() == "battery.status") batteryFound = true;
+    QVERIFY(batteryFound);
+    QCOMPARE(bridge.areaForAction("overview.nfc"), 3);
+    QCOMPARE(bridge.areaForAction("overview.camera"), 4);
+    QCOMPARE(bridge.areaForAction("sensors.once"), 5);
+    QCOMPARE(bridge.areaForAction("resize.prepare"), 8);
+    QVERIFY(bridge.catalog("no-such-action-98765").isEmpty());
+    const auto previous = bridge.section();
+    bridge.selectArea(999);
+    QCOMPARE(bridge.section(), previous);
+  }
+  void observationContextAndDraftReset() {
+    Bridge bridge(fixture, false);
+    QVERIFY(bridge.openAction("charge.mode"));
+    bridge.readRelated("preview");
+    QTRY_VERIFY(!bridge.observation().value("running").toBool());
+    QCOMPARE(bridge.observation().value("origin").toString(), QString("preview"));
+    QVERIFY(!bridge.observation().value("stale").toBool());
+    bridge.setDraft("mode", "firmware");
+    QVERIFY(bridge.observation().value("stale").toBool());
+    bridge.refresh();
+    QTRY_VERIFY(!bridge.observation().value("running").toBool());
+    QVERIFY(!bridge.observation().value("stale").toBool());
+    const auto options = bridge.observation().value("options").toList();
+    QCOMPARE(options.size(), 1);
+    QCOMPARE(options.first().toMap().value("value").toString(), QString("Firmware policy"));
+    bridge.setDraft("mode", "not-a-mode");
+    bridge.refresh();
+    QVERIFY(bridge.messageError());
+    QVERIFY(bridge.observation().value("stale").toBool());
+    bridge.resetDraft();
+    QVERIFY(bridge.message().isEmpty());
+    const auto parameters = bridge.guide().value("parameters").toList();
+    QCOMPARE(parameters.first().toMap().value("value").toString(), QString("hold70-80"));
+    bridge.readRelated("inspect");
+    QCOMPARE(bridge.observation().value("origin").toString(), QString("inspect"));
+    bridge.setDraft("mode", "firmware");
+    QVERIFY(!bridge.observation().value("stale").toBool());
+    bridge.cancelRead();
+    bridge.leaveGuide();
+    QVERIFY(bridge.observation().isEmpty());
   }
   void optionalDeviceReads() {
     if (!qEnvironmentVariableIsSet("UKE_QT_TEST_DEVICE_READS"))
@@ -248,12 +338,33 @@ private slots:
     QTRY_VERIFY(drawer->property("position").toReal() < 0.01);
     QCOMPARE(bridge.search("").size(), int(actions().size()));
     QCOMPARE(bridge.search("no-such-action-98765").size(), 0);
-    for (int area = 0; area < 7; ++area) {
+    for (int area = 0; area < bridge.areas().size(); ++area) {
       QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, area)));
       QCoreApplication::processEvents();
       QCOMPARE(bridge.section(), area);
       snapshot(window, "area-" + QString::number(area));
     }
+    QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, 0)));
+    QCoreApplication::processEvents();
+    QQuickItem *categoryCard = nullptr;
+    QTRY_VERIFY((categoryCard = visualItem(window->contentItem(), "category_power")));
+    QVERIFY(QMetaObject::invokeMethod(categoryCard, "clicked"));
+    QCOMPARE(bridge.section(), 1);
+    QVERIFY(QMetaObject::invokeMethod(window, "openCatalog", Q_ARG(QVariant, -1)));
+    QCoreApplication::processEvents();
+    QQuickItem *catalog = nullptr;
+    QTRY_VERIFY((catalog = visualItem(window->contentItem(), "catalogPage")));
+    QTRY_COMPARE(catalog->property("resultCount").toInt(), int(actions().size()));
+    auto *search = visualItem(window->contentItem(), "advancedSearch");
+    QVERIFY(search);
+    search->setProperty("text", "no-such-action-98765");
+    QTRY_COMPARE(catalog->property("resultCount").toInt(), 0);
+    auto *reset = visualItem(window->contentItem(), "resetCatalog");
+    QVERIFY(reset);
+    QVERIFY(QMetaObject::invokeMethod(reset, "clicked"));
+    QTRY_COMPARE(catalog->property("resultCount").toInt(), int(actions().size()));
+    search->setProperty("text", "charge.mode");
+    snapshot(window, "catalog-filtered");
     for (const auto &entry : actions()) {
       QVERIFY(QMetaObject::invokeMethod(
           window, "openGuide",
@@ -289,20 +400,19 @@ private slots:
       if (entry.id == "channel.set" || entry.id == "update.apply")
         snapshot(window, QString::fromStdString(entry.id));
     }
-    QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, 6)));
+    QVERIFY(QMetaObject::invokeMethod(window, "openCatalog", Q_ARG(QVariant, -1)));
     QCoreApplication::processEvents();
-    QCOMPARE(bridge.section(), 6);
     QVERIFY(bridge.guide().isEmpty());
-    auto *search = visualItem(window->contentItem(), "advancedSearch");
-    QVERIFY(search);
+    QTRY_VERIFY((search = visualItem(window->contentItem(), "advancedSearch")));
+    QCOMPARE(search->property("text").toString(), QString("charge.mode"));
     search->setProperty("text", "no-such-action-98765");
     QCoreApplication::processEvents();
     QCOMPARE(search->property("text").toString(), QString("no-such-action-98765"));
     search->setProperty("text", "");
     QVERIFY(QMetaObject::invokeMethod(window, "openGuide", Q_ARG(QVariant, QString("status"))));
     QCoreApplication::processEvents();
-    auto *submit = visualItem(window->contentItem(), "submitRequest");
-    QVERIFY(submit);
+    QQuickItem *submit = nullptr;
+    QTRY_VERIFY((submit = visualItem(window->contentItem(), "submitRequest")) && submit->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(submit, "clicked"));
     QVERIFY(bridge.observation().value("running").toBool());
     QVERIFY(!submit->isEnabled());
@@ -336,8 +446,10 @@ private slots:
     QVERIFY(QMetaObject::invokeMethod(review, "reject"));
     QCoreApplication::processEvents();
     QVERIFY(bridge.review().isEmpty());
+    QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, 0)));
     window->resize(1100, 760);
     QTest::qWait(100);
+    snapshot(window, "overview-wide");
     window->close();
     bridge.cancelRead();
     // PageRow creates a page under its nonvisual pagesLogic object before
@@ -347,7 +459,8 @@ private slots:
     warnings.removeIf([](const QString &warning) {
       return warning.contains("Main.qml:") &&
              (warning.contains("QML GuidePage:") ||
-              warning.contains("QML AreaPage:")) &&
+              warning.contains("QML AreaPage:") ||
+              warning.contains("QML CatalogPage:")) &&
              warning.endsWith("Created graphical object was not placed in the "
                               "graphics scene.");
     });

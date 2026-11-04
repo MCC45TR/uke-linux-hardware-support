@@ -12,20 +12,34 @@ inherited themes and the installed Breeze fallback fill missing names. No Breeze
 artwork is copied into the application. Theme changes refresh the name bindings.
 `--appearance-info` reports every resolved icon name and whether it renders.
 
-The daily pages are Status, Power, Display & lights, Connections, Audio & sensors,
-and Updates. Advanced provides searchable access to the complete installed action
-catalog. Kirigami's page stack, responsive drawer and page actions provide
-navigation; FormCard pages group related controls. The drawer becomes modal in a
-narrow window, and choice controls use native selection dialogs. **Back** or
-Alt+Left returns to the current area. Daily pages keep recovery and diagnostics
-in Advanced. See the [Kirigami FormCard documentation](https://api.kde.org/org-kde-kirigamiaddons-formcard-qmlmodule.html).
+The Qt navigation has nine task areas: Overview, Battery & power, Display &
+lights, Connections, Sound & cameras, Sensors & input, Software updates,
+Diagnostics & files, and Recovery & maintenance. Overview offers responsive
+Kirigami category cards and quick checks. Each category provides a short guide
+and task groups with descriptions. Rows identify reads, preferences, file work,
+software operations or attended diagnostics, including administrator access.
 
-Updates includes the selected channel, channel selection and preview, update
-preview, and installation. Each guide has a labeled action inside the page as
-well as its toolbar action. Read options and requested preferences have distinct
-instructions. Advanced uses the native search field with clear control and a
-result count. Provider unavailability remains visibly separate from a completed
-read with available values.
+**All actions** and Ctrl+K open a separate catalog with text, category and action
+type filters. Search matches English/Turkish metadata and identifiers, including
+multiple words. It retains its filters and scroll position when returning from
+an action guide. Category pages link to additional tools scoped to that category.
+All installed catalog actions remain reachable, including advanced operations.
+
+Kirigami's page stack, responsive drawer and page actions provide navigation;
+FormCard pages group related controls. The drawer becomes modal in a narrow
+window, and choice controls use native selection dialogs. **Back** or Alt+Left
+returns to the previous catalog or category. See the
+[Kirigami FormCard documentation](https://api.kde.org/org-kde-kirigamiaddons-formcard-qmlmodule.html).
+
+Software updates separates current state, channel selection, installation and
+unfinished work. Change guides present numbered stages: inspect the current
+state, choose requested values, then preview and review. Read guides show options
+and the result directly. Field help includes available ranges; reset restores
+suggested draft values rather than claiming they are current device settings.
+Observations appear next to their inspection/preview stage and identify the
+options used. Provider unavailability remains separate from a completed read
+with available values. Existing terminal review, consent and authentication
+remain authoritative.
 
 Opening a page or guide does not query devices. Select **Read information**
 or an inspection button to read. Requested defaults are drafts rather than current
@@ -76,8 +90,10 @@ startup behavior. `org.kde.desktop` is the default Quick Controls style unless
 
 Captured observations use the shared read-only `Query` on the Qt event loop.
 Stop, Back, changing pages and closing the window cancel the owned read. Each
-query retains its backend timeout and bounded stdout/stderr. Refresh only repeats
-the last validated read; it cannot replay a mutation. Structured values, original
+query retains its backend timeout and bounded stdout/stderr. Refresh validates
+matching current form options before rereading the same observation; it cannot
+replay a mutation. Results are marked out of date when relevant options change.
+Structured values, original
 bounded output and errors have separate sections. Null, false, zero, negative values,
 unavailable providers, cancellation, timeout and truncation remain distinct.
 Control and directional override characters are rendered visibly. Large structured
@@ -118,8 +134,9 @@ query. No executable callbacks are supported.
 The optional `uke-control-gui-qt-tests` RPM installs the native checks and bounded
 fixture. Run `/usr/libexec/uke-control-qt/tests/run-installed.sh` as the graphical
 session user to test the installed package without compiling on the device.
-The suites cover the full catalog, typed request routing, review refusal,
-read/stop/refresh, navigation, accessibility and Breeze/Adwaita/incomplete themes.
+The suites cover all task areas and catalog filters, typed request routing,
+draft reset and result freshness, review refusal, read/stop/refresh, retained
+catalog navigation, accessibility and Breeze/Adwaita/incomplete themes.
 Set `UKE_QT_TEST_SCREENSHOTS` to a private output directory to capture the fixture
 walkthrough. These checks establish frontend behavior, not physical acceptance
 of every provider or completion of destructive maintenance operations.
