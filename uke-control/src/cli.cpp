@@ -35,6 +35,8 @@ Arguments arguments(int argc,char** argv) {
 namespace {
 struct Group {const char* name;const char* summary;const char* usage;};
 constexpr Group groups[]={
+    {"set","Set the kernel rollback policy (root required)", "set rollback-enforced\nset rollback-permissive\nset rollback-off\n\nDefault enforced: qualify health and return to the accepted kernel on failure.\nPermissive: observe health and retain a failed, unaccepted trial without automatic fallback.\nOff: skip automatic acceptance and fallback. Intended for development.\nImage, package and slot-write checks remain enabled. No command reboots."},
+    {"rollback","Read the saved kernel rollback policy", "rollback status\n\nMissing configuration defaults to enforced. Use --json for structured output."},
     {"tui","Bilingual native terminal interface with guided parameters", "tui [--language tr|en] [--read-only] [--no-color] [--start CATEGORY|ACTION] [--fixture FILE]\n\nRequires uke-control-tui and an interactive UTF-8 terminal. F1 opens full help.\nRun as the session user; privileged actions authorize only their validated command.\nFixture mode executes no commands. Read-only mode also disables receipt writes."},
     {"actions","Shared frontend catalog and validated plans (metadata only)", "actions\nactions describe ID\nactions plan ID KEY=VALUE...\n\nUse --json for versioned bilingual metadata and exact argv plans.\nThese commands do not query hardware, execute plans or authorize changes."},
     {"status","Device overview", "status"},

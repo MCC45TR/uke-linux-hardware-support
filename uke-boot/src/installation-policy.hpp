@@ -134,12 +134,12 @@ inline void userdata(const Update &state) {
     require(state.phase != Phase::current_slot_trial || state.good == Slot::b, "Current-slot trials require an accepted B baseline");
     if (state.phase != Phase::stable) require(release_token(state.candidate) && state.candidate != state.good_release, "Invalid candidate release");
 }
-inline Slot stage(Update &state, Slot running, const std::string &running_release, const std::string &candidate) {
+inline Slot stage(Update &state, Slot running, const std::string &running_release, const std::string &candidate, bool retry_failed=false) {
     userdata(state);
     require(release_token(state.good_release) && release_token(running_release) && release_token(candidate), "Invalid kernel release");
     require(state.phase == Phase::stable, "A kernel transaction is already outstanding");
     require(running == state.good && running_release == state.good_release, "Running slot does not match the accepted baseline");
-    require(candidate != running_release && candidate != state.failed, "Same or previously failed release refused");
+    require(candidate != running_release && (retry_failed || candidate != state.failed), "Same or previously failed release refused");
     state.candidate = candidate;
     state.phase = Phase::staging;
     return opposite(running);

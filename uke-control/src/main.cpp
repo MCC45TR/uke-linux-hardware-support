@@ -21,6 +21,7 @@
 #include "vrr.hpp"
 #include "usb-request.hpp"
 #include "link-policy.hpp"
+#include "rollback.hpp"
 static int run(int argc,char** argv,bool as_json) {
     try {
         if(argc==4&&std::string_view(argv[1])=="charge"&&std::string_view(argv[2])=="mode") {
@@ -28,6 +29,13 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(const int result=uke::charge::policy_command(argc,argv,as_json);result>=0)return result;
         std::string command=argv[1];
+        if(command=="set" || command=="rollback") {
+            std::vector<std::string> words;
+            for(int i=1;i<argc;++i)words.emplace_back(argv[i]);
+            auto result=uke::execute(uke::rollback::plan(words));
+            if(result.status)throw std::runtime_error(result.output);
+            uke::cli::print(result.output,as_json);return 0;
+        }
         if(command=="microphone")return uke::microphone::command(argc-2,argv+2,as_json);
         if(command=="tui") {
             if(as_json)throw uke::cli::UsageError("tui requires a terminal; use actions --json for frontend metadata");

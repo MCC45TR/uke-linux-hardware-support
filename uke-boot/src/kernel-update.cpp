@@ -2,6 +2,7 @@
 // Matched stock-ABL payloads only; Android v4 layout follows the existing boot-image codec.
 #include "boot-common.hpp"
 #include "installation-policy.hpp"
+#include "trial-health.hpp"
 #include <openssl/evp.h>
 #include <algorithm>
 #include <array>
@@ -23,6 +24,7 @@
 #include <sys/sysmacros.h>
 #include <sys/utsname.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <signal.h>
 #include <unistd.h>
 #include <vector>
@@ -135,6 +137,8 @@ static void save_new(const fs::path &path,const Bytes &data) {
     write_fd(fd.value,data);
     need(fsync(dir.value)==0,"State directory sync failed");
 }
+#include "automatic-policy.hpp"
+#include "rollback-policy.hpp"
 static uint32_t le32(const Bytes &b,size_t i) {return uint32_t(b.at(i))|uint32_t(b.at(i+1))<<8|uint32_t(b.at(i+2))<<16|uint32_t(b.at(i+3))<<24;}
 static uint64_t le64(const Bytes &b,size_t i) {return uint64_t(le32(b,i))|uint64_t(le32(b,i+4))<<32;}
 static Bytes boot_kernel(const Bytes &b) {
@@ -215,7 +219,20 @@ static std::pair<std::string,dev_t> partition(const std::string &label,const fs:
     }
     need(!result.first.empty(),"Physical "+label+" partition unavailable"); return result;
 }
-[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_text("/proc/self/mountinfo"),const std::string &label="linux") {
+static std::string read_mountinfo(const fs::path &path="/proc/self/mountinfo") {
+    Fd fd(open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW));
+    std::string value;
+    std::array<char,4096> chunk{};
+    for(;;) {
+        const auto count=read(fd.value,chunk.data(),chunk.size());
+        if(count<0 && errno==EINTR)continue;
+        need(count>=0,"Mount information read failed");
+        need(value.size()+static_cast<size_t>(count)<=1024*1024,"Mount information exceeds the read limit");
+        if(!count)return value;
+        value.append(chunk.data(),static_cast<size_t>(count));
+    }
+}
+[[maybe_unused]] static std::string root_mount(dev_t expected,const std::string &mounts=read_mountinfo(),const std::string &label="linux") {
     need(label=="linux"||label=="userdata","Unsupported root profile");
     const auto root=uke_install::root_mount(mounts);
     need(root.writable && makedev(root.major,root.minor)==expected &&
@@ -284,7 +301,10 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
     for(const auto &[suffix,files]:groups) {
         need(!files.empty(),"Missing package file set");
         const auto expected=base+suffix;
-        const auto p=package(query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n","--",files.begin()->first.string()}),expected);
+        const auto record=query({"-qf","--qf","%{NAME}\t%{EPOCHNUM}\t%{VERSION}\t%{RELEASE}\t%{ARCH}\t%{FILEDIGESTALGO}\n[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",files.begin()->first.string()});
+        const auto header_end=record.find('\n');
+        need(header_end!=std::string::npos,"Missing owning RPM header");
+        const auto p=package(record.substr(0,header_end),expected);
         need(!have_first||same_tuple(first,p),"Boot, core and modules RPM versions differ");first=p;have_first=true;
         const auto nevra=p.name+"-"+p.epoch+":"+p.version+"-"+p.release+"."+p.arch;
         if(suffix=="-core" && base!="senemos-uke-linux-kernel-mainline") {
@@ -293,10 +313,11 @@ static Package installed_files(const std::map<std::string,std::map<fs::path,std:
             while(std::getline(input,name))matches+=name=="kernel-uname-r("+release+")";
             need(matches==1,"Kernel variant RPM does not provide the exact Image ABI");
         }
-        const auto rows=query({"-q","--qf","[%{FILENAMES}\t%{FILEDIGESTS}\n]","--",nevra});
-        std::map<fs::path,std::string> owned;std::istringstream input(rows);std::string row;
+        std::map<fs::path,std::string> owned;std::istringstream input(record.substr(header_end+1));std::string row;
         while(std::getline(input,row)) {
-            const auto tab=row.find('\t');need(tab!=std::string::npos,"Malformed installed RPM file inventory");
+            const auto tab=row.find('\t');
+            need(row.starts_with('/') && tab!=std::string::npos && row.find('\t',tab+1)==std::string::npos,
+                 "Malformed or multiple-owner installed RPM inventory");
             need(owned.emplace(row.substr(0,tab),row.substr(tab+1)).second,"Ambiguous installed RPM file inventory");
         }
         for(const auto &[path,hash]:files)need(owned.contains(path) && hex(owned.at(path)) && owned.at(path)==hash,
@@ -374,6 +395,31 @@ static Bytes validate_bundle(const fs::path &bundle,const fs::path &modules,cons
                      {"-core",{{modules/release/"vmlinuz",digest(core)}}},{"-dtbs",{{dtb,digest(file(dtb))}}},{"-modules",module_files}},release,query);
     return bytes;
 }
+static bool replace_inactive_verified(int target,int accepted,const Bytes &next,const Bytes &good,
+                                      void(*writer)(int,const Bytes&)=write_fd) {
+    need(next.size()==capacity && good.size()==capacity,"A/B boot image size differs");
+    struct stat to{},from{};
+    need(!fstat(target,&to) && !fstat(accepted,&from),"Cannot verify A/B device identities");
+#ifdef UKE_KERNEL_UPDATE_TEST
+    need(S_ISREG(to.st_mode) && S_ISREG(from.st_mode) &&
+         (to.st_dev!=from.st_dev || to.st_ino!=from.st_ino),"A/B fixture targets alias");
+#else
+    need(S_ISBLK(to.st_mode) && S_ISBLK(from.st_mode) && to.st_rdev!=from.st_rdev,
+         "Inactive and accepted boot devices must differ");
+#endif
+    CriticalSignals signals;
+    need(read_fd(accepted,capacity)==good,"Accepted boot slot changed before inactive write");
+    if(read_fd(target,capacity)==next)return false;
+    try {
+        writer(target,next);
+        need(read_fd(target,capacity)==next,"Inactive boot partition readback mismatch");
+    } catch(...) {
+        need(read_fd(accepted,capacity)==good,"Accepted slot changed during a failed inactive write; use recovery");
+        throw std::runtime_error("Inactive boot write failed; verified accepted slot retained without selecting the candidate");
+    }
+    need(read_fd(accepted,capacity)==good,"Accepted slot changed during inactive write; candidate was not selected");
+    return true;
+}
 static bool replace_verified(int target,const Bytes &next,const fs::path &backup,void(*writer)(int,const Bytes&)=write_fd) {
     CriticalSignals signals;
     const auto original=read_fd(target,capacity);
@@ -388,6 +434,18 @@ static bool replace_verified(int target,const Bytes &next,const fs::path &backup
     }
     return true;
 }
+template<class Validate,class Accept,class Policy,class Select,class Inspect,class Apply>
+static void boot_userdata(const fs::path &running,Validate validate,Accept accept,Policy enabled,
+                          Select select,Inspect inspect,Apply apply) {
+    auto bytes=validate(running);
+    accept(running,bytes);
+    if(!enabled())return;
+    const auto selected=select();
+    if(selected!=running)bytes=validate(selected);
+    inspect(selected,bytes);
+    if(selected!=running)apply(selected,bytes);
+}
+#include "oem-video.hpp"
 #ifndef UKE_KERNEL_UPDATE_TEST
 static Fd inhibit_shutdown() {
     sd_bus *raw=nullptr;const auto opened=sd_bus_open_system(&raw);
@@ -409,66 +467,143 @@ static Fd inhibit_shutdown() {
     return retained;
 }
 #include "userdata-update.hpp"
+#include "select-existing-slot.hpp"
+static bool activation_enabled(const std::string &label) {
+    if(label=="userdata" && !automatic_policy_ready("/var/lib/senemos/kernel-update")) {
+        std::cout<<"Automatic policy migration is incomplete; boot activation deferred\n";return false;
+    }
+    const auto global=file("/etc/senemos/kernel-update.conf");
+    bool enabled=global_automatic_updates(std::string(global.begin(),global.end()));
+    if(label=="userdata") {
+        const auto profile=file("/etc/senemos/userdata-update.conf");
+        enabled=automatic_updates(std::string(global.begin(),global.end()),std::string(profile.begin(),profile.end()));
+    }
+    if(!enabled)std::cout<<"Automatic boot activation is disabled in /etc/senemos/kernel-update.conf or the selected profile policy; installed RPMs alone do not change the next boot\n";
+    return enabled;
+}
+static fs::path selected_userdata_bundle() {
+    auto parent=directory("/usr/lib/senemos");struct stat link{};
+    need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
+    const auto bundle=userdata_bundle(fs::read_symlink("/usr/lib/senemos/default-boot.img"));
+    std::cout<<"Selected userdata boot bundle: "<<bundle.filename().string()<<'\n';
+    return bundle;
+}
 int main(int argc,char **argv) {
     try {
-        need((argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
+        if(argc>=2 && std::string_view(argv[1])=="rollback-policy") {
+            need((argc==3 && std::string_view(argv[2])=="status") ||
+                 (argc==4 && std::string_view(argv[2])=="set"),"Usage: uke-kernel-update rollback-policy status | set enforced|permissive|off");
+            if(argc==4) {
+                const auto mode=rollback_mode(argv[3]);
+                need(geteuid()==0,"Root privileges are required");
+                set_rollback_policy(mode);
+            }
+            const auto mode=read_rollback_policy();
+            std::cout<<"{\"schema_version\":1,\"rollback_mode\":\""<<rollback_name(mode)
+                     <<"\",\"automatic_fallback\":"<<(mode==RollbackMode::enforced?"true":"false")
+                     <<",\"health_observation\":"<<(mode==RollbackMode::off?"false":"true")
+                     <<",\"default_mode\":\"enforced\"}\n";
+            return 0;
+        }
+        need((argc==4 && (std::string(argv[1])=="select-slot" || std::string(argv[1])=="check-select-slot")) ||
+             (argc==3 && (std::string(argv[1])=="check"||std::string(argv[1])=="apply" ||
                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
-                         std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction")) ||
-             (argc==2 && (std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto")),
-             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | accept | fallback | auto | check-auto");
+                         std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
+             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy")),
+             "Usage: uke-kernel-update check|apply|check-current|apply-current|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy");
         need(geteuid()==0,"Root privileges are required");
         const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
+        const bool migrating=action=="migrate-automatic-policy";
         const bool restore=action=="check-restore-current"||action=="restore-current";
         const bool current_only=restore||action=="check-current"||action=="apply-current";
         const bool apply=action=="restore-current"||action=="apply"||action=="apply-current"||action=="transaction";
-        if(automatic && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
+        if((automatic || migrating) && (!fs::exists("/sys/firmware/devicetree/base/compatible") ||
                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
+        const auto rollback=read_rollback_policy();
+        if((action=="fallback" && rollback!=RollbackMode::enforced) ||
+           ((action=="boot" || action=="accept") && rollback==RollbackMode::off)) {
+            std::cout<<"Rollback mode "<<rollback_name(rollback)<<": automatic acceptance/fallback skipped; no slot change or reboot\n";
+            return 0;
+        }
         const auto label=root_label(read_text("/proc/cmdline"));
+        if(action=="select-slot" || action=="check-select-slot") {
+            need(label=="userdata", "Manual A/B selection requires the proven userdata profile");
+            select_existing_slot(argv[2],argv[3],action=="select-slot");
+            return 0;
+        }
+        if(migrating) {
+            if(label!="userdata")return 0;
+            (void)selected_userdata_bundle();
+            const bool changed=migrate_automatic_policy("/etc/senemos","/var/lib/senemos/kernel-update");
+            std::cout<<(changed?"Legacy image automatic-update policy enabled once; existing A/B validation remains required\n":
+                               "Automatic-update migration already recorded or custom policy retained\n");
+            return 0;
+        }
         if(action=="auto" && label!="userdata")return 0;
         need(!preflight || label=="userdata","Automatic preflight is specific to the userdata profile");
         if(automatic || preflight) {
-            const auto global=file("/etc/senemos/kernel-update.conf");
-            bool enabled=global_automatic_updates(std::string(global.begin(),global.end()));
-            if(label=="userdata") {
-                const auto profile=file("/etc/senemos/userdata-update.conf");
-                enabled=automatic_updates(std::string(global.begin(),global.end()),std::string(profile.begin(),profile.end()));
-            }
-            if(!enabled) {
-                std::cout<<"Automatic boot activation is disabled in /etc/senemos/kernel-update.conf or the selected profile policy; installed RPMs alone do not change the next boot\n";
-                if(!preflight)return 0;
-            }
+            if(automatic && label=="userdata" && !automatic_policy_ready("/var/lib/senemos/kernel-update"))
+                (void)migrate_automatic_policy("/etc/senemos","/var/lib/senemos/kernel-update");
+            if(!activation_enabled(label) && !preflight)return 0;
         }
         need(!current_only || label=="userdata","Current-slot mode is specific to the userdata profile");
-        need(label=="userdata"||(action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
-        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_text("/proc/self/mountinfo"),label);
+        need(label=="userdata"||(action!="boot" && action!="accept" && action!="fallback"),"Boot acceptance/fallback is specific to userdata A/B installations");
+        const auto root=partition(label);const auto filesystem=root_mount(root.second,read_mountinfo(),label);
         struct utsname current{};need(!uname(&current) && token(current.release),"Running kernel identity unavailable");
-        fs::path bundle=(action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
+        if(action=="check-oem-video" || action=="import-oem-video") {
+            need(label=="userdata","Device-local firmware import requires the measured userdata profile");
+            const auto super=partition("super");
+            need(ufs_controller(fs::path("/sys/class/block")/super.first)==ufs_controller(fs::path("/sys/class/block")/root.first),
+                 "Super and userdata must share the measured UFS controller");
+            if(action=="check-oem-video") {
+                const auto bytes=uke_video::load_local(super);
+                std::cout<<"Device-local video candidate verified: "<<bytes.size()<<" bytes, SHA256 "<<digest(bytes)<<"; no firmware file installed\n";
+            } else {
+                const std::string release=argv[2];need(token(release),"Invalid firmware release");
+                (void)validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/release,"/usr/lib/modules",label,current.release);
+                uke_video::import_firmware(release,current.release,super);
+                trusted("/usr/libexec/senemos-uke/uke-install-profile");
+                (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","clock-save-required"},4096);
+            }
+            return 0;
+        }
+        fs::path bundle=(action=="boot"||action=="accept"||action=="fallback")?fs::path("/usr/lib/senemos/kernel-updates")/current.release:argc==3?fs::path(argv[2]):fs::path();
         if((automatic || preflight) && label=="userdata") {
-            auto parent=directory("/usr/lib/senemos");struct stat link{};
-            need(!fstatat(parent.value,"default-boot.img",&link,AT_SYMLINK_NOFOLLOW) && S_ISLNK(link.st_mode) && link.st_uid==0,"Trusted default profile link required");
-            const auto target=fs::read_symlink("/usr/lib/senemos/default-boot.img");
-            bundle=userdata_bundle(target);
-            std::cout<<"Selected userdata boot bundle: "<<bundle.filename().string()<<'\n';
+            bundle=selected_userdata_bundle();
         }
         need(bundle.is_absolute() && bundle.parent_path()=="/usr/lib/senemos/kernel-updates" && token(bundle.filename()),"Only installed package bundle directories are accepted");
         const fs::path state="/var/lib/senemos/kernel-update";
         Fd state_dir=directory(state,true);need(!fchmod(state_dir.value,0700),"Cannot protect update state");
         Fd lock(openat(state_dir.value,"lock",O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));trusted_fd(lock.value);
         need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update is active");
+        const auto inspect_userdata=[&](const fs::path &selected,const Bytes &bytes) {
+            const auto raw=file(selected/"manifest");
+            (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
+            verify_early_firmware();
+        };
+        if(action=="boot") {
+            boot_userdata(bundle,
+                [&](const fs::path &selected){return validate_bundle(selected,"/usr/lib/modules",label,current.release);},
+                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true);},
+                [&]{return activation_enabled(label);},
+                []{return selected_userdata_bundle();},inspect_userdata,
+                [&](const fs::path &selected,const Bytes &bytes){userdata_update("apply",selected,bytes,state,current.release,filesystem);});
+            return 0;
+        }
         auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release);
         if(label=="userdata" && !current_only) {
             if(automatic || preflight) {
-                const auto raw=file(bundle/"manifest");
-                (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
-                verify_early_firmware();
+                inspect_userdata(bundle,bytes);
                 const fs::path running_bundle=fs::path("/usr/lib/senemos/kernel-updates")/current.release;
-                const auto baseline=validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
+                // The identical-default path returns below, so reuse its verified buffer.
+                const auto baseline=bundle==running_bundle?std::move(bytes):validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
                 const bool stable=fs::exists(state/"userdata.state") && decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::stable;
                 userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem);
                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
             }
-            userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem);return 0;
+            userdata_update(preflight?"check":automatic?"apply":action,bundle,bytes,state,current.release,filesystem,false,
+                            !automatic && !preflight && (action=="check" || action=="apply"));return 0;
         }
         const auto target=partition("boot_b");
         need(ufs_controller(fs::path("/sys/class/block")/target.first)==ufs_controller(fs::path("/sys/class/block")/root.first),"Root and boot_b must share the measured UFS controller");
@@ -517,6 +652,8 @@ int main(int argc,char **argv) {
         }
         std::cout<<"boot_b updated, synced and read back; previous image retained at "<<backup<<". Reboot manually.\n";
         return 0;
+    } catch(const TrialHealthFailure &e) {
+        std::cerr<<"uke-kernel-update: trial health rejected: "<<e.what()<<"; accepted rollback retained\n";return trial_health_rejected;
     } catch(const std::exception &e) {std::cerr<<"uke-kernel-update: "<<e.what()<<'\n';return 1;}
 }
 #endif
