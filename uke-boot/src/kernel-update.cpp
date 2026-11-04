@@ -592,7 +592,7 @@ int main(int argc,char **argv) {
                 [&](const fs::path &selected,const Bytes &bytes){userdata_update("apply",selected,bytes,state,current.release,filesystem);});
             return 0;
         }
-        const bool development=rollback==RollbackMode::off && (action=="check" || action=="apply");
+        const bool development=label=="userdata" && rollback==RollbackMode::off && (action=="check" || action=="apply");
         auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release,rpm,development);
         if(label=="userdata" && !current_only) {
             if(automatic || preflight) {

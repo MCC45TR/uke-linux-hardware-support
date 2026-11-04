@@ -465,6 +465,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
                  "Pending fallback flags differ; use external recovery");
         } else need(!changed.empty(),"No consistent fallback metadata found");
         if(!changed.empty()) {
+            if(read_rollback_policy()!=RollbackMode::enforced) {
+                std::cout<<"Rollback policy changed; fallback selection cancelled\n";return;
+            }
             need(charging(),"Fallback metadata requires at least 50% battery, or 30% with external power");
             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
             const auto transaction=state/(saved.policy.candidate+"-"+saved.candidate_image)/"fallback";
@@ -489,6 +492,9 @@ static void userdata_update(const std::string &action,const fs::path &bundle,con
         auto retained=physical_boot(good?b:a);
         need(read_fd(retained.value,capacity)==images[good],"Accepted boot changed during fallback selection");
         std::cout<<"Accepted slot selected; trial state retained until the accepted kernel boots\n"<<std::flush;
+        if(read_rollback_policy()!=RollbackMode::enforced) {
+            std::cout<<"Rollback policy changed after selection; no reboot requested\n";return;
+        }
         request_fallback_reboot();return;
     }
     need(slot::boot_lun(bsg.value)==running+1,"UFS boot LUN differs from the proven running slot");
