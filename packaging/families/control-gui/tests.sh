@@ -58,7 +58,7 @@ cmp "$stage/overlay/tests/packages.cpp" "$here/../../../uke-control/tests/packag
 cmp "$stage/overlay/src/cli.cpp" "$here/../../../uke-control/src/cli.cpp"
 cmp "$stage/overlay/src/client-catalog.cpp" "$here/../../../uke-control/src/client-catalog.cpp"
 for fixture in package-operation.cpp package-policy.cpp package-policy.sh package-policy.mk; do cmp "$stage/overlay/tests/$fixture" "$here/../../../uke-control/tests/$fixture"; done
-for source in update-status.cpp update-status-command.hpp; do cmp "$stage/overlay/src/$source" "$here/../../../uke-control/src/$source"; done
+for source in update-status.cpp update-status-command.hpp set-slot.cpp; do cmp "$stage/overlay/src/$source" "$here/../../../uke-control/src/$source"; done
 for source in update-status.cpp update-status.mk; do cmp "$stage/overlay/tests/$source" "$here/../../../uke-control/tests/$source"; done
 cmp "$stage/overlay/packaging/org.senemos.uke.update-status.policy" "$here/../../../uke-control/packaging/org.senemos.uke.update-status.policy"
 for rpm in "$top"/SRPMS/*.src.rpm "$metatop"/SRPMS/*.src.rpm; do

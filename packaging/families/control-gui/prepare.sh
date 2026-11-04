@@ -54,7 +54,7 @@ cp "$root/uke-control/src/"{frontend.hpp,frontend-request.cpp,client.hpp} "$stag
 cp "$root/uke-desktop-metas/src/gnome.json" "$stage/contract/"
 tar --sort=name --mtime=@1793577600 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-frontend-contract.tar.xz" -C "$stage/contract" .
 mkdir -p "$stage/packages/src" "$stage/packages/tests" "$stage/packages/packaging"
-cp "$root/uke-control/src/"{packages.cpp,package-operation.hpp,cli.cpp,client-catalog.cpp,update-status.cpp,update-status-command.hpp} "$stage/packages/src/"
+cp "$root/uke-control/src/"{packages.cpp,package-operation.hpp,cli.cpp,client-catalog.cpp,update-status.cpp,update-status-command.hpp,set-slot.cpp} "$stage/packages/src/"
 cp "$root/uke-control/tests/"{packages.cpp,package-operation.cpp,package-policy.cpp,package-policy.sh,package-policy.mk} "$stage/packages/tests/"
 cp "$root/uke-control/tests/"{update-status.cpp,update-status.mk} "$stage/packages/tests/"
 cp "$root/uke-control/packaging/org.senemos.uke.update-status.policy" "$stage/packages/packaging/"

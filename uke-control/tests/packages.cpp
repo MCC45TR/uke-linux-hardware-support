@@ -100,6 +100,13 @@ int main() {
     assert(options({"update","status"}).boot_status);
     assert(!options({"update","status"}).update);
     assert(options({"update","status","--json"}).json);
+    for(const auto *target:{"a","b","next"}) {
+        assert(options({"update","select-slot",target}).boot_target==target);
+        assert(options({"update","select-slot",target,"--dry-run"}).dry);
+    }
+    for(auto input:{std::initializer_list<const char*>{"update","select-slot"},{"update","select-slot","bad"},{"update","select-slot","a","--json"},{"update","select-slot","a","--yes"}}) {
+        bool refused=false;try{options(input);}catch(const uke::cli::UsageError&){refused=true;}assert(refused);
+    }
     for(auto input:{std::initializer_list<const char*>{"update","status","--yes"},{"update","status","--check"},{"update","status","--dry-run"},{"update","status","bad"}}) {
         bool refused=false;try{options(input);}catch(const uke::cli::UsageError&){refused=true;}assert(refused);
     }

@@ -30,11 +30,13 @@ Arguments arguments(int argc,char** argv) {
     if(w[1]=="diagnostic")w[1]="diagnostics";
     if(w.size()>2 && w[1]=="set" && w[2]=="cdc"){w.erase(w.begin()+1);}
     if(w.size()>3 && w[1]=="usb" && w[2]=="request" && w[3]=="data"){w[2]="role";w.erase(w.begin()+3);}
+    if(w[1]=="set-slot" && !result.help && !result.version) {w[1]="update";w.insert(w.begin()+2,"select-slot");}
     return result;
 }
 namespace {
 struct Group {const char* name;const char* summary;const char* usage;};
 constexpr Group groups[]={
+    {"set-slot","Select a verified existing kernel for the next boot", "set-slot a|b|next [--dry-run]\n\nnext means the other slot relative to the running slot.\nThe terminal shows both slots and the reviewed target kernel.\nA change requires administrator access and an exact SLOT A or SLOT B confirmation.\nThe boot owner validates the installed kernel, rollback and metadata; no boot image is rewritten.\nThis selects the next boot only. It never requests reboot or bypasses boot-health approval.\nUse update status for running/selected slots and kernel approval."},
     {"tui","Bilingual native terminal interface with guided parameters", "tui [--language tr|en] [--read-only] [--no-color] [--start CATEGORY|ACTION] [--fixture FILE]\n\nRequires uke-control-tui and an interactive UTF-8 terminal. F1 opens full help.\nRun as the session user; privileged actions authorize only their validated command.\nFixture mode executes no commands. Read-only mode also disables receipt writes."},
     {"actions","Shared frontend catalog and validated plans (metadata only)", "actions\nactions describe ID\nactions plan ID KEY=VALUE...\n\nUse --json for versioned bilingual metadata and exact argv plans.\nThese commands do not query hardware, execute plans or authorize changes."},
     {"status","Device overview", "status"},

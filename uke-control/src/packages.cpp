@@ -264,13 +264,17 @@ void ignore_broken_pipes() {
     struct sigaction action{};action.sa_handler=SIG_IGN;sigemptyset(&action.sa_mask);
     need(sigaction(SIGPIPE,&action,nullptr)==0,"Cannot configure package pipe-error handling");
 }
-struct Options {std::string selected;bool sync=false,update=false,dry=false,yes=false,status=false,json=false,boot_status=false;};
+struct Options {std::string selected;bool sync=false,update=false,dry=false,yes=false,status=false,json=false,boot_status=false;std::string boot_target;};
 Options parse(int argc,char** argv) {
     const auto usage=[](bool ok,const std::string& text){if(!ok)throw cli::UsageError(text);};
     usage(argc>=1,"Missing package command");
     Options o;int i=1;const std::string command=argv[0];
     if(command=="update") {
         if(i<argc && std::string_view(argv[i])=="status"){o.boot_status=true;++i;}
+        else if(i<argc && std::string_view(argv[i])=="select-slot") {
+            ++i;usage(i<argc,"set-slot requires a, b or next");o.boot_target=argv[i++];
+            usage(o.boot_target=="a" || o.boot_target=="b" || o.boot_target=="next","Slot must be a, b or next");
+        }
         else {o.sync=true;o.update=true;}
     }
     else {
@@ -289,6 +293,7 @@ Options parse(int argc,char** argv) {
         else throw cli::UsageError("Unknown package option: "+flag);
     }
     usage(!((o.status||o.boot_status)&&(o.dry||o.yes)),"status accepts no transaction options");
+    usage(o.boot_target.empty() || (!o.json && !o.yes),"set-slot uses human terminal output and explicit confirmation; JSON and --yes are not supported");
     if(o.json && !o.status && !o.boot_status && !o.dry && !o.yes)throw cli::UsageError("--json package changes require --yes; use --dry-run or --check for a preview");
     return o;
 }
@@ -624,6 +629,7 @@ std::string space_observation(fs::path path) {
 }
 void run(Options o) {
     if(o.boot_status){uke::update_status::command(o.json);return;}
+    if(!o.boot_target.empty()){uke::update_status::select_slot(o.boot_target,o.dry);return;}
     const fs::path state="/var/lib/uke-control", config="/etc/uke-control";
     if(o.status) {
         auto current=saved(config/"channel");const auto pending=geteuid()==0?saved(state/"channel-pending"):std::string{};
