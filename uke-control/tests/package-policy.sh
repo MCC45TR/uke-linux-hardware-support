@@ -31,7 +31,9 @@ echo fixture > %{buildroot}/usr/share/uke-policy-fixture/$name/value
 %files
 /usr/share/uke-policy-fixture/$name/value
 EOF
-    rpmbuild -bb --define "_topdir $fixture/top" "$fixture/top/SPECS/fixture.spec" > "$fixture/build.log" 2>&1 || { cat "$fixture/build.log"; return 1; }
+    rpmbuild -bb --define "_topdir $fixture/top" --define "_rpmdir $fixture/top/RPMS" \
+        --define '_rpmfilename %{ARCH}/%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}.rpm' \
+        "$fixture/top/SPECS/fixture.spec" > "$fixture/build.log" 2>&1 || { cat "$fixture/build.log"; return 1; }
     local package="$fixture/top/RPMS/noarch/$name-$version-1.fc46.noarch.rpm"
     if [[ $destination != unsigned ]]; then
         rpmsign --define "_openpgp_sign_id $fingerprint" --define '_openpgp_sign gpg' --addsign "$package" > "$fixture/sign.log" 2>&1 || { cat "$fixture/sign.log"; return 1; }

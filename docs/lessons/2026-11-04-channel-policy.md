@@ -33,3 +33,10 @@ sync refusal, incompatible managers, unsatisfied retained dependencies and unsig
 packages. Their RPM database is isolated and populated with database-only fixture
 records; no worker-root or tablet payload is installed. Native COPR results and
 real device channel round trips remain pending until separately verified.
+
+COPR trial 11254559 compiled the application but failed the new fixture before
+policy assertions: its nested rpmbuild inherited worker RPM output conventions,
+so the expected architecture-subdirectory path was absent. Fixture builds now
+set both `_rpmdir` and `_rpmfilename` explicitly. No binary candidate was
+published or installed from that failed trial; native policy validation remains
+pending the corrected build.
