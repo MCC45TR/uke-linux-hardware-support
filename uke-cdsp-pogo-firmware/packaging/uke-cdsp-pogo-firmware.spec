@@ -1,6 +1,6 @@
 Name: uke-cdsp-pogo-firmware
 Version: 0.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Read-only device-local Uke CDSP and pogo firmware provisioning
 License: MIT
 Source0: %{name}-%{version}.tar.gz
@@ -33,6 +33,10 @@ install -Dm644 uke-cdsp-pogo-firmware/README.md %{buildroot}%{_docdir}/%{name}/R
 %doc %{_docdir}/%{name}/README.md
 
 %changelog
+* Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.2-3
+- Report bounded fixed-file identities for read-only stock mismatch investigation.
+- Preserve complete-image admission for every import and preflight.
+
 * Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.2-2
 - Resolve fixed firmware names through validated VFAT long-name entries.
 - Test alias/checksum/order/padding failures without relaxing image hashes.

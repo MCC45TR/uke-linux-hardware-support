@@ -139,7 +139,13 @@ int main() {
     Bytes mdt(84);memcpy(mdt.data(),"\177ELF",4);mdt[4]=mdt[5]=mdt[6]=1;
     put32(mdt,28,52);put16(mdt,40,52);put16(mdt,42,32);put16(mdt,44,1);
     admit_mdt(mdt,digest(mdt).c_str());
+    assert(mdt_table_end(mdt)==84);
+    assert(mdt_summary(mdt)=="bytes=84 sha256="+digest(mdt)+" elf_table_bytes=84 elf_table_sha256="+digest(mdt));
+    auto extended=mdt;extended.push_back(0x42);
+    assert(mdt_summary(extended)=="bytes=85 sha256="+digest(extended)+" elf_table_bytes=84 elf_table_sha256="+digest(mdt));
+    refused([&]{admit_mdt(extended,digest(mdt).c_str());}); // Inspection never changes full-file admission.
     put32(mdt,28,84);refused([&]{admit_mdt(mdt,digest(mdt).c_str());});
+    refused([&]{mdt_summary(mdt);});
     Family family{{"cdsp.mdt",Bytes{1,2,3}},{"cdsp.b00",Bytes{4,5}}};
     publish_family(dir/"out","cdsp",family);verify_family(dir/"out/cdsp",family);
     publish_family(dir/"out","cdsp",family);

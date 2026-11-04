@@ -29,6 +29,12 @@ uses a generated short alias, so short-name-only lookup cannot find it. Duplicat
 identities and malformed long-name chains are refused; firmware hashes remain
 unchanged.
 
+--inspect-stock reports only sizes and SHA-256 identities for the fixed CDSP
+metadata, bounded reconstructed authentication image and admitted MCU image.
+It distinguishes the ELF table from the complete MDT file. It never publishes
+or admits an unknown image and never loads a TA or starts a DSP. Use this
+read-only report to investigate a preflight mismatch before changing any pin.
+
 The read-only LP/loop/debugfs path reuses the original Uke boot updater header
 at a96607f. FAT parsing and bounded publication are original MIT C++ code.
 Synthetic native/sanitizer tests run on COPR. Tablet provisioning and physical

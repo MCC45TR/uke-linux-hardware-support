@@ -9,12 +9,22 @@ static uint16_t le16(const Bytes &b,size_t p) {
     need(p<=b.size()&&b.size()-p>=2,"Truncated firmware field");return b[p]|uint16_t(b[p+1])<<8;
 }
 static uint32_t le32(const Bytes &b,size_t p) {return le16(b,p)|uint32_t(le16(b,p+2))<<16;}
-static void admit_mdt(const Bytes &b,const char *hash) {
-    need(b.size()<=1024*1024&&b.size()>=52&&digest(b)==hash,"Stock CDSP MDT identity is not admitted");
+static size_t mdt_table_end(const Bytes &b) {
+    need(b.size()<=1024*1024&&b.size()>=52,"Stock CDSP MDT size is outside bounds");
     need(!memcmp(b.data(),"\177ELF",4)&&b[4]==1&&b[5]==1&&b[6]==1&&le16(b,40)==52&&
          le16(b,42)==32&&le16(b,44)>0&&le16(b,44)<=64,"Stock CDSP ELF32 layout differs");
     const uint64_t ph=le32(b,28),count=le16(b,44);
     need(ph>=52&&ph<=b.size()&&count*32<=b.size()-ph,"CDSP program table exceeds MDT bounds");
+    return size_t(ph+count*32);
+}
+static void admit_mdt(const Bytes &b,const char *hash) {
+    need(digest(b)==hash,"Stock CDSP MDT identity is not admitted");
+    (void)mdt_table_end(b);
+}
+static std::string mdt_summary(const Bytes &b) {
+    const auto end=mdt_table_end(b);const Bytes table(b.begin(),b.begin()+end);
+    return "bytes="+std::to_string(b.size())+" sha256="+digest(b)+
+           " elf_table_bytes="+std::to_string(end)+" elf_table_sha256="+digest(table);
 }
 static bool admit_mcu(const Bytes &b) {return b.size()==82740&&digest(b)==mcu_sha;}
 static Family cdsp_family(const Fat &fat) {
@@ -148,6 +158,19 @@ static int preflight_auth() {
     std::cout<<"Verified the exact reconstructed device-local Uke authentication image; no file was published or TA loaded\n";
     return 0;
 }
+static int inspect_stock() {
+    auto [modem,super]=stock_sources();Fat fat(modem.fd.value,modem.size);
+    std::cout<<"Read-only identity inspection; no unknown image is admitted or published\n";
+    for(const auto &name:{"CDSP.MDT","CDSP_DTB.MDT"})
+        std::cout<<name<<' '<<mdt_summary(fat.image_file(name,1024*1024))<<'\n';
+    const auto metadata=fat.image_file("DEVAUTH.MDT",1024*1024);
+    const auto joined=join_auth_parts(metadata,[&](const auto &name,size_t maximum){return fat.image_file(name,maximum);});
+    std::cout<<"devauth.joined bytes="<<joined.size()<<" sha256="<<digest(joined)
+             <<" admitted="<<(admitted_auth(joined)?"yes":"no")<<'\n';
+    const auto mcu=mcu_image(super);
+    std::cout<<"MCU_Upgrade.bin bytes="<<mcu.size()<<" sha256="<<digest(mcu)<<" admitted=yes\n";
+    return 0;
+}
 static int run(const std::string &release,bool authentication=false) {
     need(token(release)&&release.starts_with("7.3.1-")&&release.ends_with("-unstable"),
          "Firmware candidates require an -unstable kernel ABI");
@@ -173,8 +196,9 @@ int main(int argc,char **argv) {
     try {
         if(argc==2&&std::string(argv[1])=="--preflight")return uke_local_fw::preflight();
         if(argc==2&&std::string(argv[1])=="--preflight-auth")return uke_local_fw::preflight_auth();
+        if(argc==2&&std::string(argv[1])=="--inspect-stock")return uke_local_fw::inspect_stock();
         need(argc==3&&(std::string(argv[1])=="--import"||std::string(argv[1])=="--import-auth"),
-             "Usage: uke-cdsp-pogo-firmware --preflight | --preflight-auth | --import KERNEL_RELEASE | --import-auth KERNEL_RELEASE");
+             "Usage: uke-cdsp-pogo-firmware --preflight | --preflight-auth | --inspect-stock | --import KERNEL_RELEASE | --import-auth KERNEL_RELEASE");
         return uke_local_fw::run(argv[2],std::string(argv[1])=="--import-auth");}
     catch(const std::exception &e){std::cerr<<"uke-cdsp-pogo-firmware: "<<e.what()<<'\n';return 1;}
 }
