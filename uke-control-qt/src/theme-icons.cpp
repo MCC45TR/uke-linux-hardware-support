@@ -28,10 +28,14 @@ void ThemeIcons::refresh() {
       "view-list-details", "view-refresh", "view-filter", "edit-find",
       "edit-clear", "configure", "system-run", "system-reboot", "system-shutdown",
       "system-switch-user", "security-high", "go-previous", "go-next",
-      "media-playback-stop"};
+      "media-playback-stop", "application-menu", "window-close"};
   QVariantMap names;
   for (const auto &name : standardNames) {
     QStringList candidates{name};
+    if (name == "application-menu")
+      candidates.prepend("open-menu-symbolic");
+    if (name == "window-close")
+      candidates.prepend("window-close-symbolic");
     if (name == "battery-charging")
       candidates << "battery-100-charging" << "battery-full-charging" << "battery";
     if (name == "camera-flash")

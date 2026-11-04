@@ -73,3 +73,13 @@ probe isolated `XDG_CONFIG_HOME`. Release 7 isolates both configuration search
 paths in its temporary subprocess. The real application continues to inherit
 the user's configuration; only the test probe is isolated. The other ten
 appearance checks and the retained widget checks passed before this correction.
+
+An isolated Breeze Light palette with Adwaita icons passed all guide navigation
+checks. Visual inspection nevertheless found the drawer handle's missing-icon
+placeholder: Kirigami defaults to `application-menu-symbolic`, while Adwaita
+uses `open-menu-symbolic`. The application now sets the drawer's supported
+`handleClosedIcon`/`handleOpenIcon` properties through the same resolver, preferring
+the available menu/close symbolic aliases. Native drawer open/close and both
+bindings gain runtime checks. This uses the original distribution control;
+no Kirigami source is modified. See the upstream
+[OverlayDrawer properties](https://api.kde.org/qml-org-kde-kirigami-overlaydrawer.html).

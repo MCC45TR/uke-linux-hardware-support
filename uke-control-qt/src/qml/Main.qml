@@ -31,8 +31,13 @@ Kirigami.ApplicationWindow {
         }
     }
     globalDrawer: Kirigami.GlobalDrawer {
+        objectName: "navigationDrawer"
         title: "Uke Control"
         titleIcon: themeIcons.names["preferences-system"]
+        handleClosedIcon.name: themeIcons.names["application-menu"]
+        handleOpenIcon.name: themeIcons.names["window-close"]
+        handleClosedToolTip: "Open navigation"
+        handleOpenToolTip: "Close navigation"
         isMenu: false
         modal: !root.wideScreen
         drawerOpen: !modal

@@ -233,6 +233,19 @@ private slots:
     window->resize(480, 720);
     window->show();
     QTest::qWait(100);
+    auto *drawer = window->findChild<QObject *>("navigationDrawer");
+    QVERIFY(drawer);
+    auto *menuIcon = drawer->property("handleClosedIcon").value<QObject *>();
+    auto *closeIcon = drawer->property("handleOpenIcon").value<QObject *>();
+    QVERIFY(menuIcon);
+    QVERIFY(closeIcon);
+    QCOMPARE(menuIcon->property("name").toString(), themeIcons.names().value("application-menu").toString());
+    QCOMPARE(closeIcon->property("name").toString(), themeIcons.names().value("window-close").toString());
+    QVERIFY(QMetaObject::invokeMethod(drawer, "open"));
+    QTRY_VERIFY(drawer->property("position").toReal() > 0.99);
+    snapshot(window, "navigation-drawer");
+    QVERIFY(QMetaObject::invokeMethod(drawer, "close"));
+    QTRY_VERIFY(drawer->property("position").toReal() < 0.01);
     QCOMPARE(bridge.search("").size(), int(actions().size()));
     QCOMPARE(bridge.search("no-such-action-98765").size(), 0);
     for (int area = 0; area < 7; ++area) {
