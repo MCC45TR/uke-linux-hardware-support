@@ -17,8 +17,12 @@ while IFS=$'\t' read -r name url hash; do
     mkdir -p "$root/upstream/$name"
     tar -xzf "$output/$name.tar.gz" --strip-components=1 -C "$root/upstream/$name"
 done < <(jq -r '.sources[]|[.name,.url,.sha256]|@tsv' "$here/manifests/upstreams.json")
+(cd "$root"; patch -p1 --fuzz=0 < uke-pogo-auth/patches/0001-qcomtee-refuse-credential-encoding-errors.patch)
 for compiler in g++ clang++; do
     CXX=$compiler bash "$root/uke-pogo-auth/tests/check.sh" "$root/upstream/minkipc"
+done
+for compiler in gcc clang; do
+    CC=$compiler bash "$root/uke-pogo-auth/tests/credentials.sh" "$root/upstream"
 done
 find "$root/upstream" -depth -delete
 tar --sort=name --mtime="@$(git -C "$owner" show -s --format=%ct HEAD)" --owner=0 --group=0 --numeric-owner \

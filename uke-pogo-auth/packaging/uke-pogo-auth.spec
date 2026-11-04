@@ -1,6 +1,6 @@
 Name: uke-pogo-auth
 Version: 0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Bounded native Uke pogo keyboard authentication candidate
 License: MIT AND BSD-2-Clause AND BSD-3-Clause
 Source0: %{name}-%{version}.tar.gz
@@ -8,7 +8,7 @@ Source1: minkipc.tar.gz
 Source2: quic-teec.tar.gz
 Source3: qcbor.tar.gz
 ExclusiveArch: aarch64
-BuildRequires: gcc gcc-c++ openssl-devel systemd-rpm-macros
+BuildRequires: gcc gcc-c++ openssl-devel systemd-rpm-macros patch
 BuildRequires: pkgconfig(libsystemd)
 Requires: uke-cdsp-pogo-firmware >= 0.2
 Provides: bundled(minkipc) = 1.0.0
@@ -29,6 +29,7 @@ mkdir -p upstream/minkipc upstream/quic-teec upstream/qcbor
 tar -xzf %{SOURCE1} --strip-components=1 -C upstream/minkipc
 tar -xzf %{SOURCE2} --strip-components=1 -C upstream/quic-teec
 tar -xzf %{SOURCE3} --strip-components=1 -C upstream/qcbor
+patch -p1 --fuzz=0 < uke-pogo-auth/patches/0001-qcomtee-refuse-credential-encoding-errors.patch
 
 %build
 %set_build_flags
@@ -36,6 +37,7 @@ bash uke-pogo-auth/packaging/build.sh
 
 %check
 bash uke-pogo-auth/tests/check.sh upstream/minkipc
+bash uke-pogo-auth/tests/credentials.sh "$PWD/upstream"
 
 %install
 install -Dm755 build/uke-pogo-auth %{buildroot}%{_libexecdir}/uke-pogo-auth
@@ -54,6 +56,10 @@ install -Dm644 upstream/quic-teec/libqcomtee/src/linux/tee.h %{buildroot}%{_lice
 %license %{_licensedir}/%{name}/*
 
 %changelog
+* Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1-2
+- Refuse QCOMTEE credential encoding failures and release their allocation.
+- Exercise the actual upstream C encoder with GCC/Clang sanitizers in COPR.
+
 * Wed Nov 04 2026 Uke Linux contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1-1
 - Add original bounded authentication, strict TA error handling and epoch/challenge admission.
 - Build original pinned libraries without a compiler download or OEM redistribution.

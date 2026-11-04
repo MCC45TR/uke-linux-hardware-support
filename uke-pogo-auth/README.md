@@ -32,3 +32,8 @@ generated headers and precompiled libraries are not copied. Original Qualcomm
 MINK/QCOMTEE and QCBOR sources are pinned in manifests/upstreams.json; their
 licenses/notices ship with the package. No upstream build script or implicit
 IDL compiler download is used.
+
+The QCOMTEE credential encoder carries one attributed patch to refuse failed
+QCBOR encoding and release its allocation. COPR fixtures exercise that actual C
+implementation with real QCBOR, injected errors, a capacity retry and empty
+output. Compiler warnings remain enabled in the production build.
