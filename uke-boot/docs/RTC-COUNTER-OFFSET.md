@@ -69,9 +69,26 @@ preferences remain unchanged. No kernel package or profile selection is added.
 Fixtures require GCC/Clang normal and fail-fast ASan/UBSan runs for wire/data
 mutation, real private POSIX file operations, elapsed offline time, reset/wrap/
 stall, synchronization races, forward restoration and readback.
-All inherited boot/package tests remain required. These checks are prepared,
-not yet executed. Candidate RPMs must be audited and delivered through DNF;
-copied executables are not installed or run on the tablet. Physical provisioning,
+COPR11261089 completes the full inherited boot/package checks and the four new
+compiler/sanitizer runs in282seconds as isolated1.8.92, exact source
+5fe366e47e77bf208178d99b8b0dd302d7f06ca8. Final native log gzip SHA256 is
+7d69217f4c9578ea0218bc355e3ae43a4868059bb58e10f9823b5a75ea34944c.
+The complete signed installation-profile, kernel-update and boot-integration
+RPMs verify with trusted fingerprint2204A661EA630A5303500085538797E72A3E4ECA.
+Updater and boot scriptlets match installed1.8.90 byte-for-byte. Signed new
+units and the Chrony drop-in match the source; rollback default remains
+enforced/config-noreplace. These are native/package results, not a tablet test.
+
+The earlier1.8.91 attempt fails only the new fixture's strict indentation
+warning after inherited checks pass. Separating the fault-injection conditions
+preserves their behavior, assertions and warning flags.1.8.91 remains immutable.
+The source-worker's earlier pre-SRPM version guard is also corrected to exclude
+unrelated custom-version experiments while rejecting an exact NVR everywhere.
+
+Fresh1.8.93 is prepared for the main unstable repository with the same clock
+implementation and fixtures; its own build and signed audit remain required.
+Delivery uses DNF; copied executables are not installed or run on the tablet.
+Physical provisioning,
 read-only comparison, offline boot and long-run drift remain separate gates.
 The raw RTC class remains a counter. This does not establish a hardware UTC
 calendar, alarm delivery, suspend/wake, full camera/calibration/focus or complete
