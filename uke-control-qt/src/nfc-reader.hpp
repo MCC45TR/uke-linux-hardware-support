@@ -7,6 +7,7 @@
 #include <QNearFieldTarget>
 #include <QNdefMessage>
 #include <QPointer>
+#include <QProcess>
 namespace uq {
 QVariantList ndefRows(const QNdefMessage &message);
 class NfcReader : public QObject {
@@ -16,6 +17,7 @@ class NfcReader : public QObject {
     QNearFieldManager *manager_=nullptr;
     QPointer<QNearFieldTarget> target_;
     QTimer timeout_;
+    QProcess *service_=nullptr;
     QVariantMap report_;
     void release();
     void complete(const QString &message);
@@ -24,6 +26,7 @@ public:
     ~NfcReader() override;
     QVariantMap report() const {return report_;}
     Q_INVOKABLE void inspect();
+    Q_INVOKABLE void startService();
     Q_INVOKABLE void start();
     Q_INVOKABLE void stop();
     Q_INVOKABLE void clear();

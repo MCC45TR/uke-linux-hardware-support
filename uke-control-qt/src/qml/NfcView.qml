@@ -19,6 +19,13 @@ ColumnLayout {
             onClicked: reader.inspect()
         }
         FormCard.FormButtonDelegate {
+            text: i18n("Start NFC reader service")
+            description: i18n("Start the distribution neard service. Administrator authorization may be requested.")
+            icon.name: themeIcons.names["system-run"]
+            enabled: !backend.simulation && !reader.report.busy
+            onClicked: reader.startService()
+        }
+        FormCard.FormButtonDelegate {
             objectName: "nfcStart"
             text: i18n("Read NDEF tag")
             description: i18n("Use a supported external reader. No card authentication, payment or memory writes are performed.")
@@ -29,7 +36,7 @@ ColumnLayout {
         FormCard.FormButtonDelegate {
             text: i18n("Stop reading")
             icon.name: themeIcons.names["media-playback-stop"]
-            visible: reader.report.busy || false
+            visible: (reader.report.busy && !reader.report.startingService) || false
             onClicked: reader.stop()
         }
         Repeater {

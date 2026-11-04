@@ -29,7 +29,7 @@ NfcReader::NfcReader(bool simulation,QObject *parent):QObject(parent),simulation
     connect(&timeout_,&QTimer::timeout,this,[this]{complete(i18n("Reading timed out. Bring a supported tag closer and try again."));});
     report_={{"busy",false},{"supported",false},{"message",i18n("Check for a connected NFC reader before scanning.")}};
 }
-NfcReader::~NfcReader(){release();}
+NfcReader::~NfcReader(){release();if(service_){service_->disconnect(this);service_->kill();service_->waitForFinished(1000);}}
 void NfcReader::release(){
     scanning_=false;timeout_.stop();
     if(target_){QObject::disconnect(target_,nullptr,this,nullptr);target_->disconnect();target_->deleteLater();target_=nullptr;}
@@ -38,7 +38,8 @@ void NfcReader::release(){
 void NfcReader::complete(const QString &message){release();report_["busy"]=false;report_["message"]=message;emit changed();}
 void NfcReader::inspect(){
     if(simulation_){report_["message"]=i18n("Simulation does not access NFC hardware.");emit changed();return;}
-    if(scanning_)return;
+    if(scanning_||service_)return;
+    if(manager_){manager_->deleteLater();manager_=nullptr;}
     if(!manager_) {
         manager_=new QNearFieldManager(this);
         connect(manager_,&QNearFieldManager::targetDetected,this,[this](QNearFieldTarget *target){
@@ -58,6 +59,19 @@ void NfcReader::inspect(){
     const bool supported=manager_->isSupported(QNearFieldTarget::NdefAccess);
     report_["supported"]=supported;report_["busy"]=false;
     report_["message"]=supported?i18n("A compatible NFC reader is available."):i18n("No compatible NFC reader is available. The built-in FM19511 is a tag, not a reader. Connect a supported USB NFC reader for NDEF reading.");emit changed();
+}
+void NfcReader::startService(){
+    if(simulation_||scanning_||service_)return;
+    service_=new QProcess(this);auto *p=service_;
+    auto done=[this,p](bool success){
+        if(service_!=p)return;service_=nullptr;p->deleteLater();report_["busy"]=false;report_["startingService"]=false;
+        if(success)inspect();else {report_["message"]=i18n("The NFC reader service could not be started. Check administrator authorization and the neard service.");emit changed();}
+    };
+    connect(p,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,[done](int code,QProcess::ExitStatus status){done(status==QProcess::NormalExit&&code==0);});
+    connect(p,&QProcess::errorOccurred,this,[done](QProcess::ProcessError error){if(error==QProcess::FailedToStart)done(false);});
+    report_["busy"]=true;report_["startingService"]=true;report_["message"]=i18n("Starting the distribution NFC reader service…");emit changed();
+    p->start("/usr/bin/systemctl",{"start","neard.service"});
+    QTimer::singleShot(30000,p,[p]{if(p->state()!=QProcess::NotRunning)p->kill();});
 }
 void NfcReader::start(){
     if(scanning_)return;inspect();if(simulation_||!report_.value("supported").toBool())return;

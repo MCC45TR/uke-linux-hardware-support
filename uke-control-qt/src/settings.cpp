@@ -231,7 +231,13 @@ void Settings::refresh() {
 void Settings::stop() {
   if(!current_.isEmpty())errors_[current_]=i18n("Read stopped; previous information may be out of date");
   poll_.stop();simulated_.stop();queue_.clear();
-  kernelTimeout_.stop();if(kernel_){auto *p=kernel_;kernel_=nullptr;p->disconnect(this);p->kill();p->deleteLater();}
+  kernelTimeout_.stop();if(kernel_){
+    auto *p=kernel_;kernel_=nullptr;p->disconnect(this);
+    // pkexec may already have dropped the caller's kill permission. Let the
+    // bounded read finish without blocking the GUI in QProcess's destructor.
+    connect(p,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),p,&QObject::deleteLater);
+    p->kill();if(p->state()==QProcess::NotRunning)p->deleteLater();
+  }
   if(query_){query_->cancel();query_.reset();}current_.clear();
   ++historyGeneration_;if(history_.value("busy").toBool()){history_["busy"]=false;history_["message"]=i18n("History read stopped");emit historyChanged();}
   emit changed();

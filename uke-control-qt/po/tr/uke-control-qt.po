@@ -1263,3 +1263,15 @@ msgstr "KDE enerji tasarrufu ayarları"
 
 msgid "KDE screen locking settings"
 msgstr "KDE ekran kilidi ayarları"
+
+msgid "Start NFC reader service"
+msgstr "NFC okuyucu hizmetini başlat"
+
+msgid "Start the distribution neard service. Administrator authorization may be requested."
+msgstr "Dağıtımın neard hizmetini başlatır. Yönetici yetkisi istenebilir."
+
+msgid "Starting the distribution NFC reader service…"
+msgstr "Dağıtımın NFC okuyucu hizmeti başlatılıyor…"
+
+msgid "The NFC reader service could not be started. Check administrator authorization and the neard service."
+msgstr "NFC okuyucu hizmeti başlatılamadı. Yönetici yetkisini ve neard hizmetini kontrol edin."

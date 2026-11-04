@@ -92,6 +92,7 @@ QJsonObject tag() {
 }
 }
 int main(int argc,char **argv) {
+    alarm(18);
     QCoreApplication app(argc,argv);const auto args=app.arguments();
     if(args.size()!=2||!QStringList{"dock","charging","tag"}.contains(args[1]))return 64;
     QJsonObject out{{"schema","org.uke.qt.kernel-information.v1"}};

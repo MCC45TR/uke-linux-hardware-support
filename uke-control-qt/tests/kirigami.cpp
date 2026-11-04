@@ -267,7 +267,7 @@ private slots:
     Settings settings(rich);QVERIFY(settings.open("charging"));QTRY_VERIFY(!settings.busy());
     QVERIFY(!settings.topic().value("canApply").toBool());
     QVERIFY(settings.topic().value("changes").toList().size()>=2);
-    NfcReader reader(true);reader.start();QVERIFY(!reader.report().value("busy").toBool());reader.clear();
+    NfcReader reader(true);reader.start();reader.startService();QVERIFY(!reader.report().value("busy").toBool());reader.clear();
     QNdefNfcTextRecord record;record.setText("<script>alert(1)</script>");
     QNdefNfcUriRecord uri;uri.setUri(QUrl("file:///private/example"));
     QNdefMessage message;message<<record<<uri;

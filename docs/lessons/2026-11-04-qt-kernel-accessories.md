@@ -50,3 +50,12 @@ the tablet. Physical NDEF reading requires a compatible external reader and
 an actual tag. Charge cutoff and arbitrary new thresholds remain unqualified;
 a successful information query must not become a hardware acceptance claim.
 The connected dock's Ethernet and DP output must remain connected during tests.
+
+The installed Fedora Qt 6.12 package contains the neard backend and no PC/SC
+backend. Fedora provides original neard 0.19. Release 1.3.0-2 therefore requires
+neard and adds an explicit native service-start action; installing Qt alone is
+insufficient for external reading. A service start may use the distribution's
+systemd/PolicyKit authentication. No reader daemon is automatically enabled at
+boot by this application. Root read cancellation is asynchronous even after
+pkexec drops the caller's kill permission; the helper itself has an 18-second
+process deadline and each fixed charge-owner subcommand is bounded.

@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -40,6 +40,7 @@ Requires:       plasma-integration
 Requires:       breeze-icon-theme
 Requires:       qt6-qtdeclarative
 Requires:       qt6-qtconnectivity
+Requires:       neard >= 0.14
 Requires:       polkit
 Requires:       uke-charge-control >= 1.4.1-7
 Requires:       kf6-kirigami
@@ -90,6 +91,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Wed Nov 04 2026 Uke contributors - 1.3.0-2
+- Require the original neard backend and offer explicit authorized service startup.
+- Bound privileged reads independently and keep cancellation asynchronous.
+
 * Wed Nov 04 2026 Uke contributors - 1.3.0-1
 - Show kernel-backed dock details and verified charging settings through a fixed read-only helper.
 - Add bounded explicit NDEF reading through the original Qt NFC backend and distinguish the built-in tag.
