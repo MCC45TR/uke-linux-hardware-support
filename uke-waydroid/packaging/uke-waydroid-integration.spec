@@ -1,6 +1,6 @@
 Name:           uke-waydroid-integration
 Version:        0.1.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Fedora Binderfs labels for Waydroid on Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-waydroid
@@ -11,6 +11,7 @@ Requires(post): /usr/bin/semodule
 Requires(post): /usr/bin/systemd-tmpfiles
 Requires:       coreutils gawk
 Requires:       uke-waydroid-diagnostics >= 0.1.0-2
+Requires:       (uke-kernel-default(waydroid-netd) >= 1 if senemos-uke-linux-kernel-mainline-unstable-singleboot)
 Requires(postun): /usr/bin/semodule
 Supplements:    (waydroid and uke-core-meta)
 
@@ -74,6 +75,9 @@ fi
 %{_libexecdir}/uke-waydroid-prepare
 
 %changelog
+* Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
+- Require a network-capable selected profile on the Uke unstable channel.
+
 * Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-6
 - Deliver the Android Vulkan qualification tool with a normal DNF update.
 

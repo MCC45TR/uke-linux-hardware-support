@@ -60,6 +60,13 @@ when explicitly invoked with `waydroid shell -- /system/bin/uke-vulkan-check`.
 Its NDK sysroot and native compiler are confined to COPR. No SDK/compiler is
 installed on the tablet, and this bounded check does not establish conformance.
 
+On the Uke unstable channel, revision7 requires the selected singleboot profile
+to provide `uke-kernel-default(waydroid-netd) >= 1`. This lets a normal DNF update
+pull the matching network-capable kernel cohort and prevents replacement of
+that default profile by a candidate missing the capability. Installed/default
+profile selection and the actually running kernel remain separate: existing
+administrator boot-activation policy is respected.
+
 References: [Fedora Binder labels](https://github.com/fedora-selinux/selinux-policy/blob/rawhide/policy/modules/kernel/devices.te),
 [Waydroid installation](https://docs.waydro.id/usage/install-on-desktops) and
 [Binderfs lifecycle](https://docs.kernel.org/admin-guide/binderfs.html).
