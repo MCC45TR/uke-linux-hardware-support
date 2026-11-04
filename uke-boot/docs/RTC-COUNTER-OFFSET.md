@@ -85,8 +85,13 @@ preserves their behavior, assertions and warning flags.1.8.91 remains immutable.
 The source-worker's earlier pre-SRPM version guard is also corrected to exclude
 unrelated custom-version experiments while rejecting an exact NVR everywhere.
 
-Fresh1.8.93 is prepared for the main unstable repository with the same clock
-implementation and fixtures; its own build and signed audit remain required.
+Main unstable1.8.93/COPR11261155 subsequently passes the same inherited and four
+new checks in282seconds from cda5ed3452d1d29e88c2edfb00cecaa57257e27f.
+Its final native log gzip SHA256 is
+42ab3b2398a31d304c3cfb60cf4c5a9e594f6e78faad8469c1ef27d3cc13fc85.
+All three complete signed RPMs pass the same key/payload/script/unit/default
+audit.1.8.92 and1.8.93 are immutable. Coordinated device delivery and actual
+private-anchor validation are still pending.
 Delivery uses DNF; copied executables are not installed or run on the tablet.
 Physical provisioning,
 read-only comparison, offline boot and long-run drift remain separate gates.
