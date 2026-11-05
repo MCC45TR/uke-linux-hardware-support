@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
   try {
     const auto a = app.arguments();
     if (a.size() == 2 && a[1] == "status") { output(status()); return 0; }
-    if (a.size() == 2 && a[1] == "--version") { puts("1.4.0"); return 0; }
+    if (a.size() == 2 && a[1] == "--version") { puts("1.5.0"); return 0; }
     const bool start = a.size() == 3 && a[1] == "start" && validVariant(a[2]);
     const bool worker = a.size() == 3 && a[1] == "worker" && validVariant(a[2]);
     const bool google = a.size() == 2 && a[1] == "google-id";

@@ -1404,3 +1404,421 @@ msgstr "Waydroid hazırlanamadı. Mevcut verileriniz korundu. Kurulumu yeniden d
 
 msgid "An existing custom Android installation needs its original setup tools. Its settings and user data have been kept."
 msgstr "Mevcut özel Android kurulumu kendi kurulum araçlarıyla yönetilmelidir. Ayarları ve kullanıcı verileri korundu."
+msgid "Senemos Kernel Manager"
+msgstr "Senemos Kernel Manager"
+
+
+msgid "CPU, GPU, sensors and kernel management"
+msgstr "CPU, GPU, sensörler ve çekirdek yönetimi"
+
+
+msgid "Sleep observations and wake permissions"
+msgstr "Uyku gözlemleri ve uyandırma izinleri"
+
+
+msgid "Memory and swap"
+msgstr "Bellek ve swap"
+
+
+msgid "Available memory, swap usage and allocation policy"
+msgstr "Kullanılabilir bellek, swap kullanımı ve alan ayırma politikası"
+
+
+msgid "CPU"
+msgstr "CPU"
+
+
+msgid "GPU"
+msgstr "GPU"
+
+
+msgid "Cluster frequencies, processor load and frequency policy"
+msgstr "Küme frekansları, işlemci yükü ve frekans politikası"
+
+
+msgid "Reported clock, temperature and frequency limits"
+msgstr "Bildirilen saat hızı, sıcaklık ve frekans sınırları"
+
+
+msgid "Sensors"
+msgstr "Sensörler"
+
+
+msgid "Live measurements, source status and graphs"
+msgstr "Canlı ölçümler, kaynak durumu ve grafikler"
+
+
+msgid "Settings changed elsewhere. Refresh and review the request again."
+msgstr "Ayarlar başka bir yerden değiştirildi. Yenileyip isteği tekrar inceleyin."
+
+
+msgid "The minimum frequency must not exceed the maximum."
+msgstr "En düşük frekans en yüksek frekansı aşamaz."
+
+
+msgid "Choose a frequency advertised by this driver."
+msgstr "Bu sürücünün sunduğu frekanslardan birini seçin."
+
+
+msgid "Choose a supported automatic governor."
+msgstr "Desteklenen otomatik bir governor seçin."
+
+
+msgid "The requested frequency is outside the hardware limits."
+msgstr "İstenen frekans donanım sınırlarının dışında."
+
+
+msgid "The driver returned a different value. The kernel may have limited the request; refresh to inspect it."
+msgstr "Sürücü farklı bir değer döndürdü. Çekirdek isteği sınırlamış olabilir; incelemek için yenileyin."
+
+
+msgid "The driver refused the change. Current settings remain visible."
+msgstr "Sürücü değişikliği reddetti. Güncel ayarlar gösterilmeye devam ediyor."
+
+
+msgid "This provider cannot accept that request. Refresh its current state."
+msgstr "Bu sağlayıcı isteği kabul edemiyor. Güncel durumunu yenileyin."
+
+
+msgid "Monitoring paused after ten minutes. Start again to continue."
+msgstr "İzleme on dakika sonra duraklatıldı. Devam etmek için yeniden başlatın."
+
+
+msgid "Sensor reading failed. Previous values may be stale."
+msgstr "Sensör okuması başarısız oldu. Önceki değerler eski olabilir."
+
+
+msgid "Monitoring paused while the application is inactive."
+msgstr "Uygulama etkin olmadığı için izleme duraklatıldı."
+
+
+msgid "The sensor provider could not be started."
+msgstr "Sensör sağlayıcısı başlatılamadı."
+
+
+msgid "No CPU/GPU frequency provider is exported by this kernel."
+msgstr "Bu çekirdek CPU/GPU frekans sağlayıcısı sunmuyor."
+
+
+msgid "No sensor readings were returned by the provider."
+msgstr "Sağlayıcı sensör ölçümü döndürmedi."
+
+
+msgid "Driver default"
+msgstr "Sürücü varsayılanı"
+
+
+msgid "The driver confirmed the setting. It is not saved for the next boot."
+msgstr "Sürücü ayarı doğruladı. Sonraki açılış için kaydedilmedi."
+
+
+msgid "The request was not completed. Check authorization and refresh current settings."
+msgstr "İstek tamamlanamadı. Yetkiyi kontrol edip güncel ayarları yenileyin."
+
+
+msgid "%1 s ago · %2"
+msgstr "%1 sn önce · %2"
+
+
+msgid "%1 s ago"
+msgstr "%1 sn önce"
+
+
+msgid "Now"
+msgstr "Şimdi"
+
+
+msgid "Observed values over time; missing samples break the line."
+msgstr "Zaman içinde gözlenen değerler; eksik örneklerde çizgi kesilir."
+
+
+msgid "Waiting for enough samples…"
+msgstr "Yeterli örnek bekleniyor…"
+
+
+msgid "Point or tap the graph to inspect a sample."
+msgstr "Bir örneği incelemek için grafiğin üzerine gelin veya dokunun."
+
+
+msgid "Frequency policy"
+msgstr "Frekans politikası"
+
+
+msgid "Current limits"
+msgstr "Güncel sınırlar"
+
+
+msgid "Current governor"
+msgstr "Güncel governor"
+
+
+msgid "Setting to change"
+msgstr "Değiştirilecek ayar"
+
+
+msgid "Maximum frequency"
+msgstr "En yüksek frekans"
+
+
+msgid "Minimum frequency"
+msgstr "En düşük frekans"
+
+
+msgid "Governor"
+msgstr "Governor"
+
+
+msgid "Requested value"
+msgstr "İstenen değer"
+
+
+msgid "Scope of the change"
+msgstr "Değişikliğin kapsamı"
+
+
+msgid "Only driver-advertised frequencies and automatic governors are offered. Thermal limits remain in control. Changes are not saved for the next boot."
+msgstr "Yalnız sürücünün sunduğu frekanslar ve otomatik governor seçenekleri gösterilir. Sıcaklık sınırları geçerliliğini korur. Değişiklikler sonraki açılış için kaydedilmez."
+
+
+msgid "Review frequency change"
+msgstr "Frekans değişikliğini incele"
+
+
+msgid "CPU cluster"
+msgstr "CPU kümesi"
+
+
+msgid "CPUs %1"
+msgstr "CPU %1"
+
+
+msgid "Driver-reported frequency"
+msgstr "Sürücünün bildirdiği frekans"
+
+
+msgid "Cluster load"
+msgstr "Küme yükü"
+
+
+msgid "Highest reported CPU temperature"
+msgstr "Bildirilen en yüksek CPU sıcaklığı"
+
+
+msgid "Highest reported GPU temperature"
+msgstr "Bildirilen en yüksek GPU sıcaklığı"
+
+
+msgid "Frequency driver"
+msgstr "Frekans sürücüsü"
+
+
+msgid "Measurement meaning"
+msgstr "Ölçümün anlamı"
+
+
+msgid "CPU frequency is reported by the scaling driver and can differ from the hardware clock. Load is computed from successive kernel CPU counters."
+msgstr "CPU frekansını ölçekleme sürücüsü bildirir; donanımın gerçek saat hızından farklı olabilir. Yük, çekirdeğin ardışık CPU sayaçlarından hesaplanır."
+
+
+msgid "GPU frequency is reported by devfreq. This driver does not export a GPU load percentage; clock frequency is not utilization."
+msgstr "GPU frekansını devfreq bildirir. Bu sürücü GPU yük yüzdesi sunmuyor; saat hızı kullanım oranı değildir."
+
+
+msgid "Frequency history"
+msgstr "Frekans geçmişi"
+
+
+msgid "CPU load history"
+msgstr "CPU yük geçmişi"
+
+
+msgid "GPU temperature history"
+msgstr "GPU sıcaklık geçmişi"
+
+
+msgid "CPU cores"
+msgstr "CPU çekirdekleri"
+
+
+msgid "No matching frequency provider"
+msgstr "Uygun frekans sağlayıcısı yok"
+
+
+msgid "This kernel does not export a supported frequency control for this device."
+msgstr "Bu çekirdek bu aygıt için desteklenen bir frekans kontrolü sunmuyor."
+
+
+msgid "Sensor observations"
+msgstr "Sensör gözlemleri"
+
+
+msgid "Kernel thermal, hwmon and IIO readings are shown with their source units. Desktop light and motion values may be cached; source sample age can be unknown. A missing reading is never replaced with zero."
+msgstr "Çekirdeğin thermal, hwmon ve IIO ölçümleri kaynak birimleriyle gösterilir. Masaüstü ışık ve hareket değerleri önbellekten gelebilir; örneğin yaşı bilinmeyebilir. Eksik ölçüm sıfırla doldurulmaz."
+
+
+msgid "Sensor group"
+msgstr "Sensör grubu"
+
+
+msgid "Temperature zones"
+msgstr "Sıcaklık bölgeleri"
+
+
+msgid "Analog and IIO sensors"
+msgstr "Analog ve IIO sensörleri"
+
+
+msgid "Hardware monitors"
+msgstr "Donanım izleyicileri"
+
+
+msgid "Desktop light and motion"
+msgstr "Masaüstü ışık ve hareket sensörleri"
+
+
+msgid "All sensors"
+msgstr "Tüm sensörler"
+
+
+msgid "Find a sensor"
+msgstr "Sensör ara"
+
+
+msgid "Sensor to graph"
+msgstr "Grafiği gösterilecek sensör"
+
+
+msgid "Selected source"
+msgstr "Seçili kaynak"
+
+
+msgid "Sensor history"
+msgstr "Sensör geçmişi"
+
+
+msgid "Readings · %1"
+msgstr "Ölçümler · %1"
+
+
+msgid "Source state"
+msgstr "Kaynak durumu"
+
+
+msgid "Show more sensors"
+msgstr "Daha fazla sensör göster"
+
+
+msgid "Live monitoring"
+msgstr "Canlı izleme"
+
+
+msgid "Monitoring paused"
+msgstr "İzleme duraklatıldı"
+
+
+msgid "Graphs contain observations from this session only. Collection pauses when leaving this page or switching away from the application."
+msgstr "Grafikler yalnız bu oturumun gözlemlerini içerir. Bu sayfadan veya uygulamadan ayrılınca okuma duraklar."
+
+
+msgid "Read interval"
+msgstr "Okuma aralığı"
+
+
+msgid "1 second"
+msgstr "1 saniye"
+
+
+msgid "2 seconds"
+msgstr "2 saniye"
+
+
+msgid "5 seconds"
+msgstr "5 saniye"
+
+
+msgid "Graph window"
+msgstr "Grafik zaman aralığı"
+
+
+msgid "1 minute"
+msgstr "1 dakika"
+
+
+msgid "2 minutes"
+msgstr "2 dakika"
+
+
+msgid "10 minutes"
+msgstr "10 dakika"
+
+
+msgid "Read once"
+msgstr "Bir kez oku"
+
+
+msgid "Current value"
+msgstr "Güncel değer"
+
+
+msgid "One setting is changed after administrator authorization and checked by reading it back. Thermal protection remains active. No boot configuration is changed."
+msgstr "Yönetici yetkisinden sonra tek ayar değiştirilir ve geri okunarak denetlenir. Sıcaklık koruması etkin kalır. Açılış yapılandırması değiştirilmez."
+
+
+msgid "Simulation and read-only sessions cannot apply frequency changes."
+msgstr "Simülasyon ve salt okunur oturumlarda frekans değişikliği uygulanamaz."
+
+
+msgid "Apply and verify"
+msgstr "Uygula ve doğrula"
+
+
+msgid "Accelerometer available"
+msgstr "İvmeölçer kullanılabilir"
+
+
+msgid "Orientation"
+msgstr "Yönelim"
+
+
+msgid "Tilt"
+msgstr "Eğim"
+
+
+msgid "Ambient light available"
+msgstr "Ortam ışığı sensörü kullanılabilir"
+
+
+msgid "Ambient light"
+msgstr "Ortam ışığı"
+
+
+msgid "Proximity sensor available"
+msgstr "Yakınlık sensörü kullanılabilir"
+
+
+msgid "Object nearby"
+msgstr "Yakında nesne var"
+
+
+msgid "Compass available"
+msgstr "Pusula kullanılabilir"
+
+
+msgid "Compass heading"
+msgstr "Pusula yönü"
+
+
+msgid "Cached value; sample age unknown"
+msgstr "Önbellekteki değer; örneğin yaşı bilinmiyor"
+
+
+msgid "Read from the kernel; sample age unknown"
+msgstr "Çekirdekten okundu; örneğin yaşı bilinmiyor"
+
+
+msgid "Unavailable; check the provider and access permissions"
+msgstr "Kullanılamıyor; sağlayıcıyı ve erişim izinlerini kontrol edin"
+
+
+msgid "Normal"
+msgstr "Normal"

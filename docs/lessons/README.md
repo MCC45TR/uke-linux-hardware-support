@@ -17,3 +17,5 @@
 - [UKE-UBUNTU-20261101: separate source packaging from device admission](2026-11-01-ubuntu-source-packaging.md)
 
 - [UKE-QT-KERNEL-20261104: read actual dock, charging and NFC driver facts](2026-11-04-qt-kernel-accessories.md)
+
+- [UKE-KERNEL-MANAGER-20261105: colocate CPU/GPU/sensor graphs and guarded controls](2026-11-05-senemos-kernel-manager.md)

@@ -13,9 +13,10 @@ QVariantList areaModel() {
     {"storage",i18n("Storage and memory"),i18n("Available space and memory"),"drive-harddisk"},
     {"updates",i18n("System and updates"),i18n("Software, kernels and device information"),"system-software-update"},
     {"diagnostics",i18n("Help and diagnostics"),i18n("Local reports and saved observations"),"document-properties"},
-    {"recovery",i18n("Advanced"),i18n("Specialist controls and guarded maintenance"),"security-high"}};
+    {"recovery",i18n("Advanced"),i18n("Specialist controls and guarded maintenance"),"security-high"},
+    {"kernel-manager",i18n("Senemos Kernel Manager"),i18n("CPU, GPU, sensors and kernel management"),"cpu"}};
   QVariantList out;
-  for(int i=0;i<list.size();++i) {const auto &a=list[i];out<<QVariantMap{{"id",a.id},{"title",a.title},{"icon",a.icon},{"caption",a.caption},{"description",a.caption},{"detail",a.caption},{"index",i},{"secondary",i>=7}};}
+  for(int i=0;i<list.size();++i) {const auto &a=list[i];out<<QVariantMap{{"id",a.id},{"title",a.title},{"icon",a.icon},{"caption",a.caption},{"description",a.caption},{"detail",a.caption},{"index",i},{"secondary",i==7||i==8}};}
   return out;
 }
 QString actionRole(const Action &a) {
@@ -36,8 +37,9 @@ QString accessLabel(const Action &a) {
 }
 int actionArea(const Action &a) {
   const auto &id=a.id;
-  if(id=="boot.set-slot"||id=="boot.slot-preview"||a.category=="updates"||id=="overview.recovery")return 6;
-  if(a.effect==Effect::maintenance||a.category=="recovery"||a.category=="developer"||a.category=="sensors")return 8;
+  if(id=="boot.set-slot"||id=="boot.slot-preview"||a.category=="sensors"||id=="overview.workload")return 9;
+  if(a.category=="updates"||id=="overview.recovery")return 6;
+  if(a.effect==Effect::maintenance||a.category=="recovery"||a.category=="developer")return 8;
   if(a.category=="battery"||a.category=="charge"||a.category=="wake")return 1;
   if(a.category=="display"||a.category=="desktop"||a.category=="lights")return 2;
   if(a.category=="usb"||a.category=="network"||id.starts_with("nfc.")||id=="overview.nfc")return 3;

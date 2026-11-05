@@ -130,3 +130,13 @@ The built-in FM19511 is a Type 2 tag, not an NFC reader. Explicit external NDEF
 reading uses the original Qt NFC backend, with a 30-second deadline and local
 plain-text presentation. A supported external reader is required. No EEPROM
 contents are read or written by the built-in tag information page.
+
+Senemos Kernel Manager combines live CPU/GPU observations with advertised
+frequency limits and governor controls. Graphs are bounded, pause off-page and
+show missing data as gaps; they do not record a background history. CPU load is
+computed from kernel counters. GPU frequency is not a GPU utilization estimate.
+The sensor page reuses the native sensor owner and preserves unknown sample age.
+A reviewed single-attribute frequency request requires administrator authority,
+checks the expected state and reads the value back. It never changes boot
+configuration, voltage or thermal protection. Memory/swap and sleep/wake facts
+and controls are presented together.

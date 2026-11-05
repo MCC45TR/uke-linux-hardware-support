@@ -1,6 +1,6 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.4.0
+Version:        1.5.0
 Release:        1%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
@@ -100,6 +100,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %doc README.md
 %{_bindir}/uke-control-qt
 %{_libexecdir}/uke-control-qt/kernel-information
+%{_libexecdir}/uke-control-qt/frequency-control
+%{_datadir}/polkit-1/actions/org.senemos.uke.frequency-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.qt-kernel-information.policy
 %{_datadir}/applications/org.uke.ControlQt.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.uke.ControlQt.svg
@@ -116,9 +118,14 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
-* Thu Nov 05 2026 Uke contributors - 1.4.0-1
+* Thu Nov 05 2026 Uke contributors - 1.5.0-1
 - Add graphical GAPPS/Vanilla installation, durable progress and native launch.
 - Preserve existing Android data and expose private Google registration help.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-1
+- Add Senemos Kernel Manager with live CPU, GPU and sensor graphs beside their controls.
+- Restrict reviewed frequency requests to advertised policies with stale-state checks and readback.
+- Combine memory/swap and sleep/wake observations with their related preferences.
 
 * Wed Nov 04 2026 Uke contributors - 1.3.0-6
 - Convert the observed Qt role value to the shared SDK's string type.
