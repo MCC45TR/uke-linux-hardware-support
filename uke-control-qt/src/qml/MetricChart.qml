@@ -13,8 +13,9 @@ FormCard.FormCard {
     property string unit: ""
     property int seconds: 120
     property real maximum: 0
+    property string currentReading: ""
     Layout.fillWidth: true
-    SafeText { text: card.heading; description: card.unit }
+    SafeText { text: card.heading; description: card.currentReading.length ? card.currentReading : card.unit }
     TimePlot {
         id: plot
         objectName: "metricPlot_" + card.metric

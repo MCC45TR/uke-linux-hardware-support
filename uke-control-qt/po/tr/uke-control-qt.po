@@ -1892,6 +1892,9 @@ msgstr "Frekansı ne belirliyor?"
 msgid "First graph"
 msgstr "İlk grafik"
 
+msgid "Choose graphs"
+msgstr "Grafikleri seç"
+
 msgid "Second graph"
 msgstr "İkinci grafik"
 

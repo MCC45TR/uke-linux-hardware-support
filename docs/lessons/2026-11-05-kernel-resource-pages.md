@@ -40,3 +40,19 @@ checks. The running follow-up11263202 remains an independent trial. Final
 qualification requires the corrected package's whole retained suite and actual
 read-only resource scenes. DRM client availability and kernel-only experiments
 remain separate from GUI/source acceptance.
+
+Qt1.6.0-4/sourceab1295c/COPR11263206 passed all8 build test groups and was
+installed by targeted native DNF. Installed regression checks and rpm-V pass.
+The opt-in actual read-only test rendered all8 resource pages on the tablet
+and obtained multiple memory samples;3/3 case lifecycle checks pass. Actual
+scene review found duplicated graph headings and always-expanded chart
+selectors. The final presentation refinement puts the current reading inside
+the graph card, discloses graph selection on demand and defaults memory to
+pressure and storage to read/write rates. Native policy code is unchanged.
+
+The whole hardware-support publication guard flags an inherited, unchanged
+OrangeFox image path. The new changed-source privacy scan and diff check pass;
+the Qt SRPM excludes that component. The independent kernel feature check
+11263198/source0823cd0 passed original union gates,3 complete config checks,
+unchanged full NFC/hardening and14 added AArch64 objects. Production kernel
+integration/delivery remains queued after the coordinator's frozen candidate.

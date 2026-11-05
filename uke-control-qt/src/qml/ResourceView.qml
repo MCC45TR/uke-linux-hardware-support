@@ -10,8 +10,9 @@ ColumnLayout {
     required property string mode
     required property int seconds
     property var drafts: ({})
-    property int firstChart: 0
-    property int secondChart: 1
+    property int firstChart: mode === "storage" ? 1 : 0
+    property int secondChart: ["memory", "storage", "manager-overview"].includes(mode) ? 2 : 1
+    property bool graphOptions: false
     property bool advanced: false
     readonly property var charts: manager.state.charts || []
     function draft(id, value) { const copy = Object.assign({}, drafts); copy[id] = value; drafts = copy }
@@ -33,10 +34,11 @@ ColumnLayout {
     }
     FormCard.FormHeader { visible: view.charts.length > 0; title: i18n("Live measurements") }
     FormCard.FormCard {
-        visible: view.charts.length > 0
+        visible: view.charts.length > 1
         Layout.fillWidth: true
-        FormCard.FormComboBoxDelegate { text: i18n("First graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.firstChart, view.charts.length - 1); onActivated: index => view.firstChart = index }
-        FormCard.FormComboBoxDelegate { visible: view.charts.length > 1; text: i18n("Second graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.secondChart, view.charts.length - 1); onActivated: index => view.secondChart = index }
+        FormCard.FormButtonDelegate { text: i18n("Choose graphs"); icon.name: themeIcons.names["configure"]; onClicked: view.graphOptions = !view.graphOptions }
+        FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("First graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.firstChart, view.charts.length - 1); onActivated: index => view.firstChart = index }
+        FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("Second graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.secondChart, view.charts.length - 1); onActivated: index => view.secondChart = index }
     }
     GridLayout {
         Layout.fillWidth: true
@@ -49,8 +51,7 @@ ColumnLayout {
                 required property int index
                 visible: index === 0 || view.charts.length > 1
                 Layout.fillWidth: true
-                SafeText { text: modelData.title; description: view.manager.format((view.manager.state.metrics || {})[modelData.id], modelData.unit) }
-                MetricChart { manager: view.manager; metric: modelData.id; heading: modelData.title; unit: modelData.unit; maximum: modelData.maximum; seconds: view.seconds }
+                MetricChart { manager: view.manager; metric: modelData.id; heading: modelData.title; currentReading: view.manager.format((view.manager.state.metrics || {})[modelData.id], modelData.unit); unit: modelData.unit; maximum: modelData.maximum; seconds: view.seconds }
             }
         }
     }
