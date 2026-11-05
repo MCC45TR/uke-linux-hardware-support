@@ -1,0 +1,2 @@
+# Standard LED exists only after a physical attachment report on the new driver.
+ACTION=="add", SUBSYSTEM=="leds", KERNEL=="uke-pogo::kbd_backlight", DRIVERS=="hid-nanosic-uke", TAG+="systemd", ENV{SYSTEMD_ALIAS}+="/sys/class/leds/uke-pogo::kbd_backlight", ENV{SYSTEMD_WANTS}+="uke-pogo-auth.service"

@@ -1,0 +1,14 @@
+[Unit]
+Description=Uke pogo backlight detection for the original Plasma power service
+PartOf=graphical-session.target
+After=plasma-powerdevil.service
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/uke-pogo-desktop --monitor
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX
+UMask=0077

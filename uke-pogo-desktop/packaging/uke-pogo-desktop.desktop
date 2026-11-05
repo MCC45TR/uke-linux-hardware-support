@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Uke keyboard backlight detection
+Exec=/usr/bin/systemctl --user start uke-pogo-desktop.service
+OnlyShowIn=KDE;
+NoDisplay=true
+Terminal=false
+StartupNotify=false
