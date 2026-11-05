@@ -79,8 +79,9 @@ explicit expert actions. Raw provider output remains in the expert view.
 
 The C++ adapter validates typed IDs and values before every request. Reviews
 retain the frozen request, separate consent and required confirmation tokens.
-All writes still use the existing frontend-request terminal path, authorization
-and backend qualification. There are no optimistic instant switches.
+Typed device actions retain the frontend-request terminal path, authorization
+and backend qualification. Dedicated Kernel Manager and Waydroid pages use
+their fixed native authorized helpers. There are no optimistic instant switches.
 A terminal opening is not reported as operation completion, verified application
 or physical hardware success. The GUI never automatically retries a mutation
 or terminates an independently handed-off terminal operation when closed.

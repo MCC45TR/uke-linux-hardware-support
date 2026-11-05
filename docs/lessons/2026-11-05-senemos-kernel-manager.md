@@ -68,3 +68,19 @@ by exact restoration; it must not change governors or unrelated policies by
 assumption. No stress load, voltage, thermal-disable, reboot or boot write is
 required. Automatic staging and the existing rollback-off preference are kept.
 All kernel contributions and deliveries remain with the shared coordinator.
+
+COPR11261914 compiles 1.4.0-1 and passes all six CTest groups. The final
+readback review excludes the devfreq zero/no-preference sentinel from offered
+values: a driver can report an effective resolved limit instead of the sentinel,
+so it is not a verifiable explicit advertised limit. Existing zero-valued state
+can still be displayed and handled when validating the other bound. The final
+UI preserves fractional MHz and colocates the selected sensor's value/state
+with its graph, without changing sampling or hardware policy.
+
+Page-row review found that earlier CPU/sensor pages may remain instantiated in
+the navigation stack. Only the current page may open a frequency review or
+change the selected graph source; hidden pages must not respond to the shared
+manager. A complete-scene test now visits CPU then GPU, prepares one simulated
+GPU request, verifies exactly one visible review, proves apply remains blocked
+and dismisses the dialog. This protects normal stacked navigation rather than
+relying only on standalone controller fixtures.

@@ -37,7 +37,7 @@ ColumnLayout {
         FormCard.FormComboBoxDelegate {
             objectName: "frequencyValue"
             text: i18n("Requested value")
-            model: editor.manager.choices(editor.deviceId, editor.field)
+            model: { let devices = editor.manager.devices; return editor.manager.choices(editor.deviceId, editor.field) }
             textRole: "title"
             valueRole: "value"
             currentIndex: { for (let i = 0; i < model.length; ++i) if (model[i].value === editor.requested) return i; return -1 }

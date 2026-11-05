@@ -53,13 +53,13 @@ KernelManager::KernelManager(Fixture f,QObject *parent,bool restricted):QObject(
 KernelManager::~KernelManager(){pause();if(write_){write_->disconnect(this);write_->kill();connect(write_,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),write_,&QObject::deleteLater);}}
 void KernelManager::open(const QString &mode) {
     if(mode!="cpu"&&mode!="gpu"&&mode!="sensors")return;
-    if(mode_!=mode){pause();dismissReview();mode_=mode;history_.clear();previousTicks_={};state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
+    if(mode_!=mode){pause();++generation_;dismissReview();mode_=mode;outcome_.clear();message_.clear();history_.clear();previousTicks_={};state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
     requested_=true;
     if(mode=="sensors"){interval_=5;timer_.setInterval(5000);refresh();}else start();
 }
 void KernelManager::start(){if(mode_.isEmpty()||write_)return;active_=true;timer_.start(interval_*1000);deadline_.start(600000);refresh();emit changed();}
-void KernelManager::pause(){active_=false;requested_=false;timer_.stop();deadline_.stop();++generation_;queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
-void KernelManager::close(){pause();mode_.clear();dismissReview();}
+void KernelManager::pause(){active_=false;requested_=false;timer_.stop();deadline_.stop();queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
+void KernelManager::close(){pause();++generation_;mode_.clear();dismissReview();}
 void KernelManager::setInterval(int seconds){if(seconds!=1&&seconds!=2&&seconds!=5)return;interval_=seconds;if(active_)timer_.start(seconds*1000);emit changed();}
 void KernelManager::refresh() {
     if(mode_.isEmpty()||busy())return;
@@ -117,12 +117,11 @@ void KernelManager::acceptSensors(const QJsonObject &snapshot) {
     message_=catalog.isEmpty()?i18n("No sensor readings were returned by the provider."):QString();++revision_;emit changed();
 }
 void KernelManager::selectSensor(const QString &id){if(selectedSensor_==id)return;history_.remove("sensor:"+selectedSensor_);selectedSensor_=id;++revision_;emit changed();}
-QString KernelManager::format(const QVariant &value,const QString &unit)const{bool ok=false;const auto n=value.toDouble(&ok);return value.isValid()&&ok&&std::isfinite(n)?QLocale().toString(n,'f',unit=="MHz"||unit=="%"?0:2)+(unit.isEmpty()?QString():" "+unit):i18n("Not reported");}
+QString KernelManager::format(const QVariant &value,const QString &unit)const{bool ok=false;const auto n=value.toDouble(&ok);return value.isValid()&&ok&&std::isfinite(n)?QLocale().toString(n,'f',unit=="MHz"?1:unit=="%"?0:2)+(unit.isEmpty()?QString():" "+unit):i18n("Not reported");}
 QString KernelManager::current(const QString &id,const QString &field)const{for(const auto &v:devices_){const auto d=v.toMap();if(d.value("id").toString()==id)return d.value(field).toString();}return {};}
 QVariantList KernelManager::choices(const QString &id,const QString &field)const {
     QVariantList out;for(const auto &v:devices_) {const auto d=v.toMap();if(d.value("id").toString()!=id)continue;
         const bool cpu=d.value("kind").toString()=="cpu";const auto list=d.value(field=="governor"?"governors":"frequencies").toList();
-        if(field!="governor"&&!cpu)out<<QVariantMap{{"title",i18n("Driver default")},{"value","0"}};
         for(const auto &n:list){const auto s=n.toString();if(field=="governor"&&s=="userspace")continue;out<<QVariantMap{{"title",field=="governor"?s:format(s.toDouble()/(cpu?1000:1000000),"MHz")},{"value",s}};}
     }return out;
 }
@@ -157,10 +156,11 @@ bool KernelManager::apply(const QString &token) {
     for(const auto &key:{"minimum","maximum","governor"})if(current(review_.value("id").toString(),key)!=review_.value(key).toString()){message_=reason("settings_changed");dismissReview();emit changed();return false;}
     pause();auto *p=new QProcess(this);write_=p;writeOutput_.clear();
     connect(p,&QProcess::readyReadStandardOutput,this,[this,p]{writeOutput_+=p->readAllStandardOutput();if(writeOutput_.size()>32768)p->kill();});
-    auto done=[this,p](int code){
+    const auto requestMode=mode_;
+    auto done=[this,p,requestMode](int code){
         if(write_!=p)return;writeOutput_+=p->readAllStandardOutput();const auto d=QJsonDocument::fromJson(writeOutput_.left(32768)).object();
         write_=nullptr;p->deleteLater();dismissReview();
-        outcome_=code==0&&d.value("schema").toString()=="org.uke.qt.frequency-control.v1"?i18n("The driver confirmed the setting. It is not saved for the next boot."):d.value("error").isString()&&!d.value("error").toString().isEmpty()?reason(d.value("error").toString()):i18n("The request was not completed. Check authorization and refresh current settings.");
+        if(mode_==requestMode)outcome_=code==0&&d.value("schema").toString()=="org.uke.qt.frequency-control.v1"?i18n("The driver confirmed the setting. It is not saved for the next boot."):d.value("error").isString()&&!d.value("error").toString().isEmpty()?reason(d.value("error").toString()):i18n("The request was not completed. Check authorization and refresh current settings.");
         refresh();emit changed();
     };
     connect(p,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,[done](int code,QProcess::ExitStatus status){done(status==QProcess::NormalExit?code:70);});

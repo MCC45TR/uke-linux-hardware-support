@@ -11,6 +11,7 @@ ColumnLayout {
     required property int seconds
     readonly property var targets: manager.devices.filter(d => d.kind === mode)
     property int selected: 0
+    property bool details: false
     readonly property var device: targets.length > selected ? targets[selected] : ({})
     readonly property var reading: manager.state.values ? (manager.state.values[device.id] || {}) : ({})
     Layout.fillWidth: true
@@ -32,11 +33,13 @@ ColumnLayout {
             text: view.mode === "cpu" ? i18n("Highest reported CPU temperature") : i18n("Highest reported GPU temperature")
             description: view.manager.format(view.manager.state[view.mode === "cpu" ? "cpuTemperature" : "gpuTemperature"], "°C")
         }
-        SafeText { text: i18n("Frequency driver"); description: view.device.driver || i18n("Not reported") }
+        SafeText { visible: view.details; text: i18n("Frequency driver"); description: view.device.driver || i18n("Not reported") }
         SafeText {
+            visible: view.details
             text: i18n("Measurement meaning")
             description: view.mode === "cpu" ? i18n("CPU frequency is reported by the scaling driver and can differ from the hardware clock. Load is computed from successive kernel CPU counters.") : i18n("GPU frequency is reported by devfreq. This driver does not export a GPU load percentage; clock frequency is not utilization.")
         }
+        FormCard.FormButtonDelegate { text: view.details ? i18n("Less information") : i18n("More information"); icon.name: themeIcons.names["view-list-details"]; onClicked: view.details = !view.details }
     }
     GridLayout {
         Layout.fillWidth: true

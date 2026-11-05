@@ -19,7 +19,7 @@ private slots:
         auto limited=d;limited["maximum"]="100000";
         QCOMPARE(frequencyRefusal(limited,"minimum","200000"),QString("minimum_exceeds_maximum"));
         limited["writable"]=false;QVERIFY(!frequencyRefusal(limited,"minimum","100000").isEmpty());
-        QVERIFY(frequencyRefusal(managerDevice("gpu"),"maximum","0").isEmpty());
+        QVERIFY(!frequencyRefusal(managerDevice("gpu"),"maximum","0").isEmpty());
         QVERIFY(!frequencyRefusal(d,"minimum","0").isEmpty());
     }
     void staleAndOneWriteReadback() {

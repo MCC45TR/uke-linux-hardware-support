@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.5.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -118,6 +118,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.5.0-3
+- Retain the latest delivered Kernel Manager review, graph and initial-read fixes.
+
 * Thu Nov 05 2026 Uke contributors - 1.5.0-2
 - Verify active startup and reload packaged settings when repairing an installation.
 - Refuse implicit kernel-profile replacement and preserve unknown Android editions.
@@ -125,6 +128,18 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 * Thu Nov 05 2026 Uke contributors - 1.5.0-1
 - Add graphical GAPPS/Vanilla installation, durable progress and native launch.
 - Preserve existing Android data and expose private Google registration help.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-4
+- Keep the authorized initial device read when monitoring pauses and wait for delivered results in live checks.
+- Keep graphs near the current measurements and disclose monitoring/source details on demand.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-3
+- Limit review dialogs and sensor selection to the visible settings page.
+- Exercise a reviewed GPU request after visiting the CPU page.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-2
+- Offer explicit advertised limits and preserve fractional MHz in frequency controls.
+- Show the selected sensor value and source state beside its graph.
 
 * Thu Nov 05 2026 Uke contributors - 1.4.0-1
 - Add Senemos Kernel Manager with live CPU, GPU and sensor graphs beside their controls.

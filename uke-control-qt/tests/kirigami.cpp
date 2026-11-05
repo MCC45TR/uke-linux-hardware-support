@@ -366,6 +366,19 @@ private slots:
       if(topic.id=="cpu"||topic.id=="gpu"||topic.id=="sensors") {
         QVERIFY(visualItem(window->contentItem(),"kernelMonitoring"));
         snapshot(window,"settings-"+topic.id);
+        if(topic.id=="gpu") {
+          // Keep earlier pages in PageRow, rather than clearing navigation.
+          QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString("cpu"))));
+          QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString("gpu"))));
+          QTest::qWait(100);
+          QVERIFY(window->findChildren<QObject *>("frequencyReview").size()>=2);
+          auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
+          QVERIFY(manager->prepare("gpu:gpu0","maximum","200000000"));
+          auto visibleReviews=[&]{int count=0;for(auto *object:window->findChildren<QObject *>("frequencyReview"))if(object->property("visible").toBool())++count;return count;};
+          QTRY_COMPARE(visibleReviews(),1);
+          QVERIFY(!manager->apply(manager->review().value("token").toString()));
+          manager->dismissReview();QTRY_COMPARE(visibleReviews(),0);
+        }
       }
     }
     QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,0)));snapshot(window,"settings-home");
@@ -419,7 +432,7 @@ private slots:
     engine.loadFromModule("org.uke.ControlQtTest","Main");
     QVERIFY(!engine.rootObjects().isEmpty());
     auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
-    window->resize(720,960);window->show();
+    window->resize(720,960);window->show();window->requestActivate();QTest::qWait(250);
     for(const auto *topic:{"usb","charging","nfc","cpu","gpu","sensors"}) {
       const QString id(topic);const int area=id=="charging"?1:id=="cpu"||id=="gpu"||id=="sensors"?9:3;
       QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,area)));
@@ -430,7 +443,7 @@ private slots:
       if(id=="cpu"||id=="gpu"||id=="sensors") {
         auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
         QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);
-        if(id=="sensors")QVERIFY(!manager->sensors().isEmpty());else QVERIFY(!manager->devices().isEmpty());
+        if(id=="sensors")QTRY_VERIFY_WITH_TIMEOUT(!manager->sensors().isEmpty(),30000);else QTRY_VERIFY_WITH_TIMEOUT(!manager->devices().isEmpty(),30000);
         if(id=="sensors"){manager->setInterval(1);manager->start();}
         QTest::qWait(2200);manager->refresh();QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);
         manager->pause();
