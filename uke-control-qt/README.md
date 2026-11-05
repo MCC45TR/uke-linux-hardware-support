@@ -11,7 +11,11 @@ Open **Android applications** from Settings or System and updates. Choose
 **GAPPS — Google Play included** or **Vanilla — without Google services**, then
 select **Install Waydroid**. KDE requests administrator authorization. The
 native installer uses original Fedora DNF/Waydroid packages and official OTA
-channels, checks complete image files, applies the packaged Uke graphics/window
+channels. Its conditional RPM dependency requires Uke integration0.1.0-8 or
+newer whenever Waydroid is installed, including when the installer installs it
+later. This includes the qualified ARM64-only media/shared-storage correction.
+The installer
+checks complete image files, applies the packaged Uke graphics/window
 defaults and enables the original container service. **Open Waydroid** then
 starts Android as the normal desktop user. The `--waydroid` application option
 opens this page without starting installation.
