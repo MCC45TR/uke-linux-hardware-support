@@ -2002,3 +2002,21 @@ msgstr "Yükselmiş kaynak baskısı"
 
 msgid "Below 10% pressure"
 msgstr "Kaynak baskısı %10 altında"
+
+msgid "Current memory use"
+msgstr "Geçerli bellek kullanımı"
+
+msgid "What this setting does"
+msgstr "Bu ayar ne yapar?"
+
+msgid "Controls the preference for reclaiming anonymous memory into swap. This is not a RAM capacity limit."
+msgstr "Anonim belleğin swap alanına taşınma tercihini belirler. RAM kapasitesini sınırlamaz."
+
+msgid "Scans eligible memory for identical pages. It can save memory while adding CPU work."
+msgstr "Uygun bellekte aynı sayfaları tarar. Ek CPU işi karşılığında bellek tasarrufu sağlayabilir."
+
+msgid "Choose whether large transparent pages are used always, on application advice, or never."
+msgstr "Büyük sayfaların her zaman, uygulama önerdiğinde veya hiçbir zaman kullanılmamasını seçin."
+
+msgid "0 disables MGLRU, 1 enables the basic mechanism, and 7 enables all supported aging features. Availability depends on the running kernel."
+msgstr "0 MGLRU'yu kapatır, 1 temel mekanizmayı, 7 desteklenen tüm yaşlandırma özelliklerini açar. Kullanılabilirlik çalışan çekirdeğe bağlıdır."

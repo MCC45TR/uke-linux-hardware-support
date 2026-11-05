@@ -80,7 +80,16 @@ void KernelManager::refresh() {
         if(custom)return reader();
         auto out=(mode=="cpu"||mode=="gpu"||mode=="manager-overview")?performanceSnapshot():QJsonObject{};
         out["resources"]=resourceSnapshot(mode);
-        if(mode=="profiles")out["applications"]=applicationScopes();
+        if(mode=="profiles"){
+            const auto apps=applicationScopes();out["applications"]=apps;out["lastPreset"]=lastApplicationPreset();
+            auto resources=out.value("resources").toObject();auto metrics=resources.value("metrics").toObject(),counters=resources.value("counters").toObject();auto charts=resources.value("charts").toArray();
+            for(const auto &v:apps){const auto app=v.toObject();const auto id="app/"+app.value("unit").toString();const auto memory=number(app.value("memory"),1048576);
+                metrics[id+"/memory"]=memory.isValid()?QJsonValue(memory.toDouble()):QJsonValue();
+                if(app.value("cpuUsage").isDouble())counters[id+"/cpu"]=QJsonObject{{"value",app.value("cpuUsage")},{"scale",.0001}};
+                charts<<QJsonObject{{"id",id+"/memory"},{"title",app.value("title").toString()+" / memory"},{"unit","MiB"},{"maximum",0}};
+                charts<<QJsonObject{{"id",id+"/cpu"},{"title",app.value("title").toString()+" / CPU"},{"unit","% of one CPU"},{"maximum",0}};
+            }resources["metrics"]=metrics;resources["counters"]=counters;resources["charts"]=charts;out["resources"]=resources;
+        }
         out["sampleMonotonicMs"]=double(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
         if(mode=="cpu"||mode=="manager-overview"||mode=="diagnostics") {
             QDBusMessage msg=QDBusMessage::createMethodCall("net.hadess.PowerProfiles","/net/hadess/PowerProfiles","org.freedesktop.DBus.Properties","Get");
@@ -130,7 +139,10 @@ void KernelManager::accept(const QJsonObject &snapshot) {
         state_["sections"]=resources.value("sections").toVariant();state_["controls"]=resources.value("controls").toVariant();
         state_["charts"]=resources.value("charts").toVariant();state_["metrics"]=metrics.toVariantMap();
         state_["powerProfile"]=snapshot.value("powerProfile").toString();
-        state_["applications"]=snapshot.value("applications").toVariant();
+        QVariantList applications;QVariantMap applicationValues;
+        for(const auto &v:snapshot.value("applications").toArray()){auto app=v.toObject();const auto unit=app.value("unit").toString();applicationValues[unit]=QVariantMap{{"memory",number(app.take("memory"),1048576)},{"cpu",metrics.value("app/"+unit+"/cpu").toVariant()}};app.remove("cpuUsage");applications<<app.toVariantMap();}
+        state_["applications"]=applications;state_["applicationValues"]=applicationValues;
+        state_["lastPreset"]=snapshot.value("lastPreset").toString();
         auto event=[&](const QString &key,const QString &value){if(value.isEmpty())return;if(observed_.contains(key)&&observed_[key]!=value)events_.prepend(QVariantMap{{"time",QTime::currentTime().toString("HH:mm:ss")},{"title",key},{"value",value}});observed_[key]=value;};
         event(i18n("System power profile"),snapshot.value("powerProfile").toString());
         for(const auto &v:resources.value("controls").toArray()){const auto s=v.toObject();event(s.value("title").toString(),s.value("value").toString());}

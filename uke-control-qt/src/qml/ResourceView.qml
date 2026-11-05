@@ -15,6 +15,10 @@ ColumnLayout {
     property bool advanced: false
     readonly property var charts: manager.state.charts || []
     function draft(id, value) { const copy = Object.assign({}, drafts); copy[id] = value; drafts = copy }
+    function help(id) {
+        const names = {"memory.swappiness":i18n("Controls the preference for reclaiming anonymous memory into swap. This is not a RAM capacity limit."),"memory.ksm":i18n("Scans eligible memory for identical pages. It can save memory while adding CPU work."),"memory.thp":i18n("Choose whether large transparent pages are used always, on application advice, or never."),"memory.mglru":i18n("0 disables MGLRU, 1 enables the basic mechanism, and 7 enables all supported aging features. Availability depends on the running kernel.")}
+        return names[id] || ""
+    }
     function status(value) {
         const names = {"available":i18n("Read from the kernel"),"not-exported":i18n("This kernel does not export this interface"),"kernel-support-missing":i18n("Requires additional kernel support"),"module":i18n("Kernel module support; check the runtime provider"),"permission-denied":i18n("Access denied"),"no-data":i18n("The driver exports the file but has no data"),"read-failed":i18n("The provider could not be read"),"empty":i18n("The provider returned no value"),"ambiguous-or-not-exported":i18n("No unambiguous backing queue was found")}
         return names[value] || value
@@ -96,6 +100,7 @@ ColumnLayout {
             visible: view.advanced || (control.available && ["memory.swappiness", "storage.scheduler", "storage.read-ahead"].includes(modelData.id))
             Layout.fillWidth: true
             SafeText { text: control.modelData.title; description: i18n("Current: %1 %2", control.modelData.value || i18n("Not reported"), control.modelData.unit) }
+            SafeText { visible: view.help(control.modelData.id).length > 0; text: i18n("What this setting does"); description: view.help(control.modelData.id) }
             SafeText { visible: !control.available; text: i18n("Control unavailable"); description: view.status(control.modelData.status) }
             FormCard.FormComboBoxDelegate {
                 visible: control.available && control.modelData.choices.length > 0
@@ -104,8 +109,9 @@ ColumnLayout {
                 currentIndex: Math.max(0, control.modelData.choices.indexOf(control.requested))
                 onActivated: index => view.draft(control.modelData.id, model[index])
             }
+            FormCard.FormSwitchDelegate { visible: control.available && control.modelData.id === "memory.ksm"; text: i18n("Merge identical pages"); checked: control.requested === "1"; onToggled: view.draft(control.modelData.id, checked ? "1" : "0") }
             RowLayout {
-                visible: control.available && control.modelData.choices.length === 0
+                visible: control.available && control.modelData.choices.length === 0 && control.modelData.id !== "memory.ksm"
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.largeSpacing
                 Controls.Label { Layout.fillWidth: true; text: i18n("Requested value (%1–%2)", control.modelData.minimum, control.modelData.maximum); wrapMode: Text.WordWrap }

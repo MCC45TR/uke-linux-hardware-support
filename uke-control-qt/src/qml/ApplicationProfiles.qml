@@ -8,7 +8,7 @@ ColumnLayout {
     id: view
     required property var manager
     readonly property var apps: manager.state.applications || []
-    property string preset: "normal"
+    property string preset: manager.state.lastPreset || "normal"
     readonly property var presets: [{title:i18n("Normal"),value:"normal"},{title:i18n("Prioritized"),value:"priority"},{title:i18n("Background"),value:"background"},{title:i18n("Resource limited"),value:"limited"}]
     Layout.fillWidth: true
     spacing: 0
@@ -25,6 +25,7 @@ ColumnLayout {
             required property var modelData
             Layout.fillWidth: true
             SafeText { text: modelData.title; description: i18n("CPU weight: %1 · Memory high: %2", modelData.weight, modelData.memoryHigh) }
+            SafeText { text: i18n("Current memory use"); description: view.manager.format(((view.manager.state.applicationValues || {})[modelData.unit] || {}).memory, "MiB") }
             SafeText { text: i18n("Kernel controls"); description: i18n("CPU quota: %1 · Utilization clamp: %2 · I/O limit: %3", modelData.quotaSupported ? i18n("Available") : i18n("Requires kernel support"), modelData.uclampSupported ? i18n("Available") : i18n("Requires kernel support"), modelData.ioLimitSupported ? i18n("Available") : i18n("Requires kernel support")) }
             FormCard.FormButtonDelegate { text: i18n("Review %1 preset", view.preset); icon.name: themeIcons.names["configure"]; enabled: !view.manager.busy; onClicked: view.manager.prepareApplication(modelData.unit, view.preset) }
         }

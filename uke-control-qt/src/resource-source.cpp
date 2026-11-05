@@ -241,9 +241,10 @@ QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
         section(sections,"Application GPU activity",clients);
     }
     if(all||domain=="thermal") {
-        QMap<QString,QJsonArray> groups;QSet<QString> seen;QJsonArray thresholds;
+        QMap<QString,QJsonArray> groups;QSet<QString> seen,thermalProviders;QJsonArray thresholds;
         for(const auto &n:QDir(r.sys+"/class/thermal").entryList({"thermal_zone*"},QDir::Dirs|QDir::NoDotAndDotDot)) {
             const auto p=r.sys+"/class/thermal/"+n,type=text(p+"/type"),g=group(type);if(seen.contains(type))continue;seen.insert(type);
+            thermalProviders.insert(QFileInfo(p).canonicalFilePath());
             const auto v=read(p+"/temp");const auto degrees=signedNumber(v.text,1000,-273.15,300);
             row(groups[g],type,degrees.isDouble()?QString::number(degrees.toDouble(),'f',1)+" °C":QString(),v.status);
             if(degrees.isDouble()) {const auto key="thermal/"+g;const auto old=metrics.value(key);if(!old.isDouble()||degrees.toDouble()>old.toDouble())metrics[key]=degrees;}
@@ -251,11 +252,13 @@ QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
         }
         for(const auto &n:QDir(r.sys+"/class/hwmon").entryList({"hwmon*"},QDir::Dirs|QDir::NoDotAndDotDot)) {
             const auto p=r.sys+"/class/hwmon/"+n;
+            if(thermalProviders.contains(QFileInfo(p+"/device").canonicalFilePath()))continue;
             for(const auto &input:QDir(p).entryList({"temp*_input"},QDir::Files)) {
                 const auto label=text(p+"/"+QString(input).replace("_input","_label"));const auto provider=text(p+"/name");
                 if(seen.contains(label)||seen.contains(provider))continue;
                 const auto name=label.isEmpty()?provider+" / "+input:label;const auto v=read(p+"/"+input);const auto d=signedNumber(v.text,1000,-273.15,300);
                 row(groups[group(name)],name,d.isDouble()?QString::number(d.toDouble(),'f',1)+" °C":QString(),v.status);
+                seen.insert(name);if(d.isDouble()){const auto key="thermal/"+group(name);const auto old=metrics.value(key);if(!old.isDouble()||d.toDouble()>old.toDouble())metrics[key]=d;}
             }
         }
         for(auto it=groups.begin();it!=groups.end();++it){section(sections,it.key(),it.value());chart("thermal/"+it.key(),it.key()+" maximum","°C");}

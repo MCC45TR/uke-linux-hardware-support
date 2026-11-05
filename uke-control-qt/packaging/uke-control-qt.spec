@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -124,6 +124,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.6.0-3
+- Bound application enumeration and remember the last manually selected preset.
+- Keep application CPU/memory graphs beside resource controls and remove thermal mirrors by provider.
+
 * Thu Nov 05 2026 Uke contributors - 1.6.0-2
 - Inspect bounded DRM client counters and deduplicate hwmon temperature sources.
 - Export bounded session reports and exercise new resource controls in QML fixtures.
