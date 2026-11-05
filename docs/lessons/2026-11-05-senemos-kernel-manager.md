@@ -84,3 +84,32 @@ manager. A complete-scene test now visits CPU then GPU, prepares one simulated
 GPU request, verifies exactly one visible review, proves apply remains blocked
 and dismisses the dialog. This protects normal stacked navigation rather than
 relying only on standalone controller fixtures.
+
+## Native trial and integrated delivery gate
+
+COPR11261956 (1.4.0-3) passes six groups and was installed through a scoped
+Qt-only DNF transaction. Native read-only testing then exposed an asynchronous
+first-result race: a pause could invalidate the initial CPU result, and the
+future could finish before its queued metadata delivery. The installed suite
+reported one failure rather than accepting an empty CPU page. Source2bc1725
+retains that already-authorized result when only monitoring is paused, waits
+for delivered metadata in live checks and compacts monitoring/source details.
+It passes all six groups in COPR11262005. Sourcebc36dfa additionally keeps busy
+true until queued delivery and adds an injected-reader regression for the exact
+race and paused first read, without sysfs or commands.
+
+The native frequency helper successfully reads the actual Uke provider. The
+current PPD performance profile pins every CPU minimum to its maximum. That
+profile was preserved: a matching CPU maximum request is a no-op, and lowering
+the maximum below the current minimum is refused before writing. The GPU limit
+was changed from 950 to 900 MHz, read back, restored to 950 MHz and read back
+again. Minimum and governor are identical before and after. These establish
+policy-request behavior, not all-OPP clock accuracy or stress qualification.
+Automatic staging and rollback preference file hashes remain unchanged.
+
+Concurrent Waydroid GUI work owns the final combined producer and DNF delivery.
+The integrated candidate must retain a88d985/76cf43a (current-page reviews),
+2bc1725 (initial read and compact graphs), and bc36dfa (queued delivery).
+No older partial Qt producer is republished by this conversation. Final combined
+build, installation and repeat native read-only checks remain a delivery gate.
+No kernel or boot change accompanies this userspace integration.
