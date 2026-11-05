@@ -113,3 +113,31 @@ The integrated candidate must retain a88d985/76cf43a (current-page reviews),
 No older partial Qt producer is republished by this conversation. Final combined
 build, installation and repeat native read-only checks remain a delivery gate.
 No kernel or boot change accompanies this userspace integration.
+
+## Qualified combined result
+
+The final artifact is combined Qt1.5.0-4 from
+6748ad4da75d8f344886a9ba2d6c76dfd036b835,
+[COPR11262020](https://copr.fedorainfracloud.org/coprs/build/11262020/).
+All seven CTest groups pass. The integration owner delivered the signed GUI,
+tests and native installer helper with targeted DNF and verified the producer
+pin. This conversation did not republish an older partial producer. The manager,
+frequency-source/helper and native manager tests compare identically to bc36dfa
+in that combined source; the Waydroid feature is retained alongside them.
+
+On the installed combined RPMs, the opt-in read-only scene passes three cases
+and populates actual CPU, GPU and sensor pages as well as the existing USB,
+charging and NFC pages. The eight native Kernel Manager cases pass, including
+the queued-result regression. A separate Turkish/light/Adwaita complete topic
+walk passes three cases. Local captures confirm visible CPU frequency/load,
+GPU frequency/temperature and selected-source sensor curves. Images and detailed
+readings remain private. No empty initial CPU page recurs in this check.
+
+Installed RPM verification is clean. Staging/rollback configuration hashes and
+the current PPD performance profile remain identical across the delivery and
+checks. Core/client24.speech1 and kernel12101 are unchanged by this work; no
+slot selection, reboot, thermal disable or persistent tuning was performed.
+GPU remains at its original 950 MHz maximum after the reversible policy test.
+CPU mutation under a different power profile and exhaustive all-OPP hardware
+clock/stress qualification were not attempted. No new hardware support claim
+is inferred from graphs or policy readback.
