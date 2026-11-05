@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-05",
+  "transaction": 113,
+  "status": "Ok",
+  "command": "sudo dnf update --refresh -y",
+  "history_description": "dnf update --refresh -y",
+  "repository": "mcc45tr/uke-linux-unstable",
+  "upgraded_packages": 5,
+  "signed_reference_identities_match": true,
+  "installed_reference_packages": [
+    {
+      "name": "uke-boot-integration",
+      "version": "1.8.97-1.fc46",
+      "header_sha256": "446b242ff9543365c241a66954e0093337f5c73b264c13d77e38afcdf96844e6",
+      "payload_sha256": "91263900372d14c701d6884ec2c7b4f0652e1d7e69ffc46df117afcdeec2c7a1"
+    },
+    {
+      "name": "uke-kernel-update",
+      "version": "1.8.97-1.fc46",
+      "header_sha256": "1d05681469a9ab30e0fd932f328986b241b65d7e89f780d6dd91d0d8d4b73c08",
+      "payload_sha256": "23e75f2c1ba5cf5783a653abd8da12d4aeb0adb171ac48218704c95da3bfb734"
+    },
+    {
+      "name": "uke-installation-profile",
+      "version": "1.8.97-1.fc46",
+      "header_sha256": "ab53f0c56cebc6dcfd8f9c7bd868473dcc5d6cbe1ea5eeab415a44c1bc9d8b2b",
+      "payload_sha256": "551055e1e8d45680ade5d69440b81cacf66bb87c0d58e016cdc95bed574de92e"
+    },
+    {
+      "name": "uke-cdsp-pogo-firmware",
+      "version": "0.2-8.fc46",
+      "header_sha256": "62e45846f1fa8b7de9707a3a82127fdee04e0113969cadbbec65a45e6e82b456",
+      "payload_sha256": "36b82ee6b3d1383f6bf8d6ae8de3182a56150ad6c52235b2c85c29aef92743cf"
+    },
+    {
+      "name": "uke-pogo-auth",
+      "version": "0.1-4.fc46",
+      "header_sha256": "8d5c3f603d01fb64c8e8c4123d69a0001a102a9fa56cbde21aadf5cc8d148771",
+      "payload_sha256": "4583ec9581229880b42c12aaa326f49694baf488f4a49ad9af1a9b1618a391c1"
+    }
+  ],
+  "rpm_verify_only_preserved_config_deviations": [
+    "/etc/senemos/rollback.conf",
+    "/etc/senemos/userdata-update.conf"
+  ],
+  "firmware": {
+    "release": "7.3.1-12204-unstable",
+    "mcu_bytes": 82740,
+    "cdsp_mdt_bytes": 5084,
+    "cdsp_dtb_mdt_bytes": 4044,
+    "auth_bytes": 147544,
+    "cdsp_files": 18,
+    "nanosic_files": 1,
+    "auth_files": 1,
+    "root_metadata_verified": true,
+    "full_stock_comparison": "Coordinator verify-target passed; not repeated"
+  },
+  "policy": {
+    "automatic_global": 1,
+    "automatic_userdata": 1,
+    "vrr_min_hz": 0,
+    "rollback_mode": "off"
+  },
+  "kernel_changed": false,
+  "reboot_performed": false,
+  "hardware_acceptance": false,
+  "signed_reference_packages": 5,
+  "auth4_build": 11263799,
+  "auth4_scripts_empty": true
+}
