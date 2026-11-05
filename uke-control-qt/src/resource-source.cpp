@@ -130,7 +130,7 @@ QJsonObject resourceRates(const QJsonObject &before,const QJsonObject &after,dou
     QJsonObject out;
     for(auto i=after.begin();i!=after.end();++i) {
         const auto a=before.value(i.key()).toObject(),b=i.value().toObject();const auto x=a.value("value"),y=b.value("value");
-        out[i.key()]=seconds>0&&seconds<=30&&x.isDouble()&&y.isDouble()&&y.toDouble()>=x.toDouble()&&a.value("scale")==b.value("scale")?QJsonValue((y.toDouble()-x.toDouble())*b.value("scale").toDouble(1)/seconds):QJsonValue();
+        out[i.key()]=seconds>0&&seconds<=30&&x.isDouble()&&y.isDouble()&&y.toDouble()>=x.toDouble()&&a.value("scale")==b.value("scale")&&a.value("generation")==b.value("generation")?QJsonValue((y.toDouble()-x.toDouble())*b.value("scale").toDouble(1)/seconds):QJsonValue();
     }return out;
 }
 QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
@@ -229,7 +229,7 @@ QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
                 const auto label=text(base+"/comm").left(80)+" ("+pid+")";QStringList values;
                 for(auto i=data.begin();i!=data.end();++i) {
                     if(i.key().startsWith("drm-memory-")||i.key().startsWith("drm-resident-"))values<<i.key()+": "+i.value();
-                    if(i.key().startsWith("drm-engine-")&&i.value().endsWith(" ns")) {
+                    if(i.key().startsWith("drm-engine-")&&i.value().endsWith(" ns")&&charts.size()<64) {
                         const auto key="drm/"+client+"/"+i.key();counter(counters,key,numeric(i.value().section(' ',0,0)),.0000001);
                         chart(key,label+" / "+i.key(),"% of one engine");values<<i.key()+": "+i.value();
                     }

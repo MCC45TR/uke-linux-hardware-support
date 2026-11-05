@@ -85,7 +85,7 @@ void KernelManager::refresh() {
             auto resources=out.value("resources").toObject();auto metrics=resources.value("metrics").toObject(),counters=resources.value("counters").toObject();auto charts=resources.value("charts").toArray();
             for(const auto &v:apps){const auto app=v.toObject();const auto id="app/"+app.value("unit").toString();const auto memory=number(app.value("memory"),1048576);
                 metrics[id+"/memory"]=memory.isValid()?QJsonValue(memory.toDouble()):QJsonValue();
-                if(app.value("cpuUsage").isDouble())counters[id+"/cpu"]=QJsonObject{{"value",app.value("cpuUsage")},{"scale",.0001}};
+                if(app.value("cpuUsage").isDouble())counters[id+"/cpu"]=QJsonObject{{"value",app.value("cpuUsage")},{"scale",.0001},{"generation",app.value("invocation")}};
                 charts<<QJsonObject{{"id",id+"/memory"},{"title",app.value("title").toString()+" / memory"},{"unit","MiB"},{"maximum",0}};
                 charts<<QJsonObject{{"id",id+"/cpu"},{"title",app.value("title").toString()+" / CPU"},{"unit","% of one CPU"},{"maximum",0}};
             }resources["metrics"]=metrics;resources["counters"]=counters;resources["charts"]=charts;out["resources"]=resources;
@@ -100,7 +100,11 @@ void KernelManager::refresh() {
         return out;
     }));emit changed();
 }
-void KernelManager::add(const QString &id,const QVariant &value){auto &v=history_[id];const double time=clock_.elapsed()/1000.;if(!v.isEmpty()&&time<=v.last().time)v.last().value=value;else v.append({time,value});if(v.size()>600)v.remove(0,v.size()-600);}
+void KernelManager::add(const QString &id,const QVariant &value){
+    // Transient app/DRM identities must not accumulate between manual sessions.
+    if(!history_.contains(id)&&history_.size()>=256){auto oldest=history_.begin();for(auto it=history_.begin();it!=history_.end();++it)if(it.value().isEmpty()||(!oldest.value().isEmpty()&&it.value().last().time<oldest.value().last().time))oldest=it;history_.erase(oldest);}
+    auto &v=history_[id];const double time=clock_.elapsed()/1000.;if(!v.isEmpty()&&time<=v.last().time)v.last().value=value;else v.append({time,value});if(v.size()>600)v.remove(0,v.size()-600);
+}
 void KernelManager::failure(const QString &message){message_=message;for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());++revision_;emit changed();}
 void KernelManager::accept(const QJsonObject &snapshot) {
     const auto loads=cpuLoads(previousTicks_,snapshot.value("ticks").toObject());previousTicks_=snapshot.value("ticks").toObject();

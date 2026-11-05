@@ -95,6 +95,15 @@ private slots:
         QVERIFY(!(QFileInfo(path).permissions()&QFileDevice::ReadOther));
         QVERIFY(!manager.exportReport(QUrl("https://example.invalid/report")));
     }
+    void transientChannelBudget() {
+        auto sample=managerSample();auto resources=sample.value("resources").toObject();QJsonObject metrics;
+        for(int i=0;i<300;++i)metrics[QString("transient/%1").arg(i,3,10,QChar('0'))]=i;
+        resources["metrics"]=metrics;sample["resources"]=resources;
+        Fixture f;f.enabled=true;f.results["manager.sample"]=QJsonObject{{"data",sample}};
+        KernelManager manager(f);manager.open("memory");
+        QCOMPARE(manager.plot("transient/000").value("points").toInt(),0);
+        QCOMPARE(manager.plot("transient/299").value("points").toInt(),1);
+    }
 };
 QTEST_MAIN(ManagerTests)
 #include "kernel-manager.moc"

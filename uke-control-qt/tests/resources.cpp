@@ -18,6 +18,7 @@ private slots:
         QVERIFY(resourceRates(a,b,0).value("disk").isNull());
         QVERIFY(resourceRates(a,b,31).value("disk").isNull());
         b["disk"]=QJsonObject{{"value",140},{"scale",1}};QVERIFY(resourceRates(a,b,2).value("disk").isNull());
+        b["disk"]=QJsonObject{{"value",140},{"scale",.5},{"generation","new-invocation"}};QVERIFY(resourceRates(a,b,2).value("disk").isNull());
     }
     void memoryAndPressure() {
         put(roots.proc+"/meminfo","MemTotal: 8192000 kB\nMemAvailable: 4096000 kB\nSwapTotal: 2048000 kB\nSwapFree: 1024000 kB\n");
