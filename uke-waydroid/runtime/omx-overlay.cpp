@@ -5,6 +5,7 @@
 #include <ext2fs/ext2fs.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cerrno>
 #include <stdexcept>
 
 namespace {
@@ -62,6 +63,7 @@ void save(const QString &path, const QByteArray &bytes, QFile::Permissions permi
   require(file.write(bytes) == bytes.size() && file.commit(), "Cannot commit media overlay");
 }
 void apply(const QString &work, const QString &compatible, uid_t owner) {
+  if (!QFileInfo::exists(compatible)) return;
   const auto board = read(compatible).split('\0');
   if (!board.contains("xiaomi,uke")) return;
   trustedDirectory(work, owner);
