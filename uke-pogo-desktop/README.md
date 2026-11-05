@@ -11,7 +11,7 @@ and supported-action changes.
 
 This unprivileged session helper admits exact Uke/SM7675, KDE, the exact bound
 NanoSIC OF node and the100-level LED. It waits for UPower's matching native
-object and composite API, then requests RestartUnit of the existing
+object and composite API, then requests TryRestartUnit of the existing
 plasma-powerdevil.service only if its cached capability is stale. One attempt
 per attachment epoch prevents restart loops. Other backlit keyboards remain
 supported after pogo removal. It never activates a stopped PowerDevil, writes

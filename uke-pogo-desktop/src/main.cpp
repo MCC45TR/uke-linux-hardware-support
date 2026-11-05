@@ -122,7 +122,7 @@ public slots:
         const auto state=observe();
         if(refresh_.decide(state)) {
             const auto reply=call(session_,"org.freedesktop.systemd1","/org/freedesktop/systemd1",
-                "org.freedesktop.systemd1.Manager","RestartUnit",
+                "org.freedesktop.systemd1.Manager","TryRestartUnit",
                 {QStringLiteral("plasma-powerdevil.service"),QStringLiteral("replace")});
             std::cout<<(reply.type()==QDBusMessage::ReplyMessage?
                 "Pogo backlight changed; existing PowerDevil service re-detect requested\n":
