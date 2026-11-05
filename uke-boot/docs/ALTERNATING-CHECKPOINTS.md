@@ -47,3 +47,23 @@ baseline and current GPT/UFS selection. This performs no health acceptance or
 slot change. A later boot that returned to the baseline retains the failed
 candidate marker, so it cannot silently retry that version. Tests cover these
 interruption phases and enforce unchanged caller state during planning.
+
+## Pre-write retention correction
+
+The first real DNF installation of12207 exposes an uncovered barrier in98:
+`block_inactive()` still requires the running trial's successful flag before
+any write. Final-selection fixtures passed but did not execute that preceding
+phase for an unapproved checkpoint. Kernel RPMs install; automatic staging
+refuses before changing either raw boot image, the protected approval record or
+the saved policies. The candidate is not rebootable until staging succeeds.
+
+Version99 extends the complete authenticated98 source capsule. The caller
+passes its already proven off-mode/unapproved checkpoint to the actual barrier.
+Before writing candidate bytes, the same checked GPT transaction retains the
+running bootloader fallback and marks the target unbootable. The format2
+record still states baseline_approved=0. Default approved-baseline admission,
+UFS selection, image verification, interrupts, recovery and health gates remain.
+Actual regular-file libfdisk fixtures execute barrier, commit, reload and final
+selection in both directions over four cycles and512/4096-byte sectors. GCC and
+Clang plain/sanitized modes and an original accepted-only barrier mutant are
+required in COPR. Build/package and physical A/B acceptance remain separate.
