@@ -75,7 +75,7 @@ QString frequencyRefusal(const QJsonObject &d,const QString &field,const QString
     if(field=="governor")return value!="userspace"&&d.value("governors").toArray().contains(value)?QString():QString("governor_not_supported");
     qulonglong n=0,lo=0,hi=0;if(!integer(value,n)||!integer(d.value("minimum"),lo)||!integer(d.value("maximum"),hi))return "invalid_frequency";
     const auto frequencies=d.value("frequencies").toArray();
-    if(!(d.value("kind").toString()=="gpu"&&n==0)&&!frequencies.contains(value))return "frequency_not_advertised";
+    if(n==0||!frequencies.contains(value))return "frequency_not_advertised";
     if(field=="minimum")lo=n;else hi=n;
     if(d.value("kind").toString()=="gpu") {
         qulonglong lowest=std::numeric_limits<qulonglong>::max(),highest=0;

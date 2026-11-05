@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.4.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -93,6 +93,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.4.0-2
+- Offer explicit advertised limits and preserve fractional MHz in frequency controls.
+- Show the selected sensor value and source state beside its graph.
+
 * Thu Nov 05 2026 Uke contributors - 1.4.0-1
 - Add Senemos Kernel Manager with live CPU, GPU and sensor graphs beside their controls.
 - Restrict reviewed frequency requests to advertised policies with stale-state checks and readback.

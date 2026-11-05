@@ -68,3 +68,11 @@ by exact restoration; it must not change governors or unrelated policies by
 assumption. No stress load, voltage, thermal-disable, reboot or boot write is
 required. Automatic staging and the existing rollback-off preference are kept.
 All kernel contributions and deliveries remain with the shared coordinator.
+
+COPR11261914 compiles 1.4.0-1 and passes all six CTest groups. The final
+readback review excludes the devfreq zero/no-preference sentinel from offered
+values: a driver can report an effective resolved limit instead of the sentinel,
+so it is not a verifiable explicit advertised limit. Existing zero-valued state
+can still be displayed and handled when validating the other bound. The final
+UI preserves fractional MHz and colocates the selected sensor's value/state
+with its graph, without changing sampling or hardware policy.

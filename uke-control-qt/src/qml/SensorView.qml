@@ -13,6 +13,7 @@ ColumnLayout {
     property int shown: 12
     readonly property var catalog: manager.sensors.filter(s => (group === "all" || s.group === group) && (s.title + " " + s.id).toLowerCase().includes(search.toLowerCase()))
     readonly property var descriptor: catalog.find(s => s.id === selectedId) || ({})
+    readonly property var selectedReading: manager.state.sensorValues ? (manager.state.sensorValues[selectedId] || {}) : ({})
     function choose() { if (!catalog.some(s => s.id === selectedId)) selectedId = catalog.length ? catalog[0].id : "" }
     onCatalogChanged: Qt.callLater(choose)
     onSelectedIdChanged: if (selectedId.length) manager.selectSensor(selectedId)
@@ -38,6 +39,8 @@ ColumnLayout {
             onActivated: index => view.selectedId = model[index].id
         }
         SafeText { text: i18n("Selected source"); description: view.selectedId }
+        SafeText { text: i18n("Current value"); description: view.selectedReading.value !== null && view.selectedReading.value !== undefined ? view.manager.format(view.selectedReading.value, view.descriptor.unit || "") : view.selectedReading.text || i18n("Not reported") }
+        SafeText { text: i18n("Source state"); description: view.selectedReading.status || i18n("Not reported") }
     }
     MetricChart { manager: view.manager; metric: "sensor:" + view.selectedId; heading: view.descriptor.title || i18n("Sensor history"); unit: view.descriptor.unit || ""; seconds: view.seconds }
     FormCard.FormHeader { title: i18n("Readings · %1", view.catalog.length) }
