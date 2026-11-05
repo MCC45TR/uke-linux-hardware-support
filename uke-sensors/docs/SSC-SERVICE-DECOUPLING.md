@@ -13,7 +13,7 @@ libsystemd, libc and the ELF loader. All three required firmware/configuration p
 without calling SensorProxy. The two SSC/dual-light SensorProxy capability
 requirements therefore impose an unrelated presentation dependency.
 
-Release 30 removes those two requirements while preserving all native sources,
+Release 31 removes those two requirements while preserving all native sources,
 firmware file dependencies, read-only persist admission, RAM registry, units,
 ordering, scripts and original native tests. The full parent source capsule and
 its seal are verified. Existing source catalogues remain historical inputs;
@@ -30,3 +30,10 @@ service: native IIO still depends on the firmware's file protocol. Kernel/DT
 cannot replace that protocol with private filesystem parsing. No KDE/GNOME
 package is forked or rebuilt by this change, and no local device compilation
 or copied executable is used.
+
+Initial source job 11268448 refuses before producing an SRPM: rpmspec lists
+the source-only main header alongside binary packages, and the output guard
+incorrectly treated it as an extra runtime output. The corrected guard admits
+that metadata header while requiring exactly the three service %files sections.
+Fresh source release 5 and service release 31 preserve the same dependency-only
+change. Native build, signed payload and actual output admission remain pending.
