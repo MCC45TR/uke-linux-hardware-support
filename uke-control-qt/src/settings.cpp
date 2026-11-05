@@ -145,7 +145,7 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
   };
   walk(d,0);return rows;
 }
-Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted),nfc_(fixture_.enabled,this,restricted) {
+Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted),nfc_(fixture_.enabled,this,restricted),manager_(fixture_,this,restricted) {
   kernelTimeout_.setSingleShot(true);
   connect(&kernelTimeout_,&QTimer::timeout,this,[this]{if(kernel_)kernel_->kill();});
   poll_.setInterval(50);
@@ -227,8 +227,10 @@ bool Settings::open(const QString &id) {
 void Settings::refresh() {
   stop();notice_.clear();if(!topic_)return;
   queue_=topic_->reads;next();
+  if(topic_->id=="cpu"||topic_->id=="gpu"||topic_->id=="sensors")manager_.open(topic_->id);
 }
 void Settings::stop() {
+  manager_.pause();
   if(!current_.isEmpty())errors_[current_]=i18n("Read stopped; previous information may be out of date");
   poll_.stop();simulated_.stop();queue_.clear();
   kernelTimeout_.stop();if(kernel_){
@@ -242,7 +244,7 @@ void Settings::stop() {
   ++historyGeneration_;if(history_.value("busy").toBool()){history_["busy"]=false;history_["message"]=i18n("History read stopped");emit historyChanged();}
   emit changed();
 }
-void Settings::close(){stop();nfc_.clear();topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
+void Settings::close(){stop();manager_.close();nfc_.clear();topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
 void Settings::next() {
   if(!current_.isEmpty())return;
   if(!topic_||queue_.isEmpty()){current_.clear();emit changed();return;}

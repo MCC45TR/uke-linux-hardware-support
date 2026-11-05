@@ -29,7 +29,7 @@ FormCard.FormCardPage {
     title: settings.topic.title || ""
     actions: [
         Kirigami.Action { text: i18n("Refresh"); icon.name: themeIcons.names["view-refresh"]; enabled: !settings.busy; onTriggered: { backend.cancelReview(); backend.cancelRead(); settings.refresh() } },
-        Kirigami.Action { text: i18n("Stop"); icon.name: themeIcons.names["media-playback-stop"]; enabled: settings.busy || settings.history.busy || false; onTriggered: settings.stop() }
+        Kirigami.Action { text: i18n("Stop"); icon.name: themeIcons.names["media-playback-stop"]; enabled: settings.busy || settings.history.busy || settings.manager.active || settings.manager.busy || false; onTriggered: settings.stop() }
     ]
     Kirigami.InlineMessage {
         Layout.fillWidth: true
@@ -53,6 +53,11 @@ FormCard.FormCardPage {
         visible: settings.notice.length > 0
         type: Kirigami.MessageType.Warning
         text: settings.notice
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: ["cpu", "gpu", "sensors"].includes(page.topicId)
+        sourceComponent: Component { KernelManagerView { mode: page.topicId } }
     }
     Loader {
         Layout.fillWidth: true
