@@ -330,6 +330,11 @@ private slots:
         QVERIFY(visualItem(window->contentItem(),"kernelMonitoring"));
         snapshot(window,"settings-"+topic.id);
         if(topic.id=="gpu") {
+          // Keep earlier pages in PageRow, rather than clearing navigation.
+          QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString("cpu"))));
+          QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString("gpu"))));
+          QTest::qWait(100);
+          QVERIFY(window->findChildren<QObject *>("frequencyReview").size()>=2);
           auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
           QVERIFY(manager->prepare("gpu:gpu0","maximum","200000000"));
           auto visibleReviews=[&]{int count=0;for(auto *object:window->findChildren<QObject *>("frequencyReview"))if(object->property("visible").toBool())++count;return count;};
