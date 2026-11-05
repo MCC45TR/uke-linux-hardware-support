@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "date": "2026-11-05",
+  "source_commit": "10d10d4da6a13bb544a50f16b34984126fe4c615",
+  "copr_build": 11262390,
+  "state": "succeeded",
+  "previous_build": {
+    "copr": 11262350,
+    "state": "succeeded",
+    "delivered": false
+  },
+  "checks": {
+    "native_aarch64_qt6_moc_build": true,
+    "actual_filesystem_and_refresh_policy_gcc_clang_asan_ubsan": true,
+    "desktop_file_validation": true,
+    "udev_rule_validation": true,
+    "exact_source_build_configuration": true,
+    "try_restart_unit_in_native_elf": true,
+    "scoped_component_privacy": true,
+    "full_support_index_privacy": "unchanged inherited recovery image prevents a complete pass",
+    "original_systemd_condition255_bounded_three_retries": true
+  },
+  "package": {
+    "nevra": "uke-pogo-desktop-0.1-3.fc46.aarch64",
+    "sha256": "0d052531fd4f5330eff724ea4eb7d4b047b17706b2c4d0a59e9d15e775966ca0",
+    "header_sha256": "cc7774601736765cb8fcbfd01c1374cc14bd2825e6d36491933f0d381fd81c2d",
+    "payload_sha256": "93c11e75f04c10b2d55a8e10e8a56aaa25a933310dfc6b9ee1e8f860bdbf57a0",
+    "signature_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca",
+    "both_signatures_and_digests_pass": true,
+    "no_python_kernel_oem_or_desktop_replacement_payload": true
+  },
+  "delivery": {
+    "method": "native DNF",
+    "transaction": "same requirements and scriptlets as the earlier one-package preview; later unprivileged preview cannot read root0600 native DNF state",
+    "status": "pending normal system administrator authentication",
+    "installed": false,
+    "runtime_check": "not run before DNF installation"
+  },
+  "physical": {
+    "accessory_available": false,
+    "running_kernel": "7.3.1-12101-unstable",
+    "new_pogo_kernel_delivered": false,
+    "pogo_led_present_at_baseline": false,
+    "original_kde_keyboard_action_at_baseline": false,
+    "upower_max_at_baseline": 0,
+    "authentication_provider_at_baseline": "static/inactive",
+    "effective_light_or_hotplug_ui_accepted": false
+  }
+}

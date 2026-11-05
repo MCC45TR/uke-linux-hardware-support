@@ -4,7 +4,11 @@
   "source_commit": "1ced905bad6dfb9b2ece00ab40e4fc1eaf994928",
   "copr_build": 11262350,
   "state": "succeeded",
-  "previous_build": {"copr": 11262340, "state": "succeeded", "delivered": false},
+  "previous_build": {
+    "copr": 11262340,
+    "state": "succeeded",
+    "delivered": false
+  },
   "checks": {
     "native_aarch64_qt6_moc_build": true,
     "actual_filesystem_and_refresh_policy_gcc_clang_asan_ubsan": true,
@@ -27,7 +31,7 @@
   "delivery": {
     "method": "native DNF",
     "transaction": "only this package; all dependencies already installed",
-    "status": "pending normal system administrator authentication",
+    "status": "superseded before installation; own waiting authorization request stopped",
     "installed": false,
     "runtime_check": "not run before DNF installation"
   },

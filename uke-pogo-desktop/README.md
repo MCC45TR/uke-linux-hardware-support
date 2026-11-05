@@ -34,14 +34,14 @@ Native builds and filesystem/state
 fixtures run in COPR; delivery uses DNF. Effective light, live plug/unplug UI
 and exact accessory operation require physical qualification.
 
-COPR11262350 qualifies source1ced905bad6dfb9b2ece00ab40e4fc1eaf994928:
+COPR11262390 qualifies source10d10d4da6a13bb544a50f16b34984126fe4c615:
 native AArch64 Qt6 build, both compiler/sanitizer policy fixtures and full
-signed RPM audit pass. qualification-20261105.json separates these results
-from pending DNF delivery and the unavailable physical keyboard. The earlier
-passed package0.1-1 is superseded by0.1-2, whose TryRestartUnit also preserves
-a concurrently stopped PowerDevil service. Version0.1-3 additionally corrects
-the attachment-condition readiness race; it needs its own fresh COPR check
-before delivery. The0.1-2 receipt remains scoped to its exact source.
+signed RPM audit pass. The source-tree qualification-20261105-v3.json separates
+these results from pending DNF delivery and the unavailable physical keyboard.
+Earlier passed packages0.1-1 and0.1-2 were not delivered. Version0.1-3 retains
+TryRestartUnit and corrects the attachment-condition readiness race. Original
+user systemd confirms condition255 retries exactly three times and then stops;
+both harmless test units are removed and PowerDevil remains untouched.
 
 Sources: original KDE PowerDevil v6.8.2 keyboardbrightnesscontroller.cpp and
 applets/brightness/plugin/keyboardbrightnesscontrol.cpp; UPower v1.91.5
