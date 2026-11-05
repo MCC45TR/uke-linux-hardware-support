@@ -1,6 +1,6 @@
 # Waydroid integration
 
-5 November 2026 media candidate: official ARM64-only images can declare the
+5 November 2026: official ARM64-only images can declare the
 OMX HAL without shipping its service, blocking MediaProvider and shared
 storage (upstream [2397](https://github.com/waydroid/waydroid/issues/2397) and
 [2453](https://github.com/waydroid/waydroid/issues/2453)). A native pre-mount
@@ -16,6 +16,16 @@ read-only libext2fs, without executing or shipping that donor's Python script.
 COPR fixtures cover actual ext4 reads, retained HALs, idempotence, custom edits,
 service admission, malformed XML and linked-directory refusal. Physical Uke
 media/storage acceptance is recorded separately from those build checks.
+
+Integration8, source9a8a9c9/COPR11262150, passes those native fixtures and signed
+RPM review, then a targeted DNF update on POCO Pad X1/kernel12101-unstable.
+The packaged pre-mount path restores FUSE shared storage and registered
+software Codec2. The185-second guest recheck retains a stable MediaProvider
+without matching OMX, ANR or storage-session errors. HTTPS204 and the complete
+16384-pixel hardware Vulkan check pass. Original Android images and the private
+Google registration value are preserved. This is container/session startup
+qualification; a new system reboot, real media decoding/performance, games,
+Google account completion and prolonged graphics stability remain separate.
 
 4 November 2026. Fedora Waydroid1.6.3 creates `anbox-binder`, `anbox-hwbinder`
 and `anbox-vndbinder` on a kernel with built-in Binder and an empty static device
