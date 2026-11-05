@@ -69,6 +69,17 @@ private slots:
         QTest::qWait(50);QTest::mouseMove(&window,QPoint(200,80));QTest::mouseClick(&window,Qt::LeftButton,Qt::NoModifier,QPoint(200,80));QTRY_VERIFY(!plot.cursor().isEmpty());
         manager.pause();
     }
+    void asyncDeliveryAndPausedInitialRead() {
+        // No sysfs or commands: only the production asynchronous delivery path.
+        KernelManager manager({},nullptr,true,[]{QThread::msleep(5);return managerSample();});
+        manager.open("cpu");QVERIFY(manager.busy());
+        QTest::qSleep(20); // Worker is done; its queued result is not delivered yet.
+        QVERIFY(manager.busy());QVERIFY(manager.devices().isEmpty());
+        QTRY_VERIFY(!manager.busy());QCOMPARE(manager.devices().size(),2);
+        const int revision=manager.revision();manager.refresh();manager.pause();
+        QTRY_VERIFY(!manager.busy());QVERIFY(manager.revision()>revision);
+        QCOMPARE(manager.devices().size(),2);QVERIFY(!manager.active());
+    }
 };
 QTEST_MAIN(ManagerTests)
 #include "kernel-manager.moc"

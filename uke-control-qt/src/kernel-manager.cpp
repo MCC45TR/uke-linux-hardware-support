@@ -36,11 +36,12 @@ QVariantMap cpuLoads(const QJsonObject &before,const QJsonObject &after) {
     }
     return out;
 }
-KernelManager::KernelManager(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted) {
+KernelManager::KernelManager(Fixture f,QObject *parent,bool restricted,std::function<QJsonObject()> reader):QObject(parent),fixture_(std::move(f)),restricted_(restricted),reader_(std::move(reader)) {
+    if(!reader_)reader_=performanceSnapshot;
     clock_.start();timer_.setInterval(2000);deadline_.setSingleShot(true);queryPoll_.setInterval(40);
     connect(&timer_,&QTimer::timeout,this,&KernelManager::refresh);
     connect(&deadline_,&QTimer::timeout,this,[this]{pause();message_=i18n("Monitoring paused after ten minutes. Start again to continue.");emit changed();});
-    connect(&worker_,&QFutureWatcher<QJsonObject>::finished,this,[this]{if(workerGeneration_==generation_)accept(worker_.result());if(requested_)QTimer::singleShot(0,this,&KernelManager::refresh);emit changed();});
+    connect(&worker_,&QFutureWatcher<QJsonObject>::finished,this,[this]{reading_=false;if(workerGeneration_==generation_)accept(worker_.result());if(requested_)QTimer::singleShot(0,this,&KernelManager::refresh);emit changed();});
     connect(&queryPoll_,&QTimer::timeout,this,[this]{
         if(!query_)return;query_->poll();const auto r=query_->result();if(r.running)return;
         queryPoll_.stop();query_.reset();
@@ -69,7 +70,7 @@ void KernelManager::refresh() {
         if(mode_=="sensors")acceptSensors(d);else accept(d);return;
     }
     if(mode_=="sensors") {try{query_=std::make_unique<Query>("sensors.once");queryPoll_.start();}catch(const std::exception &){failure(i18n("The sensor provider could not be started."));}emit changed();return;}
-    workerGeneration_=generation_;worker_.setFuture(QtConcurrent::run([]{return performanceSnapshot();}));emit changed();
+    reading_=true;workerGeneration_=generation_;worker_.setFuture(QtConcurrent::run([reader=reader_]{return reader();}));emit changed();
 }
 void KernelManager::add(const QString &id,const QVariant &value){auto &v=history_[id];const double time=clock_.elapsed()/1000.;if(!v.isEmpty()&&time<=v.last().time)v.last().value=value;else v.append({time,value});if(v.size()>600)v.remove(0,v.size()-600);}
 void KernelManager::failure(const QString &message){message_=message;for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());++revision_;emit changed();}
