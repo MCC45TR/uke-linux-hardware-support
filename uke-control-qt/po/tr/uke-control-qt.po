@@ -1275,3 +1275,132 @@ msgstr "Dağıtımın NFC okuyucu hizmeti başlatılıyor…"
 
 msgid "The NFC reader service could not be started. Check administrator authorization and the neard service."
 msgstr "NFC okuyucu hizmeti başlatılamadı. Yönetici yetkisini ve neard hizmetini kontrol edin."
+
+msgid "Android applications"
+msgstr "Android uygulamaları"
+
+msgid "Install and open Waydroid with Google Play or without Google services"
+msgstr "Waydroid’i Google Play ile veya Google hizmetleri olmadan kurun ve açın"
+
+msgid "Waydroid"
+msgstr "Waydroid"
+
+msgid "Android applications on your desktop"
+msgstr "Masaüstünüzde Android uygulamaları"
+
+msgid "Install Waydroid automatically, then open Android and run its applications in separate desktop windows."
+msgstr "Waydroid’i otomatik kurun; ardından Android’i açıp uygulamalarını ayrı masaüstü pencerelerinde çalıştırın."
+
+msgid "Android edition"
+msgstr "Android sürümü"
+
+msgid "GAPPS — Google Play included"
+msgstr "GAPPS — Google Play dahil"
+
+msgid "Vanilla — without Google services"
+msgstr "Vanilla — Google hizmetleri olmadan"
+
+msgid "Installed edition"
+msgstr "Kurulu sürüm"
+
+msgid "Existing Android installation"
+msgstr "Mevcut Android kurulumu"
+
+msgid "You can close Uke Control. Installation will continue and its progress will be available when you return."
+msgstr "Uke Control’ü kapatabilirsiniz. Kurulum devam eder; geri döndüğünüzde ilerlemesini görebilirsiniz."
+
+msgid "Installation is complete. Open Waydroid to get started."
+msgstr "Kurulum tamamlandı. Başlamak için Waydroid’i açın."
+
+msgid "Required packages and official Android images are downloaded and configured for you. Existing Android data is kept."
+msgstr "Gerekli paketler ve resmî Android imajları sizin için indirilip hazırlanır. Mevcut Android verileri korunur."
+
+msgid "Try installation again"
+msgstr "Kurulumu yeniden dene"
+
+msgid "Install Waydroid"
+msgstr "Waydroid’i kur"
+
+msgid "Open Waydroid"
+msgstr "Waydroid’i çalıştır"
+
+msgid "Google Play"
+msgstr "Google Play"
+
+msgid "Your Google account"
+msgstr "Google hesabınız"
+
+msgid "Sign in inside Android. If Google asks you to register this device, use the registration identifier below. This step uses your own Google account."
+msgstr "Android içinden hesabınıza giriş yapın. Google cihaz kaydı isterse aşağıdaki kayıt kimliğini kullanın. Bu işlem kendi Google hesabınızla yapılır."
+
+msgid "Read Google registration identifier"
+msgstr "Google kayıt kimliğini oku"
+
+msgid "Android / GSF identifier"
+msgstr "Android / GSF kimliği"
+
+msgid "Open Google's registration page"
+msgstr "Google’ın kayıt sayfasını aç"
+
+msgid "Waiting for administrator authorization…"
+msgstr "Yönetici yetkisi bekleniyor…"
+
+msgid "Waydroid is ready"
+msgstr "Waydroid hazır"
+
+msgid "Starting installation…"
+msgstr "Kurulum başlatılıyor…"
+
+msgid "Installing required packages…"
+msgstr "Gerekli paketler kuruluyor…"
+
+msgid "Downloading and verifying Android…"
+msgstr "Android indiriliyor ve doğrulanıyor…"
+
+msgid "Preparing graphics and application windows…"
+msgstr "Grafikler ve uygulama pencereleri hazırlanıyor…"
+
+msgid "Enabling Waydroid…"
+msgstr "Waydroid etkinleştiriliyor…"
+
+msgid "Installation needs attention"
+msgstr "Kurulumun tamamlanması gerekiyor"
+
+msgid "Install Android applications on this device"
+msgstr "Bu cihazda Android uygulamalarını kullanın"
+
+msgid "A different Android edition is already installed. Your applications and data have been kept. Use the existing installation."
+msgstr "Farklı bir Android sürümü zaten kurulu. Uygulamalarınız ve verileriniz korundu. Mevcut kurulumu kullanın."
+
+msgid "Update the system and restart it before installing Waydroid."
+msgstr "Waydroid kurulumundan önce sistemi güncelleyin ve yeniden başlatın."
+
+msgid "At least 6 GiB of free storage is required to download and prepare Android."
+msgstr "Android’i indirmek ve hazırlamak için en az 6 GiB boş alan gerekiyor."
+
+msgid "Installation was not authorized. You can try again."
+msgstr "Kurulum için yetki verilmedi. Yeniden deneyebilirsiniz."
+
+msgid "A Waydroid installation is already running. Its progress will appear here."
+msgstr "Waydroid kurulumu zaten devam ediyor. İlerlemesi burada gösterilecek."
+
+msgid "Open Waydroid first and wait for Android to start, then read the Google registration identifier again."
+msgstr "Önce Waydroid’i açıp Android’in başlamasını bekleyin; ardından Google kayıt kimliğini yeniden okuyun."
+
+msgid "Waydroid installation status is unavailable. Check that the installer package is installed."
+msgstr "Waydroid kurulum durumu okunamadı. Kurucu paketinin kurulu olduğundan emin olun."
+
+msgid "Required packages could not be installed. Check your network connection and try again."
+msgstr "Gerekli paketler kurulamadı. İnternet bağlantınızı kontrol edip yeniden deneyin."
+
+msgid "Android could not be downloaded or verified. Check your connection and try again. Existing user data has been kept."
+msgstr "Android indirilemedi veya doğrulanamadı. Bağlantınızı kontrol edip yeniden deneyin. Mevcut kullanıcı verileri korundu."
+
+msgid "Waydroid could not be opened. Try again after checking its installation."
+msgstr "Waydroid açılamadı. Kurulumunu kontrol edip yeniden deneyin."
+
+msgid "Waydroid could not be prepared. Your existing data has been kept. Try the installation again."
+msgstr "Waydroid hazırlanamadı. Mevcut verileriniz korundu. Kurulumu yeniden deneyin."
+
+msgid "An existing custom Android installation needs its original setup tools. Its settings and user data have been kept."
+msgstr "Mevcut özel Android kurulumu kendi kurulum araçlarıyla yönetilmelidir. Ayarları ve kullanıcı verileri korundu."

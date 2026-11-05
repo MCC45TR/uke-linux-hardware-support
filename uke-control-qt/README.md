@@ -5,6 +5,34 @@ Application logic and the device adapter are C++; presentation uses original
 Kirigami/FormCard controls, the desktop palette and inherited theme icons.
 GTK and the existing CLI/device writers are separate components.
 
+## Android applications
+
+Open **Android applications** from Settings or System and updates. Choose
+**GAPPS — Google Play included** or **Vanilla — without Google services**, then
+select **Install Waydroid**. KDE requests administrator authorization. The
+native installer uses original Fedora DNF/Waydroid packages and official OTA
+channels, checks complete image files, applies the packaged Uke graphics/window
+defaults and enables the original container service. **Open Waydroid** then
+starts Android as the normal desktop user. The `--waydroid` application option
+opens this page without starting installation.
+
+A fixed system service owns installation, so closing the interface does not
+interrupt package installation or downloads. Returning reads persisted progress.
+The service holds a shutdown/sleep inhibitor while it runs. Failed/interrupted
+attempts can be retried. Only GAPPS/Vanilla and fixed operations are accepted;
+there are no arbitrary command or image-URL inputs. A complete existing install
+is reused, a different edition is preserved, and custom image locations are not
+silently replaced. No application data is erased. An unsupported running kernel
+requires a normal system update/restart; the installer never changes boot policy.
+
+Google sign-in happens inside Android. If registration is required, the page
+reads the GSF identifier through a separate authorized read and opens Google's
+official registration page. The identifier is excluded from progress files/logs
+and cleared on leaving the page. Account completion and game compatibility are
+separate from successful installation. Original Fedora Waydroid retains its
+upstream Python helpers under the existing distribution-package exception; no
+project Python or on-device SDK/compiler is added.
+
 ## Everyday settings
 
 Home contains six category tiles: Battery and charging, Display and lights,

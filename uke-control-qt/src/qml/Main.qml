@@ -21,6 +21,8 @@ Kirigami.ApplicationWindow {
         if (!initialized || changingPage) return
         if (!pageStack.currentItem || pageStack.currentItem.objectName !== "guidePage") backend.leaveGuide()
         backend.settings.stop()
+        if (pageStack.currentItem && pageStack.currentItem.objectName === "waydroidPage") backend.waydroid.open()
+        else backend.waydroid.close()
         if (pageStack.currentItem && pageStack.currentItem.objectName === "topicPage") backend.settings.open(pageStack.currentItem.topicId)
         if (pageStack.currentItem && pageStack.currentItem.objectName === "areaPage") {
             browsingCatalog = false
@@ -33,6 +35,7 @@ Kirigami.ApplicationWindow {
         try {
             browsingCatalog = false
             backend.settings.close()
+            backend.waydroid.close()
             backend.selectArea(index)
             pageStack.clear()
             pageStack.push(areaPage, {areaIndex: 0})
@@ -44,6 +47,7 @@ Kirigami.ApplicationWindow {
         changingPage = true
         try {
             backend.leaveGuide()
+            backend.waydroid.close()
             backend.settings.stop()
             if (pageStack.currentItem && pageStack.currentItem.objectName === "guidePage") pageStack.pop()
             browsingCatalog = true
@@ -56,6 +60,7 @@ Kirigami.ApplicationWindow {
         changingPage = true
         try {
             backend.settings.stop()
+            backend.waydroid.close()
             if (pageStack.currentItem && pageStack.currentItem.objectName === "guidePage") pageStack.pop()
             if (backend.openAction(id)) pageStack.push(guidePage)
         } finally { changingPage = false }
@@ -64,13 +69,22 @@ Kirigami.ApplicationWindow {
         changingPage = true
         try {
             backend.leaveGuide()
+            backend.waydroid.close()
             if (backend.settings.open(id)) pageStack.push(topicPage, {topicId: id})
         } finally { changingPage = false }
     }
     function openSearch() {
         changingPage = true
-        try { backend.leaveGuide(); backend.settings.stop(); pageStack.push(searchPage) }
+        try { backend.leaveGuide(); backend.settings.stop(); backend.waydroid.close(); pageStack.push(searchPage) }
         finally { changingPage = false }
+    }
+    function openWaydroid() {
+        changingPage = true
+        try {
+            backend.leaveGuide()
+            backend.settings.stop()
+            if (!pageStack.currentItem || pageStack.currentItem.objectName !== "waydroidPage") pageStack.push(waydroidPage)
+        } finally { changingPage = false }
     }
     Component {
         id: navigationAction
@@ -112,6 +126,7 @@ Kirigami.ApplicationWindow {
     Component { id: guidePage; GuidePage { parent: root.pageStack; appWindow: root } }
     Component { id: topicPage; TopicPage { parent: root.pageStack; appWindow: root } }
     Component { id: searchPage; SettingsSearchPage { parent: root.pageStack; appWindow: root } }
+    Component { id: waydroidPage; WaydroidPage { parent: root.pageStack; appWindow: root } }
     ReviewSheet { id: reviewSheet }
     Connections {
         target: backend
@@ -123,7 +138,7 @@ Kirigami.ApplicationWindow {
     Shortcut { sequence: StandardKey.Quit; onActivated: root.close() }
     Shortcut { sequence: "Ctrl+K"; onActivated: root.openSearch() }
     Shortcut { sequence: "Alt+Left"; enabled: pageStack.depth > 1; onActivated: pageStack.pop() }
-    onClosing: { backend.cancelRead(); backend.settings.close() }
+    onClosing: { backend.cancelRead(); backend.settings.close(); backend.waydroid.close() }
     Component.onCompleted: {
         let items = []
         for (let area of backend.areas) items.push(navigationAction.createObject(root, {areaIndex: area.index}))

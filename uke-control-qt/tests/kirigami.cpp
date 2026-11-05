@@ -283,6 +283,39 @@ private slots:
     QCOMPARE(ndefRows(message).size(),1);
     QVERIFY(ndefRows(message).first().toMap().value("title").toString().contains("limit"));
   }
+  void waydroidPagePreservesDataAndBlocksSimulationWrites() {
+    auto sample = fixture;
+    sample.results["waydroid.installer"] = QJsonObject{{"ready", false}, {"initialized", false},
+        {"variant", ""}, {"kernel_ready", true}, {"busy", false}, {"phase", "idle"}, {"progress", -1}};
+    Bridge bridge(sample, false);
+    QQmlApplicationEngine engine;
+    KLocalization::setupLocalizedContext(&engine);
+    engine.rootContext()->setContextProperty("backend", &bridge);
+    engine.rootContext()->setContextProperty("themeIcons", &themeIcons);
+    engine.rootContext()->setContextProperty("styleNotice", QString());
+    QStringList warnings;
+    connect(&engine, &QQmlEngine::warnings, this, [&](const QList<QQmlError> &errors) {
+      for (const auto &error : errors) warnings << error.toString();
+    });
+    engine.loadFromModule("org.uke.ControlQtTest", "Main");
+    QVERIFY2(!engine.rootObjects().isEmpty(), qPrintable(warnings.join('\n')));
+    auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+    QVERIFY(window); window->resize(480, 800); window->show();
+    QVERIFY(QMetaObject::invokeMethod(window, "openWaydroid"));
+    QQuickItem *page = nullptr;
+    QTRY_VERIFY((page = visualItem(window->contentItem(), "waydroidPage")));
+    auto *manager = qobject_cast<WaydroidManager *>(bridge.waydroid());
+    QVERIFY(manager); QVERIFY(manager->blocked());
+    auto *install = visualItem(window->contentItem(), "installWaydroid");
+    QVERIFY(install); QVERIFY(!install->isEnabled());
+    QVERIFY(page->setProperty("selectedEdition", "VANILLA"));
+    manager->refresh(); QCoreApplication::processEvents();
+    QCOMPARE(page->property("selectedEdition").toString(), QString("VANILLA"));
+    QVERIFY(!manager->install("VANILLA"));
+    QVERIFY(!manager->launch());
+    snapshot(window, "waydroid-installer");
+    QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join('\n')));
+  }
   void qmlSettingsTopics() {
     auto rich=fixture;
     for(const auto &t:settingTopics())for(const auto &id:t.reads)

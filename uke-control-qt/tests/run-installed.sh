@@ -10,3 +10,4 @@ test_dir=/usr/libexec/uke-control-qt/tests
 bash "$test_dir/cli-smoke.sh" "$UKE_QT_TEST_APP"
 "$test_dir/uke-control-qt-appearance-tests"
 "$test_dir/uke-control-kirigami-tests"
+"$test_dir/uke-waydroid-installer-tests"

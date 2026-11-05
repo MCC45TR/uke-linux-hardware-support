@@ -43,7 +43,8 @@ QVariantList Bridge::catalog(const QString &text, int area, const QString &kind)
   return groups;
 }
 Bridge::Bridge(Fixture fixture, bool readOnly, QObject *parent)
-    : QObject(parent), fixture_(std::move(fixture)), settings_(fixture_, this, readOnly), readOnly_(readOnly) {
+    : QObject(parent), fixture_(std::move(fixture)), settings_(fixture_, this, readOnly),
+      waydroid_(fixture_, readOnly, this), readOnly_(readOnly) {
   poll_.setInterval(40);
   connect(&poll_, &QTimer::timeout, this, [this] {
     if (!query_)

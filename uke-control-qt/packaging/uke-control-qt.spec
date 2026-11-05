@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.3.0
-Release:        6%{?dist}
+Version:        1.4.0
+Release:        1%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -47,6 +47,25 @@ Requires:       kf6-kirigami
 Requires:       kf6-kirigami-addons >= 1.9
 Requires:       kf6-qqc2-desktop-style
 Requires:       konsole
+Requires:       uke-waydroid-installer = %{version}-%{release}
+
+%package -n uke-waydroid-installer
+Summary:        Native graphical Waydroid installation backend
+Requires:       polkit systemd dnf5
+Requires:       coreutils
+
+%description -n uke-waydroid-installer
+Install original Fedora Waydroid packages and official GAPPS or Vanilla images
+after desktop authorization. A system service retains installation progress
+when the graphical window closes. Existing Android data and editions are kept.
+The original Waydroid package may retain its distribution-provided Python
+helpers; this package contains only native C++ code and no project Python.
+
+%post -n uke-waydroid-installer
+%{_bindir}/systemctl daemon-reload || :
+
+%postun -n uke-waydroid-installer
+%{_bindir}/systemctl daemon-reload || :
 
 %package tests
 Summary:        Installed regression checks for the Uke Control Qt interface
@@ -90,7 +109,17 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_libexecdir}/uke-control-qt/tests/
 %{_datadir}/uke-control-qt/tests/
 
+%files -n uke-waydroid-installer
+%license LICENSE
+%{_libexecdir}/uke-control-qt/waydroid-installer
+%{_datadir}/polkit-1/actions/org.senemos.uke.waydroid-installer.policy
+%{_prefix}/lib/systemd/system/uke-waydroid-install@.service
+
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.4.0-1
+- Add graphical GAPPS/Vanilla installation, durable progress and native launch.
+- Preserve existing Android data and expose private Google registration help.
+
 * Wed Nov 04 2026 Uke contributors - 1.3.0-6
 - Convert the observed Qt role value to the shared SDK's string type.
 

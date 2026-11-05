@@ -2,6 +2,7 @@
 #pragma once
 #include "model-data.hpp"
 #include "settings.hpp"
+#include "waydroid-manager.hpp"
 #include <optional>
 namespace uq {
 class Bridge : public QObject {
@@ -9,6 +10,7 @@ class Bridge : public QObject {
   Q_PROPERTY(bool simulation READ simulation CONSTANT)
   Q_PROPERTY(bool readOnly READ readOnly CONSTANT)
   Q_PROPERTY(QObject *settings READ settings CONSTANT)
+  Q_PROPERTY(QObject *waydroid READ waydroid CONSTANT)
   Q_PROPERTY(QVariantList areas READ areas CONSTANT)
   Q_PROPERTY(int section READ section NOTIFY sectionChanged)
   Q_PROPERTY(QVariantList groups READ groups NOTIFY sectionChanged)
@@ -20,6 +22,7 @@ class Bridge : public QObject {
   Q_PROPERTY(bool messageError READ messageError NOTIFY messageChanged)
   Fixture fixture_;
   Settings settings_;
+  WaydroidManager waydroid_;
   bool readOnly_;
   int section_ = 0;
   QVariantMap guide_, observation_, review_;
@@ -44,6 +47,7 @@ public:
   ~Bridge() override;
   bool simulation() const { return fixture_.enabled; }
   QObject *settings() { return &settings_; }
+  QObject *waydroid() { return &waydroid_; }
   bool readOnly() const { return readOnly_; }
   int section() const { return section_; }
   QVariantList areas() const;

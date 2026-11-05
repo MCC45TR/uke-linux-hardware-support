@@ -78,6 +78,17 @@ FormCard.FormCardPage {
         }
     }
     FormCard.FormCard {
+        visible: page.areaIndex === 0 || page.areaIndex === 6
+        FormCard.FormButtonDelegate {
+            objectName: "openWaydroidInstaller"
+            text: i18n("Android applications")
+            description: i18n("Install and open Waydroid with Google Play or without Google services")
+            icon.name: "system-software-install"
+            Accessible.name: text
+            onClicked: page.appWindow.openWaydroid()
+        }
+    }
+    FormCard.FormCard {
         visible: backend.settings.nativeLinks(page.areaIndex).length > 0
         Repeater {
             model: backend.settings.nativeLinks(page.areaIndex)

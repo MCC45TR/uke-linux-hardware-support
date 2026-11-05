@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   KIconTheme::initTheme();
   QApplication app(argc, argv);
   QCoreApplication::setApplicationName("uke-control-qt");
-  QCoreApplication::setApplicationVersion("1.3.0");
+  QCoreApplication::setApplicationVersion("1.4.0");
   qmlRegisterType<uq::HistoryPlot>("org.uke.settings", 1, 0, "HistoryPlot");
   QCoreApplication::setOrganizationName("Uke");
   QGuiApplication::setDesktopFileName("org.uke.ControlQt");
@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
   parser.addOption({"appearance-info",
                     "Print actual Qt/KDE appearance metadata without "
                     "opening a window or querying devices."});
+  parser.addOption({"waydroid", "Open the Waydroid installer without starting installation."});
   parser.process(app);
   uq::ThemeIcons themeIcons;
   QString notice;
@@ -130,6 +131,8 @@ int main(int argc, char **argv) {
     engine.loadFromModule("org.uke.ControlQt", "Main");
     if (engine.rootObjects().isEmpty())
       return 70;
+    if (parser.isSet("waydroid"))
+      QMetaObject::invokeMethod(engine.rootObjects().first(), "openWaydroid", Qt::QueuedConnection);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &backend,
                      &uq::Bridge::cancelRead);
     return app.exec();
