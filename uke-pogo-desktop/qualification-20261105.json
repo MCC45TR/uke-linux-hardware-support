@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "date": "2026-11-05",
+  "source_commit": "1ced905bad6dfb9b2ece00ab40e4fc1eaf994928",
+  "copr_build": 11262350,
+  "state": "succeeded",
+  "previous_build": {"copr": 11262340, "state": "succeeded", "delivered": false},
+  "checks": {
+    "native_aarch64_qt6_moc_build": true,
+    "actual_filesystem_and_refresh_policy_gcc_clang_asan_ubsan": true,
+    "desktop_file_validation": true,
+    "udev_rule_validation": true,
+    "exact_source_build_configuration": true,
+    "try_restart_unit_in_native_elf": true,
+    "scoped_component_privacy": true,
+    "full_support_index_privacy": "unchanged inherited recovery image prevents a complete pass"
+  },
+  "package": {
+    "nevra": "uke-pogo-desktop-0.1-2.fc46.aarch64",
+    "sha256": "6974a6bea8049cd58c8297be9d11383156971c88ca8b1dbbcec1820905bbb398",
+    "header_sha256": "519cd854e450c2e39ad0e8cb52c87c2338d8ea5897e0d97b839ac42ec276ce59",
+    "payload_sha256": "6eca73bcc01addc6d48b639fbbc2a1283812fd75d05d44803441fbd1ba20a19d",
+    "signature_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca",
+    "both_signatures_and_digests_pass": true,
+    "no_python_kernel_oem_or_desktop_replacement_payload": true
+  },
+  "delivery": {
+    "method": "native DNF",
+    "transaction": "only this package; all dependencies already installed",
+    "status": "pending normal system administrator authentication",
+    "installed": false,
+    "runtime_check": "not run before DNF installation"
+  },
+  "physical": {
+    "accessory_available": false,
+    "running_kernel": "7.3.1-12101-unstable",
+    "new_pogo_kernel_delivered": false,
+    "pogo_led_present_at_baseline": false,
+    "original_kde_keyboard_action_at_baseline": false,
+    "upower_max_at_baseline": 0,
+    "authentication_provider_at_baseline": "static/inactive",
+    "effective_light_or_hotplug_ui_accepted": false
+  }
+}

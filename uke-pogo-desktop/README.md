@@ -31,6 +31,13 @@ Native builds and filesystem/state
 fixtures run in COPR; delivery uses DNF. Effective light, live plug/unplug UI
 and exact accessory operation require physical qualification.
 
+COPR11262350 qualifies source1ced905bad6dfb9b2ece00ab40e4fc1eaf994928:
+native AArch64 Qt6 build, both compiler/sanitizer policy fixtures and full
+signed RPM audit pass. qualification-20261105.json separates these results
+from pending DNF delivery and the unavailable physical keyboard. The earlier
+passed package0.1-1 is superseded by0.1-2, whose TryRestartUnit also preserves
+a concurrently stopped PowerDevil service.
+
 Sources: original KDE PowerDevil v6.8.2 keyboardbrightnesscontroller.cpp and
 applets/brightness/plugin/keyboardbrightnesscontrol.cpp; UPower v1.91.5
 src/up-daemon.c, src/up-device-kbd-backlight.c and linux/up-kbd-backlight-led.c;
