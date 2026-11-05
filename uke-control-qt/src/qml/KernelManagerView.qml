@@ -7,6 +7,7 @@ import org.kde.kirigamiaddons.formcard as FormCard
 ColumnLayout {
     id: view
     required property string mode
+    property bool currentPage: false
     readonly property var manager: backend.settings.manager
     property int seconds: 120
     Layout.fillWidth: true
@@ -19,7 +20,7 @@ ColumnLayout {
             objectName: "kernelMonitoring"
             text: i18n("Live monitoring")
             checked: view.manager.active
-            onToggled: { if (checked) view.manager.start(); else view.manager.pause() }
+            onToggled: { if (view.currentPage) { if (checked) view.manager.start(); else view.manager.pause() } }
         }
         FormCard.FormComboBoxDelegate {
             text: i18n("Read interval")
@@ -46,7 +47,7 @@ ColumnLayout {
     Loader {
         Layout.fillWidth: true
         active: view.mode === "sensors"
-        sourceComponent: Component { SensorView { manager: view.manager; seconds: view.seconds } }
+        sourceComponent: Component { SensorView { manager: view.manager; seconds: view.seconds; currentPage: view.currentPage } }
     }
     FormCard.FormCardDialog {
         id: review
@@ -70,5 +71,6 @@ ColumnLayout {
             onClicked: view.manager.apply(view.manager.review.token || "")
         }
     }
-    Connections { target: view.manager; function onReviewChanged() { if (Object.keys(view.manager.review).length) review.open(); else review.close() } }
+    onCurrentPageChanged: if (!currentPage) review.close()
+    Connections { target: view.manager; function onReviewChanged() { if (view.currentPage && Object.keys(view.manager.review).length) review.open(); else review.close() } }
 }

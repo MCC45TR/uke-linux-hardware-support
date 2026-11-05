@@ -7,6 +7,7 @@ ColumnLayout {
     id: view
     required property var manager
     required property int seconds
+    property bool currentPage: false
     property string group: "thermal"
     property string search: ""
     property string selectedId: ""
@@ -16,7 +17,8 @@ ColumnLayout {
     readonly property var selectedReading: manager.state.sensorValues ? (manager.state.sensorValues[selectedId] || {}) : ({})
     function choose() { if (!catalog.some(s => s.id === selectedId)) selectedId = catalog.length ? catalog[0].id : "" }
     onCatalogChanged: Qt.callLater(choose)
-    onSelectedIdChanged: if (selectedId.length) manager.selectSensor(selectedId)
+    onSelectedIdChanged: if (currentPage && selectedId.length) manager.selectSensor(selectedId)
+    onCurrentPageChanged: if (currentPage && selectedId.length) manager.selectSensor(selectedId)
     Layout.fillWidth: true
     spacing: 0
     FormCard.FormCard {

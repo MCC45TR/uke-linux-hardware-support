@@ -76,3 +76,11 @@ so it is not a verifiable explicit advertised limit. Existing zero-valued state
 can still be displayed and handled when validating the other bound. The final
 UI preserves fractional MHz and colocates the selected sensor's value/state
 with its graph, without changing sampling or hardware policy.
+
+Page-row review found that earlier CPU/sensor pages may remain instantiated in
+the navigation stack. Only the current page may open a frequency review or
+change the selected graph source; hidden pages must not respond to the shared
+manager. A complete-scene test now visits CPU then GPU, prepares one simulated
+GPU request, verifies exactly one visible review, proves apply remains blocked
+and dismisses the dialog. This protects normal stacked navigation rather than
+relying only on standalone controller fixtures.

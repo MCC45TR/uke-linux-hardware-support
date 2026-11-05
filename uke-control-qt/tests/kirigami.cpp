@@ -329,6 +329,14 @@ private slots:
       if(topic.id=="cpu"||topic.id=="gpu"||topic.id=="sensors") {
         QVERIFY(visualItem(window->contentItem(),"kernelMonitoring"));
         snapshot(window,"settings-"+topic.id);
+        if(topic.id=="gpu") {
+          auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
+          QVERIFY(manager->prepare("gpu:gpu0","maximum","200000000"));
+          auto visibleReviews=[&]{int count=0;for(auto *object:window->findChildren<QObject *>("frequencyReview"))if(object->property("visible").toBool())++count;return count;};
+          QTRY_COMPARE(visibleReviews(),1);
+          QVERIFY(!manager->apply(manager->review().value("token").toString()));
+          manager->dismissReview();QTRY_COMPARE(visibleReviews(),0);
+        }
       }
     }
     QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,0)));snapshot(window,"settings-home");
