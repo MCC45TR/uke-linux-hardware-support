@@ -70,4 +70,13 @@ decltype(auto) with_prepared(const std::map<std::string, std::string> &manifest,
     }
     return activate();
 }
+template<class Prepare, class Verify, class Accept>
+auto prepared_accept(bool dry, Prepare prepare, Verify verify, Accept accept) {
+    return [=](const auto &bundle, const auto &bytes) {
+        const std::map<std::string, std::string> manifest{
+            {"kernel_release", bundle.filename().string()}};
+        return with_prepared(manifest, dry, prepare, verify,
+            [&] { return accept(bundle, bytes); });
+    };
+}
 } // namespace uke_firmware

@@ -55,7 +55,7 @@
              uke_color::with_prepared(manifest,current.release,dry,prepare_private_color,[&] {
                  if(!dry) {
                      const auto super=partition("super");
-@@ -634,6 +652,10 @@
+@@ -634,11 +652,16 @@
                  userdata_update(replacing?(dry?"check-trial":"replace-trial"):(dry?"check":"apply"),selected,bytes,state,
                                  current.release,filesystem,false,rollback==RollbackMode::off);
              });
@@ -66,7 +66,14 @@
          };
          if(action=="boot") {
              boot_userdata(bundle,
-@@ -647,6 +669,13 @@
+                 [&](const fs::path &selected){return validate_bundle(selected,"/usr/lib/modules",label,current.release);},
+-                [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true,rollback==RollbackMode::off);},
++                uke_firmware::prepared_accept(false,prepare_managed_firmware,verify_managed_firmware,
++                    [&](const fs::path &selected,const Bytes &bytes){userdata_update("accept",selected,bytes,state,current.release,filesystem,true,rollback==RollbackMode::off);}),
+                 [&]{return activation_enabled(label);},
+                 []{return selected_userdata_bundle();},inspect_userdata,
+                 [&](const fs::path &selected,const Bytes &bytes){stage_selected(selected,bytes,false);});
+@@ -647,6 +670,13 @@
          const bool development=label=="userdata" && rollback==RollbackMode::off &&
              (action=="check" || action=="apply" || automatic || preflight);
          auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release,rpm,development);
@@ -80,7 +87,21 @@
          if(label=="userdata" && !current_only) {
              if(automatic || preflight) {
                  inspect_userdata(bundle,bytes);
-@@ -719,6 +748,7 @@
+@@ -655,7 +685,12 @@
+                 const bool stable=fs::exists(state/"userdata.state") && decode(file(state/"userdata.state")).policy.phase==uke_install::Phase::stable;
+                 const bool removed=rollback==RollbackMode::off && stable && !fs::exists(running_bundle);
+                 const auto baseline=removed?Bytes{}:bundle==running_bundle?std::move(bytes):validate_bundle(running_bundle,"/usr/lib/modules",label,current.release);
+-                userdata_update(stable?"check-stable":preflight?"check-accept":"accept",running_bundle,baseline,state,current.release,filesystem,false,rollback==RollbackMode::off);
++                const auto accept_baseline=[&](const fs::path &selected,const Bytes &accepted) {
++                    userdata_update(stable?"check-stable":preflight?"check-accept":"accept",selected,accepted,state,current.release,filesystem,false,rollback==RollbackMode::off);
++                };
++                if(!stable && bundle!=running_bundle)
++                    uke_firmware::prepared_accept(preflight,prepare_managed_firmware,verify_managed_firmware,accept_baseline)(running_bundle,baseline);
++                else accept_baseline(running_bundle,baseline);
+                 if(bundle==running_bundle){std::cout<<"Installed userdata kernel already running; no slot update\n";return 0;}
+                 stage_selected(bundle,bytes,preflight);return 0;
+             }
+@@ -719,6 +754,7 @@
              std::cout<<"boot_b updated, synced and read back; previous image retained at "<<backup<<". Reboot manually.\n";
          });
          return 0;

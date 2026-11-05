@@ -51,5 +51,19 @@ for compiler in g++ clang++; do
             grep -Fxq "$reason" "$work/mutant.log"
             printf 'Required firmware mutant refused: %s/%s/%s\n' "$mutant" "$compiler" "$mode"
         done
+        "$compiler" -std=c++20 -UNDEBUG -Wall -Wextra -Werror -Wno-unused-function "${flags[@]}" \
+            "$owner/tests/managed-firmware-boot.cpp" -o "$work/boot-after" \
+            $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
+        "$work/boot-after"
+        "$compiler" -std=c++20 -UNDEBUG -Wall -Wextra -Werror -Wno-unused-function "${flags[@]}" \
+            -DUKE_MANAGED_UNGATED_BOOT "$owner/tests/managed-firmware-boot.cpp" -o "$work/boot-before" \
+            $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
+        set +e
+        "$work/boot-before" > "$work/boot-before.log" 2>&1
+        status=$?
+        set -e
+        [[ $status == 1 ]]
+        grep -Fxq 'boot firmware preparation failure reached acceptance' "$work/boot-before.log"
+        printf 'Original 1.8.96 boot acceptance refused at required firmware assertion: %s/%s\n' "$compiler" "$mode"
     done
 done

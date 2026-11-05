@@ -14,7 +14,10 @@ recovery cohorts retain their previous paths. Automatic staging and the existing
 rollback preference are preserved, with enforced package defaults.
 
 The pending-trial guard prepares/verifies the actual recorded candidate before
-reporting it ready for reboot. Native activation covers automatic transactions,
+reporting it ready for reboot. The boot acceptance callback also prepares and
+verifies the running cohort, including an unchanged default selection. A
+different running baseline is checked before automatic acceptance; a dry
+preflight only verifies it. Native activation covers automatic transactions,
 manual application and selection, and startup staging. Existing private-color
 preparation, RTC restoration, validation and failure recovery remain in place.
 The provider publishes authenticated device-local files atomically, refuses
@@ -37,5 +40,8 @@ depending on expiry of older COPR artifacts. Every other native source, test,
 RTC/policy file and existing admission gate is verified unchanged. New callback
 checks compare the original color-only boundary and inject preparation,
 verification and private-color failures under GCC/Clang and sanitizers.
+The actual production `boot_userdata()` flow is exercised with unchanged and
+different selections, enabled/disabled staging and legacy recovery. Its original
+1.8.96 ungated acceptance callback must fail the new firmware assertion.
 Full package checks, signed repository delivery, preserved device state and
 physical camera/input/DSP/accessory operation remain separate acceptance gates.

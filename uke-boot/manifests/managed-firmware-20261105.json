@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "date": "2026-11-05",
-  "version": "1.8.96",
+  "version": "1.8.97",
   "parent": {
     "path": "referances/qualified-source/uke-boot-integration-1.8.95-1.fc46.src.rpm",
     "sha256": "53fa30a17c040fb5b4bd7a48ab9ed9df6856f068e2bffa13ab0c86ed2ecda7bd",
@@ -9,7 +9,7 @@
     "source_commit": "ae967e08dfc41b786d42316233f4d7089411eafe"
   },
   "updater_before_sha256": "47805a2cb4a3c2048454ba30afea9675811d452074cf17633c686f194ff1819f",
-  "updater_after_sha256": "4a503a13edd876983e9f8565f5f3afc8f6f07ac341dca76ccb7ec40a68392835",
+  "updater_after_sha256": "dbdbb70df6031814a161f9edd5e99db03867db7f1cc37d9b733658c02417a09c",
   "firmware_provider": {
     "minimum_version": "0.2-8",
     "source_commit": "ffbb53923e86436cc280a730a1f9365a3dcc6e6a",
@@ -26,11 +26,11 @@
   "inputs": [
     {
       "path": "src/managed-firmware.hpp",
-      "sha256": "06e7aec2aa718ef6f295c773a7a5e7ff78831fc796b6503abf19d18ec3e85e4f"
+      "sha256": "37c860ca4daa1d24cfae57cd795bf7bce9e6c29d533880df2dfeff1ecedd4ab9"
     },
     {
       "path": "patches/managed-firmware-activation.patch",
-      "sha256": "8f8d00b58625b750d4489741c6727a91355d96aaf4cd42983210333ca8e386b4"
+      "sha256": "9cd019a7ed95c88065b067d04d11db9dd4a58beba97289722309b9e395d354cf"
     },
     {
       "path": "tests/managed-firmware.cpp",
@@ -38,19 +38,29 @@
     },
     {
       "path": "tests/managed-firmware.sh",
-      "sha256": "ddfeab036d05045abf5cd9b46d239448b8bf456b3430dd7f41350d8925910d8c"
+      "sha256": "bd812f3c29c6f0e6e93b6dd8cea82cdc7fb1536b054c9a07b3ac120b553dfaa2"
     },
     {
       "path": "host/copr-managed-firmware.sh",
-      "sha256": "dded44a8e1852d6a094875e4ee62a20c3f72c46f35407818a5d0ed7918734023"
+      "sha256": "837370edd7f0e65451b67b288dd951f5f2a0c69506aba4b7a438a623206e66a5"
     },
     {
       "path": "docs/MANAGED-FIRMWARE.md",
-      "sha256": "bfba83d8052f6aa3279cf049c7663628bc6dabeb25c9a7009809b17e795667b2"
+      "sha256": "2f7b3167867568202ed7b5909c9d9af778bba85ef08c0a3f691b35d53cd4b979"
     },
     {
       "path": "referances/qualified-source/README.md",
       "sha256": "b0f960d81168b741044afccecb358e4e49bc53a09a01d24d20885bdebc23b175"
+    },
+    {
+      "path": "tests/managed-firmware-boot.cpp",
+      "sha256": "7aac3c73691007132b26253ea865ec3a505f1f0a13bf3a095928cc286c76b103"
     }
-  ]
+  ],
+  "supersedes": {
+    "version": "1.8.96",
+    "source_commit": "4473b3712c2ab2b5effc3c1685761492011fbac1",
+    "copr_build": 11264067,
+    "reason": "Boot acceptance bypassed the firmware gate for an unchanged selection"
+  }
 }
