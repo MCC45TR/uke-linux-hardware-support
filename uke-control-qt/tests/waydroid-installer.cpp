@@ -54,6 +54,14 @@ private slots:
     QVERIFY(s.calls.isEmpty());
     QCOMPARE(s.error, QString("variant-conflict"));
     QCOMPARE(s.snapshot.variant, QString("GAPPS"));
+    FakeSystem custom;
+    custom.snapshot.managed = false;
+    QVERIFY(!install(custom, "GAPPS")); QVERIFY(custom.calls.isEmpty());
+    QCOMPARE(custom.error, QString("custom-installation"));
+    FakeSystem unknown;
+    unknown.snapshot.variant = "OTHER";
+    QVERIFY(!install(unknown, "GAPPS")); QVERIFY(unknown.calls.isEmpty());
+    QCOMPARE(unknown.error, QString("variant-conflict"));
   }
   void partialInstallationResumesWithoutErasingData() {
     FakeSystem s;

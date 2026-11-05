@@ -33,6 +33,21 @@ bool kernelReady() {
     if (!config.contains(QByteArray("CONFIG_") + flag + "=y\n")) return false;
   return true;
 }
+bool profileReady() {
+  // Installing an application must not select a different kernel as a solver
+  // side effect. An old unstable default needs the normal system update first.
+  QProcess p;
+  p.start("/usr/bin/rpm", {"-q", "--quiet", "senemos-uke-linux-kernel-mainline-unstable-singleboot"});
+  if (!p.waitForFinished(5000)) { p.kill(); p.waitForFinished(); return false; }
+  if (p.exitStatus() != QProcess::NormalExit) return false;
+  if (p.exitCode() == 1 && p.readAllStandardError().isEmpty()) return true;
+  if (p.exitCode() != 0) return false;
+  p.start("/usr/bin/rpm", {"-q", "--provides", "senemos-uke-linux-kernel-mainline-unstable-singleboot"});
+  if (!p.waitForFinished(5000)) { p.kill(); p.waitForFinished(); return false; }
+  const auto provides = QString::fromLocal8Bit(p.readAllStandardOutput());
+  const auto match = QRegularExpression("(?:^|\\n)uke-kernel-default\\(waydroid-netd\\) = ([0-9]+)(?:\\n|$)").match(provides);
+  return p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0 && match.hasMatch() && match.captured(1).toUInt() >= 1;
+}
 Snapshot inspect() {
   Snapshot s;
   s.installed = QFileInfo("/usr/bin/waydroid").isExecutable();
@@ -45,11 +60,18 @@ Snapshot inspect() {
     if (ota.endsWith("/VANILLA.json")) s.variant = "VANILLA";
     const auto images = cfg.value("waydroid/images_path").toString();
     s.managed = images.isEmpty() || images == "/var/lib/waydroid/images";
+    if (s.variant.isEmpty() && !cfg.value("waydroid/arch").toString().isEmpty()) s.variant = "OTHER";
     s.initialized = !cfg.value("waydroid/arch").toString().isEmpty() &&
                     QFileInfo("/var/lib/waydroid/rootfs").isDir();
     s.imagesComplete = !images.isEmpty() && completeImage(images + "/system.img") && completeImage(images + "/vendor.img");
   }
   s.serviceEnabled = QFileInfo("/etc/systemd/system/multi-user.target.wants/waydroid-container.service").isSymLink();
+  if (s.serviceEnabled) {
+    QProcess p;
+    p.start("/usr/bin/systemctl", {"is-active", "--quiet", "waydroid-container.service"});
+    if (!p.waitForFinished(1500)) { p.kill(); p.waitForFinished(); s.serviceEnabled = false; }
+    else s.serviceEnabled = p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0;
+  }
   return s;
 }
 void directory(const QString &path, mode_t mode) {
@@ -113,7 +135,7 @@ class RealSystem final : public System {
 public:
   explicit RealSystem(QString variant) : variant_(std::move(variant)) {}
   Snapshot inspect() override { return ::inspect(); }
-  bool kernelReady() override { return ::kernelReady(); }
+  bool kernelReady() override { return ::kernelReady() && profileReady(); }
   bool enoughSpace() override {
     QStorageInfo storage("/var/lib");
     return storage.isValid() && storage.bytesAvailable() >= qint64(6) * 1024 * 1024 * 1024;
@@ -158,7 +180,14 @@ public:
       }
     }
     p.readAll(); // No raw output, account identifiers or repository URLs enter public status.
-    return p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0;
+    if (p.exitStatus() != QProcess::NormalExit || p.exitCode() != 0) return false;
+    if (step == Step::Enable) {
+      // A repaired existing installation must consume its newly packaged props.
+      p.start("/usr/bin/systemctl", {"restart", "waydroid-container.service"});
+      if (!p.waitForFinished(180000)) { p.kill(); p.waitForFinished(); return false; }
+      return p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0;
+    }
+    return true;
   }
 };
 QJsonObject googleId() {
@@ -197,7 +226,7 @@ int main(int argc, char **argv) {
     }
     const auto current = inspect();
     need(current.variant.isEmpty() || current.variant == a[2], "variant-conflict");
-    need(kernelReady(), "system-update-required");
+    need(kernelReady() && profileReady(), "system-update-required");
     if (current.ready()) { output({{"started", false}, {"already_ready", true}}); return 0; }
     need(current.managed, "custom-installation");
     save(a[2], "starting");

@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.5.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -52,7 +52,7 @@ Requires:       uke-waydroid-installer = %{version}-%{release}
 %package -n uke-waydroid-installer
 Summary:        Native graphical Waydroid installation backend
 Requires:       polkit systemd dnf5
-Requires:       coreutils
+Requires:       coreutils rpm
 
 %description -n uke-waydroid-installer
 Install original Fedora Waydroid packages and official GAPPS or Vanilla images
@@ -118,6 +118,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.5.0-2
+- Verify active startup and reload packaged settings when repairing an installation.
+- Refuse implicit kernel-profile replacement and preserve unknown Android editions.
+
 * Thu Nov 05 2026 Uke contributors - 1.5.0-1
 - Add graphical GAPPS/Vanilla installation, durable progress and native launch.
 - Preserve existing Android data and expose private Google registration help.
