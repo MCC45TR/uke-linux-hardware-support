@@ -57,7 +57,7 @@ Subject: [PATCH] Retain unapproved checkpoints at the actual pre-write barrier
              disk->gpt->commit();
 --- a/tests/slot-control.cpp
 +++ b/tests/slot-control.cpp
-@@ -66,6 +66,33 @@
+@@ -66,6 +66,34 @@
      assert(back.parts.at("boot_a").type==a.parts.at("boot_a").type);
      assert(back.parts.at("boot_b").type==a.parts.at("boot_b").type);
      {
@@ -66,13 +66,14 @@ Subject: [PATCH] Retain unapproved checkpoints at the actual pre-write barrier
 +        const auto initial=slot::snapshot(fd.value,st.st_size,sector);
 +        for(unsigned cycle=0;cycle<4;++cycle) {
 +            const unsigned running=cycle%2,target=1-running;
++            const auto before_cycle=slot::snapshot(fd.value,st.st_size,sector);
 +            slot::Disk refused(fd.value,st.st_size,sector);
 +            reject([&]{refused.block_inactive(running,target);});
-+            assert(slot::snapshot(fd.value,st.st_size,sector)==refused.observed);
++            assert(slot::snapshot(fd.value,st.st_size,sector)==before_cycle);
 +            reject([&]{refused.block_inactive(target,running,true);});
 +            slot::Disk barrier(fd.value,st.st_size,sector);
 +            assert(barrier.block_inactive(running,target,true));
-+            assert(slot::snapshot(fd.value,st.st_size,sector)==barrier.observed);
++            assert(slot::snapshot(fd.value,st.st_size,sector)==before_cycle);
 +            barrier.commit();auto blocked=barrier.reread(true);
 +            blocked->require_selected(running);
 +            const auto &held=blocked->parts.at(running?"boot_b":"boot_a");

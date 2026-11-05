@@ -7,7 +7,7 @@ export LC_ALL=C
 owner=$(cd -- "$(dirname -- "$0")/.." && pwd)
 output=$(realpath -m "${1:?Source result directory}")
 version=${2:?Unique updater version}
-[[ $version == 1.8.99 ]]
+[[ $version == 1.8.100 ]]
 work=$(mktemp -d)
 trap 'find "$work" -depth -delete' EXIT
 [[ ! -e $output || (-d $output && -z $(find "$output" -mindepth 1 -maxdepth 1 -print -quit)) ]]
@@ -31,17 +31,17 @@ install -m644 "$owner/docs/ALTERNATING-CHECKPOINTS.md" "$native/docs/ALTERNATING
 install -m644 "$owner/tests/alternating-prewrite.sh" "$native/tests/alternating-prewrite.sh"
 spec=$output/uke-boot-integration.spec
 awk '
- /^%changelog$/ {history=1;print;print "* Fri Nov 06 2026 Uke contributors - 1.8.99-1";
+ /^%changelog$/ {history=1;print;print "* Fri Nov 06 2026 Uke contributors - 1.8.100-1";
  print "- Alternate inactive slots independently of rollback-off health policy.";
  print "- Preserve required accepted-kernel components and explicit unapproved checkpoints.";print "";next}
- !history {gsub(/1[.]8[.]98/,"1.8.99")}
+ !history {gsub(/1[.]8[.]98/,"1.8.100")}
  /^Provides: uke-kernel-update\(alternating-checkpoint-v2\)/ {capability++}
  /^bash tests\/slot-control[.]sh$/ {print;print "bash tests/alternating-prewrite.sh";next}
  /the global default is disabled/ {sub(/the global default is disabled/,"both package defaults are enabled")}
  {print} END {if(capability!=1)exit 1}
 ' "$work/rpm/uke-boot-integration.spec" > "$spec"
 # The package layout and all original test/scriptlet sections remain intact.
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec") == uke-boot-integration-1.8.99-1.fc46 ]]
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec") == uke-boot-integration-1.8.100-1.fc46 ]]
 install -m644 "$spec" "$outer/inputs/uke-boot-integration/uke-boot-integration.spec"
 mv "$native" "$work/inner/uke-boot-integration-$version"
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
@@ -54,4 +54,4 @@ cp "$outer/SOURCE-SHA256SUMS" "$outer/SOURCE-SHA256SUMS.before-prewrite"
 install -m644 "$work/source-sha256" "$outer/SOURCE-SHA256SUMS"
 mv "$outer" "$work/outer/uke-boot-integration-$version"
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-boot-integration-$version.tar.xz" -C "$work/outer" "uke-boot-integration-$version"
-printf 'Complete98 updater retained; actual checkpoint pre-write99 fixtures and device qualification pending.\n'
+printf 'Complete98 updater retained; actual checkpoint pre-write100 fixtures and device qualification pending.\n'

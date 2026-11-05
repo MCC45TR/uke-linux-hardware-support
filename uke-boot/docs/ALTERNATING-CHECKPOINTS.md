@@ -67,3 +67,9 @@ Actual regular-file libfdisk fixtures execute barrier, commit, reload and final
 selection in both directions over four cycles and512/4096-byte sectors. GCC and
 Clang plain/sanitized modes and an original accepted-only barrier mutant are
 required in COPR. Build/package and physical A/B acceptance remain separate.
+
+Initial99/COPR11268221 compiles production binaries but refuses the new host
+fixture's access to a private snapshot member. No RPM or target change is
+admitted. Correct the fixture to capture the independent physical regular-file
+snapshot before the operation, preserving production encapsulation. Retry uses
+fresh version1.8.100 with identical production changes and inherited sources.
