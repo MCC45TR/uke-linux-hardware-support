@@ -94,6 +94,18 @@ int main() {
         assert(!value["complete"].asBool());
     }
     assert(refused(state()+"phase=stable\n"));
+    {
+        auto raw=state("trial"); raw.replace(0,9,"format=2\nbaseline_approved=0\n");
+        const auto checkpoint=saved(raw);
+        assert(!checkpoint.baseline_approved);
+        value=report(slots(),"7.3.1-1500","b",{},1,checkpoint,empty);
+        const auto &approval=value["kernel_approval"];
+        assert(!approval["running_kernel_approved"].asBool() && !approval["accepted_kernel_verified"].asBool());
+        assert(approval["accepted_kernel"].isNull() && approval["baseline_kernel"].asString()=="7.3.1-1500");
+        auto malformed=raw; malformed.replace(malformed.find("baseline_approved=0"),19,"baseline_approved=1");
+        assert(refused(malformed));
+        raw=state("current-slot-trial");raw.replace(0,9,"format=2\nbaseline_approved=0\n");assert(refused(raw));
+    }
     assert(refused(state("unknown")));
     auto malformed=state(); malformed.replace(malformed.find("good_slot=1"),11,"good_slot=9"); assert(refused(malformed));
     assert(!boot_slot("quiet root=LABEL=userdata"));

@@ -16,3 +16,9 @@ The COPR constructor extends the complete SHA256-pinned installed
 speech, client, rollback and frontend layers. Native tests run only in COPR.
 Hardware fixes and actual alternating-slot staging belong to kernel/DT and the
 boot updater respectively; this display change does not establish either.
+
+The next update extends the complete installed25 source and reads the updater's
+format2 unapproved development checkpoint. It reports the checkpoint separately
+from health approval even if boot firmware retains the successful-slot flag.
+Duplicate/malformed fields and a false in-place checkpoint are refused. No
+approval state is changed by status inspection.

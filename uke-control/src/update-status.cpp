@@ -144,7 +144,7 @@ Image image(int fd) {
     return {*releases.begin(), sha_final(kernel.get()), sha_final(whole.get())};
 }
 struct Slot { std::optional<Image> boot; std::optional<std::uint64_t> flags; };
-struct Saved { int good = -1; std::string release, hash, phase, candidate, failed; };
+struct Saved { int good = -1; std::string release, hash, phase, candidate, failed; bool baseline_approved=true; };
 Saved saved(const std::string &input) {
     need(input.size() <= 8192, "Oversized kernel approval record");
     std::map<std::string, std::string> fields; std::istringstream lines(input); std::string line;
@@ -153,15 +153,20 @@ Saved saved(const std::string &input) {
         need(pos != line.npos && fields.emplace(line.substr(0,pos),line.substr(pos+1)).second,
              "Malformed kernel approval record");
     }
-    const std::set<std::string> required{"format","good_slot","good_release","good_image","phase","candidate","candidate_image","failed","staged_boot_id"};
+    std::set<std::string> required{"format","good_slot","good_release","good_image","phase","candidate","candidate_image","failed","staged_boot_id"};
+    const bool checkpoint=fields.contains("format") && fields.at("format")=="2";
+    if (checkpoint) required.emplace("baseline_approved");
     need(fields.size() == required.size(), "Unsupported kernel approval record fields");
     for (const auto &key : required) need(fields.contains(key), "Missing kernel approval record field");
-    need(fields.at("format") == "1" && (fields.at("good_slot") == "0" || fields.at("good_slot") == "1"), "Unsupported kernel approval record");
+    need((fields.at("format") == "1" || (checkpoint && fields.at("baseline_approved")=="0")) &&
+         (fields.at("good_slot") == "0" || fields.at("good_slot") == "1"), "Unsupported kernel approval record");
     Saved out; out.good = fields.at("good_slot") == "0" ? 0 : 1;
+    out.baseline_approved=!checkpoint;
     out.release = fields.at("good_release"); out.hash = fields.at("good_image"); out.phase = fields.at("phase");
     need(token(out.release) && digest_value(out.hash), "Invalid accepted kernel identity");
     need(out.phase == "stable" || out.phase == "staging" || out.phase == "verified" ||
          out.phase == "trial" || out.phase == "current-slot-trial", "Unknown kernel update phase");
+    need(out.baseline_approved || out.phase!="current-slot-trial", "Unapproved checkpoint cannot authorize an in-place trial");
     for (const auto *key : {"candidate","failed"}) need(fields.at(key) == "-" || token(fields.at(key)), "Invalid kernel release in approval record");
     out.candidate = fields.at("candidate") == "-" ? "" : fields.at("candidate");
     out.failed = fields.at("failed") == "-" ? "" : fields.at("failed");
@@ -242,14 +247,22 @@ J report(const std::array<Slot,2> &slots, const std::string &running, const std:
     approval["last_failed_kernel"] = J(); approval["phase"] = J();
     if (record) {
         const auto &s = slots[record->good];
-        const bool accepted = s.boot && s.flags && s.boot->release == record->release &&
+        const bool accepted = record->baseline_approved && s.boot && s.flags && s.boot->release == record->release &&
             s.boot->boot_hash == record->hash && (*s.flags & successful) && !(*s.flags & unbootable);
-        approval["accepted_kernel"] = record->release; approval["accepted_slot"] = slot_name(record->good);
+        approval["baseline_approved"]=record->baseline_approved;
+        approval["baseline_kernel"]=record->release; approval["baseline_slot"]=slot_name(record->good);
+        if (record->baseline_approved) {
+            approval["accepted_kernel"] = record->release; approval["accepted_slot"] = slot_name(record->good);
+        }
         approval["candidate_kernel"] = nullable(record->candidate); approval["last_failed_kernel"] = nullable(record->failed); approval["phase"] = record->phase;
         approval["accepted_kernel_verified"] = accepted;
         if (current) approval["running_kernel_approved"] = accepted && *current == record->good && running == record->release;
         if (record->phase != "stable") {
             approval["state"] = "awaiting_confirmation"; approval["latest_update_approved"] = false;
+        } else if (!record->baseline_approved) {
+            approval["state"]="development_checkpoint"; approval["latest_update_approved"]=false;
+            if (!s.boot || s.boot->release!=record->release || s.boot->boot_hash!=record->hash)
+                issues.append("The unapproved development checkpoint does not match its recorded boot image.");
         } else if (accepted) {
             approval["state"] = "accepted";
             if (record->failed.empty()) approval["latest_update_approved"] = true;
@@ -406,6 +419,8 @@ void print(const J &value, bool json) {
     fields.emplace_back("Running kernel approved",display(a["running_kernel_approved"]));
     fields.emplace_back("Accepted image verified",display(a["accepted_kernel_verified"]));
     fields.emplace_back("Accepted kernel",display(a["accepted_kernel"])+" (slot "+upper_slot(a["accepted_slot"])+")");
+    if (a["baseline_approved"].isBool() && !a["baseline_approved"].asBool())
+        fields.emplace_back("Unapproved checkpoint",display(a["baseline_kernel"])+" (slot "+upper_slot(a["baseline_slot"])+")");
     fields.emplace_back("Kernel update phase",display(a["phase"]));
     fields.emplace_back("Pending candidate",a["phase"]=="stable" && a["candidate_kernel"].isNull()?"None":display(a["candidate_kernel"]));
     fields.emplace_back("Previous failed candidate",!a["phase"].isNull() && a["last_failed_kernel"].isNull()?"None recorded":display(a["last_failed_kernel"]));
