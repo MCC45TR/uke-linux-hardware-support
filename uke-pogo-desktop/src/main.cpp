@@ -138,8 +138,10 @@ int main(int argc,char **argv) {
     const bool attached_check=mode=="--bridge-attached";
     if(mode!="--check"&&mode!="--monitor"&&!attached_check)return 2;
     const auto identity=read_sysfs("/sys/firmware/devicetree/base/compatible");
-    if(!compatible(identity,"xiaomi,uke")||!compatible(identity,"qcom,sm7675"))return attached_check?1:0;
-    if(attached_check)return present("/sys",read_sysfs)?0:1;
+    if(!compatible(identity,"xiaomi,uke")||!compatible(identity,"qcom,sm7675"))return attached_check?255:0;
+    // 255 makes ExecCondition use bounded Restart=on-failure. The LED event
+    // can precede driver-core dev_groups; exit1 would skip all later retries.
+    if(attached_check)return present("/sys",read_sysfs)?0:255;
     const auto desktops=qEnvironmentVariable("XDG_CURRENT_DESKTOP").split(':');
     if(!desktops.contains(QStringLiteral("KDE")))return 0;
     Monitor monitor;

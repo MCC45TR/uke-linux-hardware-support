@@ -1,6 +1,6 @@
 Name: uke-pogo-desktop
 Version: 0.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Detect Uke pogo keyboard backlight for the original Plasma power service
 License: MIT
 Source0: %{name}-%{version}.tar.gz
@@ -46,6 +46,9 @@ install -Dm644 packaging/pogo-attachment.conf %{buildroot}%{_unitdir}/uke-pogo-a
 %{_unitdir}/uke-pogo-auth.service.d/pogo-attachment.conf
 %doc README.md
 %changelog
+* Thu Nov 05 2026 Uke contributors - 0.1-3
+- Retry bounded attachment admission when LED registration precedes dev_groups.
+
 * Thu Nov 05 2026 Uke contributors - 0.1-2
 - Preserve a concurrently stopped PowerDevil service with TryRestartUnit.
 
