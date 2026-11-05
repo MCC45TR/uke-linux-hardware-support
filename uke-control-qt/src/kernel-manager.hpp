@@ -5,6 +5,7 @@
 #include <QProcess>
 #include <QQuickPaintedItem>
 #include <QColor>
+#include <functional>
 namespace uq {
 QVariantMap cpuLoads(const QJsonObject &before,const QJsonObject &after);
 class KernelManager : public QObject {
@@ -19,7 +20,8 @@ class KernelManager : public QObject {
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(int interval READ interval NOTIFY changed)
     Fixture fixture_;
-    bool restricted_,active_=false,requested_=false;
+    bool restricted_,active_=false,requested_=false,reading_=false;
+    std::function<QJsonObject()> reader_;
     QString mode_,message_,selectedSensor_,outcome_;
     int interval_=2,revision_=0;
     unsigned generation_=0;
@@ -40,14 +42,14 @@ class KernelManager : public QObject {
     void add(const QString &id,const QVariant &value);
     void failure(const QString &message);
 public:
-    explicit KernelManager(Fixture fixture,QObject *parent=nullptr,bool restricted=false);
+    explicit KernelManager(Fixture fixture,QObject *parent=nullptr,bool restricted=false,std::function<QJsonObject()> reader={});
     ~KernelManager() override;
     QVariantList devices()const{return devices_;}
     QVariantList sensors()const{return sensors_;}
     QVariantMap state()const{return state_;}
     QVariantMap review()const{return review_;}
     bool active()const{return active_;}
-    bool busy()const{return worker_.isRunning()||bool(query_)||write_;}
+    bool busy()const{return reading_||bool(query_)||write_;}
     int revision()const{return revision_;}
     QString message()const{return outcome_.isEmpty()?message_:outcome_;}
     int interval()const{return interval_;}
