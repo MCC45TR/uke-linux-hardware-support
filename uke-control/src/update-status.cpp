@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <sys/utsname.h>
@@ -259,6 +260,48 @@ J report(const std::array<Slot,2> &slots, const std::string &running, const std:
     out["complete"] = issues.empty() && slots[0].boot && slots[1].boot && record.has_value();
     return out;
 }
+std::map<std::string,std::string> policy_fields(const std::string &input) {
+    std::map<std::string,std::string> result;
+    std::istringstream lines(input); std::string line;
+    need(input.size() <= 8192, "Oversized update policy");
+    while (std::getline(lines,line)) {
+        if (line.empty() || line.front() == '#') continue;
+        const auto split=line.find('=');
+        need(split != line.npos && split && split+1 < line.size() &&
+             result.emplace(line.substr(0,split),line.substr(split+1)).second,
+             "Malformed or duplicate update policy field");
+    }
+    return result;
+}
+bool automatic_policy(const std::string &input, bool userdata) {
+    const auto fields=policy_fields(input);
+    need(fields.contains("automatic") && (fields.at("automatic")=="0" || fields.at("automatic")=="1"),
+         "Invalid automatic staging policy");
+    need(fields.size()==1 || (userdata && fields.size()==2 && fields.contains("vrr_min_hz") &&
+         (fields.at("vrr_min_hz")=="0" || fields.at("vrr_min_hz")=="30")), "Unknown automatic staging policy field");
+    return fields.at("automatic")=="1";
+}
+std::string rollback_policy(const std::string &input) {
+    for (const auto *mode : {"enforced","permissive","off"})
+        if (input==std::string("mode=")+mode+'\n') return mode;
+    throw std::runtime_error("Invalid rollback policy");
+}
+void observe_policies(J &out, const fs::path &configuration) {
+    J policy; policy["automatic_global"]=J(); policy["automatic_userdata"]=J();
+    policy["rollback_mode"]=J(); policy["automatic_fallback"]=J();
+    for (const bool userdata : {false,true}) try {
+        policy[userdata?"automatic_userdata":"automatic_global"]=automatic_policy(
+            text(configuration/(userdata?"userdata-update.conf":"kernel-update.conf")),userdata);
+    } catch (const std::exception &e) { out["issues"].append(std::string(userdata?"Userdata staging: ":"Global staging: ")+e.what()); }
+    try {
+        const auto mode=rollback_policy(text(configuration/"rollback.conf"));
+        policy["rollback_mode"]=mode; policy["automatic_fallback"]=mode=="enforced";
+    } catch (const std::exception &e) { out["issues"].append(std::string("Rollback: ")+e.what()); }
+    policy["automatic_staging"]=policy["automatic_global"].isBool() && policy["automatic_userdata"].isBool()
+        ? J(policy["automatic_global"].asBool() && policy["automatic_userdata"].asBool()) : J();
+    out["update_policy"]=policy;
+    if (!out["issues"].empty()) out["complete"]=false;
+}
 J inspect() {
     const auto compatible = text("/sys/firmware/devicetree/base/compatible");
     need(compatible.find(std::string("xiaomi,uke\0",11)) != compatible.npos &&
@@ -298,25 +341,75 @@ J inspect() {
     try { running_hash=hash_file(fs::path("/usr/lib/modules")/current.release/"vmlinuz"); } catch (const std::exception &e) { issues.append(e.what()); }
     if (!boot_parameters_valid) running_hash.clear();
     try { record=saved(text("/var/lib/senemos/kernel-update/userdata.state")); } catch (const std::exception &e) { issues.append(e.what()); }
-    return report(slots,current.release,running_hash,declared,next,record,issues);
+    auto result=report(slots,current.release,running_hash,declared,next,record,issues);
+    observe_policies(result,"/etc/senemos");
+    return result;
 }
 std::string display(const J &value) { return value.isNull() ? "Unknown" : value.isBool() ? (value.asBool() ? "Yes" : "No") : value.asString(); }
 std::string upper_slot(const J &slot) { return slot.isNull() ? "Unknown" : slot.asString()=="a" ? "A" : "B"; }
+unsigned terminal_width() {
+    struct winsize size{};
+    return !ioctl(STDOUT_FILENO,TIOCGWINSZ,&size) && size.ws_col ? size.ws_col : 80;
+}
+std::vector<std::string> wrap_field(std::string text, unsigned width) {
+    std::vector<std::string> result;
+    while (text.size()>width) {
+        auto end=text.rfind(' ',width);
+        if (end==text.npos || end==0) end=width;
+        result.push_back(text.substr(0,end));
+        text.erase(0,end+(text[end]==' '));
+    }
+    result.push_back(text); return result;
+}
+std::string columns(const std::vector<std::pair<std::string,std::string>> &fields, unsigned width) {
+    width=std::clamp(width,20U,240U);
+    const unsigned count=width>=120?3:width>=60?2:1, cell=(width-2*(count-1))/count;
+    std::ostringstream out;
+    for (std::size_t start=0;start<fields.size();start+=count) {
+        std::array<std::vector<std::string>,3> wrapped; std::size_t height=0;
+        const auto used=std::min<std::size_t>(count,fields.size()-start);
+        for (std::size_t c=0;c<used;++c) {
+            wrapped[c]=wrap_field(fields[start+c].first+": "+fields[start+c].second,cell);
+            height=std::max(height,wrapped[c].size());
+        }
+        for (std::size_t row=0;row<height;++row) {
+            for (std::size_t c=0;c<used;++c) {
+                const auto line=row<wrapped[c].size()?wrapped[c][row]:std::string{};
+                out<<line;
+                if (c+1<used) out<<std::string(cell-line.size()+2,' ');
+            }
+            out<<'\n';
+        }
+    }
+    return out.str();
+}
 void print(const J &value, bool json) {
     if (json) { Json::StreamWriterBuilder writer; writer["indentation"]=""; std::cout << Json::writeString(writer,value) << '\n'; return; }
-    std::cout << "Uke update status\nRunning kernel: " << display(value["running_kernel"])
-        << "\nCurrent boot slot: " << upper_slot(value["current_slot"]) << '\n';
-    for (const auto &slot : value["slots"]) std::cout << "Slot " << upper_slot(slot["slot"]) << ": " << display(slot["kernel_release"])
-        << " (bootable: " << display(slot["bootable"]) << ", bootloader successful: " << display(slot["boot_successful"]) << ")\n";
+    std::vector<std::pair<std::string,std::string>> fields{
+        {"Running kernel",display(value["running_kernel"])},
+        {"Current boot slot",upper_slot(value["current_slot"])},
+        {"Next boot slot",upper_slot(value["next_boot_slot"])},
+        {"Pending slot switch",display(value["pending_slot_switch"])},
+        {"Automatic staging",display(value["update_policy"]["automatic_staging"])},
+        {"Rollback mode",display(value["update_policy"]["rollback_mode"])},
+        {"Global automatic policy",display(value["update_policy"]["automatic_global"])},
+        {"Userdata automatic policy",display(value["update_policy"]["automatic_userdata"])},
+        {"Automatic fallback policy",display(value["update_policy"]["automatic_fallback"])}};
+    for (const auto &slot : value["slots"]) {
+        const auto name="Slot "+upper_slot(slot["slot"]);
+        fields.emplace_back(name+" kernel",display(slot["kernel_release"]));
+        fields.emplace_back(name+" bootable",display(slot["bootable"]));
+        fields.emplace_back(name+" bootloader successful",display(slot["boot_successful"]));
+    }
     const auto &a=value["kernel_approval"];
-    std::cout << "Next boot slot: " << upper_slot(value["next_boot_slot"]) << "\nPending slot switch: " << display(value["pending_slot_switch"])
-        << "\nLatest recorded kernel update approved: " << display(a["latest_update_approved"])
-        << "\nRunning kernel approved: " << display(a["running_kernel_approved"])
-        << "\nRecorded accepted kernel verified: " << display(a["accepted_kernel_verified"])
-        << "\nAccepted kernel: " << display(a["accepted_kernel"]) << " (slot " << upper_slot(a["accepted_slot"]) << ")"
-        << "\nKernel update phase: " << display(a["phase"])
-        << "\nPending candidate: " << (a["phase"] == "stable" && a["candidate_kernel"].isNull() ? "None" : display(a["candidate_kernel"]))
-        << "\nPrevious failed candidate: " << (!a["phase"].isNull() && a["last_failed_kernel"].isNull() ? "None recorded" : display(a["last_failed_kernel"])) << '\n';
+    fields.emplace_back("Latest update approved",display(a["latest_update_approved"]));
+    fields.emplace_back("Running kernel approved",display(a["running_kernel_approved"]));
+    fields.emplace_back("Accepted image verified",display(a["accepted_kernel_verified"]));
+    fields.emplace_back("Accepted kernel",display(a["accepted_kernel"])+" (slot "+upper_slot(a["accepted_slot"])+")");
+    fields.emplace_back("Kernel update phase",display(a["phase"]));
+    fields.emplace_back("Pending candidate",a["phase"]=="stable" && a["candidate_kernel"].isNull()?"None":display(a["candidate_kernel"]));
+    fields.emplace_back("Previous failed candidate",!a["phase"].isNull() && a["last_failed_kernel"].isNull()?"None recorded":display(a["last_failed_kernel"]));
+    std::cout<<"Uke update status\n"<<columns(fields,terminal_width());
     if (!a["history_note"].isNull()) std::cout << "Approval history: " << a["history_note"].asString() << '\n';
     for (const auto &issue : value["issues"]) std::cout << "Status incomplete: " << issue.asString() << '\n';
 }

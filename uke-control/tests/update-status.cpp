@@ -20,6 +20,37 @@ static std::array<Slot,2> slots() {
             Slot{Image{"7.3.1-1500","b",std::string(64,'b')},active|successful|(1ULL<<48)}};
 }
 int main() {
+    assert(automatic_policy("# retained policy\nautomatic=1\n",false));
+    assert(automatic_policy("automatic=1\nvrr_min_hz=30\n",true));
+    assert(!automatic_policy("automatic=0\nvrr_min_hz=0\n",true));
+    for (const auto *bad : {"automatic=1\nautomatic=0\n","automatic=yes\n","automatic=1\nunknown=1\n",
+                            "automatic=1\nvrr_min_hz=60\n","=1\n","automatic=\n"}) {
+        bool rejected=false; try { (void)automatic_policy(bad,true); } catch (...) { rejected=true; }
+        assert(rejected);
+    }
+    for (const auto *mode : {"enforced","permissive","off"})
+        assert(rollback_policy(std::string("mode=")+mode+'\n')==mode);
+    for (const auto *bad : {"mode=off","mode=off\nmode=enforced\n","mode=unknown\n"}) {
+        bool rejected=false; try { (void)rollback_policy(bad); } catch (...) { rejected=true; } assert(rejected);
+    }
+    const std::vector<std::pair<std::string,std::string>> fields{
+        {"Running kernel","7.3.1-12206-unstable"},{"Automatic staging","Yes"},{"Rollback mode","off"},
+        {"Previous failed candidate",std::string(128,'x')},{"Current boot slot","A"},{"Next boot slot","B"}};
+    for (const unsigned width : {20,59,60,80,119,120,160,240}) {
+        const auto rendered=columns(fields,width); std::istringstream rows(rendered); std::string row;
+        while (std::getline(rows,row)) assert(row.size()<=width);
+        assert(rendered.find("Running kernel")!=rendered.npos);
+        assert(rendered.find("Automatic staging")!=rendered.npos);
+        assert(rendered.find("Rollback mode")!=rendered.npos);
+        if (width==80) {
+            const auto first=rendered.substr(0,rendered.find('\n'));
+            assert(first.find("Automatic staging")==41 && first.find("Rollback mode")==first.npos);
+        }
+        if (width==120) {
+            const auto first=rendered.substr(0,rendered.find('\n'));
+            assert(first.find("Automatic staging")==40 && first.find("Rollback mode")==80);
+        }
+    }
     const J empty(Json::arrayValue);
     const auto accepted=saved(state());
     auto value=report(slots(),"7.3.1-1500","b",{},1,accepted,empty);
