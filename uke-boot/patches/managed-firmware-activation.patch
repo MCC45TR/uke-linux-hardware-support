@@ -1,0 +1,90 @@
+--- a/src/kernel-update.cpp
++++ b/src/kernel-update.cpp
+@@ -4,6 +4,7 @@
+ #include "installation-policy.hpp"
+ #include "trial-health.hpp"
+ #include "o82-private-color.hpp"
++#include "managed-firmware.hpp"
+ #include <openssl/evp.h>
+ #include <algorithm>
+ #include <array>
+@@ -476,6 +477,17 @@
+     (void)uke_video::capture({"/usr/bin/uke-o82-color-profile","--prepare-kernel",release},4096,
+                              std::chrono::seconds(120));
+ }
++static void managed_firmware(const char *operation,const std::string &release) {
++    constexpr auto helper="/usr/libexec/uke-cdsp-pogo-firmware";
++    trusted(helper);
++    (void)uke_video::capture({helper,operation,release},4096,std::chrono::seconds(120));
++}
++static void prepare_managed_firmware(const std::string &release) {
++    managed_firmware("--prepare-target",release);
++}
++static void verify_managed_firmware(const std::string &release) {
++    managed_firmware("--verify-target",release);
++}
+ static bool activation_enabled(const std::string &label) {
+     if(label=="userdata" && !automatic_policy_ready("/var/lib/senemos/kernel-update")) {
+         std::cout<<"Automatic policy migration is incomplete; boot activation deferred\n";return false;
+@@ -538,7 +550,10 @@
+         const auto label=root_label(read_text("/proc/cmdline"));
+         if(action=="select-slot" || action=="check-select-slot") {
+             need(label=="userdata", "Manual A/B selection requires the proven userdata profile");
+-            select_existing_slot(argv[2],argv[3],action=="select-slot");
++            uke_firmware::with_prepared({{"kernel_release",argv[3]}},uke_firmware::dry_action(action),
++                prepare_managed_firmware,verify_managed_firmware,[&] {
++                    select_existing_slot(argv[2],argv[3],action=="select-slot");
++                });
+             return 0;
+         }
+         if(migrating) {
+@@ -608,6 +623,8 @@
+            fs::exists(state/"userdata.state")) {
+             const auto saved=decode(file(state/"userdata.state"));
+             if(pending_development_reboot(rollback,saved.policy,saved.staged_boot_id,boot_id,current.release)) {
++                uke_firmware::with_prepared({{"kernel_release",saved.policy.candidate}},uke_firmware::dry_action(action),
++                    prepare_managed_firmware,verify_managed_firmware,[] {});
+                 std::cout<<"A development trial is already recorded in this boot; automatic staging awaits its reboot; policy remains enabled\n";
+                 return 0;
+             }
+@@ -622,6 +639,7 @@
+                 std::cout<<"Seamless policy enabled; current, pending or older development selection needs no additional staging\n";return;
+             }
+             const bool replacing=plan==SeamlessStage::replace_trial;
++            const auto activate=[&] {
+             uke_color::with_prepared(manifest,current.release,dry,prepare_private_color,[&] {
+                 if(!dry) {
+                     const auto super=partition("super");
+@@ -634,6 +652,10 @@
+                 userdata_update(replacing?(dry?"check-trial":"replace-trial"):(dry?"check":"apply"),selected,bytes,state,
+                                 current.release,filesystem,false,rollback==RollbackMode::off);
+             });
++            };
++            if(action=="boot")uke_firmware::with_prepared(manifest,uke_firmware::dry_action(action),
++                prepare_managed_firmware,verify_managed_firmware,activate);
++            else activate();
+         };
+         if(action=="boot") {
+             boot_userdata(bundle,
+@@ -647,6 +669,13 @@
+         const bool development=label=="userdata" && rollback==RollbackMode::off &&
+             (action=="check" || action=="apply" || automatic || preflight);
+         auto bytes=action=="fallback"?Bytes{}:validate_bundle(bundle,"/usr/lib/modules",label,current.release,rpm,development);
++        std::map<std::string,std::string> firmware_manifest;
++        if(action!="fallback" && !restore) {
++            const auto raw=file(bundle/"manifest");
++            firmware_manifest=properties(std::string(raw.begin(),raw.end()));
++        }
++        return uke_firmware::with_prepared(firmware_manifest,uke_firmware::dry_action(action),
++            prepare_managed_firmware,verify_managed_firmware,[&]() -> int {
+         if(label=="userdata" && !current_only) {
+             if(automatic || preflight) {
+                 inspect_userdata(bundle,bytes);
+@@ -719,6 +748,7 @@
+             std::cout<<"boot_b updated, synced and read back; previous image retained at "<<backup<<". Reboot manually.\n";
+         });
+         return 0;
++        });
+     } catch(const TrialHealthFailure &e) {
+         std::cerr<<"uke-kernel-update: trial health rejected: "<<e.what()<<"; accepted rollback retained\n";return trial_health_rejected;
+     } catch(const std::exception &e) {std::cerr<<"uke-kernel-update: "<<e.what()<<'\n';return 1;}
