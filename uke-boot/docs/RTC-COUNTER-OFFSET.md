@@ -109,3 +109,16 @@ the anchor inode/mtime/size/permissions unchanged and the read-only UTC check
 passes again. No raw record values or live clock restore are used. This
 establishes deployed synchronized provisioning and periodic/idempotent behavior;
 offline/cold-power retention, long-run drift and alarm/wake remain unqualified.
+
+5 November 2026 local, actual12101 boot: installed boot userspace is now
+1.8.95. The monotonic startup journal records the PMIC-counter/private-anchor
+restore at6.705227seconds, before Chrony starts6.748347seconds and first selects
+NTP25.472160seconds. A subsequent root read-only counter/UTC comparison passes;
+the save-only timer is active/waiting and its latest service succeeds. This
+establishes this boot's execution of the startup restore before NTP selection.
+The observer does not invoke a live restore or export private record values.
+It does not establish a deliberately network-isolated boot, cold power-loss
+retention, long-run drift, raw hardware UTC calendar or alarm/wake behavior.
+Canonical observation UKE-BOOT-OBS-20261105-02 also preserves the unrelated
+camera, touch, GPU and CDSP limits. No new native build or package release is
+needed for this documentation-only update; prior tested inputs stay immutable.
