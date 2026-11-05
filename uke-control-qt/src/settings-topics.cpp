@@ -4,6 +4,7 @@
 namespace uq {
 const QList<Topic> &settingTopics() {
   static const QList<Topic> topics{
+    {"manager-overview",i18n("Kernel Manager overview"),i18n("Resource pressure, capabilities and related controls"),"utilities-system-monitor",9,{},{}},
     {"battery",i18n("Battery use"),i18n("Level, temperature and recorded history"),"battery",1,{"battery.status"},{}},
     {"charging",i18n("Charge limit and policy"),i18n("Firmware thresholds, control support and charging preference"),"battery-charging",1,{"kernel.charging"},{"charge.limit","charge.mode"}},
     {"health",i18n("Battery health"),i18n("Reported capacity, cycles and cell topology"),"battery",1,{"battery.health","battery.cells"},{}},
@@ -17,8 +18,8 @@ const QList<Topic> &settingTopics() {
     {"nfc",i18n("NFC tags and reading"),i18n("Built-in tag information and connected NDEF readers"),"network-wireless",3,{"kernel.tag"},{}},
     {"ethernet",i18n("Ethernet"),i18n("Choose a detected interface to inspect or configure"),"network-wired",3,{}, {"ethernet.status","ethernet.profile"}},
     {"sound",i18n("Sound and microphone"),i18n("Audio devices and microphone preference"),"audio-input-microphone",4,{"microphone.status","overview.audio"},{"microphone.select"}},
-    {"storage",i18n("Storage"),i18n("Used and available filesystem space"),"drive-harddisk",5,{"overview.storage"},{}},
-    {"memory",i18n("Memory and swap"),i18n("Available memory, swap usage and allocation policy"),"cpu",5,{"overview.workload","swap.status"},{"swap.set","swap.apply"}},
+    {"storage",i18n("Storage"),i18n("Filesystem space, I/O pressure, latency and queue policy"),"drive-harddisk",5,{"overview.storage"},{}},
+    {"memory",i18n("Memory and swap"),i18n("Pressure, reclaim, swap activity and allocation policy"),"cpu",5,{"overview.workload","swap.status"},{"swap.set","swap.apply"}},
     {"updates",i18n("Software updates"),i18n("Selected channel, available updates and installation"),"system-software-update",6,{"channel.status"},{"update.preview","update.apply","channel.set"}},
     {"kernel",i18n("Kernel and boot slots"),i18n("Running kernel, approval and next boot selection"),"system-reboot",9,{"update.status"},{"boot.set-slot"}},
     {"about",i18n("Device information"),i18n("Hardware, cameras, sensors and firmware"),"dialog-information",6,{"hardware.status","overview.camera","sensors.list"},{}},
@@ -29,6 +30,9 @@ const QList<Topic> &settingTopics() {
     {"serial",i18n("Serial connection"),i18n("Separate session and saved boot policies"),"drive-removable-media-usb",8,{}, {"cdc.session","cdc.persistent"}},
     {"cpu",i18n("CPU"),i18n("Cluster frequencies, processor load and frequency policy"),"cpu",9,{},{}},
     {"gpu",i18n("GPU"),i18n("Reported clock, temperature and frequency limits"),"video-display",9,{},{}},
+    {"thermal",i18n("Thermal and sleep"),i18n("Grouped temperatures, cooling, battery power and wake evidence"),"preferences-system-power-management",9,{},{}},
+    {"profiles",i18n("Application profiles"),i18n("Reviewed CPU sharing and memory limits for active applications"),"configure",9,{},{}},
+    {"diagnostics",i18n("Kernel diagnostics"),i18n("Kernel capabilities, pressure and observed policy changes"),"utilities-system-monitor",9,{},{}},
     {"sensors",i18n("Sensors"),i18n("Live measurements, source status and graphs"),"utilities-system-monitor",9,{}, {"sensors.once","sensors.watch"}}
   };
   return topics;

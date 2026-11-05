@@ -20,7 +20,7 @@ class KernelManager : public QObject {
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(int interval READ interval NOTIFY changed)
     Fixture fixture_;
-    bool restricted_,active_=false,requested_=false,reading_=false;
+    bool restricted_,active_=false,requested_=false,reading_=false,customReader_=false;
     std::function<QJsonObject()> reader_;
     QString mode_,message_,selectedSensor_,outcome_;
     int interval_=2,revision_=0;
@@ -33,6 +33,10 @@ class KernelManager : public QObject {
     QProcess *write_=nullptr;
     QByteArray writeOutput_;
     QJsonObject previousTicks_;
+    QJsonObject previousCounters_;
+    qint64 previousSample_=0;
+    QVariantList events_;
+    QMap<QString,QString> observed_;
     QVariantList devices_,sensors_;
     QVariantMap state_,review_;
     struct Point {double time;QVariant value;};
@@ -65,6 +69,9 @@ public:
     Q_INVOKABLE QString current(const QString &id,const QString &field)const;
     Q_INVOKABLE QString format(const QVariant &value,const QString &unit={})const;
     Q_INVOKABLE bool prepare(const QString &id,const QString &field,const QString &value);
+    Q_INVOKABLE bool prepareResource(const QString &id,const QString &value);
+    Q_INVOKABLE bool prepareApplication(const QString &unit,const QString &preset);
+    Q_INVOKABLE QString summary()const;
     Q_INVOKABLE void dismissReview();
     Q_INVOKABLE bool apply(const QString &token);
 signals:

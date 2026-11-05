@@ -227,7 +227,7 @@ bool Settings::open(const QString &id) {
 void Settings::refresh() {
   stop();notice_.clear();if(!topic_)return;
   queue_=topic_->reads;next();
-  if(topic_->id=="cpu"||topic_->id=="gpu"||topic_->id=="sensors")manager_.open(topic_->id);
+  if(QStringList{"cpu","gpu","sensors","manager-overview","memory","storage","thermal","profiles","diagnostics"}.contains(topic_->id))manager_.open(topic_->id);
 }
 void Settings::stop() {
   manager_.pause();
