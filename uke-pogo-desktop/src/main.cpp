@@ -7,6 +7,7 @@
 #include <QDBusMessage>
 #include <QDBusObjectPath>
 #include <QDBusReply>
+#include <QDBusServiceWatcher>
 #include <QDBusVariant>
 #include <QFile>
 #include <QTimer>
@@ -99,10 +100,11 @@ public:
         for(const char *signal:{"DeviceAdded","DeviceRemoved"})
             system_.connect(QString::fromLatin1(upower),QString::fromLatin1(upower_path),QString::fromLatin1(upower),
                 QString::fromLatin1(signal),this,SLOT(changed(QDBusObjectPath)));
-        connect(system_.interface(),&QDBusConnectionInterface::serviceOwnerChanged,this,
-            [this](const QString &name,const QString &,const QString &){if(name==QLatin1String(upower))wake();});
-        connect(session_.interface(),&QDBusConnectionInterface::serviceOwnerChanged,this,
-            [this](const QString &name,const QString &,const QString &){if(name==QLatin1String(powerdevil))wake();});
+        auto *upower_watcher=new QDBusServiceWatcher(QString::fromLatin1(upower),system_,QDBusServiceWatcher::WatchForOwnerChange,this);
+        auto *powerdevil_watcher=new QDBusServiceWatcher(QString::fromLatin1(powerdevil),session_,QDBusServiceWatcher::WatchForOwnerChange,this);
+        for(auto *watcher:{upower_watcher,powerdevil_watcher})
+            connect(watcher,&QDBusServiceWatcher::serviceOwnerChanged,this,
+                [this](const QString &,const QString &,const QString &){wake();});
     }
     void wake() {attempts_=0;settle_.start();}
     int inspect() {
