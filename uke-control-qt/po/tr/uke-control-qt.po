@@ -1694,3 +1694,9 @@ msgstr "Kullanılamıyor; sağlayıcıyı ve erişim izinlerini kontrol edin"
 
 msgid "Normal"
 msgstr "Normal"
+
+msgid "Session observations"
+msgstr "Oturum gözlemleri"
+
+msgid "Monitoring options"
+msgstr "İzleme seçenekleri"

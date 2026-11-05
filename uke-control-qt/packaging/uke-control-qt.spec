@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.4.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -93,6 +93,10 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.4.0-4
+- Keep the authorized initial device read when monitoring pauses and wait for delivered results in live checks.
+- Keep graphs near the current measurements and disclose monitoring/source details on demand.
+
 * Thu Nov 05 2026 Uke contributors - 1.4.0-3
 - Limit review dialogs and sensor selection to the visible settings page.
 - Exercise a reviewed GPU request after visiting the CPU page.

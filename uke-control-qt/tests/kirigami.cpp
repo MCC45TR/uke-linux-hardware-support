@@ -395,7 +395,7 @@ private slots:
     engine.loadFromModule("org.uke.ControlQtTest","Main");
     QVERIFY(!engine.rootObjects().isEmpty());
     auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
-    window->resize(720,960);window->show();
+    window->resize(720,960);window->show();window->requestActivate();QTest::qWait(250);
     for(const auto *topic:{"usb","charging","nfc","cpu","gpu","sensors"}) {
       const QString id(topic);const int area=id=="charging"?1:id=="cpu"||id=="gpu"||id=="sensors"?9:3;
       QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,area)));
@@ -406,7 +406,7 @@ private slots:
       if(id=="cpu"||id=="gpu"||id=="sensors") {
         auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
         QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);
-        if(id=="sensors")QVERIFY(!manager->sensors().isEmpty());else QVERIFY(!manager->devices().isEmpty());
+        if(id=="sensors")QTRY_VERIFY_WITH_TIMEOUT(!manager->sensors().isEmpty(),30000);else QTRY_VERIFY_WITH_TIMEOUT(!manager->devices().isEmpty(),30000);
         if(id=="sensors"){manager->setInterval(1);manager->start();}
         QTest::qWait(2200);manager->refresh();QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);
         manager->pause();

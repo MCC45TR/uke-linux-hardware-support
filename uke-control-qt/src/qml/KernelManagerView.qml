@@ -10,12 +10,13 @@ ColumnLayout {
     property bool currentPage: false
     readonly property var manager: backend.settings.manager
     property int seconds: 120
+    property bool optionsExpanded: false
     Layout.fillWidth: true
     spacing: 0
     FormCard.FormHeader { title: i18n("Senemos Kernel Manager") }
     FormCard.FormCard {
         Layout.fillWidth: true
-        SafeText { text: manager.active ? i18n("Live monitoring") : i18n("Monitoring paused"); description: i18n("Graphs contain observations from this session only. Collection pauses when leaving this page or switching away from the application.") }
+        SafeText { visible: view.optionsExpanded; text: i18n("Session observations"); description: i18n("Graphs contain observations from this session only. Collection pauses when leaving this page or switching away from the application.") }
         FormCard.FormSwitchDelegate {
             objectName: "kernelMonitoring"
             text: i18n("Live monitoring")
@@ -23,6 +24,7 @@ ColumnLayout {
             onToggled: { if (view.currentPage) { if (checked) view.manager.start(); else view.manager.pause() } }
         }
         FormCard.FormComboBoxDelegate {
+            visible: view.optionsExpanded
             text: i18n("Read interval")
             model: [{title:i18n("1 second"),value:1},{title:i18n("2 seconds"),value:2},{title:i18n("5 seconds"),value:5}]
             textRole: "title"
@@ -30,13 +32,15 @@ ColumnLayout {
             onActivated: index => view.manager.setInterval(model[index].value)
         }
         FormCard.FormComboBoxDelegate {
+            visible: view.optionsExpanded
             text: i18n("Graph window")
             model: [{title:i18n("1 minute"),value:60},{title:i18n("2 minutes"),value:120},{title:i18n("10 minutes"),value:600}]
             textRole: "title"
             currentIndex: view.seconds === 60 ? 0 : view.seconds === 120 ? 1 : 2
             onActivated: index => view.seconds = model[index].value
         }
-        FormCard.FormButtonDelegate { text: i18n("Read once"); icon.name: themeIcons.names["view-refresh"]; enabled: !view.manager.busy; onClicked: view.manager.refresh() }
+        FormCard.FormButtonDelegate { text: i18n("Monitoring options"); icon.name: themeIcons.names["configure"]; onClicked: view.optionsExpanded = !view.optionsExpanded }
+        FormCard.FormButtonDelegate { visible: !view.manager.active; text: i18n("Read once"); icon.name: themeIcons.names["view-refresh"]; enabled: !view.manager.busy; onClicked: view.manager.refresh() }
     }
     Kirigami.InlineMessage { Layout.fillWidth: true; visible: view.manager.message.length > 0; text: view.manager.message; type: Kirigami.MessageType.Information }
     Loader {

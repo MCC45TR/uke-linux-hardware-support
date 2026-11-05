@@ -12,6 +12,7 @@ ColumnLayout {
     property string search: ""
     property string selectedId: ""
     property int shown: 12
+    property bool details: false
     readonly property var catalog: manager.sensors.filter(s => (group === "all" || s.group === group) && (s.title + " " + s.id).toLowerCase().includes(search.toLowerCase()))
     readonly property var descriptor: catalog.find(s => s.id === selectedId) || ({})
     readonly property var selectedReading: manager.state.sensorValues ? (manager.state.sensorValues[selectedId] || {}) : ({})
@@ -23,7 +24,7 @@ ColumnLayout {
     spacing: 0
     FormCard.FormCard {
         Layout.fillWidth: true
-        SafeText { text: i18n("Sensor observations"); description: i18n("Kernel thermal, hwmon and IIO readings are shown with their source units. Desktop light and motion values may be cached; source sample age can be unknown. A missing reading is never replaced with zero.") }
+        SafeText { visible: view.details; text: i18n("Sensor observations"); description: i18n("Kernel thermal, hwmon and IIO readings are shown with their source units. Desktop light and motion values may be cached; source sample age can be unknown. A missing reading is never replaced with zero.") }
         FormCard.FormComboBoxDelegate {
             text: i18n("Sensor group")
             model: [{title:i18n("Temperature zones"),value:"thermal"},{title:i18n("Analog and IIO sensors"),value:"iio"},{title:i18n("Hardware monitors"),value:"hwmon"},{title:i18n("Desktop light and motion"),value:"desktop"},{title:i18n("All sensors"),value:"all"}]
@@ -40,9 +41,10 @@ ColumnLayout {
             currentIndex: { for (let i=0;i<model.length;++i) if (model[i].id === view.selectedId) return i; return -1 }
             onActivated: index => view.selectedId = model[index].id
         }
-        SafeText { text: i18n("Selected source"); description: view.selectedId }
+        SafeText { visible: view.details; text: i18n("Selected source"); description: view.selectedId }
         SafeText { text: i18n("Current value"); description: view.selectedReading.value !== null && view.selectedReading.value !== undefined ? view.manager.format(view.selectedReading.value, view.descriptor.unit || "") : view.selectedReading.text || i18n("Not reported") }
         SafeText { text: i18n("Source state"); description: view.selectedReading.status || i18n("Not reported") }
+        FormCard.FormButtonDelegate { text: view.details ? i18n("Less information") : i18n("More information"); icon.name: themeIcons.names["view-list-details"]; onClicked: view.details = !view.details }
     }
     MetricChart { manager: view.manager; metric: "sensor:" + view.selectedId; heading: view.descriptor.title || i18n("Sensor history"); unit: view.descriptor.unit || ""; seconds: view.seconds }
     FormCard.FormHeader { title: i18n("Readings · %1", view.catalog.length) }

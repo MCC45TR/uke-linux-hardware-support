@@ -53,13 +53,13 @@ KernelManager::KernelManager(Fixture f,QObject *parent,bool restricted):QObject(
 KernelManager::~KernelManager(){pause();if(write_){write_->disconnect(this);write_->kill();connect(write_,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),write_,&QObject::deleteLater);}}
 void KernelManager::open(const QString &mode) {
     if(mode!="cpu"&&mode!="gpu"&&mode!="sensors")return;
-    if(mode_!=mode){pause();dismissReview();mode_=mode;outcome_.clear();message_.clear();history_.clear();previousTicks_={};state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
+    if(mode_!=mode){pause();++generation_;dismissReview();mode_=mode;outcome_.clear();message_.clear();history_.clear();previousTicks_={};state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
     requested_=true;
     if(mode=="sensors"){interval_=5;timer_.setInterval(5000);refresh();}else start();
 }
 void KernelManager::start(){if(mode_.isEmpty()||write_)return;active_=true;timer_.start(interval_*1000);deadline_.start(600000);refresh();emit changed();}
-void KernelManager::pause(){active_=false;requested_=false;timer_.stop();deadline_.stop();++generation_;queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
-void KernelManager::close(){pause();mode_.clear();dismissReview();}
+void KernelManager::pause(){active_=false;requested_=false;timer_.stop();deadline_.stop();queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
+void KernelManager::close(){pause();++generation_;mode_.clear();dismissReview();}
 void KernelManager::setInterval(int seconds){if(seconds!=1&&seconds!=2&&seconds!=5)return;interval_=seconds;if(active_)timer_.start(seconds*1000);emit changed();}
 void KernelManager::refresh() {
     if(mode_.isEmpty()||busy())return;
