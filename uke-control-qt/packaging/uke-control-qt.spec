@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.5.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -118,6 +118,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.5.0-4
+- Retain the queued telemetry-result race fix and its isolated regression check.
+
 * Thu Nov 05 2026 Uke contributors - 1.5.0-3
 - Retain the latest delivered Kernel Manager review, graph and initial-read fixes.
 
