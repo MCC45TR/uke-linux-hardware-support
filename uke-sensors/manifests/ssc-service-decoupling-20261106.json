@@ -4,13 +4,41 @@
   "parent_build": 11239521,
   "parent_source_rpm_sha256": "9cdc893e2b96ce1ec3e7b992a4ea4d2d3f11178c38d827a56b0af398104ffe5a",
   "source_family": "uke-sensor-integration-1.0.0-6",
-  "allowed_binary_packages": ["uke-ssc-fileservice-2026.09.21-32", "uke-ssc-fileservice-debuginfo-2026.09.21-32", "uke-ssc-fileservice-debugsource-2026.09.21-32"],
-  "removed_requirements": ["iio-sensor-proxy(ssc) >= 1", "iio-sensor-proxy(uke-dual-light) >= 1"],
+  "allowed_binary_packages": [
+    "uke-ssc-fileservice-2026.09.21-32",
+    "uke-ssc-fileservice-debuginfo-2026.09.21-32",
+    "uke-ssc-fileservice-debugsource-2026.09.21-32"
+  ],
+  "removed_requirements": [
+    "iio-sensor-proxy(ssc) >= 1",
+    "iio-sensor-proxy(uke-dual-light) >= 1"
+  ],
   "native_sources_and_tests_unchanged": true,
   "firmware_file_requirements_retained": true,
   "read_only_persist_and_ram_registry_retained": true,
   "service_ordering_and_upgrade_scripts_retained": true,
   "frontend_retirement_authorized": false,
   "physical_acceptance": false,
-  "remaining_gates": ["Original distribution frontend compatibility", "Motion axes and both ALS semantics", "Proximity and restart/suspend behavior", "Core/adaptive-display dependency closure", "Private registry and user preference preservation"]
+  "remaining_gates": [
+    "Original distribution frontend compatibility",
+    "Motion axes and both ALS semantics",
+    "Proximity and restart/suspend behavior",
+    "Core/adaptive-display dependency closure",
+    "Private registry and user preference preservation"
+  ],
+  "qualification": {
+    "copr_build": 11268501,
+    "state": "succeeded",
+    "duration_seconds": 85,
+    "source_commit": "3ebef7605313608fe9994192d654bff24ce4eceb",
+    "source_rpm_sha256": "f773367637700cbac68ad1ccfa0babebd07fea6da27c7230e5cd6a5e4e3654b1",
+    "native_log_sha256": "f8f316f9348b626c3c956cc18d4cce2cb32744c8ecd08d576e955e4de7977b4a",
+    "only_selected_runtime_debug_outputs": true,
+    "rpm_signatures": 3,
+    "unchanged_data_payloads": 6,
+    "upgrade_scripts_and_triggers_unchanged": true,
+    "remaining_installed_requirement_providers": 32,
+    "normal_repository_visible": true,
+    "tablet_installed": false
+  }
 }

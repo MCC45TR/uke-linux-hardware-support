@@ -44,3 +44,13 @@ regular expression with exact parsed section-name comparison against the three
 allowed packages. The real parent transformation passes this local metadata
 check without compilation. Fresh source release 6 and service release 32 retain
 the same code and dependency scope; all native admission remains mandatory.
+
+COPR 11268501 succeeds in 85 seconds from source `3ebef760`. All original
+native tests pass. The three signed RPMs have exactly the selected identities;
+the dependency delta is precisely the two capability requirements. All other
+requirements resolve on the running tablet. The six data payloads, file modes,
+config flags, upgrade scripts and triggers match installed release 29; ELF
+outputs remain native AArch64 without a SensorProxy/libssc linkage. The normal
+configured repository now exposes release 32. Tablet installation and service
+restart acceptance remain pending authenticated DNF access; no installed
+frontend or calibration has been removed or modified.
