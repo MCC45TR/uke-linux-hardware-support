@@ -1,0 +1,121 @@
+{
+  "build": 11264107,
+  "source_commit": "6b6aeb895d788bf4fee4f47acc25327a39b37292",
+  "packages": [
+    {
+      "name": "uke-boot-integration",
+      "version": "1.8.97-1.fc46",
+      "arch": "aarch64",
+      "header_sha256": "446b242ff9543365c241a66954e0093337f5c73b264c13d77e38afcdf96844e6",
+      "payload_sha256": "91263900372d14c701d6884ec2c7b4f0652e1d7e69ffc46df117afcdeec2c7a1",
+      "rpm_sha256": "386204da8ce0d85fc2409064be88e21c4282682fa8367a76266ac3a7b942dcb8",
+      "size": 234740,
+      "trusted_signatures": true
+    },
+    {
+      "name": "uke-boot-recovery",
+      "version": "1.8.97-1.fc46",
+      "arch": "aarch64",
+      "header_sha256": "d9b4a354ff2fbec4c258765015e8d13bbce45ffd010c1a2420df2199b8eed1c3",
+      "payload_sha256": "1cf9e73ec4eae80d5f1237396938b02bc26c76af74967127655aaabbc5b75614",
+      "rpm_sha256": "4a8d9d5f59863d260b646184a3e855b4666bdf13b8befac5b6f40de6806abbfd",
+      "size": 36836,
+      "trusted_signatures": true
+    },
+    {
+      "name": "uke-cdc-debug",
+      "version": "1.8.97-1.fc46",
+      "arch": "aarch64",
+      "header_sha256": "8d2545f45626d2dac06c5823ae61effe232865c7a7ee7b9396d6e71d5e36eef7",
+      "payload_sha256": "2ee0db064e39c9efdf7c58c319f72cb84b082c9334ab9754dbdeb42c282be093",
+      "rpm_sha256": "3463fea589336bf503531b6c8f7aebaaf5c63ac729b41bfc25eeb8d7c96d7e27",
+      "size": 10810,
+      "trusted_signatures": true
+    },
+    {
+      "name": "uke-esp32-cdc",
+      "version": "1.8.97-1.fc46",
+      "arch": "aarch64",
+      "header_sha256": "0bb96986cf8c97fe94d17b83006cfe5627e9674e0bc4f0e9653f4abc285d84b8",
+      "payload_sha256": "b9a9ac9950f5a34107a4d12951fd997bdfe8a9366b90e8f13505435479973f68",
+      "rpm_sha256": "5c85e26b0017a09398b6df30733b5be0ca62083a562e3e24c71a68c71ad6ec8a",
+      "size": 18865,
+      "trusted_signatures": true
+    },
+    {
+      "name": "uke-installation-profile",
+      "version": "1.8.97-1.fc46",
+      "arch": "aarch64",
+      "header_sha256": "ab53f0c56cebc6dcfd8f9c7bd868473dcc5d6cbe1ea5eeab415a44c1bc9d8b2b",
+      "payload_sha256": "551055e1e8d45680ade5d69440b81cacf66bb87c0d58e016cdc95bed574de92e",
+      "rpm_sha256": "5c857422b13b9662bf24dd863670b4180517a6685b4eb00105a9494301912f41",
+      "size": 69767,
+      "trusted_signatures": true
+    },
+    {
+      "name": "uke-kernel-update",
+      "version": "1.8.97-1.fc46",
+      "arch": "aarch64",
+      "header_sha256": "1d05681469a9ab30e0fd932f328986b241b65d7e89f780d6dd91d0d8d4b73c08",
+      "payload_sha256": "23e75f2c1ba5cf5783a653abd8da12d4aeb0adb171ac48218704c95da3bfb734",
+      "rpm_sha256": "70d2d7e8bd1478dde598f3ba3371a3d24608ecaa5c9dc51740a59182a2426440",
+      "size": 209374,
+      "trusted_signatures": true
+    }
+  ],
+  "target_installation": false,
+  "physical_acceptance": false,
+  "native_log_sha256": "cf4e7a880e157145ba33cb4bea510bec100cff4dbf5a1e25ff1cee9272ab66f0",
+  "source_log_sha256": "e6de2681c76259f1cc642218f532a9699902ad70f8ee52ba36fa8cf87a5a60ca",
+  "duration_seconds": 350,
+  "gate_checks_per_mode": 165,
+  "actual_boot_checks_per_mode": 184,
+  "compiler_sanitizer_modes": 4,
+  "retained_native_checks": true,
+  "installed95_scriptlets_identical": true,
+  "rollback_default": "enforced",
+  "rollback_noreplace": true,
+  "only_added_runtime_requirement": "uke-cdsp-pogo-firmware >= 0.2-8",
+  "provider8_installed_requirement_closure": true,
+  "schema_version": 1,
+  "date": "2026-11-05",
+  "environment": "Fedora46 AArch64 COPR",
+  "target_compilation": false,
+  "source_review": "Independent exact-source firmware-owner review lifted the boot-acceptance block",
+  "negative_controls": [
+    "Original1.8.95 color-only boundary",
+    "Original1.8.96 ungated boot acceptance",
+    "Missing firmware verification",
+    "Preparation during dry checks",
+    "Read-only classification of replace-trial"
+  ],
+  "provider": {
+    "version": "0.2-8.fc46",
+    "build": 11263798,
+    "source_commit": "ffbb53923e86436cc280a730a1f9365a3dcc6e6a",
+    "rpm_sha256": "783075493b3cade1f0e0ca3fac3afa14b52301a0c5e1ab17f97129383437dc73",
+    "header_sha256": "62e45846f1fa8b7de9707a3a82127fdee04e0113969cadbbec65a45e6e82b456",
+    "native_log_sha256": "d87d755d91422cc0e6bf2b5a87cd6610cb036285821bac973630bc3e861367cb",
+    "trusted_signatures": true,
+    "firmware_payload": false
+  },
+  "trusted_key_fingerprint": "2204A661EA630A5303500085538797E72A3E4ECA",
+  "retired_candidate": {
+    "version": "1.8.96-1.fc46",
+    "build": 11264067,
+    "source_commit": "4473b3712c2ab2b5effc3c1685761492011fbac1",
+    "native_log_sha256": "27468c7f7ba7ae2ee424b8e8837c9d680366a852a0bce4d021d05178a218a7fb",
+    "native_build": "succeeded",
+    "reason": "Actual boot acceptance bypassed firmware admission for unchanged default",
+    "target_installed": false,
+    "api_after_retirement": 404,
+    "successor_dependency": false
+  },
+  "delivery": "Coordinator normal repository DNF required",
+  "hardware_limits": [
+    "Firmware preparation on target remains unverified",
+    "Complete calibrated cameras and rear focus remain open",
+    "Real input/display continuity and repeated recovery remain open",
+    "DSP compute and physical accessory acceptance remain open"
+  ]
+}
