@@ -1,13 +1,14 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.5.0
-Release:        5%{?dist}
+Version:        1.6.0
+Release:        6%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
 Provides:       uke-control-qt = %{version}-%{release}
 Obsoletes:      uke-control-qt < 1.0.0-3
 BuildRequires:  gcc-c++
+BuildRequires:  zlib-devel
 BuildRequires:  cmake
 BuildRequires:  make
 BuildRequires:  gettext
@@ -100,8 +101,12 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %license LICENSE
 %doc README.md
 %{_bindir}/uke-control-qt
+%{_bindir}/uke-kernel-status
 %{_libexecdir}/uke-control-qt/kernel-information
 %{_libexecdir}/uke-control-qt/frequency-control
+%{_libexecdir}/uke-control-qt/resource-control
+%{_libexecdir}/uke-control-qt/application-control
+%{_datadir}/polkit-1/actions/org.senemos.uke.resource-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.frequency-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.qt-kernel-information.policy
 %{_datadir}/applications/org.uke.ControlQt.desktop
@@ -119,6 +124,28 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.6.0-6
+- Bound transient telemetry identities and separate restarted application counters.
+
+* Thu Nov 05 2026 Uke contributors - 1.6.0-5
+- Keep current readings in chart cards and disclose graph selection on demand.
+
+* Thu Nov 05 2026 Uke contributors - 1.6.0-4
+- Initialize hidden numeric editors for categorical and unavailable providers.
+
+* Thu Nov 05 2026 Uke contributors - 1.6.0-3
+- Bound application enumeration and remember the last manually selected preset.
+- Keep application CPU/memory graphs beside resource controls and remove thermal mirrors by provider.
+
+* Thu Nov 05 2026 Uke contributors - 1.6.0-2
+- Inspect bounded DRM client counters and deduplicate hwmon temperature sources.
+- Export bounded session reports and exercise new resource controls in QML fixtures.
+
+* Thu Nov 05 2026 Uke contributors - 1.6.0-1
+- Add kernel resource pages, pressure and I/O graphs, residency and capability explanations.
+- Add reviewed runtime policies and user application resource presets with readback.
+- Provide readable kernel resource information in the terminal.
+
 * Thu Nov 05 2026 Uke contributors - 1.5.0-5
 - Require the qualified ARM64-only media integration whenever Waydroid is installed.
 

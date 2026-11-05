@@ -56,8 +56,8 @@ FormCard.FormCardPage {
     }
     Loader {
         Layout.fillWidth: true
-        active: ["cpu", "gpu", "sensors"].includes(page.topicId)
-        sourceComponent: Component { KernelManagerView { mode: page.topicId; currentPage: page.appWindow.pageStack.currentItem === page && settings.topic.id === page.topicId } }
+        active: ["cpu", "gpu", "sensors", "manager-overview", "memory", "storage", "thermal", "profiles", "diagnostics"].includes(page.topicId)
+        sourceComponent: Component { KernelManagerView { mode: page.topicId; appWindow: page.appWindow; currentPage: page.appWindow.pageStack.currentItem === page && settings.topic.id === page.topicId } }
     }
     Loader {
         Layout.fillWidth: true

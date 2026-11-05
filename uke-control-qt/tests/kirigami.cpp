@@ -380,6 +380,13 @@ private slots:
           manager->dismissReview();QTRY_COMPARE(visibleReviews(),0);
         }
       }
+      if(topic.id=="memory"||topic.id=="storage"||topic.id=="thermal"||topic.id=="profiles"||topic.id=="diagnostics"||topic.id=="manager-overview") {
+        QVERIFY(visualItem(window->contentItem(),"kernelMonitoring"));
+        auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
+        QVERIFY(!manager->state().value("sections").toList().isEmpty());
+        QVERIFY(visualItem(window->contentItem(),"resourceValue_memory.swappiness"));
+        snapshot(window,"settings-"+topic.id);
+      }
     }
     QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,0)));snapshot(window,"settings-home");
     QVERIFY(QMetaObject::invokeMethod(window,"openSearch"));
@@ -387,6 +394,26 @@ private slots:
     search->setProperty("text","kernel");snapshot(window,"settings-search");
     window->close();
     warnings.removeIf([](const QString &w){return w.contains("Main.qml:")&&w.endsWith("Created graphical object was not placed in the graphics scene.");});
+    QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
+  }
+  void optionalResourceReads() {
+    if(!qEnvironmentVariableIsSet("UKE_QT_TEST_RESOURCE_READS"))QSKIP("Actual resource reads require explicit opt-in");
+    Bridge bridge({},true);QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);
+    engine.rootContext()->setContextProperty("backend",&bridge);engine.rootContext()->setContextProperty("themeIcons",&themeIcons);engine.rootContext()->setContextProperty("styleNotice",QString());
+    QStringList warnings;connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});
+    engine.loadFromModule("org.uke.ControlQtTest","Main");QVERIFY(!engine.rootObjects().isEmpty());
+    auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);window->resize(720,960);window->show();
+    auto *settings=qobject_cast<Settings *>(bridge.settings());auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
+    for(const auto *id:{"manager-overview","cpu","gpu","memory","storage","thermal","profiles","diagnostics"}) {
+      QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,QString(id)=="memory"||QString(id)=="storage"?5:9)));
+      QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString(id))));
+      QTRY_VERIFY_WITH_TIMEOUT(!settings->busy()&&!manager->busy(),30000);
+      QTRY_VERIFY_WITH_TIMEOUT(!manager->state().value("sections").toList().isEmpty(),30000);
+      QTest::qWait(1100);manager->refresh();QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);manager->pause();
+      if(QString(id)=="memory")QVERIFY(manager->plot("memory/used").value("points").toInt()>=2);
+      snapshot(window,"resource-device-"+QString(id));qInfo("Read-only resource scene completed: %s",id);
+    }
+    window->close();warnings.removeIf([](const QString &w){return w.contains("Main.qml:")&&w.endsWith("Created graphical object was not placed in the graphics scene.");});
     QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
   }
   void optionalDeviceReads() {

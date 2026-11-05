@@ -2,11 +2,13 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 ColumnLayout {
     id: view
     required property string mode
+    property var appWindow
     property bool currentPage: false
     readonly property var manager: backend.settings.manager
     property int seconds: 120
@@ -14,6 +16,14 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 0
     FormCard.FormHeader { title: i18n("Senemos Kernel Manager") }
+    FormCard.FormCard {
+        visible: view.mode === "manager-overview"
+        Layout.fillWidth: true
+        Repeater {
+            model: [{id:"cpu",title:i18n("CPU"),icon:"cpu"},{id:"gpu",title:i18n("GPU"),icon:"video-display"},{id:"memory",title:i18n("Memory and swap"),icon:"cpu"},{id:"storage",title:i18n("Storage"),icon:"drive-harddisk"},{id:"thermal",title:i18n("Thermal and sleep"),icon:"preferences-system-power-management"},{id:"profiles",title:i18n("Application profiles"),icon:"configure"},{id:"diagnostics",title:i18n("Diagnostics"),icon:"utilities-system-monitor"}]
+            delegate: FormCard.FormButtonDelegate { required property var modelData; text: modelData.title; icon.name: themeIcons.names[modelData.icon]; onClicked: if (view.appWindow) view.appWindow.openTopic(modelData.id) }
+        }
+    }
     FormCard.FormCard {
         Layout.fillWidth: true
         SafeText { visible: view.optionsExpanded; text: i18n("Session observations"); description: i18n("Graphs contain observations from this session only. Collection pauses when leaving this page or switching away from the application.") }
@@ -40,13 +50,26 @@ ColumnLayout {
             onActivated: index => view.seconds = model[index].value
         }
         FormCard.FormButtonDelegate { text: i18n("Monitoring options"); icon.name: themeIcons.names["configure"]; onClicked: view.optionsExpanded = !view.optionsExpanded }
+        SafeText { visible: view.optionsExpanded; text: i18n("Last observation"); description: view.manager.state.sampledAt || i18n("Not read yet") }
+        FormCard.FormButtonDelegate { visible: view.optionsExpanded; text: i18n("Save session report"); description: i18n("Save a bounded text report locally. No files are uploaded."); icon.name: themeIcons.names["document-export"]; onClicked: reportFile.open() }
         FormCard.FormButtonDelegate { visible: !view.manager.active; text: i18n("Read once"); icon.name: themeIcons.names["view-refresh"]; enabled: !view.manager.busy; onClicked: view.manager.refresh() }
     }
+    FileDialog { id: reportFile; title: i18n("Save session report"); fileMode: FileDialog.SaveFile; nameFilters: [i18n("Text reports (*.txt)")]; onAccepted: view.manager.exportReport(selectedFile) }
     Kirigami.InlineMessage { Layout.fillWidth: true; visible: view.manager.message.length > 0; text: view.manager.message; type: Kirigami.MessageType.Information }
     Loader {
         Layout.fillWidth: true
         active: view.mode === "cpu" || view.mode === "gpu"
         sourceComponent: Component { PerformanceView { manager: view.manager; mode: view.mode; seconds: view.seconds } }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: view.mode === "profiles"
+        sourceComponent: Component { ApplicationProfiles { manager: view.manager } }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: view.mode !== "sensors"
+        sourceComponent: Component { ResourceView { manager: view.manager; mode: view.mode; seconds: view.seconds } }
     }
     Loader {
         Layout.fillWidth: true
@@ -56,16 +79,16 @@ ColumnLayout {
     FormCard.FormCardDialog {
         id: review
         objectName: "frequencyReview"
-        title: i18n("Review frequency change")
+        title: i18n("Review kernel resource change")
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 30)
         height: Math.min(implicitHeight, parent.height - Kirigami.Units.largeSpacing * 2)
         standardButtons: view.manager.busy ? Controls.Dialog.NoButton : Controls.Dialog.Cancel
         closePolicy: view.manager.busy ? Controls.Popup.NoAutoClose : Controls.Popup.CloseOnEscape
         onRejected: view.manager.dismissReview()
-        SafeText { text: view.manager.review.id || ""; description: view.manager.review.field === "maximum" ? i18n("Maximum frequency") : view.manager.review.field === "minimum" ? i18n("Minimum frequency") : i18n("Governor") }
+        SafeText { text: view.manager.review.id || ""; description: view.manager.review.field === "maximum" ? i18n("Maximum frequency") : view.manager.review.field === "minimum" ? i18n("Minimum frequency") : view.manager.review.field === "governor" ? i18n("Governor") : view.manager.review.field || "" }
         SafeText { text: i18n("Current value"); description: view.manager.review.before || "" }
         SafeText { text: i18n("Requested value"); description: view.manager.review.after || "" }
-        SafeText { text: i18n("Scope of the change"); description: i18n("One setting is changed after administrator authorization and checked by reading it back. Thermal protection remains active. No boot configuration is changed.") }
+        SafeText { text: i18n("Scope of the change"); description: view.manager.review.kind === "application" ? i18n("This preset affects only the selected application invocation. Existing limits are replaced with the reviewed preset. The current unit and resulting limits are checked before reporting success.") : i18n("One runtime setting is changed after administrator authorization and checked by reading it back. Changes are not saved for the next boot. Memory and storage controls affect the whole system. Desktop power management can subsequently replace frequency settings.") }
         SafeText { visible: view.manager.review.blocked || false; text: i18n("Action disabled"); description: i18n("Simulation and read-only sessions cannot apply frequency changes.") }
         FormCard.FormButtonDelegate {
             objectName: "applyFrequency"

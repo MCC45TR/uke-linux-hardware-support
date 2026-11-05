@@ -37,7 +37,7 @@ ColumnLayout {
         SafeText {
             visible: view.details
             text: i18n("Measurement meaning")
-            description: view.mode === "cpu" ? i18n("CPU frequency is reported by the scaling driver and can differ from the hardware clock. Load is computed from successive kernel CPU counters.") : i18n("GPU frequency is reported by devfreq. This driver does not export a GPU load percentage; clock frequency is not utilization.")
+            description: view.mode === "cpu" ? i18n("CPU frequency is reported by the scaling driver and can differ from the hardware clock. Load is computed from successive kernel CPU counters.") : i18n("GPU frequency is reported by devfreq. Clock frequency is not utilization. Available application engine counters are shown separately below.")
         }
         FormCard.FormButtonDelegate { text: view.details ? i18n("Less information") : i18n("More information"); icon.name: themeIcons.names["view-list-details"]; onClicked: view.details = !view.details }
     }

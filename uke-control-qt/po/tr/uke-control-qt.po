@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: uke-control-qt 1.5.0\n"
+"Project-Id-Version: uke-control-qt 1.6.0\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1828,3 +1828,198 @@ msgstr "Oturum gözlemleri"
 
 msgid "Monitoring options"
 msgstr "İzleme seçenekleri"
+
+msgid "Kernel Manager overview"
+msgstr "Kernel Manager özeti"
+
+msgid "Resource pressure, capabilities and related controls"
+msgstr "Kaynak baskısı, çekirdek desteği ve ilgili ayarlar"
+
+msgid "Thermal and sleep"
+msgstr "Sıcaklık ve uyku"
+
+msgid "Grouped temperatures, cooling, battery power and wake evidence"
+msgstr "Gruplanmış sıcaklıklar, soğutma, pil gücü ve uyanma bilgileri"
+
+msgid "Application profiles"
+msgstr "Uygulama profilleri"
+
+msgid "Reviewed CPU sharing and memory limits for active applications"
+msgstr "Çalışan uygulamalar için gözden geçirilen CPU paylaşımı ve bellek sınırları"
+
+msgid "Kernel diagnostics"
+msgstr "Çekirdek tanılama"
+
+msgid "Kernel capabilities, pressure and observed policy changes"
+msgstr "Çekirdek desteği, kaynak baskısı ve gözlenen ayar değişiklikleri"
+
+msgid "Live measurements"
+msgstr "Canlı ölçümler"
+
+msgid "Read from the kernel"
+msgstr "Çekirdekten okundu"
+
+msgid "This kernel does not export this interface"
+msgstr "Bu çekirdek bu arayüzü sunmuyor"
+
+msgid "Requires additional kernel support"
+msgstr "Ek çekirdek desteği gerekiyor"
+
+msgid "Kernel module support; check the runtime provider"
+msgstr "Modül desteği var; çalışan sağlayıcıyı kontrol edin"
+
+msgid "Access denied"
+msgstr "Erişim reddedildi"
+
+msgid "The driver exports the file but has no data"
+msgstr "Sürücü dosyayı sunuyor ancak veri döndürmüyor"
+
+msgid "The provider could not be read"
+msgstr "Sağlayıcı okunamadı"
+
+msgid "The provider returned no value"
+msgstr "Sağlayıcı değer döndürmedi"
+
+msgid "No unambiguous backing queue was found"
+msgstr "Kesin olarak eşleştirilebilen bir depolama kuyruğu bulunamadı"
+
+msgid "System power profile"
+msgstr "Sistem güç profili"
+
+msgid "Who controls frequency?"
+msgstr "Frekansı ne belirliyor?"
+
+msgid "First graph"
+msgstr "İlk grafik"
+
+msgid "Choose graphs"
+msgstr "Grafikleri seç"
+
+msgid "Second graph"
+msgstr "İkinci grafik"
+
+msgid "Show less"
+msgstr "Daha az göster"
+
+msgid "Show all %1 readings"
+msgstr "%1 ölçümün tümünü göster"
+
+msgid "Runtime controls"
+msgstr "Çalışma anındaki ayarlar"
+
+msgid "Advanced kernel controls"
+msgstr "Gelişmiş çekirdek ayarları"
+
+msgid "Show governor tuning, memory experiments and queue details, including unavailable interfaces."
+msgstr "Governor ayrıntılarını, bellek deneylerini ve kuyruk ayarlarını kullanılamayan arayüzlerle birlikte göster."
+
+msgid "Current: %1 %2"
+msgstr "Geçerli: %1 %2"
+
+msgid "Control unavailable"
+msgstr "Ayar kullanılamıyor"
+
+msgid "Requested value (%1–%2)"
+msgstr "İstenen değer (%1–%2)"
+
+msgid "Review change"
+msgstr "Değişikliği gözden geçir"
+
+msgid "Session events"
+msgstr "Oturum olayları"
+
+msgid "No changes recorded"
+msgstr "Kaydedilmiş değişiklik yok"
+
+msgid "Application resource profiles"
+msgstr "Uygulama kaynak profilleri"
+
+msgid "Scope"
+msgstr "Kapsam"
+
+msgid "Preset"
+msgstr "Profil"
+
+msgid "Prioritized"
+msgstr "Öncelikli"
+
+msgid "Background"
+msgstr "Arka plan"
+
+msgid "Resource limited"
+msgstr "Kaynakları sınırlı"
+
+msgid "No managed applications found"
+msgstr "Yönetilen uygulama bulunamadı"
+
+msgid "Open an application from the desktop application launcher, then refresh. System services and applications owned by other users are excluded."
+msgstr "Masaüstü uygulama başlatıcısından bir uygulama açıp yenileyin. Sistem hizmetleri ve başka kullanıcıların uygulamaları bu listede yer almaz."
+
+msgid "CPU weight: %1 · Memory high: %2"
+msgstr "CPU ağırlığı: %1 · Bellek eşiği: %2"
+
+msgid "Kernel controls"
+msgstr "Çekirdek denetimleri"
+
+msgid "Requires kernel support"
+msgstr "Çekirdek desteği gerekiyor"
+
+msgid "Review %1 preset"
+msgstr "%1 profilini gözden geçir"
+
+msgid "Review kernel resource change"
+msgstr "Çekirdek kaynak değişikliğini gözden geçir"
+
+msgid "Last observation"
+msgstr "Son gözlem"
+
+msgid "Not read yet"
+msgstr "Henüz okunmadı"
+
+msgid "Save session report"
+msgstr "Oturum raporunu kaydet"
+
+msgid "Save a bounded text report locally. No files are uploaded."
+msgstr "Sınırlı boyuttaki metin raporunu yerel olarak kaydet. Dosyalar karşıya yüklenmez."
+
+msgid "Text reports (*.txt)"
+msgstr "Metin raporları (*.txt)"
+
+msgid "Session samples: elapsed seconds, metric, value"
+msgstr "Oturum örnekleri: geçen saniye, ölçüm, değer"
+
+msgid "The bounded session report was saved locally."
+msgstr "Sınırlı boyuttaki oturum raporu yerel olarak kaydedildi."
+
+msgid "The report could not be saved. Choose a writable local file."
+msgstr "Rapor kaydedilemedi. Yazılabilir bir yerel dosya seçin."
+
+msgid "The setting was read back and confirmed. It is not saved for the next boot."
+msgstr "Ayar geri okunarak doğrulandı. Sonraki açılış için kaydedilmedi."
+
+msgid "Application resource preset"
+msgstr "Uygulama kaynak profili"
+
+msgid "Elevated pressure"
+msgstr "Yükselmiş kaynak baskısı"
+
+msgid "Below 10% pressure"
+msgstr "Kaynak baskısı %10 altında"
+
+msgid "Current memory use"
+msgstr "Geçerli bellek kullanımı"
+
+msgid "What this setting does"
+msgstr "Bu ayar ne yapar?"
+
+msgid "Controls the preference for reclaiming anonymous memory into swap. This is not a RAM capacity limit."
+msgstr "Anonim belleğin swap alanına taşınma tercihini belirler. RAM kapasitesini sınırlamaz."
+
+msgid "Scans eligible memory for identical pages. It can save memory while adding CPU work."
+msgstr "Uygun bellekte aynı sayfaları tarar. Ek CPU işi karşılığında bellek tasarrufu sağlayabilir."
+
+msgid "Choose whether large transparent pages are used always, on application advice, or never."
+msgstr "Büyük sayfaların her zaman, uygulama önerdiğinde veya hiçbir zaman kullanılmamasını seçin."
+
+msgid "0 disables MGLRU, 1 enables the basic mechanism, and 7 enables all supported aging features. Availability depends on the running kernel."
+msgstr "0 MGLRU'yu kapatır, 1 temel mekanizmayı, 7 desteklenen tüm yaşlandırma özelliklerini açar. Kullanılabilirlik çalışan çekirdeğe bağlıdır."

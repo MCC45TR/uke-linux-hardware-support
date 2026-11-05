@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 #include "kernel-manager.hpp"
 #include "frequency-source.hpp"
+#include "resource-source.hpp"
+#include "application-source.hpp"
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <chrono>
 #include <QtConcurrent>
 #include <KLocalizedString>
 #include <QGuiApplication>
@@ -37,7 +42,7 @@ QVariantMap cpuLoads(const QJsonObject &before,const QJsonObject &after) {
     return out;
 }
 KernelManager::KernelManager(Fixture f,QObject *parent,bool restricted,std::function<QJsonObject()> reader):QObject(parent),fixture_(std::move(f)),restricted_(restricted),reader_(std::move(reader)) {
-    if(!reader_)reader_=performanceSnapshot;
+    customReader_=bool(reader_);
     clock_.start();timer_.setInterval(2000);deadline_.setSingleShot(true);queryPoll_.setInterval(40);
     connect(&timer_,&QTimer::timeout,this,&KernelManager::refresh);
     connect(&deadline_,&QTimer::timeout,this,[this]{pause();message_=i18n("Monitoring paused after ten minutes. Start again to continue.");emit changed();});
@@ -53,13 +58,13 @@ KernelManager::KernelManager(Fixture f,QObject *parent,bool restricted,std::func
 }
 KernelManager::~KernelManager(){pause();if(write_){write_->disconnect(this);write_->kill();connect(write_,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),write_,&QObject::deleteLater);}}
 void KernelManager::open(const QString &mode) {
-    if(mode!="cpu"&&mode!="gpu"&&mode!="sensors")return;
-    if(mode_!=mode){pause();++generation_;dismissReview();mode_=mode;outcome_.clear();message_.clear();history_.clear();previousTicks_={};state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
+    if(!QStringList{"cpu","gpu","sensors","manager-overview","memory","storage","thermal","profiles","diagnostics"}.contains(mode))return;
+    if(mode_!=mode){pause();++generation_;dismissReview();mode_=mode;outcome_.clear();message_.clear();history_.clear();previousTicks_={};previousCounters_={};previousSample_=0;state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
     requested_=true;
     if(mode=="sensors"){interval_=5;timer_.setInterval(5000);refresh();}else start();
 }
 void KernelManager::start(){if(mode_.isEmpty()||write_)return;active_=true;timer_.start(interval_*1000);deadline_.start(600000);refresh();emit changed();}
-void KernelManager::pause(){active_=false;requested_=false;timer_.stop();deadline_.stop();queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
+void KernelManager::pause(){active_=false;requested_=false;previousCounters_={};previousSample_=0;previousTicks_={};timer_.stop();deadline_.stop();queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
 void KernelManager::close(){pause();++generation_;mode_.clear();dismissReview();}
 void KernelManager::setInterval(int seconds){if(seconds!=1&&seconds!=2&&seconds!=5)return;interval_=seconds;if(active_)timer_.start(seconds*1000);emit changed();}
 void KernelManager::refresh() {
@@ -70,9 +75,36 @@ void KernelManager::refresh() {
         if(mode_=="sensors")acceptSensors(d);else accept(d);return;
     }
     if(mode_=="sensors") {try{query_=std::make_unique<Query>("sensors.once");queryPoll_.start();}catch(const std::exception &){failure(i18n("The sensor provider could not be started."));}emit changed();return;}
-    reading_=true;workerGeneration_=generation_;worker_.setFuture(QtConcurrent::run([reader=reader_]{return reader();}));emit changed();
+    reading_=true;workerGeneration_=generation_;
+    worker_.setFuture(QtConcurrent::run([reader=reader_,custom=customReader_,mode=mode_]{
+        if(custom)return reader();
+        auto out=(mode=="cpu"||mode=="gpu"||mode=="manager-overview")?performanceSnapshot():QJsonObject{};
+        out["resources"]=resourceSnapshot(mode);
+        if(mode=="profiles"){
+            const auto apps=applicationScopes();out["applications"]=apps;out["lastPreset"]=lastApplicationPreset();
+            auto resources=out.value("resources").toObject();auto metrics=resources.value("metrics").toObject(),counters=resources.value("counters").toObject();auto charts=resources.value("charts").toArray();
+            for(const auto &v:apps){const auto app=v.toObject();const auto id="app/"+app.value("unit").toString();const auto memory=number(app.value("memory"),1048576);
+                metrics[id+"/memory"]=memory.isValid()?QJsonValue(memory.toDouble()):QJsonValue();
+                if(app.value("cpuUsage").isDouble())counters[id+"/cpu"]=QJsonObject{{"value",app.value("cpuUsage")},{"scale",.0001},{"generation",app.value("invocation")}};
+                charts<<QJsonObject{{"id",id+"/memory"},{"title",app.value("title").toString()+" / memory"},{"unit","MiB"},{"maximum",0}};
+                charts<<QJsonObject{{"id",id+"/cpu"},{"title",app.value("title").toString()+" / CPU"},{"unit","% of one CPU"},{"maximum",0}};
+            }resources["metrics"]=metrics;resources["counters"]=counters;resources["charts"]=charts;out["resources"]=resources;
+        }
+        out["sampleMonotonicMs"]=double(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+        if(mode=="cpu"||mode=="manager-overview"||mode=="diagnostics") {
+            QDBusMessage msg=QDBusMessage::createMethodCall("net.hadess.PowerProfiles","/net/hadess/PowerProfiles","org.freedesktop.DBus.Properties","Get");
+            msg.setArguments({"net.hadess.PowerProfiles","ActiveProfile"});
+            const auto reply=QDBusConnection::systemBus().call(msg,QDBus::Block,750);
+            if(reply.type()==QDBusMessage::ReplyMessage&&!reply.arguments().isEmpty())out["powerProfile"]=qvariant_cast<QDBusVariant>(reply.arguments().first()).variant().toString();
+        }
+        return out;
+    }));emit changed();
 }
-void KernelManager::add(const QString &id,const QVariant &value){auto &v=history_[id];const double time=clock_.elapsed()/1000.;if(!v.isEmpty()&&time<=v.last().time)v.last().value=value;else v.append({time,value});if(v.size()>600)v.remove(0,v.size()-600);}
+void KernelManager::add(const QString &id,const QVariant &value){
+    // Transient app/DRM identities must not accumulate between manual sessions.
+    if(!history_.contains(id)&&history_.size()>=256){auto oldest=history_.begin();for(auto it=history_.begin();it!=history_.end();++it)if(it.value().isEmpty()||(!oldest.value().isEmpty()&&it.value().last().time<oldest.value().last().time))oldest=it;history_.erase(oldest);}
+    auto &v=history_[id];const double time=clock_.elapsed()/1000.;if(!v.isEmpty()&&time<=v.last().time)v.last().value=value;else v.append({time,value});if(v.size()>600)v.remove(0,v.size()-600);
+}
 void KernelManager::failure(const QString &message){message_=message;for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());++revision_;emit changed();}
 void KernelManager::accept(const QJsonObject &snapshot) {
     const auto loads=cpuLoads(previousTicks_,snapshot.value("ticks").toObject());previousTicks_=snapshot.value("ticks").toObject();
@@ -89,13 +121,42 @@ void KernelManager::accept(const QJsonObject &snapshot) {
     QVariant cpuTemp,gpuTemp;
     for(const auto &v:snapshot.value("temperatures").toArray()) {
         const auto t=v.toObject();if(!t.value("value").isDouble())continue;const auto label=t.value("label").toString();const auto n=t.value("value").toDouble();
-        if(label.startsWith("cpu")&&(!cpuTemp.isValid()||n>cpuTemp.toDouble()))cpuTemp=n;
+        if((label.startsWith("cpuss")||QRegularExpression("^cpu-[0-9]").match(label).hasMatch())&&(!cpuTemp.isValid()||n>cpuTemp.toDouble()))cpuTemp=n;
         if(label.startsWith("gpu")&&(!gpuTemp.isValid()||n>gpuTemp.toDouble()))gpuTemp=n;
     }
     add("cpuTemperature",cpuTemp);add("gpuTemperature",gpuTemp);
     state_={{"values",values},{"cores",cores},{"cpuTemperature",cpuTemp},{"gpuTemperature",gpuTemp}};
+    state_["sampledAt"]=QDateTime::currentDateTime().toString(Qt::ISODate);
+    const auto resources=snapshot.value("resources").toObject();
+    if(!resources.isEmpty()) {
+        auto metrics=resources.value("metrics").toObject();
+        const qint64 sampled=qint64(snapshot.value("sampleMonotonicMs").toDouble());
+        const auto counters=resources.value("counters").toObject();
+        const auto rates=resourceRates(previousCounters_,counters,(sampled-previousSample_)/1000.);
+        previousCounters_=counters;previousSample_=sampled;
+        for(auto i=rates.begin();i!=rates.end();++i)metrics[i.key()]=i.value();
+        for(const auto &op:{"read","write"}) {
+            const auto count=rates.value("io/"+QString(op)+"-ops"),duration=rates.value("io/"+QString(op)+"-ms");
+            metrics["io/"+QString(op)+"-latency"]=count.isDouble()&&duration.isDouble()&&count.toDouble()>0?QJsonValue(duration.toDouble()/count.toDouble()):QJsonValue();
+        }
+        for(auto i=metrics.begin();i!=metrics.end();++i)add(i.key(),i.value().isDouble()?i.value().toVariant():QVariant());
+        state_["sections"]=resources.value("sections").toVariant();state_["controls"]=resources.value("controls").toVariant();
+        state_["charts"]=resources.value("charts").toVariant();state_["metrics"]=metrics.toVariantMap();
+        state_["powerProfile"]=snapshot.value("powerProfile").toString();
+        QVariantList applications;QVariantMap applicationValues;
+        for(const auto &v:snapshot.value("applications").toArray()){auto app=v.toObject();const auto unit=app.value("unit").toString();applicationValues[unit]=QVariantMap{{"memory",number(app.take("memory"),1048576)},{"cpu",metrics.value("app/"+unit+"/cpu").toVariant()}};app.remove("cpuUsage");applications<<app.toVariantMap();}
+        state_["applications"]=applications;state_["applicationValues"]=applicationValues;
+        state_["lastPreset"]=snapshot.value("lastPreset").toString();
+        auto event=[&](const QString &key,const QString &value){if(value.isEmpty())return;if(observed_.contains(key)&&observed_[key]!=value)events_.prepend(QVariantMap{{"time",QTime::currentTime().toString("HH:mm:ss")},{"title",key},{"value",value}});observed_[key]=value;};
+        event(i18n("System power profile"),snapshot.value("powerProfile").toString());
+        for(const auto &v:resources.value("controls").toArray()){const auto s=v.toObject();event(s.value("title").toString(),s.value("value").toString());}
+        for(auto i=metrics.begin();i!=metrics.end();++i)if(i.key().startsWith("psi/")&&i.value().isDouble()) {
+            const auto band=i.value().toDouble()>=10?i18n("Elevated pressure"):i18n("Below 10% pressure");event(i.key(),band);
+        }
+        if(events_.size()>100)events_=events_.mid(0,100);state_["events"]=events_;
+    }
     if(metadata!=devices_){devices_=metadata;emit devicesChanged();}
-    message_=metadata.isEmpty()?i18n("No CPU/GPU frequency provider is exported by this kernel."):QString();++revision_;emit changed();
+    message_=metadata.isEmpty()&&(mode_=="cpu"||mode_=="gpu")?i18n("No CPU/GPU frequency provider is exported by this kernel."):QString();++revision_;emit changed();
 }
 void KernelManager::acceptSensors(const QJsonObject &snapshot) {
     QVariantList catalog;QVariantMap values;int count=0;
@@ -154,19 +215,58 @@ bool KernelManager::prepare(const QString &id,const QString &field,const QString
 }
 bool KernelManager::apply(const QString &token) {
     if(write_||review_.isEmpty()||token!=review_.value("token").toString()||restricted_||fixture_.enabled)return false;
-    for(const auto &key:{"minimum","maximum","governor"})if(current(review_.value("id").toString(),key)!=review_.value(key).toString()){message_=reason("settings_changed");dismissReview();emit changed();return false;}
+    const bool resource=review_.value("kind").toString()=="resource",application=review_.value("kind").toString()=="application";
+    if(!resource&&!application)for(const auto &key:{"minimum","maximum","governor"})if(current(review_.value("id").toString(),key)!=review_.value(key).toString()){message_=reason("settings_changed");dismissReview();emit changed();return false;}
     pause();auto *p=new QProcess(this);write_=p;writeOutput_.clear();
     connect(p,&QProcess::readyReadStandardOutput,this,[this,p]{writeOutput_+=p->readAllStandardOutput();if(writeOutput_.size()>32768)p->kill();});
     const auto requestMode=mode_;
     auto done=[this,p,requestMode](int code){
         if(write_!=p)return;writeOutput_+=p->readAllStandardOutput();const auto d=QJsonDocument::fromJson(writeOutput_.left(32768)).object();
         write_=nullptr;p->deleteLater();dismissReview();
-        if(mode_==requestMode)outcome_=code==0&&d.value("schema").toString()=="org.uke.qt.frequency-control.v1"?i18n("The driver confirmed the setting. It is not saved for the next boot."):d.value("error").isString()&&!d.value("error").toString().isEmpty()?reason(d.value("error").toString()):i18n("The request was not completed. Check authorization and refresh current settings.");
+        if(mode_==requestMode)outcome_=code==0&&QStringList{"org.uke.qt.frequency-control.v1","org.uke.qt.resource-control.v1","org.uke.qt.application-control.v1"}.contains(d.value("schema").toString())?i18n("The setting was read back and confirmed. It is not saved for the next boot."):d.value("error").isString()&&!d.value("error").toString().isEmpty()?reason(d.value("error").toString()):i18n("The request was not completed. Check authorization and refresh current settings.");
         refresh();emit changed();
     };
     connect(p,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,[done](int code,QProcess::ExitStatus status){done(status==QProcess::NormalExit?code:70);});
     connect(p,&QProcess::errorOccurred,this,[done](QProcess::ProcessError error){if(error==QProcess::FailedToStart)done(69);});
     QStringList args{"/usr/libexec/uke-control-qt/frequency-control",review_.value("kind").toString(),review_.value("name").toString(),review_.value("field").toString(),review_.value("minimum").toString(),review_.value("maximum").toString(),review_.value("governor").toString(),review_.value("value").toString()};
-    p->start("/usr/bin/pkexec",args);QTimer::singleShot(60000,p,[p]{if(p->state()!=QProcess::NotRunning)p->kill();});emit changed();return true;
+    if(resource)args={"/usr/libexec/uke-control-qt/resource-control",review_.value("id").toString(),review_.value("expected").toString(),review_.value("path").toString(),review_.value("value").toString()};
+    if(application){args={review_.value("unit").toString(),review_.value("invocation").toString(),review_.value("fingerprint").toString(),review_.value("preset").toString()};p->start("/usr/libexec/uke-control-qt/application-control",args);}
+    else p->start("/usr/bin/pkexec",args);QTimer::singleShot(60000,p,[p]{if(p->state()!=QProcess::NotRunning)p->kill();});emit changed();return true;
+}
+bool KernelManager::prepareResource(const QString &id,const QString &value) {
+    if(write_)return false;QJsonObject setting;
+    for(const auto &v:state_.value("controls").toList())if(v.toMap().value("id").toString()==id)setting=QJsonObject::fromVariantMap(v.toMap());
+    const auto error=resourceRefusal(setting,value);
+    if(!error.isEmpty()){message_=i18n("The requested value is unavailable or outside the advertised limits.");emit changed();return false;}
+    review_={{"id",id},{"kind","resource"},{"field",setting.value("title").toString()},{"before",setting.value("value").toString()},{"after",value+" "+setting.value("unit").toString()},
+        {"expected",setting.value("value").toString()},{"path",setting.value("path").toString()},{"value",value},
+        {"token",QUuid::createUuid().toString(QUuid::WithoutBraces)},{"blocked",fixture_.enabled||restricted_}};
+    emit reviewChanged();return true;
+}
+bool KernelManager::prepareApplication(const QString &unit,const QString &preset) {
+    if(write_||!QStringList{"normal","priority","background","limited"}.contains(preset))return false;
+    QVariantMap target;for(const auto &v:state_.value("applications").toList())if(v.toMap().value("unit").toString()==unit)target=v.toMap();if(target.isEmpty())return false;
+    review_={{"id",target.value("title")},{"kind","application"},{"field",i18n("Application resource preset")},{"unit",unit},{"invocation",target.value("invocation")},{"fingerprint",target.value("fingerprint")},{"preset",preset},
+        {"before",i18n("CPU weight %1; memory high %2",target.value("weight").toString(),target.value("memoryHigh").toString())},
+        {"after",preset=="priority"?i18n("CPU weight 200; no memory high limit"):preset=="background"?i18n("CPU weight 25; no memory high limit"):preset=="limited"?i18n("CPU weight 100; memory high 1 GiB; CPU quota 50% only where supported"):i18n("CPU weight 100; no memory high limit or CPU quota")},
+        {"token",QUuid::createUuid().toString(QUuid::WithoutBraces)},{"blocked",fixture_.enabled||restricted_}};emit reviewChanged();return true;
+}
+QString KernelManager::summary()const {
+    QString out=i18n("Senemos Kernel Manager — session observations")+"\n"+i18n("Page: %1",mode_)+"\n";
+    for(const auto &v:state_.value("sections").toList()){const auto s=v.toMap();out+="\n"+s.value("title").toString()+"\n";for(const auto &w:s.value("rows").toList()){const auto row=w.toMap();out+="  "+row.value("title").toString()+": "+row.value("value").toString()+" ["+row.value("status").toString()+"]\n";}}
+    for(const auto &v:events_){const auto e=v.toMap();out+=e.value("time").toString()+" "+e.value("title").toString()+": "+e.value("value").toString()+"\n";}return out.left(131072);
+}
+bool KernelManager::exportReport(const QUrl &url) {
+    if(!url.isLocalFile()||url.toLocalFile().isEmpty())return false;
+    QString report=summary()+"\n"+i18n("Session samples: elapsed seconds, metric, value")+"\n";
+    for(auto it=history_.begin();it!=history_.end();++it)for(const auto &p:it.value()) {
+        if(report.size()>1048576)break;
+        report+=QString::number(p.time,'f',3)+"\t"+it.key()+"\t"+(p.value.isValid()?QString::number(p.value.toDouble(),'g',12):QString("missing"))+"\n";
+    }
+    QSaveFile out(url.toLocalFile());
+    const auto bytes=report.toUtf8();const bool opened=out.open(QIODevice::WriteOnly);
+    if(opened)out.setPermissions(QFileDevice::ReadOwner|QFileDevice::WriteOwner);
+    const bool success=opened&&out.write(bytes)==bytes.size()&&out.commit();
+    outcome_=success?i18n("The bounded session report was saved locally."):i18n("The report could not be saved. Choose a writable local file.");emit changed();return success;
 }
 }

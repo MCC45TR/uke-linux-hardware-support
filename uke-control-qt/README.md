@@ -145,3 +145,37 @@ A reviewed single-attribute frequency request requires administrator authority,
 checks the expected state and reads the value back. It never changes boot
 configuration, voltage or thermal protection. Memory/swap and sleep/wake facts
 and controls are presented together.
+
+Senemos Kernel Manager resource pages (1.6)
+-----------------------------------------
+
+The overview links to CPU, GPU, memory, storage, thermal/sleep, application
+profiles and diagnostics. Memory and storage keep their canonical settings
+pages and are linked from the manager rather than duplicating their setters.
+Graphs use bounded in-memory session samples and pause when leaving the page
+or the application. Counter resets, missed samples and absent providers remain
+missing data. Storage rates use 512-byte sectors and the actual root backing
+queue; completion latency is a mean, not a percentile. UFS clocks are distinct
+from GPU clocks. CPU die temperatures exclude board thermistors.
+
+Runtime controls include advertised governors and frequencies, governor
+parameters, root-queue scheduler/read-ahead/request policy, swappiness, THP,
+KSM and MGLRU where exported. A fixed Polkit helper derives paths from typed
+IDs, checks the reviewed value/provider again and reads back each change.
+These controls do not create boot persistence. Memory and queue policies are
+system-wide; the desktop power profile and thermal constraints remain relevant.
+
+Application presets apply to active app scopes/services belonging to the
+current systemd user manager. They change CPU weight and memory-high; CPU
+quota is conditional on the runtime cgroup interface. They do not control
+other users or system services. The target invocation and old resource state
+are checked again before applying. A remembered last preset is informational;
+it never automatically applies to a different transient unit or a new launch.
+
+`uke-kernel-status [cpu|gpu|memory|storage|thermal|profiles|diagnostics]` prints
+human-readable kernel observations without opening the GUI or requiring root.
+Capabilities distinguish compiled support from a present, readable provider.
+Zram, uclamp, scheduler extensions, DAMON and I/O caps need corresponding kernel
+support and separately qualified controllers. An advertised suspend mode is
+not a physical suspend qualification. The interface never invents GPU load or
+starts an external scheduler automatically.
