@@ -1,11 +1,12 @@
 Name:           uke-waydroid-integration
 Version:        0.1.0
-Release:        7%{?dist}
-Summary:        Fedora Binderfs labels for Waydroid on Uke
+Release:        8%{?dist}
+Summary:        Waydroid Binderfs, graphics and media integration for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-waydroid
 Source0:        %{name}-%{version}.tar.xz
-BuildArch:      noarch
+BuildRequires:  gcc-c++ pkgconf-pkg-config qt6-qtbase-devel e2fsprogs-devel
+BuildRequires:  e2fsprogs
 Requires:       waydroid waydroid-selinux selinux-policy-targeted
 Requires(post): /usr/bin/semodule
 Requires(post): /usr/bin/systemd-tmpfiles
@@ -29,6 +30,14 @@ The original application and kernel remain distribution components.
 %build
 # The COPR source worker links this CIL against the complete Fedora policy
 # using semodule -n. Binary packaging does not load policy in the worker.
+g++ %{optflags} -fPIC -std=c++20 %{build_ldflags} \
+    $(pkg-config --cflags Qt6Core Qt6Xml ext2fs) \
+    uke-waydroid/runtime/omx-overlay.cpp -o uke-waydroid-media-prepare \
+    $(pkg-config --libs Qt6Core Qt6Xml ext2fs)
+g++ %{optflags} -fPIC -std=c++20 %{build_ldflags} -DUKE_OMX_FIXTURES \
+    $(pkg-config --cflags Qt6Core Qt6Xml ext2fs) \
+    uke-waydroid/runtime/omx-overlay.cpp -o omx-fixtures \
+    $(pkg-config --libs Qt6Core Qt6Xml ext2fs)
 
 %install
 install -Dm0644 uke-waydroid/selinux/uke_waydroid_binder.cil \
@@ -41,6 +50,8 @@ install -Dm0644 uke-waydroid/config/uke-defaults.conf \
     %{buildroot}%{_sysconfdir}/waydroid/uke-defaults.conf
 install -Dm0755 uke-waydroid/runtime/uke-waydroid-prepare \
     %{buildroot}%{_libexecdir}/uke-waydroid-prepare
+install -Dm0755 uke-waydroid-media-prepare \
+    %{buildroot}%{_libexecdir}/uke-waydroid-media-prepare
 
 %check
 cmp uke-waydroid/selinux/uke_waydroid_binder.cil \
@@ -52,6 +63,7 @@ cmp uke-waydroid/config/50-uke-waydroid.conf \
 cmp uke-waydroid/runtime/uke-waydroid-prepare \
     %{buildroot}%{_libexecdir}/uke-waydroid-prepare
 sh uke-waydroid/tests/prepare.sh
+sh uke-waydroid/tests/omx-overlay.sh "$PWD/omx-fixtures"
 
 %post
 %{_bindir}/semodule -X 400 -i %{_datadir}/selinux/packages/uke_waydroid_binder.cil || exit 1
@@ -73,8 +85,13 @@ fi
 %{_prefix}/lib/systemd/system/waydroid-container.service.d/50-uke-waydroid.conf
 %config(noreplace) %{_sysconfdir}/waydroid/uke-defaults.conf
 %{_libexecdir}/uke-waydroid-prepare
+%{_libexecdir}/uke-waydroid-media-prepare
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 0.1.0-8
+- Omit the absent ARM64-only OMX service through an owned pre-mount overlay.
+- Prefer the existing Codec2 software stack without changing Android images.
+
 * Wed Nov 04 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-7
 - Require a network-capable selected profile on the Uke unstable channel.
 

@@ -1,5 +1,22 @@
 # Waydroid integration
 
+5 November 2026 media candidate: official ARM64-only images can declare the
+OMX HAL without shipping its service, blocking MediaProvider and shared
+storage (upstream [2397](https://github.com/waydroid/waydroid/issues/2397) and
+[2453](https://github.com/waydroid/waydroid/issues/2453)). A native pre-mount
+helper reads the original ext4 images without writing or mounting them. On
+exact Uke/ARM64-only MAINLINE configurations, it omits only that missing HAL
+through an owned vendor overlay and selects the already provided Codec2 stack.
+Original images, application data and administrator manifests are preserved.
+Owned overlays retire if a later image supplies the service. This addresses
+image metadata; it does not add hardware video codecs or establish game or
+Google-account acceptance. The pre-mount overlay approach is also documented
+in enij90/armada-tb321fu commitf430dd7; this implementation uses C++/Qt XML and
+read-only libext2fs, without executing or shipping that donor's Python script.
+COPR fixtures cover actual ext4 reads, retained HALs, idempotence, custom edits,
+service admission, malformed XML and linked-directory refusal. Physical Uke
+media/storage acceptance is recorded separately from those build checks.
+
 4 November 2026. Fedora Waydroid1.6.3 creates `anbox-binder`, `anbox-hwbinder`
 and `anbox-vndbinder` on a kernel with built-in Binder and an empty static device
 list. On POCO Pad X1, kernel7.3.1-1500, the new nodes receive `binderfs_t` and

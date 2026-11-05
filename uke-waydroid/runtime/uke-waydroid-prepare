@@ -20,6 +20,18 @@ if [ -r "$compatible" ] && tr '\000' '\n' < "$compatible" | grep -qx 'xiaomi,uke
     settings="$settings
 mesa.fd.dev.features=enable_tp_ubwc_flag_hint=0
 ro.hardware.vulkan=freedreno"
+    # ARM64-only images ship the software Codec2 service, without an OMX HAL.
+    # Keep this paired with the packaged pre-mount manifest correction.
+    if awk -F= '
+        /^\[waydroid\]/ {section=1; next}
+        /^\[/ {section=0}
+        section {key=$1; value=$2; gsub(/[[:space:]]/, "", key); gsub(/[[:space:]]/, "", value);
+                 if (key=="arch") arch=value; if (key=="vendor_type") vendor=value}
+        END {exit !(arch=="arm64_only" && vendor=="MAINLINE")}
+    ' "$work/waydroid.cfg"; then
+        settings="$settings
+debug.stagefright.ccodec=1"
+    fi
 fi
 temporary=
 trap '[ -z "$temporary" ] || rm -f -- "$temporary"' EXIT HUP INT TERM
