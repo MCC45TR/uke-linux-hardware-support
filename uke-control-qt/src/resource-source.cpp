@@ -18,6 +18,7 @@ Value read(const QString &path,int limit=65536) {
 }
 QString text(const QString &p){return read(p).text;}
 QJsonValue numeric(const QString &s,double scale=1){bool ok=false;const double n=s.toDouble(&ok);return ok&&std::isfinite(n)&&n>=0&&n<=9007199254740991.?QJsonValue(n/scale):QJsonValue();}
+QJsonValue signedNumber(const QString &s,double scale,double minimum,double maximum){bool ok=false;const double n=s.toDouble(&ok)/scale;return ok&&std::isfinite(n)&&n>=minimum&&n<=maximum?QJsonValue(n):QJsonValue();}
 QJsonObject fields(const QString &p,bool colon=false) {
     QJsonObject out;
     for(auto line:text(p).split('\n')) {if(colon)line.replace(':',' ');const auto w=line.simplified().split(' ');if(w.size()>=2)out[w[0]]=numeric(w[1]);}
@@ -111,7 +112,7 @@ QJsonObject resourceSetting(const QString &id,const ResourceRoots &r) {
         else if(id=="cpu.idle-governor")choices=options(text(r.sys+"/devices/system/cpu/cpuidle/available_governors"));
         else choices=options(v.text);
     }
-    const auto current=id=="memory.mglru"?QString::number(v.text.toUInt(nullptr,0)):selected(v.text);
+    const auto current=v.status!="available"?QString():id=="memory.mglru"?QString::number(v.text.toUInt(nullptr,0)):selected(v.text);
     return {{"id",id},{"title",spec.title},{"unit",spec.unit},{"value",current},{"path",QFileInfo(spec.path).canonicalFilePath()},
         {"status",v.status},{"minimum",spec.minimum},{"maximum",spec.maximum},{"choices",choices},
         {"writable",v.status=="available"&&bool(QFileInfo(spec.path).permissions() & QFileDevice::WriteOwner)},
@@ -136,13 +137,13 @@ QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
     const bool all=domain=="manager-overview"||domain=="diagnostics";
     QJsonArray sections,controls,charts;QJsonObject metrics,counters;QStringList ids;
     auto chart=[&](const QString &id,const QString &title,const QString &unit,double max=0){charts<<QJsonObject{{"id",id},{"title",title},{"unit",unit},{"maximum",max}};};
-    auto psi=[&](const QString &kind){QJsonArray rows;for(const auto &line:text(r.proc+"/pressure/"+kind).split('\n')) {
+    auto psi=[&](const QString &kind){QJsonArray rows;const auto pressure=read(r.proc+"/pressure/"+kind);for(const auto &line:pressure.text.split('\n')) {
         const auto w=line.simplified().split(' ');if(w.size()<2)continue;
         for(const auto &f:w.mid(1)){const auto p=f.split('=');if(p.size()!=2)continue;
             if(p[0]=="avg10"){const auto id="psi/"+kind+"/"+w[0];metrics[id]=numeric(p[1]);row(rows,w[0]+" / last 10 seconds",p[1]+" %");if(w[0]=="some")chart(id,kind+" pressure","%",100);}
             if(p[0]=="total")counter(counters,"stall/"+kind+"/"+w[0],numeric(p[1]),.0001);
         }
-    }section(sections,kind+" pressure",rows);};
+    }if(rows.isEmpty())row(rows,"Pressure observations",{},pressure.status=="available"?"invalid-value":pressure.status);section(sections,kind+" pressure",rows);};
     if(all||domain=="memory") {
         const auto m=fields(r.proc+"/meminfo",true);QJsonArray rows;
         for(const auto &k:{"MemTotal","MemAvailable","Cached","Buffers","SReclaimable","Shmem","SwapTotal","SwapFree","Dirty","Writeback"})
@@ -213,15 +214,52 @@ QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
         QJsonArray rows;fileRow(rows,"Runtime state",p+"/device/power/runtime_status");fileRow(rows,"Active time (ms)",p+"/device/power/runtime_active_time");fileRow(rows,"Suspended time (ms)",p+"/device/power/runtime_suspended_time");
         const auto stat=read(p+"/trans_stat");row(rows,"Frequency transition table",stat.text,stat.status);row(rows,"Load measurement","Frequency alone does not measure GPU utilization. Client counters appear only when DRM fdinfo exports them.");section(sections,"GPU runtime and residency",rows);
     }
+    if(domain=="gpu") {
+        QJsonArray clients;QSet<QString> seen;int scanned=0,processes=0;
+        for(const auto &pid:QDir(r.proc).entryList(QDir::Dirs|QDir::NoDotAndDotDot)) {
+            if(!QRegularExpression("^[0-9]+$").match(pid).hasMatch()||QFileInfo(r.proc+"/"+pid).ownerId()!=getuid())continue;
+            if(++processes>128||scanned>=2048)break;
+            const auto base=r.proc+"/"+pid;int count=0;
+            for(const auto &fd:QDir(base+"/fd").entryList(QDir::Files|QDir::System|QDir::NoDotAndDotDot)) {
+                if(++count>128||++scanned>2048||clients.size()>=64)break;
+                if(!QFileInfo(base+"/fd/"+fd).symLinkTarget().startsWith("/dev/dri/"))continue;
+                const auto lines=read(base+"/fdinfo/"+fd,16384).text.split('\n');QMap<QString,QString> data;
+                for(const auto &line:lines){const auto at=line.indexOf(':');if(at>0)data[line.left(at)]=line.mid(at+1).trimmed();}
+                if(!data.contains("drm-client-id"))continue;const auto client=pid+"/"+data.value("drm-client-id");if(seen.contains(client))continue;seen.insert(client);
+                const auto label=text(base+"/comm").left(80)+" ("+pid+")";QStringList values;
+                for(auto i=data.begin();i!=data.end();++i) {
+                    if(i.key().startsWith("drm-memory-")||i.key().startsWith("drm-resident-"))values<<i.key()+": "+i.value();
+                    if(i.key().startsWith("drm-engine-")&&i.value().endsWith(" ns")) {
+                        const auto key="drm/"+client+"/"+i.key();counter(counters,key,numeric(i.value().section(' ',0,0)),.0000001);
+                        chart(key,label+" / "+i.key(),"% of one engine");values<<i.key()+": "+i.value();
+                    }
+                }
+                if(!values.isEmpty())row(clients,label,values.join("\n"));
+            }
+        }
+        if(clients.isEmpty())row(clients,"Application GPU counters","No readable DRM client counters for this user's running processes","not-exported");
+        section(sections,"Application GPU activity",clients);
+    }
     if(all||domain=="thermal") {
-        QMap<QString,QJsonArray> groups;QSet<QString> seen;
+        QMap<QString,QJsonArray> groups;QSet<QString> seen;QJsonArray thresholds;
         for(const auto &n:QDir(r.sys+"/class/thermal").entryList({"thermal_zone*"},QDir::Dirs|QDir::NoDotAndDotDot)) {
             const auto p=r.sys+"/class/thermal/"+n,type=text(p+"/type"),g=group(type);if(seen.contains(type))continue;seen.insert(type);
-            const auto v=read(p+"/temp");const auto degrees=numeric(v.text,1000);
+            const auto v=read(p+"/temp");const auto degrees=signedNumber(v.text,1000,-273.15,300);
             row(groups[g],type,degrees.isDouble()?QString::number(degrees.toDouble(),'f',1)+" °C":QString(),v.status);
             if(degrees.isDouble()) {const auto key="thermal/"+g;const auto old=metrics.value(key);if(!old.isDouble()||degrees.toDouble()>old.toDouble())metrics[key]=degrees;}
+            for(const auto &trip:QDir(p).entryList({"trip_point_*_temp"},QDir::Files)) {const auto value=signedNumber(text(p+"/"+trip),1000,-273.15,300);if(value.isDouble())row(thresholds,type+" / "+text(p+"/"+QString(trip).replace("_temp","_type")),QString::number(value.toDouble(),'f',1)+" °C (informational)");}
+        }
+        for(const auto &n:QDir(r.sys+"/class/hwmon").entryList({"hwmon*"},QDir::Dirs|QDir::NoDotAndDotDot)) {
+            const auto p=r.sys+"/class/hwmon/"+n;
+            for(const auto &input:QDir(p).entryList({"temp*_input"},QDir::Files)) {
+                const auto label=text(p+"/"+QString(input).replace("_input","_label"));const auto provider=text(p+"/name");
+                if(seen.contains(label)||seen.contains(provider))continue;
+                const auto name=label.isEmpty()?provider+" / "+input:label;const auto v=read(p+"/"+input);const auto d=signedNumber(v.text,1000,-273.15,300);
+                row(groups[group(name)],name,d.isDouble()?QString::number(d.toDouble(),'f',1)+" °C":QString(),v.status);
+            }
         }
         for(auto it=groups.begin();it!=groups.end();++it){section(sections,it.key(),it.value());chart("thermal/"+it.key(),it.key()+" maximum","°C");}
+        section(sections,"Kernel thermal thresholds",thresholds);
         QJsonArray cooling;
         for(const auto &n:QDir(r.sys+"/class/thermal").entryList({"cooling_device*"},QDir::Dirs|QDir::NoDotAndDotDot)) {const auto p=r.sys+"/class/thermal/"+n;row(cooling,text(p+"/type"),"state "+text(p+"/cur_state")+" / "+text(p+"/max_state")+" (policy levels, not a performance percentage)");}
         section(sections,"Cooling policy",cooling);QJsonArray sleep;
@@ -231,7 +269,8 @@ QJsonObject resourceSnapshot(const QString &domain,const ResourceRoots &r) {
         for(const auto &n:QDir(r.sys+"/class/power_supply").entryList(QDir::Dirs|QDir::NoDotAndDotDot)) {
             const auto p=r.sys+"/class/power_supply/"+n;if(text(p+"/type")!="Battery")continue;
             QJsonArray b;for(const auto &key:{"status","power_now","current_now","voltage_now","temp","charge_control_start_threshold","charge_control_end_threshold"})fileRow(b,key,p+"/"+key);section(sections,"Battery power",b);
-            metrics["battery/power"]=numeric(text(p+"/power_now"),1000000);chart("battery/power","Battery power magnitude","W");
+            metrics["battery/power"]=signedNumber(text(p+"/power_now"),1000000,-200,200);chart("battery/power","Battery reported power","W");
+            metrics["battery/current"]=signedNumber(text(p+"/current_now"),1000,-30000,30000);chart("battery/current","Battery reported current","mA");
         }
     }
     if(all||domain=="profiles") {

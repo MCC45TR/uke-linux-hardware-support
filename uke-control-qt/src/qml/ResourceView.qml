@@ -12,6 +12,7 @@ ColumnLayout {
     property var drafts: ({})
     property int firstChart: 0
     property int secondChart: 1
+    property bool advanced: false
     readonly property var charts: manager.state.charts || []
     function draft(id, value) { const copy = Object.assign({}, drafts); copy[id] = value; drafts = copy }
     function status(value) {
@@ -26,9 +27,9 @@ ColumnLayout {
         SafeText { text: i18n("System power profile"); description: view.manager.state.powerProfile || "" }
         SafeText { text: i18n("Who controls frequency?"); description: i18n("The desktop power profile, frequency governor and thermal policy can all constrain frequency. A requested limit does not prove that a particular hardware clock was reached.") }
     }
-    FormCard.FormHeader { visible: view.charts.length > 0 && !["cpu", "gpu"].includes(view.mode); title: i18n("Live measurements") }
+    FormCard.FormHeader { visible: view.charts.length > 0; title: i18n("Live measurements") }
     FormCard.FormCard {
-        visible: view.charts.length > 0 && !["cpu", "gpu"].includes(view.mode)
+        visible: view.charts.length > 0
         Layout.fillWidth: true
         FormCard.FormComboBoxDelegate { text: i18n("First graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.firstChart, view.charts.length - 1); onActivated: index => view.firstChart = index }
         FormCard.FormComboBoxDelegate { visible: view.charts.length > 1; text: i18n("Second graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.secondChart, view.charts.length - 1); onActivated: index => view.secondChart = index }
@@ -36,7 +37,7 @@ ColumnLayout {
     GridLayout {
         Layout.fillWidth: true
         columns: width > Kirigami.Units.gridUnit * 45 ? 2 : 1
-        visible: view.charts.length > 0 && !["cpu", "gpu"].includes(view.mode)
+        visible: view.charts.length > 0
         Repeater {
             model: view.charts.length ? [view.charts[Math.min(view.firstChart, view.charts.length - 1)], view.charts[Math.min(view.secondChart, view.charts.length - 1)]] : []
             delegate: ColumnLayout {
@@ -80,6 +81,11 @@ ColumnLayout {
         }
     }
     FormCard.FormHeader { visible: (view.manager.state.controls || []).length > 0; title: i18n("Runtime controls") }
+    FormCard.FormCard {
+        Layout.fillWidth: true
+        visible: (view.manager.state.controls || []).length > 0
+        FormCard.FormSwitchDelegate { text: i18n("Advanced kernel controls"); description: i18n("Show governor tuning, memory experiments and queue details, including unavailable interfaces."); checked: view.advanced; onToggled: view.advanced = checked }
+    }
     Repeater {
         model: view.manager.state.controls || []
         delegate: FormCard.FormCard {
@@ -87,6 +93,7 @@ ColumnLayout {
             required property var modelData
             readonly property string requested: view.drafts[modelData.id] === undefined ? modelData.value : view.drafts[modelData.id]
             readonly property bool available: modelData.status === "available" && modelData.writable
+            visible: view.advanced || (control.available && ["memory.swappiness", "storage.scheduler", "storage.read-ahead"].includes(modelData.id))
             Layout.fillWidth: true
             SafeText { text: control.modelData.title; description: i18n("Current: %1 %2", control.modelData.value || i18n("Not reported"), control.modelData.unit) }
             SafeText { visible: !control.available; text: i18n("Control unavailable"); description: view.status(control.modelData.status) }

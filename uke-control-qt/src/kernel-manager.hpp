@@ -72,6 +72,7 @@ public:
     Q_INVOKABLE bool prepareResource(const QString &id,const QString &value);
     Q_INVOKABLE bool prepareApplication(const QString &unit,const QString &preset);
     Q_INVOKABLE QString summary()const;
+    Q_INVOKABLE bool exportReport(const QUrl &url);
     Q_INVOKABLE void dismissReview();
     Q_INVOKABLE bool apply(const QString &token);
 signals:

@@ -21,11 +21,13 @@ QMap<QString,QString> properties(const QString &unit) {
 }
 QString fingerprint(const QMap<QString,QString> &p){QByteArray b;for(const auto &k:{"InvocationID","ControlGroup","CPUWeight","MemoryHigh","CPUQuotaPerSecUSec"})b+=p.value(k).toUtf8()+'\0';return QString::fromLatin1(QCryptographicHash::hash(b,QCryptographicHash::Sha256).toHex());}
 bool exported(const QString &cg,const QString &name){return QFileInfo::exists("/sys/fs/cgroup"+cg+"/"+name);}
+QString cgroupText(const QString &cg,const QString &name){QFile file("/sys/fs/cgroup"+cg+"/"+name);return file.open(QIODevice::ReadOnly)?QString::fromUtf8(file.read(4096)).trimmed():QString();}
 }
 QJsonObject applicationScope(const QString &unit) {
     const auto p=properties(unit);if(p.isEmpty())return {};
     return {{"unit",unit},{"title",p.value("Description").left(200)},{"invocation",p.value("InvocationID")},{"fingerprint",fingerprint(p)},
         {"weight",p.value("CPUWeight")},{"memory",p.value("MemoryCurrent")},{"memoryHigh",p.value("MemoryHigh")},{"quota",p.value("CPUQuotaPerSecUSec")},
+        {"quotaRaw",cgroupText(p.value("ControlGroup"),"cpu.max")},
         {"quotaSupported",exported(p.value("ControlGroup"),"cpu.max")},{"uclampSupported",exported(p.value("ControlGroup"),"cpu.uclamp.max")},
         {"ioLimitSupported",exported(p.value("ControlGroup"),"io.max")}};
 }
@@ -43,7 +45,10 @@ QJsonObject applyApplicationPreset(const QString &unit,const QString &invocation
     QStringList args{"set-property","--runtime",unit,"CPUWeight="+QString(weight),"MemoryHigh="+QString(memory)};
     if(quota)args<<"CPUQuota="+QString(preset=="limited"?"50%":"infinity");
     int code=0;run(args,code);const auto after=applicationScope(unit);result["after"]=after;
-    const bool readback=after.value("invocation").toString()==invocation&&after.value("weight").toString()==weight&&after.value("memoryHigh").toString()==memory;
+    const auto q=after.value("quotaRaw").toString().simplified().split(' ');
+    bool quotaReadback=!quota;
+    if(quota&&q.size()==2){bool a=false,b=false;const auto amount=q[0].toULongLong(&a),period=q[1].toULongLong(&b);quotaReadback=preset=="limited"?a&&b&&period>0&&amount*2==period:q[0]=="max";}
+    const bool readback=after.value("invocation").toString()==invocation&&after.value("weight").toString()==weight&&after.value("memoryHigh").toString()==memory&&quotaReadback;
     result["error"]=code?"request_failed":!readback?"readback_differs":"";
     result["quotaSupported"]=quota;result["preset"]=preset;
     // Store a reviewed preset as a local record, never an automatic rule for

@@ -80,6 +80,21 @@ private slots:
         QTRY_VERIFY(!manager.busy());QVERIFY(manager.revision()>revision);
         QCOMPARE(manager.devices().size(),2);QVERIFY(!manager.active());
     }
+    void resourceReviewAndPrivateExport() {
+        Fixture f;f.enabled=true;f.results["manager.sample"]=QJsonObject{{"data",managerSample()}};
+        KernelManager manager(f);manager.open("memory");
+        QCOMPARE(manager.state().value("controls").toList().size(),3);
+        QVERIFY(!manager.prepareResource("memory.swappiness","201"));
+        QVERIFY(manager.prepareResource("memory.swappiness","61"));QVERIFY(manager.review().value("blocked").toBool());
+        QVERIFY(!manager.apply(manager.review().value("token").toString()));
+        manager.open("profiles");QVERIFY(manager.prepareApplication("app-example.scope","background"));
+        QVERIFY(!manager.apply(manager.review().value("token").toString()));
+        QTemporaryDir dir;QVERIFY(dir.isValid());const auto path=dir.filePath("session.txt");
+        QVERIFY(manager.exportReport(QUrl::fromLocalFile(path)));QFile file(path);QVERIFY(file.open(QIODevice::ReadOnly));
+        QVERIFY(file.readAll().contains("Senemos Kernel Manager"));
+        QVERIFY(!(QFileInfo(path).permissions()&QFileDevice::ReadOther));
+        QVERIFY(!manager.exportReport(QUrl("https://example.invalid/report")));
+    }
 };
 QTEST_MAIN(ManagerTests)
 #include "kernel-manager.moc"

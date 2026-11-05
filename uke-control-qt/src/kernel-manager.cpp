@@ -113,6 +113,7 @@ void KernelManager::accept(const QJsonObject &snapshot) {
     }
     add("cpuTemperature",cpuTemp);add("gpuTemperature",gpuTemp);
     state_={{"values",values},{"cores",cores},{"cpuTemperature",cpuTemp},{"gpuTemperature",gpuTemp}};
+    state_["sampledAt"]=QDateTime::currentDateTime().toString(Qt::ISODate);
     const auto resources=snapshot.value("resources").toObject();
     if(!resources.isEmpty()) {
         auto metrics=resources.value("metrics").toObject();
@@ -238,5 +239,18 @@ QString KernelManager::summary()const {
     QString out=i18n("Senemos Kernel Manager — session observations")+"\n"+i18n("Page: %1",mode_)+"\n";
     for(const auto &v:state_.value("sections").toList()){const auto s=v.toMap();out+="\n"+s.value("title").toString()+"\n";for(const auto &w:s.value("rows").toList()){const auto row=w.toMap();out+="  "+row.value("title").toString()+": "+row.value("value").toString()+" ["+row.value("status").toString()+"]\n";}}
     for(const auto &v:events_){const auto e=v.toMap();out+=e.value("time").toString()+" "+e.value("title").toString()+": "+e.value("value").toString()+"\n";}return out.left(131072);
+}
+bool KernelManager::exportReport(const QUrl &url) {
+    if(!url.isLocalFile()||url.toLocalFile().isEmpty())return false;
+    QString report=summary()+"\n"+i18n("Session samples: elapsed seconds, metric, value")+"\n";
+    for(auto it=history_.begin();it!=history_.end();++it)for(const auto &p:it.value()) {
+        if(report.size()>1048576)break;
+        report+=QString::number(p.time,'f',3)+"\t"+it.key()+"\t"+(p.value.isValid()?QString::number(p.value.toDouble(),'g',12):QString("missing"))+"\n";
+    }
+    QSaveFile out(url.toLocalFile());
+    const auto bytes=report.toUtf8();const bool opened=out.open(QIODevice::WriteOnly);
+    if(opened)out.setPermissions(QFileDevice::ReadOwner|QFileDevice::WriteOwner);
+    const bool success=opened&&out.write(bytes)==bytes.size()&&out.commit();
+    outcome_=success?i18n("The bounded session report was saved locally."):i18n("The report could not be saved. Choose a writable local file.");emit changed();return success;
 }
 }

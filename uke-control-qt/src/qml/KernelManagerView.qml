@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 ColumnLayout {
@@ -49,8 +50,11 @@ ColumnLayout {
             onActivated: index => view.seconds = model[index].value
         }
         FormCard.FormButtonDelegate { text: i18n("Monitoring options"); icon.name: themeIcons.names["configure"]; onClicked: view.optionsExpanded = !view.optionsExpanded }
+        SafeText { visible: view.optionsExpanded; text: i18n("Last observation"); description: view.manager.state.sampledAt || i18n("Not read yet") }
+        FormCard.FormButtonDelegate { visible: view.optionsExpanded; text: i18n("Save session report"); description: i18n("Save a bounded text report locally. No files are uploaded."); icon.name: themeIcons.names["document-export"]; onClicked: reportFile.open() }
         FormCard.FormButtonDelegate { visible: !view.manager.active; text: i18n("Read once"); icon.name: themeIcons.names["view-refresh"]; enabled: !view.manager.busy; onClicked: view.manager.refresh() }
     }
+    FileDialog { id: reportFile; title: i18n("Save session report"); fileMode: FileDialog.SaveFile; nameFilters: [i18n("Text reports (*.txt)")]; onAccepted: view.manager.exportReport(selectedFile) }
     Kirigami.InlineMessage { Layout.fillWidth: true; visible: view.manager.message.length > 0; text: view.manager.message; type: Kirigami.MessageType.Information }
     Loader {
         Layout.fillWidth: true
