@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
-Version:        1.3.0
-Release:        6%{?dist}
+Version:        1.4.0
+Release:        4%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -81,6 +81,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %doc README.md
 %{_bindir}/uke-control-qt
 %{_libexecdir}/uke-control-qt/kernel-information
+%{_libexecdir}/uke-control-qt/frequency-control
+%{_datadir}/polkit-1/actions/org.senemos.uke.frequency-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.qt-kernel-information.policy
 %{_datadir}/applications/org.uke.ControlQt.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.uke.ControlQt.svg
@@ -91,6 +93,23 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_datadir}/uke-control-qt/tests/
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.4.0-4
+- Keep the authorized initial device read when monitoring pauses and wait for delivered results in live checks.
+- Keep graphs near the current measurements and disclose monitoring/source details on demand.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-3
+- Limit review dialogs and sensor selection to the visible settings page.
+- Exercise a reviewed GPU request after visiting the CPU page.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-2
+- Offer explicit advertised limits and preserve fractional MHz in frequency controls.
+- Show the selected sensor value and source state beside its graph.
+
+* Thu Nov 05 2026 Uke contributors - 1.4.0-1
+- Add Senemos Kernel Manager with live CPU, GPU and sensor graphs beside their controls.
+- Restrict reviewed frequency requests to advertised policies with stale-state checks and readback.
+- Combine memory/swap and sleep/wake observations with their related preferences.
+
 * Wed Nov 04 2026 Uke contributors - 1.3.0-6
 - Convert the observed Qt role value to the shared SDK's string type.
 

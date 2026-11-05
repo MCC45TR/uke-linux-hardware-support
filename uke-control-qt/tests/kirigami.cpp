@@ -16,6 +16,7 @@
 #include <QtTest>
 #include <QNdefNfcTextRecord>
 #include <QNdefNfcUriRecord>
+#include "manager-fixture.hpp"
 using namespace uq;
 static QQuickItem *visualItem(QQuickItem *parent, const QString &name) {
   if (!parent->isVisible())
@@ -121,7 +122,7 @@ private slots:
   }
   void taskTaxonomyAndCatalogFilters() {
     Bridge bridge(fixture, false);
-    QCOMPARE(bridge.areas().size(), 9);
+    QCOMPARE(bridge.areas().size(), 10);
     QSet<QString> areaIds;
     for (const auto &value : bridge.areas()) {
       const auto area = value.toMap();
@@ -142,7 +143,7 @@ private slots:
         }
       }
     }
-    QCOMPARE(areaIds.size(), 9);
+    QCOMPARE(areaIds.size(), 10);
     QSet<QString> catalogIds;
     for (const auto &group : bridge.catalog(""))
       for (const auto &entry : group.toMap().value("entries").toList()) {
@@ -171,7 +172,7 @@ private slots:
     QVERIFY(batteryFound);
     QCOMPARE(bridge.areaForAction("overview.nfc"), 3);
     QCOMPARE(bridge.areaForAction("overview.camera"), 6);
-    QCOMPARE(bridge.areaForAction("sensors.once"), 8);
+    QCOMPARE(bridge.areaForAction("sensors.once"), 9);
     QCOMPARE(bridge.areaForAction("resize.prepare"), 8);
     QVERIFY(bridge.catalog("no-such-action-98765").isEmpty());
     const auto previous = bridge.section();
@@ -285,6 +286,8 @@ private slots:
   }
   void qmlSettingsTopics() {
     auto rich=fixture;
+    rich.results["manager.sample"]=QJsonObject{{"data",managerSample()}};
+    rich.results["sensors.once"]=QJsonObject{{"data",managerSensors()}};
     for(const auto &t:settingTopics())for(const auto &id:t.reads)
       if(!rich.results.contains(id))rich.results[id]=QJsonObject{{"data",QJsonObject{{"available",true},{"status","Synthetic reported state"}}}};
     auto battery=QJsonObject{{"provider_verified",true},{"snapshot_coherent",true},
@@ -323,6 +326,23 @@ private slots:
       if(topic.id=="kernel")snapshot(window,"settings-kernel");
       if(topic.id=="nfc") {QVERIFY(visualItem(window->contentItem(),"nfcInspect"));snapshot(window,"settings-nfc");}
       if(topic.id=="usb") {QVERIFY(visualItem(window->contentItem(),"usbAutomatic"));snapshot(window,"settings-dock");}
+      if(topic.id=="cpu"||topic.id=="gpu"||topic.id=="sensors") {
+        QVERIFY(visualItem(window->contentItem(),"kernelMonitoring"));
+        snapshot(window,"settings-"+topic.id);
+        if(topic.id=="gpu") {
+          // Keep earlier pages in PageRow, rather than clearing navigation.
+          QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString("cpu"))));
+          QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString("gpu"))));
+          QTest::qWait(100);
+          QVERIFY(window->findChildren<QObject *>("frequencyReview").size()>=2);
+          auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
+          QVERIFY(manager->prepare("gpu:gpu0","maximum","200000000"));
+          auto visibleReviews=[&]{int count=0;for(auto *object:window->findChildren<QObject *>("frequencyReview"))if(object->property("visible").toBool())++count;return count;};
+          QTRY_COMPARE(visibleReviews(),1);
+          QVERIFY(!manager->apply(manager->review().value("token").toString()));
+          manager->dismissReview();QTRY_COMPARE(visibleReviews(),0);
+        }
+      }
     }
     QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,0)));snapshot(window,"settings-home");
     QVERIFY(QMetaObject::invokeMethod(window,"openSearch"));
@@ -375,13 +395,22 @@ private slots:
     engine.loadFromModule("org.uke.ControlQtTest","Main");
     QVERIFY(!engine.rootObjects().isEmpty());
     auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
-    window->resize(720,960);window->show();
-    for(const auto *topic:{"usb","charging","nfc"}) {
-      QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,QString(topic)=="charging"?1:3)));
+    window->resize(720,960);window->show();window->requestActivate();QTest::qWait(250);
+    for(const auto *topic:{"usb","charging","nfc","cpu","gpu","sensors"}) {
+      const QString id(topic);const int area=id=="charging"?1:id=="cpu"||id=="gpu"||id=="sensors"?9:3;
+      QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,area)));
       QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,QString(topic))));
       QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),30000);
       QVERIFY2(settings->notice().isEmpty(),qPrintable(settings->notice()));
-      QVERIFY(!settings->information().isEmpty());
+      if(id!="cpu"&&id!="gpu"&&id!="sensors")QVERIFY(!settings->information().isEmpty());
+      if(id=="cpu"||id=="gpu"||id=="sensors") {
+        auto *manager=qobject_cast<KernelManager *>(settings->manager());QVERIFY(manager);
+        QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);
+        if(id=="sensors")QTRY_VERIFY_WITH_TIMEOUT(!manager->sensors().isEmpty(),30000);else QTRY_VERIFY_WITH_TIMEOUT(!manager->devices().isEmpty(),30000);
+        if(id=="sensors"){manager->setInterval(1);manager->start();}
+        QTest::qWait(2200);manager->refresh();QTRY_VERIFY_WITH_TIMEOUT(!manager->busy(),30000);
+        manager->pause();
+      }
       if(QString(topic)=="nfc")qobject_cast<NfcReader *>(settings->nfc())->inspect();
       snapshot(window,"device-"+QString(topic));
       qInfo("Installed kernel information page completed: %s",topic);
@@ -664,6 +693,7 @@ int main(int argc, char **argv) {
   KStyleManager::initStyle();
   QQuickStyle::setStyle("org.kde.desktop");
   qmlRegisterType<HistoryPlot>("org.uke.settings",1,0,"HistoryPlot");
+  qmlRegisterType<TimePlot>("org.uke.settings",1,0,"TimePlot");
   KirigamiTests tests;
   return QTest::qExec(&tests, argc, argv);
 }

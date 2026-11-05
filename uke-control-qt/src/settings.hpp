@@ -8,6 +8,7 @@
 #include <functional>
 #include <QProcess>
 #include "nfc-reader.hpp"
+#include "kernel-manager.hpp"
 namespace uq {
 struct Topic {
   QString id, title, subtitle, icon;
@@ -30,6 +31,7 @@ class Settings : public QObject {
   Q_PROPERTY(QString updated READ updated NOTIFY changed)
   Q_PROPERTY(QObject* nfc READ nfc CONSTANT)
   Q_PROPERTY(QVariantMap usbPolicy READ usbPolicy NOTIFY changed)
+  Q_PROPERTY(QObject* manager READ manager CONSTANT)
   Fixture fixture_;
   bool restricted_ = false;
   const Topic *topic_ = nullptr;
@@ -42,6 +44,7 @@ class Settings : public QObject {
   QVariantMap history_;
   unsigned historyGeneration_ = 0;
   NfcReader nfc_;
+  KernelManager manager_;
   QProcess *kernel_ = nullptr;
   QTimer kernelTimeout_;
   QByteArray kernelOutput_;
@@ -61,6 +64,7 @@ public:
   QVariantMap history() const { return history_; }
   QVariantMap bootReport() const;
   QObject *nfc() { return &nfc_; }
+  QObject *manager() { return &manager_; }
   QVariantMap usbPolicy() const;
   bool busy() const { return !current_.isEmpty(); }
   QString notice() const { return notice_; }

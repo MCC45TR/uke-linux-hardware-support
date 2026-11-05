@@ -22,7 +22,7 @@ FormCard.FormCardPage {
         text: backend.simulation ? i18n("Simulation — sample data only. Changes are disabled.") : i18n("Read-only session")
     }
     Repeater {
-        model: page.areaIndex === 0 ? backend.areas.filter(a => a.index >= 1 && a.index <= 6) : []
+        model: page.areaIndex === 0 ? backend.areas.filter(a => !a.secondary && a.index > 0) : []
         delegate: FormCard.FormCard {
             required property var modelData
             Layout.fillWidth: true
