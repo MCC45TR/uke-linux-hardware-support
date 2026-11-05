@@ -13,7 +13,7 @@ libsystemd, libc and the ELF loader. All three required firmware/configuration p
 without calling SensorProxy. The two SSC/dual-light SensorProxy capability
 requirements therefore impose an unrelated presentation dependency.
 
-Release 31 removes those two requirements while preserving all native sources,
+Release 32 removes those two requirements while preserving all native sources,
 firmware file dependencies, read-only persist admission, RAM registry, units,
 ordering, scripts and original native tests. The full parent source capsule and
 its seal are verified. Existing source catalogues remain historical inputs;
@@ -37,3 +37,10 @@ incorrectly treated it as an extra runtime output. The corrected guard admits
 that metadata header while requiring exactly the three service %files sections.
 Fresh source release 5 and service release 31 preserve the same dependency-only
 change. Native build, signed payload and actual output admission remain pending.
+
+Source job 11268497 then passes RPM parsing but the file-section guard excludes
+the runtime package whose declaration ends at the package name. Replace that
+regular expression with exact parsed section-name comparison against the three
+allowed packages. The real parent transformation passes this local metadata
+check without compilation. Fresh source release 6 and service release 32 retain
+the same code and dependency scope; all native admission remains mandatory.

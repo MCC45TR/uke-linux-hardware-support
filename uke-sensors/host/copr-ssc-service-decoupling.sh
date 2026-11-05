@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # COPR only. Extend the complete installed sensor source family, not stale git.
 set -Eeuo pipefail
+trap 'printf "SSC source guard failed at line%s: %s\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
 test ! -e /etc/senemos/kernel-update.conf
 export LC_ALL=C
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 && $(rpm --eval '%{fedora}') == 46 ]]
 owner=$(cd -- "$(dirname -- "$0")/.." && pwd)
 output=$(realpath -m "${1:?Source result directory}")
-[[ ${2:?Unique source release} == 5 && ${3:?Unique fileservice release} == 31 ]]
+[[ ${2:?Unique source release} == 6 && ${3:?Unique fileservice release} == 32 ]]
 [[ ! -e $output || (-d $output && -z $(find "$output" -mindepth 1 -maxdepth 1 -print -quit)) ]]
 work=$(mktemp -d);trap 'find "$work" -depth -delete' EXIT
 mkdir -p "$output" "$work/rpm" "$work/source"
@@ -34,8 +35,8 @@ awk '
   skip=($0 ~ /-n uke-(front-color|proximity-capture)([[:space:]]|$)/)
  }
  skip {next}
- /^Release: 3%\{[?]dist\}$/ {$0="Release: 5%{?dist}";source_release++}
- /^Release: 29[.]fc46$/ {$0="Release: 31.fc46";binary_release++}
+ /^Release: 3%\{[?]dist\}$/ {$0="Release: 6%{?dist}";source_release++}
+ /^Release: 29[.]fc46$/ {$0="Release: 32.fc46";binary_release++}
  /^Requires: iio-sensor-proxy\((ssc|uke-dual-light)\) >= 1$/ {removed++;next}
  /^%check$/ {
   print "# Do not republish completed observation clients with a service-only update."
@@ -43,8 +44,8 @@ awk '
   install_cleanup++
  }
  /^%changelog$/ {
-  print;print "* Fri Nov 06 2026 Uke contributors - 1.0.0-5";
-  print "- Deliver fileservice release31 without unused SSC/dual-light frontend requirements.";
+  print;print "* Fri Nov 06 2026 Uke contributors - 1.0.0-6";
+  print "- Deliver fileservice release32 without unused SSC/dual-light frontend requirements.";
   print "- Preserve native sources, read-only factory admission and upgrade behavior.";
   print "- Publish only the required service and its matching debug packages.";print "";next
  }
@@ -52,12 +53,14 @@ awk '
  END {if(source_release!=1 || binary_release!=3 || removed!=2 || install_cleanup!=1)exit 1}
 ' "$work/rpm/uke-sensor-integration.spec" > "$output/uke-sensor-integration.spec"
 spec=$output/uke-sensor-integration.spec
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec") == uke-sensor-integration-1.0.0-5.fc46 ]]
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$spec") == uke-sensor-integration-1.0.0-6.fc46 ]]
 rpmspec -q --qf '%{NAME}-%{VERSION}-%{RELEASE}\n' "$spec" | sort > "$work/packages"
 # rpmspec also lists the source-only header; no main %files means no RPM.
-[[ $(grep -Ec '^%files' "$spec") == 3 && $(grep -Ec '^%files -n uke-ssc-fileservice([[:space:]]|-)' "$spec") == 3 ]]
-printf '%s\n' uke-sensor-integration-1.0.0-5.fc46 uke-ssc-fileservice-2026.09.21-31.fc46 uke-ssc-fileservice-debuginfo-2026.09.21-31.fc46 uke-ssc-fileservice-debugsource-2026.09.21-31.fc46 | sort > "$work/expected"
-cmp "$work/expected" "$work/packages"
+awk '/^%files([[:space:]]|$)/ {if($2!="-n")exit 1;print $3}' "$spec" | sort > "$work/file-sections"
+printf '%s\n' uke-ssc-fileservice uke-ssc-fileservice-debuginfo uke-ssc-fileservice-debugsource | sort > "$work/expected-sections"
+cmp "$work/expected-sections" "$work/file-sections"
+printf '%s\n' uke-sensor-integration-1.0.0-6.fc46 uke-ssc-fileservice-2026.09.21-32.fc46 uke-ssc-fileservice-debuginfo-2026.09.21-32.fc46 uke-ssc-fileservice-debugsource-2026.09.21-32.fc46 | sort > "$work/expected"
+cmp "$work/expected" "$work/packages" || { cat "$work/expected" "$work/packages" >&2;exit 1; }
 rpmspec -q --requires "$spec" > "$work/requires"
 ! grep -F 'iio-sensor-proxy(' "$work/requires"
-printf 'Complete sensor family retained; only fileservice31 and matched debug outputs. Native/package qualification pending.\n'
+printf 'Complete sensor family retained; only fileservice32 and matched debug outputs. Native/package qualification pending.\n'
