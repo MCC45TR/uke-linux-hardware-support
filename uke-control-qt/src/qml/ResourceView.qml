@@ -117,9 +117,9 @@ ColumnLayout {
                 Controls.Label { Layout.fillWidth: true; text: i18n("Requested value (%1–%2)", control.modelData.minimum, control.modelData.maximum); wrapMode: Text.WordWrap }
                 Controls.SpinBox {
                     objectName: "resourceValue_" + control.modelData.id
-                    from: control.modelData.minimum; to: control.modelData.maximum
+                    from: Number(control.modelData.minimum || 0); to: Number(control.modelData.maximum || 0)
                     stepSize: control.modelData.id.endsWith("read-ahead") ? 4 : 1
-                    value: Number(control.requested)
+                    value: control.modelData.choices.length === 0 ? Number(control.requested || 0) : 0
                     editable: true
                     onValueModified: view.draft(control.modelData.id, String(value))
                     Accessible.name: control.modelData.title

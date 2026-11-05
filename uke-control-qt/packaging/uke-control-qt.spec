@@ -1,7 +1,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -124,6 +124,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/org.uke.ControlQt.des
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Thu Nov 05 2026 Uke contributors - 1.6.0-4
+- Initialize hidden numeric editors for categorical and unavailable providers.
+
 * Thu Nov 05 2026 Uke contributors - 1.6.0-3
 - Bound application enumeration and remember the last manually selected preset.
 - Keep application CPU/memory graphs beside resource controls and remove thermal mirrors by provider.
