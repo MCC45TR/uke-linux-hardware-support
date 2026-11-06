@@ -1,56 +1,36 @@
 # Separate the DSP filesystem service from sensor presentation
 
-6 November 2026, POCO Pad X1, Fedora AArch64. The existing native IIO consumer
-owns sensor QMI transport and channel publication. A direct-read snapshot on
-kernel 12206 successfully reads all seven native devices and their standard
-attributes; the acceleration magnitude is about 9.76 m/s². This is a transport
-and unit sanity observation, without pose, accuracy or lifecycle acceptance.
+6 November2026, POCO Pad X1, Fedora AArch64. The native IIO consumer owns
+sensor QMI transport and channel publication. Seven providers and their
+standard attributes can be read directly on12206; this establishes transport
+and unit sanity, without controlled pose, accuracy or lifecycle acceptance.
 
-The installed filesystem service comes from complete source family
-`uke-sensor-integration-1.0.0-3`, COPR 11239521. Its native daemon links only
-libsystemd, libc and the ELF loader. All three required firmware/configuration paths belong to
-`uke-firmware`; its service units use FastRPC and the private RAM registry,
-without calling SensorProxy. The two SSC/dual-light SensorProxy capability
-requirements therefore impose an unrelated presentation dependency.
+Filesystem service32 removes its unused SSC and dual-light SensorProxy
+capability requirements. Its native daemon links libsystemd/libc/loader and
+serves FastRPC independently of the frontend. Firmware/configuration paths,
+read-only persist admission, private RAM registry, service ordering, scripts
+and all native tests remain. Kernel/DT cannot replace the firmware file
+protocol by parsing a private filesystem, so this service remains necessary.
 
-Release 32 removes those two requirements while preserving all native sources,
-firmware file dependencies, read-only persist admission, RAM registry, units,
-ordering, scripts and original native tests. The full parent source capsule and
-its seal are verified. Existing source catalogues remain historical inputs;
-the explicit service-decoupling manifest defines this update's output selection.
-Completed front-color/proximity observation clients are not rebuilt as new RPM
-outputs; their retained source tests still run. Matching service debug packages
-remain available. No firmware, factory calibration or unique identity is added.
+The update extends complete source family1.0.0-3/COPR11239521 with both source
+inventories verified. Only the required service and matching debug RPMs are
+published; completed observation-client sources/tests remain historical inputs.
+COPR11268501 succeeds85seconds from3ebef760. All three binary signatures,
+exact output identities, the two-requirement delta,32 other installed
+requirement providers, six unchanged data payloads and upgrade scripts/triggers
+are independently admitted. ELFs remain AArch64 without SensorProxy/libssc.
 
-This does not remove the installed presentation frontend. Core meta and
-adaptive-display still require it. Replacement with the original distribution
-SensorProxy requires axes, both light paths, proximity, startup/restart/suspend,
-dependency closure and preserved user settings. Keep the FastRPC filesystem
-service: native IIO still depends on the firmware's file protocol. Kernel/DT
-cannot replace that protocol with private filesystem parsing. No KDE/GNOME
-package is forked or rebuilt by this change, and no local device compilation
-or copied executable is used.
+Normal configured-repository DNF upgrades only the service from29to32 on the
+tablet. All216 private RAM registry files remain byte-identical with the same
+generation inode; persist stays read-only and all three service units are
+active. Exact RPM/header verification, rawA+B, kernel trial/status and persistent
+preferences/policies are preserved. After restart all seven native providers,
+19 numeric attributes and the acceleration mount matrix read successfully;
+repeated acceleration vectors change. Detailed calibration stays private.
 
-Initial source job 11268448 refuses before producing an SRPM: rpmspec lists
-the source-only main header alongside binary packages, and the output guard
-incorrectly treated it as an extra runtime output. The corrected guard admits
-that metadata header while requiring exactly the three service %files sections.
-Fresh source release 5 and service release 31 preserve the same dependency-only
-change. Native build, signed payload and actual output admission remain pending.
-
-Source job 11268497 then passes RPM parsing but the file-section guard excludes
-the runtime package whose declaration ends at the package name. Replace that
-regular expression with exact parsed section-name comparison against the three
-allowed packages. The real parent transformation passes this local metadata
-check without compilation. Fresh source release 6 and service release 32 retain
-the same code and dependency scope; all native admission remains mandatory.
-
-COPR 11268501 succeeds in 85 seconds from source `3ebef760`. All original
-native tests pass. The three signed RPMs have exactly the selected identities;
-the dependency delta is precisely the two capability requirements. All other
-requirements resolve on the running tablet. The six data payloads, file modes,
-config flags, upgrade scripts and triggers match installed release 29; ELF
-outputs remain native AArch64 without a SensorProxy/libssc linkage. The normal
-configured repository now exposes release 32. Tablet installation and service
-restart acceptance remain pending authenticated DNF access; no installed
-frontend or calibration has been removed or modified.
+Core meta and adaptive-display still require the installed presentation
+frontend. Replacement with the original distribution SensorProxy requires
+controlled axes, both light paths, proximity, startup/restart/suspend, dependency
+closure and preserved user settings. No frontend/libssc is retired by this
+update. No KDE/GNOME package is rebuilt; compilation stays in COPR and tablet
+delivery uses DNF. Full sensor accuracy and suspend acceptance remain open.

@@ -39,6 +39,15 @@
     "upgrade_scripts_and_triggers_unchanged": true,
     "remaining_installed_requirement_providers": 32,
     "normal_repository_visible": true,
-    "tablet_installed": false
+    "tablet_installed": true,
+    "normal_repository_dnf_only_one_upgrade": true,
+    "private_ram_registry_files_preserved": 216,
+    "private_generation_inode_preserved": true,
+    "persist_read_only": true,
+    "three_fileservice_units_active": true,
+    "raw_a_b_and_policy_trial_preserved": true,
+    "post_restart_iio_providers": 7,
+    "post_restart_numeric_attributes": 19,
+    "controlled_accuracy_and_suspend_accepted": false
   }
 }
