@@ -1,0 +1,80 @@
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -2,6 +2,7 @@
+ #pragma once
+ #include "installation-policy.hpp"
+ #include "slot-control.hpp"
++#include "metadata-maintenance.hpp"
+ #include "touch-health.hpp"
+ #include "rtc-clock.hpp"
+ struct UserdataUpdate {
+@@ -638,13 +639,19 @@
+         const bool trial=prior && accepting_trial(*prior,running,release,good_hash,current_boot_id);
+         if(skip_off_acceptance(mode,prior && (trial || (unsigned(prior->policy.good)==running &&
+                  prior->policy.good_release==release && prior->good_image==good_hash)))) {
++            std::vector<std::pair<std::string,slot::Disk*>> maintenance;
++            for(auto &disk:disks)maintenance.emplace_back(disk->name,disk->gpt.get());
++            if(repair_unaccepted_slot_crc(maintenance,state,true) && action=="accept") {
++                auto inhibitor=inhibit_shutdown();CriticalSignals signals;
++                (void)repair_unaccepted_slot_crc(maintenance,state,false);
++            }
+             const auto recovered=interrupted_off_stage(*prior,mode,running,release,good_hash,current_boot_id);
+             if(recovered && action=="accept") {
+                 save_update(statefile,*recovered);
+                 std::cout<<"Interrupted inactive trial record recovered; kernel health approval and slot selection unchanged\n";
+                 return;
+             }
+-            std::cout<<"Rollback off: running boot identity verified; health acceptance skipped; protected state unchanged\n";
++            std::cout<<"Rollback off: running boot identity verified; matching-array CRC maintenance complete; health approval and slot selection unchanged\n";
+             return;
+         }
+         if(trial && action=="accept") {
+--- a/tests/slot-control.cpp
++++ b/tests/slot-control.cpp
+@@ -2,6 +2,7 @@
+ #define UKE_KERNEL_UPDATE_TEST
+ #include "../src/kernel-update.cpp"
+ #include "../src/slot-control.hpp"
++#include "../src/metadata-maintenance.hpp"
+ #include <cassert>
+ #include <functional>
+ static void reject(const std::function<void()> &call) {
+@@ -204,6 +205,38 @@
+         reject([&]{returned.fallback(good,failed);});
+         a.restore();
+     }
++    for(unsigned running=0;running<2;++running) {
++        a.restore();
++        if(running==1){slot::Disk selected(fd.value,st.st_size,sector);assert(selected.prepare(0,1));selected.commit();}
++        const auto trial=slot::snapshot(fd.value,st.st_size,sector);
++        const auto private_state=path.string()+".crc-maintenance";
++        fs::create_directory(private_state);fs::permissions(private_state,fs::perms::owner_all);
++        const auto record=fs::path(private_state)/"userdata.state";
++        save_new(record,Bytes{'u','n','a','p','p','r','o','v','e','d'});
++        const auto saved=file(record);
++        auto old=trial.backup;set32(old,88,le32(old,88)^1);header_crc(old);
++        slot::write_at(fd.value,trial.last*sector,old);
++        slot::Disk repair(fd.value,st.st_size,sector,true);
++        const std::vector<std::pair<std::string,slot::Disk*>> targets{{"fixture",&repair}};
++        const auto observed=slot::snapshot(fd.value,st.st_size,sector,true);
++        assert(repair_unaccepted_slot_crc(targets,private_state,true));
++        assert(slot::snapshot(fd.value,st.st_size,sector,true)==observed && fs::is_empty(fs::path(private_state))==false);
++        assert(std::distance(fs::directory_iterator(private_state),fs::directory_iterator{})==1);
++        assert(repair_unaccepted_slot_crc(targets,private_state,false));
++        const auto fixed=slot::snapshot(fd.value,st.st_size,sector);
++        assert(fixed==trial && file(record)==saved);
++        slot::Disk clean(fd.value,st.st_size,sector);
++        assert(!repair_unaccepted_slot_crc({{"fixture",&clean}},private_state,false));
++        assert(slot::snapshot(fd.value,st.st_size,sector)==fixed && file(record)==saved);
++        reject([&]{repair_unaccepted_slot_crc({{"same",&clean},{"same",&clean}},private_state,false);});
++        slot::write_at(fd.value,trial.last*sector,old);
++        slot::Disk modified(fd.value,st.st_size,sector,true);
++        if(running==1)modified.success(running);else assert(modified.prepare(0,1));
++        reject([&]{repair_unaccepted_slot_crc({{"fixture",&modified}},private_state,false);});
++        assert(slot::snapshot(fd.value,st.st_size,sector,true).entries==trial.entries && file(record)==saved);
++        a.restore();fs::remove_all(private_state);
++    }
++    std::cout<<"Rollback-off CRC maintenance: actual preview/commit/idempotence, both slots, unchanged flags/types/approval and pending-mutation refusal passed\n";
+     auto stale=original.entries;stale[0]^=1;slot::write_at(fd.value,original.primary_entries,stale);
+     reject([&]{slot::snapshot(fd.value,st.st_size,sector);});a.restore();
+     slot::Disk interrupted(fd.value,st.st_size,sector);assert(interrupted.prepare(0,1));

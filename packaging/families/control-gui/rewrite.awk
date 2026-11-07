@@ -8,6 +8,14 @@ function finish_phase() {
     if(phase=="prep") {
         print "mkdir -p %{_builddir}/uke-control-frontend-contract"
         print "tar -xJf %{SOURCE1} -C %{_builddir}/uke-control-frontend-contract"
+        if(build_phase=="backend") {
+            print "mapfile -t package_sources < <(find %{_builddir}/uke-control-2.8.1/work -type f -path '*/src/packages.cpp')"
+            print "test ${#package_sources[@]} = 1"
+            print "package_root=${package_sources[0]%/src/packages.cpp}"
+            print "tar -xJf %{SOURCE5} -C \"$package_root\""
+            print "printf '%s\\n' 'include tests/package-policy.mk' >> \"$package_root/Makefile\""
+            print "printf '%s\\n' 'include tests/update-status.mk' >> \"$package_root/Makefile\""
+        }
     } else if(phase=="build" && build_phase=="backend") {
         print "contract=%{_builddir}/uke-control-frontend-contract"
         print "mapfile -t client_libraries < <(find %{_builddir}/uke-control-2.8.1/work -type f -path '*/build/libuke-control-client.so.1')"
@@ -21,6 +29,10 @@ function finish_phase() {
         if(build_phase=="backend") {
             print "install -Dm644 \"$contract/frontend.hpp\" %{buildroot}%{_includedir}/uke-control/frontend.hpp"
             print "install -Dm755 \"$contract/frontend-request\" %{buildroot}%{_libexecdir}/uke-control/frontend-request"
+            print "package_root=$(dirname \"$(cat \"$contract/library-directory\")\")"
+            print "install -Dm755 \"$package_root/build/update-status\" %{buildroot}%{_libexecdir}/uke-control/update-status"
+            print "install -Dm755 \"$package_root/build/set-slot\" %{buildroot}%{_libexecdir}/uke-control/set-slot"
+            print "install -Dm644 \"$package_root/packaging/org.senemos.uke.update-status.policy\" %{buildroot}%{_datadir}/polkit-1/actions/org.senemos.uke.update-status.policy"
         } else {
             print "install -Dm644 \"$contract/gnome.json\" %{buildroot}%{_datadir}/senemos/uke/desktops/gnome.json"
         }
@@ -93,6 +105,7 @@ function gnome_preamble() {
     print "Source2: uke-control-published-spec.txt"
     print "Source3: input.json"
     print "Source4: copr-public-key.asc"
+    print "Source5: uke-control-package-update.tar.xz"
     next
 }
 /^(Requires|Recommends|Suggests):/ {
@@ -106,6 +119,9 @@ function gnome_preamble() {
     print
     if(current=="uke-control") {
         print "Provides: uke-control(frontend-v1) = 1"
+        print "Provides: uke-control(update-status-v1) = 1"
+        print "Provides: uke-control(slot-selection-v1) = 1"
+        print "Requires: uke-kernel-update(slot-selection-v1) >= 1"
         print "Provides: /usr/libexec/uke-control/frontend-request"
         print "Requires: uke-control-client%{?_isa} = " version["uke-control"] "-" newer["uke-control"]
     }
@@ -123,7 +139,7 @@ current=="uke-kde-plasma-meta" && /^Requires: glibc-all-langpacks$/ {
 /^%(pre|post|preun|postun|pretrans|posttrans|files|changelog)([[:space:]]|$)/ {
     finish_phase(); phase=""
 }
-/^%files -n uke-control$/ {root_files=1;print; print "%{_libexecdir}/uke-control/frontend-request"; next}
+/^%files -n uke-control$/ {root_files=1;print; print "%{_libexecdir}/uke-control/frontend-request"; print "%{_libexecdir}/uke-control/update-status"; print "%{_libexecdir}/uke-control/set-slot"; print "%{_datadir}/polkit-1/actions/org.senemos.uke.update-status.policy"; next}
 /^%files/ {root_files=0}
 root_files && /^\/usr\/lib64\/libuke-control-client[.]so([.]1)?$/ {next}
 root_files && /^\/usr\/lib64\/pkgconfig\/uke-control-client[.]pc$/ {next}
@@ -151,8 +167,10 @@ END {
     }
     print ""
     print "%changelog"
-    if(build_phase=="backend") print "* Tue Nov 03 2026 Uke contributors - 2.8.1-7"
-    else print "* Tue Nov 03 2026 Uke contributors - 1.0.0-37"
-    print "- Preserve the published backend and add the typed GUI client contract."
-    print "- Require the corresponding native application in each desktop selection."
+    if(build_phase=="backend") print "* Wed Nov 04 2026 Uke contributors - 2.8.1-11"
+    else print "* Wed Nov 04 2026 Uke contributors - 1.0.0-41"
+    print "- Preserve newer installed versions and unavailable extras during channel changes."
+    print "- Honor kernel version locks and skip boot work for unchanged selections."
+    print "- Keep exact synchronization explicit and add signed offline solver tests."
+    print "- Handle scriptlet pipe errors without truncating successful receipts."
 }

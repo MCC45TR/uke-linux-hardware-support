@@ -1,0 +1,94 @@
+From: Uke contributors <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Retain unapproved checkpoints at the actual pre-write barrier
+
+--- a/src/slot-control.hpp
++++ b/src/slot-control.hpp
+@@ -147,18 +147,29 @@
+                  "GPT and UFS boot LUN selection differ");
+         }
+     }
+-    bool block_inactive(unsigned running,unsigned target) {
++    bool block_inactive(unsigned running,unsigned target,bool retain_checkpoint=false) {
+         need(running<2 && target==1-running,"Inactive slot required before writing");
+         require_selected(running);
+         const auto good=std::string("boot_")+(running?'b':'a');
+         const auto next=std::string("boot_")+(target?'b':'a');
+         if(!parts.contains(good) && !parts.contains(next))return false;
+         need(parts.contains(good) && parts.contains(next),"Unpaired boot slot");
+-        need((parts.at(good).attrs&successful) && !(parts.at(good).attrs&unbootable),
+-             "Accepted boot must be successful before writing the inactive slot");
++        const auto &held=parts.at(good);
++        need(((held.attrs&successful) || (retain_checkpoint && (held.attrs&priority))) && !(held.attrs&unbootable),
++             "Running boot must be retained before writing the inactive slot");
++        bool changed=false;
++        // The caller has proven an unapproved booted checkpoint in off mode.
++        // Retain its bootloader fallback before any candidate bytes are touched;
++        // the protected format2 record remains explicitly health-unapproved.
++        if(retain_checkpoint && !(held.attrs&successful)) {
++            const auto retained=held.attrs|successful;
++            need(!fdisk_gpt_set_partition_attrs(context.get(),held.number,retained) && !warning,
++                 "Cannot retain the running checkpoint before inactive write");
++            expected[good]={held.type,retained};changed=true;
++        }
+         const auto &p=parts.at(next);
+         const auto attrs=(p.attrs&~(successful|retries|priority))|unbootable;
+-        if(attrs==p.attrs)return false;
++        if(attrs==p.attrs)return changed;
+         need(!fdisk_gpt_set_partition_attrs(context.get(),p.number,attrs) && !warning,
+              "Cannot mark the inactive boot slot unbootable");
+         expected[next]={p.type,attrs};
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -730,13 +730,13 @@
+     if(rotating && original_prior->baseline_approved)
+         preserve_accepted_kernel(state,*original_prior,images[unsigned(original_prior->policy.good)]);
+     const auto transaction=state/(next+"-"+saved.candidate_image);auto transaction_dir=directory(transaction,true);
+-    // Commit only the target's unbootable flag before touching its image. A
++    // Retain the proven running checkpoint and block the target before writing. A
+     // power loss or partial image write must never leave a bootable candidate.
+     // Keep each descriptor locked while re-reading the admitted metadata.
+     changed.clear();
+     for(auto &disk:disks) {
+         disk->reload();
+-        const bool blocked=disk->gpt->block_inactive(running,target);
++        const bool blocked=disk->gpt->block_inactive(running,target,!saved.baseline_approved);
+         if(blocked) {
+             disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
+             disk->gpt->commit();
+--- a/tests/slot-control.cpp
++++ b/tests/slot-control.cpp
+@@ -66,6 +66,34 @@
+     assert(back.parts.at("boot_a").type==a.parts.at("boot_a").type);
+     assert(back.parts.at("boot_b").type==a.parts.at("boot_b").type);
+     {
++        // Execute the real pre-write barrier -> reload -> final selection in
++        // both directions, repeatedly, starting from an unapproved trial.
++        const auto initial=slot::snapshot(fd.value,st.st_size,sector);
++        for(unsigned cycle=0;cycle<4;++cycle) {
++            const unsigned running=cycle%2,target=1-running;
++            const auto before_cycle=slot::snapshot(fd.value,st.st_size,sector);
++            slot::Disk refused(fd.value,st.st_size,sector);
++            reject([&]{refused.block_inactive(running,target);});
++            assert(slot::snapshot(fd.value,st.st_size,sector)==before_cycle);
++            reject([&]{refused.block_inactive(target,running,true);});
++            slot::Disk barrier(fd.value,st.st_size,sector);
++            assert(barrier.block_inactive(running,target,true));
++            assert(slot::snapshot(fd.value,st.st_size,sector)==before_cycle);
++            barrier.commit();auto blocked=barrier.reread(true);
++            blocked->require_selected(running);
++            const auto &held=blocked->parts.at(running?"boot_b":"boot_a");
++            const auto &next=blocked->parts.at(target?"boot_b":"boot_a");
++            assert((held.attrs&slot::successful) && !(held.attrs&slot::unbootable));
++            assert((next.attrs&slot::unbootable) && !(next.attrs&(slot::successful|slot::priority|slot::retries)));
++            assert(!blocked->block_inactive(running,target,true));
++            assert(blocked->prepare(running,target,true));blocked->commit();
++            slot::Disk selected(fd.value,st.st_size,sector);selected.require_selected(target);
++            assert(!(selected.parts.at(target?"boot_b":"boot_a").attrs&slot::successful));
++            assert(selected.parts.at(running?"boot_b":"boot_a").attrs&slot::successful);
++        }
++        assert(slot::snapshot(fd.value,st.st_size,sector)==initial);
++    }
++    {
+         // A is now an unaccepted trial; B retains its successful baseline.
+         const auto before_checkpoint=slot::snapshot(fd.value,st.st_size,sector);
+         slot::Disk checkpoint(fd.value,st.st_size,sector);

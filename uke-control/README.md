@@ -322,6 +322,10 @@ sudo uke-control channel set unstable
 sudo uke-control channel sync
 sudo uke-control update --check
 sudo uke-control update
+uke-control update status
+sudo uke-control set-slot next --dry-run
+sudo uke-control set-slot a
+sudo uke-control set-slot b
 uke-control sensors -n5
 uke-control sensors -n5 --count=3 --json
 uke-control inventory
@@ -355,6 +359,24 @@ uke-control test sample accel
 uke-control test sample cct_front # raw descriptor-bound fields; units unverified
 sudo uke-control report
 ```
+
+`update status` prints readable terminal text, including the running kernel and
+slot, kernels stored in A/B, next boot selection, pending switch and approval
+record. Use `sudo` outside an active local desktop session. Explicit `--json`
+serves programmatic clients; redirecting output keeps human text by default.
+Missing evidence remains unknown. Current acceptance is verified against the
+stored image and boot-success flag. A retained previous failure without an
+ordered history cannot establish which historical attempt was most recent.
+
+`set-slot a|b|next` selects an existing verified kernel for the next boot.
+`next` means the slot opposite the currently running one. Use `--dry-run` to
+inspect its exact kernel and admission checks first. Changes require an
+interactive terminal and the exact `SLOT A` or `SLOT B` confirmation; an already
+selected target is a no-op. The boot owner refuses failed releases, unverified
+bundles and inconsistent trial/recovery state, preserves the accepted fallback
+and retains post-boot health approval. It never reboots or rewrites boot images.
+Later package policy may stage another kernel. Status and selection are also
+available in the Qt application's **Software updates → Kernel & boot slots**.
 
 Use the actual input node returned by the system; the example node is not a
 stable identifier. Touch observation requires an already accepted held contact;
