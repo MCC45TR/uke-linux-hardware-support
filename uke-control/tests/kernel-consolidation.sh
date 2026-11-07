@@ -13,6 +13,17 @@ fi
 grep -Fx '%doc KERNEL-CONSOLIDATION.md' "$work/expanded"
 grep -Fx '%license BOOT-RUNTIME-LICENSE.GPL-3.0' "$work/expanded"
 grep -Fx '%license BOOT-RUNTIME-THP-LICENSE' "$work/expanded"
+# Check every complete emitted lifecycle body after RPM macro expansion.
+# Some retained systemd macros expand to whitespace, which must still form a
+# valid shell compound command when several owners are combined.
+awk -v root="$work" '
+ /^%(pre|post|preun|postun|pretrans|posttrans|transfiletriggerin|transfiletriggerun|filetriggerin|filetriggerun)([[:space:]]|$)/ {
+  current=root "/scriptlet-" ++count;next
+ }
+ /^%[a-zA-Z]/ {current=""}
+ current!="" {print >> current}
+ END{if(count<5)exit 1}' "$work/expanded"
+for scriptlet in "$work"/scriptlet-*;do bash -n "$scriptlet";done
 for phase in SAVE RESTORE;do
  awk -v phase="$phase" '
   $0=="# UKE_CONTROL_TRANSFER_"phase"_BEGIN" {copy=1;found++;next}

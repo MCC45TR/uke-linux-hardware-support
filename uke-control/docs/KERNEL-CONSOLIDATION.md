@@ -83,3 +83,18 @@ included release header. Its copy list gains that header, retaining every
 original mutant and assertion. No binary RPM is published; the corrected
 attempt retains2.9.0-2. The source worker compiles the isolated retained consumer
 before starting the full native build to catch this missing-input class early.
+
+Corrected292/11283490 passes834s and installs through DNF together with the real
+TUI and firmware09. The original291 postun contains an empty shell subshell
+after a retained systemd macro expands to whitespace. DNF reports that old
+removal-script error even though all new packages install and the automatic
+updater writes, syncs, reads back and selects inactiveB7331. Independent signed
+package/header, complete derived boot image, unchanged currentA, module,
+firmware and preference checks pass. The transaction error remains recorded.
+
+Release293 prefixes every composed lifecycle subshell with the shell no-op and
+syntax-checks all complete expanded scriptlets. This preserves empty original
+hooks without introducing a new action. Source validation does not establish
+the following native build or target update; upgrading the already installed
+malformed292 may report its old postun once more. Do not modify the RPM database
+or mask DNF errors to conceal that historical script.

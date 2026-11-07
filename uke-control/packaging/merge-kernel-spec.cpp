@@ -45,7 +45,7 @@ static bool metadata(const std::string &line) {
 static std::string updated(std::string line) {
     for (const std::string old : {"2.8.1-26%{?dist}", "2.8.1-26.fc46"}) {
         for (std::size_t p = 0; (p = line.find(old, p)) != std::string::npos;) {
-            const std::string replacement = "2.9.0-2%{?dist}";
+            const std::string replacement = "2.9.0-3%{?dist}";
             line.replace(p, old.size(), replacement); p += replacement.size();
         }
     }
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
                             if (line == "Requires: /usr/lib/systemd/systemd-growfs") header.push_back("Requires: systemd-udev");
                             else if (metadata(line) || line.starts_with("BuildRequires:")) header.push_back(line);
                         } else if (line.starts_with("Version:")) header.push_back("Version: 2.9.0");
-                        else if (line.starts_with("Release:")) header.push_back("Release: 2%{?dist}");
+                        else if (line.starts_with("Release:")) header.push_back("Release: 3%{?dist}");
                         else if (line.starts_with("License:")) header.push_back("License: MIT AND Apache-2.0 AND GPL-3.0-or-later");
                         else if (line.starts_with("SourceLicense:")) header.push_back("SourceLicense: MIT AND Apache-2.0 AND GPL-3.0-or-later AND GPL-2.0-only");
                         else header.push_back(metadata(line) ? updated(line) : line);
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
                         auto &target = name == sdk ? sdk_header : tui_header;
                         for (const auto &line : section.lines) {
                             if (line.starts_with("Version:")) target.push_back("Version: 2.9.0");
-                            else if (line.starts_with("Release:")) target.push_back("Release: 2%{?dist}");
+                            else if (line.starts_with("Release:")) target.push_back("Release: 3%{?dist}");
                             else target.push_back(updated(line));
                         }
                     } else if (folded.contains(name)) {
@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
         header.push_back("Source19: retained-o82-color-0.7.0.tar.xz");
         header.push_back("Source20: unstable-release.cpp");
         header.push_back("BuildRequires: patch");
-        header.push_back("Requires: uke-control-tui%{?_isa} = 2.9.0-2%{?dist}");
+        header.push_back("Requires: uke-control-tui%{?_isa} = 2.9.0-3%{?dist}");
         header.push_back("Provides: uke-o82-color-profile = 0.7.0-2%{?dist}");
         header.push_back("Provides: uke-o82-color-profile%{?_isa} = 0.7.0-2%{?dist}");
         header.push_back("Obsoletes: uke-o82-color-profile <= 0.7.0-2%{?dist}");
@@ -234,9 +234,9 @@ int main(int argc, char **argv) {
             header.push_back("Obsoletes: " + name + " <= 1.8.102-1%{?dist}");
         }
         for (const auto &name : folded_control) if (name != "uke-control") {
-            header.push_back("Provides: " + name + " = 2.9.0-2%{?dist}");
-            header.push_back("Provides: " + name + "%{?_isa} = 2.9.0-2%{?dist}");
-            header.push_back("Obsoletes: " + name + " < 2.9.0-2%{?dist}");
+            header.push_back("Provides: " + name + " = 2.9.0-3%{?dist}");
+            header.push_back("Provides: " + name + "%{?_isa} = 2.9.0-3%{?dist}");
+            header.push_back("Obsoletes: " + name + " < 2.9.0-3%{?dist}");
         }
         std::set<std::string> seen;
         for (const auto &line : header) if (line.empty() || seen.insert(line).second) std::cout << line << '\n';
@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
             "fi\n# UKE_CONTROL_TRANSFER_RESTORE_END\n");
         for (const auto &[marker, parts] : callbacks) {
             std::cout << '\n' << marker << '\n';
-            for (const auto &part : parts) std::cout << "(\n" << part << ") || exit $?\n";
+            for (const auto &part : parts) std::cout << "(\n:\n" << part << ") || exit $?\n";
         }
         std::cout << "\n%files\n";
         seen.clear();
@@ -316,6 +316,6 @@ int main(int argc, char **argv) {
         std::cout << "%doc KERNEL-CONSOLIDATION.md\n";
         std::cout << "\n%files -n " << sdk << '\n' << body(sdk_files);
         std::cout << "\n%files -n " << tui << '\n' << body(tui_files);
-        std::cout << "\n%changelog\n* Sat Nov 07 2026 Uke contributors - 2.9.0-2\n- Require the matching terminal package and retain the existing SDK separately.\n- Fold native private-color provisioning into Control and admit canonical future unstable versions.\n\n* Sat Nov 07 2026 Uke contributors - 2.9.0-1\n- Consolidate retained control and kernel delivery components in one runtime RPM.\n- Load filelists for reliable original DNF file-dependency resolution.\n\n" << body(changelog);
+        std::cout << "\n%changelog\n* Sat Nov 07 2026 Uke contributors - 2.9.0-3\n- Keep composed shell scriptlets valid after empty retained RPM macro expansions.\n- Check every complete expanded lifecycle body before the native build.\n\n* Sat Nov 07 2026 Uke contributors - 2.9.0-2\n- Require the matching terminal package and retain the existing SDK separately.\n- Fold native private-color provisioning into Control and admit canonical future unstable versions.\n\n* Sat Nov 07 2026 Uke contributors - 2.9.0-1\n- Consolidate retained control and kernel delivery components in one runtime RPM.\n- Load filelists for reliable original DNF file-dependency resolution.\n\n" << body(changelog);
     } catch (const std::exception &error) { std::cerr << error.what() << '\n'; return 1; }
 }

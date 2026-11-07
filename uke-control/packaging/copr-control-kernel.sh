@@ -59,13 +59,13 @@ printf '%s\n' '// SPDX-License-Identifier: MIT' '#pragma once' 'namespace uke {'
 g++ -std=c++20 -O2 -Wall -Wextra -Werror "$owner/packaging/merge-kernel-spec.cpp" -o "$stage/merge-kernel-spec"
 "$stage/merge-kernel-spec" "$stage/control/uke-control.spec" "$stage/boot/uke-boot-integration.spec" "$stage/color/uke-o82-color-profile.spec" > "$output/uke-control.spec"
 cp "$output/uke-control.spec" "$output/control-consolidated-spec.txt"
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.9.0-2.fc46 ]]
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.9.0-3.fc46 ]]
 rpmspec -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$stage/binaries"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui > "$stage/expected-binaries"
 cmp "$stage/binaries" "$stage/expected-binaries"
 rpmspec -P "$output/uke-control.spec" > "$stage/expanded.spec"
 bash "$owner/tests/kernel-consolidation.sh" "$output/uke-control.spec"
-grep -Fx 'Requires: uke-control-tui(aarch-64) = 2.9.0-2.fc46' "$stage/expanded.spec"
+grep -Fx 'Requires: uke-control-tui(aarch-64) = 2.9.0-3.fc46' "$stage/expanded.spec"
 grep -Fx 'Provides: uke-o82-color-profile = 0.7.0-2.fc46' "$stage/expanded.spec"
 for compiler in g++;do
  "$compiler" -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror -I"$owner/packaging" "$owner/tests/unstable-release.cpp" -o "$stage/release-test"
