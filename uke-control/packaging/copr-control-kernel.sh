@@ -26,6 +26,33 @@ install -m644 "$owner/packaging/60-uke-filelists.conf" "$output/"
 install -m644 "$owner/packaging/merge-kernel-spec.cpp" "$owner/packaging/copr-control-kernel.sh" "$owner/docs/KERNEL-CONSOLIDATION.md" "$output/"
 install -m644 "$owner/tests/kernel-consolidation.sh" "$output/"
 install -m644 "$owner/packaging/unstable-release.hpp" "$owner/packaging/runtime733-version.patch" "$owner/tests/unstable-release.cpp" "$output/"
+# Compile the retained header consumer and its isolated copy context early.
+# These are source-worker checks, not device executables.
+mkdir "$stage/boot-outer" "$stage/boot-runtime" "$stage/guard-probe"
+tar -xJf "$stage/boot/uke-boot-integration-1.8.102.tar.xz" -C "$stage/boot-outer"
+tar -xJf "$stage/boot-outer/uke-boot-integration-1.8.102/inputs/uke-boot-integration/uke-boot-integration-1.8.102.tar.xz" -C "$stage/boot-runtime"
+mkdir -p "$stage/guard-probe/uke-boot/src" "$stage/guard-probe/uke-boot/tests"
+boot_root=$stage/boot-runtime/uke-boot-integration-1.8.102
+for file in src/o82-private-color.hpp tests/o82-private-color.cpp tests/managed-firmware.sh;do
+ cp "$boot_root/$file" "$stage/guard-probe/uke-boot/$file"
+done
+cp "$stage/color/o82-stock-profile.hpp" "$stage/color/o82-stock-profile-contract.cpp" "$stage/guard-probe/"
+(cd "$stage/guard-probe";git apply --check "$owner/packaging/runtime733-version.patch";git apply "$owner/packaging/runtime733-version.patch")
+install -m644 "$owner/packaging/unstable-release.hpp" "$stage/guard-probe/uke-boot/src/"
+cp "$boot_root/src/managed-firmware.hpp" "$stage/guard-probe/uke-boot/src/"
+cp "$boot_root/tests/managed-firmware.cpp" "$stage/guard-probe/uke-boot/tests/"
+g++ -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror "$stage/guard-probe/uke-boot/tests/managed-firmware.cpp" -o "$stage/guard-probe/test"
+"$stage/guard-probe/test"
+mkdir -p "$stage/isolated/src" "$stage/isolated/tests"
+cp "$stage/guard-probe/uke-boot/src/o82-private-color.hpp" "$stage/guard-probe/uke-boot/src/unstable-release.hpp" "$stage/isolated/src/"
+cp "$boot_root/tests/managed-firmware.cpp" "$stage/isolated/tests/"
+sed 's/verify(release);/(void)verify;/' "$boot_root/src/managed-firmware.hpp" > "$stage/isolated/src/managed-firmware.hpp"
+g++ -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror "$stage/isolated/tests/managed-firmware.cpp" -o "$stage/isolated/test"
+status=0
+"$stage/isolated/test" > "$stage/isolated/test.log" 2>&1 || status=$?
+[[ $status == 1 ]]
+grep -Fx 'firmware verification failure reached activation' "$stage/isolated/test.log"
+printf 'Retained isolated firmware consumer compiles and its missing-verification mutant refuses before activation.\n'
 tar --sort=name --mtime=@1794009600 --owner=0 --group=0 --numeric-owner -cJf "$output/retained-o82-color-0.7.0.tar.xz" -C "$stage/color" .
 printf '%s\n' '// SPDX-License-Identifier: MIT' '#pragma once' 'namespace uke {' \
  'inline constexpr const char* application_version="2.9.0";' '}' > "$output/control-version.hpp"

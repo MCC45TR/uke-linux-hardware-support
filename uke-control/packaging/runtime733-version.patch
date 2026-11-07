@@ -83,3 +83,13 @@
      refusal([&] { (void)o82_stock::filename(0); });
      check_stock(o82_stock::filename(0x36) != o82_stock::filename(0x42));
      for (unsigned panel : {0x36u, 0x42u}) {
+--- a/uke-boot/tests/managed-firmware.sh
++++ b/uke-boot/tests/managed-firmware.sh
+@@ -27,6 +27,7 @@
+             mkdir -p "$work/$mutant/src" "$work/$mutant/tests"
+             cp "$owner/tests/managed-firmware.cpp" "$work/$mutant/tests/"
+             cp "$owner/src/o82-private-color.hpp" "$work/$mutant/src/"
++            cp "$owner/src/unstable-release.hpp" "$work/$mutant/src/"
+             case $mutant in
+                 missing-verification)
+                     sed 's/verify(release);/(void)verify;/' "$owner/src/managed-firmware.hpp" \

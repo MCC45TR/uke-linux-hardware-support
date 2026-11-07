@@ -76,3 +76,10 @@ unchanged. New synthetic publication tests cover newer versions restarting at1
 without touching active consumers. This updates an existing required runtime;
 it adds no new producer or resident service. Consolidation into its final
 runtime owner still needs separate dependency and license admission.
+
+Control292 first attempt11283433 passes the actual73-case updater guard in both
+compilers, then stops when an existing isolated firmware mutant omits the newly
+included release header. Its copy list gains that header, retaining every
+original mutant and assertion. No binary RPM is published; the corrected
+attempt retains2.9.0-2. The source worker compiles the isolated retained consumer
+before starting the full native build to catch this missing-input class early.
