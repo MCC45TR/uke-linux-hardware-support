@@ -36,3 +36,10 @@ The candidate needs COPR compilation, actual RPM dependency/script/file review,
 upgrade-solver checks and a DNF device transaction before runtime acceptance.
 This source change does not establish new driver, encrypted-root, Secure Boot,
 TEE key-service, speaker-protection or HDMI timing acceptance.
+
+The first native candidate, COPR11283172, passed the retained runtime and new
+lifecycle checks but failed final file packaging: absolute doc/license operands
+were interpreted as BUILDROOT paths. The corrected composer stages every retained
+boot document under a distinct relative name, including all license texts. The
+source-worker fixture rejects absolute operands. No runtime binary was published
+by the failed candidate; the corrected attempt retains version2.9.0-1.

@@ -5,6 +5,14 @@ spec=$(realpath "${1:?Actual generated consolidated spec}")
 work=$(mktemp -d);trap 'find "$work" -depth -delete' EXIT
 mkdir "$work/bin"
 rpmspec -P "$spec" > "$work/expanded"
+# Relative doc/license operands copy source documents. Absolute operands instead
+# name files inside BUILDROOT, and are inappropriate for these retained inputs.
+if grep -Eq '^%(doc|license)[[:space:]]+/' "$work/expanded";then
+    printf 'Source documents must use relative staged paths\n' >&2;exit 1
+fi
+grep -Fx '%doc KERNEL-CONSOLIDATION.md' "$work/expanded"
+grep -Fx '%license BOOT-RUNTIME-LICENSE.GPL-3.0' "$work/expanded"
+grep -Fx '%license BOOT-RUNTIME-THP-LICENSE' "$work/expanded"
 for phase in SAVE RESTORE;do
  awk -v phase="$phase" '
   $0=="# UKE_CONTROL_TRANSFER_"phase"_BEGIN" {copy=1;found++;next}

@@ -107,21 +107,15 @@ int main(int argc, char **argv) {
                         auto &files = name == sdk ? sdk_files : main_files;
                         for (auto line : section.lines) {
                             if (is_boot && (line.starts_with("%license ") || line.starts_with("%doc "))) {
-                                const std::string relative = "work/uke-boot-integration/";
-                                std::size_t p = 0;
-                                while ((p = line.find(relative, p)) != std::string::npos) {
-                                    const std::string absolute = "%{_builddir}/uke-boot-integration-1.8.102/" + relative;
-                                    line.replace(p, relative.size(), absolute); p += absolute.size();
-                                }
-                                const std::string boot_root = "%{_builddir}/uke-boot-integration-1.8.102/work/uke-boot-integration/uke-boot-integration-1.8.102/";
-                                if (line == "%license " + boot_root + "LICENSE") {
-                                    staged_documents.push_back("cp '" + boot_root + "LICENSE' BOOT-RUNTIME-LICENSE");
-                                    line = "%license BOOT-RUNTIME-LICENSE";
-                                }
-                                if (line == "%doc " + boot_root + "README.md") {
-                                    staged_documents.push_back("cp '" + boot_root + "README.md' BOOT-INTEGRATION-README.md");
-                                    line = "%doc BOOT-INTEGRATION-README.md";
-                                }
+                                const auto space = line.find(' ');
+                                const auto relative = line.substr(space + 1);
+                                require(relative.starts_with("work/uke-boot-integration/uke-boot-integration-1.8.102/") &&
+                                        std::regex_match(relative, std::regex(R"(^[a-zA-Z0-9/_+.-]+$)")), "Unreviewed boot document");
+                                const auto basename = relative.substr(relative.rfind('/') + 1);
+                                const auto destination = "BOOT-RUNTIME-" + basename;
+                                const auto absolute = "%{_builddir}/uke-boot-integration-1.8.102/" + relative;
+                                staged_documents.push_back("cp '" + absolute + "' '" + destination + "'");
+                                line = line.substr(0, space + 1) + destination;
                             }
                             files.push_back(line);
                         }
@@ -192,6 +186,7 @@ int main(int argc, char **argv) {
             for (const auto &part : phases[phase]) std::cout << part << '\n';
             if (std::string(phase) == "prep") {
                 std::cout << "mapfile -t version_headers < <(find %{_builddir}/uke-control-2.8.1/work -type f -path '*/src/version.hpp')\ntest ${#version_headers[@]} = 1\ninstall -m644 %{SOURCE11} \"${version_headers[0]}\"\n";
+                std::cout << "install -m644 %{SOURCE14} KERNEL-CONSOLIDATION.md\n";
                 std::set<std::string> copied;
                 for (const auto &line : staged_documents) if (copied.insert(line).second) std::cout << line << '\n';
             }
@@ -240,7 +235,7 @@ int main(int argc, char **argv) {
         seen.clear();
         for (const auto &line : main_files) if (line.empty() || seen.insert(line).second) std::cout << line << '\n';
         std::cout << "/usr/share/dnf5/libdnf.conf.d/60-uke-filelists.conf\n";
-        std::cout << "%doc %{SOURCE14}\n";
+        std::cout << "%doc KERNEL-CONSOLIDATION.md\n";
         std::cout << "\n%files -n " << sdk << '\n' << body(sdk_files);
         std::cout << "\n%changelog\n* Sat Nov 07 2026 Uke contributors - 2.9.0-1\n- Consolidate retained control and kernel delivery components in one runtime RPM.\n- Load filelists for reliable original DNF file-dependency resolution.\n\n" << body(changelog);
     } catch (const std::exception &error) { std::cerr << error.what() << '\n'; return 1; }
