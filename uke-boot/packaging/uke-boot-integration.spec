@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name: uke-boot-integration
-Version: 1.8.11
+Version: 1.8.39
 Release: 1%{?dist}
 Summary: Uke image configuration and native boot integration
 License: MIT AND GPL-3.0-or-later AND Apache-2.0
@@ -13,13 +13,19 @@ BuildRequires: pkgconfig(libsystemd) pkgconfig(wayland-client) pkgconfig(wayland
 BuildRequires: openssl-devel
 BuildRequires: pkgconfig(fdisk) pkgconfig(zlib) util-linux
 BuildRequires: pkgconfig(libdrm)
+BuildRequires: glib2 strace systemd
 BuildRequires: jq
+BuildRequires: rpm-build
+BuildRequires: e2fsprogs
 BuildRequires: dbus-daemon systemd-udev pkgconfig(umockdev-1.0)
-Requires: libstdc++%{?_isa} >= 16.2.1
+Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1)
 Requires: kmod bash systemd NetworkManager openssh-server chrony
 Requires: util-linux-core coreutils grep
 Requires: systemd-udev
 Requires: bluez
+Requires: linux-firmware
+Requires: (pipewire-plugin-libcamera if wireplumber)
+Requires: (libcamera-ipa if wireplumber)
 Requires: uke-firmware >= 3.0.304.0
 Requires: senemos-uke-linux-kernel-mainline-modules >= 7.2.9-1.53.native53
 Requires(pre): rpm systemd coreutils sed
@@ -53,7 +59,7 @@ does not establish RAM/UFS/firmware handoff or physical tablet boot.
 License: MIT
 Summary: Native ESP32-S3 CDC journal forwarding for the Uke Core debug profile
 Requires: %{name} = %{version}-%{release}
-Requires: systemd libstdc++%{?_isa} >= 16.2.1
+Requires: systemd (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1)
 %description -n uke-esp32-cdc
 Native raw-TTY configuration and real-root journal forwarding to an explicitly
 configured ttyACM USB-host port. Core composition may apply the separate original
@@ -85,23 +91,28 @@ The console grants local root access over USB. USB networking stays optional.
 %package -n uke-kernel-update
 License: MIT
 Summary: Native checked installation of matched Uke stock-ABL kernel bundles
-Requires: libstdc++%{?_isa} >= 16.2.1 openssl-libs rpm
+Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1) openssl-libs rpm
 Requires: systemd >= 254
+Requires: e2fsprogs
 Requires: uke-installation-profile = %{version}-%{release}
 Provides: uke-kernel-update(userdata-ab) = 1
 Provides: uke-kernel-update(guarded-automatic) = 1
 Provides: uke-kernel-update(transaction-v1) = 1
 Provides: uke-kernel-update(final-transaction-v2) = 1
+Provides: uke-kernel-update(automatic-policy-migration-v1) = 1
 Provides: uke-kernel-update(root-filesystem-v2) = 1
 Provides: uke-kernel-update(current-slot-restore) = 1
 Provides: uke-kernel-update(kernel-touch-client-v1) = 1
 Provides: uke-kernel-update(userdata-fallback-v1) = 1
+Provides: uke-kernel-update(trial-health-v2) = 1
 Provides: uke-kernel-update(qualified-firmware-cohort-v1) = 1
+Provides: uke-kernel-update(inactive-slot-no-image-backup-v1) = 1
+Provides: uke-kernel-update(device-local-video-import-v1) = 1
 %description -n uke-kernel-update
 Validates matched installed boot-v4 payloads and module inventories. The Linux
 root profile retains its opt-in boot_b writer. The userdata profile writes an
 inactive boot slot and selects the QTI slot only after full readback, coherent
-GPT/boot-LUN checks and durable backups. Boot health accepts a matching trial.
+GPT/boot-LUN checks and durable metadata journals. Boot health accepts a matching trial.
 Automatic staging requires both the global and userdata policies to be enabled;
 the global default is disabled. Failed alternating trials select the verified
 accepted slot and request a normal reboot after bounded health retries. Physical power-loss
@@ -110,7 +121,8 @@ recovery requires device validation.
 %package -n uke-installation-profile
 License: MIT
 Summary: Native classification of the Uke Linux root partition
-Requires: libstdc++%{?_isa} >= 16.2.1 systemd
+Provides: uke-installation-profile(rtc-secure-offset-v1) = 1
+Requires: (libstdc++%{?_isa} >= 16.2.1 or uke-libstdcxx%{?_isa} >= 16.2.1) systemd
 Requires: /usr/lib/systemd/systemd-growfs
 Requires: %{name} = %{version}-%{release}
 %description -n uke-installation-profile
@@ -135,10 +147,17 @@ cp touch-runtime/legacy/src/upstream/nt36532-thp/LICENSE THP-LICENSE
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -ffile-prefix-map=$PWD=. src/touch-launcher.cpp -o uke-touchscreen %{build_ldflags}
 %{__cxx} %{optflags} -std=c++20 -Wall -Wextra -Werror -Wno-unused-function -ffile-prefix-map=$PWD=. touch-runtime/legacy/src/touch-thp.cpp touch-runtime/legacy/src/upstream/nt36532-thp/nvt_touch_core.cpp -lcrypto -lsystemd -o uke-touch-thp %{build_ldflags}
 %check
+g++ -std=c++20 -O2 -Wall -Wextra -Werror tests/rtc-clock.cpp -o rtc-clock-contract
+./rtc-clock-contract
+bash tests/rtc-packaging.sh
 cmp src/profiles/60-uke-security.conf %{buildroot}%{_prefix}/lib/sysctl.d/60-uke-security.conf
+bash tests/shutdown-trace.sh
+bash tests/ppd-home.sh
 bash tests/installation-policy.sh
 bash tests/slot-control.sh
 bash tests/userdata-update.sh
+bash tests/oem-video.sh
+udevadm verify src/udev/72-uke-system-heap.rules
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/touch-health.cpp -o touch-health-contract
 ./touch-health-contract
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/usb-port.cpp -o usb-port-contract
@@ -154,6 +173,9 @@ bash tests/startup-contract.sh
 bash tests/startup-native.sh
 %{__cxx} -std=c++20 -O2 -Wall -Wextra -Werror tests/kernel-update.cpp -o kernel-update-contract $(pkg-config --cflags --libs fdisk zlib openssl libsystemd)
 ./kernel-update-contract
+g++ -std=c++20 -O2 -Wall -Wextra -Werror tests/trial-health.cpp -o trial-health-contract
+./trial-health-contract
+bash tests/automatic-policy-rpm.sh "$PWD/kernel-update-contract"
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror -pthread tests/native-profile-ready.cpp -o native-profile-ready-contract $(pkg-config --cflags --libs libsystemd)
 bash tests/native-profile-ready.sh ./native-profile-ready-contract
 %{__cxx} -std=c++17 -O2 -Wall -Wextra -Werror tests/native-profile-udev.cpp -o native-profile-udev-contract $(pkg-config --cflags --libs umockdev-1.0)
@@ -177,8 +199,16 @@ install -Dm644 touch-runtime/legacy/src/udev/70-uke-touchscreen.rules %{buildroo
 install -Dm644 touch-runtime/legacy/src/modules-load.d/uke-touchscreen.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-touchscreen.conf
 install -Dm644 touch-runtime/legacy/src/modprobe.d/uke-touchscreen.conf %{buildroot}%{_prefix}/lib/modprobe.d/uke-touchscreen.conf
 install -d %{buildroot}%{_prefix}/lib/firmware/novatek/uke
-ln -s /usr/lib/firmware/qcom/uke/touch/csot/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
+ln -s ../../qcom/uke/touch/csot/normal.bin %{buildroot}%{_prefix}/lib/firmware/novatek/uke/nt36532-normal.bin
 install -Dm644 src/units/70-uke-chronyd-clock.conf %{buildroot}%{_unitdir}/chronyd.service.d/70-uke-clock.conf
+install -pDm644 src/profiles/clock-epoch %{buildroot}%{_prefix}/lib/clock-epoch
+install -Dm644 src/profiles/uke-system-heap.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-system-heap.conf
+install -Dm644 src/udev/72-uke-system-heap.rules %{buildroot}%{_udevrulesdir}/72-uke-system-heap.rules
+install -Dm644 src/units/30-uke-plasmalogin-ready.conf %{buildroot}%{_unitdir}/plasmalogin.service.d/30-uke-native-drm.conf
+install -Dm644 src/units/30-uke-power-profiles-home.conf %{buildroot}%{_unitdir}/power-profiles-daemon.service.d/30-uke-state-home.conf
+install -Dm755 src/shutdown-trace.sh %{buildroot}%{_libexecdir}/senemos-uke/uke-shutdown-trace
+install -Dm644 src/units/uke-shutdown-trace.service %{buildroot}%{_unitdir}/uke-shutdown-trace.service
+install -Dm644 src/profiles/73-uke-shutdown-trace.rules %{buildroot}%{_udevrulesdir}/73-uke-shutdown-trace.rules
 install -Dm755 uke-boot-status %{buildroot}%{_bindir}/uke-boot-status
 install -Dm755 uke-native-power-profile-ready %{buildroot}%{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 install -Dm644 src/units/uke-native-power-profile-ready.service %{buildroot}%{_unitdir}/uke-native-power-profile-ready.service
@@ -211,8 +241,11 @@ install -Dm644 src/profiles/80-uke-boot.preset %{buildroot}%{_presetdir}/80-uke-
 install -Dm644 src/units/uke-userdata-accept.service %{buildroot}%{_unitdir}/uke-userdata-accept.service
 install -Dm644 src/units/uke-userdata-fallback.service %{buildroot}%{_unitdir}/uke-userdata-fallback.service
 install -Dm755 uke-install-profile %{buildroot}%{_libexecdir}/senemos-uke/uke-install-profile
+install -Dm644 src/units/75-uke-clock-floor.conf %{buildroot}%{_unitdir}/chronyd.service.d/75-uke-clock-floor.conf
 install -Dm644 src/units/uke-install-profile.service %{buildroot}%{_unitdir}/uke-install-profile.service
 install -Dm644 src/units/uke-root-grow.service %{buildroot}%{_unitdir}/uke-root-grow.service
+install -Dm644 src/units/uke-rtc-sync.service %{buildroot}%{_unitdir}/uke-rtc-sync.service
+install -Dm644 src/units/uke-rtc-sync.timer %{buildroot}%{_unitdir}/uke-rtc-sync.timer
 install -Dm755 uke-boot-guard %{buildroot}%{_libexecdir}/senemos-uke/uke-boot-guard
 install -Dm644 src/units/uke-boot-guard.service %{buildroot}%{_unitdir}/uke-boot-guard.service
 install -Dm644 src/profiles/uke-reboot.conf %{buildroot}%{_prefix}/lib/modules-load.d/uke-reboot.conf
@@ -232,6 +265,9 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %preun
+if [ "$1" -eq 0 ] && [ -d /run/systemd/system ]; then
+    systemctl stop uke-shutdown-trace.service || :
+fi
 %systemd_preun uke-touchscreen.service
 
 %postun
@@ -239,10 +275,17 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 /usr/bin/udevadm control --reload >/dev/null 2>&1 || :
 
 %posttrans
+# Keep current-session tracing without retriggering existing role devices.
+if [ -d /run/systemd/system ]; then
+    systemctl --no-block start uke-shutdown-trace.service || :
+fi
 # @bluetooth-migration-restore
 # @touch-migration-restore
 
 %post -n uke-kernel-update
+if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
+    %{_bindir}/uke-kernel-update migrate-automatic-policy || exit 1
+fi
 %systemd_post uke-userdata-accept.service
 
 %preun -n uke-kernel-update
@@ -252,17 +295,17 @@ ln -s ../../../usr/bin/uke-reboot %{buildroot}/usr/local/sbin/reboot
 %systemd_postun uke-userdata-accept.service
 
 %post -n uke-installation-profile
-%systemd_post uke-root-grow.service
+%systemd_post uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer
 
 %preun -n uke-installation-profile
-%systemd_preun uke-root-grow.service
+%systemd_preun uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer
 # Retire only our generated policy, including when downgrading to an older classifier.
 if [ "$(readlink /etc/tmpfiles.d/journal-nocow.conf 2>/dev/null)" = '%{_datadir}/senemos/boot/uke/journal-nocow-disabled.conf' ]; then
     rm -f /etc/tmpfiles.d/journal-nocow.conf
 fi
 
 %postun -n uke-installation-profile
-%systemd_postun uke-root-grow.service
+%systemd_postun uke-root-grow.service uke-rtc-sync.service uke-rtc-sync.timer
 
 %posttrans -n uke-installation-profile
 if [ -d /run/systemd/system ] && [ -r /sys/firmware/devicetree/base/compatible ]; then
@@ -285,6 +328,7 @@ fi
 %doc docs/USB-TYPEC.md
 %doc docs/NATIVE-POWER-PROFILES.md
 %doc docs/TOUCH-RUNTIME.md
+%doc docs/SHUTDOWN-TRACE.md
 %{_libexecdir}/senemos-uke/uke-native-power-profile-ready
 %{_libexecdir}/senemos-uke/uke-touchscreen
 %{_libexecdir}/senemos-uke/uke-touch-thp
@@ -308,6 +352,16 @@ fi
 %{_unitdir}/uke-usb-observer.service
 %{_datadir}/dbus-1/system.d/org.senemos.Uke.USB1.conf
 %{_unitdir}/chronyd.service.d/70-uke-clock.conf
+%{_prefix}/lib/clock-epoch
+%{_prefix}/lib/modules-load.d/uke-system-heap.conf
+%{_udevrulesdir}/72-uke-system-heap.rules
+%dir %{_unitdir}/plasmalogin.service.d
+%{_unitdir}/plasmalogin.service.d/30-uke-native-drm.conf
+%dir %{_unitdir}/power-profiles-daemon.service.d
+%{_unitdir}/power-profiles-daemon.service.d/30-uke-state-home.conf
+%{_libexecdir}/senemos-uke/uke-shutdown-trace
+%{_unitdir}/uke-shutdown-trace.service
+%{_udevrulesdir}/73-uke-shutdown-trace.rules
 %{_presetdir}/80-uke-boot.preset
 %{_datadir}/senemos/boot/uke
 %{_unitdir}/uke-cdc-acm.service
@@ -331,6 +385,7 @@ fi
 %license LICENSE
 %doc docs/KERNEL-UPDATES.md
 %doc docs/USERDATA-AB.md
+%doc docs/RTC-PERSISTENCE.md
 %{_bindir}/uke-kernel-update
 %dir %{_sysconfdir}/senemos
 %config(noreplace) %{_sysconfdir}/senemos/kernel-update.conf
@@ -342,8 +397,11 @@ fi
 %license LICENSE
 %doc docs/USERDATA-AB.md
 %{_libexecdir}/senemos-uke/uke-install-profile
+%{_unitdir}/chronyd.service.d/75-uke-clock-floor.conf
 %{_unitdir}/uke-install-profile.service
 %{_unitdir}/uke-root-grow.service
+%{_unitdir}/uke-rtc-sync.service
+%{_unitdir}/uke-rtc-sync.timer
 
 %files -n uke-boot-recovery
 %license LICENSE
@@ -357,6 +415,74 @@ fi
 %{_prefix}/lib/dracut/modules.d/93uke-boot-guard
 
 %changelog
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.33-1
+- Persist only NTP-synchronized clock floors and restore before Chrony startup.
+- Refresh the saved floor after a signed kernel firmware import.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.32-1
+- Load the normal system DMA heap and grant its active seat access.
+- Include the original libcamera IPA dependency with the desktop camera plugin.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.31-1
+- Use the trusted merged-usr helper path for local video inspection.
+- Migrate only the exact legacy read-only persist mount to the Fedora context.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.30-1
+- Require the original Fedora package that owns RTL8153 wired firmware.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.29-1
+- Add bounded device-local video import for non-running, signed kernel bundles.
+- Require original Fedora Realtek firmware and the conditional libcamera plugin.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.28-1
+- Correct the GPT re-admission fixture to compare its public snapshot.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.27-1
+- Retain the accepted A/B slot directly without full boot-image file copies.
+- Verify the protected slot before and after inactive writes and slot selection.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.26-1
+- Install the epoch through the expanded standalone spec and verify its RPM payload.
+
+* Mon Nov 02 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.25-1
+- Preserve the packaged systemd clock epoch instead of restoring an old RTC counter.
+- Retain disabled legacy userdata policy without enabling updates or display overrides.
+
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.24-1
+- Poll strict native touch readiness briefly during packaged startup acceptance.
+- Preserve all other acceptance, retry, rollback and passive trace behavior.
+
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.22-1
+- Run startup acceptance and gated staging under one updater lock.
+- Reuse the identical running bundle within the operation; retain all admission checks.
+
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.21-1
+- Read owning RPM metadata and file inventory with one query per package.
+- Preserve cohort and digest checks; refuse malformed or multiple-owner output.
+
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.20-1
+- Keep the temporary USB trace through user shutdown without a target-order cycle.
+- Verify the actual systemd ordering graph and a cyclic negative control.
+- Admit original and existing GNU 16.2.1 runtimes without forcing a runtime migration.
+
+* Sun Nov 01 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.8.18-2
+- Use the original Fedora GNU C++ runtime; retain all boot programs and service behavior.
+
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.18-1
+- Give the original Power Profiles daemon its existing state directory as HOME.
+- Avoid a GIO startup NSS lookup while retaining the SELinux policy and daemon.
+
+* Sun Nov 01 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.17-1
+- Complete only the empty Fedora clock default with UTC without RTC access.
+- Preserve configured clock values, file metadata and unsafe path targets.
+
+* Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.13-1
+- Enable guarded DNF boot activation by default; retain inactive-slot verification and rollback.
+
+* Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.12-1
+- Read complete mount information with a 1 MiB bound before native update admission.
+- Preserve strict root, partition, power, backup and readback checks.
+
 * Sat Oct 31 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.8.11-1
 - Release old metadata descriptors before reacquiring the accepted baseline for a replacement trial.
 

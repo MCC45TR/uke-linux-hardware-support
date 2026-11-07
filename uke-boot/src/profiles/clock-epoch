@@ -1,0 +1,1 @@
+# systemd uses this file's packaged mtime as the offline system-clock lower bound.

@@ -1,5 +1,56 @@
 # Userdata boot A/B updates
 
+3 November 2026, version1.8.38: when the running DT requests the Uke secure
+RTC backend, boot health also requires a valid RTC calendar matching system
+UTC. Trusted-time provisioning runs through the original Chrony dependency and
+a native timer. The first-update migration and 30-second qualification window
+are retained. [RTC persistence](RTC-PERSISTENCE.md) separates initialization,
+write/readback and physical cold-start validation.
+
+3 November 2026, version 1.8.37: new trials require 30 continuous seconds of
+the existing display, touch and service health checks within a 90-second
+observation window. A failed sample or a sampling gap over five seconds resets
+the healthy interval. Suspend counts toward the deadline. Invalid, frozen and
+reversed clocks cannot admit a trial. Trial acceptance binds the current boot
+identity, then rechecks its package cohort, durable state and both boot images
+before recording success. Read-only preflight reports a health snapshot without
+claiming that the observation window passed.
+
+A terminal observation failure exits with status78. The acceptance service
+does not restart that status: its existing OnFailure handler requests the
+guarded return to the accepted slot. Other temporary failures retain the five
+bounded service starts. Fallback rechecks early firmware, all admitted GPT
+snapshots, the final fallback flags, UFS boot-LUN selection and the accepted
+boot image before requesting a normal reboot.
+
+Newly staged trials carry three bootloader attempts rather than seven. Existing
+armed trials retain their metadata. This change does not implement an ABL,
+watchdog or early-kernel recovery path: failure before the root/userspace starts
+still depends on the retained bootloader and reset path. A/B recovery restores
+the accepted kernel slot, while the shared userspace remains updated. Physical
+power-loss, hard-hang and rollback acceptance remain separate validation work.
+
+1 November 2026. Version 1.8.18 gives the original Fedora Power Profiles daemon
+its existing state directory as `HOME`. GIO file monitoring can then determine
+the home path without an NSS passwd lookup. No daemon rebuild or SELinux grant
+is added. Native regular-file fixtures cover the monitor behavior; the next
+daemon start must separately confirm the absence of its previous startup AVC.
+
+1 November 2026. Version 1.8.17 completes the unconfigured Fedora clock file
+`0.0 0 0.0\n0\n` with its missing `UTC` line during installation-profile
+reconciliation. Other contents, including `LOCAL` and drift calibration, are
+preserved. The helper retains the existing file inode and metadata, refuses
+unsafe paths and does not access the RTC. Native fixtures cover this migration;
+physical clock retention and reboot timing require separate device checks.
+
+31 October 2026. Version1.8.13 enables both automatic update policies by
+default. A singleboot installation uses both boot slots for Linux; its
+inactive-slot writer retains the previous accepted image and matched modules.
+Existing global opt-outs are preserved during RPM upgrades. An administrator
+re-enabling an older installation sets automatic=1 in both policy files after
+the read-only check-auto admission succeeds. DNF stages the selected kernel;
+the administrator chooses when to reboot.
+
 30 October 2026. Version 1.8.9 preserves direct selected-profile transaction
 calls, including Uke Control calls after package installation. RPM kernel hooks
 and final file triggers use the same guarded writer. A repeated call verifies
@@ -91,10 +142,13 @@ required. Replacing the running module directory is refused.
 `/etc/senemos/userdata-update.conf` is an administrator-preserving RPM config.
 It defaults to `automatic=1` and the bounded userdata VRR argument at 30 Hz.
 Automatic staging requires the exact value `automatic=1` in both
-this file and `/etc/senemos/kernel-update.conf`. The global default is
-`automatic=0`. Missing, duplicate or malformed settings fail closed before any
-state directory, slot, GPT or boot-LUN operation. A valid disabled policy returns
-from the `auto` command without accepting a boot or staging a kernel. VRR arguments alter only the
+this file and `/etc/senemos/kernel-update.conf`. Both shipped policies default
+to `automatic=1`; existing administrator configuration remains preserved.
+For `auto` and `transaction`, missing, duplicate or malformed settings fail
+closed before any state directory, slot, GPT or boot-LUN operation. A valid
+disabled policy returns from `auto` without accepting a boot or staging a kernel.
+The startup `boot` action performs independent health acceptance first, as
+described below. VRR arguments alter only the
 checked Android v4 wrapper; the package Image remains byte-identical. This
 argument does not establish physical VRR quality or cadence.
 
@@ -110,12 +164,14 @@ Old executable string literals do not satisfy the note contract. The RPM exposes
 A transaction file trigger runs after all package post-transaction scripts.
 It acts only on an exact Uke userdata installation. An ordinary Linux root or
 an offline composition does not enter the slot writer. At graphical startup,
-the packaged service first runs explicit software-health acceptance, then runs
-the separately gated automatic command. A disabled automatic policy therefore
-does not skip marking a proven healthy running slot successful. Acceptance
+the packaged service uses `uke-kernel-update boot` to perform software-health
+acceptance before policy-gated automatic staging under one updater lock. A
+matching default reuses this operation's verified running bundle. A disabled
+automatic policy therefore does not skip marking a proven healthy running slot
+successful. Acceptance
 retains the physical root, running Image, signed package/module, UFS boot-LUN,
 GPT identity and software-health checks. It does not select the other slot or
-enable automatic staging. A failed acceptance prevents the subsequent command.
+enable automatic staging. A failed acceptance prevents subsequent staging.
 Normal acceptance and staging do not reboot the device.
 
 Before a write, the updater requires a unique physical UFS root and 96 MiB boot
@@ -133,12 +189,18 @@ are checked before writing the physical GPT arrays and headers. The protective
 MBR is preserved byte for byte; libfdisk's PMBR normalization remains in memory.
 Restoration verifies both headers, both arrays and the protective MBR.
 
-The accepted slot and GPT metadata receive synced private backups. With at least
+The accepted boot slot itself remains the rollback image; no full accepted or
+inactive boot image is copied to the root filesystem. Small synced GPT metadata
+journals retain the existing checked restoration contract. The inactive boot
+slot is durably marked unbootable before image writes, while the accepted slot
+and UFS selection remain unchanged. With at least
 50% measured battery, or 30% plus external power, the inactive boot slot is
 written, synced and fully read back. Only then are the QTI GPT type GUIDs and
 slot flags selected, followed by the UFS boot LUN and its readback. The accepted
 boot slot is retained. A metadata failure attempts verified restoration before
-returning an error. Keep the private transaction backups and a fastboot route.
+returning an error. An inactive-image write failure leaves the accepted slot
+selected and verifies that its bytes are unchanged; it does not select a partial
+candidate. Keep the metadata journals and a fastboot route.
 
 The durable state records staging, verification and trial separately. A boot
 ID distinguishes a pending trial before reboot from a return to the old slot.
@@ -283,3 +345,12 @@ non-atomic under power loss. Host tests do not qualify physical recovery.
 
 Private lessons retain the comparison details and failed trials. No device
 identifiers, raw GPT backups, credentials or calibration are public payloads.
+
+### Legacy disabled image defaults
+
+Boot integration 1.8.36 migrates the exact pair of legacy one-line disabled
+policies once during package installation, before the final transaction trigger.
+The existing A/B state machine and its rollback/health checks remain unchanged.
+A later administrator opt-out is preserved. No new refresh override is enabled
+by this migration. See the one-time migration in `KERNEL-UPDATES.md` for its
+backup, interruption and custom-policy behavior.

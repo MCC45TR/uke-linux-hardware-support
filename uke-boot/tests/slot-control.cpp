@@ -50,7 +50,9 @@ int main(int argc,char **argv) {
     b.require_selected(1);reject([&]{b.require_selected(0);});
     assert(b.parts.at("boot_b").type==a.parts.at("boot_a").type);
     assert(b.parts.at("boot_a").type==a.parts.at("boot_b").type);
-    assert(b.parts.at("boot_b").attrs==(uint64_t(0x3f)<<48));
+    assert(b.parts.at("boot_b").attrs==(uint64_t(0x1f)<<48));
+    assert(((b.parts.at("boot_b").attrs&slot::retries)>>51)==3);
+    reject([&]{b.require_fallback(0,1);});
     assert(b.parts.at("abl_b").attrs==(a.parts.at("abl_b").attrs|slot::active));
     assert(b.parts.at("abl_a").attrs==(a.parts.at("abl_a").attrs&~slot::active));
     assert(!(b.parts.at("boot_a").attrs&slot::active) && (b.parts.at("boot_a").attrs&slot::successful));
@@ -97,7 +99,31 @@ int main(int argc,char **argv) {
             slot::Disk healthy(fd.value,st.st_size,sector);healthy.success(1);healthy.commit();
         }
         const unsigned failed=1-good;
+        slot::Disk barrier(fd.value,st.st_size,sector);
+        const auto good_name=std::string("boot_")+(good?'b':'a');
+        const auto next_name=std::string("boot_")+(failed?'b':'a');
+        const auto accepted_before=barrier.parts.at(good_name);
+        assert(barrier.block_inactive(good,failed));barrier.commit();
+        auto blocked=barrier.reread(true);
+        blocked->require_selected(good);
+        assert(blocked->parts.at(good_name).attrs==accepted_before.attrs);
+        assert(blocked->parts.at(good_name).type==accepted_before.type);
+        assert(blocked->parts.at(next_name).type==barrier.parts.at(next_name).type);
+        const auto blocked_flags=blocked->parts.at(next_name).attrs;
+        assert((blocked_flags&slot::unbootable) && !(blocked_flags&(slot::successful|slot::retries|slot::priority|slot::active)));
+        assert(!blocked->block_inactive(good,failed));
+        reject([&]{blocked->block_inactive(failed,good);});
+        assert(blocked->reread()->before==blocked->before);
+        slot::Disk foreign(fd.value,st.st_size,sector);
+        assert(foreign.prepare(good,failed));foreign.commit();
+        reject([&]{blocked->reread();});
+        barrier.restore();
+        // Repeat the barrier, then resume a valid trial from the blocked slot.
+        slot::Disk again(fd.value,st.st_size,sector);
+        assert(again.block_inactive(good,failed));again.commit();
         slot::Disk stage(fd.value,st.st_size,sector);assert(stage.prepare(good,failed));stage.commit();
+        slot::Disk retry_budget(fd.value,st.st_size,sector);
+        assert(((retry_budget.parts.at(next_name).attrs&slot::retries)>>51)==3);
         const auto staged=slot::snapshot(fd.value,st.st_size,sector);
         auto stale_header=staged.backup;set32(stale_header,88,le32(stale_header,88)^1);header_crc(stale_header);
         slot::write_at(fd.value,staged.last*sector,stale_header);
@@ -106,6 +132,8 @@ int main(int argc,char **argv) {
         assert(trial.fallback(failed,good));trial.commit();
         slot::Disk returned(fd.value,st.st_size,sector);
         returned.require_selected(good);
+        returned.require_fallback(failed,good);
+        reject([&]{returned.require_fallback(good,failed);});
         const auto good_flags=returned.parts.at(good?"boot_b":"boot_a").attrs;
         const auto failed_flags=returned.parts.at(failed?"boot_b":"boot_a").attrs;
         assert((good_flags&slot::active) && (good_flags&slot::successful) && !(good_flags&slot::unbootable));

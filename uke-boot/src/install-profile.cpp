@@ -2,14 +2,20 @@
 // Classifies an installation and delegates explicit one-time growth to original systemd.
 #include "installation-policy.hpp"
 #include "boot-common.hpp"
+#include "rtc-clock.hpp"
 #include <array>
 #include <cerrno>
+#include <cstdint>
 #include <fcntl.h>
 #include <iostream>
+#include <vector>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/vfs.h>
 #include <sys/wait.h>
+#include <sys/xattr.h>
+#include <sys/random.h>
+#include <sys/timex.h>
 #include <linux/magic.h>
 #include <unistd.h>
 
@@ -86,6 +92,90 @@ static void write_all(int fd, const std::string &value) {
         offset += static_cast<size_t>(count);
     }
     require(fsync(fd) == 0, "Cannot sync profile");
+}
+static bool repair_default_clock_config(int etc_fd) {
+    const int raw = openat(etc_fd, "adjtime", O_RDWR | O_APPEND | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    if (raw < 0 && errno == ENOENT) return false;
+    ProfileFd clock(raw);
+    trusted(clock.value, false);
+    require(flock(clock.value, LOCK_EX | LOCK_NB) == 0, "Clock configuration is busy");
+    struct stat before{}, named{};
+    require(fstat(clock.value, &before) == 0, "Cannot inspect clock configuration");
+    constexpr auto incomplete = "0.0 0 0.0\n0\n";
+    if (before.st_size != 12 || bounded_read(clock.value, 12) != incomplete) return false;
+    require(fstatat(etc_fd, "adjtime", &named, AT_SYMLINK_NOFOLLOW) == 0 &&
+            named.st_dev == before.st_dev && named.st_ino == before.st_ino && named.st_nlink == 1,
+            "Clock configuration changed during inspection");
+    // Complete only Fedora's empty default; retain the inode, label and any administrator settings.
+    write_all(clock.value, "UTC\n");
+    return true;
+}
+// Migrate only the exact image-generated legacy entry. Mount view labels leave
+// OEM persist xattrs intact; this does not remount or open the OEM partition.
+template<class BeforeCommit = void(*)()>
+static bool repair_persist_context(int etc_fd, BeforeCommit before_commit = +[]{}) {
+    constexpr std::string_view legacy = "PARTLABEL=persist /mnt/vendor/persist ext4 ro,noload,nodev,nosuid,noexec,nofail,x-systemd.device-timeout=10s 0 0";
+    constexpr std::string_view updated = "PARTLABEL=persist /mnt/vendor/persist ext4 ro,noload,nodev,nosuid,noexec,context=system_u:object_r:var_lib_t:s0,nofail,x-systemd.device-timeout=10s 0 0";
+    trusted(etc_fd, true);
+    const int raw = openat(etc_fd, "fstab", O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    if (raw < 0 && errno == ENOENT) return false;
+    ProfileFd source(raw); trusted(source.value, false);
+    require(flock(source.value, LOCK_EX | LOCK_NB) == 0, "Filesystem configuration is busy");
+    struct stat original{};
+    require(fstat(source.value, &original) == 0, "Cannot inspect filesystem configuration");
+    const auto input = bounded_read(source.value, 1024 * 1024);
+    size_t offset = 0, match = std::string::npos; unsigned entries = 0;
+    while (offset < input.size()) {
+        const auto end = input.find('\n', offset);
+        const auto line = input.substr(offset, end == std::string::npos ? end : end - offset);
+        std::istringstream fields(line); std::string device, mount;
+        if ((fields >> device) && device.front() != '#' && (fields >> mount) &&
+            (device == "PARTLABEL=persist" || mount == "/mnt/vendor/persist")) {
+            ++entries;
+            if (line == legacy) match = offset;
+        }
+        if (end == std::string::npos) break;
+        offset = end + 1;
+    }
+    if (entries != 1 || match == std::string::npos) return false;
+    auto replacement = input; replacement.replace(match, legacy.size(), updated);
+    uint64_t random = 0;
+    require(getrandom(&random, sizeof(random), 0) == ssize_t(sizeof(random)), "Cannot allocate filesystem staging name");
+    const auto temporary = ".uke-fstab-" + std::to_string(random);
+    ProfileFd output(openat(etc_fd, temporary.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600));
+    struct Cleanup {int dir; const std::string &name; ~Cleanup(){unlinkat(dir, name.c_str(), 0);}} cleanup{etc_fd, temporary};
+    require(fchown(output.value, original.st_uid, original.st_gid) == 0 &&
+            fchmod(output.value, original.st_mode & 07777) == 0, "Cannot preserve filesystem configuration owner/mode");
+    const auto length = flistxattr(source.value, nullptr, 0);
+    require(length >= 0 && length <= 65536, "Cannot inspect filesystem configuration attributes");
+    std::vector<char> names(static_cast<size_t>(length));
+    if (length) require(flistxattr(source.value, names.data(), names.size()) == length, "Filesystem attributes changed");
+    for (size_t p = 0; p < names.size();) {
+        const auto size = strnlen(names.data() + p, names.size() - p);
+        require(size < names.size() - p, "Malformed filesystem attribute list");
+        const auto *name = names.data() + p;
+        require(std::string_view(name) != "security.ima" && std::string_view(name) != "security.evm",
+                "Signed filesystem configuration requires administrator review");
+        const auto count = fgetxattr(source.value, name, nullptr, 0);
+        require(count >= 0 && count <= 65536, "Cannot read filesystem configuration attribute");
+        std::vector<char> value(static_cast<size_t>(count));
+        require(fgetxattr(source.value, name, value.data(), value.size()) == count &&
+                fsetxattr(output.value, name, value.data(), value.size(), 0) == 0, "Cannot preserve filesystem configuration attributes");
+        p += size + 1;
+    }
+    write_all(output.value, replacement);
+    before_commit();
+    struct stat current{}, named{};
+    require(fstat(source.value, &current) == 0 && fstatat(etc_fd, "fstab", &named, AT_SYMLINK_NOFOLLOW) == 0 &&
+            current.st_dev == original.st_dev && current.st_ino == original.st_ino && current.st_nlink == 1 &&
+            named.st_dev == original.st_dev && named.st_ino == original.st_ino &&
+            current.st_size == original.st_size && current.st_mtim.tv_sec == original.st_mtim.tv_sec &&
+            current.st_mtim.tv_nsec == original.st_mtim.tv_nsec && current.st_ctim.tv_sec == original.st_ctim.tv_sec &&
+            current.st_ctim.tv_nsec == original.st_ctim.tv_nsec && lseek(source.value, 0, SEEK_SET) == 0 &&
+            bounded_read(source.value, 1024 * 1024) == input, "Filesystem configuration changed; migration refused");
+    require(renameat(etc_fd, temporary.c_str(), etc_fd, "fstab") == 0 && fsync(etc_fd) == 0,
+            "Cannot commit filesystem mount-view policy");
+    return true;
 }
 static void mask_unit(int directory_fd, const char *unit) {
     if (symlinkat("/dev/null", directory_fd, unit) < 0) {
@@ -188,20 +278,88 @@ static void reconcile_journal_policy() {
     // The vendor's separate journal ownership, ACL and retention rules remain active.
     journal_policy(etc.value, journal_nocow_unavailable(filesystem.f_type));
 }
+struct ClockSample {timespec now; bool synchronized;};
+static ClockSample clock_sample() {
+    timespec now{}; struct timex status{};
+    require(clock_gettime(CLOCK_REALTIME, &now) == 0, "Cannot read the system clock");
+    const int result = adjtimex(&status);
+    require(result >= 0, "Cannot inspect clock synchronization");
+    return {now, !(status.status & STA_UNSYNC) && result != TIME_ERROR};
+}
+static bool clock_before(timespec a, timespec b) {
+    return a.tv_sec < b.tv_sec || (a.tv_sec == b.tv_sec && a.tv_nsec < b.tv_nsec);
+}
+static void clock_bounds(timespec value) {
+    require(value.tv_sec >= 1793577600 && value.tv_sec < 4102444800 &&
+            value.tv_nsec >= 0 && value.tv_nsec < 1000000000, "Clock floor is outside supported bounds");
+}
+static timespec read_clock_floor(int state_fd) {
+    const int raw = openat(state_fd, "clock-floor", O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
+    if (raw < 0 && errno == ENOENT) return {};
+    ProfileFd input(raw); trusted(input.value, false); struct stat st{};
+    require(fstat(input.value, &st) == 0 && st.st_size == 0, "Invalid clock-floor state");
+    clock_bounds(st.st_mtim); return st.st_mtim;
+}
+static bool save_clock_floor(int state_fd, ClockSample sample = clock_sample()) {
+    if (!sample.synchronized) return false;
+    clock_bounds(sample.now);
+    const auto previous = read_clock_floor(state_fd);
+    if (!clock_before(previous, sample.now)) return false;
+    int raw = openat(state_fd, "clock-floor", O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+    if (raw < 0 && errno == EEXIST) raw = openat(state_fd, "clock-floor", O_WRONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
+    ProfileFd output(raw); trusted(output.value, false); struct stat st{};
+    require(fstat(output.value, &st) == 0 && st.st_size == 0, "Clock-floor state changed");
+    timespec stamps[2]{{0, UTIME_OMIT}, sample.now};
+    require(futimens(output.value, stamps) == 0 && fsync(output.value) == 0 && fsync(state_fd) == 0,
+            "Cannot persist the synchronized clock floor");
+    return true;
+}
+template<class SetTime>
+static bool restore_clock_floor(int state_fd, ClockSample sample, SetTime set_time) {
+    const auto saved = read_clock_floor(state_fd);
+    if (!saved.tv_sec || !clock_before(sample.now, saved)) return false;
+    require(set_time(saved) == 0, "Cannot restore the synchronized clock floor");
+    return true;
+}
 #ifndef UKE_INSTALL_PROFILE_TEST
 int main(int argc, char **argv) {
     try {
-        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow");
+        require(argc == 2, "Usage: uke-install-profile initialize|reconcile|status|check|grow|clock-save|clock-save-required|clock-restore|rtc-sync|rtc-check");
         const std::string action = argv[1];
-        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow", "Unknown profile operation");
+        require(action == "initialize" || action == "reconcile" || action == "status" || action == "check" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore" || action == "rtc-sync" || action == "rtc-check", "Unknown profile operation");
         if (action != "status") require(uke_device(observation("/sys/firmware/devicetree/base/compatible", 4096)), "Exact Uke/SM7675 device required");
         if (action == "check") { std::cout << uke_install::name(inspect_root()) << '\n'; return 0; }
         require(geteuid() == 0, "Root privileges required for system installation state");
-        auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow");
+        if(action=="rtc-sync" || action=="rtc-check") {
+            const auto sample=[] {const auto s=clock_sample();return uke_rtc::Sample{s.now.tv_sec,s.synchronized};};
+            if(action=="rtc-sync" && !uke_rtc::requested()) {
+                std::cout<<"rtc-sync: running kernel has no secure RTC backend; no RTC write\n";return 0;
+            }
+            uke_rtc::Device rtc(action=="rtc-sync");
+            if(action=="rtc-check") {
+                uke_rtc::check([&]{return rtc.read();},sample);
+                std::cout<<"rtc-check: admitted RTC calendar matches system UTC; no write\n";
+            } else {
+                const auto result=uke_rtc::synchronize([&]{return rtc.read();},[&](int64_t utc){rtc.write(utc);},sample);
+                std::cout<<(result==uke_rtc::Result::deferred?"rtc-sync: deferred until NTP-synchronized UTC\n":
+                           result==uke_rtc::Result::correct?"rtc-sync: UTC already correct; no write\n":
+                           "rtc-sync: trusted UTC written and read back through the secure RTC backend\n");
+            }
+            return 0;
+        }
+        auto state = directory("/var/lib/senemos/installation", action == "initialize" || action == "reconcile" || action == "grow" || action == "clock-save" || action == "clock-save-required" || action == "clock-restore");
         if (action == "status") { std::cout << uke_install::name(stored_profile(state.value)) << '\n'; return 0; }
         ProfileFd lock(openat(state.value, "lock", O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK, 0600));
         trusted(lock.value, false);
         require(flock(lock.value, LOCK_EX | LOCK_NB) == 0, "Installation classification already running");
+        if (action == "clock-save" || action == "clock-save-required" || action == "clock-restore") {
+            const auto sample = clock_sample();
+            if (action == "clock-save-required") require(sample.synchronized, "NTP synchronization required before staging a new signed kernel");
+            const bool changed = action == "clock-restore" ?
+                restore_clock_floor(state.value, sample, [](timespec value){return clock_settime(CLOCK_REALTIME, &value);}) : save_clock_floor(state.value, sample);
+            std::cout << action << (changed ? ": synchronized floor applied\n" : ": no clock/state change required\n");
+            return 0;
+        }
         if (action == "grow") {
             require(inspect_root() == uke_install::Profile::userdata, "Online growth requires the provisioned userdata root");
             const auto root = uke_install::root_mount(observation("/proc/self/mountinfo", 1024 * 1024));
@@ -233,6 +391,13 @@ int main(int argc, char **argv) {
         }
         require(inspect_root() == profile, "Installation profile differs from the observed root");
         reconcile_journal_policy();
+        auto etc = directory("/etc", false);
+        if (repair_default_clock_config(etc.value))
+            std::cout << "Completed the empty default clock configuration with UTC; no RTC access.\n";
+        if (action == "reconcile" && repair_persist_context(etc.value))
+            std::cout << "Added the Fedora context to the legacy read-only persist mount; effective on next mount, OEM labels unchanged.\n";
+        if (action == "reconcile" && save_clock_floor(state.value))
+            std::cout << "Persisted the NTP-synchronized clock floor; no RTC access.\n";
         if (profile == uke_install::Profile::linux) {
             mask_unit(units.value, "uke-userdata-update.service");
             mask_unit(units.value, "uke-userdata-accept.service");

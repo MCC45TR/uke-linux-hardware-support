@@ -1,5 +1,53 @@
 # Stock-ABL kernel updates
 
+3 November 2026, source1.8.38 pairs the secure RTC kernel with trusted UTC
+provisioning, readback and startup checks. The original Chrony package remains
+in use. See [RTC persistence](RTC-PERSISTENCE.md) for bootstrap, old-kernel
+compatibility, offline time and separate physical acceptance limits.
+
+3 November 2026, source 1.8.37 adds continuous trial health qualification, a
+three-attempt bootloader budget for new trials, and final fallback readback.
+The updater package carries this policy; no new kernel Image or firmware is
+required. The first-DNF policy migration introduced in 1.8.36 is retained.
+See [userdata rollback](USERDATA-AB.md) for timing, terminal-health handling
+and the independent physical acceptance limits.
+
+Software validation on 3 November 2026: COPR
+[11251295](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11251295/)
+passed for Fedora Rawhide AArch64. Injected-clock qualification, both-direction
+512/4096-byte GPT fallback and the retained first-update RPM transaction fixtures
+passed. All six binary packages and the rebuilt SRPM verify with the COPR key;
+repository hashes and the delivered failure-unit policy were checked separately.
+[Artifact identities](rollback-health-20261103.json) distinguish those software
+checks from the unperformed physical update and rollback tests.
+
+1 November 2026. Source 1.8.22 runs startup acceptance and policy-gated staging
+through one `boot` command under the updater lock. An identical default reuses
+the running bundle's verified bytes. Disabled staging still performs health
+acceptance; malformed policy and candidate failures retain the existing refusal
+behavior. Native checks and physical startup timing remain separate gates.
+
+1 November 2026. Version1.8.21 reads owning RPM metadata and its complete file
+inventory in one query per package. Cohort, ownership, module/file digests and
+rollback checks remain; malformed or multiple-owner records are refused. Native
+Fedora Rawhide AArch64 checks and installed POCO Pad X1 preflight pass. Paired
+query measurements improve; complete verifier timing is affected by desktop
+load, and a physical startup improvement remains unverified.
+
+31 October 2026. Version1.8.13 enables the guarded kernel transaction by
+default. On singleboot userdata installations, DNF writes and verifies the
+inactive Linux boot slot, selects it for the next reboot and retains the
+accepted running slot and modules for rollback. Existing firmware, power,
+identity and transaction checks remain. No automatic reboot is introduced.
+Administrator configuration remains preserved by RPM upgrades.
+
+31 October 2026. Updater 1.8.12 reads the complete mount listing with a 1 MiB
+bound. A native 4614-byte listing was previously cut at 4096 bytes and refused
+as an incomplete row. Strict row/root validation remains; unreadable, oversized
+or ambiguous input is refused. COPR tests and native device admission are
+separate validation steps. No caller may shorten or filter the mount namespace
+to bypass an admission refusal.
+
 31 October 2026, POCO Pad X1, Fedora Rawhide AArch64. Normal DNF update with
 updater 1.8.11 replaced an unbooted 7.3.0-60 trial with 7.3.1-3 in slot A.
 DNF reported completion before reboot. A normal reboot started 7.3.1-3 and
@@ -160,3 +208,118 @@ This extends package verification without enabling automatic updates. It does
 not qualify alternating-slot firmware, suspend, KVM or an unstable kernel boot.
 The manual current-slot path retains its physical boot identity, power, durable
 backup, readback and protected-partition checks.
+
+## Reuse of the verified running bundle
+
+1 November 2026: when the default bundle is the running kernel, automatic
+activation reuses the bytes already verified in that invocation. It retains
+the manifest, complete module inventory, RPM ownership, early firmware, physical
+boot image and accepted-state checks. The path returns without writing a slot.
+A distinct candidate still receives independent candidate and baseline
+validation. This removes one repeated bundle validation; device boot timing
+and shutdown reliability require separate measurements.
+
+## Native display readiness
+
+1 November 2026: the Plasma Login Manager drop-in retains its bounded udev
+wait and allows it to finish when Uke's native display device alias exists.
+The original Fedora service and application remain unchanged. Other USB
+coldplug work continues independently. The reviewed original service is
+`plasma-login-manager-6.8.2-1.fc46`; recheck the drop-in if upstream adds other
+pre-start commands. This configuration requires a separate measured reboot
+and does not establish physical display or shutdown acceptance.
+
+The packaged `boot` action alone allows a two-second polling window for native
+touch calibration during panel handoff. It retries the complete native predicate
+every100ms only while an exactly identified, bound input and a uniquely
+connected/enabled internal panel remain valid. Ready input or the existing
+verified panel-off standby condition is still required; invalid metadata fails
+immediately. Explicit acceptance, preflight, legacy touch and transaction paths
+keep their immediate checks. The120-second service timeout, five starts and
+30-second external restart delay remain. Persistent pending may add two seconds
+per attempt; blocked sysfs reads remain subject to the enclosing service timeout.
+Native fixture results and actual startup time are separate validation gates.
+
+## Clock initialization and disabled legacy policy
+
+The clock floor comes from the mtime of the packaged `/usr/lib/clock-epoch`,
+using systemd's existing epoch handling. Chronyd starts without `-s`: an old
+PMIC RTC counter or stale drift-file mtime must not replace this floor before
+package verification. Normal NTP correction remains enabled. This does not set
+the hardware RTC or claim accurate offline wall time. Acceptance is ordered
+after chronyd and `time-set.target`, without an online synchronization dependency.
+See the [systemd epoch contract](https://www.freedesktop.org/software/systemd/man/258/systemd.html)
+and [chronyd options](https://chrony-project.org/doc/latest/chronyd.html).
+
+Legacy userdata files containing exactly `automatic=0` retain their opt-out
+and use no VRR override. A legacy enabled policy still requires an explicit
+`vrr_min_hz`; unknown keys and malformed values remain errors. Installing this
+update does not enable automatic activation, write an RTC, repair a filesystem
+or establish a successful reboot.
+# Device-local video firmware
+
+The installation profile also keeps a zero-byte `clock-floor` state file whose
+mtime is advanced only while the kernel reports NTP synchronization. Chrony's
+profile-owned startup/shutdown drop-in restores that verified lower bound before
+Chrony and saves it after shutdown. An admitted new-kernel firmware import must
+refresh the floor with NTP synchronization before normal slot staging. The state
+is monotonic, root-only and separate from the packaged early epoch; it performs
+no RTC access. This covers signatures made later on the same day than RPM's
+clamped packaged epoch. Boot and offline-clock acceptance still need device
+verification after reboot.
+
+`uke-kernel-update check-oem-video` inspects the physical Uke super partition
+read-only and reports a candidate without installing it. The importer admits
+mirrored, SHA256-checked Android LP metadata, the measured single-device linear
+ODM/vendor layout, and fixed firmware size/hash/ELF memory bounds. Unknown,
+changed or absent inputs fail closed. Temporary loop devices are read-only and
+autoclear; helper output and runtime are bounded.
+
+`uke-kernel-update import-oem-video RELEASE` additionally requires a fully
+validated installed kernel bundle and confines a new firmware file to that
+non-running kernel's versioned firmware directory. Publication is atomic and
+does not overwrite different existing bytes. Kernel-specific lookup follows
+the standard Linux firmware search path. This command neither writes Android
+partitions nor activates a kernel or reboots. Firmware bytes are never included
+in source archives or public COPR packages. Size/hash admission does not prove
+PAS authentication, HFI compatibility or codec operation on hardware.
+
+LP format reference: AOSP system/core commit
+`a3b721a32242006b59cb12bd62c9133632af3a2d`,
+`fs_mgr/liblp/include/liblp/metadata_format.h` (Apache-2.0).
+
+## One-time image policy migration
+
+3 November 2026, boot integration 1.8.36: the updater's package post-install
+migrates the exact legacy image pair `automatic=0` plus LF in both automatic
+policy files. Each original file is retained in the protected update state,
+then both policies are enabled with a durable migration journal. The legacy
+display override remains disabled (`vrr_min_hz=0`). The existing final RPM file
+trigger stages the complete selected kernel, verifies the inactive boot slot
+and changes the next-boot slot through the existing A/B state machine. There
+is no automatic reboot. Installing the new updater also runs that final trigger
+against already installed kernel bundles; a new kernel need not be reinstalled.
+
+This is a one-time migration of the old image default. Custom policies are
+retained. Once recorded, a later explicit `automatic=0` remains disabled across
+upgrades. An interrupted migration can resume only with its admitted original
+backups and expected old/new bytes. Unknown, writable, linked or replaced files
+are refused. Pending policy writes do not admit boot activation.
+
+Use the normal `sudo dnf update --refresh -y` transaction after the new packages
+are published. It installs the updated policy/updater and uses the existing
+signature, tuple, firmware, root/UFS, accepted-slot, power and readback checks.
+The source update adds no current-slot writer and performs no tablet operation
+while building. Source/package fixtures and physical acceptance remain separate.
+
+RPM trigger semantics: [rpm-scriptlets(7)](https://rpm.org/docs/latest/manual/file_triggers.html).
+
+Software validation on 3 November 2026: COPR
+[11250994](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11250994/)
+completed for Fedora Rawhide AArch64. Native policy/recovery and existing A/B
+contracts passed. An isolated RPM upgrade with an already installed boot bundle
+recorded migration before exactly one final activation trigger. All six binary
+RPMs and the rebuilt source RPM verify with the COPR public key; the delivered
+migration hook, final trigger and repository metadata were checked separately.
+[Artifact identities](seamless-policy-20261103.json) retain the build source and
+digests. No physical slot write, reboot or rollback was performed for this build.

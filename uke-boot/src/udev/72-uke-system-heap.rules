@@ -1,0 +1,2 @@
+# Active-seat access to normal allocated pages; reserved CMA heaps keep Fedora policy.
+SUBSYSTEM=="dma_heap", KERNEL=="system", TAG+="uaccess"

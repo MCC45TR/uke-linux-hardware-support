@@ -24,7 +24,7 @@ $(grep -E '^(StartLimitIntervalSec|StartLimitBurst)=' src/units/uke-userdata-acc
 [Service]
 Type=oneshot
 ExecStart=/bin/sh -c 'printf a >> $stage/attempts; exit 1'
-$(grep -E '^(Restart|RestartMode)=' src/units/uke-userdata-accept.service)
+$(grep -E '^(Restart|RestartMode|RestartPreventExitStatus)=' src/units/uke-userdata-accept.service)
 RestartSec=50ms
 UNIT
 cat >"$units/$unit-fallback.service" <<UNIT
@@ -42,3 +42,18 @@ test "$(cat "$stage/attempts")" = aaaaa
 test "$(cat "$stage/fallback")" = f
 test "$(systemctl --user show "$unit.service" --value --property=Result)" = start-limit-hit
 printf '%s\n' 'Host systemd: five bounded starts then one OnFailure action; no device command or reboot executed'
+systemctl --user stop "$unit.service" "$unit-fallback.service"
+systemctl --user reset-failed "$unit.service" "$unit-fallback.service"
+: > "$stage/attempts"
+: > "$stage/fallback"
+sed -i 's/exit 1/exit 78/' "$units/$unit.service"
+systemctl --user daemon-reload
+systemctl --user start --no-block "$unit.service"
+for ((attempt=0; attempt<200; ++attempt)); do
+    [[ ! -s $stage/fallback ]] || break
+    sleep 0.05
+done
+test "$(cat "$stage/attempts")" = a
+test "$(cat "$stage/fallback")" = f
+test "$(systemctl --user show "$unit.service" --value --property=Result)" = exit-code
+printf '%s\n' 'Host systemd: terminal trial health status invokes OnFailure once without restarting; no device command or reboot executed'
