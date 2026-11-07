@@ -1,0 +1,85 @@
+--- a/uke-boot/src/o82-private-color.hpp
++++ b/uke-boot/src/o82-private-color.hpp
+@@ -6,6 +6,7 @@
+ #include <stdexcept>
+ #include <string>
+ #include <string_view>
++#include "unstable-release.hpp"
+ namespace uke_color {
+ inline bool required(const std::map<std::string, std::string> &manifest) {
+     const auto marker = manifest.find("o82_private_color");
+@@ -14,13 +15,8 @@
+     if (marker->second != "5" || target == manifest.end())
+         throw std::runtime_error("Unsupported private-color preparation marker");
+     const std::string_view release = target->second;
+-    if (!release.starts_with("7.3.1-") || !release.ends_with("-unstable") || release.size() <= 15)
+-        throw std::runtime_error("Private-color preparation requires an unstable kernel");
+-    const auto digits = release.substr(6, release.size() - 15);
+-    unsigned revision = 0;
+-    const auto parsed = std::from_chars(digits.data(), digits.data() + digits.size(), revision);
+-    if (parsed.ec != std::errc() || parsed.ptr != digits.data() + digits.size() || !revision || digits.front() == '0')
+-        throw std::runtime_error("Invalid private-color kernel revision");
++    if (!uke_release::unstable(release))
++        throw std::runtime_error("Private-color preparation requires a canonical unstable kernel");
+     return true;
+ }
+ template<class Prepare, class Stage>
+--- a/o82-stock-profile.hpp
++++ b/o82-stock-profile.hpp
+@@ -4,6 +4,7 @@
+ #include <charconv>
+ #include <json-c/json.h>
+ #include "o82-color-firmware.h"
++#include "unstable-release.hpp"
+ // Preserve the existing project's compact helper source without weakening
+ // diagnostics on this implementation or the color converter.
+ #pragma GCC diagnostic push
+@@ -27,13 +28,8 @@
+     return std::string("o82-") + (panel == 0x42 ? "42" : "36") + "-color-v5.bin";
+ }
+ inline void release_name(const std::string &release, const std::string &running) {
+-    need(token(release) && release.starts_with("7.3.1-") && release.ends_with("-unstable") &&
+-         release != running && release.size() > 15, "A non-running unstable kernel release is required");
+-    const auto digits = std::string_view(release).substr(6, release.size() - 15);
+-    unsigned revision = 0;
+-    const auto result = std::from_chars(digits.data(), digits.data() + digits.size(), revision);
+-    need(result.ec == std::errc() && result.ptr == digits.data() + digits.size() && revision &&
+-         digits.front() != '0', "Invalid unstable kernel revision");
++    need(token(release) && uke_release::unstable(release) && release != running,
++         "A non-running canonical unstable kernel release is required");
+ }
+ inline json_object *member(json_object *object, const char *key) {
+     json_object *value = nullptr;
+--- a/uke-boot/tests/o82-private-color.cpp
++++ b/uke-boot/tests/o82-private-color.cpp
+@@ -49,6 +49,14 @@
+         no_calls({{"kernel_release", release}, {"o82_private_color", "5"}}, running);
+     color_check(uke_color::required({{"kernel_release", "7.3.1-1-unstable"}, {"o82_private_color", "5"}}));
+     color_check(!uke_color::required({{"kernel_release", "7.2.9-legacy"}}));
++    for (const char *valid : {"7.3.3-1-unstable", "7.3.3-34-unstable", "7.4.0-2-unstable", "8.0.0-1-unstable"}) {
++        std::vector<std::string> calls;
++        uke_color::with_prepared({{"kernel_release",valid},{"o82_private_color","5"}},running,false,
++            [&](const std::string &value){color_check(value==valid);calls.push_back("prepare");},
++            [&]{calls.push_back("stage");});
++        color_check(calls==std::vector<std::string>({"prepare","stage"}));
++        no_calls({{"kernel_release",valid},{"o82_private_color","5"}},valid);
++    }
+     const auto parsed = properties("format=1\nkernel_release=" + next + "\no82_private_color=5\n");
+     color_check(uke_color::required(parsed));
+     reject([&] { (void)properties("o82_private_color=5\no82_private_color=4\n"); });
+--- a/o82-stock-profile-contract.cpp
++++ b/o82-stock-profile-contract.cpp
+@@ -78,6 +78,13 @@
+          std::string("7.3.1--unstable"), std::string("../12102"), std::string("7.3.1-4294967296-unstable")})
+         refusal([&] { o82_stock::release_name(bad, release); });
+     o82_stock::release_name("7.3.1-1-unstable", running);
++    for (const char *valid : {"7.3.3-1-unstable", "7.3.3-34-unstable", "7.4.0-2-unstable", "8.0.0-1-unstable"}) {
++        auto changed=composition();
++        check_stock(!json_object_object_add(changed.get(),"kernel_release",json_object_new_string(valid)));
++        o82_stock::candidate(changed.get(),valid,running);
++        refusal([&]{o82_stock::candidate(changed.get(),valid,valid);});
++        refusal([&]{o82_stock::candidate(changed.get(),release,running);});
++    }
+     refusal([&] { (void)o82_stock::filename(0); });
+     check_stock(o82_stock::filename(0x36) != o82_stock::filename(0x42));
+     for (unsigned panel : {0x36u, 0x42u}) {

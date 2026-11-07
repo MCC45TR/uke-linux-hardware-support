@@ -43,3 +43,26 @@ were interpreted as BUILDROOT paths. The corrected composer stages every retaine
 boot document under a distinct relative name, including all license texts. The
 source-worker fixture rejects absolute operands. No runtime binary was published
 by the failed candidate; the corrected attempt retains version2.9.0-1.
+
+COPR11283195 subsequently passes the complete native build and is installed
+through DNF. The kernel7331 transaction still refuses before either raw boot
+slot changes: both the updater and the private-color helper only parse731.
+The Control2.9.0-2 source retains the exact color0.7.0-1/COPR11261358 source RPM
+(SHA2565640dbe8a1c3eff89762250c89c81a5f06c5700aff6fa4ae74c234ad2f98d1f1),
+all its native checks, licenses and local-only preset admission. It transfers
+the nonresident command into Control, with compatibility Provides/Obsoletes.
+Factory tables and private calibration remain outside the public payload.
+
+A shared strict parser admits canonical three-part versions from731 onward
+and positive bounded revisions with the exact unstable suffix. Existing
+same-running-kernel, signed source contract, exact panel, private permissions,+publication and failure-before-staging checks remain. Actual updater and color
+fixtures add7331,73334,7402 and8001, including mismatch and running-candidate
+refusals. Two native compilers also exercise52 parser cases. Compilation and
+device staging remain separate admission gates.
+
+The user explicitly requests a mandatory TUI package. Control2.9.0-2 therefore
+requires the exact matching uke-control-tui RPM, rather than merely providing
+the terminal binary from the main package. The client SDK remains optional.
+The main runtime still owns the installation classifier, updater, client,
+diagnostics and private-color provisioning, reducing independent producers
+without moving desktop policy or private tables into the kernel.
