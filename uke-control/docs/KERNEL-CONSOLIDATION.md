@@ -55,7 +55,8 @@ Factory tables and private calibration remain outside the public payload.
 
 A shared strict parser admits canonical three-part versions from731 onward
 and positive bounded revisions with the exact unstable suffix. Existing
-same-running-kernel, signed source contract, exact panel, private permissions,+publication and failure-before-staging checks remain. Actual updater and color
+same-running-kernel, signed source contract, exact panel, private permissions,
+publication and failure-before-staging checks remain. Actual updater and color
 fixtures add7331,73334,7402 and8001, including mismatch and running-candidate
 refusals. Two native compilers also exercise52 parser cases. Compilation and
 device staging remain separate admission gates.
@@ -66,3 +67,12 @@ the terminal binary from the main package. The client SDK remains optional.
 The main runtime still owns the installation classifier, updater, client,
 diagnostics and private-color provisioning, reducing independent producers
 without moving desktop policy or private tables into the kernel.
+
+The required device-local firmware helper also rejects7331. Its0.2-9 source
+retains the exact0.2-8/COPR11263798 archive and acquisition/publication controls,
+uses the same strict parser, and orders inactive targets by the whole upstream
+version and revision. The original exact-source idle-current allowlist stays
+unchanged. New synthetic publication tests cover newer versions restarting at1
+without touching active consumers. This updates an existing required runtime;
+it adds no new producer or resident service. Consolidation into its final
+runtime owner still needs separate dependency and license admission.
