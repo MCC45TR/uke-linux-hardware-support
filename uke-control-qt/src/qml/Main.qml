@@ -13,44 +13,81 @@ Kirigami.ApplicationWindow {
     minimumWidth: Kirigami.Units.gridUnit * 20
     minimumHeight: Kirigami.Units.gridUnit * 24
     property bool initialized: false
+    property bool changingPage: false
+    property bool browsingCatalog: false
+    property var navigationActions: []
     pageStack.columnView.columnResizeMode: Kirigami.ColumnView.SingleColumn
-    pageStack.onCurrentIndexChanged: {
-        if (initialized && pageStack.currentIndex === 0) backend.cancelRead()
+    pageStack.onCurrentItemChanged: {
+        if (!initialized || changingPage) return
+        if (!pageStack.currentItem || pageStack.currentItem.objectName !== "guidePage") backend.leaveGuide()
+        if (pageStack.currentItem && pageStack.currentItem.objectName === "areaPage") browsingCatalog = false
     }
     pageStack.onPageRemoved: page => page.destroy()
     function showArea(index) {
-        backend.selectArea(index)
-        pageStack.clear()
-        pageStack.push(areaPage)
-        if (globalDrawer.modal) globalDrawer.close()
+        changingPage = true
+        try {
+            browsingCatalog = false
+            backend.selectArea(index)
+            pageStack.clear()
+            pageStack.push(areaPage)
+            if (globalDrawer.modal) globalDrawer.close()
+        } finally { changingPage = false }
+    }
+    function openCatalog(area = -1) {
+        changingPage = true
+        try {
+            backend.leaveGuide()
+            if (pageStack.currentItem && pageStack.currentItem.objectName === "guidePage") pageStack.pop()
+            browsingCatalog = true
+            if (pageStack.currentItem && pageStack.currentItem.objectName === "catalogPage") pageStack.currentItem.focusSearch()
+            else pageStack.push(catalogPage, {initialArea: area})
+            if (globalDrawer.modal) globalDrawer.close()
+        } finally { changingPage = false }
     }
     function openGuide(id) {
-        while (pageStack.depth > 1) pageStack.pop()
-        if (backend.openAction(id)) {
-            pageStack.push(guidePage)
+        changingPage = true
+        try {
+            if (pageStack.currentItem && pageStack.currentItem.objectName === "guidePage") pageStack.pop()
+            if (backend.openAction(id)) pageStack.push(guidePage)
+        } finally { changingPage = false }
+    }
+    Component {
+        id: navigationAction
+        Kirigami.Action {
+            required property int areaIndex
+            objectName: "navigate_" + backend.areas[areaIndex].id
+            text: backend.areas[areaIndex].title
+            icon.name: themeIcons.names[backend.areas[areaIndex].icon]
+            checkable: true
+            checked: !root.browsingCatalog && backend.section === areaIndex
+            onTriggered: root.showArea(areaIndex)
         }
     }
+    Kirigami.Action { id: catalogSeparator; separator: true }
+    Kirigami.Action {
+        id: catalogAction
+        text: "All actions"
+        icon.name: themeIcons.names["edit-find"]
+        checkable: true
+        checked: root.browsingCatalog
+        onTriggered: root.openCatalog()
+    }
     globalDrawer: Kirigami.GlobalDrawer {
+        objectName: "navigationDrawer"
         title: "Uke Control"
-        titleIcon: "preferences-system"
+        titleIcon: themeIcons.names["preferences-system"]
+        handleClosedIcon.name: themeIcons.names["application-menu"]
+        handleOpenIcon.name: themeIcons.names["window-close"]
+        handleClosedToolTip: "Open navigation"
+        handleOpenToolTip: "Close navigation"
         isMenu: false
         modal: !root.wideScreen
         drawerOpen: !modal
-        actions: [
-            Kirigami.Action { text: "Status"; icon.name: "dialog-information"; checked: backend.section === 0; onTriggered: root.showArea(0) },
-            Kirigami.Action { text: "Power"; icon.name: "battery"; checked: backend.section === 1; onTriggered: root.showArea(1) },
-            Kirigami.Action { text: "Display & lights"; icon.name: "video-display"; checked: backend.section === 2; onTriggered: root.showArea(2) },
-            Kirigami.Action { text: "Connections"; icon.name: "network-wired"; checked: backend.section === 3; onTriggered: root.showArea(3) },
-            Kirigami.Action { text: "Audio & sensors"; icon.name: "audio-card"; checked: backend.section === 4; onTriggered: root.showArea(4) },
-            Kirigami.Action { text: "Updates"; icon.name: "system-software-update"; checked: backend.section === 5; onTriggered: root.showArea(5) },
-            Kirigami.Action { text: "Advanced"; icon.name: "preferences-system"; checked: backend.section === 6; onTriggered: root.showArea(6) }
-        ]
+        actions: root.navigationActions
     }
     pageStack.initialPage: areaPage
-    pageStack.onDepthChanged: {
-        if (initialized && pageStack.depth === 1) backend.leaveGuide()
-    }
     Component { id: areaPage; AreaPage { parent: root.pageStack; appWindow: root } }
+    Component { id: catalogPage; CatalogPage { parent: root.pageStack; appWindow: root } }
     Component { id: guidePage; GuidePage { parent: root.pageStack; appWindow: root } }
     ReviewSheet { id: reviewSheet }
     Connections {
@@ -61,9 +98,14 @@ Kirigami.ApplicationWindow {
         }
     }
     Shortcut { sequence: StandardKey.Quit; onActivated: root.close() }
+    Shortcut { sequence: "Ctrl+K"; onActivated: root.openCatalog() }
     Shortcut { sequence: "Alt+Left"; enabled: pageStack.depth > 1; onActivated: pageStack.pop() }
     onClosing: backend.cancelRead()
     Component.onCompleted: {
+        let items = []
+        for (let area of backend.areas) items.push(navigationAction.createObject(root, {areaIndex: area.index}))
+        items.push(catalogSeparator, catalogAction)
+        navigationActions = items
         if (backend.guide.id !== undefined) pageStack.push(guidePage)
         initialized = true
     }

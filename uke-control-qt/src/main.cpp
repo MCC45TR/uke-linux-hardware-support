@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "bridge.hpp"
+#include "theme-icons.hpp"
 #include <KIconTheme>
 #include <KLocalizedQmlContext>
 #include <KLocalizedString>
@@ -13,7 +14,7 @@ int main(int argc, char **argv) {
   KIconTheme::initTheme();
   QApplication app(argc, argv);
   QCoreApplication::setApplicationName("uke-control-qt");
-  QCoreApplication::setApplicationVersion("1.0.0");
+  QCoreApplication::setApplicationVersion("1.1.0");
   QCoreApplication::setOrganizationName("Uke");
   QGuiApplication::setDesktopFileName("org.uke.ControlQt");
   KStyleManager::initStyle();
@@ -37,6 +38,7 @@ int main(int argc, char **argv) {
                     "Print actual Qt/KDE appearance metadata without "
                     "opening a window or querying devices."});
   parser.process(app);
+  uq::ThemeIcons themeIcons;
   QString notice;
   const auto styles = QStyleFactory::keys();
   bool breeze = false;
@@ -56,12 +58,13 @@ int main(int argc, char **argv) {
     const auto font = app.font();
     const QFontInfo resolvedFont(font);
     QJsonObject icons;
-    for (const auto *name :
-         {"dialog-information", "battery", "video-display", "network-wired",
-          "audio-card", "system-software-update", "preferences-system",
-          "go-previous", "view-refresh", "dialog-warning"})
-      icons.insert(QString::fromLatin1(name),
-                   QIcon::hasThemeIcon(QString::fromLatin1(name)));
+    QJsonObject resolvedNames;
+    const auto names = themeIcons.names();
+    for (auto it = names.begin(); it != names.end(); ++it) {
+      const auto name = it.value().toString();
+      icons.insert(it.key(), !QIcon::fromTheme(name).pixmap(32, 32).isNull());
+      resolvedNames.insert(it.key(), name);
+    }
     QJsonObject environment;
     for (const auto *key : {"XDG_CURRENT_DESKTOP", "KDE_SESSION_VERSION",
                             "QT_QPA_PLATFORMTHEME", "QT_STYLE_OVERRIDE"})
@@ -87,6 +90,7 @@ int main(int argc, char **argv) {
         {"icons", QJsonObject{{"theme", QIcon::themeName()},
                               {"resolvedTheme", KIconTheme::current()},
                               {"fallbackTheme", QIcon::fallbackThemeName()},
+                              {"names", resolvedNames},
                               {"available", icons}}},
         {"font", QJsonObject{{"family", font.family()},
                              {"resolvedFamily", resolvedFont.family()},
@@ -112,12 +116,15 @@ int main(int argc, char **argv) {
       return 77;
     }
     uq::Bridge backend(fixture, parser.isSet("read-only"));
-    if (parser.isSet("start"))
+    if (parser.isSet("start")) {
+      backend.selectArea(backend.areaForAction(parser.value("start")));
       if (!backend.openAction(parser.value("start")))
         throw std::runtime_error(backend.message().toStdString());
+    }
     QQmlApplicationEngine engine;
     KLocalization::setupLocalizedContext(&engine);
     engine.rootContext()->setContextProperty("backend", &backend);
+    engine.rootContext()->setContextProperty("themeIcons", &themeIcons);
     engine.rootContext()->setContextProperty("styleNotice", notice);
     engine.loadFromModule("org.uke.ControlQt", "Main");
     if (engine.rootObjects().isEmpty())

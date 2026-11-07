@@ -4,6 +4,54 @@
 #include <sys/stat.h>
 #include <unistd.h>
 namespace uq {
+QString fieldTitle(const QString &key) {
+  static const QMap<QString, QString> labels{
+      {"available", "Information available"}, {"physical_acceptance", "Physical validation"},
+      {"current_ma", "Current (mA)"}, {"voltage_mv", "Voltage (mV)"},
+      {"temperature_c", "Temperature (°C)"}, {"capacity_percent", "Charge (%)"},
+      {"cycles", "Charge cycles"}, {"schema", "Report format"},
+      {"usb", "USB"}, {"nfc", "NFC"}, {"cpu", "CPU"}, {"gpu", "GPU"}};
+  if (labels.contains(key)) return labels.value(key);
+  auto label = key;
+  label.replace('_', ' ');
+  label.replace('-', ' ');
+  if (!label.isEmpty()) label[0] = label[0].toUpper();
+  return safe(label.toStdString());
+}
+QString actionIcon(const Action &a) {
+  const auto id = QString::fromStdString(a.id);
+  // The same semantic names serve daily pages and the complete SDK catalog.
+  for (const auto &[part, icon] :
+       std::initializer_list<std::pair<const char *, const char *>>{
+           {"microphone", "audio-input-microphone"},
+           {"battery", "battery"}, {"charge", "battery-charging"},
+           {"brightness", "video-display"}, {"display", "video-display"},
+           {"desktop", "preferences-desktop"}, {"flashlight", "camera-flash"},
+           {"led", "preferences-desktop-color"}, {"usb", "drive-removable-media-usb"},
+           {"ethernet", "network-wired"}, {"nfc", "network-wireless"},
+           {"audio", "audio-card"}, {"camera", "camera-photo"},
+           {"sensors", "utilities-system-monitor"}, {"wake", "preferences-system-time"},
+           {"sleep", "preferences-system-power-management"},
+           {"channel", "system-switch-user"}, {"update", "system-software-update"},
+           {"hardware", "cpu"}, {"firmware", "cpu"},
+           {"workload", "utilities-system-monitor"}, {"touch", "input-touchpad"},
+           {"storage", "drive-harddisk"}, {"roots", "drive-harddisk"},
+           {"swap", "drive-harddisk"}, {"resize", "drive-harddisk"},
+           {"snapshot", "document-save"}, {"support", "document-export"},
+           {"diagnostics", "document-properties"}, {"report", "document-send"},
+           {"recovery", "security-high"}, {"boot", "system-reboot"}})
+    if (id.contains(QString::fromLatin1(part)))
+      return QString::fromLatin1(icon);
+  if (a.effect == Effect::maintenance)
+    return "security-high";
+  if (a.effect == Effect::publish)
+    return "document-send";
+  if (a.effect == Effect::local_file)
+    return "document-save";
+  if (a.effect == Effect::read)
+    return "dialog-information";
+  return "configure";
+}
 static QString q(const std::string &s) {
   return QString::fromUtf8(s.data(), int(s.size()));
 }
@@ -161,6 +209,43 @@ QString friendlyTitle(const Action &a) {
   return found == names.end() ? q(a.title.en) : found->second;
 }
 QString summary(const Action &a) {
+  static const QMap<QString, QString> taskHelp{
+      {"update.status", "Read which kernel is running, both slot kernels, the next boot selection and recorded approval."},
+      {"boot.set-slot", "Choose A, B or the other running slot. Review the exact kernel in the terminal before confirming; reboot is separate."},
+      {"boot.slot-preview", "Check the target slot and its kernel without changing boot selection."},
+      {"status", "Check the reported charging, memory and USB state."},
+      {"overview.battery", "See the battery snapshot and which measurements are available."},
+      {"overview.workload", "Check current CPU, memory and workload information."},
+      {"hardware.status", "Inspect the detected hardware and available device endpoints."},
+      {"overview.desktop", "See the current desktop session and display information."},
+      {"overview.storage", "Inspect storage and filesystem information."},
+      {"battery.status", "Read the battery's reported charge, voltage, current and temperature."},
+      {"battery.health", "Inspect reported battery health and the source of those values."},
+      {"charge.status", "Check the charging provider and its reported policy."},
+      {"charge.admission", "Check whether the provider can accept a charging request."},
+      {"overview.sleep", "Inspect the reported sleep state and available information."},
+      {"wake.status", "See which wake sources are available and their saved permissions."},
+      {"desktop.plasma", "Inspect the current Plasma desktop settings."},
+      {"flashlight.status", "Check whether the flashlight is available and its reported state."},
+      {"led.status", "Read the notification light's reported state."},
+      {"display.bits", "Inspect display link capabilities and reported connection details."},
+      {"usb.status", "Check connected USB devices and the current USB role."},
+      {"ethernet.status", "Inspect the Ethernet interface, connection and reported link."},
+      {"overview.nfc", "Check NFC availability and the reported state."},
+      {"overview.audio", "Inspect available audio devices and routing information."},
+      {"microphone.status", "Check the microphone array and saved channel preference without recording."},
+      {"overview.camera", "Inspect camera availability and reported support limits."},
+      {"sensors.list", "List sensors and the readings each provider can report."},
+      {"sensors.once", "Read one sample from the selected sensor."},
+      {"sensors.watch", "Observe the selected sensor for a limited interval."},
+      {"channel.status", "Check the selected software channel and any unfinished update."},
+      {"channel.set", "Choose Stable, Test or Unstable, preview the plan, then review the change."},
+      {"channel.preview", "Review the selected channel's software plan in the terminal without installing it."},
+      {"update.preview", "Check available updates in the terminal without installing them."},
+      {"update.apply", "Review and install updates for the selected channel. Wait for completion before rebooting."}};
+  const auto help = taskHelp.constFind(q(a.id));
+  if (help != taskHelp.cend())
+    return *help;
   if (a.effect == Effect::maintenance)
     return q(a.description.en);
   if (a.effect == Effect::publish)

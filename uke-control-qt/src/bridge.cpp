@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "bridge.hpp"
+#include "navigation.hpp"
 #if defined(UKE_CONTROL_SOURCE_HEADERS)
 #include <frontend.hpp>
 #else
@@ -8,80 +9,36 @@
 #include <climits>
 namespace uq {
 static QString q(const std::string &s) { return QString::fromStdString(s); }
-static QVariantMap item(const std::string &id) {
-  const auto &a = action(id);
-  return {
-      {"id", q(id)},
-      {"title", friendlyTitle(a)},
-      {"description", summary(a)},
-      {"icon", a.effect == Effect::read ? "view-list-details" : "configure"}};
-}
-QVariantList Bridge::areas() const {
-  QVariantList result;
-  const QStringList names{"Status",      "Power",           "Display & lights",
-                          "Connections", "Audio & sensors", "Updates",
-                          "Advanced"};
-  const QStringList icons{"dialog-information", "battery",
-                          "video-display",      "network-wired",
-                          "audio-card",         "system-software-update",
-                          "preferences-system"};
-  for (int i = 0; i < names.size(); ++i)
-    result << QVariantMap{
-        {"title", names[i]}, {"icon", icons[i]}, {"index", i}};
-  return result;
-}
-QVariantList Bridge::groups() const {
-  QVariantList result;
-  auto add = [&](const QString &title,
-                 std::initializer_list<const char *> ids) {
-    QVariantList entries;
-    for (const auto *id : ids)
-      entries << item(id);
-    result << QVariantMap{{"title", title}, {"entries", entries}};
-  };
-  switch (section_) {
-  case 0:
-    add("Device at a glance",
-        {"status", "overview.battery", "overview.workload"});
-    add("System information",
-        {"hardware.status", "overview.desktop", "overview.storage"});
-    break;
-  case 1:
-    add("Battery & charging", {"battery.status", "battery.health",
-                               "charge.status", "charge.admission"});
-    add("Charging preferences", {"charge.mode", "charge.limit"});
-    add("Sleep & wake", {"overview.sleep", "wake.status", "wake.set"});
-    break;
-  case 2:
-    add("Desktop",
-        {"desktop.plasma", "desktop.rotation", "desktop.brightness"});
-    add("Lights", {"flashlight.status", "flashlight.state", "flashlight.level",
-                   "led.status", "led.color", "led.auto"});
-    add("Display link", {"display.bits"});
-    break;
-  case 3:
-    add("USB & accessories", {"usb.status"});
-    add("Network & NFC", {"ethernet.status", "overview.nfc", "nfc.state"});
-    break;
-  case 4:
-    add("Audio & microphone", {"overview.audio", "microphone.status",
-                               "microphone.select", "overview.camera"});
-    add("Sensors", {"sensors.list", "sensors.once", "sensors.watch"});
-    break;
-  case 5:
-    add("Channel & update review", {"channel.status", "update.preview"});
-    add("Apply reviewed work", {"update.apply"});
-    break;
-  }
-  return result;
+QVariantList Bridge::areas() const { return areaModel(); }
+QVariantList Bridge::groups() const { return taskGroups(section_); }
+int Bridge::areaForAction(const QString &id) const {
+  try { return actionArea(action(id.toStdString())); }
+  catch (const std::exception &) { return 0; }
 }
 QVariantList Bridge::search(const QString &text) const {
   QVariantList entries;
   for (const auto &a : actions())
-    if ((q(a.id) + " " + friendlyTitle(a) + " " + q(a.description.en))
-            .contains(text, Qt::CaseInsensitive))
-      entries << item(a.id);
+    if (matchesAction(a, text)) entries << actionItem(a);
   return entries;
+}
+QVariantList Bridge::catalog(const QString &text, int area, const QString &kind) const {
+  QVariantList groups;
+  const auto model = areaModel();
+  for (int index = 0; index < model.size(); ++index) {
+    if (area >= 0 && index != area) continue;
+    QVariantList entries;
+    for (const auto &a : actions()) {
+      if (actionArea(a) != index || !matchesAction(a, text)) continue;
+      if (kind == "read" && a.effect != Effect::read) continue;
+      if (kind == "change" && a.effect != Effect::device && a.effect != Effect::packages) continue;
+      if (kind == "files" && a.effect != Effect::local_file && a.effect != Effect::publish) continue;
+      if (kind == "maintenance" && a.effect != Effect::maintenance) continue;
+      entries << actionItem(a);
+    }
+    if (!entries.isEmpty())
+      groups << QVariantMap{{"title", model[index].toMap().value("title")}, {"entries", entries}};
+  }
+  return groups;
 }
 Bridge::Bridge(Fixture fixture, bool readOnly, QObject *parent)
     : QObject(parent), fixture_(std::move(fixture)), readOnly_(readOnly) {
@@ -106,14 +63,16 @@ Bridge::Bridge(Fixture fixture, bool readOnly, QObject *parent)
 Bridge::~Bridge() { cancelRead(); }
 void Bridge::clearMessage() {
   message_.clear();
+  messageError_ = false;
   emit messageChanged();
 }
 void Bridge::fail(const std::exception &error) {
   message_ = safe(error.what());
+  messageError_ = true;
   emit messageChanged();
 }
 void Bridge::selectArea(int index) {
-  if (index < 0 || index > 6)
+  if (index < 0 || index >= areas().size())
     return;
   leaveGuide();
   section_ = index;
@@ -126,6 +85,8 @@ void Bridge::leaveGuide() {
   draft_.clear();
   observation_.clear();
   readId_.clear();
+  readOrigin_.clear();
+  observationStale_ = false;
   clearMessage();
   emit guideChanged();
   emit observationChanged();
@@ -133,22 +94,6 @@ void Bridge::leaveGuide() {
 bool Bridge::openAction(const QString &id) {
   try {
     const auto &a = action(id.toStdString());
-    if (guide_.isEmpty() && section_ == 0) {
-      if (a.category == "charge" || a.category == "battery" ||
-          a.category == "wake")
-        section_ = 1;
-      else if (a.category == "desktop" || a.category == "display" ||
-               a.category == "lights")
-        section_ = 2;
-      else if (a.category == "usb" || a.category == "network" ||
-               a.id.starts_with("nfc."))
-        section_ = 3;
-      else if (a.category == "media" || a.category == "sensors")
-        section_ = 4;
-      else if (a.category == "updates")
-        section_ = 5;
-      emit sectionChanged();
-    }
     leaveGuide();
     draft_ = defaults(a);
     QString details = q(a.description.en);
@@ -192,6 +137,12 @@ bool Bridge::openAction(const QString &id) {
           {"maximum", int(std::min<std::uint64_t>(p.maximum, INT_MAX))}};
     }
     guide_ = {{"id", id},
+              {"areaTitle", areaModel()[actionArea(a)].toMap().value("title")},
+              {"role", actionRole(a)},
+              {"accessLabel", accessLabel(a)},
+              {"administrator", a.access == Access::root},
+              {"diagnostic", a.tests_package},
+              {"icon", actionIcon(a)},
               {"title", friendlyTitle(a)},
               {"description", summary(a)},
               {"details", details},
@@ -201,6 +152,8 @@ bool Bridge::openAction(const QString &id) {
               {"read", a.effect == Effect::read},
               {"capture", a.presentation == Presentation::capture},
               {"inspect", !a.inspect.empty()},
+              {"inspectTerminal", !a.inspect.empty() && action(a.inspect).presentation == Presentation::terminal},
+              {"previewTerminal", !a.preview.empty() && action(a.preview).presentation == Presentation::terminal},
               {"preview", !a.preview.empty()}};
     emit guideChanged();
     return true;
@@ -216,9 +169,28 @@ void Bridge::setDraft(const QString &key, const QString &value) {
   // Intermediate text is a draft. plan() validates every field before any read,
   // review or handoff. QML cannot supply executable arguments.
   cancelReview();
+  if (draft_[key.toStdString()] == value.toStdString()) return;
   draft_[key.toStdString()] = value.toStdString();
+  if (!readId_.empty() && (readOrigin_ != "inspect" || readValues_.contains(key.toStdString()))) {
+    observationStale_ = true;
+    showResult(result_);
+  }
 }
-void Bridge::startRead(const Plan &request) {
+void Bridge::resetDraft() {
+  if (guide_.isEmpty()) return;
+  const auto values = defaults(action(guide_.value("id").toString().toStdString()));
+  for (const auto &[key, value] : values) setDraft(q(key), q(value));
+  auto parameters = guide_.value("parameters").toList();
+  for (auto &entry : parameters) {
+    auto parameter = entry.toMap();
+    parameter["value"] = q(values.at(parameter.value("key").toString().toStdString()));
+    entry = parameter;
+  }
+  guide_["parameters"] = parameters;
+  clearMessage();
+  emit guideChanged();
+}
+void Bridge::startRead(const Plan &request, const QString &origin) {
   if (request.effect != Effect::read ||
       request.presentation != Presentation::capture)
     throw std::runtime_error(
@@ -227,6 +199,8 @@ void Bridge::startRead(const Plan &request) {
   clearMessage();
   readId_ = request.action_id;
   readValues_ = request.values;
+  readOrigin_ = origin;
+  observationStale_ = false;
   elapsed_.start();
   Result result;
   result.action_id = readId_;
@@ -261,6 +235,7 @@ void Bridge::submit() {
   }
 }
 void Bridge::readRelated(const QString &relation) {
+  clearMessage();
   try {
     const auto &a = action(guide_.value("id").toString().toStdString());
     const auto id = relation == "inspect"   ? a.inspect
@@ -275,7 +250,7 @@ void Bridge::readRelated(const QString &relation) {
     const auto request = plan(id, values);
     if (request.effect == Effect::read &&
         request.presentation == Presentation::capture)
-      startRead(request);
+      startRead(request, relation);
     else
       prepare(request);
   } catch (const std::exception &error) {
@@ -286,7 +261,10 @@ void Bridge::refresh() {
   if (readId_.empty() || result_.running)
     return;
   try {
-    startRead(plan(readId_, readValues_));
+    auto values = readValues_;
+    for (auto &[key, value] : values)
+      if (draft_.contains(key)) value = draft_.at(key);
+    startRead(plan(readId_, values), readOrigin_);
   } catch (const std::exception &error) {
     fail(error);
   }
@@ -327,6 +305,7 @@ void Bridge::showResult(const Result &result) {
                  ? QString::number(value.toArray().size()) + " entries"
                  : QString::number(value.toObject().size()) + " fields";
     rows << QVariantMap{{"key", safe(key.toStdString())},
+                        {"label", fieldTitle(key)},
                         {"value", text},
                         {"depth", int(depth)}};
     if (depth >= 16)
@@ -346,6 +325,10 @@ void Bridge::showResult(const Result &result) {
                   : result.timed_out        ? "Read timed out"
                   : result.exit_status == 0 ? "Read complete"
                                             : "Information unavailable";
+  QString icon = result.running ? "view-refresh"
+                 : result.cancelled ? "media-playback-stop"
+                 : result.timed_out || result.exit_status != 0 ? "dialog-warning"
+                 : "dialog-ok";
   QString notice;
   if (result.cancelled)
     notice = "Read cancelled. Output may be partial.";
@@ -362,9 +345,12 @@ void Bridge::showResult(const Result &result) {
     const auto object = document.object();
     if (!result.running && !result.cancelled && result.exit_status == 0 &&
         object.contains("available") && object.value("available").isBool() &&
-        !object.value("available").toBool())
+        !object.value("available").toBool()) {
       notice = "This provider is unavailable in the current session. No device "
                "values can be shown.";
+      state = "Provider unavailable";
+      icon = "dialog-warning";
+    }
     for (auto it = object.begin(); it != object.end(); ++it)
       add(it.key(), it.value(), 0);
   } else if (document.isArray())
@@ -375,7 +361,22 @@ void Bridge::showResult(const Result &result) {
     notice += " Output was truncated; inspect the bounded raw result.";
   if (count >= 2000)
     notice += " Showing the first 2,000 values.";
+  QVariantList options;
+  for (const auto &p : action(result.action_id).parameters) {
+    if (!readValues_.contains(p.id) || readValues_.at(p.id).empty()) continue;
+    QString value = safe(readValues_.at(p.id));
+    for (const auto &choice : p.choices)
+      if (choice.value == readValues_.at(p.id)) value = q(choice.title.en);
+    options << QVariantMap{{"title", q(p.title.en)}, {"value", value}};
+  }
   observation_ = {{"title", friendlyTitle(action(result.action_id))},
+                  {"bootReport", result.action_id == "update.status" && document.isObject() &&
+                      document.object().value("schema").toString() == "org.uke.control.update-status.v1" &&
+                      document.object().value("available").toBool() ? document.object().toVariantMap() : QVariantMap{}},
+                  {"origin", readOrigin_},
+                  {"stale", observationStale_},
+                  {"options", options},
+                  {"icon", icon},
                   {"running", result.running},
                   {"state", state},
                   {"notice", notice},
@@ -414,6 +415,9 @@ void Bridge::prepare(const Plan &request) {
     warning +=
         " Administrator authentication may be requested in the terminal.";
   review_ = {
+      {"read", request.effect == Effect::read},
+      {"role", actionRole(a)},
+      {"access", accessLabel(a)},
       {"title", friendlyTitle(a)},
       {"description", summary(a)},
       {"values", values},
@@ -442,9 +446,10 @@ bool Bridge::confirmReview(bool consent, const QString &token) {
     cancelReview();
     const auto result =
         uke::frontend::launch_terminal(request.action_id, request.values, true);
+    messageError_ = !result.launched;
     message_ = result.launched
-                   ? "Continue in the terminal and inspect its final result. "
-                     "Opening it does not establish device success."
+                   ? "The terminal is open. Complete any authentication there "
+                     "and check the final result before returning here."
                    : safe(result.error);
     emit messageChanged();
     return result.launched;

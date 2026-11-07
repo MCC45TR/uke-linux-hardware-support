@@ -6,13 +6,49 @@ uses Qt Quick/QML and original Kirigami/FormCard components. It respects KDE
 appearance preferences and uses Breeze with KDE's desktop Quick Controls style.
 There is no Python, WebView, replacement desktop service or privileged GUI.
 
-The daily pages are Status, Power, Display & lights, Connections, Audio & sensors,
-and Updates. Advanced provides searchable access to the complete installed action
-catalog. Kirigami's page stack, responsive drawer and page actions provide
-navigation; FormCard pages group related controls. The drawer becomes modal in a
-narrow window, and choice controls use native selection dialogs. **Back** or
-Alt+Left returns to the current area. Daily pages keep recovery and diagnostics
-in Advanced. See the [Kirigami FormCard documentation](https://api.kde.org/org-kde-kirigamiaddons-formcard-qmlmodule.html).
+Navigation, catalog actions, read states and request controls use semantic icon
+names from the desktop theme. KDE's configured icon theme remains selected;
+inherited themes and the installed Breeze fallback fill missing names. No Breeze
+artwork is copied into the application. Theme changes refresh the name bindings.
+`--appearance-info` reports every resolved icon name and whether it renders.
+
+The Qt navigation has nine task areas: Overview, Battery & power, Display &
+lights, Connections, Sound & cameras, Sensors & input, Software updates,
+Diagnostics & files, and Recovery & maintenance. Overview offers responsive
+Kirigami category cards and quick checks. Each category provides a short guide
+and task groups with descriptions. Rows identify reads, preferences, file work,
+software operations or attended diagnostics, including administrator access.
+
+**All actions** and Ctrl+K open a separate catalog with text, category and action
+type filters. Search matches English/Turkish metadata and identifiers, including
+multiple words. It retains its filters and scroll position when returning from
+an action guide. Category pages link to additional tools scoped to that category.
+All installed catalog actions remain reachable, including advanced operations.
+
+Kirigami's page stack, responsive drawer and page actions provide navigation;
+FormCard pages group related controls. The drawer becomes modal in a narrow
+window, and choice controls use native selection dialogs. **Back** or Alt+Left
+returns to the previous catalog or category. See the
+[Kirigami FormCard documentation](https://api.kde.org/org-kde-kirigamiaddons-formcard-qmlmodule.html).
+
+Software updates separates current state, channel selection, installation and
+unfinished work. Change guides present numbered stages: inspect the current
+state, choose requested values, then preview and review. Read guides show options
+and the result directly. Field help includes available ranges; reset restores
+suggested draft values rather than claiming they are current device settings.
+Observations appear next to their inspection/preview stage and identify the
+options used. Provider unavailability remains separate from a completed read
+with available values. Existing terminal review, consent and authentication
+remain authoritative.
+
+**Kernel & boot slots** shows the running kernel and slot, both stored kernels,
+the next boot selection, pending switch and approval record as native cards.
+Unknown or incomplete evidence remains explicit. A retained failed-candidate
+record does not establish whether it happened before or after the accepted
+kernel; the report explains that limitation. Slot selection offers A, B and
+`next` (the slot opposite the running one), an inspection and a preview before
+the attended terminal confirmation. The guarded boot owner verifies the stored
+image and recovery state. Selecting a slot never reboots the device.
 
 Opening a page or guide does not query devices. Select **Read information**
 or an inspection button to read. Requested defaults are drafts rather than current
@@ -21,6 +57,9 @@ action identifier, access requirements and, during review, exact validated argum
 Maintenance and external-publication warnings remain visible before confirmation.
 
 ## Build and run
+
+On POCO Pad X1, build native packages in COPR and install them through DNF.
+The source build commands below are for a separate build environment.
 
 Install a C++ compiler, CMake, Qt 6.6 or newer (Widgets, Qml, Quick and
 QuickControls2), ECM, KDE Frameworks (IconThemes, ConfigWidgets, I18n 6.8 or newer),
@@ -60,8 +99,10 @@ startup behavior. `org.kde.desktop` is the default Quick Controls style unless
 
 Captured observations use the shared read-only `Query` on the Qt event loop.
 Stop, Back, changing pages and closing the window cancel the owned read. Each
-query retains its backend timeout and bounded stdout/stderr. Refresh only repeats
-the last validated read; it cannot replay a mutation. Structured values, original
+query retains its backend timeout and bounded stdout/stderr. Refresh validates
+matching current form options before rereading the same observation; it cannot
+replay a mutation. Results are marked out of date when relevant options change.
+Structured values, original
 bounded output and errors have separate sections. Null, false, zero, negative values,
 unavailable providers, cancellation, timeout and truncation remain distinct.
 Control and directional override characters are rendered visibly. Large structured
@@ -98,6 +139,16 @@ query, command, terminal handoff, mutation and receipt save. It accepts the exis
 exit status 0–255 and delay 0–3,000 ms. Unknown fields and incompatible fields
 are rejected. Missing results stay unavailable and never fall through to a real
 query. No executable callbacks are supported.
+
+The optional `uke-control-gui-qt-tests` RPM installs the native checks and bounded
+fixture. Run `/usr/libexec/uke-control-qt/tests/run-installed.sh` as the graphical
+session user to test the installed package without compiling on the device.
+The suites cover all task areas and catalog filters, typed request routing,
+draft reset and result freshness, review refusal, read/stop/refresh, retained
+catalog navigation, accessibility and Breeze/Adwaita/incomplete themes.
+Set `UKE_QT_TEST_SCREENSHOTS` to a private output directory to capture the fixture
+walkthrough. These checks establish frontend behavior, not physical acceptance
+of every provider or completion of destructive maintenance operations.
 
 The C++ Qt tests load the actual Kirigami pages and exercise typed values, separate errors, read refresh, unavailable
 fixtures, cancellation, page/search/form navigation, native approval requirements,

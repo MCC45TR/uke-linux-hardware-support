@@ -9,7 +9,15 @@ FormCard.FormCardPage {
     id: page
     objectName: "areaPage"
     required property var appWindow
-    title: backend.areas[backend.section].title
+    readonly property var area: backend.areas[backend.section]
+    title: area.title
+    actions: [
+        Kirigami.Action {
+            text: "Find an action"
+            icon.name: themeIcons.names["edit-find"]
+            onTriggered: page.appWindow.openCatalog()
+        }
+    ]
     Kirigami.InlineMessage {
         Layout.fillWidth: true
         visible: backend.simulation || backend.readOnly
@@ -23,8 +31,63 @@ FormCard.FormCardPage {
         text: styleNotice
     }
     SafeText {
-        text: backend.section === 6 ? "Expert tools" : "Device settings"
-        description: backend.section === 6 ? "Diagnostics, recovery and the full action catalog. Each operation keeps its own review and access requirements." : "Choose an item to inspect its current state or review a preference. Opening a page does not run device commands."
+        icon.name: themeIcons.names[page.area.icon]
+        text: page.area.caption
+        description: page.area.detail
+    }
+    FormCard.FormHeader {
+        visible: backend.section === 0
+        title: "Browse your device"
+        maximumWidth: Kirigami.Units.gridUnit * 58
+    }
+    Kirigami.CardsLayout {
+        objectName: "categoryCards"
+        Layout.fillWidth: true
+        Layout.maximumWidth: Kirigami.Units.gridUnit * 58
+        Layout.alignment: Qt.AlignHCenter
+        Layout.leftMargin: Kirigami.Units.largeSpacing
+        Layout.rightMargin: Kirigami.Units.largeSpacing
+        visible: backend.section === 0
+        maximumColumns: 2
+        minimumColumnWidth: Kirigami.Units.gridUnit * 18
+        maximumColumnWidth: Kirigami.Units.gridUnit * 28
+        Repeater {
+            model: backend.section === 0 ? backend.areas.slice(1) : []
+            delegate: Kirigami.AbstractCard {
+                required property var modelData
+                objectName: "category_" + modelData.id
+                Layout.fillWidth: true
+                showClickFeedback: true
+                Accessible.name: modelData.title
+                Accessible.description: modelData.description
+                onClicked: page.appWindow.showArea(modelData.index)
+                contentItem: ColumnLayout {
+                    spacing: Kirigami.Units.smallSpacing
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Kirigami.Icon {
+                            source: themeIcons.names[modelData.icon]
+                            implicitWidth: Kirigami.Units.iconSizes.medium
+                            implicitHeight: implicitWidth
+                            Accessible.ignored: true
+                        }
+                        Kirigami.Heading { Layout.fillWidth: true; level: 4; text: modelData.title; wrapMode: Text.WordWrap }
+                        Kirigami.Icon {
+                            source: themeIcons.names["go-next"]
+                            implicitWidth: Kirigami.Units.iconSizes.small
+                            implicitHeight: implicitWidth
+                            Accessible.ignored: true
+                        }
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: modelData.caption
+                        wrapMode: Text.WordWrap
+                        color: Kirigami.Theme.disabledTextColor
+                    }
+                }
+            }
+        }
     }
     Repeater {
         model: backend.groups
@@ -36,45 +99,27 @@ FormCard.FormCardPage {
             FormCard.FormHeader { title: groupColumn.modelData.title }
             FormCard.FormCard {
                 Layout.fillWidth: true
+                FormCard.FormSectionText { text: groupColumn.modelData.description; textFormat: Text.PlainText }
                 Repeater {
                     model: groupColumn.modelData.entries
-                    delegate: FormCard.FormButtonDelegate {
+                    delegate: ActionRow {
                         required property var modelData
-                        objectName: "action_" + modelData.id
-                        text: modelData.title
-                        description: modelData.description
-                        icon.name: modelData.icon
-                        onClicked: page.appWindow.openGuide(modelData.id)
+                        entry: modelData
+                        onClicked: page.appWindow.openGuide(entry.id)
                     }
                 }
             }
         }
     }
-    Controls.TextField {
-        id: searchField
-        objectName: "advancedSearch"
-        Layout.fillWidth: true
-        visible: backend.section === 6
-        placeholderText: "Search all actions…"
-        Accessible.name: "Search all actions"
-    }
+    FormCard.FormHeader { title: "Explore further" }
     FormCard.FormCard {
-        visible: backend.section === 6
-        Repeater {
-            id: searchResults
-            model: backend.section === 6 ? backend.search(searchField.text) : []
-            delegate: FormCard.FormButtonDelegate {
-                required property var modelData
-                text: modelData.title
-                description: modelData.id
-                icon.name: modelData.icon
-                onClicked: page.appWindow.openGuide(modelData.id)
-            }
-        }
-        SafeText {
-            visible: searchResults.count === 0
-            text: "No matching actions"
-            description: "Clear the search or try another word."
+        FormCard.FormButtonDelegate {
+            objectName: "browseAllActions"
+            text: backend.section === 0 ? "Search all actions" : "More tools in this category"
+            description: backend.section === 0 ? "Search by task, category or action type. Shortcut: Ctrl+K." : "Find additional status checks, preferences and diagnostics."
+            Accessible.name: text
+            icon.name: themeIcons.names["edit-find"]
+            onClicked: page.appWindow.openCatalog(backend.section === 0 ? -1 : backend.section)
         }
     }
 }
