@@ -2,6 +2,7 @@
 // Actual updater guards with regular files only; no hardware/reboot providers.
 #define UKE_KERNEL_UPDATE_TEST
 #include "../src/kernel-update.cpp"
+#include "../src/userdata-update.hpp"
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
