@@ -13,8 +13,9 @@ for entry in \
  'boot 11272089 uke-boot-integration-1.8.102-1.fc46.src.rpm 06208c79c6271e8c8542d0693b47d9285007cbfd184e2504e2d48b79abb72a1f' \
  'color 11261358 uke-o82-color-profile-0.7.0-1.src.rpm 5640dbe8a1c3eff89762250c89c81a5f06c5700aff6fa4ae74c234ad2f98d1f1';do
  read -r kind id name hash <<< "$entry"
- curl -q -fLsS --retry 2 --max-time 180 --proto '=https' --proto-redir '=https' \
-  "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/$id/$name" -o "$stage/$kind.src.rpm"
+ url="https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/$id/$name"
+ case $kind in boot|color) url="https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/$name";;esac
+ curl -q -fLsS --retry 2 --max-time 180 --proto '=https' --proto-redir '=https' "$url" -o "$stage/$kind.src.rpm"
  printf '%s  %s\n' "$hash" "$stage/$kind.src.rpm" | sha256sum -c --strict -
  rpm2cpio "$stage/$kind.src.rpm" > "$stage/input.cpio"
  cpio -t --quiet < "$stage/input.cpio" | awk '/^\/|(^|\/)\.\.($|\/)/ {bad=1} END {exit bad}'

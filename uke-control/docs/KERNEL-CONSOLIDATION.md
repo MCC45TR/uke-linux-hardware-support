@@ -98,3 +98,21 @@ hooks without introducing a new action. Source validation does not establish
 the following native build or target update; upgrading the already installed
 malformed292 may report its old postun once more. Do not modify the RPM database
 or mask DNF errors to conceal that historical script.
+
+
+8 November2026: Control2.10 folds the existing event-driven speaker session
+bridge into the main RPM. Original executable/autostart paths and preferences
+remain, with versioned compatibility for the retired orientation package.
+Control/TUI2.10 installs through normal DNF with both boot images unchanged.
+The old audio producer is removed after signed-package, ownership and rollback
+solver checks. Its required source and signed recovery RPMs remain retained.
+
+The original boot102 and color07 SRPMs are also present in the existing public
+consolidation source archive. Their complete bytes independently match SHA256
+06208c79c6271e8c8542d0693b47d9285007cbfd184e2504e2d48b79abb72a1f and
+5640dbe8a1c3eff89762250c89c81a5f06c5700aff6fa4ae74c234ad2f98d1f1.
+The retained293 source-worker entry uses those archive URLs. Current2.10
+production uses the complete admitted293 SRPM and does not download their
+standalone producers. Producer retirement still requires current job, repository
+provider, source dependency and recovery checks; archive presence is not device
+acceptance or authorization to remove runtime source components.
