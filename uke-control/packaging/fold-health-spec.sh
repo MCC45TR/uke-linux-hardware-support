@@ -14,6 +14,7 @@ awk '
   print "Source24: uke-control-boot-health.tar.xz"
   print "Source25: fold-health-spec.sh"
   print "Source26: copr-control-health.sh"
+  print "BuildRequires: git-core"
   print "Provides: uke-control(kernel-health-report-v1) = 1"
   print;header++;next
  }
