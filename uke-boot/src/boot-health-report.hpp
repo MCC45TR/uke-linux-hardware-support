@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 #include "trial-health.hpp"
+#include "critical-health.hpp"
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -9,6 +10,7 @@
 struct BootHealthReport {
     std::string verdict, kernel, mode, detail;
     bool observation_only;
+    bool critical = false;
 };
 
 inline std::string boot_health_text(std::string_view value) {
@@ -27,6 +29,7 @@ inline std::string boot_health_line(const BootHealthReport &report) {
         <<" kernel="<<std::quoted(boot_health_text(report.kernel))
         <<" rollback="<<std::quoted(boot_health_text(report.mode))
         <<" approval=pending observation_only="<<(report.observation_only?"yes":"no")
+        <<" severity="<<(report.critical?"critical":"ordinary")
         <<" detail="<<std::quoted(boot_health_text(report.detail))<<'\n';
     return line.str();
 }
@@ -52,8 +55,15 @@ bool observe_boot_health(std::string_view kernel,bool acceptance_path,
     try {
         qualify_trial_health([&] {
             try {probe();return true;}
+            catch(const CriticalHealthFailure &) {throw;}
             catch(const std::exception &failure) {last_failure=boot_health_text(failure.what());return false;}
         },clock,pause);
+    } catch(const CriticalHealthFailure &failure) {
+        const auto mode=current_mode();
+        emit(BootHealthReport{"rejected",std::string(kernel),mode,
+                             boot_health_text(failure.what()),!acceptance_path,true});
+        if(acceptance_path && critical_fallback_policy(mode,true))throw;
+        return false;
     } catch(const std::exception &failure) {
         const auto mode=current_mode();
         auto reason=std::string(failure.what());

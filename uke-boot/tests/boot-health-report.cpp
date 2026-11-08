@@ -65,6 +65,20 @@ int main() {
         assert(text.find('\t')==std::string::npos && text.find('\033')==std::string::npos);
         assert(text.find("kernel?next")!=std::string::npos && text.size()<760);++scenarios;
     }
-    std::cout<<"Actual boot-health reporting: "<<scenarios
+    const auto previous_scenarios=scenarios;
+    for(const std::string mode:{"enforced","permissive","off"})for(bool acceptance:{false,true}) {
+        bool threw=false;std::vector<BootHealthReport> reports;unsigned samples=0;
+        try {
+            assert(!observe_boot_health("7.3.3-9-unstable",acceptance,[&]{return mode;},
+                [&]{samples++;throw CriticalHealthFailure("critical: ADSP crashed");},
+                []{return int64_t(0);},[]{assert(false);},[&](auto r){reports.push_back(r);}));
+        }catch(const CriticalHealthFailure &){threw=true;}
+        assert(threw==(acceptance && mode!="off"));
+        assert(samples==1 && reports.size()==2 && reports.back().critical && reports.back().verdict=="rejected");
+        assert(boot_health_line(reports.back()).find("severity=critical")!=std::string::npos);scenarios++;
+    }
+    std::cout<<"Actual boot-health reporting: "<<previous_scenarios
              <<" policy/window/mode-change/log-integrity scenarios passed; no boot-state or reboot provider.\n";
+    std::cout<<"Actual critical boot-health reporting: "<<(scenarios-previous_scenarios)
+             <<" immediate mode/authority scenarios passed; no writer or reboot provider.\n";
 }
