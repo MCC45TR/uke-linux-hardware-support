@@ -62,6 +62,15 @@ cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
 # Local native sources are produced by the existing owning-component recipes.
 if [[ $integration == true ]]; then
+    # The remaining audio payload is session transform policy. Hardware routing
+    # lives in ALSA; retired policy/control RPMs must not be regenerated here.
+    if [[ $family == uke-audio-integration ]]; then
+        [[ $(jq -c '.local_sources' <<<"$profile") == '["uke-speaker-orientation"]' ]]
+        make -C uke-desktop-integration speaker-orientation-srpm BUILD_DIR="$stage/audio-local" >"$stage/audio-local.log"
+        mapfile -t local_inputs < <(find "$stage/audio-local/speaker-orientation/rpmbuild/SRPMS" -maxdepth 1 -name '*.src.rpm' -type f)
+        [[ ${#local_inputs[@]} == 1 ]]
+        printf 'uke-speaker-orientation\t%s\n' "${local_inputs[0]}" >>"$stage/inputs"
+    fi
     while IFS=$'\t' read -r key url hash; do
         [[ $key =~ ^uke-[a-zA-Z0-9+_.-]+$ ]]
         case $url in

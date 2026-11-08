@@ -25,7 +25,16 @@ static constexpr std::array<const char *, 4> controls = {
 static constexpr std::array<const char *, 4> angles = {"0", "90", "180", "270"};
 
 static bool target_card(const char *driver, const char *name) {
-    return !std::strcmp(driver, "sm7675") && !std::strcmp(name, "POCO-Pad-X1");
+    if (std::strcmp(name, "POCO-Pad-X1")) return false;
+    if (!std::strcmp(driver, "sm7675")) return true;
+    if (std::strncmp(driver, "uke", 3) || std::strlen(driver) > 15) return false;
+    const char *p = driver + 3;
+    for (char separator : {'_', '_', '-', 'u'}) {
+        const char *start = p;
+        while (*p >= '0' && *p <= '9') ++p;
+        if (p == start || *p++ != separator) return false;
+    }
+    return *p == '\0';
 }
 
 static int open_card(snd_ctl_t **result) {
@@ -68,6 +77,31 @@ static int synchronize(snd_ctl_t *ctl, unsigned turn) {
     snd_ctl_elem_value_t *value;
     snd_ctl_elem_info_alloca(&info);
     snd_ctl_elem_value_alloca(&value);
+    // The machine driver coordinates the four hardware endpoints. Use the
+    // legacy path only when this additive control is absent on an old kernel.
+    snd_ctl_elem_info_set_interface(info, SND_CTL_ELEM_IFACE_MIXER);
+    snd_ctl_elem_info_set_name(info, "Speaker Display Rotation");
+    int aggregate = snd_ctl_elem_info(ctl, info);
+    if (aggregate != -ENOENT) {
+        if (aggregate < 0) return aggregate;
+        if (snd_ctl_elem_info_get_type(info) != SND_CTL_ELEM_TYPE_ENUMERATED ||
+            snd_ctl_elem_info_get_count(info) != 1 || snd_ctl_elem_info_get_items(info) != 4)
+            return -EPROTO;
+        for (unsigned item = 0; item < angles.size(); ++item) {
+            snd_ctl_elem_info_set_item(info, item);
+            if ((aggregate = snd_ctl_elem_info(ctl, info)) < 0) return aggregate;
+            if (std::strcmp(snd_ctl_elem_info_get_item_name(info), angles[item])) return -EPROTO;
+        }
+        snd_ctl_elem_value_set_interface(value, SND_CTL_ELEM_IFACE_MIXER);
+        snd_ctl_elem_value_set_name(value, "Speaker Display Rotation");
+        aggregate = snd_ctl_elem_read(ctl, value);
+        if (aggregate < 0 && aggregate != -EUCLEAN) return aggregate;
+        if (aggregate == 0 && snd_ctl_elem_value_get_enumerated(value, 0) == turn) return 0;
+        snd_ctl_elem_value_set_enumerated(value, 0, turn);
+        if ((aggregate = snd_ctl_elem_write(ctl, value)) < 0) return aggregate;
+        if ((aggregate = snd_ctl_elem_read(ctl, value)) < 0) return aggregate;
+        return snd_ctl_elem_value_get_enumerated(value, 0) == turn ? 0 : -EIO;
+    }
     // Validate the complete ABI before changing any amplifier.
     for (const char *name : controls) {
         snd_ctl_elem_info_clear(info);
