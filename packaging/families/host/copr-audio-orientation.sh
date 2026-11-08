@@ -6,9 +6,12 @@ root=$(cd -- "$(dirname -- "$0")/../../.." && pwd)
 output=$(realpath -m "${1:?COPR source result}")
 [[ ! -e $output ]]
 cd "$root"
-for check in split-spec filelists contracts cohort; do
-    bash "packaging/families/tests/$check.sh"
-done
+(
+    cd packaging/families
+    for check in split-spec filelists contracts cohort; do
+        bash "tests/$check.sh"
+    done
+)
 FEDORA_TARGET=rawhide bash packaging/families/host/compose.sh uke-audio-integration "$PWD/packaging/families/build/audio-current"
 mapfile -t inputs < <(find packaging/families/build/audio-current/SRPMS -maxdepth 1 -type f -name '*.src.rpm')
 [[ ${#inputs[@]} == 1 ]]
