@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Compose complete source recipes into a source family; no binary repackaging.
 set -Eeuo pipefail
+case ${SOURCE_PACKAGE:-} in
+    pipewire|uke-pipewire|uke-pipewire-*)
+        printf '%s\n' 'Retired PipeWire fork: use original Fedora packages and Core21 migration.' >&2
+        exit 2;;
+esac
 # Expand upstream source recipes in the selected Fedora worker, without binary retagging.
 fedora_number=$(rpm --eval '%{fedora}')
 [[ $fedora_number =~ ^[0-9]+$ ]]

@@ -229,8 +229,8 @@
       "name": "uke-sound",
       "version": "1.0.5",
       "requires": [
-        "uke-pipewire",
-        "uke-pipewire-alsa",
+        "pipewire",
+        "pipewire-alsa",
         "wireplumber",
         "alsa-utils",
         "(senemos-uke-linux-kernel-mainline >= 7.3.0-33 or senemos-uke-linux-kernel-mainline-singleboot >= 7.3.0-33)",
@@ -242,7 +242,7 @@
       "suggests": [
         "plasma-pa"
       ],
-      "status": "matched speaker kernel, stock preset and desktop playback policy; physical acceptance remains separate",
+      "status": "original Fedora PipeWire with matched kernel, stock preset and standard desktop policy; physical acceptance remains separate",
       "watch_paths": [
         "uke-desktop-integration/src/ucm2",
         "uke-desktop-integration/src/wireplumber",
@@ -251,7 +251,6 @@
         "uke-desktop-integration/packaging/uke-speaker-controls.spec",
         "uke-desktop-integration/tests/audio-policy.sh",
         "uke-desktop-integration/tests/audio-policy.cpp",
-        "uke-desktop-integration/patches/pipewire",
         "xiaomi-uke-firmware/packaging/speaker-firmware"
       ],
       "release": 1
