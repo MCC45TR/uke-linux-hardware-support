@@ -55,10 +55,10 @@
           "original_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228137/uke-speaker-orientation-0.1.0-5.fc46.src.rpm"
         }
       ],
-      "local_sources": [
-        "uke-speaker-orientation"
-      ],
-      "scope": "Session display-transform notification only; hardware routing uses native ALSA. Archived audio policy and speaker-control inputs are retained for source recovery, not regenerated."
+      "local_sources": [],
+      "scope": "Retired producer plan: current event-driven speaker session bridge belongs to the existing uke-control runtime package. Retained source references are for reproducibility and rollback; actual COPR deletion follows admitted upgrades.",
+      "runtime_production": false,
+      "folded_into": "uke-control"
     },
     {
       "name": "uke-sensor-integration",

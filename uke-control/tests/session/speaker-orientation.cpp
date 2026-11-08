@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 #define main orientation_daemon_main
-#include "../src/uke-speaker-orientation.cpp"
+#include "../../src/session/speaker-orientation.cpp"
 #undef main
 #include <cassert>
 

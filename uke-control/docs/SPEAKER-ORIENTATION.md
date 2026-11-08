@@ -53,11 +53,14 @@ retried. The native card operation also does not promise simultaneous I2C
 changes across amplifiers. It never raises volume, enables a switch,
 starts playback or changes DisplayPort/HDMI/Bluetooth routing.
 
-The audio source family now builds only the existing orientation RPM from its
-current component source. Archived DisplayPort policy and speaker-control
-inputs remain available for source recovery, without regenerating redundant
-RPMs. The notifier does not depend on the retired DisplayPort policy package;
-it uses ALSA, Wayland and logind directly. Its XDG autostart covers original KDE and
+Control 2.10 owns this session layer in its existing main runtime RPM. It
+replaces the separate orientation package through versioned Provides/Obsoletes
+and retains the executable and configuration paths, including the existing
+XDG autostart identity. The audio producer is retired only after the normal
+DNF ownership/configuration transition and recovery are verified. Archived
+DisplayPort policy and speaker-control inputs remain source references.
+The notifier uses ALSA, Wayland and logind directly and adds no root service.
+Its XDG autostart covers original KDE and
 GNOME applications in Wayland sessions; it does not implement X11 sessions.
 No root daemon, target Python or desktop application fork is included.
 The compositor's actual internal-output transform remains session policy.
