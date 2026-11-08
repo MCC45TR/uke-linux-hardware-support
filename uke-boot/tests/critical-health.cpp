@@ -16,6 +16,13 @@ int main() {
     const std::filesystem::path root=name,adsp=root/"sys/class/remoteproc/remoteproc7";
     unsigned cases=0;
     critical_platform_health(root);cases++;
+    assert(critical_remoteproc_event("remoteproc","adsp","crash"));cases++;
+    for(const auto &fields:std::initializer_list<std::initializer_list<std::string>>{
+            {"remoteproc","cdsp","crash"},{"devcoredump","adsp","crash"},
+            {"remoteproc","adsp","running"},{"remoteproc","adsp",""}}) {
+        auto p=fields.begin();const auto &subsystem=*p++;const auto &name=*p++;const auto &event=*p;
+        assert(!critical_remoteproc_event(subsystem,name,event));cases++;
+    }
     put(adsp/"name","cdsp\n");put(adsp/"state","crashed\n");critical_platform_health(root);cases++;
     put(adsp/"name","adsp\n");put(adsp/"state","running\n");critical_platform_health(root);cases++;
     put(adsp/"state","crashed\n");

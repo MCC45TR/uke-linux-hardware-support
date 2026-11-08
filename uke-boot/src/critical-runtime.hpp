@@ -9,11 +9,16 @@ struct CriticalRuntimeContext {
     sd_event *event;
     std::exception_ptr failure;
     bool off_reported=false;
+    bool adsp_crash_event=false;
 };
 
 static int critical_runtime_probe(CriticalRuntimeContext &context) noexcept {
     try {
-        critical_runtime_event([]{critical_platform_health();},
+        critical_runtime_event([&]{
+                if(context.adsp_crash_event)
+                    throw CriticalHealthFailure("critical: ADSP crash event received in this boot");
+                critical_platform_health();
+            },
             []{return rollback_name(read_rollback_policy());},
             [] {
                 // Serialize against DNF/manual selection; state-file rename
@@ -41,8 +46,15 @@ static int critical_runtime_probe(CriticalRuntimeContext &context) noexcept {
     return 0;
 }
 
-static int critical_runtime_device(sd_device_monitor *,sd_device *,void *userdata) noexcept {
-    return critical_runtime_probe(*static_cast<CriticalRuntimeContext *>(userdata));
+static int critical_runtime_device(sd_device_monitor *,sd_device *device,void *userdata) noexcept {
+    auto &context=*static_cast<CriticalRuntimeContext *>(userdata);
+    const char *subsystem=nullptr,*name=nullptr,*event=nullptr;
+    if(sd_device_get_subsystem(device,&subsystem)>=0 &&
+       sd_device_get_sysattr_value(device,"name",&name)>=0 &&
+       sd_device_get_property_value(device,"RPROC_EVENT",&event)>=0 &&
+       critical_remoteproc_event(subsystem,name,event))
+        context.adsp_crash_event=true;
+    return critical_runtime_probe(context);
 }
 static int critical_runtime_state(sd_event_source *,const inotify_event *event,void *userdata) noexcept {
     // Unrelated settings and the rejection record itself do not wake a probe.

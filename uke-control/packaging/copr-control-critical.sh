@@ -15,14 +15,14 @@ cpio -t --quiet < "$work/parent.cpio" | awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{ex
 mkdir "$output" "$work/overlay"
 (cd "$output";cpio -idm --quiet --no-absolute-filenames < "$work/parent.cpio")
 for file in critical-health.hpp critical-runtime.hpp boot-health-report.hpp;do install -m644 "$owner/../uke-boot/src/$file" "$work/overlay/";done
-for file in critical-health.cpp critical-health.sh boot-health-report.cpp;do install -m644 "$owner/../uke-boot/tests/$file" "$work/overlay/";done
+for file in critical-health.cpp critical-health.sh critical-userdata.cpp boot-health-report.cpp;do install -m644 "$owner/../uke-boot/tests/$file" "$work/overlay/";done
 install -m644 "$owner/../uke-boot/patches/critical-rollback.patch" "$owner/packaging/apply-critical-rollback.sh" "$owner/docs/CRITICAL-ROLLBACK.md" "$work/overlay/"
 install -m644 "$owner/../LICENSE" "$work/overlay/LICENSE"
 tar --sort=name --mtime=@1794168000 --owner=0 --group=0 --numeric-owner -cJf "$output/uke-control-critical-rollback.tar.xz" -C "$work/overlay" .
 install -m644 "$owner/packaging/fold-critical-spec.sh" "$owner/packaging/copr-control-critical.sh" "$output/"
 bash "$owner/packaging/fold-critical-spec.sh" "$output/uke-control.spec"
-sed -i 's/application_version="2.11.0"/application_version="2.12.0"/' "$output/control-version.hpp"
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.12.0-1.fc46 ]]
+sed -i 's/application_version="2.11.0"/application_version="2.12.1"/' "$output/control-version.hpp"
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.12.1-1.fc46 ]]
 rpmspec -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui > "$work/expected"
 cmp "$work/names" "$work/expected"

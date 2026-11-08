@@ -39,3 +39,5 @@ mode changes, one-boot authority and stale-record refusal. Native compilation,
 real failed-trial return, interruption, power loss and runtime monitoring are
 separate acceptance gates. The system keeps its user-selected permissive mode;
 the distribution default remains enforced.
+
+The crash event is latched for this boot before probing state, so a firmware recovery that finishes before userspace dispatch cannot hide the crash. Native tests also exercise the actual late-pair identity predicate and emergency metadata-power provider using temporary files. Device fallback and power-loss acceptance remain separate.

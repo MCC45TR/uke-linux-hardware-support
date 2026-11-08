@@ -11,6 +11,11 @@ public:
     using TrialHealthFailure::TrialHealthFailure;
 };
 
+inline bool critical_remoteproc_event(std::string_view subsystem,std::string_view name,
+                                     std::string_view event) {
+    return subsystem=="remoteproc" && name=="adsp" && event=="crash";
+}
+
 inline std::string critical_health_value(const std::filesystem::path &path) {
     std::ifstream input(path);
     std::string value;

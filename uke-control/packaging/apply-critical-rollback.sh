@@ -13,7 +13,7 @@ overlay=$(cd -- "$(dirname -- "$0")" && pwd)
 git -C "$boot" apply --check "$overlay/critical-rollback.patch"
 git -C "$boot" apply "$overlay/critical-rollback.patch"
 install -m644 "$overlay/critical-health.hpp" "$overlay/critical-runtime.hpp" "$overlay/boot-health-report.hpp" "$boot/src/"
-install -m644 "$overlay/critical-health.cpp" "$overlay/critical-health.sh" "$overlay/boot-health-report.cpp" "$boot/tests/"
+install -m644 "$overlay/critical-health.cpp" "$overlay/critical-health.sh" "$overlay/critical-userdata.cpp" "$overlay/boot-health-report.cpp" "$boot/tests/"
 work=$(mktemp -d)
 trap 'find "$work" -depth -delete' EXIT
 awk '
