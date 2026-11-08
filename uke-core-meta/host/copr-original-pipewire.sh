@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 # COPR-only data update. Preserve the complete signed Core20 payload/selection.
 set -Eeuo pipefail
+trap 'printf "Core original-PipeWire preparation failed at line %s\n" "$LINENO" >&2' ERR
 export LC_ALL=C
 [[ ! -e /sys/firmware/devicetree/base/model && $(rpm --eval '%{_host_cpu}') == aarch64 ]]
 owner=$(cd -- "$(dirname -- "$0")/.." && pwd)
@@ -9,18 +10,9 @@ output=$(realpath -m "${1:?COPR result directory}")
 work=$(mktemp -d)
 trap 'find "$work" -depth -delete' EXIT
 mkdir -p "$output" "$work/parent" "$work/source" "$work/keydb"
-curl -qfsSL --retry 2 --max-time 90 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11269278/uke-core-meta-1.0.7-20.src.rpm -o "$work/core20.src.rpm"
-printf '%s  %s\n' 489482645c4b3116b23619cbc2ec6e41d67bcd2df32ee18995756341b19d9ee3 "$work/core20.src.rpm" | sha256sum -c --strict -
-curl -qfsSL --retry 2 --max-time 30 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/pubkey.gpg -o "$work/key.asc"
-rpmkeys --dbpath "$work/keydb" --import "$work/key.asc"
-rpmkeys --dbpath "$work/keydb" --checksig --verbose "$work/core20.src.rpm" > "$work/signatures"
-[[ $(grep -Fc 'key fingerprint: 2204a661ea630a5303500085538797e72a3e4eca: OK' "$work/signatures") == 2 ]]
-! grep -Eiq 'NOKEY|BAD|NOT OK' "$work/signatures"
-[[ $(rpm -qp --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$work/core20.src.rpm") == uke-core-meta-1.0.7-20.fc46 ]]
-rpm2cpio "$work/core20.src.rpm" > "$work/parent.cpio"
-cpio -t --quiet < "$work/parent.cpio" | awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{exit bad}'
-(cd "$work/parent";cpio -idm --quiet --no-absolute-filenames < "$work/parent.cpio")
-tar -tJf "$work/parent/uke-core-meta-1.0.7.tar.xz" | awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{exit bad}'
+# Generated Core20 SRPMs are unsigned. Reuse its qualified producer, which
+# authenticates the pinned signed source ancestor and preserves every datum.
+bash "$owner/host/copr-speaker-controls-merge.sh" "$work/parent"
 tar -xJf "$work/parent/uke-core-meta-1.0.7.tar.xz" -C "$work/source"
 source=$work/source/uke-core-meta-1.0.7
 (cd "$source";sha256sum -c --strict SOURCE-SHA256SUMS)
