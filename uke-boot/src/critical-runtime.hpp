@@ -10,29 +10,26 @@ struct CriticalRuntimeContext {
     std::exception_ptr failure;
     bool off_reported=false;
     bool adsp_crash_event=false;
+    std::unique_ptr<Fd> pending_lock{};
 };
 
 static int critical_runtime_probe(CriticalRuntimeContext &context) noexcept {
     try {
-        critical_runtime_event([&]{
-                if(context.adsp_crash_event)
-                    throw CriticalHealthFailure("critical: ADSP crash event received in this boot");
-                critical_platform_health();
-            },
+        critical_runtime_event([&]{critical_platform_health_latched(context.adsp_crash_event);},
             []{return rollback_name(read_rollback_policy());},
-            [] {
+            [&] {
                 // Serialize against DNF/manual selection; state-file rename
-                // wakes this monitor if the writer was busy. No retry timer.
+                // or writer close wakes a busy request. Keep our one unheld
+                // descriptor open so its own close cannot cause a retry loop.
                 const fs::path state="/var/lib/senemos/kernel-update";
-                auto parent=directory(state);
-                Fd lock(openat(parent.value,"lock",O_RDWR|O_NOFOLLOW|O_CLOEXEC));trusted_fd(lock.value);
-                if(flock(lock.value,LOCK_EX|LOCK_NB)<0) {
-                    need(errno==EWOULDBLOCK,"Cannot lock runtime health state");return false;
+                if(!acquire_critical_runtime_lock(state,context.pending_lock))return false;
+                if(read_rollback_policy()==RollbackMode::off) {
+                    context.pending_lock.reset();return false;
                 }
-                if(read_rollback_policy()==RollbackMode::off)return false;
                 utsname current{};need(!uname(&current),"Missing runtime kernel identity");
                 const fs::path marker=state/"critical-health";
                 replace_policy(marker,policy_exists(marker)?policy_text(marker):std::string{},critical_rejection_text(current.release));
+                context.pending_lock.reset();
                 return true;
             },
             [](const std::string &mode,const char *reason,bool authority) {
@@ -57,10 +54,11 @@ static int critical_runtime_device(sd_device_monitor *,sd_device *device,void *u
     return critical_runtime_probe(context);
 }
 static int critical_runtime_state(sd_event_source *,const inotify_event *event,void *userdata) noexcept {
-    // Unrelated settings and the rejection record itself do not wake a probe.
-    if(event && event->len && (std::string_view(event->name)=="userdata.state" ||
-                              std::string_view(event->name)=="rollback.conf"))
-        return critical_runtime_probe(*static_cast<CriticalRuntimeContext *>(userdata));
+    auto &context=*static_cast<CriticalRuntimeContext *>(userdata);
+    // A read-only updater may release its lock without renaming the state.
+    // Observe that close only while a critical request is waiting for it.
+    if(event && event->len && critical_state_event(event->name,bool(context.pending_lock)))
+        return critical_runtime_probe(context);
     return 0;
 }
 

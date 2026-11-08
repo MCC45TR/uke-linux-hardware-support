@@ -16,6 +16,11 @@ inline bool critical_remoteproc_event(std::string_view subsystem,std::string_vie
     return subsystem=="remoteproc" && name=="adsp" && event=="crash";
 }
 
+inline bool critical_state_event(std::string_view name,bool waiting_for_writer) {
+    return name=="userdata.state" || name=="rollback.conf" ||
+        (waiting_for_writer && name=="lock");
+}
+
 inline std::string critical_health_value(const std::filesystem::path &path) {
     std::ifstream input(path);
     std::string value;
@@ -48,6 +53,13 @@ inline bool critical_fallback_policy(std::string_view mode,bool critical) {
     if(mode=="permissive")return critical;
     if(mode=="off")return false;
     throw std::runtime_error("Invalid rollback mode for critical fallback");
+}
+
+inline void critical_platform_health_latched(bool &crashed,
+        const std::filesystem::path &root="/") {
+    if(crashed)throw CriticalHealthFailure("critical: ADSP crash observed in this boot");
+    try{critical_platform_health(root);}
+    catch(const CriticalHealthFailure &){crashed=true;throw;}
 }
 
 // A runtime notification is not a polling tick. A busy transaction defers to

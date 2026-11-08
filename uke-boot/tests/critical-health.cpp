@@ -16,6 +16,12 @@ int main() {
     const std::filesystem::path root=name,adsp=root/"sys/class/remoteproc/remoteproc7";
     unsigned cases=0;
     critical_platform_health(root);cases++;
+    for(bool waiting:{false,true}) {
+        assert(critical_state_event("userdata.state",waiting));cases++;
+        assert(critical_state_event("rollback.conf",waiting));cases++;
+        assert(critical_state_event("lock",waiting)==waiting);cases++;
+        assert(!critical_state_event("critical-health",waiting));cases++;
+    }
     assert(critical_remoteproc_event("remoteproc","adsp","crash"));cases++;
     for(const auto &fields:std::initializer_list<std::initializer_list<std::string>>{
             {"remoteproc","cdsp","crash"},{"devcoredump","adsp","crash"},
@@ -27,6 +33,14 @@ int main() {
     put(adsp/"name","adsp\n");put(adsp/"state","running\n");critical_platform_health(root);cases++;
     put(adsp/"state","crashed\n");
     try{critical_platform_health(root);assert(false);}catch(const CriticalHealthFailure &e){assert(std::string(e.what()).find("ADSP")!=std::string::npos);}cases++;
+    {
+        bool latched=false;
+        try{critical_platform_health_latched(latched,root);assert(false);}
+        catch(const CriticalHealthFailure &){assert(latched);}cases++;
+        put(adsp/"state","running\n");
+        try{critical_platform_health_latched(latched,root);assert(false);}
+        catch(const CriticalHealthFailure &){assert(latched);}cases++;
+    }
     for(const auto &value:std::initializer_list<std::string>{"offline\n","suspended\n","recovering\n","running\ncrashed\n",std::string(129,'x')+"\n"}) {
         put(adsp/"state",value);
         try{critical_platform_health(root);assert(false);}

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <utility>
+#include <sys/inotify.h>
 
 static void put(const fs::path &path,const std::string &value) {
     fs::create_directories(path.parent_path());
@@ -20,6 +21,33 @@ int main() {
     const std::string good_release="7.3.3-7-unstable",candidate="7.3.3-9-unstable";
     const std::string good_hash(64,'a'),candidate_hash(64,'b');
     unsigned cases=0;
+    {
+        const auto state=root/"lock-fixture";fs::create_directory(state);
+        auto writer=std::make_unique<Fd>(open((state/"lock").c_str(),O_RDWR|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600));
+        assert(writer->value>=0 && !flock(writer->value,LOCK_EX|LOCK_NB));
+        Fd watch(inotify_init1(IN_NONBLOCK|IN_CLOEXEC));assert(watch.value>=0);
+        assert(inotify_add_watch(watch.value,state.c_str(),IN_CLOSE_WRITE)>=0);
+        std::unique_ptr<Fd> pending;
+        assert(!acquire_critical_runtime_lock(state,pending) && pending);cases++;
+        alignas(inotify_event) char buffer[4096];
+        assert(read(watch.value,buffer,sizeof(buffer))==-1 && errno==EAGAIN);cases++;
+        writer.reset();
+        auto bytes=read(watch.value,buffer,sizeof(buffer));assert(bytes>=ssize_t(sizeof(inotify_event)));
+        const auto *event=reinterpret_cast<const inotify_event *>(buffer);
+        assert((event->mask&IN_CLOSE_WRITE) && event->len &&
+            critical_state_event(event->name,bool(pending)));cases++;
+        assert(acquire_critical_runtime_lock(state,pending));cases++;
+        pending.reset();
+        bytes=read(watch.value,buffer,sizeof(buffer));assert(bytes>=ssize_t(sizeof(inotify_event)));
+        event=reinterpret_cast<const inotify_event *>(buffer);
+        assert((event->mask&IN_CLOSE_WRITE) && event->len &&
+            !critical_state_event(event->name,bool(pending)));cases++;
+        fs::remove(state/"lock");fs::create_symlink(root/"foreign",state/"lock");
+        bool refused=false;
+        try{(void)acquire_critical_runtime_lock(state,pending);}
+        catch(const std::exception &){refused=true;}
+        assert(refused);pending.reset();cases++;
+    }
     for(const auto good:{uke_install::Slot::a,uke_install::Slot::b}) {
         UserdataUpdate retained{{uke_install::Profile::userdata,good,good_release,
             uke_install::Phase::stable,{},{}},good_hash,{}, {}};
