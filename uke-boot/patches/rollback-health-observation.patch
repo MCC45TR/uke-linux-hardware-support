@@ -1,0 +1,71 @@
+--- a/src/kernel-update.cpp
++++ b/src/kernel-update.cpp
+@@ -3,6 +3,7 @@
+ #include "boot-common.hpp"
+ #include "installation-policy.hpp"
+ #include "trial-health.hpp"
++#include "boot-health-report.hpp"
+ #include "o82-private-color.hpp"
+ #include "managed-firmware.hpp"
+ #include <openssl/evp.h>
+@@ -521,7 +522,7 @@
+             const auto mode=read_rollback_policy();
+             std::cout<<"{\"schema_version\":1,\"rollback_mode\":\""<<rollback_name(mode)
+                      <<"\",\"automatic_fallback\":"<<(mode==RollbackMode::enforced?"true":"false")
+-                     <<",\"health_observation\":"<<(mode==RollbackMode::off?"false":"true")
++                     <<",\"health_observation\":true,\"automatic_acceptance\":"<<(mode==RollbackMode::off?"false":"true")
+                      <<",\"default_mode\":\"enforced\"}\n";
+             return 0;
+         }
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -379,15 +379,15 @@
+         (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","rtc-check"},4096);
+     }
+ }
+-static void trial_health() {
+-    std::cout<<"Observing trial health for 30 continuous seconds; acceptance remains pending\n"<<std::flush;
+-    qualify_trial_health([] {
+-        try {health(false,1000*1000);return true;}
+-        catch(const std::exception &) {return false;}
+-    },[] {
+-        timespec now{};need(!clock_gettime(CLOCK_BOOTTIME,&now),"Trial health boot clock unavailable");
+-        return int64_t(now.tv_sec)*1000+now.tv_nsec/1000000;
+-    },[] {std::this_thread::sleep_for(std::chrono::seconds(1));});
++static bool trial_health(const std::string &release,bool acceptance_path=true) {
++    return observe_boot_health(release,acceptance_path,
++        [] {return rollback_name(read_rollback_policy());},
++        [] {health(false,1000*1000);},
++        [] {
++            timespec now{};need(!clock_gettime(CLOCK_BOOTTIME,&now),"Trial health boot clock unavailable");
++            return int64_t(now.tv_sec)*1000+now.tv_nsec/1000000;
++        },[] {std::this_thread::sleep_for(std::chrono::seconds(1));},
++        [](const BootHealthReport &report) {std::cerr<<boot_health_line(report)<<std::flush;});
+ }
+ static void request_fallback_reboot() {
+     sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Fallback selected; system bus unavailable for reboot");
+@@ -639,6 +639,10 @@
+         const bool trial=prior && accepting_trial(*prior,running,release,good_hash,current_boot_id);
+         if(skip_off_acceptance(mode,prior && (trial || (unsigned(prior->policy.good)==running &&
+                  prior->policy.good_release==release && prior->good_image==good_hash)))) {
++            // Off disables approval/fallback, not boot diagnostics. Do not add
++            // observation delays to DNF staging or a dry-run operation.
++            if(startup && action=="accept" && (trial || !prior->baseline_approved))
++                (void)trial_health(release,false);
+             std::vector<std::pair<std::string,slot::Disk*>> maintenance;
+             for(auto &disk:disks)maintenance.emplace_back(disk->name,disk->gpt.get());
+             if(repair_unaccepted_slot_crc(maintenance,state,true) && action=="accept") {
+@@ -655,12 +659,7 @@
+             return;
+         }
+         if(trial && action=="accept") {
+-            try {trial_health();}
+-            catch(const TrialHealthFailure &failure) {
+-                if(read_rollback_policy()==RollbackMode::enforced)throw;
+-                std::cerr<<"Trial health rejected: "<<failure.what()<<"; rollback policy retains the unaccepted trial without reboot\n";
+-                return;
+-            }
++            if(!trial_health(release))return;
+             if(read_rollback_policy()==RollbackMode::off) {
+                 std::cout<<"Rollback switched off during observation; trial remains unaccepted\n";return;
+             }
