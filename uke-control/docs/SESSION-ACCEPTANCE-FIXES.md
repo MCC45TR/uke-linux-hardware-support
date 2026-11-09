@@ -8,8 +8,8 @@ After the kernel11 reboot, the native health window passed but acceptance
 stopped with `Durable GPT backup differs from current metadata`. The existing
 acceptance filename hashes only partition entries. Valid GPT headers can differ
 while both arrays remain identical, so an older durable record can use the same
-name. The corrected key hashes the exact observed MBR, both headers and entries,
-the same bytes the backup function saves. Existing records are not overwritten.
+name. The corrected call uses the existing backup_identity() method, which already
+hashes the exact observed MBR, both headers and entries saved by backup(). Existing records are not overwritten.
 CRC, array equality, disk identity, geometry, compare-before-commit, verified
 writeback and restore checks are unchanged. Host fixtures cover the same-entry,
 different-header case, repeatability and refusal to overwrite a different record.
@@ -30,3 +30,8 @@ does not prove metadata/fallback coherence or physical sound/cover/brightness.
 Source, native tests, signed RPM/DNF transition and actual boot/session results
 must be reported separately. Source tests do not establish speaker gain243,
 encrypted boot, sensor comfort, USB stability or surround-profile support.
+
+The initial native215 build11293504 stopped in prep: the local boot checkout
+was older than the retained214 payload, which already contains backup_identity().
+The corrected patch reuses that existing method instead of adding it again.
+The runtime call-site change and regression fixture remain; no gate is removed.

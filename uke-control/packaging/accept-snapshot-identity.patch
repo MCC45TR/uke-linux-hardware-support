@@ -1,34 +1,6 @@
---- a/src/slot-control.hpp
-+++ b/src/slot-control.hpp
-@@ -91,6 +91,11 @@
-         if(fdisk_is_ask(ask,WARN)||fdisk_is_ask(ask,WARNX))*static_cast<bool*>(data)=true;
-         return fdisk_is_ask(ask,INFO)||fdisk_is_ask(ask,WARN)||fdisk_is_ask(ask,WARNX)?0:-EINVAL;
-     }
-+    Bytes backup_bytes() const {
-+        Bytes data=observed.mbr;
-+        for(const auto *part:{&observed.primary,&observed.backup,&observed.entries})data.insert(data.end(),part->begin(),part->end());
-+        return data;
-+    }
- public:
-     int fd;uint64_t size;unsigned sector;
-     Snapshot before;
-@@ -129,11 +134,11 @@
-         }
-     }
-     void backup(const fs::path &path) const {
--        Bytes data=observed.mbr;
--        for(const auto *part:{&observed.primary,&observed.backup,&observed.entries})data.insert(data.end(),part->begin(),part->end());
-+        const auto data=backup_bytes();
-         if(!fs::exists(path))save_new(path,data);
-         need(file(path)==data,"Durable GPT backup differs from current metadata");
-     }
-+    std::string backup_identity() const {return digest(backup_bytes());}
-     bool needs_backup_crc_repair() const {return before.backup!=observed.backup;}
-     void require_selected(unsigned selected) const {
-         need(selected<2,"Invalid selected GPT slot");
 --- a/src/userdata-update.hpp
 +++ b/src/userdata-update.hpp
-@@ -476,7 +476,7 @@
+@@ -709,7 +709,7 @@
          }
          if(!changed.empty()) {
              auto inhibitor=inhibit_shutdown();CriticalSignals signals;
@@ -37,6 +9,22 @@
              try {
                  if(mark_success)boot_table->success(running);
                  for(auto *disk:changed)disk->gpt->commit();
+@@ -745,13 +745,13 @@
+         disk->reload();
+         const bool blocked=disk->gpt->block_inactive(running,target,!saved.baseline_approved);
+         if(blocked) {
+-            disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
++            disk->gpt->backup(transaction/(disk->name+"-"+disk->gpt->backup_identity()+".gpt"));
+             disk->gpt->commit();
+         }
+         disk->reload(blocked);
+         disk->gpt->require_selected(running);
+         if(disk->gpt->prepare(running,target,!saved.baseline_approved)) {
+-            disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
++            disk->gpt->backup(transaction/(disk->name+"-"+disk->gpt->backup_identity()+".gpt"));
+             changed.push_back(disk.get());
+         }
+     }
 --- a/tests/slot-control.cpp
 +++ b/tests/slot-control.cpp
 @@ -71,6 +71,14 @@
