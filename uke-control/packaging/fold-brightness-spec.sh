@@ -27,10 +27,11 @@ awk '
   print "git -C %{_builddir}/uke-control-brightness init -q"
   print "git -C \"$curve_control\" --git-dir %{_builddir}/uke-control-brightness/.git --work-tree \"$curve_control\" apply -p2 --check --whitespace=error %{_builddir}/uke-control-brightness/packaging/brightness-curve-cli.patch"
   print "git -C \"$curve_control\" --git-dir %{_builddir}/uke-control-brightness/.git --work-tree \"$curve_control\" apply -p2 --whitespace=error %{_builddir}/uke-control-brightness/packaging/brightness-curve-cli.patch"
-  print;build++;next
+  print
+  print "bash %{_builddir}/uke-control-brightness/tests/brightness-curve.sh"
+  build++;next
  }
  $0=="%install" {
-  print "bash %{_builddir}/uke-control-brightness/tests/brightness-curve.sh"
   print "%{__cxx} %{build_cxxflags} -std=c++20 -Wall -Wextra -Werror $(pkg-config --cflags jsoncpp libsystemd) %{_builddir}/uke-control-brightness/src/brightness-curve.cpp %{build_ldflags} $(pkg-config --libs jsoncpp libsystemd) -o %{_builddir}/uke-control-brightness/brightness-curve"
   print;install++;next
  }
