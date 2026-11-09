@@ -1,0 +1,100 @@
+diff --git a/src/audio/uke-speaker-runtime.cpp b/src/audio/uke-speaker-runtime.cpp
+--- a/src/audio/uke-speaker-runtime.cpp
++++ b/src/audio/uke-speaker-runtime.cpp
+@@ -183,19 +183,21 @@
+     const char *acdb = "/var/cache/uke-speaker-runtime/Forte_acdb_cal.acdb";
+     const char *card = "hw:POCOPadX1";
+     bool apply = false, status_only = false, has_control = false, gain_readiness = false;
++    bool ensure_loaded = false;
+     unsigned operations = 0;
+     try {
+         for (int i = 1; i < argc; ++i) {
+             std::string_view option(argv[i]);
+             if (option == "--check") { apply = false; ++operations; }
+             else if (option == "--load") { apply = true; ++operations; }
++            else if (option == "--ensure-loaded") { apply = true; ensure_loaded = true; ++operations; }
+             else if (option == "--status") { status_only = true; ++operations; }
+             else if (option == "--has-control") { has_control = true; ++operations; }
+             else if (option == "--gain-readiness") { gain_readiness = true; ++operations; }
+             else if (option == "--persist-directory" && i + 1 < argc) directory = argv[++i];
+             else if (option == "--acdb" && i + 1 < argc) acdb = argv[++i];
+             else if (option == "--card" && i + 1 < argc) card = argv[++i];
+-            else throw std::runtime_error("usage: uke-speaker-runtime [--check|--load|--status|--has-control|--gain-readiness] [--acdb PATH] [--persist-directory RO_PATH] [--card ALSA_ID]");
++            else throw std::runtime_error("usage: uke-speaker-runtime [--check|--load|--ensure-loaded|--status|--has-control|--gain-readiness] [--acdb PATH] [--persist-directory RO_PATH] [--card ALSA_ID]");
+         }
+         require_runtime(operations <= 1);
+         if (gain_readiness) {
+@@ -243,6 +245,17 @@
+             require_runtime(geteuid() == 0);
+             control = std::make_unique<Control>(card);
+             control->lock();
++            if (ensure_loaded) {
++                // Read only after authenticating and pinning the command numid.
++                // Restoring an active oneshot must not resend private data into
++                // an already prepared or playing protected graph.
++                const auto state = control->status();
++                if (state >= UKE_FS_READY && state <= UKE_FS_RUNNING) {
++                    std::cout << "Protected speaker parameters already staged; no data read or write.\n";
++                    return 0;
++                }
++                require_runtime(state == UKE_FS_EMPTY);
++            }
+         }
+         auto parameters = generic_parameters(acdb);
+         // Refuse to read unit data if the process cannot keep it out of swap.
+diff --git a/src/audio/speaker-gain-preflight.sh b/src/audio/speaker-gain-preflight.sh
+--- a/src/audio/speaker-gain-preflight.sh
++++ b/src/audio/speaker-gain-preflight.sh
+@@ -18,7 +18,7 @@
+  [[ ,$options, != *,ro,* ]] || persist_ro=true
+ fi
+ installed=false
+-if rpm -q uke-speaker-runtime >/dev/null 2>&1; then installed=true; fi
++if rpm -q --whatprovides 'uke-speaker-runtime(gain-readiness-v1)' >/dev/null 2>&1; then installed=true; fi
+ controls=false
+ controls_query=false
+ if names=$(amixer -c POCOPadX1 controls 2>/dev/null); then
+diff --git a/src/audio/systemd/uke-speaker-provision@.service b/src/audio/systemd/uke-speaker-provision@.service
+--- a/src/audio/systemd/uke-speaker-provision@.service
++++ b/src/audio/systemd/uke-speaker-provision@.service
+@@ -8,7 +8,7 @@
+ Type=oneshot
+ RemainAfterExit=yes
+ ExecCondition=/usr/bin/uke-speaker-runtime --has-control
+-ExecStart=/usr/bin/uke-speaker-runtime --load
++ExecStart=/usr/bin/uke-speaker-runtime --ensure-loaded
+ TimeoutStartSec=20s
+ LimitCORE=0
+ LimitMEMLOCK=infinity
+diff --git a/tests/audio-speaker-control-mock.cpp b/tests/audio-speaker-control-mock.cpp
+--- a/tests/audio-speaker-control-mock.cpp
++++ b/tests/audio-speaker-control-mock.cpp
+@@ -11,7 +11,7 @@
+     return std::strcmp(snd_ctl_elem_info_get_name(info), "FS19xx Protection State") == 0;
+ }
+ extern "C" {
+-uid_t geteuid() noexcept { return 0; }
++uid_t geteuid() noexcept { return std::getenv("UKE_AUDIO_TEST_NOT_ROOT") ? 1000 : 0; }
+ int snd_ctl_open(snd_ctl_t **handle, const char *, int mode) {
+     if (std::getenv("UKE_AUDIO_TEST_REQUIRE_READONLY") && !(mode & SND_CTL_READONLY)) return -EACCES;
+     if (std::getenv("UKE_AUDIO_TEST_ABSENT")) return -ENOENT;
+@@ -45,11 +45,17 @@
+ int snd_ctl_elem_info_is_writable(const snd_ctl_elem_info_t *info) {
+     return !state_info(info) || std::getenv("UKE_AUDIO_TEST_WRITABLE_STATE");
+ }
+-int snd_ctl_elem_lock(snd_ctl_t *, snd_ctl_elem_id_t *) { locked = true; return 0; }
++int snd_ctl_elem_lock(snd_ctl_t *, snd_ctl_elem_id_t *) {
++    if (std::getenv("UKE_AUDIO_TEST_LOCK_FAILURE")) return -EBUSY;
++    locked = true; return 0;
++}
+ int snd_ctl_elem_unlock(snd_ctl_t *, snd_ctl_elem_id_t *) { locked = false; return 0; }
+ int snd_ctl_elem_read(snd_ctl_t *, snd_ctl_elem_value_t *value) {
+     if (std::strcmp(snd_ctl_elem_value_get_name(value), "FS19xx Protection State") != 0) return -EPERM;
+-    const auto *state = std::getenv("UKE_AUDIO_TEST_STATE");
++    if (std::getenv("UKE_AUDIO_TEST_REQUIRE_LOCKED_READ") && !locked) return -EPERM;
++    if (std::getenv("UKE_AUDIO_TEST_READ_FAILURE")) return -EIO;
++    const auto *state = locked ? std::getenv("UKE_AUDIO_TEST_LOCKED_STATE") : nullptr;
++    if (!state) state = std::getenv("UKE_AUDIO_TEST_STATE");
+     snd_ctl_elem_value_set_enumerated(value, 0, state ? std::strtoul(state, nullptr, 10) : 0);
+     return 0;
+ }
