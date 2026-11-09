@@ -56,6 +56,9 @@ void numerical() {
 }
 void configuration() {
     using namespace uke::brightness;
+    check(internal_connector("DSI-1")&&internal_connector("DSI-012"));
+    for(const auto* name:{"DSI-","DSI--1","DSI-1234","DSI-1x","DP-1"})
+        check(!internal_connector(name));
     const auto request=make_request(config,false);
     const auto transition=apply_request(config,request);
     auto original=parse(config),next=parse(transition.configuration);

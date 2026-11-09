@@ -3,12 +3,16 @@
 #include "oss-brightness-curve.hpp"
 #include <json/json.h>
 #include <memory>
-#include <regex>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 namespace uke::brightness {
 inline constexpr const char* profile_name="uke-oss-normal-v1";
+inline bool internal_connector(std::string_view name) {
+    return name.size()>=5&&name.size()<=7&&name.starts_with("DSI-")&&
+        std::all_of(name.begin()+4,name.end(),[](char c){return c>='0'&&c<='9';});
+}
 inline Json::Value parse(const std::string& text) {
     require(!text.empty()&&text.size()<=1024*1024,"Brightness configuration exceeds bounds");
     Json::CharReaderBuilder builder;
@@ -45,7 +49,7 @@ inline Json::Value& panel(Json::Value& document) {
         require(output.isObject(),"Invalid KWin output entry");
         if(!output["connectorName"].isString())continue;
         const auto name=output["connectorName"].asString();
-        if(!std::regex_match(name,std::regex("DSI-[0-9]{1,3}")))continue;
+        if(!internal_connector(name))continue;
         require(!selected,"Ambiguous internal panel configuration");
         selected=&output;
     }
