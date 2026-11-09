@@ -21,8 +21,8 @@ install -m644 "$owner/../LICENSE" "$work/overlay/LICENSE"
 tar --sort=name --mtime=@1794168000 --owner=0 --group=0 --numeric-owner -cJf "$output/uke-control-critical-rollback.tar.xz" -C "$work/overlay" .
 install -m644 "$owner/packaging/fold-critical-spec.sh" "$owner/packaging/copr-control-critical.sh" "$output/"
 bash "$owner/packaging/fold-critical-spec.sh" "$output/uke-control.spec"
-sed -i 's/application_version="2.11.0"/application_version="2.12.2"/' "$output/control-version.hpp"
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.12.2-1.fc46 ]]
+sed -i 's/application_version="2.11.0"/application_version="2.12.3"/' "$output/control-version.hpp"
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.12.3-1.fc46 ]]
 rpmspec -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui > "$work/expected"
 cmp "$work/names" "$work/expected"

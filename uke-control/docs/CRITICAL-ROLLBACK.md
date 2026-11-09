@@ -1,6 +1,7 @@
 # Critical boot-health fallback
 
-Date: 8 November 2026. Source candidate; native and device admission pending.
+Date: 9 November 2026. The 2.12.3 counter extension is a source candidate;
+its native and device admission remains separate from delivered 2.12.2.
 
 The rejected full8 boots with a matching package but its ADSP crashes. Audio
 requests time out and battery telemetry returns EPIPE. Checking only active
@@ -40,6 +41,24 @@ real failed-trial return, interruption, power loss and runtime monitoring are
 separate acceptance gates. The system keeps its user-selected permissive mode;
 the distribution default remains enforced.
 
-The crash event is latched for this boot before probing state, so a firmware recovery that finishes before userspace dispatch cannot hide the crash. Native tests also exercise the actual late-pair identity predicate and emergency metadata-power provider using temporary files. Device fallback and power-loss acceptance remain separate.
+The crash event is latched after the listener is armed, so recovery before
+userspace dispatch cannot hide that event. The new read-only remoteproc
+`crash_count` snapshot also covers a handled crash before the subscription.
+The existing event listener starts before reading this initial snapshot.
+No counter read queries DSP firmware. On an older kernel, missing history is
+reported once and the existing state/event path remains available.
+
+A present but malformed or unreadable counter is unavailable health, not an
+invented zero or a confirmed crash. Missing ADSP is also unavailable. Runtime
+uncertainty is logged once per transition without granting fallback authority;
+the normal bounded boot qualification still applies. A live `crashed` state
+takes precedence over a malformed counter. A positive counter with recovered
+`running` state remains a confirmed failure. The existing boot/kernel/state
+binding, failed-release bookkeeping and verified return path remain required.
+
+The counter belongs to the registered remoteproc object. It is not persistent
+across object replacement or reboot and does not establish coverage of kernel
+panic, GPU, UFS or power-loss failures. Native fixtures also exercise late-pair
+identity and emergency metadata power. Physical fallback remains unqualified.
 
 A critical event that overlaps another updater keeps one unheld lock descriptor and also observes the other writer's close. This covers read-only checks that release the lock without changing userdata.state. Its own descriptor remains open while waiting, preventing a self-generated close/retry loop; healthy idle does not observe lock-close traffic. Native and device scheduling acceptance remain separate.

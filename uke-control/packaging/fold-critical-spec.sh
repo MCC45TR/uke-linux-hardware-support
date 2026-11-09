@@ -6,13 +6,14 @@ trap 'find "$work" -depth -delete' EXIT
 [[ $(grep -Fxc 'Version: 2.11.0' "$spec") == 3 ]]
 ! grep -q UKE_CONTROL_CRITICAL_ROLLBACK "$spec"
 awk '
- /^Version: 2.11.0$/ {print "Version: 2.12.2";next}
+ /^Version: 2.11.0$/ {print "Version: 2.12.3";next}
  $0=="%description" {
   print "# UKE_CONTROL_CRITICAL_ROLLBACK"
   print "Source27: uke-control-critical-rollback.tar.xz"
   print "Source28: fold-critical-spec.sh"
   print "Source29: copr-control-critical.sh"
   print "Provides: uke-control(critical-rollback-v1) = 1"
+  print "Provides: uke-control(critical-crash-count-v1) = 1"
   print;header++;next
  }
  $0=="%build" {
@@ -31,12 +32,12 @@ awk '
  }
  $0=="%files" {print;print "%{_docdir}/uke-control/CRITICAL-ROLLBACK.md";files++;next}
  $0=="%changelog" {
-  print;print "* Sun Nov 08 2026 Uke contributors - 2.12.2-1"
-  print "- Distinguish confirmed ADSP crashes from ordinary boot-health failures."
-  print "- Permit bound critical-only fallback in permissive mode with verified rollback."
+  print;print "* Mon Nov 09 2026 Uke contributors - 2.12.3-1"
+  print "- Detect recovered ADSP crashes through native remoteproc crash history."
+  print "- Log unavailable health once without granting critical fallback authority."
   print "";history=1;changelog++;next
  }
- {if(!history)gsub(/2[.]11[.]0-1/,"2.12.2-1");print}
+ {if(!history)gsub(/2[.]11[.]0-1/,"2.12.3-1");print}
  END{if(header!=1||build!=1||check!=1||files!=1||changelog!=1)exit 1}
 ' "$spec" > "$work/spec"
 install -m644 "$work/spec" "$spec"

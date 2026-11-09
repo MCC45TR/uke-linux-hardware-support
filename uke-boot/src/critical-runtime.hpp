@@ -10,6 +10,7 @@ struct CriticalRuntimeContext {
     std::exception_ptr failure;
     bool off_reported=false;
     bool adsp_crash_event=false;
+    bool unknown_reported=false;
     std::unique_ptr<Fd> pending_lock{};
 };
 
@@ -32,10 +33,10 @@ static int critical_runtime_probe(CriticalRuntimeContext &context) noexcept {
                 context.pending_lock.reset();
                 return true;
             },
-            [](const std::string &mode,const char *reason,bool authority) {
+            [](const std::string &mode,const char *reason,bool authority,bool critical) {
                 utsname current{};need(!uname(&current),"Missing runtime log identity");
-                std::cerr<<boot_health_line({"rejected",current.release,mode,reason,!authority,true})<<std::flush;
-            },context.off_reported);
+                std::cerr<<boot_health_line({critical?"rejected":"unavailable",current.release,mode,reason,!authority,critical})<<std::flush;
+            },context.off_reported,&context.unknown_reported);
     }catch(...) {
         context.failure=std::current_exception();
         (void)sd_event_exit(context.event,trial_health_rejected);
@@ -80,6 +81,16 @@ static int monitor_critical_runtime() {
                                  critical_runtime_state,&context)>=0,
              "Cannot observe critical-health policy/state events");
     std::cout<<"Critical runtime monitor armed; blocking on remoteproc/coredump and policy/state events, no timer or DSP polling\n"<<std::flush;
+    try {
+        for(const auto &entry:fs::directory_iterator("/sys/class/remoteproc")) {
+            if(critical_health_value(entry.path()/"name")!="adsp")continue;
+            if(!fs::exists(entry.path()/"crash_count"))
+                std::cerr<<"Early ADSP crash history unavailable on this kernel; event and state monitoring remain active\n"<<std::flush;
+        }
+    }catch(const std::exception &) {
+        // Diagnostics must not disable the already armed event listener.
+        std::cerr<<"ADSP crash history availability is unknown; event monitoring remains active\n"<<std::flush;
+    }
     (void)critical_runtime_probe(context);
     const auto status=sd_event_loop(event.get());
     need(status>=0,"Critical-health event loop failed");
