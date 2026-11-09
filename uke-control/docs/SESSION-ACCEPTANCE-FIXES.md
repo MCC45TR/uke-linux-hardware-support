@@ -35,3 +35,12 @@ The initial native215 build11293504 stopped in prep: the local boot checkout
 was older than the retained214 payload, which already contains backup_identity().
 The corrected patch reuses that existing method instead of adding it again.
 The runtime call-site change and regression fixture remain; no gate is removed.
+
+Native11293514 passes935s, including four brightness modes and all retained
+contracts, but its RPM headers still require the214 cohort. The candidate is
+not admitted for installation. Release2 retargets all12 active self-cohort
+Requires/Provides/Obsoletes entries and the three Release fields; history and
+other compatibility providers stay unchanged. A source-worker RPM metadata
+check now verifies exact dependencies against the emitted providers before
+native submission. The same version is retained; the undelivered binary NVR
+uses a new RPM release to avoid silently replacing a published artifact.
