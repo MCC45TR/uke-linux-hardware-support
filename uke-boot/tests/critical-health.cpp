@@ -98,7 +98,7 @@ int main() {
         try{critical_platform_health_latched(latched,root);assert(false);}
         catch(const CriticalHealthFailure &){assert(latched);}cases++;
     }
-    for(const std::string value:std::initializer_list<std::string>{"","-1\n","+1\n","1.0\n","00\n"," 1\n","1 \n",
+    for(const std::string &value:std::initializer_list<std::string>{"","-1\n","+1\n","1.0\n","00\n"," 1\n","1 \n",
             "4294967296\n","1","1\r\n","1\n2\n","0\n\n",std::string(128,'9')+"\n",std::string("1\0\n",3)}) {
         put(adsp/"crash_count",value);unavailable();
         put(adsp/"state","crashed\n");
