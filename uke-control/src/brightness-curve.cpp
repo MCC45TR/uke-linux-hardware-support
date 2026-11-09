@@ -157,11 +157,9 @@ int command(const std::string& operation) {
     }
     before_compositor();
     const auto request=parse(*read_file(pending));
-    require(request["original_config"].isString(),"Invalid pending brightness request");
-    const auto transition=apply_request(request["original_config"].asString(),request);
-    const bool committed=*current==transition.configuration;
-    require(committed||*current==request["original_config"].asString(),
-        "Brightness request is stale; current preferences preserved");
+    const auto pending_transition=apply_pending_request(*current,request);
+    const auto& transition=pending_transition.transition;
+    const bool committed=pending_transition.committed;
     const bool restoring=request["operation"]=="restore";
     // Save only the curve, not an obsolete copy of external display layouts.
     // A failed target publication leaves the request and restore data intact.

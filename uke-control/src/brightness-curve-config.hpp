@@ -131,4 +131,26 @@ inline Transition apply_request(const std::string& current,const Json::Value& re
     }
     return {serialize(document),applied};
 }
+struct PendingTransition {Transition transition;bool committed;};
+inline bool same_curve(const Json::Value& a,const Json::Value& b) {
+    return a.isMember("autoBrightnessCurve")==b.isMember("autoBrightnessCurve")&&
+        (!a.isMember("autoBrightnessCurve")||a["autoBrightnessCurve"]==b["autoBrightnessCurve"]);
+}
+inline PendingTransition apply_pending_request(const std::string& current,const Json::Value& request) {
+    require(request.isObject()&&request["original_config"].isString(),"Invalid pending brightness request");
+    const auto original_text=request["original_config"].asString();
+    const auto intended=apply_request(original_text,request);
+    auto original=parse(original_text),next=parse(intended.configuration),present=parse(current);
+    const auto& old_panel=panel(original);const auto& new_panel=panel(next);const auto& now=panel(present);
+    for(const char* key:{"connectorName","edidIdentifier","edidHash","mstPath"})
+        require(old_panel.isMember(key)==now.isMember(key)&&old_panel[key]==now[key],
+            "Internal panel identity changed; brightness request preserved");
+    if(now.isMember("autoBrightnessCurve"))validate_curve(now["autoBrightnessCurve"]);
+    if(same_curve(now,new_panel))return {{current,intended.applied},true};
+    require(same_curve(now,old_panel),"Brightness curve changed; preserve current user learning");
+    // KWin legitimately saves brightness, DDC detection and external layouts at
+    // shutdown. Merge only the requested curve; preserve every current field.
+    auto merged=request;merged["original_config"]=current;
+    return {apply_request(current,merged),false};
+}
 }

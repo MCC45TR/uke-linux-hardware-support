@@ -14,7 +14,7 @@ compositor has loaded that saved curve.
 fresh Plasma session. The current session is unchanged. A startup hook runs
 only while a request exists, before the original compositor starts. The native
 operation refuses an active KWin/Mutter owner or unavailable user bus, a changed
-configuration, another board, an ambiguous internal panel or a native backlight
+curve/panel identity, another board, an ambiguous internal panel or a native backlight
 range other than 0..2047. A refused request remains pending and is logged.
 
 Only the unique internal output's `autoBrightnessCurve` changes. Brightness
@@ -24,6 +24,14 @@ The old curve is retained in private user settings.
 overwrite later user learning. `cancel` removes an uncommitted request. Startup
 publication is atomic and an interrupted committed transition can be completed
 without importing it twice. No firmware or private calibration is copied.
+
+Shutdown may save brightness, DDC detection and external display layouts after
+the request was queued. A pending transition checks the original curve and
+internal panel identity, then merges only that curve into the current document.
+Unrelated changes survive. New learned curves still prevent an import/restore.
+Both compositor-absence checks and the final file-concurrency check remain.
+Startup diagnostics go directly to the journal under `uke-brightness-curve`;
+Plasma's environment-script subprocess otherwise discards standard error.
 
 The numerical lux/nits table comes from the Apache-2.0 common overlay,
 SPDX-FileCopyrightText: The LineageOS Project, at

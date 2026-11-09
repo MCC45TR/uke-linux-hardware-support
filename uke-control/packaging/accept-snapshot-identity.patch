@@ -1,0 +1,56 @@
+--- a/src/slot-control.hpp
++++ b/src/slot-control.hpp
+@@ -91,6 +91,11 @@
+         if(fdisk_is_ask(ask,WARN)||fdisk_is_ask(ask,WARNX))*static_cast<bool*>(data)=true;
+         return fdisk_is_ask(ask,INFO)||fdisk_is_ask(ask,WARN)||fdisk_is_ask(ask,WARNX)?0:-EINVAL;
+     }
++    Bytes backup_bytes() const {
++        Bytes data=observed.mbr;
++        for(const auto *part:{&observed.primary,&observed.backup,&observed.entries})data.insert(data.end(),part->begin(),part->end());
++        return data;
++    }
+ public:
+     int fd;uint64_t size;unsigned sector;
+     Snapshot before;
+@@ -129,11 +134,11 @@
+         }
+     }
+     void backup(const fs::path &path) const {
+-        Bytes data=observed.mbr;
+-        for(const auto *part:{&observed.primary,&observed.backup,&observed.entries})data.insert(data.end(),part->begin(),part->end());
++        const auto data=backup_bytes();
+         if(!fs::exists(path))save_new(path,data);
+         need(file(path)==data,"Durable GPT backup differs from current metadata");
+     }
++    std::string backup_identity() const {return digest(backup_bytes());}
+     bool needs_backup_crc_repair() const {return before.backup!=observed.backup;}
+     void require_selected(unsigned selected) const {
+         need(selected<2,"Invalid selected GPT slot");
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -476,7 +476,7 @@
+         }
+         if(!changed.empty()) {
+             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+-            for(auto *disk:changed)disk->gpt->backup(state/("accept-"+digest(disk->gpt->before.entries)+"-"+disk->name+".gpt"));
++            for(auto *disk:changed)disk->gpt->backup(state/("accept-"+disk->gpt->backup_identity()+"-"+disk->name+".gpt"));
+             try {
+                 if(mark_success)boot_table->success(running);
+                 for(auto *disk:changed)disk->gpt->commit();
+--- a/tests/slot-control.cpp
++++ b/tests/slot-control.cpp
+@@ -71,6 +71,14 @@
+         slot::write_at(fd.value,original.last*sector,stale_header);
+         reject([&]{slot::Disk strict(fd.value,st.st_size,sector);});
+         slot::Disk repair(fd.value,st.st_size,sector,true);assert(repair.needs_backup_crc_repair());
++        // Firmware can change only a valid backup header, leaving both entry
++        // arrays identical. An entry-only key then aliases an older receipt.
++        assert(repair.before.entries==original.entries);
++        assert(repair.backup_identity()!=a.backup_identity());
++        const auto unique=path.string()+"."+repair.backup_identity()+".gpt";
++        repair.backup(unique);repair.backup(unique);
++        reject([&]{a.backup(unique);});
++        fs::remove(unique);
+         assert(slot::read_at(fd.value,original.last*sector,sector)==stale_header);
+         const auto raw_backup=path.string()+".stale-metadata";repair.backup(raw_backup);
+         auto recorded=file(raw_backup);assert(std::equal(stale_header.begin(),stale_header.end(),recorded.begin()+2*sector));

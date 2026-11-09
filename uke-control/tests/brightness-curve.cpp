@@ -83,6 +83,28 @@ void configuration() {
     }
     auto altered=request;altered["old_curve"][0][1]=.3;
     refuses([&]{apply_request(config,altered);});
+    auto shutdown=parse(config);panel(shutdown)["brightness"]=.12;
+    shutdown.append(parse(R"({"name":"new_external_layout","data":{"hdr":true,"x":350}})"));
+    const auto shutdown_text=serialize(shutdown);
+    const auto merged=apply_pending_request(shutdown_text,request);
+    check(!merged.committed&&merged.transition.applied==transition.applied);
+    auto merged_document=parse(merged.transition.configuration);
+    panel(merged_document)["autoBrightnessCurve"]=panel(shutdown)["autoBrightnessCurve"];
+    check(merged_document==shutdown);
+    const auto retry=apply_pending_request(merged.transition.configuration,request);
+    check(retry.committed&&retry.transition.configuration==merged.transition.configuration);
+    auto after_retry=parse(retry.transition.configuration);panel(after_retry)["brightness"]=.31;
+    check(apply_pending_request(serialize(after_retry),request).committed);
+    auto conflict=shutdown;panel(conflict)["autoBrightnessCurve"][0][1]=.123;
+    refuses([&]{apply_pending_request(serialize(conflict),request);});
+    auto changed_identity=shutdown;panel(changed_identity)["edidHash"]="different";
+    refuses([&]{apply_pending_request(serialize(changed_identity),request);});
+    auto queued_restore=make_request(merged.transition.configuration,true,merged.transition.applied);
+    auto restore_layout=parse(merged.transition.configuration);panel(restore_layout)["brightness"]=.47;
+    const auto restored=apply_pending_request(serialize(restore_layout),queued_restore);
+    panel(restore_layout)["autoBrightnessCurve"]=panel(original)["autoBrightnessCurve"];
+    check(parse(restored.transition.configuration)==restore_layout&&!restored.committed);
+    check(apply_pending_request(restored.transition.configuration,queued_restore).committed);
     refuses([&]{make_request(config,true);});
     for(const auto* text:{"null","{}","[1]","[{}]","[]","invalid", "[1] []",
         R"([{"name":"outputs","name":"other","data":[]}])",
