@@ -44,3 +44,10 @@ other compatibility providers stay unchanged. A source-worker RPM metadata
 check now verifies exact dependencies against the emitted providers before
 native submission. The same version is retained; the undelivered binary NVR
 uses a new RPM release to avoid silently replacing a published artifact.
+
+Custom11293633 succeeds969s with the corrected2.15.0-2 cohort and all
+retained native suites. Independent source admission confirms36 unchanged214
+inputs, the exact version/spec transform and eight exact overlay files. The
+normal release constructor uses that complete SRPM directly, so it adds no
+dependency on an earlier runtime producer or source-constructor chain. Native
+and package results are separate from the actual DNF/GPT/session transition.
