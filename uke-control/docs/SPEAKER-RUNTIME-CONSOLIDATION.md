@@ -64,3 +64,17 @@ Retiring the old COPR producer also requires signed RPM/ownership/dependency
 admission, actual DNF upgrade/fresh/downgrade checks and recoverable device tests
 for speakers, microphone, DP, STOP/reopen and suspend. Preserve the old provider
 and accepted kernel until this measured parity and rollback path are recorded.
+
+## Normal repository source closure
+
+Native qualification COPR11292369 succeeds with the exact source214 cohort.
+The release factory consumes its self-contained SRPM, SHA256
+`a20418325d53b6d2cf9e11684d2b24af3eb112cd64a29334ed81c5f492506f40`,
+and unchanged spec SHA256
+`7e2641a1521e99d10371cb1c2cd01f0cf4aa66e8c676a0b70a15315afdeb0a03`.
+All native tests still run in the normal build. The original one-time folding
+constructor is retained as provenance but is not invoked by the producer.
+Normal builds therefore do not fetch the old speaker-runtime producer. Future
+updates must extend this self-contained cohort and preserve its source, rather
+than reintroducing that legacy producer as a source dependency. This source
+closure does not by itself authorize provider retirement or claim device parity.
