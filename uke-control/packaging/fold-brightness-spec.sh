@@ -23,7 +23,7 @@ awk '
   print "mapfile -t curve_main < <(find %{_builddir}/uke-control-2.8.1/work -type f -path \047*/src/main.cpp\047)"
   print "test ${#curve_main[@]} = 1"
   print "curve_control=${curve_main[0]%/src/main.cpp}"
-  print "printf \04724337befa46bdf31836441d7430cb6b928131b9ccb26487aa5afbec47180df0f  %s/src/main.cpp\n5675f2d70ab9d56948459c596fe2f564232f0ad178305db71f0461a5e10b402d  %s/src/cli.cpp\n\047 \"$curve_control\" \"$curve_control\" | sha256sum -c --strict --quiet -"
+  print "printf \047a0301229ab438127f1c88f496fded02f93293366a3b6fc01a7f6abe47c7d9abd  %s/src/main.cpp\ne629dbf9e1cc198e22bf3d8ee17745b3b9ac221686e947bd2b398c1ff2b4b1cc  %s/src/cli.cpp\n\047 \"$curve_control\" \"$curve_control\" | sha256sum -c --strict --quiet -"
   print "git -C %{_builddir}/uke-control-brightness init -q"
   print "git -C \"$curve_control\" --git-dir %{_builddir}/uke-control-brightness/.git --work-tree \"$curve_control\" apply -p2 --check --whitespace=error %{_builddir}/uke-control-brightness/packaging/brightness-curve-cli.patch"
   print "git -C \"$curve_control\" --git-dir %{_builddir}/uke-control-brightness/.git --work-tree \"$curve_control\" apply -p2 --whitespace=error %{_builddir}/uke-control-brightness/packaging/brightness-curve-cli.patch"
