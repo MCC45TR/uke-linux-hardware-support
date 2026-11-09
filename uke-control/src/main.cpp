@@ -91,6 +91,11 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::desktop::status(),as_json);return 0;}
         if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="plasma"){uke::cli::print(uke::desktop::plasma_status(),as_json);return 0;}
+        if(command=="desktop"&&argc==4&&std::string_view(argv[2])=="brightness-curve") {
+            char* request[]={const_cast<char*>("/usr/libexec/uke-control/brightness-curve"),argv[3],nullptr};
+            execv(request[0],request);
+            throw std::runtime_error("The native brightness preference helper is missing");
+        }
         if(command=="desktop"&&argc==4){auto result=uke::desktop::plasma_set(argv[2],argv[3]);uke::cli::print(result.output,as_json);return result.status;}
         if(command=="channel"||command=="update") {
             execv("/usr/libexec/uke-control/packages",argv+1);

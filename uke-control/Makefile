@@ -15,6 +15,9 @@ protocols := $(shell pkg-config --variable=pkgdatadir wayland-protocols)
 .PHONY: all check check-native check-bus check-rgb-policy check-fedora-target check-repositories check-sensor-proxy check-copr-trigger clean srpm validate
 all: build/uke-control build/uke-control-packages build/uke-control-tests build/ssc-discovery build/ssc-sample build/resize-system build/layout-manager build/uke-control-rgb build/torch-access build/selinux/uke_control_rgb.pp
 all: build/uke-control-tui build/uke-control-client.pc build/uke-control-request
+all: build/brightness-curve
+build/brightness-curve: src/brightness-curve.cpp src/brightness-curve-config.hpp src/oss-brightness-curve.hpp | build
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(shell pkg-config --cflags jsoncpp libsystemd) $< $(shell pkg-config --libs jsoncpp libsystemd) -o $@
 client_sources := src/client.cpp src/client-catalog.cpp src/client-process.cpp
 client_flags := $(shell pkg-config --cflags jsoncpp)
 client_libs := $(shell pkg-config --libs jsoncpp) -pthread
@@ -122,6 +125,10 @@ build/test-roots: tests/roots.cpp src/overview.cpp | build
 build/test-cadence-handshake: tests/cadence-handshake.cpp src/cadence.cpp build/xdg-shell-client.h build/presentation-time-client.h build/xdg-shell-protocol.o build/presentation-time-protocol.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -UNDEBUG $(LDFLAGS) tests/cadence-handshake.cpp build/*-protocol.o $(shell pkg-config --libs wayland-client) -o $@
 check: check-native check-bus check-client check-tui check-microphone
+check: check-brightness-curve
+.PHONY: check-brightness-curve
+check-brightness-curve:
+	bash tests/brightness-curve.sh
 check-native check-bus check-repositories check-sensor-proxy: CXXFLAGS += -UNDEBUG
 check-native: build/test-contact build/test-maintenance build/test-report-budget build/test-package-operation build/test-usb-transition build/test-charge-intent build/test-roots build/test-cadence-handshake
 check-native: all check-fedora-target check-rgb-policy check-layout build/test-front-color build/test-execute build/test-cli

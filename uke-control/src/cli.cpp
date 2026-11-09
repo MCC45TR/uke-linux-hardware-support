@@ -58,7 +58,7 @@ constexpr Group groups[]={
     {"cdc","Manual USB serial export", "cdc on|off [--persistent]"},
     {"ethernet","Ethernet capabilities and link profiles", "ethernet status IFACE\nethernet profile IFACE auto|1000-full|100-full|10-full"},
     {"display","Display stream, lane profiles and VRR minimum", "display bits\ndisplay profiles\ndisplay profile usb3-display|display4\ndisplay lane-limit 1|2|4\ndisplay compression [auto|on|off]\ndisplay vrr-min [status|configured]\ndisplay vrr-min set HZ\ndisplay sensor\n\nCompression auto requires driver interface 2. Live requests are handled by DRM; policy readback is not physical validation."},
-    {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off"},
+    {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off\ndesktop brightness-curve status|queue-oss|queue-restore|cancel\n\nCurve requests apply before the next fresh Plasma session. Existing layout and other output preferences are preserved."},
     {"hardware","Cached chipset, audio, media and input paths", "hardware status"},
     {"firmware","Cached remote processors and SCMI discovery", "firmware status"},
     {"wake","Driver wake permissions", "wake status [SOURCE]\nwake set SOURCE on|off\nwake apply\n\nStatus lists available source names, including supported usb-device-PORT, lid-open and double-tap.\nSaved choices override supported USB, Bluetooth, lid and gesture wake defaults.\nPermission readback is not physical wake validation."},
