@@ -20,10 +20,10 @@ for part in integration diagnostics; do
     printf '%s  %s\n' "$(jq -er ".$part.spec_sha256" "$plan")" "$spec" | sha256sum -c --strict -
     printf '%s  %s\n' "$(jq -er ".$part.archive_sha256" "$plan")" "$archive" | sha256sum -c --strict -
     install -m0644 "$archive" "$output/"
-    install -m0644 "$spec" "$output/$part-parent.spec"
+    install -m0644 "$spec" "$output/$part-parent.recipe"
 done
 node "$owner/uke-waydroid/packaging/fold-diagnostics-spec.mjs" \
-    "$output/integration-parent.spec" "$output/diagnostics-parent.spec" "$output/uke-waydroid-integration.spec"
+    "$output/integration-parent.recipe" "$output/diagnostics-parent.recipe" "$output/uke-waydroid-integration.spec"
 install -m0644 "$plan" "$output/diagnostics-fold.json"
 printf 'Waydroid fold source: %s; both original source archives and recipes retained.\n' "$(git -C "$owner" rev-parse HEAD)"
 sha256sum "$output/uke-waydroid-integration.spec" "$output/"*.tar.xz

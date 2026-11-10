@@ -29,7 +29,7 @@ replace('License:        MIT\n', 'License:        MIT AND BSD-2-Clause AND BSD-3
 replace('Source0:        %{name}-%{version}.tar.xz\n',
   'Source0:        %{name}-%{version}.tar.xz\n' +
   'Source1:        uke-waydroid-diagnostics-0.1.0.tar.xz\n' +
-  'Source2:        integration-parent.spec\nSource3:        diagnostics-parent.spec\n' +
+  'Source2:        integration-parent.recipe\nSource3:        diagnostics-parent.recipe\n' +
   'Source4:        diagnostics-fold.json\nExclusiveArch:  aarch64\n' +
   'BuildRequires:  clang lld binutils glslang\n' +
   '%global debug_package %{nil}\n%global _build_id_links none\n' +
