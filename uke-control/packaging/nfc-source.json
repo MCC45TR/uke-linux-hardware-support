@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/MCC45TR/uke-linux-hardware-support",
+  "commit": "2a16f204486a471c4a702c0ee00e05edd6237319",
+  "package": "uke-nfc-ir-1.1.0-2",
+  "scope": "Unchanged application,UAPI,ACL rules,tests and licenses only; not RF/optical acceptance",
+  "source_assets": [
+    {
+      "path": "uke-nfc-ir/70-uke-nfc-ir.rules",
+      "sha256": "fd69acd8089e6ec376c447a79b0682729da0714816cc67241d8c94e7814274ec"
+    },
+    {
+      "path": "uke-nfc-ir/LICENSES/GPL-2.0-only.txt",
+      "sha256": "f6b78c087c3ebdf0f3c13415070dd480a3f35d8fc76f3d02180a407c1c812f79"
+    },
+    {
+      "path": "uke-nfc-ir/LICENSES/Linux-syscall-note",
+      "sha256": "9b4084655174654608fd037e9ddb4feeadfada01cd042e9c17b05aa7105b2b9f"
+    },
+    {
+      "path": "uke-nfc-ir/README.md",
+      "sha256": "9c3f6de9d0b988061558af58abf9d921599434a9a2ed9ea84c2998c9286a556a"
+    },
+    {
+      "path": "uke-nfc-ir/include/fm19511.h",
+      "sha256": "4502665344c02c5e56daab8c11f174b3478f09312c3314ba93394022a846497e"
+    },
+    {
+      "path": "uke-nfc-ir/src/main.cpp",
+      "sha256": "08be5f1f5ca7255ed995fd1ffbfb8edbb1f764f479108f2d700c029a32540cad"
+    },
+    {
+      "path": "uke-nfc-ir/src/tag.hpp",
+      "sha256": "af4005745f16595b2444005585e59529889fec7f168789c726a9814fc639a657"
+    },
+    {
+      "path": "uke-nfc-ir/tests/check.sh",
+      "sha256": "ed30addfb3cc0287d0cbd2347c23bab48332b187b392c7b7673fe433549eda84"
+    },
+    {
+      "path": "uke-nfc-ir/tests/client.cpp",
+      "sha256": "35aa995111a602fe9a8c1f78f00d7515c995d428e868247ce7a5fcfd1e946513"
+    },
+    {
+      "path": "uke-nfc-ir/tests/session-acl.sh",
+      "sha256": "166f900fad34728457dcc28c9ee18b1bdc27f43f225bb4562fa5436824a29298"
+    },
+    {
+      "path": "uke-nfc-ir/uapi-source.json",
+      "sha256": "4be1e3e735662057ce1efd85d0d115f66adebc43443e9f6dda6ff3df2347f544"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "3261559b7f050f1691b0001544b8497469dea818a3b03136fc5cca0478b595ee"
+    }
+  ]
+}
