@@ -3,7 +3,7 @@
   "integration": {
     "build": 11262150,
     "source_commit": "9a8a9c993ff3589637e9c80367257ad32c0c2560",
-    "srpm_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11262150/uke-waydroid-integration-0.1.0-8.src.rpm",
+    "srpm_url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-waydroid-integration-0.1.0-8.src.rpm",
     "srpm_sha256": "fc4f2afbae337d3a44c0001ed00a768dd750a3011397e7b0ec5b99170c397dd1",
     "archive_sha256": "0b97539d1bb9fed405d597763ffed1615dd1629875020221c50bed6135f1d1b5",
     "spec_sha256": "a0838048d75c6e40d13d41adae7b807b7624c2df6835891e3d75273986204ba8"
@@ -11,7 +11,7 @@
   "diagnostics": {
     "build": 11260540,
     "source_commit": "da27bab5e88fa6134a68f9d09808f03cedba991f",
-    "srpm_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11260540/uke-waydroid-diagnostics-0.1.0-3.src.rpm",
+    "srpm_url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-waydroid-diagnostics-0.1.0-3.src.rpm",
     "srpm_sha256": "8d2476e9af20c8ffa4e135178f98a18d04af95ccfc714c56317d21c8b6db178c",
     "archive_sha256": "8139142464244220be9cc25169b4e055450950149a2341c4887a680899781373",
     "spec_sha256": "35e3fa65cc00cb4893aa79449db23ab252030c7fa14b018b1ca35df690737f73",

@@ -25,3 +25,10 @@ source ownership, compare host preparation and Android runtime behavior, check
 normal DNF upgrade and rollback resolution, preserve signed recovery artifacts,
 then verify COPR API and refreshed repository metadata absence. Source or build
 success alone does not authorize retiring a runtime provider.
+
+The source input locators now use the existing public consolidation archive.
+Four archived parent binary/source artifacts were downloaded again and their
+hashes checked; both binary signatures were verified. This locator-only source
+change preserves every pinned SRPM/archive/recipe byte and does not republish
+the already successful 0.1.0-9 build. Future source generation must remain
+independent of the retired diagnostics producer.
