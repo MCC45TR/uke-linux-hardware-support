@@ -43,14 +43,12 @@
       "sources": [
         "uke-battery-observer"
       ],
-      "producers": [
-        "uke-battery-observer"
-      ],
+      "producers": [],
       "destination": "native-interfaces",
       "original_packages": [
         "upower"
       ],
-      "remaining_work": "Move hardware protection/lifecycle to kernel events. Keep diagnostic and offline-charge UI in userspace, with necessary integration in existing Control. The observer/offline outputs still require this producer; the charge-helper fold alone does not retire it.",
+      "remaining_work": "Control217r3 now owns unchanged battery/offline payloads and current charge helper. Native fixtures, signed source/data/32ELF parity and actual DNF upgrade/fresh/reinstall/archive rollback pass; old activation/preferences retained. Retire the redundant source producer after refreshed repository absence. Native event-only protection and physical charger-boot/electrical acceptance remain open.",
       "retirement_eligible": false
     },
     {
@@ -545,6 +543,14 @@
         "uke-speaker-runtime"
       ],
       "replacement": "The existing Control provider owns the runtime and startup files. Preserve archived signed043 recovery; see consolidation/RUNTIME-RETIREMENT.md."
+    },
+    {
+      "names": [
+        "uke-battery-observer",
+        "uke-offline-charge",
+        "uke-charge-control"
+      ],
+      "replacement": "Existing Control217r3 provides battery/offline/current charge integration;keep archived signed battery7/Control217r2 rollback and Control battery-services constructor."
     }
   ]
 }

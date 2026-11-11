@@ -68,6 +68,7 @@ install: all
 	install -Dm644 manifests/battery-profile.json "$(DESTDIR)$(prefix)/share/uke-battery/battery-profile.json"
 	install -Dm644 manifests/model-profile.json "$(DESTDIR)$(prefix)/share/uke-battery/model-profile.json"
 srpm:
+	@printf 'Retired standalone battery RPM: use the Control battery-services source constructor.\n' >&2; exit 2
 	mkdir -p "$(outdir)/rpmbuild"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
 	# Package exactly the reviewed worktree, with a per-file byte inventory.
 	stage=$$(mktemp -d)
