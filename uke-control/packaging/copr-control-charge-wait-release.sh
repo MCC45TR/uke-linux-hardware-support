@@ -19,7 +19,7 @@ rpm2cpio "$work/parent.rpm" | cpio -t --quiet | awk '/^\/|(^|\/)\.\.($|\/)/{bad=
 mkdir "$output" "$work/overlay"
 rpm2cpio "$work/parent.rpm" | (cd "$output";cpio -idm --quiet --no-absolute-filenames)
 printf '%s  %s\n' "$(jq -er .parent.spec_sha256 "$contract")" "$output/uke-control.spec" | sha256sum -c --strict --quiet -
-curl -qfsSL --max-time 90 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/11304610-uke-kernel-migration-check/uke-kernel-migration-check-7.3.3-94.fc46.aarch64.rpm -o "$work/proof.rpm"
+curl -qfsSL --max-time 90 "$(jq -er .native_admission.receipt_url "$delivery")" -o "$work/proof.rpm"
 printf '%s  %s\n' a03b2cbde163a83e18a52454accaa8910d733e23cf4487ee581b15200b981b50 "$work/proof.rpm" | sha256sum -c --strict --quiet -
 rpm2cpio "$work/proof.rpm" | cpio -i --to-stdout --quiet '*control-wait-source-qualification.json' > "$work/overlay/native94.json"
 jq -e '.source_commit=="088a1ed3a950ee4c04b307fc0405ec5a1ebb62f8" and .parent.build==11303736 and .parent.version=="2.17.0-1" and .source_unit.after_sha256=="c5e1600477f16593ff6b83c68857f076aecae6fb8a04bd72925c1d0ebcf1c678"' "$work/overlay/native94.json" >/dev/null

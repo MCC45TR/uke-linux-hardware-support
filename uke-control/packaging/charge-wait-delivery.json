@@ -15,7 +15,8 @@
   "native_admission": {
     "build": 11304610,
     "source_commit": "088a1ed3a950ee4c04b307fc0405ec5a1ebb62f8",
-    "receipt_sha256": "a03b2cbde163a83e18a52454accaa8910d733e23cf4487ee581b15200b981b50"
+    "receipt_sha256": "a03b2cbde163a83e18a52454accaa8910d733e23cf4487ee581b15200b981b50",
+    "receipt_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable:custom:kernel-migration-20261105/fedora-rawhide-aarch64/11304610-uke-kernel-migration-check/uke-kernel-migration-check-7.3.3-94.fc46.aarch64.rpm"
   },
   "source_assets": [
     {
@@ -28,7 +29,7 @@
     },
     {
       "path": "uke-control/packaging/copr-control-charge-wait-release.sh",
-      "sha256": "8a3ad40cad5d385c4d680f495a9f1799a5d90479fbcaa99ac1e2c6608ccc18c4"
+      "sha256": "7e63e6cb2c0712f7fae78b7d1b81dc70c22e45cc4b714132caf8185a73e2ddce"
     },
     {
       "path": "uke-control/docs/CHARGE-WAIT-DELIVERY.md",
