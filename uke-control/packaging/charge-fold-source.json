@@ -12,7 +12,7 @@
     },
     "helper": {
       "build": 11250670,
-      "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11250670/uke-battery-observer-1.4.1-7.src.rpm",
+      "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-battery-observer-1.4.1-7.src.rpm",
       "sha256": "10cb0a2cf803a98443bf24eeabc2cae249bc8e6436dae3068b22f6d5b49b3de2"
     }
   },

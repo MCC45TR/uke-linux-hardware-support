@@ -4,7 +4,7 @@
   "control": {
     "build": 11305547,
     "nvr": "uke-control-2.17.0-2",
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11305547/uke-control-2.17.0-2.src.rpm",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.17.0-2.src.rpm",
     "srpm_sha256": "6d1bebe33fbfaa280a5166e5501ffd8c6d8eb85f382359b888ac97494f764711",
     "spec_sha256": "79c486669adb6d1feae8a4781940f86367f91c650bf4f99a7eb6b7947fe010df",
     "non_spec_source_files": 52
