@@ -8,7 +8,7 @@ assert.equal(crypto.createHash('sha256').update(before).digest('hex'),'a96361c44
 const split=before.indexOf('%changelog\n');assert(split>=0);let body=before.slice(0,split);const history=before.slice(split);
 assert.equal(body.split('Version: 2.17.0\n').length,4);assert.equal(body.split('Release: 1%{?dist}\n').length,4);assert.equal(body.split('2.17.0-1').length,13);
 body=body.replaceAll('Release: 1%{?dist}\n','Release: 2%{?dist}\n').replaceAll('2.17.0-1','2.17.0-2');
-const header='# UKE_CONTROL_CHARGE_WAIT\nSource51: uke-control-charge-wait.tar.xz\n';
+const header='# UKE_CONTROL_CHARGE_WAIT\nSource51: uke-control-charge-wait.tar.xz\nBuildRequires: nodejs\n';
 const prep=`mkdir -p %{_builddir}/uke-control-charge-wait
 tar -xJf %{SOURCE51} -C %{_builddir}/uke-control-charge-wait
 bash %{_builddir}/uke-control-charge-wait/apply-charge-wait.sh %{_builddir}/uke-control-charge/runtime %{_builddir}/uke-control-charge-wait

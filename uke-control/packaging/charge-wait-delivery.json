@@ -25,7 +25,7 @@
     },
     {
       "path": "uke-control/packaging/fold-charge-wait-spec.sh",
-      "sha256": "e04fc55f1d98f9ac3cf1c6e7f1c7cd77a17c8df7c4b3910765eacd65bfe798a7"
+      "sha256": "300387b91a032bf3d10b929e0310727c7f56cde6d984aeee4b61b2cc9dad6369"
     },
     {
       "path": "uke-control/packaging/copr-control-charge-wait-release.sh",
@@ -33,7 +33,7 @@
     },
     {
       "path": "uke-control/docs/CHARGE-WAIT-DELIVERY.md",
-      "sha256": "3cb11a54eb7c114171cad3e3a61a5b5a1544a717198142dfead6d20f9f479970"
+      "sha256": "bb94f8131407ea3870620f823daff0e938ded241981f21ccfe84ac5e798877e5"
     }
   ],
   "production_build_qualified": false,
@@ -42,9 +42,12 @@
   "protection_interval_seconds": 2,
   "new_runtime_packages": 0,
   "new_services": 0,
-  "new_dependencies": 0,
   "old_checks_retained": true,
   "unit_and_config_state_preserved_by_existing_transition": true,
   "physical_cutoff_accepted": false,
-  "legacy_guard_retired": false
+  "legacy_guard_retired": false,
+  "new_runtime_dependencies": 0,
+  "new_build_dependencies": [
+    "nodejs"
+  ]
 }

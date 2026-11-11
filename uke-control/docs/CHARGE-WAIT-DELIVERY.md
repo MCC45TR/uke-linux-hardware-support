@@ -14,8 +14,9 @@ retain every original check, scriptlet, configuration and service definition.
 
 The package build reruns the actual wait/control/I/O and signal-error fixtures
 with GCC and Clang sanitizers. It does not execute device-facing main or a
-firmware operation. No dependency, service, runtime RPM or debug package is
-added. Keep the periodic guard and its two-second protection interval until
+firmware operation. Node.js is declared as a COPR-only test build dependency;
+no runtime dependency, service, runtime RPM or debug package is added.
+Keep the periodic guard and its two-second protection interval until
 native event/action/lifecycle parity is independently accepted.
 
 Before installation, verify signatures, dependency and payload closure, normal
