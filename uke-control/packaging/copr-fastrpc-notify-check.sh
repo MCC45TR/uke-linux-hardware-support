@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # COPR source generation only. Does not compile or install on the tablet.
 set -Eeuo pipefail
-[[ ! -e /etc/senemos/kernel-update.conf && $# == 2 && $2 == 98 ]]
+[[ ! -e /etc/senemos/kernel-update.conf && $# == 2 && $2 == 99 ]]
 output=$(realpath -m "$1")
 [[ ! -e $output && ! -L $output ]]
 owner=$(cd -- "$(dirname -- "$0")/.." && pwd)
@@ -20,11 +20,11 @@ install -m644 "$owner/LICENSE" "$bundle/LICENSE"
 install -m644 "$contract" "$bundle/fastrpc-notify.json"
 commit=$(git -C "$owner" rev-parse HEAD)
 tree=$(git -C "$owner" rev-parse HEAD^{tree})
-jq -n --arg commit "$commit" --arg tree "$tree" '{source_commit:$commit,source_tree:$tree,scope:"Original Fedora listener,synthetic RPC only;no provider transition or physical acceptance",native_revision:98,new_runtime_packages:0}' > "$bundle/source-receipt.json"
+jq -n --arg commit "$commit" --arg tree "$tree" '{source_commit:$commit,source_tree:$tree,scope:"Original Fedora listener,synthetic RPC only;no provider transition or physical acceptance",native_revision:99,new_runtime_packages:0}' > "$bundle/source-receipt.json"
 (cd "$bundle";find . -type f -print0 | sort -z | xargs -0 sha256sum > "$work/seal")
 install -m644 "$work/seal" "$bundle/SHA256SUMS"
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-fastrpc-notify-check-1.tar.xz" -C "$work" uke-fastrpc-notify-check-1
-sed 's/@RELEASE@/98/g' "$owner/packaging/fastrpc-notify-check.spec.in" > "$output/uke-kernel-migration-check.spec"
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-kernel-migration-check.spec") == uke-kernel-migration-check-7.3.3-98.fc46 ]]
-printf 'FastRPC readiness98:original Fedora1.0.8 package/header/ELF,local-scope forwarding and synthetic RPC fixture;no runtime delivery.\n'
+sed 's/@RELEASE@/99/g' "$owner/packaging/fastrpc-notify-check.spec.in" > "$output/uke-kernel-migration-check.spec"
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-kernel-migration-check.spec") == uke-kernel-migration-check-7.3.3-99.fc46 ]]
+printf 'FastRPC readiness99:original Fedora1.0.8 package/header/ELF,local-scope forwarding and synthetic RPC fixture;no runtime delivery.\n'

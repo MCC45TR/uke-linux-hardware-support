@@ -44,10 +44,11 @@ grep -Eq 'bl[[:space:]]+[0-9a-f]+ <adsp_default_listener_register@plt>' original
 grep -Eq 'bl[[:space:]]+[0-9a-f]+ <adsp_default_listener1_register@plt>' original.disassembly
 bash fastrpc-notify-test.sh "$PWD/fixture" "$PWD/libuke-fastrpc-notify.so"
 rpm -V fastrpc fastrpc-devel
-printf 'Original Fedora package/header/ELF and both PLT calls retained;RTLD_LOCAL native readiness qualification passed.\n' > qualification.txt
+printf 'Original Fedora package/header/ELF and both PLT calls retained;RTLD_LOCAL native readiness qualification passed.\n' > %{buildroot}%{_datadir}/uke-kernel-migration-check/fastrpc-notify.txt
 
 %install
-install -Dm644 qualification.txt %{buildroot}%{_datadir}/uke-kernel-migration-check/fastrpc-notify.txt
+install -d -m755 %{buildroot}%{_datadir}/uke-kernel-migration-check
+printf 'Native fixture qualification pending.\n' > %{buildroot}%{_datadir}/uke-kernel-migration-check/fastrpc-notify.txt
 
 %files
 %license LICENSE

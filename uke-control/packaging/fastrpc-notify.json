@@ -37,7 +37,8 @@
     "new_runtime_packages": 0,
     "healthy_idle_threads": 0,
     "healthy_idle_polling": 0,
-    "full_kernel_reserved": false
+    "full_kernel_reserved": false,
+    "native_revision": 99
   },
   "return_path": "Remove adapter after original Fedora provides equivalent registered-listener notification",
   "source_assets": [
@@ -55,11 +56,11 @@
     },
     {
       "path": "uke-control/packaging/copr-fastrpc-notify-check.sh",
-      "sha256": "321055a98c01cb3b1134a36abe0afc55415833f508aaf243a8349f7366402201"
+      "sha256": "fb92cdee4dd555afa130c98329002ee35595a119775e077797ea619a62350745"
     },
     {
       "path": "uke-control/packaging/fastrpc-notify-check.spec.in",
-      "sha256": "c6c7caf41aa14f9bbb7a5b6b750afd00562095d5d479930bb4ee8c13bd1962f2"
+      "sha256": "4c2aa9c14d869f662672066619466ca33c01eeed6cfcfe8d52872950197572c8"
     },
     {
       "path": "uke-control/docs/FASTRPC-NOTIFY.md",
@@ -69,5 +70,15 @@
       "path": "uke-control/LICENSE",
       "sha256": "3261559b7f050f1691b0001544b8497469dea818a3b03136fc5cca0478b595ee"
     }
-  ]
+  ],
+  "previous_attempt": {
+    "revision": 98,
+    "copr_build": 11310290,
+    "state": "failed",
+    "source_commit": "291adc396afb22d0199d789f75b8827520fd9da2",
+    "actual_source_rpm_sha256": "dcca8b7e1c0e577839269dae3c14aa1e1ee0307da732b72d2259531217f4ff8d",
+    "both_cpp_compiled": true,
+    "fixture_executed": false,
+    "reason": "RPM install phase preceded the check-created receipt;no native runtime acceptance"
+  }
 }
