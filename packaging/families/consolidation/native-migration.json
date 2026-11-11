@@ -43,7 +43,9 @@
       "sources": [
         "uke-battery-observer"
       ],
-      "producers": [],
+      "producers": [
+        "uke-battery-observer"
+      ],
       "destination": "native-interfaces",
       "original_packages": [
         "upower"
