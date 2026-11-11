@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "parent_build": 11303736,
+  "parent_version": "2.17.0-1",
+  "version": "2.17.0",
+  "release": 2,
+  "parent_source_files": 51,
+  "new_source_overlays": 1,
+  "runtime_names": [
+    "uke-control",
+    "uke-control-client-devel",
+    "uke-control-tui"
+  ],
+  "native_admission": {
+    "build": 11304610,
+    "source_commit": "088a1ed3a950ee4c04b307fc0405ec5a1ebb62f8",
+    "receipt_sha256": "a03b2cbde163a83e18a52454accaa8910d733e23cf4487ee581b15200b981b50"
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/packaging/apply-charge-wait.sh",
+      "sha256": "1cd721e46bc65408a2b0494d491ce506f8dcf1892b89e677000f341792f65379"
+    },
+    {
+      "path": "uke-control/packaging/fold-charge-wait-spec.sh",
+      "sha256": "e04fc55f1d98f9ac3cf1c6e7f1c7cd77a17c8df7c4b3910765eacd65bfe798a7"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-charge-wait-release.sh",
+      "sha256": "8a3ad40cad5d385c4d680f495a9f1799a5d90479fbcaa99ac1e2c6608ccc18c4"
+    },
+    {
+      "path": "uke-control/docs/CHARGE-WAIT-DELIVERY.md",
+      "sha256": "3cb11a54eb7c114171cad3e3a61a5b5a1544a717198142dfead6d20f9f479970"
+    }
+  ],
+  "production_build_qualified": false,
+  "installed_on_target": false,
+  "hardware_bodies_unchanged": true,
+  "protection_interval_seconds": 2,
+  "new_runtime_packages": 0,
+  "new_services": 0,
+  "new_dependencies": 0,
+  "old_checks_retained": true,
+  "unit_and_config_state_preserved_by_existing_transition": true,
+  "physical_cutoff_accepted": false,
+  "legacy_guard_retired": false
+}
