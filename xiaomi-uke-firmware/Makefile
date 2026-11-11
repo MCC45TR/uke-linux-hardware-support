@@ -7,6 +7,7 @@ SPEAKER_NOTICE ?= $(CURDIR)/referances/speaker-preset-3.0.304.0/odm-NOTICE.xml.g
 .PHONY: validate srpm
 .PHONY: speaker-srpm
 speaker-srpm:
+	@printf 'Retired standalone speaker firmware RPM: use the firmware-consolidation source constructor.\n' >&2; exit 2
 	input='$(SPEAKER_PRESET)'; notice='$(SPEAKER_NOTICE)'
 	[[ -f $$input && ! -L $$input && -f $$notice && ! -L $$notice ]]
 	data=packaging/speaker-firmware

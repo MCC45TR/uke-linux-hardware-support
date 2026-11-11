@@ -261,7 +261,7 @@
       ],
       "destination": "firmware",
       "original_packages": [],
-      "remaining_work": "Preserve required amplifier/DSP firmware, topology and calibration boundaries. Distribution/upstream data adoption and audio protection parity precede consolidation/removal.",
+      "remaining_work": "Existing firmware15 owns the byte-exact generic preset,licenses/provenance and noreplace flag. Signed isolated DNF ownership upgrade/rollback preserves a synthetic local modification;actual device upgrade/reinstall/archive rollback and all227 payload files pass. Retire redundant source producer after dependency/repository closure. Physical playback/protection acceptance and distribution firmware adoption remain open.",
       "retirement_eligible": false
     },
     {
@@ -553,6 +553,12 @@
         "uke-charge-control"
       ],
       "replacement": "Existing Control217r3 provides battery/offline/current charge integration;keep archived signed battery7/Control217r2 rollback and Control battery-services constructor."
+    },
+    {
+      "names": [
+        "uke-speaker-firmware"
+      ],
+      "replacement": "Existing firmware3.0.304.0-15 preserves the exact preset and noreplace/license ownership;keep archived signed firmware14/speaker2 recovery."
     }
   ]
 }
