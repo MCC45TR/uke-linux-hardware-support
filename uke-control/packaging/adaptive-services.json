@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "control": {
+    "build": 11308566,
+    "nvr": "uke-control-2.17.0-3",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.17.0-3.src.rpm",
+    "srpm_sha256": "3aa7bca693d10c94d95db1c43964d5c673a3e8a1e643b57f38a9faf0af368d58",
+    "spec_sha256": "5bfcffa9cee2eb3164e985f44bb26cc8fc7259a8787ae85f50b4df50796e56af",
+    "non_spec_source_files": 55
+  },
+  "adaptive": {
+    "source_build": 11240837,
+    "source_nvr": "uke-control-2.8.1-5.fc46",
+    "source_rpm_sha256": "86a9009506056373ec7f9cfbe4cfeeef189c154fdccd6267433a3f0c8dc6ee9e",
+    "runtime_nvr": "uke-adaptive-display-1.0.16-17.fc46",
+    "runtime_sha256": "3e41a238e60e5221c79554d2bf3449e14ccb1d0ed4d0f58a4d3c8cbe775bf000",
+    "license": "MIT",
+    "public_recovery_verified": true
+  },
+  "archives": {
+    "source0": "00bc896fb2b8bfe70c6444a412a8014c17c77af17cb1ab5587c062ae14d1efab",
+    "power": "1d77a6cbe43468427c6c6a958da58d296b190bb065055a4f45a5ee06185fdee6",
+    "wrapper": "5e706252ee394ec2b1b79165372ae1908bc084271371639ba5f8f95553390369",
+    "runtime": "7efaec9f322fe48ef53390c29b7861115895bb86851965c1bef3454695df6c91"
+  },
+  "runtime_files": [
+    {
+      "path": "docs/ADAPTIVE-DISPLAY.md",
+      "sha256": "08480f53d59266af13b2a5b8ed5aceda9508b398885d8373468b535be8b6a6a6"
+    },
+    {
+      "path": "docs/DISPLAY-CONTROLS.md",
+      "sha256": "7fff75c0a65445c08df2f51ef4e6b285fa2532b0d52478eb0e60bbdc93b457af"
+    },
+    {
+      "path": "docs/GPU-MONITORING.md",
+      "sha256": "e53cd2ff92b8dddf12e96dcfab4fc39c8ed5b07f0b20acc8de1404e9a186edc1"
+    },
+    {
+      "path": "docs/SERVICE-POLICY.md",
+      "sha256": "92e5321c5873d4a3e11c90bc85db2b67b0f1ba0061991b3df1650839f0a9d554"
+    },
+    {
+      "path": "docs/SUSPEND.md",
+      "sha256": "a543ecb2f66754f6844f1a839179c6981dc48531861329610ceffe765fbbd825"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "6d5638a97949e3de3b964b6f71bf0f27645500275bb202d91eaa93ff5b98a704"
+    },
+    {
+      "path": "packaging/30-uke-s2idle.conf",
+      "sha256": "709646153d67646c12a87f33e6214cd25a3d3a8f48b960cb3da71bfd9bbb1d91"
+    },
+    {
+      "path": "packaging/60-block-scheduler.rules",
+      "sha256": "f32a5f78346be767c49e9eb0b37fe4d59dfc142a695444745e4918bfe0f83010"
+    },
+    {
+      "path": "packaging/60-uke-display-ddc.conf",
+      "sha256": "5785ba65d2f691485918ab97c6f6dcf5d9f6dbb752b37b62de831db5d781e287"
+    },
+    {
+      "path": "packaging/61-uke-display-ddc.rules",
+      "sha256": "1808320f225bab663c52ce57acab3d59cf47d6e90e9ab289d783b314d70e7296"
+    },
+    {
+      "path": "packaging/71-uke-tablet-mode.rules",
+      "sha256": "b1c27214a6751a3ba7d22d0ac462dda0dcce299368cf5d52abbf52c99f2dc99f"
+    },
+    {
+      "path": "packaging/80-uke-adaptive-display.preset",
+      "sha256": "82b842dfa1eecaac505cbccabd7ced9c4828642519e082cd7d3d40e13df82fac"
+    },
+    {
+      "path": "packaging/adreno.page",
+      "sha256": "0afc85ba49f75eba089c657258f143f27400d64d10436e290525d654c0bc4ef3"
+    },
+    {
+      "path": "packaging/kwinoutputconfig.json",
+      "sha256": "4cdae1a8d55fd446aec8c12476b8462aff85d97f94e761023773921c863015ab"
+    },
+    {
+      "path": "packaging/powerdevilrc",
+      "sha256": "a5cdf1e3e0e652057cdc68689c04d46c8b6cbc42c26673c3b91b60acf9bac787"
+    },
+    {
+      "path": "packaging/uke-adaptive-display.target",
+      "sha256": "f642b6787d8ab129000550e20aa8acae3584d841c150a9d84abecd794496e2f8"
+    },
+    {
+      "path": "packaging/uke-suspend.conf",
+      "sha256": "a133cddd511f57872890403da63411ca656cf298e0dd9f8cc0674bf640c915c0"
+    },
+    {
+      "path": "src/adreno-stats/CMakeLists.txt",
+      "sha256": "23f1890375c833a69bf3cd437dd14e27f978a3c13f11565b97486455a308555f"
+    },
+    {
+      "path": "src/adreno-stats/counters.hpp",
+      "sha256": "79e4b7d8a2c309664b266bd6222d1d5e88ea3ad40259ee00e3d6ea9d2255beae"
+    },
+    {
+      "path": "src/adreno-stats/plugin-test.cpp",
+      "sha256": "083a00433dc188c1c555d80a9021ab189412246df544167101aceaaff403d2ae"
+    },
+    {
+      "path": "src/adreno-stats/plugin.cpp",
+      "sha256": "59723bace8ea1e7805afcd12cfe0a8fe38471c943e66d42ad8bd90845bb2ba60"
+    },
+    {
+      "path": "src/adreno-stats/plugin.json",
+      "sha256": "243edb0a6762158be3a0a373e9f83cdbb0484d77641a1a549f05430404122793"
+    },
+    {
+      "path": "src/adreno-stats/reader.hpp",
+      "sha256": "a97045e305925183f0cbb36a0a96c172e739a41c4337008a154b57f2417818e5"
+    },
+    {
+      "path": "src/adreno-stats/tests.cpp",
+      "sha256": "beae16489fb25fd0a327b87e022369dd426baafb6a5286e3595adfa1f1edd520"
+    },
+    {
+      "path": "src/uke-ddc-config",
+      "sha256": "711ae7975552dac26a83c178d731612ff135b295b884ccf235032854b68eeaee"
+    },
+    {
+      "path": "tests/ddc-config.sh",
+      "sha256": "5f7593cf0aea7d96dfd1666299881aa47238a5687834eda333a3c7874eb1502b"
+    }
+  ],
+  "plugin_elf_requires": [
+    "ld-linux-aarch64.so.1()(64bit)",
+    "ld-linux-aarch64.so.1(GLIBC_2.17)(64bit)",
+    "libKF6CoreAddons.so.6()(64bit)",
+    "libKSysGuardSystemStats.so.2()(64bit)",
+    "libQt6Core.so.6()(64bit)",
+    "libQt6Core.so.6(Qt_6)(64bit)",
+    "libQt6Core.so.6(Qt_6.12)(64bit)",
+    "libc.so.6()(64bit)",
+    "libc.so.6(GLIBC_2.17)(64bit)",
+    "libc.so.6(GLIBC_ABI_DT_RELR)(64bit)",
+    "libgcc_s.so.1()(64bit)",
+    "libgcc_s.so.1(GCC_3.0)(64bit)",
+    "libgcc_s.so.1(GCC_3.3.1)(64bit)",
+    "libstdc++.so.6()(64bit)",
+    "libstdc++.so.6(CXXABI_1.3)(64bit)",
+    "libstdc++.so.6(CXXABI_1.3.9)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4.30)(64bit)",
+    "rtld(GNU_HASH)"
+  ],
+  "dependency_scope": {
+    "filter_path": "^/usr/lib64/qt6/plugins/ksystemstats/libuke_adreno[.]so$",
+    "elf_consumer": "ksystemstats",
+    "desktop_consumer": "plasma-workspace",
+    "native_generator_equality_required": true,
+    "unconditional_kde_required": false
+  },
+  "result": {
+    "version": "2.17.0-4",
+    "spec_sha256": "427a6f61da15c3b7b9d1ead0dca2204c7d8b6fa7f9e26dfe635d21099e1679c3",
+    "runtime_names": [
+      "uke-control",
+      "uke-control-client-devel",
+      "uke-control-tui"
+    ],
+    "folded_packages": [
+      "uke-adaptive-display"
+    ],
+    "new_runtime_packages": 0,
+    "original_kde_packages": true,
+    "physical_acceptance": false,
+    "native_qualified": false,
+    "dnf_installed": false,
+    "legacy_builds_deleted": false
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/packaging/prepare-adaptive-sources.sh",
+      "sha256": "5240c2bc4506d8b4df1c1712363bb49e4a0bbad0b02fe1567a58e471e899dd4f"
+    },
+    {
+      "path": "uke-control/packaging/check-adaptive-plugin-deps.sh",
+      "sha256": "12522e3102258caf927f07dc53f36e07fa3cdab240ec41f0a32530f60c501661"
+    },
+    {
+      "path": "uke-control/packaging/adaptive-unit-state.sh",
+      "sha256": "ef879fe0e47a9f03f2751e5f5735752cb90488684723c10b1cba79e86136747f"
+    },
+    {
+      "path": "uke-control/packaging/fold-adaptive-spec.mjs",
+      "sha256": "5486c37b15db45fe1a453335e91255d4a030d9e342c8d50120d78d9659c3019e"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-adaptive-services.sh",
+      "sha256": "6000c54d78564990806d6b6905b16ca0a79a6ab19a26b37d3266e2edcfde6dfc"
+    },
+    {
+      "path": "uke-control/tests/adaptive-unit-state.sh",
+      "sha256": "e66ba37b725627b3a7e39a255a2cee3f6666f66d7930280a8493ece7f26ca0e9"
+    },
+    {
+      "path": "uke-control/docs/ADAPTIVE-SERVICES.md",
+      "sha256": "74be56272759a754de4121683130e64bbfd2ec33e85a898de93396d3b62a4afb"
+    },
+    {
+      "path": "uke-control/tests/adaptive-services-data.sh",
+      "sha256": "18c7293356813f0ae967d12a27b0ab95c0e6a6b3adf3d40e1e1e4fb42b0810f5"
+    }
+  ]
+}
