@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "source_check_release": 94,
+  "parent": {
+    "build": 11303736,
+    "name": "uke-control",
+    "version": "2.17.0-1",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11303736/uke-control-2.17.0-1.src.rpm",
+    "sha256": "caa857f26f2c9cc560f88804b121a962c2cffd44b3ba1f52c09599ed304cc5e5",
+    "spec_sha256": "a96361c448efcd3c2809041e10a1bc5fda5c4196d82acb6005f9a76594cd01d0",
+    "runtime_archive_sha256": "c7c0569a55fe2a136ba33f32ccc809d115c892393f08e5ae04caccdbcb5692be"
+  },
+  "source_unit": {
+    "path": "src/battery/control-main.cpp",
+    "workspace_path": "uke-platform-runtime/src/battery/control-main.cpp",
+    "before_sha256": "7df53b33452d4601e95e4a896d2e8aa3d02097fc382cd9c0b4b79266663b5a04",
+    "after_sha256": "c5e1600477f16593ff6b83c68857f076aecae6fb8a04bd72925c1d0ebcf1c678"
+  },
+  "source_assets": [
+    {
+      "path": "uke-platform-runtime/src/battery/control-main.cpp",
+      "sha256": "c5e1600477f16593ff6b83c68857f076aecae6fb8a04bd72925c1d0ebcf1c678"
+    },
+    {
+      "path": "uke-platform-runtime/tests/charge-wait.cpp",
+      "sha256": "89a60afeb61f7aa34d277e2ec5bce22a55ec1867bce442a21dfb4434257db8f5"
+    },
+    {
+      "path": "uke-control/packaging/charge-wait.patch",
+      "sha256": "7e2121e1f05bff485695c739bb7cfaa64af4be93fbf0c548ffa5c930a6e37d8a"
+    },
+    {
+      "path": "uke-control/packaging/check-charge-wait-native.sh",
+      "sha256": "d219f317d758c0a5211b2b5ac8f5a1647d82e649506b9e6a1c0a2de3bb5a27e1"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-charge-wait-check.sh",
+      "sha256": "b305595e2eaadf50fda918c852e8eeee12e2e27fd13f3d6feebf9413ab71dc62"
+    },
+    {
+      "path": "uke-control/docs/CHARGE-WAIT.md",
+      "sha256": "6b38b36ed5c31835e153a9cc2969cffca442d5a31bfc6625f2b5acaef08ff177"
+    }
+  ],
+  "protection_interval_seconds": 2,
+  "automatic_interval_unchanged": true,
+  "hardware_bodies_unchanged": true,
+  "writer_admission_unchanged": true,
+  "unit_and_configuration_unchanged": true,
+  "short_tick_removed": true,
+  "stop_signal_wait": true,
+  "monotonic_deadline": true,
+  "legacy_guard_retired": false,
+  "hardware_event_coverage_accepted": false,
+  "native_qualified": false,
+  "installed_on_target": false,
+  "new_runtime_packages": 0,
+  "new_services": 0,
+  "new_dependencies": 0,
+  "physical_cutoff_accepted": false
+}
