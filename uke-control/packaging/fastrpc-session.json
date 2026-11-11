@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "parent": {
+    "build": 11310493,
+    "nvr": "uke-kernel-migration-check-7.3.3-100",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-kernel-migration-check-7.3.3-100.src.rpm",
+    "srpm_sha256": "81fcf108fc34d2951071725a4f89632e9d39650d08c1e44db95d184ff4d3bd0f",
+    "spec_sha256": "0f739a3eb18375f3d686874555da44fd50f614bad8470a0bb4c9024b38e8c6fd",
+    "archives": [
+      {
+        "filename": "uke-fastrpc-notify-check-1.tar.xz",
+        "sha256": "4181b277f27ddaf68eaa8efc56f88ce675958e3c89235b103d2a4d26614d1f5e"
+      },
+      {
+        "filename": "uke-fastrpc-files-1.tar.xz",
+        "sha256": "6947975a7d168ff6fe95d2b40e43f4b4430617f39947ac057cca5fea480b91e7"
+      }
+    ],
+    "source_inputs_unchanged": true,
+    "all_nine_readiness_and_87_file_checks_retained": true
+  },
+  "sdk": {
+    "commit": "d247519650fe5cb16de6c78edaa95bcc4be25073",
+    "url": "https://github.com/qualcomm/fastrpc/archive/v1.0.8/fastrpc-1.0.8.tar.gz",
+    "archive_sha256": "b8582e8d816fd89c0f8348740f682277ca639e22d557808703d7056477ef0f02",
+    "header": "inc/fastrpc_ioctl.h",
+    "header_sha256": "1a8c16290a34d9605120aba1eec87e767f5ac023b535c8ba62ab94f5fe15f9f9",
+    "license": "BSD-3-Clause",
+    "reference_only": true
+  },
+  "kernel": {
+    "commit": "d50d994bffa3c7c6db2d8bc4c5f0c55e3f46b0cd",
+    "cumulative_source": "6719b05e",
+    "url": "https://raw.githubusercontent.com/torvalds/linux/d50d994bffa3c7c6db2d8bc4c5f0c55e3f46b0cd/include/uapi/misc/fastrpc.h",
+    "header_sha256": "d4b65d7045d0fdabb3834db470eab563c6898c3bc00f969edd60e1e045459c9c",
+    "license": "GPL-2.0 WITH Linux-syscall-note",
+    "cumulative_patches_leave_header_unchanged": true,
+    "reference_only": true
+  },
+  "result": {
+    "native_revision": 101,
+    "source_only": true,
+    "native_qualified": false,
+    "source_abi_assertions": 82,
+    "session_cases": 8,
+    "ioctl_syscalls_denied": true,
+    "new_runtime_packages": 0,
+    "provider_transition": false,
+    "physical_acceptance": false,
+    "full_kernel_reserved": false
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/src/fastrpc-session.cpp",
+      "sha256": "fcb04cbda50413154c1d121a22ba21132940fcb4d7be3c2e1310b2cba5218f4c"
+    },
+    {
+      "path": "uke-control/src/fastrpc-notify.cpp",
+      "sha256": "96e80d72f242b34d7987cfc60f3bb27e04a6f4f2e45fb240474133fa97e759f0"
+    },
+    {
+      "path": "uke-control/tests/fastrpc-session.cpp",
+      "sha256": "a94119c8a4211d09f160c2fcab4db99a96ab3f3a5fd6cfeab2b898dc91e23323"
+    },
+    {
+      "path": "uke-control/tests/fastrpc-session-mocks.cpp",
+      "sha256": "ff106cc5cd380fd751b711e34b5d27839f4b6a491b0aebf772a9682f200c2889"
+    },
+    {
+      "path": "uke-control/tests/fastrpc-session-abi.cpp",
+      "sha256": "77a97faf3ab7dc0540965c90317fa2699219382790389eefc368f54170b1b4b3"
+    },
+    {
+      "path": "uke-control/tests/fastrpc-session-test.sh",
+      "sha256": "d7f8ce028bc07eab325df7b4bda5780b193450f07153c591f4e50364b8be9d53"
+    },
+    {
+      "path": "uke-control/packaging/fold-fastrpc-session-spec.mjs",
+      "sha256": "ee1236cd2dc82e584a823179c51544b5f49adcba0cf4d3267af55030857cd94b"
+    },
+    {
+      "path": "uke-control/packaging/copr-fastrpc-session-check.sh",
+      "sha256": "16c3863c1ad5d51a9ebc53ae80da75bce957f11fd181283a0e0b6cd4bc7b0ca8"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-SESSION.md",
+      "sha256": "0715e4856953383896d4ccd0aed4ff7ecb17a4e9b2d343557921ad7f10145907"
+    }
+  ]
+}
