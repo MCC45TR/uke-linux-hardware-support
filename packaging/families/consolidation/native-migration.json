@@ -50,7 +50,7 @@
       "original_packages": [
         "upower"
       ],
-      "remaining_work": "Control217r3 now owns unchanged battery/offline payloads and current charge helper. Native fixtures, signed source/data/32ELF parity and actual DNF upgrade/fresh/reinstall/archive rollback pass; old activation/preferences retained. Retire the redundant source producer after refreshed repository absence. Native event-only protection and physical charger-boot/electrical acceptance remain open.",
+      "remaining_work": "Control217r3 owns unchanged battery/offline payloads and current charge helper. Native fixtures,signed source/data/32ELF parity and actual DNF upgrade/fresh/reinstall/archive rollback pass with activation/preferences retained. Producer3272002 retired;refreshed metadata excludes its standalone outputs. Native event-only protection and physical charger-boot/electrical acceptance remain open.",
       "retirement_eligible": false
     },
     {
@@ -177,7 +177,7 @@
       ],
       "destination": "control",
       "original_packages": [],
-      "remaining_work": "Retain package/update/rollback, session preferences and necessary event/demand integration. Migrate hardware protocols to kernel/DT; healthy idle waits on notifications. Qualified217r2 is installed and its two-second protection observation is not fully event driven.",
+      "remaining_work": "Control217r3 is installed and provides the unchanged battery/offline/current charge integration. Retain package/update/rollback,session preferences and event/demand integration. Complete native hardware protocols and event-only protection;physical acceptance remains open.",
       "retirement_eligible": false
     },
     {
@@ -261,7 +261,7 @@
       ],
       "destination": "firmware",
       "original_packages": [],
-      "remaining_work": "Existing firmware15 owns the byte-exact generic preset,licenses/provenance and noreplace flag. Signed isolated DNF ownership upgrade/rollback preserves a synthetic local modification;actual device upgrade/reinstall/archive rollback and all227 payload files pass. Retire redundant source producer after dependency/repository closure. Physical playback/protection acceptance and distribution firmware adoption remain open.",
+      "remaining_work": "Existing firmware15 owns the byte-exact generic preset,licenses/provenance and noreplace flag. Signed isolated DNF ownership upgrade/rollback preserves a synthetic local modification;actual device upgrade/reinstall/archive rollback and all227 files pass. Producer3266596 retired with refreshed repository absence. Physical playback/protection acceptance and distribution firmware adoption remain open.",
       "retirement_eligible": false
     },
     {

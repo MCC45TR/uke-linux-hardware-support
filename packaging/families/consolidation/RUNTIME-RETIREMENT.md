@@ -26,3 +26,21 @@ installed test/debug RPMs; its build and repository cleanup are separate gates.
 
 These ownership and solver results do not qualify physical audio, gain243,
 stationary closed-cover startup or native sensor heading. Gain223 remains.
+
+Control217r3/COPR11308566 was subsequently installed through the configured
+repository. All52 parent source files,197 data files,32 ELF interfaces/libraries/
+loadable code sections,SELinux CIL and all file ownership/flags are retained.
+Observer/offline services retain their inactive disabled/static states. Fresh,
+reinstall and archived217r2/battery7 rollback resolve. Firmware15/COPR11309337
+also retains all227 parent data/license files and the generic preset's noreplace
+flag;isolated signed DNF upgrade/rollback preserves a synthetic local edit.
+Actual device upgrade/reinstall/archive rollback and raw boot checks pass.
+
+The battery and speaker-firmware producers3272002/3266596 are retired with
+exact GET404 and refreshed standalone-output absence. Existing Control and
+firmware producers use qualified source workers with successful-NVR refusal.
+A fresh Core21/Control217r3/firmware15 solve excludes all five obsolete provider
+names. Hardware source contracts43081867981 and the complete30-producer/
+31-installed-name inventory pass without unknown entries. Device names fell
+36 to31;producer definitions33 to30. Required original-provider and hardware
+parity work remains open. Current kernel23/A,rollback21/B and gain223 remain.
