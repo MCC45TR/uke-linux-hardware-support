@@ -4,6 +4,7 @@ set -Eeuo pipefail
 name=${1:?package}
 top=${2:?RPM topdir}
 project=${3:?repository root}
+bash "$project/../packaging/families/host/check-source-retirement.sh" "$name"
 profile=$(jq -ce --arg name "$name" '.packages[] | select(.name==$name)' "$project/manifests/native-runtime.json")
 version=$(jq -er .version <<< "$profile")
 release=$(jq -er .release <<< "$profile")

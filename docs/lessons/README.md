@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-NATIVE-PACKAGES-20261111: distinguish ownership coverage from retirement](2026-11-11-native-package-migration.md)
+
 - [UKE-BOOT-STATUS-20261104: distinguish running, selected and accepted kernels](2026-11-04-update-slot-status.md)
 
 - [UKE-CHANNEL-POLICY-20261104: separate upgrades from exact version synchronization](2026-11-04-channel-policy.md)

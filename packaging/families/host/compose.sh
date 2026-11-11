@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Compose complete source recipes into a source family; no binary repackaging.
 set -Eeuo pipefail
+source_policy_root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
+if [[ -n ${SOURCE_PACKAGE:-} ]]; then
+    bash "$source_policy_root/packaging/families/host/check-source-retirement.sh" "$SOURCE_PACKAGE"
+fi
 case ${SOURCE_PACKAGE:-} in
     pipewire|uke-pipewire|uke-pipewire-*)
         printf '%s\n' 'Retired PipeWire fork: use original Fedora packages and Core21 migration.' >&2
@@ -39,6 +43,18 @@ if [[ $family == uke-control || $family =~ ^uke-(meta|power|sensor|audio|video|d
 catalog=packaging/families/families.json
 if [[ $integration == true ]]; then catalog=packaging/families/integrations.json; fi
 profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' "$catalog")
+# Check frozen/umbrella inputs before downloads, local source generation or
+# output creation. SOURCE_PACKAGE alone does not cover archived children.
+if [[ $integration == true ]]; then
+    while IFS= read -r source_key; do
+        bash "$root/packaging/families/host/check-source-retirement.sh" "$source_key"
+    done < <(jq -r '.sources[].name' <<<"$profile")
+elif [[ -z $standalone ]]; then
+    while IFS= read -r source_key; do
+        bash "$root/packaging/families/host/check-source-retirement.sh" "$source_key"
+    done < <(jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' uke-desktop-packaging/manifests/native-runtime.json;
+        jq -r --arg family "$family" '.[]|select(.family==$family)|.name' packaging/families/source-inputs.json)
+fi
 if [[ $integration == true && $family == uke-control ]];then
     standalone=uke-control
     [[ $(jq -r '.sources[0].name' <<<"$profile") == "$standalone" ]]

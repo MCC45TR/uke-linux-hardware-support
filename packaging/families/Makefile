@@ -3,10 +3,13 @@ SHELL := /bin/bash
 .ONESHELL:
 FAMILY ?= uke-core
 outdir ?= $(CURDIR)/build/$(FAMILY)
-.PHONY: srpm check
+.PHONY: srpm check check-native-migration
 srpm:
 	bash host/compose.sh '$(FAMILY)' '$(outdir)'
+check-native-migration:
+	bash tests/native-migration.sh
 check:
+	bash tests/native-migration.sh
 	bash tests/split-spec.sh
 	bash tests/filelists.sh
 	bash tests/cohort.sh

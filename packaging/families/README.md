@@ -1,5 +1,9 @@
 # COPR source families
 
+11 November 2026: the [native ownership inventory and source guard](consolidation/NATIVE-MIGRATION.md)
+cover all current unstable producers, installed project sources and same-name
+rebuilds. Coverage is separate from functional parity and retirement acceptance.
+
 1 November 2026: `mcc45tr/uke-linux-unstable` uses 23 active source producers,
 with only `fedora-rawhide-aarch64` enabled. The existing
 [`uke-control` source family](consolidation/control-family-results.md) owns

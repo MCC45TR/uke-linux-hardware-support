@@ -5,6 +5,7 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 key=${1:?source package}; output=$(realpath -m "${2:?output directory}")
 [[ $key =~ ^[a-zA-Z0-9+_.-]+$ ]]
+bash "$root/packaging/families/host/check-source-retirement.sh" "$key"
 case $key in
     pipewire|uke-pipewire|uke-pipewire-*)
         printf '%s\n' 'Retired PipeWire fork: use original Fedora packages and Core21 migration.' >&2
