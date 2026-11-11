@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "package_name": "uke-desktop-metas",
+  "output_version": "1.0.0-37",
+  "reference_commit": "5b3750cc727ccb91ebfec4537cb642b4518ae401",
+  "native_source": {
+    "legacy_build": 11240837,
+    "archive_url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.8.1-5.fc46.native.src.rpm",
+    "sha256": "44755d1c58f919bcd76c2a13c6dabefe2cf574464542bfa58fb29309fca5881a",
+    "signing_key": "2204A661EA630A5303500085538797E72A3E4ECA",
+    "source_generation_sha256_is_different": "86a9009506056373ec7f9cfbe4cfeeef189c154fdccd6267433a3f0c8dc6ee9e"
+  },
+  "reference_files": [
+    {
+      "path": "prepare.sh",
+      "sha256": "6ed30feaae9d6c7d05c48fa1529d44a21ddf36082f789f3f0985e995698630a0"
+    },
+    {
+      "path": "input.json",
+      "sha256": "a1e3206c380e21ce629182df838f792bcf8f83797fb511c05d87710bf0763432"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "0c81f236b891e39f2e46d2b06aae584204ab17ebef01c500fc6548d1bfc1b475"
+    }
+  ],
+  "source_assets": [
+    {
+      "path": "packaging/families/host/seed-desktop-metas-source.sh",
+      "sha256": "b2b6aaa6f8d8ba5ec1aaf211d78fc1c04141300e940d85fdb48a47f5f0e7df4f"
+    },
+    {
+      "path": "packaging/families/host/copr-preserved-desktop-metas.sh",
+      "sha256": "ddda542dcd21f62203b20a1e1b384d2e43295a99891a077650ece88b17339193"
+    },
+    {
+      "path": "packaging/families/tests/desktop-meta-source-retention.sh",
+      "sha256": "c0d2fcbb6b1855227bb1cd6db868026a5e34d217e4de5eb281a7d5c01d018ce3"
+    }
+  ],
+  "policy": {
+    "historical_source_code_unchanged": true,
+    "exact_cache_input_retained": true,
+    "successful_nvr_republication_refused": true,
+    "new_runtime_packages": 0,
+    "new_native_build_submitted": false
+  }
+}
