@@ -32,6 +32,13 @@ directly. Shell syntax and whitespace checks passed. No native compilation,
 COPR job, package transaction, kernel staging, firmware SET or hardware test
 was performed in this source change.
 
+Initial full source CI failed in the umbrella fixture's worker-identity check,
+before any production/download stub ran. The container's OS release spelling
+did not satisfy the real native-worker gate. The fixture now models that
+worker identity alongside its existing RPM/tool stubs; production OS admission
+is unchanged. Runs 43044835314, 43044987921 and diagnostic 43045420035 retain
+the failed evidence. This correction does not weaken the retired-source check.
+
 Original UPower's unknown-health and late-capacity behavior and SensorProxy's
 magnetic/lifecycle parity still prevent their retirement. Graphics/video
 userspace compatibility and Qt key sound also remain open. Kernel/DT must not

@@ -69,6 +69,13 @@ case "$*" in
     *) exit 99;;
 esac
 SH
+# Model a native Rawhide worker independently of container VERSION spelling.
+# Production source-worker identity checks remain unchanged.
+cat > "$stage/bin/grep" <<'SH'
+#!/usr/bin/bash
+if [[ ${!#} == /etc/os-release ]]; then exit 0; fi
+exec /usr/bin/grep "$@"
+SH
 for command in make curl rpmbuild; do
     printf '#!/usr/bin/bash\nprintf unexpected-tool > "%s"\nexit 99\n' "$stage/unexpected" > "$stage/bin/$command"
 done
