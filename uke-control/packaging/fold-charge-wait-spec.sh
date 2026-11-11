@@ -23,5 +23,5 @@ let inverse=body;for(const [a,b]of replacements.toReversed()){assert.equal(inver
 inverse=inverse.replaceAll('Release: 2%{?dist}\n','Release: 1%{?dist}\n').replaceAll('2.17.0-2','2.17.0-1');assert.equal(inverse+history,before);
 const entry='* Wed Nov 11 2026 Uke contributors - 2.17.0-2\n- Replace short periodic wait ticks with one interruptible deadline.\n- Preserve the protection interval,helper ownership and persistent settings.\n\n';
 fs.writeFileSync(p,body+history.replace('%changelog\n',()=>'%changelog\n'+entry));
-console.log('Control217r2 recipe: full parent inverse,three existing names and retained checks,units,config and dependencies.');
+console.log('Control217r2 recipe: full parent inverse,three existing names and retained checks,units,config and runtime dependencies; Node.js is build-only.');
 NODE
