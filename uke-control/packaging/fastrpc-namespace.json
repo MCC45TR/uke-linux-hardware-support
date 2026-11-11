@@ -44,11 +44,12 @@
   "source_assets": [
     {
       "path": "uke-control/tests/fastrpc-namespace.sh",
-      "sha256": "0363af457e4599a99eb5e4eafab2a34e1f9a36519a2887be9d10c52b15007ee2"
+      "sha256": "470064a89cf886b939efe9370fffaa6df141acb63e445cd3a20c2f7c26f8a978"
     },
     {
       "path": "uke-control/docs/FASTRPC-NAMESPACE.md",
-      "sha256": "edf836522a79b8bc4268ae29f28a00e66736b77afbcbec02ebff84e633cc724c"
+      "sha256": "63083678e09b32a7a456a2dbf4306cb006e75101bc37b56741f90b9f2965aa4d"
     }
-  ]
+  ],
+  "whitespace_followup": "Only trailing empty lines normalized after the successful target fixture;behavior unchanged."
 }

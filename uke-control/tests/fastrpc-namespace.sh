@@ -64,4 +64,3 @@ trap - EXIT
 printf 'Only public fixture data and a collected transient unit were used;own temporary tree removed.\n' >> "$output/result.log"
 touch "$output/complete"
 cat "$output/result.log"
-

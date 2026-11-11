@@ -47,4 +47,3 @@ not prove a complete provider switch. Next qualify original Fedora library
 file APIs,required library/config paths,boot/autostart ownership,readiness,
 private-RAM registry refresh,SELinux,crash/suspend,and signed DNF rollback.
 Retain the current provider until those gates pass.
-
