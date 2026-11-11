@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Read-only inventory. This tool never installs packages or retires producers.
 set -Eeuo pipefail
+umask 077
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 policy=$root/packaging/families/consolidation/native-migration.json
 case ${1:-} in
