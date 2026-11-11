@@ -14,7 +14,7 @@ for cc in g++ clang++;do
   if [[ $sanitize == 1 ]];then flags+=(-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer);fi
   "$cc" "${flags[@]}" -I"$control/src" "$control/tests/charge-client.cpp" "$control/src/charge-client.cpp" $(pkg-config --cflags --libs libsystemd) -o "$work/client"
   "$work/client"
-  "$cc" "${flags[@]}" "$control/tests/charge-intent.cpp" -o "$work/intent"
+  "$cc" "${flags[@]}" -I"$control/src" "$control/tests/charge-intent.cpp" -o "$work/intent"
   "$work/intent"
   "$cc" "${flags[@]}" "$runtime/tests/charge-control.cpp" "$runtime/src/battery/control.cpp" -o "$work/control"
   "$work/control"
@@ -25,8 +25,8 @@ for cc in g++ clang++;do
  done
 done
 # Compile the actual complete helper and changed Control CLI/library once.
-make -C "$runtime" CXX=clang++ "$runtime/build/uke-charge-control"
-make -C "$control" CXX=clang++ -j4 build/uke-control
+make -C "$runtime" CXX=g++ "$runtime/build/uke-charge-control"
+make -C "$control" CXX=g++ -j4 build/uke-control
 llvm-readelf -h "$runtime/build/uke-charge-control" "$control/build/uke-control" | grep -F AArch64
 llvm-nm -C "$control/build/libuke-control.so.0" > "$work/control-symbols"
 grep -F 'uke::charge_apply_preconfigured_cap()' "$work/control-symbols"

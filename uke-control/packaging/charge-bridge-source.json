@@ -2,7 +2,7 @@
   "schema": 1,
   "date": "2026-11-11",
   "component": "existing Control fixed charge bridge",
-  "source_check_release": 90,
+  "source_check_release": 91,
   "parent_control_source": "886a83a8a6e906fb9798756c5d7aebea0c273b83",
   "parent_control_build": 11300991,
   "actual_helper_parent_build": 11250670,
@@ -82,11 +82,18 @@
     },
     {
       "path": "uke-control/packaging/check-charge-bridge-native.sh",
-      "sha256": "824084e0ec8f1ecc006b0154e0c6f20094a8a12c6e4dbcfd5470bc597cead6bc"
+      "sha256": "4a6a107ec41536c0c4922d3d12832e43a9af866b54eca3127132299923ddb29f"
     },
     {
       "path": "uke-control/packaging/copr-control-charge-check.sh",
       "sha256": "d436219b68559429eaaac8946735a2a24a6df81729e29d631f1207f51f76bf04"
     }
-  ]
+  ],
+  "previous_source_check": {
+    "release": 90,
+    "build": 11303083,
+    "state": "failed",
+    "duration_seconds": 50,
+    "reason": "The new receipt driver omitted the Control header include directory before intent tests; no runtime/device acceptance. Production source unchanged."
+  }
 }
