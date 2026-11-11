@@ -8,7 +8,7 @@ assert.equal(crypto.createHash('sha256').update(before).digest('hex'),'a96361c44
 const split=before.indexOf('%changelog\n');assert(split>=0);let body=before.slice(0,split);const history=before.slice(split);
 assert.equal(body.split('Version: 2.17.0\n').length,4);assert.equal(body.split('Release: 1%{?dist}\n').length,4);assert.equal(body.split('2.17.0-1').length,13);
 body=body.replaceAll('Release: 1%{?dist}\n','Release: 2%{?dist}\n').replaceAll('2.17.0-1','2.17.0-2');
-const header='# UKE_CONTROL_CHARGE_WAIT\nSource51: uke-control-charge-wait.tar.xz\nBuildRequires: nodejs\n';
+const header='# UKE_CONTROL_CHARGE_WAIT\nSource51: uke-control-charge-wait.tar.xz\nBuildRequires: gcc-c++ clang llvm make compiler-rt libasan libubsan nodejs\nBuildRequires: pkgconfig(libsystemd) >= 257\nBuildRequires: pkgconfig(libcrypto) jq\n';
 const prep=`mkdir -p %{_builddir}/uke-control-charge-wait
 tar -xJf %{SOURCE51} -C %{_builddir}/uke-control-charge-wait
 bash %{_builddir}/uke-control-charge-wait/apply-charge-wait.sh %{_builddir}/uke-control-charge/runtime %{_builddir}/uke-control-charge-wait
@@ -23,5 +23,5 @@ let inverse=body;for(const [a,b]of replacements.toReversed()){assert.equal(inver
 inverse=inverse.replaceAll('Release: 2%{?dist}\n','Release: 1%{?dist}\n').replaceAll('2.17.0-2','2.17.0-1');assert.equal(inverse+history,before);
 const entry='* Wed Nov 11 2026 Uke contributors - 2.17.0-2\n- Replace short periodic wait ticks with one interruptible deadline.\n- Preserve the protection interval,helper ownership and persistent settings.\n\n';
 fs.writeFileSync(p,body+history.replace('%changelog\n',()=>'%changelog\n'+entry));
-console.log('Control217r2 recipe: full parent inverse,three existing names and retained checks,units,config and runtime dependencies; Node.js is build-only.');
+console.log('Control217r2 recipe: full parent inverse,three existing names and retained checks,units,config and runtime dependencies; native94 fixture tools are build-only.');
 NODE

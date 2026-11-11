@@ -23,6 +23,8 @@ curl -qfsSL --max-time 90 "$(jq -er .native_admission.receipt_url "$delivery")" 
 printf '%s  %s\n' a03b2cbde163a83e18a52454accaa8910d733e23cf4487ee581b15200b981b50 "$work/proof.rpm" | sha256sum -c --strict --quiet -
 rpm2cpio "$work/proof.rpm" | cpio -i --to-stdout --quiet '*control-wait-source-qualification.json' > "$work/overlay/native94.json"
 jq -e '.source_commit=="088a1ed3a950ee4c04b307fc0405ec5a1ebb62f8" and .parent.build==11303736 and .parent.version=="2.17.0-1" and .source_unit.after_sha256=="c5e1600477f16593ff6b83c68857f076aecae6fb8a04bd72925c1d0ebcf1c678"' "$work/overlay/native94.json" >/dev/null
+curl -qfsSL --max-time 40 https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable:custom:kernel-migration-20261105/srpm-builds/11304610/uke-kernel-migration-check.spec -o "$work/overlay/native94.spec"
+printf '%s  %s\n' edbdfc28cd1e8b88abbea268f4fe1c7495333825c08f5ed5d27056e90e444931 "$work/overlay/native94.spec" | sha256sum -c --strict --quiet -
 for name in charge-wait.patch charge-wait-source.json apply-charge-wait.sh check-charge-wait-native.sh;do
  install -m644 "$owner/packaging/$name" "$work/overlay/$name"
 done
@@ -34,6 +36,9 @@ jq --arg commit "$commit" --arg tree "$tree" '.+{source_commit:$commit,source_tr
 epoch=$(git -C "$workspace" show -s --format=%ct HEAD)
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-control-charge-wait.tar.xz" -C "$work/overlay" .
 bash "$owner/packaging/fold-charge-wait-spec.sh" "$output/uke-control.spec"
+while IFS= read -r requirement;do
+ grep -Fx "$requirement" "$output/uke-control.spec" >/dev/null
+done < <(grep '^BuildRequires:' "$work/overlay/native94.spec")
 [[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-2.fc46 ]]
 rpmspec -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui > "$work/expected"

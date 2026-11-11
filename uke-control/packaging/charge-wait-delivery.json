@@ -25,15 +25,15 @@
     },
     {
       "path": "uke-control/packaging/fold-charge-wait-spec.sh",
-      "sha256": "ce749cc0da3117e593c42e3627506301e0ecc011900ffa5acf94622f3afc68a9"
+      "sha256": "cb1afe3f3f4570b879ba7ca21e0b290c81700bc4ba8d4510e0f721b8a4a7b24c"
     },
     {
       "path": "uke-control/packaging/copr-control-charge-wait-release.sh",
-      "sha256": "7e63e6cb2c0712f7fae78b7d1b81dc70c22e45cc4b714132caf8185a73e2ddce"
+      "sha256": "e4748ca6a1261c7339d3734901dd6dde70e8997c4c5e9ac5b24169e5dc794dba"
     },
     {
       "path": "uke-control/docs/CHARGE-WAIT-DELIVERY.md",
-      "sha256": "bb94f8131407ea3870620f823daff0e938ded241981f21ccfe84ac5e798877e5"
+      "sha256": "2221c12067c94a366df6548915fca3186820619645dad094ab43c44d43401d93"
     }
   ],
   "production_build_qualified": false,
@@ -48,6 +48,13 @@
   "legacy_guard_retired": false,
   "new_runtime_dependencies": 0,
   "new_build_dependencies": [
-    "nodejs"
-  ]
+    "nodejs",
+    "llvm"
+  ],
+  "native_test_build_requires": [
+    "gcc-c++ clang llvm make compiler-rt libasan libubsan nodejs",
+    "pkgconfig(libsystemd) >= 257",
+    "pkgconfig(libcrypto) jq"
+  ],
+  "native_proof_recipe_sha256": "edbdfc28cd1e8b88abbea268f4fe1c7495333825c08f5ed5d27056e90e444931"
 }
