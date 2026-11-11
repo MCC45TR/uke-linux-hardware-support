@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 # COPR source worker only; preserve native100 and the original Fedora SDK.
 set -Eeuo pipefail
-[[ ! -e /etc/senemos/kernel-update.conf && $# == 2 && $2 == 101 ]]
+[[ ! -e /etc/senemos/kernel-update.conf && $# == 2 && $2 == 102 ]]
 output=$(realpath -m "$1")
 [[ ! -e $output && ! -L $output ]]
 owner=$(cd -- "$(dirname -- "$0")/.." && pwd)
@@ -37,11 +37,11 @@ install -m644 "$owner/docs/FASTRPC-SESSION.md" "$bundle/FASTRPC-SESSION.md"
 install -m644 "$contract" "$bundle/fastrpc-session.json"
 commit=$(git -C "$owner" rev-parse HEAD)
 tree=$(git -C "$owner" rev-parse HEAD^{tree})
-jq -n --arg commit "$commit" --arg tree "$tree" '{source_commit:$commit,source_tree:$tree,native_revision:101,scope:"Original Fedora single-session launcher and kernel source ABI;all ioctl syscalls denied in session fixture",new_runtime_packages:0}' > "$bundle/session-source-receipt.json"
+jq -n --arg commit "$commit" --arg tree "$tree" '{source_commit:$commit,source_tree:$tree,native_revision:102,scope:"Original Fedora single-session launcher and kernel source ABI;all ioctl syscalls denied in session fixture",new_runtime_packages:0}' > "$bundle/session-source-receipt.json"
 (cd "$bundle";find . -type f -print0 | sort -z | xargs -0 sha256sum > "$work/seal")
 install -m644 "$work/seal" "$bundle/SHA256SUMS"
 epoch=$(git -C "$owner" show -s --format=%ct HEAD)
 tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner -cJf "$output/uke-fastrpc-session-1.tar.xz" -C "$work/bundle" uke-fastrpc-session-1
 node "$owner/packaging/fold-fastrpc-session-spec.mjs" "$output/uke-kernel-migration-check.spec" "$contract"
-[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-kernel-migration-check.spec") == uke-kernel-migration-check-7.3.3-101.fc46 ]]
-printf 'Native101:exact native100 plus original-library session fixture and source ABI comparison;no Fedora rebuild/runtime delivery.\n'
+[[ $(rpmspec -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-kernel-migration-check.spec") == uke-kernel-migration-check-7.3.3-102.fc46 ]]
+printf 'Native102:exact native100 plus original-library session fixture and source ABI comparison;no Fedora rebuild/runtime delivery.\n'

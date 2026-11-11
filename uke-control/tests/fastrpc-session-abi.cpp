@@ -9,6 +9,7 @@
 
 namespace sdk {
 #include "sdk/fastrpc_ioctl.h"
+constexpr auto poll_mode = FASTRPC_POLL_MODE;
 constexpr auto command_ALLOC_DMA_BUFF = FASTRPC_IOCTL_ALLOC_DMA_BUFF;
 constexpr auto command_FREE_DMA_BUFF = FASTRPC_IOCTL_FREE_DMA_BUFF;
 constexpr auto command_INVOKE = FASTRPC_IOCTL_INVOKE;
@@ -36,8 +37,10 @@ constexpr auto command_GET_DSP_INFO = FASTRPC_IOCTL_GET_DSP_INFO;
 #undef FASTRPC_IOCTL_MEM_UNMAP
 #undef FASTRPC_IOCTL_SET_OPTION
 #undef FASTRPC_IOCTL_GET_DSP_INFO
+#undef FASTRPC_POLL_MODE
 namespace kernel {
 #include "kernel/fastrpc.h"
+constexpr auto poll_mode = FASTRPC_POLL_MODE;
 constexpr auto command_ALLOC_DMA_BUFF = FASTRPC_IOCTL_ALLOC_DMA_BUFF;
 constexpr auto command_FREE_DMA_BUFF = FASTRPC_IOCTL_FREE_DMA_BUFF;
 constexpr auto command_INVOKE = FASTRPC_IOCTL_INVOKE;
@@ -53,6 +56,7 @@ constexpr auto command_SET_OPTION = FASTRPC_IOCTL_SET_OPTION;
 constexpr auto command_GET_DSP_INFO = FASTRPC_IOCTL_GET_DSP_INFO;
 }
 static_assert(sizeof(void *) == 8, "AArch64 LP64 qualification required");
+static_assert(sdk::poll_mode == kernel::poll_mode);
 static_assert(sdk::command_ALLOC_DMA_BUFF == kernel::command_ALLOC_DMA_BUFF);
 static_assert(sdk::command_FREE_DMA_BUFF == kernel::command_FREE_DMA_BUFF);
 static_assert(sdk::command_INVOKE == kernel::command_INVOKE);
@@ -134,4 +138,4 @@ static_assert(offsetof(sdk::fastrpc_ioctl_capability, domain) == offsetof(kernel
 static_assert(offsetof(sdk::fastrpc_ioctl_capability, attribute_id) == offsetof(kernel::fastrpc_ioctl_capability, attribute_id));
 static_assert(offsetof(sdk::fastrpc_ioctl_capability, capability) == offsetof(kernel::fastrpc_ioctl_capability, capability));
 static_assert(offsetof(sdk::fastrpc_ioctl_capability, reserved) == offsetof(kernel::fastrpc_ioctl_capability, reserved));
-int main() { std::puts("Original SDK/kernel FastRPC ABI: 82 LP64/command/layout assertions passed; no device access."); }
+int main() { std::puts("Original SDK/kernel FastRPC ABI: 83 LP64/command/layout assertions passed; no device access."); }

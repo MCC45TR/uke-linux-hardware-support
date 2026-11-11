@@ -39,10 +39,10 @@
     "reference_only": true
   },
   "result": {
-    "native_revision": 101,
+    "native_revision": 102,
     "source_only": true,
     "native_qualified": false,
-    "source_abi_assertions": 82,
+    "source_abi_assertions": 83,
     "session_cases": 8,
     "ioctl_syscalls_denied": true,
     "new_runtime_packages": 0,
@@ -69,7 +69,7 @@
     },
     {
       "path": "uke-control/tests/fastrpc-session-abi.cpp",
-      "sha256": "77a97faf3ab7dc0540965c90317fa2699219382790389eefc368f54170b1b4b3"
+      "sha256": "87ff91632952d74888717dbf60b5fcaf59a351d458f7063094928d9f6788609a"
     },
     {
       "path": "uke-control/tests/fastrpc-session-test.sh",
@@ -77,11 +77,11 @@
     },
     {
       "path": "uke-control/packaging/fold-fastrpc-session-spec.mjs",
-      "sha256": "ee1236cd2dc82e584a823179c51544b5f49adcba0cf4d3267af55030857cd94b"
+      "sha256": "26eb76b36c05326c546eafed9617f8cf636d1b93a1a2403ac8b9ee1f8f1eccfb"
     },
     {
       "path": "uke-control/packaging/copr-fastrpc-session-check.sh",
-      "sha256": "16c3863c1ad5d51a9ebc53ae80da75bce957f11fd181283a0e0b6cd4bc7b0ca8"
+      "sha256": "0251355821c0b48e524eeb01c86df759ddfe1e226c00f7c4250a2a26ab85c9b2"
     },
     {
       "path": "uke-control/docs/FASTRPC-SESSION.md",
