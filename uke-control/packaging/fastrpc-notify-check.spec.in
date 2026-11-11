@@ -1,0 +1,60 @@
+%global debug_package %{nil}
+%global _build_id_links none
+Name: uke-kernel-migration-check
+Version: 7.3.3
+Release: @RELEASE@%{?dist}
+Summary: Original Fedora FastRPC readiness integration qualification
+License: MIT
+URL: https://github.com/MCC45TR/uke-linux-hardware-support
+Source0: uke-fastrpc-notify-check-1.tar.xz
+ExclusiveArch: aarch64
+BuildRequires: gcc-c++ coreutils diffutils binutils jq
+BuildRequires: pkgconfig(libsystemd) glibc-devel
+BuildRequires: fastrpc = 1.0.8-1.fc46
+BuildRequires: fastrpc-devel = 1.0.8-1.fc46
+
+%description
+Retain a native qualification receipt for existing Control session integration.
+The unmodified Fedora listener/stubs run with synthetic remote RPC operations.
+No device code, production configuration or new runtime provider is installed.
+
+%prep
+%setup -q -n uke-fastrpc-notify-check-1
+sha256sum -c --strict --quiet SHA256SUMS
+
+%build
+%set_build_flags
+g++ $CXXFLAGS $LDFLAGS -std=c++20 -Wall -Wextra -Werror -fPIC -shared \
+ -fno-exceptions -fno-rtti -fvisibility=hidden fastrpc-notify.cpp \
+ $(pkg-config --cflags --libs libsystemd) -ldl -o libuke-fastrpc-notify.so
+g++ $CXXFLAGS $LDFLAGS -std=c++20 -Wall -Wextra -Werror \
+ -Wl,--export-dynamic fastrpc-notify-test.cpp -ldl -o fixture
+
+%check
+test ! -e /etc/senemos/kernel-update.conf
+test "$(rpm -q --qf '%%{VERSION}-%%{RELEASE}' fastrpc)" = 1.0.8-1.fc46
+test "$(rpm -q --qf '%%{SHA256HEADER}' fastrpc)" = "$(jq -er .fedora.rpm_header_sha256 fastrpc-notify.json)"
+printf '%%s  %%s\n' "$(jq -er .fedora.listener_elf_sha256 fastrpc-notify.json)" /usr/lib64/libadsp_default_listener.so.1.0.0 | sha256sum -c --strict --quiet -
+rpm -V fastrpc fastrpc-devel
+readelf -h libuke-fastrpc-notify.so | grep -q AArch64
+readelf -d /usr/lib64/libadsp_default_listener.so.1.0.0 > original.dynamic
+! grep -q SYMBOLIC original.dynamic
+objdump -d /usr/lib64/libadsp_default_listener.so.1.0.0 > original.disassembly
+grep -Eq 'bl[[:space:]]+[0-9a-f]+ <adsp_default_listener_register@plt>' original.disassembly
+grep -Eq 'bl[[:space:]]+[0-9a-f]+ <adsp_default_listener1_register@plt>' original.disassembly
+bash fastrpc-notify-test.sh "$PWD/fixture" "$PWD/libuke-fastrpc-notify.so"
+rpm -V fastrpc fastrpc-devel
+printf 'Original Fedora package/header/ELF and both PLT calls retained;RTLD_LOCAL native readiness qualification passed.\n' > qualification.txt
+
+%install
+install -Dm644 qualification.txt %{buildroot}%{_datadir}/uke-kernel-migration-check/fastrpc-notify.txt
+
+%files
+%license LICENSE
+%doc FASTRPC-NOTIFY.md source-receipt.json
+%{_datadir}/uke-kernel-migration-check/fastrpc-notify.txt
+
+%changelog
+* Thu Nov 12 2026 Uke contributors - 7.3.3-@RELEASE@
+- Qualify registered-listener notification with original Fedora FastRPC.
+- Retain real listener/stubs and synthetic RPC-only execution in COPR.
