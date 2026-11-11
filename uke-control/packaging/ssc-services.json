@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "control": {
+    "build": 11310066,
+    "nvr": "uke-control-2.17.0-4",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.17.0-4.src.rpm",
+    "srpm_sha256": "75dce114e6943700082fe94718aa63de7345032c50b1c5ed54ed5686b42213aa",
+    "spec_sha256": "427a6f61da15c3b7b9d1ead0dca2204c7d8b6fa7f9e26dfe635d21099e1679c3",
+    "non_spec_source_files": 56
+  },
+  "ssc": {
+    "build": 11268501,
+    "source_commit": "3ebef7605313608fe9994192d654bff24ce4eceb",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-sensor-integration-1.0.0-6.src.rpm",
+    "srpm_sha256": "f773367637700cbac68ad1ccfa0babebd07fea6da27c7230e5cd6a5e4e3654b1",
+    "source_archive_sha256": "f5839b7b6f37518b1ca47ac042e8fde1c2cee6228abf23400e4fcb2bb2154fea",
+    "runtime_nvr": "uke-ssc-fileservice-2026.09.21-32.fc46.aarch64",
+    "runtime_sha256": "ebcd602f604c4d16b62276326fe9f94470e7072c2f353f3ba080ca024133942d",
+    "upstream": "linux-msm/hexagonrpc",
+    "upstream_commit": "510c87e5c89026ee2bd2034776fc4d15994f353d",
+    "license": "GPL-3.0-or-later",
+    "legacy_protocol_delta_unchanged": true,
+    "inputs": [
+      {
+        "filename": "0001-select-sequence-type.patch",
+        "sha256": "f4a2b595c19d2619190491012b1b97528cd4ee1d8f66d43ac40726c26889004d"
+      },
+      {
+        "filename": "0002-verbose-native-u64.patch",
+        "sha256": "e3210ab47dda7dc283f9c3fb0b60d88697b678f67ae6581b6a2dc3a794548e5f"
+      },
+      {
+        "filename": "0003-map-oem-odm-sensor-config.patch",
+        "sha256": "109c840be6c9ec15b763165f6e0024e91e00cea177141e34d38b2989d959c721"
+      },
+      {
+        "filename": "0004-reject-mapped-symlinks.patch",
+        "sha256": "90d2f5d0e374da8c81dcc7a184cb117f7e89762f185543ce6a78b2c8dfa87565"
+      },
+      {
+        "filename": "0005-reject-incomplete-shell-images.patch",
+        "sha256": "def1772137e0641487144a4605fb77141a014454329bb1bc7fbaaace807f1083"
+      },
+      {
+        "filename": "0006-notify-listener-readiness.patch",
+        "sha256": "99f4b5a49220f2a07766c6748084ed3839577875fc07eb7f3d43df96b422c3ba"
+      },
+      {
+        "filename": "70-uke-ssc.rules",
+        "sha256": "7a530b21d6dd45d029f3bde94e28e1abb739ce2bc7f091b0f91343eb5479ba81"
+      },
+      {
+        "filename": "hexagon-readiness.c",
+        "sha256": "80e4dc6825a0b4cad676d48664421d7fa93f5b9105e63506c7125e81cf983aa1"
+      },
+      {
+        "filename": "hexagon-registry.cpp",
+        "sha256": "bda0bba17fba17c77609b7a161478f3427adb734638df62ad62db36950f846a5"
+      },
+      {
+        "filename": "hexagon-shell.c",
+        "sha256": "46c5109311e7ced1cd61afaf707758e1eb89f86fd7027b8f56faa94d1f4795d8"
+      },
+      {
+        "filename": "hexagonrpc-510c87e5.tar.gz",
+        "sha256": "ed7b0e704a5e8c20b77b013b4b34f3cddbe41d4cf546edc73f029501f7ebdec5"
+      },
+      {
+        "filename": "iio-ssc-order.conf",
+        "sha256": "9b61a6b303df145fd4155afa2ad2ce0b400716178e273a806a5f0e6bfcb27121"
+      },
+      {
+        "filename": "ssc-cache-test.cpp",
+        "sha256": "1f0a06bfa6d8b95dcf8c801d6922de1e74792d10e5001ace7402237ee0f7feb3"
+      },
+      {
+        "filename": "ssc-cache.cpp",
+        "sha256": "b135389fb30f54ea632db23f6bb1a0a5bd99cb399e19fd74725a791c68bf0afc"
+      },
+      {
+        "filename": "uke-ssc-cache.service",
+        "sha256": "9bc7c6ce353244a6d19097dbfc0e190897eee476dea3599b34e14774d1383615"
+      },
+      {
+        "filename": "uke-ssc-fileservice.spec",
+        "sha256": "f939046153955ef0b4eafaeaf0a9a4c6589688ffb859113ad8465e12c775371f"
+      },
+      {
+        "filename": "uke-ssc-root.service",
+        "sha256": "9a9a29a4a6b86508547b07ba3df00cbe7950354dfedaf0c551e94f8246cf700f"
+      },
+      {
+        "filename": "uke-ssc-sensors.service",
+        "sha256": "a6de8fa955893d5db5cc091d698377e3658d9a3f5900d0115ca3f84816403050"
+      }
+    ]
+  },
+  "native": {
+    "build": 11310532,
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-kernel-migration-check-7.3.3-102.src.rpm",
+    "srpm_sha256": "5e2ef533e0bd00e85d23b434a74cfb3bda77547374266501503dec6a5d67bc19",
+    "spec_sha256": "019e3f7a8a51adaa70978f8376b737fc541d395324a4c534f888885dd70fa7db",
+    "archives": [
+      {
+        "filename": "uke-fastrpc-notify-check-1.tar.xz",
+        "sha256": "4181b277f27ddaf68eaa8efc56f88ce675958e3c89235b103d2a4d26614d1f5e"
+      },
+      {
+        "filename": "uke-fastrpc-files-1.tar.xz",
+        "sha256": "6947975a7d168ff6fe95d2b40e43f4b4430617f39947ac057cca5fea480b91e7"
+      },
+      {
+        "filename": "uke-fastrpc-session-1.tar.xz",
+        "sha256": "2cb28c73e821871a07031a706375b7d173d40f8cd0d6b1294839287d2ab31da7"
+      }
+    ],
+    "all_qualification_checks_retained": true
+  },
+  "result": {
+    "version": "2.17.0-5",
+    "runtime_names": [
+      "uke-control",
+      "uke-control-client-devel",
+      "uke-control-tui"
+    ],
+    "new_runtime_packages": 0,
+    "legacy_virtual_version": "2026.09.21-33",
+    "source_only": true,
+    "native_qualified": false,
+    "delivered": false,
+    "original_fedora_path_selected": false,
+    "ssc_producer_retired": false,
+    "spec_sha256": "449683c6770df32a37b9824da07cfc07c7bfbc223b9816d4996d47a31fbae962"
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/packaging/copr-control-ssc-services.sh",
+      "sha256": "e54b45ba19adbb5a3414e30d4703b47d88519abcabfd40f04e4e166245c4d3fd"
+    },
+    {
+      "path": "uke-control/packaging/prepare-ssc-sources.sh",
+      "sha256": "3bc35842ffd35d95ec2f2314351a34fc587ae59a95cbb55f344750782d1f1a4a"
+    },
+    {
+      "path": "uke-control/packaging/fold-ssc-spec.mjs",
+      "sha256": "d5eea7c8dbe333d02a397847cc94889b55904b65c7e6c5e21c6a7b6e836326c0"
+    },
+    {
+      "path": "uke-control/packaging/ssc-recipe.json",
+      "sha256": "3d4a00a6883e075f661bd3c597bdcfd2f1fe55999c917354cbb733e488f1c0a6"
+    },
+    {
+      "path": "uke-control/packaging/ssc-unit-state.sh",
+      "sha256": "7e531d5a07acca358eae1b1e0b344c8416ca50b1b0347b2dec6f42a42927e70b"
+    },
+    {
+      "path": "uke-control/tests/ssc-unit-state.sh",
+      "sha256": "3505af8acfd29d0a94721475e274602809db325f606364ca97db7a55d0d5ca22"
+    },
+    {
+      "path": "uke-control/docs/SSC-SERVICES.md",
+      "sha256": "a096a41d738e3cc98fabcc02996e80689b83bad4e110950a6199e36ea7c98277"
+    }
+  ]
+}
