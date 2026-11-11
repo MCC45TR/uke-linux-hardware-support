@@ -61,8 +61,9 @@ Result enable_preconfigured_cap() {
     return execute({helper, "enable-cap80"}, 12, 65536);
 }
 Result enable_moisture() { return execute({helper,"moisture-enable"},20,65536); }
-Result apply_preconfigured_cap() {
+Result apply_preconfigured_cap() { return apply_preconfigured_cap(false); }
+Result apply_preconfigured_cap(bool online_reduction) {
     // One bounded request; preserve unknown outcomes and never replay it.
-    return execute({helper, "apply-cap80"}, 12, 65536);
+    return execute({helper, online_reduction ? "apply-cap80-online" : "apply-cap80"}, 12, 65536);
 }
 }

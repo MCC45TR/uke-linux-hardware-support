@@ -56,6 +56,17 @@ std::string read_file(const fs::path &path) {
     try { auto data = read_fd(fd, "file"); close(fd); return data; }
     catch (...) { close(fd); throw; }
 }
+template<class Writer>
+void sysfs_store_once(const std::string &value, Writer writer) {
+    // A failed store may have reached firmware. Preserve errno, never replay.
+    errno = 0;
+    const auto written = writer(value.data(), value.size());
+    const int error = errno;
+    if (written < 0)
+        throw std::runtime_error("control_store_failed_no_retry_errno_" + std::to_string(error));
+    if (written != static_cast<ssize_t>(value.size()))
+        throw std::runtime_error("control_store_short_no_retry_bytes_" + std::to_string(written));
+}
 class Sysfs final : public Io {
     int directory_ = -1;
 public:
@@ -90,17 +101,18 @@ public:
     void write(const std::string &name, const std::string &value) override {
         if (name != "uke_charge_lease" && name != "uke_charge_thresholds" && name != "uke_charge_refresh" &&
             name != "uke_charge_enable_existing_cap" && name != "uke_charge_apply_existing_cap" &&
+            name != "uke_charge_apply_existing_cap_online" &&
             name != "uke_charge_current_profile" && name != "uke_charge_current_ua" && name != "uke_charge_moisture_enable" && name != "uke_charge_wet_guard")
             fail("control_attribute_forbidden");
         const int fd = openat(directory_, name.c_str(), O_WRONLY | O_CLOEXEC | O_NOFOLLOW);
-        if (fd < 0) fail("control_attribute_not_writable");
-        // Never retry a failed/interrupted/short sysfs store: delivery may be ambiguous.
-        const auto n = ::write(fd, value.data(), value.size());
-        const int saved_errno = errno; close(fd);
-        if (n != static_cast<ssize_t>(value.size())) {
-            errno = saved_errno;
-            fail("control_store_failed_no_retry");
+        if (fd < 0) {
+            const int error = errno;
+            throw std::runtime_error("control_attribute_not_writable_errno_" + std::to_string(error));
         }
+        try {
+            sysfs_store_once(value, [fd](const char *data, size_t size) { return ::write(fd, data, size); });
+            close(fd);
+        } catch (...) { close(fd); throw; }
     }
 };
 class Lock {
@@ -282,10 +294,11 @@ int main(int argc, char **argv) {
     const bool settings_query = argc == 2 && std::strcmp(argv[1], "settings") == 0;
     const bool protection_query = argc == 2 && std::strcmp(argv[1], "protection") == 0;
     const bool preconfigured_cap = argc == 2 && std::strcmp(argv[1], "enable-cap80") == 0;
-    const bool apply_cap = argc == 2 && std::strcmp(argv[1], "apply-cap80") == 0;
+    const bool apply_online_cap = argc == 2 && std::strcmp(argv[1], "apply-cap80-online") == 0;
+    const bool apply_cap = apply_online_cap || (argc == 2 && std::strcmp(argv[1], "apply-cap80") == 0);
     try {
         if (argc == 2 && std::string(argv[1]) == "capabilities") {
-            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"moisture_diagnostic_implemented\":true,\"moisture_enable_only_implemented\":true,\"wet_input_inhibit_implemented\":true,\"external_thermal_guard_implemented\":true,\"protection_qualification_required\":true,\"wet_response_qualified\":false,\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"settings_query_implemented\":true,\"preconfigured_cap_enable_implemented\":true,\"preconfigured_cap_apply_implemented\":true,\"preconfigured_cap_application_effect_qualified\":false,\"preconfigured_cap_scope\":\"offline_existing_70_80_only\",\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_charge_control_capabilities\",\"moisture_diagnostic_implemented\":true,\"moisture_enable_only_implemented\":true,\"wet_input_inhibit_implemented\":true,\"external_thermal_guard_implemented\":true,\"protection_qualification_required\":true,\"wet_response_qualified\":false,\"threshold_transport_implemented\":true,\"current_transport_implemented\":true,\"automatic_policy_implemented\":true,\"admission_preflight_implemented\":true,\"settings_query_implemented\":true,\"preconfigured_cap_enable_implemented\":true,\"preconfigured_cap_apply_implemented\":true,\"preconfigured_cap_online_apply_implemented\":true,\"online_cap_requires_matching_kernel\":true,\"preconfigured_cap_application_effect_qualified\":false,\"preconfigured_cap_scope\":\"offline_existing_70_80_only\",\"qualification_required\":true,\"active_qualification\":null,\"voltage_writer\":false,\"physical_charge_stopped\":null}\n";
             return 0;
         }
         if (argc == 2 && std::string(argv[1]) == "--help") {
@@ -295,11 +308,12 @@ int main(int argc, char **argv) {
                 << "uke-charge-control slow | automatic | profile-restore\n"
                 << "uke-charge-control identity-review REVIEW_FILE  (explicit expiring review; no charging SET)\n"
                 << "uke-charge-control protocol-inspect  (root; default-off development ABI; two firmware GETs, no SET)\n"
-                << "uke-charge-control enable-cap80 | apply-cap80\n"
+                << "uke-charge-control enable-cap80 | apply-cap80 | apply-cap80-online\n"
                 << "uke-charge-control moisture-enable  (qualified profile, offline, enable-only)\n"
                 << "settings requires root and performs three diagnostic GETs without control permission.\n"
                 << "enable-cap80 requires root and the matched offline-only existing70/80-cap interface.\n"
                 << "apply-cap80 sends the already enabled70/80 target once, offline; firmware receipt is not charge-stop proof.\n"
+                << "apply-cap80-online requires the matching kernel, online input and SOC at/above80; one fixed request, no retry.\n"
                 << "General threshold/current actions require root, a reviewed control profile and matching per-boot evidence.\n"
                 << "Positive FCC only; CV remains firmware-owned. No PD negotiation or electrical cutoff.\n";
             return 0;
@@ -308,7 +322,7 @@ int main(int argc, char **argv) {
         const std::string command(argv[1]);
         if ((command == "pair" && argc != 4) || (command == "identity-review" && argc != 3) ||
             (command != "pair" && command != "identity-review" && argc != 2)) fail("control_arguments_invalid");
-        if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "protection" && command != "protection-status" && command != "protection-serve" && command != "moisture-enable" && command != "enable-cap80" && command != "apply-cap80" && command != "verify" && command != "cap80" && command != "band80-90" &&
+        if (command != "status" && command != "admission" && command != "protocols" && command != "settings" && command != "protection" && command != "protection-status" && command != "protection-serve" && command != "moisture-enable" && command != "enable-cap80" && command != "apply-cap80" && command != "apply-cap80-online" && command != "verify" && command != "cap80" && command != "band80-90" &&
             command != "pair" && command != "serve" && command != "threshold-off" &&
             command != "slow" && command != "automatic" && command != "profile-restore" &&
             command != "identity-review" && command != "protocol-inspect") fail("control_command_unsupported");
@@ -399,14 +413,16 @@ int main(int argc, char **argv) {
         if (apply_cap) {
             Lock owner;
             const auto before = context(*io);
-            request_preconfigured_cap_application(*io, before);
+            request_preconfigured_cap_application(*io, before, apply_online_cap);
             const auto after = context(*io);
             if (!preconfigured_cap_context_matches(before, after)) fail("preconfigured_cap_context_changed");
-            std::cout << "{\"schema_version\":1,\"kind\":\"uke_preconfigured_charge_cap\",\"operation\":\"apply_existing_70_80_once\""
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_preconfigured_charge_cap\",\"operation\":\""
+                << (apply_online_cap ? "apply_existing_70_80_online_once" : "apply_existing_70_80_once") << "\""
                 << ",\"request_sent\":true,\"firmware_reply_received\":true,\"configuration_readback_verified\":true"
                 << ",\"reported_enabled\":true,\"reported_start_percent\":70,\"reported_end_percent\":80"
                 << ",\"applied\":null,\"control_outcome_unknown\":true,\"general_control_admitted\":false"
-                << ",\"input_was_offline\":true,\"persistent_policy\":false,\"automatic_retry\":false"
+                << ",\"input_was_offline\":" << (apply_online_cap ? "false" : "true")
+                << ",\"persistent_policy\":false,\"automatic_retry\":false"
                 << ",\"physical_charge_stopped\":null,\"battery_bypass_qualified\":false}\n";
             return 0;
         }
@@ -518,7 +534,8 @@ int main(int argc, char **argv) {
             return 69;
         }
         if (apply_cap) {
-            std::cout << "{\"schema_version\":1,\"kind\":\"uke_preconfigured_charge_cap\",\"operation\":\"apply_existing_70_80_once\",\"reason\":\""
+            std::cout << "{\"schema_version\":1,\"kind\":\"uke_preconfigured_charge_cap\",\"operation\":\""
+                << (apply_online_cap ? "apply_existing_70_80_online_once" : "apply_existing_70_80_once") << "\",\"reason\":\""
                 << identifier(e.what()) << "\",\"request_sent\":null,\"firmware_reply_received\":null,\"applied\":null"
                 << ",\"control_outcome_unknown\":true,\"general_control_admitted\":false,\"automatic_retry\":false"
                 << ",\"physical_charge_stopped\":null,\"battery_bypass_qualified\":false}\n";

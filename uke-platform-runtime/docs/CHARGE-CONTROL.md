@@ -466,3 +466,13 @@ for every case; do not convert a missing case into a pass. Use a controlled rig
 for fault injection. Never wet, short or deliberately overheat the tablet.
 Factory reset, bypass, all-night control, individual-cell health, peak45W and
 exact QC/MI negotiation remain unqualified until their separate evidence exists.
+
+### Online fixed-cap source follow-up, 11 November 2026
+
+The existing Control package can request `apply-cap80-online` through the
+matched full19-or-later root-only endpoint. Only the existing enabled70/80
+band is eligible; fresh source/SOC/health/fault checks remain in the kernel.
+No arbitrary current/CV writer, retry, fallback or resident policy is added.
+The old offline command is unchanged. Sysfs-store errors now retain errno,
+and short stores report bytes. This is source preparation, not electrical
+cutoff, autonomous persistence or package/device acceptance.

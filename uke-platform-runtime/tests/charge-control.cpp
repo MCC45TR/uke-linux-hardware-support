@@ -55,7 +55,7 @@ public:
         if (name == "uke_charge_current_profile") { value.current_admitted = true; return; }
         if (name == "uke_charge_refresh") return;
         if (delivery_error) throw std::runtime_error("synthetic_delivery_ambiguous");
-        if (name == "uke_charge_apply_existing_cap") { assert(record == "1\n"); return; }
+        if (name == "uke_charge_apply_existing_cap" || name == "uke_charge_apply_existing_cap_online") { assert(record == "1\n"); return; }
         if (name == "uke_charge_current_ua") {
             if (!mismatch) value.current_ua = uint32_t(std::stoul(record));
         } else if (name == "uke_charge_thresholds") {
@@ -135,10 +135,16 @@ int main() {
         Fake io;
         request_preconfigured_cap_application(io, before);
         assert(io.writes == std::vector<std::string>{"uke_charge_apply_existing_cap"});
+        io.writes.clear();
+        request_preconfigured_cap_application(io, before, true);
+        assert(io.writes == std::vector<std::string>{"uke_charge_apply_existing_cap_online"});
         io.writes.clear(); io.delivery_error = true;
         rejects([&] { request_preconfigured_cap_application(io, before); });
         // Ambiguous delivery produces exactly one write, with no retry/undo/lease.
         assert(io.writes == std::vector<std::string>{"uke_charge_apply_existing_cap"});
+        io.writes.clear();
+        rejects([&] { request_preconfigured_cap_application(io, before, true); });
+        assert(io.writes == std::vector<std::string>{"uke_charge_apply_existing_cap_online"});
         for(unsigned fault=0;fault<16;fault++) {
             auto changed=after;
             if(fault==0)changed.state.enabled=false;
@@ -174,6 +180,7 @@ int main() {
             if(fault==10)invalid.kernel_release.clear();
             io.writes.clear();
             rejects([&] { request_preconfigured_cap_application(io, invalid); });
+            rejects([&] { request_preconfigured_cap_application(io, invalid, true); });
             assert(io.writes.empty());
         }
     }

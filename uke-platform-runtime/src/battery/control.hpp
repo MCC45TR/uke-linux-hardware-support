@@ -109,7 +109,7 @@ public:
     virtual void write(const std::string &attribute, const std::string &value) = 0;
 };
 // A fixed diagnostic request. No retry, lease, fallback or actuator-success claim.
-void request_preconfigured_cap_application(Io &io, const Context &before);
+void request_preconfigured_cap_application(Io &io, const Context &before, bool online_reduction = false);
 class Session {
     Io &io_;
     Profile profile_;
