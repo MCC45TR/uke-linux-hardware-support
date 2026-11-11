@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "control": {
+    "build": 11305547,
+    "nvr": "uke-control-2.17.0-2",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11305547/uke-control-2.17.0-2.src.rpm",
+    "srpm_sha256": "6d1bebe33fbfaa280a5166e5501ffd8c6d8eb85f382359b888ac97494f764711",
+    "spec_sha256": "79c486669adb6d1feae8a4781940f86367f91c650bf4f99a7eb6b7947fe010df",
+    "non_spec_source_files": 52
+  },
+  "battery": {
+    "build": 11250670,
+    "nvr": "uke-battery-observer-1.4.1-7",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-battery-observer-1.4.1-7.src.rpm",
+    "srpm_sha256": "10cb0a2cf803a98443bf24eeabc2cae249bc8e6436dae3068b22f6d5b49b3de2",
+    "source_archive_sha256": "ed9eddf7410203535c8145d740fcd2be6cb3be09609742064c691f9c22aad8f9",
+    "sysusers_sha256": "ffeb97031bf8fb2833fb6e3095fd1ffcb18217980f75dda5ce1205b7b6dc4ada",
+    "original_source_and_native_tests_retained": true,
+    "recovery_public_readback_verified": true
+  },
+  "result": {
+    "version": "2.17.0-3",
+    "spec_sha256": "5bfcffa9cee2eb3164e985f44bb26cc8fc7259a8787ae85f50b4df50796e56af",
+    "runtime_names": [
+      "uke-control",
+      "uke-control-client-devel",
+      "uke-control-tui"
+    ],
+    "folded_packages": [
+      "uke-battery-observer",
+      "uke-offline-charge"
+    ],
+    "new_runtime_packages": 0,
+    "current_charge_helper_unchanged": true,
+    "battery_demand_wait_unchanged": true,
+    "offline_ui_never_started_by_migration": true,
+    "native_qualified": false,
+    "signed_payload_parity": false,
+    "dnf_installed": false,
+    "producer_retired": false
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/packaging/fold-battery-spec.mjs",
+      "sha256": "ff55b4f6cc761c2c85de845c5ad691cc4b2285e1fc27874e210fc833e69b20e4"
+    },
+    {
+      "path": "uke-control/packaging/battery-unit-state.sh",
+      "sha256": "d6f68d802b51fa659ef79421f0ecb22d95fb73962a005674f1d629454e718f88"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-battery-services.sh",
+      "sha256": "c622379aad44702acf082c3b0e6c640185e6ea3224087bd7eb79546ce6977d5f"
+    },
+    {
+      "path": "uke-control/tests/battery-unit-state.sh",
+      "sha256": "399e98d13646681d394d805960b3c5c2bd6b3435bae300ab0de5312b9fc005ee"
+    },
+    {
+      "path": "uke-control/docs/BATTERY-SERVICES.md",
+      "sha256": "d27c96cb067d2fc9c5f1036970356fd1fc74523a1f2cfc57bb2439e38d18d469"
+    }
+  ]
+}
