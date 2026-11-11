@@ -1,0 +1,133 @@
+diff --git a/uke-control/src/backend.cpp b/uke-control/src/backend.cpp
+index aafaaf30..68f7f6ad 100644
+--- a/uke-control/src/backend.cpp
++++ b/uke-control/src/backend.cpp
+@@ -75,7 +75,8 @@ struct Lock {
+     }
+ };
+ Result charge_enable_preconfigured_cap() {root();board();Lock lock;charge_helper();remember_qualified_charge("enable-cap80");return charge::enable_preconfigured_cap();}
+-Result charge_apply_preconfigured_cap() {root();board();Lock lock;charge_helper();remember_qualified_charge("apply-cap80");return charge::apply_preconfigured_cap();}
++Result charge_apply_preconfigured_cap() { return charge_apply_preconfigured_cap(false); }
++Result charge_apply_preconfigured_cap(bool online_reduction) {root();board();Lock lock;charge_helper();remember_qualified_charge(online_reduction ? "apply-cap80-online" : "apply-cap80");return charge::apply_preconfigured_cap(online_reduction);}
+ Result charge_control_mode(const std::string& mode) {
+     root();board();Lock lock;charge_helper();
+     if(mode!="firmware"&&mode!="temporary-full")remember_qualified_charge(mode);
+diff --git a/uke-control/src/backend.hpp b/uke-control/src/backend.hpp
+index 2a5cabc1..0483d1ac 100644
+--- a/uke-control/src/backend.hpp
++++ b/uke-control/src/backend.hpp
+@@ -34,6 +34,7 @@ Result charge_control_query(const std::string& operation);
+ Result charge_enable_preconfigured_cap();
+ Result charge_enable_moisture();
+ Result charge_apply_preconfigured_cap();
++Result charge_apply_preconfigured_cap(bool online_reduction);
+ Result charge_control_mode(const std::string& mode);
+ Result charge_review(const std::string& review);
+ std::string usb_status();
+diff --git a/uke-control/src/charge-client.cpp b/uke-control/src/charge-client.cpp
+index 5c53051e..334f2349 100644
+--- a/uke-control/src/charge-client.cpp
++++ b/uke-control/src/charge-client.cpp
+@@ -61,8 +61,9 @@ Result enable_preconfigured_cap() {
+     return execute({helper, "enable-cap80"}, 12, 65536);
+ }
+ Result enable_moisture() { return execute({helper,"moisture-enable"},20,65536); }
+-Result apply_preconfigured_cap() {
++Result apply_preconfigured_cap() { return apply_preconfigured_cap(false); }
++Result apply_preconfigured_cap(bool online_reduction) {
+     // One bounded request; preserve unknown outcomes and never replay it.
+-    return execute({helper, "apply-cap80"}, 12, 65536);
++    return execute({helper, online_reduction ? "apply-cap80-online" : "apply-cap80"}, 12, 65536);
+ }
+ }
+diff --git a/uke-control/src/charge-client.hpp b/uke-control/src/charge-client.hpp
+index 0278f4b8..1ddf46b0 100644
+--- a/uke-control/src/charge-client.hpp
++++ b/uke-control/src/charge-client.hpp
+@@ -8,4 +8,5 @@ Result control_mode(const std::string& mode);
+ Result enable_preconfigured_cap();
+ Result enable_moisture();
+ Result apply_preconfigured_cap();
++Result apply_preconfigured_cap(bool online_reduction);
+ }
+diff --git a/uke-control/src/charge-intent.hpp b/uke-control/src/charge-intent.hpp
+index 23bea150..f01a8bd9 100644
+--- a/uke-control/src/charge-intent.hpp
++++ b/uke-control/src/charge-intent.hpp
+@@ -9,13 +9,13 @@ inline std::string standard(unsigned percent) {
+     return "format=1\nprovider=standard_threshold\nrequested="+std::to_string(percent)+"\n";
+ }
+ inline std::string qualified(std::string_view mode) {
+-    for(const auto* known:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80"})
++    for(const auto* known:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80","apply-cap80-online"})
+         if(mode==known)return "format=1\nprovider=qualified\nrequested="+std::string(mode)+"\n";
+     throw std::runtime_error("Unsupported qualified charge intent");
+ }
+ inline bool restore_legacy(const std::string& record,unsigned percent) {
+     if(record.empty()||record==standard(percent))return true;
+-    for(const auto* mode:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80"})if(record==qualified(mode))return false;
++    for(const auto* mode:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80","apply-cap80-online"})if(record==qualified(mode))return false;
+     throw std::runtime_error("Saved charge intent is unknown or differs from the legacy limit; restoration refused");
+ }
+ }
+diff --git a/uke-control/src/cli.cpp b/uke-control/src/cli.cpp
+index 38a1eced..b0c1c8df 100644
+--- a/uke-control/src/cli.cpp
++++ b/uke-control/src/cli.cpp
+@@ -53,7 +53,7 @@ constexpr Group groups[]={
+     {"update","Update packages or inspect kernel and A/B boot status", "update [--check] [--yes]\nupdate status [--json]\n\nStatus reads the current slot, both stored kernels, next boot selection and kernel approval. It never applies an update or selects a slot.\nUpdates never downgrade installed packages. Unavailable channel extras and kernel version locks are retained.\nUse channel sync explicitly for exact target versions."},
+     {"swap","Swap status and saved policy", "swap status\nswap set half|full|MiB\nswap apply"},
+     {"inventory","Partition and filesystem inventory", "inventory [--refresh]"},
+-    {"charge","Charging status, qualification and guarded requests", "charge status\ncharge capabilities|admission|protocols|protocol-inspect|settings|protection|protection-status\ncharge modes\ncharge plan firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge plan temporary-full MINUTES\ncharge mode firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge review /ABSOLUTE/REVIEW_FILE\ncharge restore-current\ncharge limit PERCENT\ncharge enable-cap80|apply-cap80|moisture-enable\ncharge notifications\n\nReview installs expiring operator evidence; it does not start charging control.\nRestore-current uses the reviewed positive FCC value and is not a factory reset."},
++    {"charge","Charging status, qualification and guarded requests", "charge status\ncharge capabilities|admission|protocols|protocol-inspect|settings|protection|protection-status\ncharge modes\ncharge plan firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge plan temporary-full MINUTES\ncharge mode firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge review /ABSOLUTE/REVIEW_FILE\ncharge restore-current\ncharge limit PERCENT\ncharge enable-cap80|apply-cap80|apply-cap80-online|moisture-enable\ncharge notifications\n\nReview installs expiring operator evidence; it does not start charging control.\nRestore-current uses the reviewed positive FCC value and is not a factory reset."},
+     {"usb","USB topology, roles and per-device power policy", "usb status\nusb watch [SECONDS]\nusb role host|device\nusb power DEVICE performance|auto\nusb transition status|recover\n\nRecovery requires root and stable, unused Uke role readbacks. Unknown legacy records are preserved for review."},
+     {"cdc","Manual USB serial export", "cdc on|off [--persistent]"},
+     {"ethernet","Ethernet capabilities and link profiles", "ethernet status IFACE\nethernet profile IFACE auto|1000-full|100-full|10-full"},
+diff --git a/uke-control/src/main.cpp b/uke-control/src/main.cpp
+index ec31f7a2..a21013b7 100644
+--- a/uke-control/src/main.cpp
++++ b/uke-control/src/main.cpp
+@@ -182,8 +182,8 @@ static int run(int argc,char** argv,bool as_json) {
+             if(argc==3&&std::string_view(argv[2])=="enable-cap80") {
+                 auto result=uke::charge_enable_preconfigured_cap();uke::cli::print(result.output,as_json);return result.status;
+             }
+-            if(argc==3&&std::string_view(argv[2])=="apply-cap80") {
+-                auto result=uke::charge_apply_preconfigured_cap();uke::cli::print(result.output,as_json);return result.status;
++            if(argc==3&&(std::string_view(argv[2])=="apply-cap80"||std::string_view(argv[2])=="apply-cap80-online")) {
++                auto result=uke::charge_apply_preconfigured_cap(std::string_view(argv[2])=="apply-cap80-online");uke::cli::print(result.output,as_json);return result.status;
+             }
+             if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="protocol-inspect"||std::string_view(argv[2])=="settings"||std::string_view(argv[2])=="protection"||std::string_view(argv[2])=="protection-status")) {
+                 auto result=uke::charge_control_query(argv[2]);uke::cli::print(result.output,as_json);return result.status;
+diff --git a/uke-control/tests/charge-client.cpp b/uke-control/tests/charge-client.cpp
+index 6a34d615..873d7b76 100644
+--- a/uke-control/tests/charge-client.cpp
++++ b/uke-control/tests/charge-client.cpp
+@@ -45,6 +45,15 @@ int main() {
+     bool query_rejected=false;
+     try{uke::charge::control_query("verify");}catch(const std::exception&){query_rejected=true;}
+     assert(query_rejected&&calls.empty());
++    reset({{0,"online request received; physical outcome unknown"}});
++    assert(uke::charge::apply_preconfigured_cap(true).status==0);
++    assert((calls==std::vector<std::vector<std::string>>{{"/usr/libexec/uke-charge-control","apply-cap80-online"}}));
++    reset({{69,"control_store_failed_no_retry_errno_11"}});
++    auto online=uke::charge::apply_preconfigured_cap(true);
++    assert(online.status==69&&online.output=="control_store_failed_no_retry_errno_11"&&calls.size()==1);
++    reset({});query_rejected=false;
++    try{uke::charge::control_query("apply-cap80-online");}catch(const std::exception&){query_rejected=true;}
++    assert(query_rejected&&calls.empty());
+     reset({{0,"{\"request_sent\":true,\"applied\":null}\n"}});
+     const auto applied=uke::charge::apply_preconfigured_cap();
+     assert(applied.status==0&&applied.output.find("\"applied\":null")!=std::string::npos);
+diff --git a/uke-control/tests/charge-intent.cpp b/uke-control/tests/charge-intent.cpp
+index e68b475c..287f5a18 100644
+--- a/uke-control/tests/charge-intent.cpp
++++ b/uke-control/tests/charge-intent.cpp
+@@ -4,7 +4,7 @@
+ int main() {
+     using namespace uke::charge::intent;
+     assert(restore_legacy("",90));assert(restore_legacy(standard(90),90));
+-    for(const auto* mode:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80"})assert(!restore_legacy(qualified(mode),90));
++    for(const auto* mode:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80","apply-cap80-online"})assert(!restore_legacy(qualified(mode),90));
+     for(const auto& record:{standard(80),std::string("format=2\n"),std::string("format=1\nprovider=qualified\nrequested=unknown\n")}) {
+         bool refused=false;try{restore_legacy(record,90);}catch(const std::exception&){refused=true;}assert(refused);
+     }
