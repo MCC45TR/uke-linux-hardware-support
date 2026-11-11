@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "parent_copr_build": 11286610,
+  "parent_srpm_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11286610/uke-core-meta-1.0.7-21.src.rpm",
+  "parent_srpm_sha256": "60e4a4a1d22c24ff7ee9b4bb73e0c864a7e93fff1bc5d3db567791fc6972cb33",
+  "parent_spec_sha256": "037adec0f2fe133503dbab27ccd47a3cc277515d68f01172f581cec51cd2651d",
+  "source_archive_sha256": "11936232165f075426ce87c93cf1eb6c07631f16489dd57dbb4ddd75ff780695",
+  "version": "1.0.7",
+  "release": 22,
+  "requires_before": "Requires: uke-ssc-fileservice uke-upower",
+  "requires_after": "Requires: uke-ssc-fileservice upower >= 1.91.5",
+  "payload_changed": false,
+  "automatic_provider_retirement": false,
+  "stock_runtime_parity_accepted": false,
+  "dnf_transition_accepted": false,
+  "new_runtime_packages": 0
+}
