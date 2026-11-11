@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "parent": {
+    "build": 11263264,
+    "version": "1.6.0-6",
+    "original_srpm_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11263264/uke-control-gui-qt-1.6.0-6.src.rpm",
+    "archive_url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-gui-qt-1.6.0-6.src.rpm",
+    "srpm_sha256": "08091b4a80f44331a752e594a6bcb0320a96826aa3a74c2fb42310c0c6f53947",
+    "spec_sha256": "e6f01994807a7ef90dbf7334e9428a2fce23f093df9af06a44a3a7a92f9c1faa",
+    "source_archive_sha256": "bc931826e8b5c98719def8ff16dbe2752afdbb8bf2bd5fab7ea53a77870f2594"
+  },
+  "result": {
+    "version": "1.6.0-7",
+    "spec_sha256": "39b2cd2d7b290f098cf0bb377d503312beb622e501efc7526caa2bff67b075e7",
+    "runtime_names": [
+      "uke-control-gui-qt",
+      "uke-waydroid-installer"
+    ],
+    "retired_subpackages": [
+      "uke-control-gui-qt-tests"
+    ],
+    "source_archive_unchanged": true,
+    "native_ctest_retained": true,
+    "new_runtime_packages": 0
+  },
+  "patch_sha256": "dbe7a59b9b5d50e80bdd61086f24c5255d717db2a64c83c1b9ffcf3177e4308f",
+  "source_assets": [
+    {
+      "path": "packaging/families/host/control-qt-runtime.patch",
+      "sha256": "dbe7a59b9b5d50e80bdd61086f24c5255d717db2a64c83c1b9ffcf3177e4308f"
+    },
+    {
+      "path": "packaging/families/host/apply-control-qt-runtime.sh",
+      "sha256": "05f4a3dba0bcbf72c9e90049d09efb9605dcba7a7902d37341c04b0c609f79f5"
+    },
+    {
+      "path": "packaging/families/host/copr-control-qt-runtime.sh",
+      "sha256": "19b63ed760627a60f3db4163f536171f1e5df8f6c2a12fb3ff17cee16c55f95f"
+    },
+    {
+      "path": "packaging/families/tests/control-qt-runtime.sh",
+      "sha256": "0521f38a201a22757601a224a1f6130f4dff8ca6f453f9c23358cc070b06d86f"
+    },
+    {
+      "path": "packaging/families/consolidation/CONTROL-QT-RUNTIME.md",
+      "sha256": "f4d4dca5ffb948c7609d6c6778e4d80d71830cafb30b34028463769cbd656e69"
+    }
+  ],
+  "native_qualified": false,
+  "signed_runtime_audited": false,
+  "dnf_installed": false,
+  "old_builds_removed": false
+}

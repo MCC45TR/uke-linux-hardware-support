@@ -1,0 +1,70 @@
+--- a/uke-control-qt.spec
++++ b/uke-control-qt.spec
+@@ -1,7 +1,8 @@
++%global debug_package %{nil}
+ %global source_name uke-control-qt
+ Name:           uke-control-gui-qt
+ Version:        1.6.0
+-Release:        6%{?dist}
++Release:        7%{?dist}
+ Summary:        Native Kirigami interface for Uke Control
+ License:        MIT
+ Source0:        %{source_name}-%{version}.tar.gz
+@@ -49,6 +50,7 @@
+ Requires:       kf6-qqc2-desktop-style
+ Requires:       konsole
+ Requires:       uke-waydroid-installer = %{version}-%{release}
++Obsoletes:      uke-control-gui-qt-tests < 1.6.0-7%{?dist}
+ 
+ %package -n uke-waydroid-installer
+ Summary:        Native graphical Waydroid installation backend
+@@ -69,15 +71,6 @@
+ %postun -n uke-waydroid-installer
+ %{_bindir}/systemctl daemon-reload || :
+ 
+-%package tests
+-Summary:        Installed regression checks for the Uke Control Qt interface
+-Requires:       %{name} = %{version}-%{release}
+-Requires:       adwaita-icon-theme
+-
+-%description tests
+-Optional native regression checks for the packaged interface, icon themes,
+-typed action routing and isolated simulation. No device changes are performed.
+-
+ %description
+ A native Qt 6 Kirigami frontend with a typed C++ adapter for Uke Control.
+ Daily task pages provide typed requests, asynchronous observations and explicit
+@@ -96,6 +89,11 @@
+ 
+ %check
+ %ctest
++# Retain every build-time test; completed checks are not runtime payload.
++for directory in "%{buildroot}%{_libexecdir}/uke-control-qt/tests" "%{buildroot}%{_datadir}/uke-control-qt/tests"; do
++    test -d "$directory" && test ! -L "$directory"
++    find "$directory" -depth -delete
++done
+ 
+ %files
+ %license LICENSE
+@@ -113,10 +111,6 @@
+ %{_datadir}/icons/hicolor/scalable/apps/org.uke.ControlQt.svg
+ %{_datadir}/locale/*/LC_MESSAGES/uke-control-qt.mo
+ 
+-%files tests
+-%{_libexecdir}/uke-control-qt/tests/
+-%{_datadir}/uke-control-qt/tests/
+-
+ %files -n uke-waydroid-installer
+ %license LICENSE
+ %{_libexecdir}/uke-control-qt/waydroid-installer
+@@ -124,6 +118,10 @@
+ %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
+ 
+ %changelog
++* Wed Nov 11 2026 Uke contributors - 1.6.0-7
++- Keep all native interface checks in the build and retire the runtime test RPM.
++- Preserve the Qt interface and Waydroid installer sources and behavior.
++
+ * Thu Nov 05 2026 Uke contributors - 1.6.0-6
+ - Bound transient telemetry identities and separate restarted application counters.
+ 
