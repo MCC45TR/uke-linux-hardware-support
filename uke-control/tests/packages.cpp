@@ -15,6 +15,28 @@ static bool rawhide_repository_fixture_host(const std::string& release) {
     catch(const std::runtime_error&){return false;}
 }
 int main() {
+    {
+        char pattern[]="/tmp/uke-package-pipe-XXXXXX";assert(mkdtemp(pattern));
+        const fs::path root=pattern,receipt=root/"receipt.json";
+        const std::string payload="{\"payload\":\""+std::string(20000,'x')+"\"}";
+        std::cout.flush();const auto child=fork();assert(child>=0);
+        if(child==0) {
+            ignore_broken_pipes();
+            const auto output=open(receipt.c_str(),O_WRONLY|O_CREAT|O_EXCL,0600);
+            assert(output>=0&&dup2(output,STDOUT_FILENO)>=0);close(output);
+            {
+                CriticalSignals critical;
+                int descriptors[2];assert(pipe(descriptors)==0);close(descriptors[0]);
+                assert(write(descriptors[1],"x",1)==-1&&errno==EPIPE);close(descriptors[1]);
+                uke::cli::print(payload,true,"Receipt");
+            }
+            // Deliberately bypass global iostream destruction: the coordinator
+            // must flush its complete receipt before restoring deferred signals.
+            _exit(0);
+        }
+        int status=0;assert(waitpid(child,&status,0)==child&&WIFEXITED(status)&&WEXITSTATUS(status)==0);
+        assert(read_file(receipt)==payload+'\n');fs::remove_all(root);
+    }
     const std::string container_release="ID=fedora\nVERSION_ID=46\nVERSION=\"46 (Container Image Prerelease)\"\n";
     bool container_refused=false;try{fedora_target(container_release);}catch(const std::runtime_error&){container_refused=true;}
     assert(container_refused);
@@ -75,6 +97,19 @@ int main() {
     assert(options({"brunch","stable"}).selected=="stable");assert(options({"branch","test","--dry-run"}).dry);
     assert(options({"brunch","unstable","--yes"}).yes);assert(options({"brunch","sync"}).sync);
     assert(options({"update"}).update);assert(options({"update","--check"}).dry);
+    assert(options({"update","status"}).boot_status);
+    assert(!options({"update","status"}).update);
+    assert(options({"update","status","--json"}).json);
+    for(const auto *target:{"a","b","next"}) {
+        assert(options({"update","select-slot",target}).boot_target==target);
+        assert(options({"update","select-slot",target,"--dry-run"}).dry);
+    }
+    for(auto input:{std::initializer_list<const char*>{"update","select-slot"},{"update","select-slot","bad"},{"update","select-slot","a","--json"},{"update","select-slot","a","--yes"}}) {
+        bool refused=false;try{options(input);}catch(const uke::cli::UsageError&){refused=true;}assert(refused);
+    }
+    for(auto input:{std::initializer_list<const char*>{"update","status","--yes"},{"update","status","--check"},{"update","status","--dry-run"},{"update","status","bad"}}) {
+        bool refused=false;try{options(input);}catch(const uke::cli::UsageError&){refused=true;}assert(refused);
+    }
     assert(options({"channel","set","stable","--json","--yes"}).json);
     assert(options({"channel","status","--json"}).status);
     assert(options({"channel","set","test","--dry-run","--json"}).dry);
@@ -108,6 +143,35 @@ int main() {
     assert(infer_channel({prefix+"uke-linux-test:custom:experiment"}).empty());
     assert(infer_channel({"uke-linux",prefix+"uke-linux"}).empty());
     assert(managed_source("legacy-candidate",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/custom/"}));
+    assert(source_channel("uke-selected",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-$basearch/"})=="unstable");
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/custom/"}).empty());
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test-fake/fedora-rawhide-aarch64/"}).empty());
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/fedora-rawhide-aarch64/","https://example.invalid/"}).empty());
+    assert(source_channel("alias",{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux/fedora-rawhide-aarch64/","https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/fedora-rawhide-aarch64/"}).empty());
+    {
+        libdnf5::Base base;base.get_config().get_plugins_option().set(false);base.setup();
+        const auto add=[&](const std::string& name,const std::string& selection) {
+            auto repo=base.get_repo_sack()->create_repo(name);
+            repo->get_config().get_baseurl_option().set(std::vector<std::string>{"https://download.copr.fedorainfracloud.org/results/mcc45tr/"+project(selection)+"/fedora-rawhide-aarch64/"});
+            return repo;
+        };
+        add("uke-selected","unstable");add("uke-policy","unstable");
+        assert(infer_channel(base)=="unstable");
+        auto other=add("different-channel","test");assert(infer_channel(base).empty());
+        other->get_config().get_enabled_option().set(false);assert(infer_channel(base)=="unstable");
+        auto custom=base.get_repo_sack()->create_repo("custom");
+        custom->get_config().get_baseurl_option().set(std::vector<std::string>{"https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-test/custom/"});
+        assert(infer_channel(base).empty());
+    }
+    {
+        std::ostringstream output,errors;auto* old_output=std::cout.rdbuf(output.rdbuf());auto* old_errors=std::cerr.rdbuf(errors.rdbuf());
+        Downloads downloads;auto* transfer=downloads.add_new_download(nullptr,"fixture-package",1024);
+        assert(downloads.progress(transfer,1024,512)==0);
+        assert(downloads.end(transfer,Downloads::TransferStatus::SUCCESSFUL,nullptr)==0);
+        std::cout.rdbuf(old_output);std::cerr.rdbuf(old_errors);
+        assert(output.str().empty()&&errors.str().find("Downloaded fixture-package")!=std::string::npos);
+        assert(std::string(operation::next("complete"))=="none");
+    }
     for(const auto& arch:{"aarch64","noarch","x86_64"}) {
         const auto stable=kernel+"-core-7.2.11-1.fc46."+arch;
         const auto rc=kernel+"-core-7.4~rc7-1.fc46."+arch;

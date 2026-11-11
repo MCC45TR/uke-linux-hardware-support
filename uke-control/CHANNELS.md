@@ -1,5 +1,32 @@
 # Package channels
 
+4 November 2026, 2.8.1-11: `channel set`, `branch`/`brunch` and `update`
+use conservative upgrades. They retain newer installed versions and installed
+extras absent from the destination, listing each package and retention reason
+in the plan. Retained packages cannot be replaced or removed indirectly by
+dependency resolution. Kernel version locks remain effective; unchanged or
+newer installed kernels require no updater call. An empty update with unchanged
+repository policy completes without confirmation, RPM execution or journal/boot
+writes. This supersedes earlier descriptions of set/update as exact version
+synchronization.
+
+Scriptlet pipe errors are handled as I/O failures rather than deferred SIGPIPE
+termination. Completed receipts are flushed before user-cancellation signals
+are restored, including results larger than the standard stream buffer.
+
+`channel sync` remains the explicit exact-version operation: it can downgrade
+project packages and refuses missing target replacements. It also resumes a
+verified pending operation. Ordinary channel selection is not a userspace
+rollback and does not erase installed applications to fit a destination.
+
+4 November 2026: package operations report repository refresh, downloads,
+RPM installation, scriptlets and guarded finalization on standard error.
+Explicit JSON results remain on standard output. Multiple enabled aliases of
+one normal COPR channel can supply an implicit selection; custom directories
+and mixed channels cannot. An incomplete target reports all missing installed
+components before any package or persistent channel change. It still requires
+compatible target packages; missing components are never silently removed.
+
 30 October 2026: a failed native transaction reports its RPM, signature and
 transaction diagnostics while retaining the pending channel. Correct the
 reported problem before running `channel sync`. Failure before RPM execution
@@ -103,16 +130,16 @@ and pass the existing kernel updater. Prerelease versions are excluded from
 ordinary DNF selection in stable/test. Package selection and the running kernel
 are reported separately; no automatic reboot occurs.
 
-Synchronization covers installed packages also offered by the selected COPR,
+Exact synchronization (`channel sync`) covers installed packages also offered by the selected COPR,
 packages with a recorded Uke COPR origin, and project package names `uke-*` and
 `senemos-uke-*`. It does not install every optional package from a repository.
-The native solver upgrades or downgrades those packages to the selected exact
+For this explicit operation, the native solver upgrades or downgrades packages to the selected exact
 NEVRA. A matching version from another repository or a local RPM is reinstalled
 from the selected repository, so matching version labels cannot hide a different
 payload. An installed project package missing from the target blocks the whole
 transition. Promote its matching package or resolve the obsolete component
 explicitly; the tool does not silently delete it or its dependants.
-The target `uke-control` must provide `uke-control(channel-api) = 1`; otherwise
+Any replacement `uke-control` must provide `uke-control(channel-api) = 1`; otherwise
 the transition is refused before changes. Promote a compatible manager into
 the destination first. Downgrading to a manager without these commands would
 remove the return path even if the RPM transaction itself succeeded.
@@ -131,12 +158,16 @@ must come from Fedora's `rawhide` repository, including a necessary downgrade.
 No other project package is handed to an arbitrary outside repository. If the
 original replacement is unavailable, the whole transaction is refused.
 
-`sync` repairs the saved selection; without a saved selection it infers exactly
-one enabled stable/test COPR and refuses missing or ambiguous selections.
-`update` performs the same synchronization and upgrades the other
-distribution packages in the same dependency transaction. Dependency failures,
-version locks, missing candidates, duplicate repository definitions and
-unintended package removal are errors. There is no `nodeps`, signature bypass,
+`sync` explicitly reconciles target versions or resumes a pending operation.
+Without a saved selection it requires one unambiguous normal channel, including
+aliases of that same channel. Recovery retains the original selection/update/sync
+mode recorded before interruption.
+`update` upgrades selected-channel and distribution packages in one dependency
+transaction while retaining newer installed versions and unavailable channel
+extras. `channel set` applies that conservative channel policy without requesting
+distribution-wide upgrades. Both honor version locks. Dependency failures,
+duplicate repository definitions and unintended package removal are errors.
+There is no `nodeps`, signature bypass,
 skip-broken, skip-unavailable or automatic dependency-erasure fallback.
 
 The active Uke COPR has priority 1 and package signature/TLS checks enabled.

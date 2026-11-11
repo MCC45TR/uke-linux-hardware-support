@@ -9,13 +9,13 @@ inline std::string standard(unsigned percent) {
     return "format=1\nprovider=standard_threshold\nrequested="+std::to_string(percent)+"\n";
 }
 inline std::string qualified(std::string_view mode) {
-    for(const auto* known:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80"})
+    for(const auto* known:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80","apply-cap80-online"})
         if(mode==known)return "format=1\nprovider=qualified\nrequested="+std::string(mode)+"\n";
     throw std::runtime_error("Unsupported qualified charge intent");
 }
 inline bool restore_legacy(const std::string& record,unsigned percent) {
     if(record.empty()||record==standard(percent))return true;
-    for(const auto* mode:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80"})if(record==qualified(mode))return false;
+    for(const auto* mode:{"charge80","hold70-80","hold80-90","slow","automatic","profile-restore","enable-cap80","apply-cap80","apply-cap80-online"})if(record==qualified(mode))return false;
     throw std::runtime_error("Saved charge intent is unknown or differs from the legacy limit; restoration refused");
 }
 }

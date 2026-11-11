@@ -5,6 +5,11 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 key=${1:?source package}; output=$(realpath -m "${2:?output directory}")
 [[ $key =~ ^[a-zA-Z0-9+_.-]+$ ]]
+case $key in
+    pipewire|uke-pipewire|uke-pipewire-*)
+        printf '%s\n' 'Retired PipeWire fork: use original Fedora packages and Core21 migration.' >&2
+        exit 2;;
+esac
 grep -Eq '^VERSION="?(Rawhide|[0-9]+ \(Rawhide( Prerelease)?\))"?$|^VERSION_ID="?rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; }
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 ]]
 stage=$(mktemp -d)

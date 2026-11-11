@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Compose complete source recipes into a source family; no binary repackaging.
 set -Eeuo pipefail
+case ${SOURCE_PACKAGE:-} in
+    pipewire|uke-pipewire|uke-pipewire-*)
+        printf '%s\n' 'Retired PipeWire fork: use original Fedora packages and Core21 migration.' >&2
+        exit 2;;
+esac
 # Expand upstream source recipes in the selected Fedora worker, without binary retagging.
 fedora_number=$(rpm --eval '%{fedora}')
 [[ $fedora_number =~ ^[0-9]+$ ]]
@@ -16,6 +21,10 @@ rpm_target=(--define "dist $dist" --define "fedora $fedora_number")
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
 family=${1:?source family}; target=${TARGET_ARCH:-aarch64}
+if [[ $family == uke-audio-integration ]];then
+    printf '%s\n' 'Audio bridge production is folded into uke-control; do not create a separate runtime family.' >&2
+    exit 2
+fi
 standalone=${SOURCE_PACKAGE:-}
 integration=false
 if [[ $family == uke-control || $family =~ ^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$ ]]; then integration=true; fi

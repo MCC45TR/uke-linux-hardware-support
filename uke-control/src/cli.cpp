@@ -30,11 +30,13 @@ Arguments arguments(int argc,char** argv) {
     if(w[1]=="diagnostic")w[1]="diagnostics";
     if(w.size()>2 && w[1]=="set" && w[2]=="cdc"){w.erase(w.begin()+1);}
     if(w.size()>3 && w[1]=="usb" && w[2]=="request" && w[3]=="data"){w[2]="role";w.erase(w.begin()+3);}
+    if(w[1]=="set-slot" && !result.help && !result.version) {w[1]="update";w.insert(w.begin()+2,"select-slot");}
     return result;
 }
 namespace {
 struct Group {const char* name;const char* summary;const char* usage;};
 constexpr Group groups[]={
+    {"set-slot","Select a verified existing kernel for the next boot", "set-slot a|b|next [--dry-run]\n\nnext means the other slot relative to the running slot.\nThe terminal shows both slots and the reviewed target kernel.\nA change requires administrator access and an exact SLOT A or SLOT B confirmation.\nThe boot owner validates the installed kernel, rollback and metadata; no boot image is rewritten.\nThis selects the next boot only. It never requests reboot or bypasses boot-health approval.\nUse update status for running/selected slots and kernel approval."},
     {"tui","Bilingual native terminal interface with guided parameters", "tui [--language tr|en] [--read-only] [--no-color] [--start CATEGORY|ACTION] [--fixture FILE]\n\nRequires uke-control-tui and an interactive UTF-8 terminal. F1 opens full help.\nRun as the session user; privileged actions authorize only their validated command.\nFixture mode executes no commands. Read-only mode also disables receipt writes."},
     {"actions","Shared frontend catalog and validated plans (metadata only)", "actions\nactions describe ID\nactions plan ID KEY=VALUE...\n\nUse --json for versioned bilingual metadata and exact argv plans.\nThese commands do not query hardware, execute plans or authorize changes."},
     {"status","Device overview", "status"},
@@ -47,16 +49,16 @@ constexpr Group groups[]={
     {"roots","Read-only root candidate discovery and mounted-root inspection", "roots list\nroots inspect PARTUUID\n\nDoes not mount, repair or execute a target. Inspection requires one verified current mount."},
     {"battery","Battery readings, pack health, cells and charging protocol", "battery status\nbattery health\nbattery cells\nbattery protocol\n\nReuses uke-battery and uke-charge-control. Reports unavailable values explicitly.\nPack health, vendor SOH and calculated retention are separate observations.\nIndividual cell health requires individual cell measurements; it is not inferred.\nA reported USB class is not a negotiated PD revision or a verified QC/MI session."},
     {"nfc","Linux NFC controller and radio permission", "nfc status\nnfc on|off\n\nOn/off changes only a unique NFC controller's rfkill permission and requires root.\nIt does not start tag polling or provide card emulation.\nA passive tap-to-share feature does not establish a controllable Linux reader."},
-    {"channel","COPR channel selection and synchronization", "channel status\nchannel set stable|test|unstable [--dry-run] [--yes]\nchannel sync [--dry-run] [--yes]"},
-    {"update","Synchronize the channel and update distribution packages", "update [--check] [--yes]"},
+    {"channel","COPR channel selection and explicit version synchronization", "channel status\nchannel set stable|test|unstable [--dry-run] [--yes]\nchannel sync [--dry-run] [--yes]\n\nset preserves newer installed packages, unavailable extras and kernel version locks.\nsync explicitly reconciles exact target versions and can downgrade packages."},
+    {"update","Update packages or inspect kernel and A/B boot status", "update [--check] [--yes]\nupdate status [--json]\n\nStatus reads the current slot, both stored kernels, next boot selection and kernel approval. It never applies an update or selects a slot.\nUpdates never downgrade installed packages. Unavailable channel extras and kernel version locks are retained.\nUse channel sync explicitly for exact target versions."},
     {"swap","Swap status and saved policy", "swap status\nswap set half|full|MiB\nswap apply"},
     {"inventory","Partition and filesystem inventory", "inventory [--refresh]"},
-    {"charge","Charging status, qualification and guarded requests", "charge status\ncharge capabilities|admission|protocols|protocol-inspect|settings|protection|protection-status\ncharge modes\ncharge plan firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge plan temporary-full MINUTES\ncharge mode firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge review /ABSOLUTE/REVIEW_FILE\ncharge restore-current\ncharge limit PERCENT\ncharge enable-cap80|apply-cap80|moisture-enable\ncharge notifications\n\nReview installs expiring operator evidence; it does not start charging control.\nRestore-current uses the reviewed positive FCC value and is not a factory reset."},
+    {"charge","Charging status, qualification and guarded requests", "charge status\ncharge capabilities|admission|protocols|protocol-inspect|settings|protection|protection-status\ncharge modes\ncharge plan firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge plan temporary-full MINUTES\ncharge mode firmware|charge80|hold70-80|hold80-90|slow|automatic\ncharge review /ABSOLUTE/REVIEW_FILE\ncharge restore-current\ncharge limit PERCENT\ncharge enable-cap80|apply-cap80|apply-cap80-online|moisture-enable\ncharge notifications\n\nReview installs expiring operator evidence; it does not start charging control.\nRestore-current uses the reviewed positive FCC value and is not a factory reset."},
     {"usb","USB topology, roles and per-device power policy", "usb status\nusb watch [SECONDS]\nusb role host|device\nusb power DEVICE performance|auto\nusb transition status|recover\n\nRecovery requires root and stable, unused Uke role readbacks. Unknown legacy records are preserved for review."},
     {"cdc","Manual USB serial export", "cdc on|off [--persistent]"},
     {"ethernet","Ethernet capabilities and link profiles", "ethernet status IFACE\nethernet profile IFACE auto|1000-full|100-full|10-full"},
     {"display","Display stream, lane profiles and VRR minimum", "display bits\ndisplay profiles\ndisplay profile usb3-display|display4\ndisplay lane-limit 1|2|4\ndisplay compression [auto|on|off]\ndisplay vrr-min [status|configured]\ndisplay vrr-min set HZ\ndisplay sensor\n\nCompression auto requires driver interface 2. Live requests are handled by DRM; policy readback is not physical validation."},
-    {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off"},
+    {"desktop","Original desktop interfaces and KDE policies", "desktop status\ndesktop plasma\ndesktop rotation on|off\ndesktop brightness on|off\ndesktop brightness-curve status|queue-oss|queue-restore|cancel\n\nCurve requests apply before the next fresh Plasma session. Existing layout and other output preferences are preserved."},
     {"hardware","Cached chipset, audio, media and input paths", "hardware status"},
     {"firmware","Cached remote processors and SCMI discovery", "firmware status"},
     {"wake","Driver wake permissions", "wake status [SOURCE]\nwake set SOURCE on|off\nwake apply\n\nStatus lists available source names, including supported usb-device-PORT, lid-open and double-tap.\nSaved choices override supported USB, Bluetooth, lid and gesture wake defaults.\nPermission readback is not physical wake validation."},
@@ -177,7 +179,9 @@ std::string help(std::string_view group) {
             out<<line<<'\n';first=false;
         }
     }
-    out<<"\nOptions:\n  -h, --help    Show help without running a device operation\n  --version     Show version\n  --json        Machine-readable output; explicit even when redirected\n\n";
+    out<<"\nOptions:\n  -h, --help    Show help without running a device operation\n  --version     Show version\n";
+    if(group!="set-slot")out<<"  --json        Machine-readable output; explicit even when redirected\n";
+    out<<'\n';
     if(group.empty() || group=="channel" || group=="update")out<<"Package changes require root. With --json, use --dry-run/--check or explicit --yes.\n";
     out<<"Hardware changes retain their existing privilege and qualification checks.\n"
           "Exit status: 0 success; 64 command usage; other nonzero values report operation failure.\n";

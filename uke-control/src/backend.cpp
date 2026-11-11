@@ -75,7 +75,8 @@ struct Lock {
     }
 };
 Result charge_enable_preconfigured_cap() {root();board();Lock lock;charge_helper();remember_qualified_charge("enable-cap80");return charge::enable_preconfigured_cap();}
-Result charge_apply_preconfigured_cap() {root();board();Lock lock;charge_helper();remember_qualified_charge("apply-cap80");return charge::apply_preconfigured_cap();}
+Result charge_apply_preconfigured_cap() { return charge_apply_preconfigured_cap(false); }
+Result charge_apply_preconfigured_cap(bool online_reduction) {root();board();Lock lock;charge_helper();remember_qualified_charge(online_reduction ? "apply-cap80-online" : "apply-cap80");return charge::apply_preconfigured_cap(online_reduction);}
 Result charge_control_mode(const std::string& mode) {
     root();board();Lock lock;charge_helper();
     if(mode!="firmware"&&mode!="temporary-full")remember_qualified_charge(mode);

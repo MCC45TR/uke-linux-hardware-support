@@ -1,0 +1,372 @@
+From: Uke contributors <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] Keep rollback-off kernel updates on alternating inactive slots
+
+Use an explicitly unapproved rotating checkpoint instead of replacing current A.
+Preserve accepted kernel recovery components before reusing its physical slot,
+keep approval separate from bootloader retention, and retain existing inactive
+write, firmware, GPT, UFS, charge, locking and readback boundaries.
+
+--- a/src/kernel-update.cpp
++++ b/src/kernel-update.cpp
+@@ -638,7 +638,7 @@
+             if(plan==SeamlessStage::current || plan==SeamlessStage::pending || plan==SeamlessStage::older || plan==SeamlessStage::deferred) {
+                 std::cout<<"Seamless policy enabled; current, pending or older development selection needs no additional staging\n";return;
+             }
+-            const bool replacing=plan==SeamlessStage::replace_trial;
++            const bool rotating=plan==SeamlessStage::rotate_trial;
+             const auto activate=[&] {
+             uke_color::with_prepared(manifest,current.release,dry,prepare_private_color,[&] {
+                 if(!dry) {
+@@ -649,7 +649,7 @@
+                     trusted("/usr/libexec/senemos-uke/uke-install-profile");
+                     (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","clock-save-required"},4096);
+                 }
+-                userdata_update(replacing?(dry?"check-trial":"replace-trial"):(dry?"check":"apply"),selected,bytes,state,
++                userdata_update(rotating?(dry?"check-rotate":"rotate"):(dry?"check":"apply"),selected,bytes,state,
+                                 current.release,filesystem,false,rollback==RollbackMode::off);
+             });
+             };
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -7,6 +7,8 @@
+ struct UserdataUpdate {
+     uke_install::Update policy;
+     std::string good_image,candidate_image,staged_boot_id;
++    // A rotating development checkpoint proves boot identity, not boot health.
++    bool baseline_approved = true;
+ };
+ static bool valid_boot_id(const std::string &value) {
+     if(value.size()!=36)return false;
+@@ -32,7 +34,10 @@
+          (saved.policy.phase!=uke_install::Phase::stable||saved.policy.candidate.empty()),"Invalid stable/failed release state");
+     need(saved.policy.phase==uke_install::Phase::stable?saved.candidate_image.empty():hex(saved.candidate_image),"Invalid candidate image digest");
+     need(saved.policy.phase==uke_install::Phase::stable?saved.staged_boot_id.empty():valid_boot_id(saved.staged_boot_id),"Invalid staging boot identity");
+-    return "format=1\ngood_slot="+std::to_string(unsigned(saved.policy.good))+"\ngood_release="+saved.policy.good_release+
++    need(saved.baseline_approved || saved.policy.phase!=uke_install::Phase::current_slot_trial,
++         "Unapproved checkpoints cannot authorize in-place trials");
++    return std::string(saved.baseline_approved?"format=1\n":"format=2\nbaseline_approved=0\n")+
++        "good_slot="+std::to_string(unsigned(saved.policy.good))+"\ngood_release="+saved.policy.good_release+
+         "\ngood_image="+saved.good_image+"\nphase="+phase_name(saved.policy.phase)+"\ncandidate="+
+         (saved.policy.candidate.empty()?"-":saved.policy.candidate)+"\ncandidate_image="+
+         (saved.candidate_image.empty()?"-":saved.candidate_image)+"\nfailed="+(saved.policy.failed.empty()?"-":saved.policy.failed)+
+@@ -40,12 +45,16 @@
+ }
+ static UserdataUpdate decode(const Bytes &bytes) {
+     const auto values=properties(std::string(bytes.begin(),bytes.end()));
+-    const std::set<std::string> keys={"format","good_slot","good_release","good_image","phase","candidate","candidate_image","failed","staged_boot_id"};
++    std::set<std::string> keys={"format","good_slot","good_release","good_image","phase","candidate","candidate_image","failed","staged_boot_id"};
++    const bool checkpoint=values.contains("format") && values.at("format")=="2";
++    if(checkpoint) keys.emplace("baseline_approved");
+     need(values.size()==keys.size(),"Unexpected userdata state fields");
+     for(const auto &key:keys)need(values.contains(key),"Missing userdata state field");
+-    need(values.at("format")=="1" && (values.at("good_slot")=="0"||values.at("good_slot")=="1"),"Invalid userdata state version/slot");
++    need((values.at("format")=="1" || (checkpoint && values.at("baseline_approved")=="0")) &&
++         (values.at("good_slot")=="0"||values.at("good_slot")=="1"),"Invalid userdata state version/slot");
+     UserdataUpdate saved{{uke_install::Profile::userdata,values.at("good_slot")=="0"?uke_install::Slot::a:uke_install::Slot::b,
+         values.at("good_release"),uke_install::Phase::stable,{},{}},values.at("good_image"),{}, {}};
++    saved.baseline_approved=!checkpoint;
+     const auto phase=values.at("phase");
+     if(phase=="stable")saved.policy.phase=uke_install::Phase::stable;
+     else if(phase=="staging")saved.policy.phase=uke_install::Phase::staging;
+@@ -191,6 +200,49 @@
+     need(release==saved.policy.candidate && image_hash==saved.candidate_image && boot_id!=saved.staged_boot_id,
+          "Acceptance requires the booted, recorded current-slot trial");return true;
+ }
++static UserdataUpdate rotating_checkpoint(UserdataUpdate saved,RollbackMode mode,unsigned running,
++        const std::string &release,const std::string &image_hash,const std::string &boot_id) {
++    need(mode==RollbackMode::off,"Unaccepted checkpoint rotation requires rollback-off");
++    need(booted_ab_trial(saved,running,release,image_hash,boot_id),"Rotation requires the booted matching alternating trial");
++    saved.policy.good=static_cast<uke_install::Slot>(running);saved.policy.good_release=release;
++    saved.policy.phase=uke_install::Phase::stable;saved.policy.candidate.clear();
++    saved.good_image=image_hash;saved.candidate_image.clear();saved.staged_boot_id.clear();
++    saved.baseline_approved=false;(void)encode(saved);return saved;
++}
++static std::optional<UserdataUpdate> interrupted_off_stage(UserdataUpdate saved,RollbackMode mode,unsigned running,
++        const std::string &release,const std::string &image_hash,const std::string &boot_id) {
++    (void)encode(saved);
++    if(mode!=RollbackMode::off)return {};
++    const bool incomplete=saved.policy.phase==uke_install::Phase::staging || saved.policy.phase==uke_install::Phase::verified;
++    const bool returned=saved.policy.phase==uke_install::Phase::trial && running==unsigned(saved.policy.good) &&
++                        valid_boot_id(boot_id) && saved.staged_boot_id!=boot_id;
++    if(!incomplete && !returned)return {};
++    need(running==unsigned(saved.policy.good) && release==saved.policy.good_release && image_hash==saved.good_image,
++         "Interrupted stage requires the unchanged running baseline");
++    if(returned)saved.policy.failed=saved.policy.candidate;
++    saved.policy.phase=uke_install::Phase::stable;saved.policy.candidate.clear();
++    saved.candidate_image.clear();saved.staged_boot_id.clear();(void)encode(saved);return saved;
++}
++static void preserve_accepted_kernel(const fs::path &state,const UserdataUpdate &saved,const Bytes &image) {
++    if(!saved.baseline_approved)return;
++    need(saved.good_image==digest(image),"Accepted recovery source differs from its protected record");
++    const auto kernel=boot_kernel(image);
++    need(fs::space(state).available>kernel.size()+32*1024*1024,"Insufficient accepted-kernel recovery artifact space");
++    const auto banner="Linux version "+saved.policy.good_release+" ";
++    need(std::search(kernel.begin(),kernel.end(),banner.begin(),banner.end())!=kernel.end(),"Accepted recovery kernel release differs from its record");
++    const auto recovery=state/"accepted-kernel-recovery"/saved.policy.good_release;
++    auto dir=directory(recovery,true);
++    // Retain only the required kernel component and its small wrapper/record.
++    // No root-filesystem image or full boot-partition backup is created.
++    const auto retain=[&](const char *name,const Bytes &bytes) {
++        const auto path=recovery/name;
++        if(fs::exists(path))need(file(path)==bytes,"Existing accepted-kernel recovery artifact differs");
++        else save_new(path,bytes);
++    };
++    retain("Image",kernel);
++    retain("boot-header",Bytes(image.begin(),image.begin()+4096));
++    const auto record=encode(saved);retain("approval.state",Bytes(record.begin(),record.end()));
++}
+ static UserdataUpdate superseded_trial(UserdataUpdate saved,unsigned running,const std::string &release,
+                                       const std::string &image_hash,const std::string &boot_id,const std::string &next) {
+     need(awaiting_ab_reboot(saved,running,release,image_hash,boot_id),"Only an unbooted trial in this boot can be superseded");
+@@ -349,7 +401,9 @@
+                            "RebootWithFlags",nullptr,nullptr,"t",uint64_t(1))>=0,
+          "Accepted slot selected; reboot refused or inhibited, retain trial state and reboot normally");
+ }
+-static void userdata_update(const std::string &action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem,bool startup=false,bool explicit_request=false) {
++static void userdata_update(const std::string &requested_action,const fs::path &bundle,const Bytes &package_bytes,const fs::path &state,const std::string &release,const std::string &filesystem,bool startup=false,bool explicit_request=false) {
++    const bool rotating=requested_action=="rotate" || requested_action=="check-rotate";
++    const std::string action=rotating?(requested_action=="check-rotate"?"check":"apply"):requested_action;
+     need(read_text("/var/lib/senemos/installation/profile")=="format=1\nroot=userdata\n","A classified userdata installation is required");
+     const auto statefile=state/"userdata.state";
+     if(action=="fallback" && (!fs::exists(statefile) || decode(file(statefile)).policy.phase!=uke_install::Phase::trial)) {
+@@ -361,7 +415,7 @@
+     std::array<Bytes,2> images;
+     for(unsigned i=0;i<2;++i){auto fd=physical_boot(i?b:a);images[i]=read_fd(fd.value,capacity);}
+     const auto mode=read_rollback_policy();
+-    const auto prior=fs::exists(statefile)?std::optional<UserdataUpdate>(decode(file(statefile))):std::nullopt;
++    auto prior=fs::exists(statefile)?std::optional<UserdataUpdate>(decode(file(statefile))):std::nullopt;
+     const bool development=mode==RollbackMode::off && explicit_request && prior &&
+         prior->policy.phase==uke_install::Phase::stable && prior->policy.good_release==release;
+     const fs::path core=fs::path("/usr/lib/modules")/release/"vmlinuz";
+@@ -383,6 +437,11 @@
+     auto bsg=ufs_bsg(controller);
+     const auto good_hash=digest(images[running]);
+     auto current_boot_id=read_text("/proc/sys/kernel/random/boot_id");need(current_boot_id.ends_with('\n'),"Missing current boot identity");current_boot_id.pop_back();
++    const auto original_prior=prior;
++    if(rotating) {
++        need(explicit_request && prior,"Alternating checkpoint requires protected trial state");
++        prior=rotating_checkpoint(*prior,mode,running,release,good_hash,current_boot_id);
++    }
+     const bool awaiting=prior && awaiting_ab_reboot(*prior,running,release,good_hash,current_boot_id);
+     const bool replacing=action=="check-trial" || action=="replace-trial";
+     need(!replacing || (explicit_request && mode==RollbackMode::off && prior),"Trial replacement requires an explicit rollback-off request and protected state");
+@@ -504,6 +563,7 @@
+         return;
+     }
+     if(action=="fallback") {
++        need(prior && prior->baseline_approved,"Automatic health fallback requires an approved baseline; the development checkpoint remains unapproved");
+         if(read_rollback_policy()!=RollbackMode::enforced) {
+             std::cout<<"Automatic fallback disabled by rollback policy; no slot change or reboot\n";return;
+         }
+@@ -570,13 +630,20 @@
+         need(prior && prior->policy.phase==uke_install::Phase::stable && unsigned(prior->policy.good)==running &&
+              prior->policy.good_release==release && prior->good_image==good_hash,"Accepted stable baseline identity differs");
+         const auto flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
+-        need((flags&slot::successful) && !(flags&slot::unbootable),"Accepted stable slot flags differ");
+-        std::cout<<"Previously accepted running baseline verified; no new boot-health acceptance\n";return;
++        need((prior->baseline_approved || mode==RollbackMode::off) &&
++             (flags&(prior->baseline_approved?slot::successful:slot::priority)) && !(flags&slot::unbootable),"Protected baseline slot flags differ");
++        std::cout<<"Protected running baseline verified; boot-health approval remains unchanged\n";return;
+     }
+     if(action=="accept" || action=="check-accept") {
+         const bool trial=prior && accepting_trial(*prior,running,release,good_hash,current_boot_id);
+         if(skip_off_acceptance(mode,prior && (trial || (unsigned(prior->policy.good)==running &&
+                  prior->policy.good_release==release && prior->good_image==good_hash)))) {
++            const auto recovered=interrupted_off_stage(*prior,mode,running,release,good_hash,current_boot_id);
++            if(recovered && action=="accept") {
++                save_update(statefile,*recovered);
++                std::cout<<"Interrupted inactive trial record recovered; kernel health approval and slot selection unchanged\n";
++                return;
++            }
+             std::cout<<"Rollback off: running boot identity verified; health acceptance skipped; protected state unchanged\n";
+             return;
+         }
+@@ -607,6 +674,7 @@
+                (saved.policy.phase==uke_install::Phase::current_slot_trial && running==unsigned(saved.policy.good) && release==saved.policy.candidate)) {
+                 need(saved.candidate_image==good_hash,"Trial image differs from its verified transaction");
+                 uke_install::accept(saved.policy,static_cast<uke_install::Slot>(running),release,true);
++                saved.baseline_approved=true;
+                 saved.good_image=good_hash;saved.candidate_image.clear();
+                 saved.staged_boot_id.clear();
+             } else {
+@@ -643,7 +711,8 @@
+         save_update(statefile,saved);std::cout<<"Healthy userdata kernel accepted in slot "<<(running?'b':'a')<<"; physical display/sensor accuracy is not inferred\n";return;
+     }
+     need(fs::exists(statefile),"Run the packaged userdata acceptance service before the first automatic update");
+-    auto saved=decode(file(statefile));need(saved.good_image==good_hash,"Running boot bytes differ from the accepted baseline");
++    auto saved=*prior;need(saved.good_image==good_hash,"Running boot bytes differ from the baseline");
++    need(saved.baseline_approved || mode==RollbackMode::off,"Unapproved development baseline requires rollback-off; health acceptance remains separate");
+     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+     const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
+     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next,
+@@ -652,12 +721,14 @@
+     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();
+     need(valid_boot_id(boot_id),"Malformed staging boot identity");saved.staged_boot_id=boot_id;verify_early_firmware();
+     std::vector<SlotMetadata*> changed;
+-    for(auto &disk:disks)if(disk->gpt->prepare(running,target))changed.push_back(disk.get());
++    for(auto &disk:disks)if(disk->gpt->prepare(running,target,!saved.baseline_approved))changed.push_back(disk.get());
+     need(!changed.empty(),"No consistent QTI slot metadata found");
+     if(action=="check"){std::cout<<"Matched userdata bundle, running Image, inactive slot, GPTs, early firmware and UFS boot LUN checks passed; no hardware writes\n";return;}
+     need(charging(),"Verified battery must be at least 50%, or at least 30% with external power");
+     need(fs::space(state).available>32*1024*1024,"Insufficient durable slot metadata space");
+     auto inhibitor=inhibit_shutdown();CriticalSignals signals;
++    if(rotating && original_prior->baseline_approved)
++        preserve_accepted_kernel(state,*original_prior,images[unsigned(original_prior->policy.good)]);
+     const auto transaction=state/(next+"-"+saved.candidate_image);auto transaction_dir=directory(transaction,true);
+     // Commit only the target's unbootable flag before touching its image. A
+     // power loss or partial image write must never leave a bootable candidate.
+@@ -672,7 +743,7 @@
+         }
+         disk->reload(blocked);
+         disk->gpt->require_selected(running);
+-        if(disk->gpt->prepare(running,target)) {
++        if(disk->gpt->prepare(running,target,!saved.baseline_approved)) {
+             disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
+             changed.push_back(disk.get());
+         }
+@@ -699,6 +770,7 @@
+         }catch(...){throw std::runtime_error("Slot selection and restoration failed; retain transaction backups and use recovery before rebooting");}
+         throw std::runtime_error("Slot selection failed; accepted metadata and UFS boot LUN restored and verified");
+     }
+-    std::cout<<"Uke kernel update complete: "<<next<<" written to slot "<<(target?'b':'a')<<", synced, read back and selected for next boot; rollback "<<release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
++    std::cout<<"Uke kernel update complete: "<<next<<" written to slot "<<(target?'b':'a')<<", synced, read back and selected for next boot; "
++        <<(saved.baseline_approved?"approved rollback ":"unapproved development checkpoint ")<<release<<" retained in slot "<<(running?'b':'a')<<". Reboot when ready.\n";
+ }
+ #endif
+--- a/src/slot-control.hpp
++++ b/src/slot-control.hpp
+@@ -181,7 +181,7 @@
+              "Cannot stage development trial quarantine or retry flags");
+         expected["boot_a"]={a.type,attrs};return true;
+     }
+-    bool prepare(unsigned running,unsigned target) {
++    bool prepare(unsigned running,unsigned target,bool retain_checkpoint=false) {
+         need(running<2 && target==1-running,"Inactive slot required");bool changed=false;
+         for(const auto &[name,a]:parts) {
+             if(!name.ends_with("_a"))continue;
+@@ -193,7 +193,7 @@
+             const auto &old=running?b:a,&next=target?b:a;
+             if(name=="boot_a")need(old.attrs&priority,"Current boot slot has no priority");
+             const auto old_flags=name=="boot_a"?
+-                (old.attrs&~(priority|active))|(uint64_t(2)<<48):old.attrs&~active;
++                (old.attrs&~(priority|active))|(uint64_t(2)<<48)|(retain_checkpoint?successful:0):old.attrs&~active;
+             const auto next_flags=name=="boot_a"?(next.attrs&~flags)|trial_flags:next.attrs|active;
+             auto set_type=[&](const Part &p,const std::string &type) {
+                 std::unique_ptr<fdisk_parttype,decltype(&fdisk_unref_parttype)> value(fdisk_new_parttype(),fdisk_unref_parttype);
+--- a/src/seamless-policy.hpp
++++ b/src/seamless-policy.hpp
+@@ -37,7 +37,7 @@
+     return before_global!=next_global || before_profile!=next_profile || retire;
+ }
+ 
+-enum class SeamlessStage {current,apply,replace_trial,pending,older,deferred};
++enum class SeamlessStage {current,apply,replace_trial,pending,older,deferred,rotate_trial};
+ inline std::array<uint64_t,4> unstable_version(const std::string &release) {
+     need(release.ends_with("-unstable"),"Automatic development updates require the unstable ABI");
+     const auto text=release.substr(0,release.size()-9);std::array<uint64_t,4> result{};
+@@ -54,7 +54,7 @@
+ inline bool pending_development_reboot(RollbackMode mode,const uke_install::Update &saved,
+         const std::string &staged_boot_id,const std::string &boot_id,const std::string &running) {
+     return mode==RollbackMode::off && saved.phase==uke_install::Phase::trial &&
+-        saved.good==uke_install::Slot::b && !staged_boot_id.empty() && staged_boot_id==boot_id &&
++        !staged_boot_id.empty() && staged_boot_id==boot_id &&
+         !saved.candidate.empty() && saved.candidate!=running;
+ }
+ inline SeamlessStage seamless_stage(RollbackMode mode,const uke_install::Update &saved,
+@@ -66,8 +66,8 @@
+     if(running.ends_with("-unstable") && selected.ends_with("-unstable") &&
+        unstable_version(selected)<unstable_version(running))return SeamlessStage::older;
+     if(saved.phase==uke_install::Phase::stable)return SeamlessStage::apply;
+-    if(saved.phase==uke_install::Phase::trial && saved.good==uke_install::Slot::b &&
+-       saved.candidate==running && !boot_id.empty() && staged_boot_id!=boot_id)return SeamlessStage::replace_trial;
++    if(saved.phase==uke_install::Phase::trial &&
++       saved.candidate==running && !boot_id.empty() && staged_boot_id!=boot_id)return SeamlessStage::rotate_trial;
+     return SeamlessStage::deferred;
+ }
+ inline bool skip_off_acceptance(RollbackMode mode,bool matching) {
+--- a/tests/userdata-update.cpp
++++ b/tests/userdata-update.cpp
+@@ -246,6 +246,53 @@
+         assert(!lock_metadata_fd(-1) && errno==EBADF);
+         std::cout<<"Actual metadata flock: transient contention recovers, held locks time out, invalid descriptors refuse\n";
+     }
++    {
++        const auto staged_id=std::string("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
++        const auto booted_id=std::string("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
++        for(unsigned initial_good=0;initial_good<2;++initial_good) {
++            UserdataUpdate rotating{{uke_install::Profile::userdata,static_cast<uke_install::Slot>(initial_good),
++                "7.3.1-1500",uke_install::Phase::trial,"7.3.1-12206-unstable",{}},std::string(64,'a'),std::string(64,'b'),staged_id};
++            unsigned running_slot=1-initial_good;
++            for(unsigned cycle=0;cycle<4;++cycle) {
++                const auto before=encode(rotating),release=rotating.policy.candidate,hash=rotating.candidate_image;
++                reject([&]{rotating_checkpoint(rotating,RollbackMode::enforced,running_slot,release,hash,booted_id);});
++                reject([&]{rotating_checkpoint(rotating,RollbackMode::off,running_slot,release,hash,rotating.staged_boot_id);});
++                reject([&]{rotating_checkpoint(rotating,RollbackMode::off,1-running_slot,release,hash,booted_id);});
++                auto checkpoint=rotating_checkpoint(rotating,RollbackMode::off,running_slot,release,hash,booted_id);
++                assert(encode(rotating)==before && !checkpoint.baseline_approved);
++                const auto encoded=encode(checkpoint);
++                assert(encoded.starts_with("format=2\nbaseline_approved=0\n"));
++                assert(encode(decode(Bytes(encoded.begin(),encoded.end())))==encoded);
++                for(const auto phase:{uke_install::Phase::staging,uke_install::Phase::verified,uke_install::Phase::trial}) {
++                    auto interrupted=checkpoint;interrupted.policy.phase=phase;
++                    interrupted.policy.candidate="7.3.1-13000-unstable";interrupted.candidate_image=std::string(64,'f');interrupted.staged_boot_id=staged_id;
++                    const auto record_before=encode(interrupted);
++                    const auto recovered=interrupted_off_stage(interrupted,RollbackMode::off,running_slot,release,hash,booted_id);
++                    assert(recovered && recovered->policy.phase==uke_install::Phase::stable && !recovered->baseline_approved);
++                    assert(recovered->policy.candidate.empty() && encode(interrupted)==record_before);
++                    assert(!interrupted_off_stage(interrupted,RollbackMode::enforced,running_slot,release,hash,booted_id));
++                    reject([&]{interrupted_off_stage(interrupted,RollbackMode::off,running_slot,"wrong",hash,booted_id);});
++                    if(phase==uke_install::Phase::trial)assert(recovered->policy.failed==interrupted.policy.candidate);
++                }
++                auto bad=encoded;bad.replace(bad.find("baseline_approved=0"),19,"baseline_approved=1");
++                reject([&]{decode(Bytes(bad.begin(),bad.end()));});
++                const auto next="7.3.1-"+std::to_string(12207+cycle)+"-unstable";
++                const auto target=unsigned(uke_install::stage(checkpoint.policy,static_cast<uke_install::Slot>(running_slot),release,next));
++                assert(target==1-running_slot && !checkpoint.baseline_approved);
++                checkpoint.candidate_image=std::string(64,char('c'+cycle));checkpoint.staged_boot_id=staged_id;
++                uke_install::verified(checkpoint.policy);(void)uke_install::arm(checkpoint.policy);
++                rotating=checkpoint;running_slot=target;
++            }
++        }
++        const auto original=image("7.3.1-1500");
++        UserdataUpdate accepted{{uke_install::Profile::userdata,uke_install::Slot::b,"7.3.1-1500",uke_install::Phase::stable,{},{}},digest(original),{}, {}};
++        preserve_accepted_kernel(root,accepted,original);preserve_accepted_kernel(root,accepted,original);
++        const auto recovery=root/"accepted-kernel-recovery/7.3.1-1500";
++        assert(file(recovery/"Image")==boot_kernel(original) && fs::file_size(recovery/"Image")<capacity);
++        assert(fs::file_size(recovery/"boot-header")==4096 && decode(file(recovery/"approval.state")).baseline_approved);
++        assert(std::distance(fs::directory_iterator(recovery),fs::directory_iterator{})==3);
++        auto wrong=accepted;wrong.good_image=std::string(64,'f');reject([&]{preserve_accepted_kernel(root,wrong,original);});
++    }
+     fs::remove_all(root);
+     std::cout<<"Userdata durable states, alternating and current-slot trials, healthy acceptance/fallback, stale/symlink/hardlink refusals, unique running Image identity and bounded VRR derivation passed; regular files only\n";
+ }
+--- a/tests/slot-control.cpp
++++ b/tests/slot-control.cpp
+@@ -67,6 +67,12 @@
+     assert(back.parts.at("boot_b").type==a.parts.at("boot_b").type);
+     {
+         // A is now an unaccepted trial; B retains its successful baseline.
++        const auto before_checkpoint=slot::snapshot(fd.value,st.st_size,sector);
++        slot::Disk checkpoint(fd.value,st.st_size,sector);
++        assert(checkpoint.prepare(0,1,true));
++        assert(checkpoint.expected.at("boot_a").second&slot::successful);
++        assert(!(checkpoint.expected.at("boot_b").second&slot::successful));
++        assert(slot::snapshot(fd.value,st.st_size,sector)==before_checkpoint); // Preview never commits.
+         const auto retained=back.parts.at("boot_b");
+         const auto paired=back.parts.at("abl_a");
+         slot::Disk quarantine(fd.value,st.st_size,sector);
+--- a/tests/seamless-policy.cpp
++++ b/tests/seamless-policy.cpp
+@@ -45,7 +45,11 @@
+         return seamless_stage(mode,saved,prior,boot,running,selected);
+     };
+     assert(plan(RollbackMode::off,saved.candidate,saved.candidate)==SeamlessStage::current);
+-    assert(plan(RollbackMode::off,saved.candidate,"7.3.1-7300-unstable")==SeamlessStage::replace_trial);
++    assert(plan(RollbackMode::off,saved.candidate,"7.3.1-7300-unstable")==SeamlessStage::rotate_trial);
++    saved.good=uke_install::Slot::a;
++    assert(plan(RollbackMode::off,saved.candidate,"7.3.1-7300-unstable")==SeamlessStage::rotate_trial);
++    assert(pending_development_reboot(RollbackMode::off,saved,boot,boot,saved.good_release));
++    saved.good=uke_install::Slot::b;
+     assert(plan(RollbackMode::enforced,saved.candidate,"7.3.1-7300-unstable")==SeamlessStage::apply);
+     assert(plan(RollbackMode::permissive,saved.candidate,"7.3.1-7300-unstable")==SeamlessStage::apply);
+     rejects([&]{plan(RollbackMode::off,saved.candidate,saved.failed);});

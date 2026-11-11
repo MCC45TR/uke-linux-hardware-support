@@ -1,0 +1,99 @@
+--- a/uke-cdsp-pogo-firmware/src/managed.hpp
++++ b/uke-cdsp-pogo-firmware/src/managed.hpp
+@@ -3,14 +3,29 @@
+ #include "idle-current.hpp"
+ #include <nlohmann/json.hpp>
+ #include <optional>
++#include "unstable-release.hpp"
+ namespace uke_local_fw {
+ struct ManagedProfile {std::string release,source;unsigned revision;};
+ static inline std::optional<unsigned> unstable_revision(const std::string &release) {
+-    const std::string prefix="7.3.1-",suffix="-unstable";
+-    if(!release.starts_with(prefix)||!release.ends_with(suffix))return {};
+-    const auto number=release.substr(prefix.size(),release.size()-prefix.size()-suffix.size());
+-    if(number.empty()||number.size()>8||number.front()=='0'||number.find_first_not_of("0123456789")!=std::string::npos)return {};
+-    return unsigned(std::stoul(number));
++    if(!uke_release::unstable(release))return {};
++    const auto split=release.find('-');
++    const auto number=std::string_view(release).substr(split+1,release.size()-split-1-std::string_view("-unstable").size());
++    unsigned revision=0;
++    const auto parsed=std::from_chars(number.data(),number.data()+number.size(),revision);
++    if(parsed.ec!=std::errc()||parsed.ptr!=number.data()+number.size())return {};
++    return revision;
++}
++static inline std::array<unsigned,4> unstable_order(const std::string &release) {
++    need(uke_release::unstable(release),"Canonical unstable release required for ordering");
++    std::array<unsigned,4> key{};auto version=std::string_view(release);
++    for(unsigned i=0;i<key.size();++i){
++        const auto at=version.find(i<2?'.':'-');
++        const auto number=version.substr(0,at);
++        const auto parsed=std::from_chars(number.data(),number.data()+number.size(),key[i]);
++        need(parsed.ec==std::errc()&&parsed.ptr==number.data()+number.size(),"Invalid release order component");
++        version.remove_prefix(at+1);
++    }
++    return key;
+ }
+ static inline std::optional<ManagedProfile> managed_profile(const fs::path &root,const std::string &release) {
+     const auto revision=unstable_revision(release);if(!revision)return {};
+@@ -45,7 +60,7 @@
+     return found!=sources.end()&&found->second==profile.source;
+ }
+ static inline std::vector<ManagedProfile> managed_targets(const fs::path &profiles,const fs::path &modules,const std::string &current) {
+-    std::vector<ManagedProfile> selected;std::optional<std::pair<unsigned,std::string>> newest;unsigned inspected=0;
++    std::vector<ManagedProfile> selected;std::optional<std::pair<std::array<unsigned,4>,std::string>> newest;unsigned inspected=0;
+     bool current_present=false;
+     for(const auto &entry:fs::directory_iterator(profiles)) {
+         need(++inspected<=128,"Too many installed kernel profiles");
+@@ -53,7 +68,8 @@
+         // Removed kernels and unrelated families never become import targets.
+         if(!path_present(modules/release))continue;
+         if(release==current)current_present=true;
+-        if(!newest||*revision>newest->first)newest=std::make_pair(*revision,release);
++        const auto key=unstable_order(release);
++        if(!newest||key>newest->first)newest=std::make_pair(key,release);
+     }
+     const auto append=[&](const std::string &release) {
+         auto directory_fd=directory(modules/release);(void)directory_fd;
+--- a/uke-cdsp-pogo-firmware/src/import.cpp
++++ b/uke-cdsp-pogo-firmware/src/import.cpp
+@@ -142,7 +142,7 @@
+     return 0;
+ }
+ static int run(const std::string &release,bool authentication=false) {
+-    need(token(release)&&release.starts_with("7.3.1-")&&release.ends_with("-unstable"),
++    need(token(release)&&unstable_revision(release).has_value(),
+          "Firmware candidates require an -unstable kernel ABI");
+     utsname current{};need(!uname(&current)&&release!=current.release,"Only a non-running kernel may receive firmware");
+     need(fs::is_directory(fs::path("/usr/lib/modules")/release),"Target kernel modules are not installed");
+--- a/uke-cdsp-pogo-firmware/tests/managed.cpp
++++ b/uke-cdsp-pogo-firmware/tests/managed.cpp
+@@ -24,7 +24,7 @@
+         text(profiles/release/"source-composition.json",composition(release,source).dump());
+         fs::create_directories(modules/release);
+     };
+-    for(const auto &bad:{"7.3.1-12204","7.3.1-012204-unstable","7.3.1-1x-unstable","../7.3.1-12204-unstable","7.3.1--unstable","7.4.0-1-unstable"})assert(!unstable_revision(bad));
++    for(const auto &bad:{"7.3.1-12204","7.3.1-012204-unstable","7.3.1-1x-unstable","../7.3.1-12204-unstable","7.3.1--unstable","7.2.9-1-unstable"})assert(!unstable_revision(bad));
+     add(current);add("7.3.1-12203-unstable");add("7.3.1-12205-unstable");
+     text(profiles/"7.3.1-12203-unstable/source-composition.json","older-profile-format");
+     add("7.3.1-99999-unstable");fs::remove_all(modules/"7.3.1-99999-unstable");
+@@ -67,6 +67,19 @@
+     const auto future=*managed_profile(profiles,"7.3.1-12205-unstable");
+     assert(prepare_managed(future,current,firmware,families,active));
+     assert(file(parent/"cdsp/cdsp.mdt")==before);
++    // Public revisions restart at1 for a newer upstream version. Compare the
++    // complete tuple and preserve the running profile and exact idle allowlist.
++    for(const auto &release:{"7.3.3-1-unstable","7.3.3-34-unstable","7.4.0-1-unstable","8.0.0-1-unstable"}){
++        add(release);assert(unstable_revision(release));
++        const auto newer=*managed_profile(profiles,release);
++        assert(!qualified_idle_source(newer));
++        const auto cohort=managed_targets(profiles,modules,current);
++        assert(cohort.size()==2&&cohort.front().release==current&&cohort.back().release==release);
++        assert(prepare_managed(newer,current,firmware,families,active));
++        assert(file(parent/"cdsp/cdsp.mdt")==before);
++        assert(!prepare_managed(newer,current,firmware,families,active,true));
++    }
++    for(const auto &bad:{"7.3.3-0-unstable","7.3.3-01-unstable","7.03.3-1-unstable","7.3.3-4294967296-unstable","7.3.3-1/2-unstable"})assert(!unstable_revision(bad));
+     fs::remove_all(root);
+-    std::cout<<"PASS: actual managed profile selection/admission, exact idle-current source, active refusal, verify-only, additive no-replace publication and future inactive targets; synthetic only\n";
++    std::cout<<"PASS: actual managed profile selection/admission, exact idle-current source, active refusal, verify-only, additive no-replace publication and future inactive targets; synthetic only; complete semantic-version ordering retains newer revision1\n";
+ }

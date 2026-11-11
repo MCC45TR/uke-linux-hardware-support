@@ -1,6 +1,6 @@
 # Internal speaker orientation
 
-Date: 27 October 2026. Target: Xiaomi Pad 7 / POCO Pad X1, Uke. Source and host
+Date: 8 November 2026. Target: Xiaomi Pad 7 / POCO Pad X1, Uke. Source and host
 fixtures only; physical channel order, live switching and desktop acceptance
 remain unverified.
 
@@ -35,18 +35,37 @@ The helper checks logind session identity, user, local Wayland type and active
 state. User-manager autostarts may lack both a login cgroup and XDG_SESSION_ID;
 the fallback accepts exactly one local Wayland session belonging to the user.
 Multiple possible sessions refuse routing instead of following another desktop.
-It validates all four control names, types and angle labels before any
-write, skips unchanged values and checks each write by reading it back. ALSA
+Version 0.2.0 prefers the additive `Speaker Display Rotation` card control.
+The machine driver snapshots all four codec selections, verifies the result,
+restores all endpoints on failure and invokes the existing amplifier fault
+latch if restoration cannot be verified. It retains the DT endpoint geometry
+and OEM position masks. The client validates the complete enum and confirms
+the result; only an absent control selects compatibility with older kernels.
+Versioned Uke card driver names are admitted alongside the original `sm7675`
+driver, always with the exact `POCO-Pad-X1` card name.
+
+The legacy path validates all four control names, types and angle labels before
+any write, skips unchanged values and reads back each result. ALSA
 and logind events trigger reconciliation; missing/failing controls use a bounded
 retry interval. A missing control on older kernels cannot enable speakers.
-The four control writes are sequential, not one hardware transaction; partial
-failure is reported and retried. It never raises volume, enables a switch,
+Its four compatibility writes are sequential; partial failure is reported and
+retried. The native card operation also does not promise simultaneous I2C
+changes across amplifiers. It never raises volume, enables a switch,
 starts playback or changes DisplayPort/HDMI/Bluetooth routing.
 
-Install `uke-speaker-orientation` with the matching test kernel and existing
-`uke-displayport-audio` policy. Its XDG autostart entry covers original KDE and
+Control 2.10 owns this session layer in its existing main runtime RPM. It
+replaces the separate orientation package through versioned Provides/Obsoletes
+and retains the executable and configuration paths, including the existing
+XDG autostart identity. The audio producer is retired only after the normal
+DNF ownership/configuration transition and recovery are verified. Archived
+DisplayPort policy and speaker-control inputs remain source references.
+The notifier uses ALSA, Wayland and logind directly and adds no root service.
+Its XDG autostart covers original KDE and
 GNOME applications in Wayland sessions; it does not implement X11 sessions.
 No root daemon, target Python or desktop application fork is included.
+The compositor's actual internal-output transform remains session policy.
+Accelerometer readings cannot replace it when rotation is locked, manually
+selected or an external display remains active with the cover closed.
 
 The default display-zero offset is 0 relative to the native output transform.
 This retains the source reference; its alignment with the reported USB-C-right

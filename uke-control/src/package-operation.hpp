@@ -10,7 +10,7 @@
 
 namespace uke::packages::operation {
 enum class Resume {replan,finish_boot,finish_selection,review};
-struct Record {std::string id,channel,phase,kernel;bool boot_required=false;};
+struct Record {std::string id,channel,phase,kernel;bool boot_required=false;std::string mode="sync";};
 inline Resume resume(const std::string& phase) {
     if(phase=="prepared"||phase=="repositories")return Resume::replan;
     if(phase=="rpm_complete"||phase=="boot_started")return Resume::finish_boot;
@@ -18,6 +18,7 @@ inline Resume resume(const std::string& phase) {
     return Resume::review;
 }
 inline const char* next(const std::string& phase) {
+    if(phase=="complete")return "none";
     switch(resume(phase)) {
     case Resume::replan:return "review_new_plan";
     case Resume::finish_boot:return "resume_boot_finalization";
@@ -30,12 +31,12 @@ inline void validate(const Record& record) {
     if(record.id.size()!=32||record.id.find_first_not_of("0123456789abcdef")!=std::string::npos||
        (record.channel!="stable"&&record.channel!="test"&&record.channel!="unstable")||
        record.kernel.size()>256||record.kernel.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._+~-")!=std::string::npos||
-       (record.boot_required&&record.kernel.empty()))throw std::runtime_error("Invalid package operation identity");
+       (record.boot_required&&record.kernel.empty())||(record.mode!="sync"&&record.mode!="set"&&record.mode!="update"))throw std::runtime_error("Invalid package operation identity");
     bool phase=false;for(const auto* known:{"prepared","repositories","rpm_started","rpm_complete","boot_started","boot_complete","selected","complete"})phase|=record.phase==known;
     if(!phase)throw std::runtime_error("Unknown package operation phase");
 }
 inline std::string encode(const Record& record) {
-    validate(record);return "format=1\nid="+record.id+"\nchannel="+record.channel+"\nphase="+record.phase+"\nkernel="+record.kernel+"\nboot_required="+(record.boot_required?"1":"0")+"\n";
+    validate(record);return "format=2\nid="+record.id+"\nchannel="+record.channel+"\nphase="+record.phase+"\nkernel="+record.kernel+"\nboot_required="+(record.boot_required?"1":"0")+"\nmode="+record.mode+"\n";
 }
 inline Record decode(const std::string& text) {
     if(text.size()>512||!text.ends_with('\n'))throw std::runtime_error("Incomplete package operation record");
@@ -44,8 +45,10 @@ inline Record decode(const std::string& text) {
         const auto split=line.find('=');
         if(split==line.npos||!fields.emplace(line.substr(0,split),line.substr(split+1)).second)throw std::runtime_error("Malformed package operation record");
     }
-    if(fields.size()!=6||fields.at("format")!="1"||(fields.at("boot_required")!="0"&&fields.at("boot_required")!="1"))throw std::runtime_error("Unsupported package operation record");
-    Record record{fields.at("id"),fields.at("channel"),fields.at("phase"),fields.at("kernel"),fields.at("boot_required")=="1"};validate(record);return record;
+    const bool legacy=fields.at("format")=="1"&&fields.size()==6;
+    const bool versioned=fields.at("format")=="2"&&fields.size()==7;
+    if((!legacy&&!versioned)||(fields.at("boot_required")!="0"&&fields.at("boot_required")!="1"))throw std::runtime_error("Unsupported package operation record");
+    Record record{fields.at("id"),fields.at("channel"),fields.at("phase"),fields.at("kernel"),fields.at("boot_required")=="1",legacy?"sync":fields.at("mode")};validate(record);return record;
 }
 struct Actions {
     std::function<void(const Record&)> checkpoint;

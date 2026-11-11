@@ -75,6 +75,8 @@ package selections. Numeric readings alone do not establish physical acceptance.
 
 %install
 install -Dm755 build/uke-control %{buildroot}%{_bindir}/uke-control
+install -Dm755 build/brightness-curve %{buildroot}%{_libexecdir}/uke-control/brightness-curve
+install -Dm644 packaging/30-uke-brightness-curve.sh %{buildroot}%{_sysconfdir}/xdg/plasma-workspace/env/30-uke-brightness-curve.sh
 install -Dm644 src/uke-microphone.lua %{buildroot}%{_datadir}/wireplumber/scripts/uke-microphone.lua
 install -Dm644 src/uke-microphone-policy.lua %{buildroot}%{_datadir}/wireplumber/scripts/lib/uke-microphone-policy.lua
 install -Dm644 packaging/96-uke-microphone-policy.conf %{buildroot}%{_datadir}/wireplumber/wireplumber.conf.d/96-uke-microphone-policy.conf
@@ -168,10 +170,13 @@ fi
 %files
 %license LICENSE shared/recovery/LICENSE-APACHE-2.0
 %doc README.md CHANGELOG.md CHARGING.md DISPLAY.md CHANNELS.md SENSORS.md DESKTOP.md HARDWARE.md DIAGNOSTIC.md RESIZE.md LIGHTS.md CLI.md BOOT-LAYOUT.md OVERVIEW.md REVIEW-2026-10-30.md TUI.md MICROPHONE.md
+%doc docs/BRIGHTNESS-CURVE.md
 %{_datadir}/wireplumber/scripts/uke-microphone.lua
 %{_datadir}/wireplumber/scripts/lib/uke-microphone-policy.lua
 %{_datadir}/wireplumber/wireplumber.conf.d/96-uke-microphone-policy.conf
 %{_bindir}/uke-control
+%{_libexecdir}/uke-control/brightness-curve
+%config(noreplace) %{_sysconfdir}/xdg/plasma-workspace/env/30-uke-brightness-curve.sh
 %{_datadir}/bash-completion/completions/uke-control
 %{_libexecdir}/uke-control/rgb-led
 %{_libexecdir}/uke-control/torch-access

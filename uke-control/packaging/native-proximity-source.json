@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "parent_build": 11299926,
+  "parent_version": "2.16.0-1",
+  "parent_srpm_sha256": "c05d1472413aba357022c8b18b38d88305f8e9b690a9dcc26e592ceb819f8744",
+  "parent_spec_sha256": "16db08349320c9941a65fe909390b4c54c0fc0518807391e2535781ec0fd7cbc",
+  "version": "2.16.0-2",
+  "new_runtime_packages": 0,
+  "new_services": 0,
+  "physical_accepted": false,
+  "source_assets": [
+    {
+      "path": "packaging/89-uke-native-proximity.rules",
+      "sha256": "a71a599bf1313067040fbbe31d21bdfe1e556b64f65eb8323c4ecbb25ff5735e"
+    },
+    {
+      "path": "docs/NATIVE-PROXIMITY-SELECTION.md",
+      "sha256": "962b87fcb0b4ea2fe848c0f0e19bb7d0a8fc97579e940974f6ffdc672196371f"
+    },
+    {
+      "path": "packaging/fold-native-proximity-spec.sh",
+      "sha256": "f5352e6a6e5d458f29bdf925643d530b3173da2bec25b14ae30c93b474e3f6da"
+    },
+    {
+      "path": "packaging/copr-control-native-proximity.sh",
+      "sha256": "89bf18f7bffa2566e027f890e97176e9257a4039d347ef6ef5d965978270ec1d"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 #define main orientation_daemon_main
-#include "../src/uke-speaker-orientation.cpp"
+#include "../../src/session/speaker-orientation.cpp"
 #undef main
 #include <cassert>
 
 static std::array<unsigned, 4> actual;
 static int query_index, query_item, writes, fail_write, missing_control = -1;
 static bool wrong_type, wrong_labels, ignore_write, fail_read;
+static bool aggregate_control;
 static int fake_active = 1, fake_remote;
 static uid_t fake_uid;
 static const char *fake_type = "wayland";
@@ -19,6 +20,8 @@ static int index_of(const char *name) {
     assert(false); return -1;
 }
 extern "C" int snd_ctl_elem_info(snd_ctl_t *, snd_ctl_elem_info_t *info) {
+    if (!std::strcmp(snd_ctl_elem_info_get_name(info), "Speaker Display Rotation"))
+        return aggregate_control ? 0 : -ENOENT;
     query_index = index_of(snd_ctl_elem_info_get_name(info));
     return query_index == missing_control ? -ENOENT : 0;
 }
@@ -33,11 +36,19 @@ extern "C" const char *snd_ctl_elem_info_get_item_name(const snd_ctl_elem_info_t
 }
 extern "C" int snd_ctl_elem_read(snd_ctl_t *, snd_ctl_elem_value_t *value) {
     if (fail_read) return -EIO;
+    if (!std::strcmp(snd_ctl_elem_value_get_name(value), "Speaker Display Rotation")) {
+        for (unsigned i = 1; i < actual.size(); ++i) if (actual[i] != actual[0]) return -EUCLEAN;
+        snd_ctl_elem_value_set_enumerated(value, 0, actual[0]); return 0;
+    }
     snd_ctl_elem_value_set_enumerated(value, 0, actual.at(index_of(snd_ctl_elem_value_get_name(value))));
     return 0;
 }
 extern "C" int snd_ctl_elem_write(snd_ctl_t *, snd_ctl_elem_value_t *value) {
     if (++writes == fail_write) return -EIO;
+    if (!std::strcmp(snd_ctl_elem_value_get_name(value), "Speaker Display Rotation")) {
+        if (!ignore_write) actual.fill(snd_ctl_elem_value_get_enumerated(value, 0));
+        return 0;
+    }
     if (!ignore_write) actual.at(index_of(snd_ctl_elem_value_get_name(value))) =
         snd_ctl_elem_value_get_enumerated(value, 0);
     return 0;
@@ -66,6 +77,7 @@ extern "C" int sd_uid_get_sessions(uid_t, int, char ***list) {
 static void reset() {
     actual.fill(0); writes = 0; fail_write = -1; missing_control = -1;
     wrong_type = wrong_labels = ignore_write = fail_read = false;
+    aggregate_control = false;
 }
 
 int main() {
@@ -85,6 +97,22 @@ int main() {
     assert(target_card("sm7675", "POCO-Pad-X1"));
     assert(!target_card("sm7675", "POCO-Pad-X1-HDMI"));
     assert(!target_card("foreign", "POCO-Pad-X1"));
+    assert(target_card("uke7_3_3-5u", "POCO-Pad-X1"));
+    assert(target_card("uke7_3_3-6u", "POCO-Pad-X1"));
+    for (const char *bad : {"uke", "uke7_3-6u", "uke7_3_3-6uX", "uke7_3_3--6u", "uke7_3_3- 6u"})
+        assert(!target_card(bad, "POCO-Pad-X1"));
+    reset(); aggregate_control = true;
+    assert(synchronize(nullptr, 1) == 0 && writes == 1);
+    for (auto v : actual) assert(v == 1);
+    assert(synchronize(nullptr, 1) == 0 && writes == 1);
+    actual[2] = 3; assert(synchronize(nullptr, 2) == 0 && writes == 2);
+    for (auto v : actual) assert(v == 2);
+    reset(); aggregate_control = true; wrong_type = true;
+    assert(synchronize(nullptr, 1) == -EPROTO && !writes);
+    reset(); aggregate_control = true; ignore_write = true;
+    assert(synchronize(nullptr, 1) == -EIO && writes == 1);
+    reset(); aggregate_control = true; fail_write = 1;
+    assert(synchronize(nullptr, 1) == -EIO && writes == 1);
     reset(); assert(synchronize(nullptr, 4) == -EINVAL && writes == 0);
     for (unsigned turn = 0; turn < 4; ++turn) {
         reset(); assert(synchronize(nullptr, turn) == 0);

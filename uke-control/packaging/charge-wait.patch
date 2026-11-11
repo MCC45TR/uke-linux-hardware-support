@@ -1,0 +1,64 @@
+diff --git a/src/battery/control-main.cpp b/src/battery/control-main.cpp
+index c5836f12..78d91e82 100644
+--- a/src/battery/control-main.cpp
++++ b/src/battery/control-main.cpp
+@@ -18,7 +18,8 @@
+ #include <sys/file.h>
+ #include <sys/stat.h>
+ #include <sys/utsname.h>
+-#include <thread>
++#include <poll.h>
++#include <pthread.h>
+ #include <time.h>
+ #include <unistd.h>
+ 
+@@ -28,6 +29,29 @@ namespace fs = std::filesystem;
+ volatile sig_atomic_t stopping = 0;
+ void stop(int) { stopping = 1; }
+ [[noreturn]] void fail(const char *reason) { throw std::runtime_error(reason); }
++// Block stop signals across the flag check; ppoll unmasks them atomically.
++// Retain the same fallback deadline without a 100 ms wakeup grid.
++void wait_until(std::chrono::steady_clock::time_point deadline) {
++    sigset_t blocked{}, previous{};
++    sigemptyset(&blocked); sigaddset(&blocked, SIGTERM); sigaddset(&blocked, SIGINT);
++    const int mask_error = pthread_sigmask(SIG_BLOCK, &blocked, &previous);
++    if (mask_error) throw std::runtime_error("control_wait_mask_errno_" + std::to_string(mask_error));
++    int wait_error = 0;
++    while (!stopping) {
++        const auto remaining = deadline - std::chrono::steady_clock::now();
++        if (remaining <= std::chrono::steady_clock::duration::zero()) break;
++        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(remaining).count();
++        const timespec timeout{static_cast<time_t>(ns / 1000000000LL), static_cast<long>(ns % 1000000000LL)};
++        const int result = ppoll(nullptr, 0, &timeout, &previous);
++        if (result == 0) continue;
++        if (result < 0 && errno == EINTR) continue;
++        wait_error = result < 0 && errno ? errno : EPROTO;
++        break;
++    }
++    const int restore_error = pthread_sigmask(SIG_SETMASK, &previous, nullptr);
++    if (restore_error) throw std::runtime_error("control_wait_restore_errno_" + std::to_string(restore_error));
++    if (wait_error) throw std::runtime_error("control_wait_poll_errno_" + std::to_string(wait_error));
++}
+ uint64_t now() {
+     timespec t{}; if (clock_gettime(CLOCK_BOOTTIME, &t)) fail("control_clock_unavailable");
+     return uint64_t(t.tv_sec) * 1000000000ULL + uint64_t(t.tv_nsec);
+@@ -398,8 +422,7 @@ int main(int argc, char **argv) {
+                     // Transport quarantine and the kernel's uncertain-write latch forbid SET replay.
+                     emit_protection_change(std::cerr, "protection observation: " + identifier(e.what()) + '\n', previous_report);
+                 }
+-                for (unsigned ticks = 0; ticks < 20 && !stopping; ++ticks)
+-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
++                wait_until(std::chrono::steady_clock::now() + std::chrono::seconds(2));
+             }
+             return 0;
+         }
+@@ -502,8 +525,7 @@ int main(int argc, char **argv) {
+                 }
+                 const auto seconds = std::chrono::seconds(profile.lease_ns / 3000000000ULL);
+                 const auto until = std::chrono::steady_clock::now() + seconds;
+-                while (!stopping && std::chrono::steady_clock::now() < until)
+-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
++                wait_until(until);
+             }
+         } else {
+             Lock lock;

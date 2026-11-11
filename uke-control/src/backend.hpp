@@ -34,6 +34,7 @@ Result charge_control_query(const std::string& operation);
 Result charge_enable_preconfigured_cap();
 Result charge_enable_moisture();
 Result charge_apply_preconfigured_cap();
+Result charge_apply_preconfigured_cap(bool online_reduction);
 Result charge_control_mode(const std::string& mode);
 Result charge_review(const std::string& review);
 std::string usb_status();

@@ -8,4 +8,5 @@ Result control_mode(const std::string& mode);
 Result enable_preconfigured_cap();
 Result enable_moisture();
 Result apply_preconfigured_cap();
+Result apply_preconfigured_cap(bool online_reduction);
 }

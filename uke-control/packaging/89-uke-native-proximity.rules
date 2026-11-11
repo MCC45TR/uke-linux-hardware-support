@@ -1,0 +1,4 @@
+# Prefer the standard event input for the declared binary proximity contract.
+# Raw IIO remains accessible. Older kernels retain their existing udev type.
+# The capability exists before input registration, avoiding an IIO-first race.
+ACTION!="remove", SUBSYSTEM=="iio", ATTR{name}=="uke-ssc-proximity", ATTR{ssc_proximity_input_abi}=="1", ENV{IIO_SENSOR_PROXY_TYPE}=""

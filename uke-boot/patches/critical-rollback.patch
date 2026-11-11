@@ -1,0 +1,284 @@
+--- a/src/kernel-update.cpp
++++ b/src/kernel-update.cpp
+@@ -472,6 +472,7 @@
+     return retained;
+ }
+ #include "userdata-update.hpp"
++#include "critical-runtime.hpp"
+ #include "select-existing-slot.hpp"
+ static void prepare_private_color(const std::string &release) {
+     trusted("/usr/bin/uke-o82-color-profile");
+@@ -521,7 +522,9 @@
+             }
+             const auto mode=read_rollback_policy();
+             std::cout<<"{\"schema_version\":1,\"rollback_mode\":\""<<rollback_name(mode)
+-                     <<"\",\"automatic_fallback\":"<<(mode==RollbackMode::enforced?"true":"false")
++                     <<"\",\"automatic_fallback\":"<<(mode!=RollbackMode::off?"true":"false")
++                     <<",\"critical_fallback\":"<<(mode!=RollbackMode::off?"true":"false")
++                     <<",\"ordinary_failure_fallback\":"<<(mode==RollbackMode::enforced?"true":"false")
+                      <<",\"health_observation\":true,\"automatic_acceptance\":"<<(mode==RollbackMode::off?"false":"true")
+                      <<",\"default_mode\":\"enforced\"}\n";
+             return 0;
+@@ -531,10 +534,11 @@
+                          std::string(argv[1])=="check-current"||std::string(argv[1])=="apply-current" ||
+                          std::string(argv[1])=="check-trial"||std::string(argv[1])=="replace-trial" ||
+                          std::string(argv[1])=="check-restore-current"||std::string(argv[1])=="restore-current"||std::string(argv[1])=="transaction"||std::string(argv[1])=="import-oem-video")) ||
+-             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy"||std::string(argv[1])=="enable-seamless-policy")),
++             (argc==2 && (std::string(argv[1])=="boot"||std::string(argv[1])=="boot-watch"||std::string(argv[1])=="accept"||std::string(argv[1])=="fallback"||std::string(argv[1])=="auto"||std::string(argv[1])=="check-auto"||std::string(argv[1])=="check-oem-video"||std::string(argv[1])=="migrate-automatic-policy"||std::string(argv[1])=="enable-seamless-policy")),
+              "Usage: uke-kernel-update check|apply|check-current|apply-current|check-trial|replace-trial|check-restore-current|restore-current|transaction BUNDLE | select-slot|check-select-slot a|b|next RELEASE | import-oem-video RELEASE | boot | accept | fallback | auto | check-auto | check-oem-video | migrate-automatic-policy | enable-seamless-policy");
+         need(geteuid()==0,"Root privileges are required");
+-        const std::string action=argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
++        const bool watch_runtime=std::string_view(argv[1])=="boot-watch";
++        const std::string action=watch_runtime?"boot":argv[1];const bool automatic=action=="auto"||action=="transaction",preflight=action=="check-auto";
+         const bool migrating=action=="migrate-automatic-policy" || action=="enable-seamless-policy";
+         const bool restore=action=="check-restore-current"||action=="restore-current";
+         const bool current_only=restore||action=="check-current"||action=="apply-current";
+@@ -543,7 +547,7 @@
+                          !uke_device(read_text("/sys/firmware/devicetree/base/compatible"))))return 0;
+         need(uke_device(read_text("/sys/firmware/devicetree/base/compatible")),"Exact Uke/SM7675 identity required");
+         const auto rollback=read_rollback_policy();
+-        if((action=="fallback" && rollback!=RollbackMode::enforced) ||
++        if((action=="fallback" && rollback==RollbackMode::off) ||
+            (action=="accept" && rollback==RollbackMode::off)) {
+             std::cout<<"Rollback mode "<<rollback_name(rollback)<<": automatic acceptance/fallback skipped; no slot change or reboot\n";
+             return 0;
+@@ -620,7 +624,7 @@
+             need(value.ends_with('\n'),"Missing boot identity");value.pop_back();
+             need(valid_boot_id(value),"Invalid boot identity");return value;
+         }();
+-        if(label=="userdata" && rollback==RollbackMode::off && (automatic || preflight || action=="boot") &&
++        if(label=="userdata" && rollback!=RollbackMode::enforced && (automatic || preflight || action=="boot") &&
+            fs::exists(state/"userdata.state")) {
+             const auto saved=decode(file(state/"userdata.state"));
+             if(pending_development_reboot(rollback,saved.policy,saved.staged_boot_id,boot_id,current.release)) {
+@@ -666,6 +670,10 @@
+                 [&]{return activation_enabled(label);},
+                 []{return selected_userdata_bundle();},inspect_userdata,
+                 [&](const fs::path &selected,const Bytes &bytes){stage_selected(selected,bytes,false);});
++            if(watch_runtime) {
++                need(!flock(lock.value,LOCK_UN),"Cannot release boot lock before runtime monitoring");
++                return monitor_critical_runtime();
++            }
+             return 0;
+         }
+         const bool development=label=="userdata" && rollback==RollbackMode::off &&
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -83,6 +83,41 @@
+     need(!renameat(dir.value,temporary.c_str(),dir.value,path.filename().c_str()) && !fsync(dir.value),"Cannot commit userdata update state");
+     need(encode(decode(file(path)))==value,"Userdata state readback differs");
+ }
++// Validate the retained identity before restoring a late failed trial. Bundle,
++// firmware and physical metadata validation remain in the caller.
++static bool critical_retained_pair_matches(const UserdataUpdate &retained,
++        const std::string &recorded_boot,const std::string &current_boot,
++        unsigned running,const std::string &release,const std::string &current_hash,
++        const std::string &other_hash) {
++    return valid_boot_id(current_boot) && recorded_boot==current_boot+"\n" &&
++        running<2 && unsigned(retained.policy.good)<2 &&
++        retained.policy.phase==uke_install::Phase::trial &&
++        retained.policy.candidate==release && retained.candidate_image==current_hash &&
++        unsigned(retained.policy.good)!=running && retained.good_image==other_hash;
++}
++static bool fallback_metadata_power(bool critical,const fs::path &root="/") {
++    try {if(charging(root/"sys/class/power_supply"))return true;}catch(const std::exception &){}
++    // Only the small return-to-verified-slot metadata transaction may use the
++    // independent USB-C power indication when the crashed DSP loses battery
++    // telemetry. Image staging retains the original measured-battery gate.
++    if(!critical)return false;
++    const fs::path source=root/"sys/class/power_supply/ucsi-source-psy-pmic_glink.ucsi.01";
++    return critical_health_value(source/"type")=="USB" && critical_health_value(source/"online")=="1";
++}
++
++// Keep one unheld descriptor while another writer owns the lock. A writer's
++// close is observable without producing a close/retry loop of our own.
++static bool acquire_critical_runtime_lock(const fs::path &state,std::unique_ptr<Fd> &pending) {
++    auto parent=directory(state);
++    if(!pending) {
++        pending=std::make_unique<Fd>(openat(parent.value,"lock",O_RDWR|O_NOFOLLOW|O_CLOEXEC));
++        trusted_fd(pending->value);
++    }
++    if(flock(pending->value,LOCK_EX|LOCK_NB)<0) {
++        need(errno==EWOULDBLOCK,"Cannot lock runtime health state");return false;
++    }
++    return true;
++}
+ static UserdataUpdate current_slot_trial(UserdataUpdate saved,const std::string &running_release,const std::string &previous_hash,
+                                         const std::string &release,const std::string &next_hash,const std::string &boot_id) {
+     need(hex(previous_hash) && hex(next_hash) && previous_hash!=next_hash && saved.good_image==previous_hash,
+@@ -362,6 +397,7 @@
+     return config.at("vrr_min_hz")=="30";
+ }
+ static void health(bool wait_for_touch,uint64_t timeout_usec=5*1000*1000) {
++    critical_platform_health();
+     for(const auto &unit:uke_touch::health_units("/",wait_for_touch)) {
+         sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Health check requires the system bus");
+         std::unique_ptr<sd_bus,decltype(&sd_bus_unref)> bus(raw,sd_bus_unref);sd_bus_message *response=nullptr;
+@@ -379,8 +415,25 @@
+         (void)uke_video::capture({"/usr/libexec/senemos-uke/uke-install-profile","rtc-check"},4096);
+     }
+ }
++static std::string critical_rejection_text(const std::string &release) {
++    const fs::path state="/var/lib/senemos/kernel-update";
++    auto boot=read_text("/proc/sys/kernel/random/boot_id");
++    need(boot.ends_with('\n'),"Missing critical-health boot identity");boot.pop_back();
++    const auto hash=digest(file(state/"userdata.state"));
++    const auto text="format=1\nkernel="+release+"\nboot="+boot+"\nstate_sha256="+hash+"\ncritical=adsp-crashed\n";
++    need(critical_rejection_matches(text,release,boot,hash),"Invalid critical-health identity");return text;
++}
++static bool active_critical_rejection() {
++    const fs::path marker="/var/lib/senemos/kernel-update/critical-health";
++    if(!policy_exists(marker))return false;
++    utsname running{};need(!uname(&running),"Missing critical-health running kernel");
++    return policy_text(marker)==critical_rejection_text(running.release);
++}
++static bool fallback_policy_allowed() {
++    return critical_fallback_policy(rollback_name(read_rollback_policy()),active_critical_rejection());
++}
+ static bool trial_health(const std::string &release,bool acceptance_path=true) {
+-    return observe_boot_health(release,acceptance_path,
++    try {return observe_boot_health(release,acceptance_path,
+         [] {return rollback_name(read_rollback_policy());},
+         [] {health(false,1000*1000);},
+         [] {
+@@ -388,6 +441,13 @@
+             return int64_t(now.tv_sec)*1000+now.tv_nsec/1000000;
+         },[] {std::this_thread::sleep_for(std::chrono::seconds(1));},
+         [](const BootHealthReport &report) {std::cerr<<boot_health_line(report)<<std::flush;});
++    }catch(const CriticalHealthFailure &) {
++        if(acceptance_path && read_rollback_policy()!=RollbackMode::off) {
++            const fs::path marker="/var/lib/senemos/kernel-update/critical-health";
++            replace_policy(marker,policy_exists(marker)?policy_text(marker):std::string{},critical_rejection_text(release));
++        }
++        throw;
++    }
+ }
+ static void request_fallback_reboot() {
+     sd_bus *raw=nullptr;need(sd_bus_open_system(&raw)>=0,"Fallback selected; system bus unavailable for reboot");
+@@ -407,7 +467,7 @@
+     const std::string action=rotating?(requested_action=="check-rotate"?"check":"apply"):requested_action;
+     need(read_text("/var/lib/senemos/installation/profile")=="format=1\nroot=userdata\n","A classified userdata installation is required");
+     const auto statefile=state/"userdata.state";
+-    if(action=="fallback" && (!fs::exists(statefile) || decode(file(statefile)).policy.phase!=uke_install::Phase::trial)) {
++    if(action=="fallback" && (!fs::exists(statefile) || (decode(file(statefile)).policy.phase!=uke_install::Phase::trial && !active_critical_rejection()))) {
+         std::cout<<"No alternating trial needs fallback; no slot change or reboot\n";return;
+     }
+     const auto a=partition("boot_a"),b=partition("boot_b"),root=partition("userdata");
+@@ -438,6 +498,27 @@
+     auto bsg=ufs_bsg(controller);
+     const auto good_hash=digest(images[running]);
+     auto current_boot_id=read_text("/proc/sys/kernel/random/boot_id");need(current_boot_id.ends_with('\n'),"Missing current boot identity");current_boot_id.pop_back();
++    if(action=="fallback" && prior && active_critical_rejection() &&
++       prior->policy.phase==uke_install::Phase::stable &&
++       unsigned(prior->policy.good)==running && prior->policy.good_release==release) {
++        // A late crash can invalidate a previously healthy accepted trial. Use
++        // only its same-boot retained pair, and refuse if DNF replaced the old
++        // other slot or removed its modules. Never manufacture a new baseline.
++        const auto retained=decode(file(state/"runtime-rollback.state"));
++        need(critical_retained_pair_matches(retained,policy_text(state/"runtime-rollback.boot"),
++             current_boot_id,running,release,good_hash,digest(images[unsigned(retained.policy.good)])),
++             "Late critical fallback has no unchanged same-boot rollback pair");
++        const auto verified=validate_bundle(fs::path("/usr/lib/senemos/kernel-updates")/retained.policy.good_release,
++                                           "/usr/lib/modules","userdata",retained.policy.good_release);
++        need(boot_kernel(verified)==boot_kernel(images[unsigned(retained.policy.good)]),
++             "Late critical fallback installed Image differs");
++        verify_early_firmware();
++        need(fallback_policy_allowed() && fallback_metadata_power(true),
++             "Late critical fallback policy or independent power is unavailable");
++        save_update(statefile,retained);prior=retained;
++        const fs::path marker=state/"critical-health";
++        replace_policy(marker,policy_text(marker),critical_rejection_text(release));
++    }
+     const auto original_prior=prior;
+     if(rotating) {
+         need(explicit_request && prior,"Alternating checkpoint requires protected trial state");
+@@ -564,8 +645,10 @@
+         return;
+     }
+     if(action=="fallback") {
+-        need(prior && prior->baseline_approved,"Automatic health fallback requires an approved baseline; the development checkpoint remains unapproved");
+-        if(read_rollback_policy()!=RollbackMode::enforced) {
++        const bool critical=active_critical_rejection();
++        need(prior && (prior->baseline_approved || (critical && read_rollback_policy()==RollbackMode::permissive)),
++             "Fallback requires an approved baseline or a bound critical rejection and verified checkpoint");
++        if(!fallback_policy_allowed()) {
+             std::cout<<"Automatic fallback disabled by rollback policy; no slot change or reboot\n";return;
+         }
+         const auto saved=decode(file(statefile));auto boot_id=read_text("/proc/sys/kernel/random/boot_id");
+@@ -593,10 +676,10 @@
+                  "Pending fallback flags differ; use external recovery");
+         } else need(!changed.empty(),"No consistent fallback metadata found");
+         if(!changed.empty()) {
+-            if(read_rollback_policy()!=RollbackMode::enforced) {
++            if(!fallback_policy_allowed()) {
+                 std::cout<<"Rollback policy changed; fallback selection cancelled\n";return;
+             }
+-            need(charging(),"Fallback metadata requires at least 50% battery, or 30% with external power");
++            need(fallback_metadata_power(critical),"Fallback metadata requires measured battery or independent external power after a critical DSP failure");
+             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+             const auto transaction=state/(saved.policy.candidate+"-"+saved.candidate_image)/"fallback";
+             auto transaction_dir=directory(transaction,true);
+@@ -620,7 +703,7 @@
+         auto retained=physical_boot(good?b:a);
+         need(read_fd(retained.value,capacity)==images[good],"Accepted boot changed during fallback selection");
+         std::cout<<"Accepted slot selected; trial state retained until the accepted kernel boots\n"<<std::flush;
+-        if(read_rollback_policy()!=RollbackMode::enforced) {
++        if(!fallback_policy_allowed()) {
+             std::cout<<"Rollback policy changed after selection; no reboot requested\n";return;
+         }
+         request_fallback_reboot();return;
+@@ -631,7 +714,7 @@
+         need(prior && prior->policy.phase==uke_install::Phase::stable && unsigned(prior->policy.good)==running &&
+              prior->policy.good_release==release && prior->good_image==good_hash,"Accepted stable baseline identity differs");
+         const auto flags=boot_table->parts.at(running?"boot_b":"boot_a").attrs;
+-        need((prior->baseline_approved || mode==RollbackMode::off) &&
++        need((prior->baseline_approved || mode!=RollbackMode::enforced) &&
+              (flags&(prior->baseline_approved?slot::successful:slot::priority)) && !(flags&slot::unbootable),"Protected baseline slot flags differ");
+         std::cout<<"Protected running baseline verified; boot-health approval remains unchanged\n";return;
+     }
+@@ -679,6 +762,12 @@
+             if((saved.policy.phase==uke_install::Phase::trial && running!=unsigned(saved.policy.good)) ||
+                (saved.policy.phase==uke_install::Phase::current_slot_trial && running==unsigned(saved.policy.good) && release==saved.policy.candidate)) {
+                 need(saved.candidate_image==good_hash,"Trial image differs from its verified transaction");
++                // Retain the old verified pair for a later event-driven crash in
++                // this boot, even after normal boot-health acceptance completes.
++                save_update(state/"runtime-rollback.state",saved);
++                const auto runtime_boot=read_text("/proc/sys/kernel/random/boot_id");
++                const fs::path runtime_marker=state/"runtime-rollback.boot";
++                replace_policy(runtime_marker,policy_exists(runtime_marker)?policy_text(runtime_marker):std::string{},runtime_boot);
+                 uke_install::accept(saved.policy,static_cast<uke_install::Slot>(running),release,true);
+                 saved.baseline_approved=true;
+                 saved.good_image=good_hash;saved.candidate_image.clear();
+@@ -718,7 +807,7 @@
+     }
+     need(fs::exists(statefile),"Run the packaged userdata acceptance service before the first automatic update");
+     auto saved=*prior;need(saved.good_image==good_hash,"Running boot bytes differ from the baseline");
+-    need(saved.baseline_approved || mode==RollbackMode::off,"Unapproved development baseline requires rollback-off; health acceptance remains separate");
++    need(saved.baseline_approved || mode!=RollbackMode::enforced,"Unapproved checkpoint requires off or permissive policy and complete installed rollback modules; approval remains separate");
+     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+     const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
+     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next,
+--- a/src/seamless-policy.hpp
++++ b/src/seamless-policy.hpp
+@@ -53,7 +53,7 @@
+ }
+ inline bool pending_development_reboot(RollbackMode mode,const uke_install::Update &saved,
+         const std::string &staged_boot_id,const std::string &boot_id,const std::string &running) {
+-    return mode==RollbackMode::off && saved.phase==uke_install::Phase::trial &&
++    return mode!=RollbackMode::enforced && saved.phase==uke_install::Phase::trial &&
+         !staged_boot_id.empty() && staged_boot_id==boot_id &&
+         !saved.candidate.empty() && saved.candidate!=running;
+ }
+--- a/src/units/uke-userdata-accept.service
++++ b/src/units/uke-userdata-accept.service
+@@ -9,8 +9,8 @@
+ StartLimitBurst=5
+ 
+ [Service]
+-Type=oneshot
+-ExecStart=/usr/bin/uke-kernel-update boot
++Type=exec
++ExecStart=/usr/bin/uke-kernel-update boot-watch
+ TimeoutStartSec=120
+ Restart=on-failure
+ RestartPreventExitStatus=78

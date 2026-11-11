@@ -1,0 +1,44 @@
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -709,7 +709,7 @@
+         }
+         if(!changed.empty()) {
+             auto inhibitor=inhibit_shutdown();CriticalSignals signals;
+-            for(auto *disk:changed)disk->gpt->backup(state/("accept-"+digest(disk->gpt->before.entries)+"-"+disk->name+".gpt"));
++            for(auto *disk:changed)disk->gpt->backup(state/("accept-"+disk->gpt->backup_identity()+"-"+disk->name+".gpt"));
+             try {
+                 if(mark_success)boot_table->success(running);
+                 for(auto *disk:changed)disk->gpt->commit();
+@@ -745,13 +745,13 @@
+         disk->reload();
+         const bool blocked=disk->gpt->block_inactive(running,target,!saved.baseline_approved);
+         if(blocked) {
+-            disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
++            disk->gpt->backup(transaction/(disk->name+"-"+disk->gpt->backup_identity()+".gpt"));
+             disk->gpt->commit();
+         }
+         disk->reload(blocked);
+         disk->gpt->require_selected(running);
+         if(disk->gpt->prepare(running,target,!saved.baseline_approved)) {
+-            disk->gpt->backup(transaction/(disk->name+"-"+digest(disk->gpt->before.entries)+".gpt"));
++            disk->gpt->backup(transaction/(disk->name+"-"+disk->gpt->backup_identity()+".gpt"));
+             changed.push_back(disk.get());
+         }
+     }
+--- a/tests/slot-control.cpp
++++ b/tests/slot-control.cpp
+@@ -71,6 +71,14 @@
+         slot::write_at(fd.value,original.last*sector,stale_header);
+         reject([&]{slot::Disk strict(fd.value,st.st_size,sector);});
+         slot::Disk repair(fd.value,st.st_size,sector,true);assert(repair.needs_backup_crc_repair());
++        // Firmware can change only a valid backup header, leaving both entry
++        // arrays identical. An entry-only key then aliases an older receipt.
++        assert(repair.before.entries==original.entries);
++        assert(repair.backup_identity()!=a.backup_identity());
++        const auto unique=path.string()+"."+repair.backup_identity()+".gpt";
++        repair.backup(unique);repair.backup(unique);
++        reject([&]{a.backup(unique);});
++        fs::remove(unique);
+         assert(slot::read_at(fd.value,original.last*sector,sector)==stale_header);
+         const auto raw_backup=path.string()+".stale-metadata";repair.backup(raw_backup);
+         auto recorded=file(raw_backup);assert(std::equal(stale_header.begin(),stale_header.end(),recorded.begin()+2*sector));

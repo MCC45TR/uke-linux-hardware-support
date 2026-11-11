@@ -1,5 +1,40 @@
 # Control frontend package contract
 
+4 November 2026, follow-up candidate `2.8.1-11.fc46`: normal channel selection
+and updates preserve newer installed versions and unavailable extras. Exact
+version reconciliation remains in `channel sync`. The source overlay includes
+matching help/catalog text and signed offline solver fixtures. An unchanged
+normal update skips RPM, journal and boot work. COPR/device results are tracked
+in the [channel-policy record](../../../docs/lessons/2026-11-04-channel-policy.md).
+The follow-up also prevents internal scriptlet pipe errors from terminating a
+completed transaction and truncating its buffered JSON receipt.
+
+Version `2.8.1-11.fc46` passed COPR and POCO Pad X1 acceptance in all three
+Rawhide AArch64 channels: [unstable 11254600](https://copr.fedorainfracloud.org/coprs/build/11254600/),
+[test 11254623](https://copr.fedorainfracloud.org/coprs/build/11254623/) and
+[stable 11254624](https://copr.fedorainfracloud.org/coprs/build/11254624/).
+All six directed channel transitions, normal confirmation, branch/brunch aliases
+and repeated empty updates passed. Linux 7.3.1-1500, version locks and boot policy
+remained unchanged. No new boot or physical hardware qualification is implied.
+
+4 November 2026: the backend candidate advances to `2.8.1-9.fc46`.
+The original source archives and existing maintainer scripts remain unchanged.
+A separate source overlay contains the package manager, its operation-status
+header and regression tests. It adds stderr progress, normal COPR alias
+inference and complete missing-component diagnostics. It retains signature,
+package-removal, version-lock and boot-selection admission.
+Only the five backend/SDK packages need rebuilding for this update. Existing
+desktop selections remain usable; the optional metadata source recipe has its
+own advanced revision. COPR compilation and tablet results are recorded
+separately in the integration lesson journal.
+
+[COPR 11254211](https://copr.fedorainfracloud.org/coprs/build/11254211/) passed
+Rawhide AArch64 compilation and the retained native tests. DNF installation,
+real update progress, repeated empty updates and normal-alias inference passed
+on POCO Pad X1 with Linux 7.3.1-1500. Stable/test transitions still refuse their
+eight missing installed components before mutation; full transition acceptance
+remains open. See the [dated verification record](../../../docs/lessons/2026-11-04-control-update.md).
+
 This source recipe preserves the signed published `uke-control-2.8.1-5.fc46`
 cohort, including its DNF fixes, and advances the native backend to
 `2.8.1-7.fc46`. `input.json` pins COPR build 11240837, its source digest and the
@@ -43,7 +78,11 @@ binary build or installation transaction.
 
 ## COPR build sequence
 
-Use only `mcc45tr/uke-linux-unstable`, chroot `fedora-rawhide-aarch64`.
+The 2.8.1-11 backend/SDK cohort is published in `mcc45tr/uke-linux`,
+`mcc45tr/uke-linux-test` and `mcc45tr/uke-linux-unstable`, restricted to
+`fedora-rawhide-aarch64` for this release.
+For the separate GUI/desktop sequence below, use `mcc45tr/uke-linux-unstable`
+with chroot `fedora-rawhide-aarch64`.
 All Git source definitions must use the same reviewed immutable commit:
 
 1. `uke-control`: source subdirectory `packaging/families/control-gui`.

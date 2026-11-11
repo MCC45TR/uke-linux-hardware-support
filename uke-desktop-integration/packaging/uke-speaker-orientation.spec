@@ -1,19 +1,19 @@
 Name:           uke-speaker-orientation
-Version:        0.1.0
-Release:        4%{?dist}
+Version:        0.2.0
+Release:        1%{?dist}
 Summary:        Display-aware internal speaker routing for Uke Wayland sessions
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support
 Source0:        %{name}-%{version}.tar.gz
 ExclusiveArch:  aarch64
-Requires:       uke-displayport-audio >= 0.1.0-6
 BuildRequires:  gcc-c++ pkgconf-pkg-config alsa-lib-devel wayland-devel systemd-devel
 BuildRequires:  libasan libubsan
 BuildRequires:  systemd
 
 %description
 Follow the internal display transform in KDE Plasma and GNOME Wayland sessions
-and set the Uke kernel's per-amplifier Speaker Rotation controls. Only the active
+and set the Uke kernel's coordinated Speaker Display Rotation control, with
+compatibility for older per-amplifier controls. Only the active
 local session and the exact combined Uke card are eligible. No gain, speaker
 enable, firmware, microphone or external-output setting is changed.
 
@@ -40,6 +40,11 @@ bash tests/speaker-orientation.sh
 %config(noreplace) %{_sysconfdir}/xdg/autostart/uke-speaker-orientation.desktop
 
 %changelog
+* Sun Nov 08 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.2.0-1
+- Use native coordinated speaker routing with legacy-kernel compatibility.
+- Accept the exact versioned Uke card driver and preserve session policy.
+- Drop the unrelated legacy DisplayPort policy package dependency.
+
 * Tue Oct 27 2026 Senemos Contributors <75160848+MCC45TR@users.noreply.github.com> - 0.1.0-4
 - Use standard cross-desktop autostart without a legacy GNOME phase key.
 - Test the real systemd generator and both desktop conditions during the RPM build.

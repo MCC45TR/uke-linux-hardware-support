@@ -91,6 +91,11 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::desktop::status(),as_json);return 0;}
         if(command=="desktop"&&argc==3&&std::string_view(argv[2])=="plasma"){uke::cli::print(uke::desktop::plasma_status(),as_json);return 0;}
+        if(command=="desktop"&&argc==4&&std::string_view(argv[2])=="brightness-curve") {
+            char* request[]={const_cast<char*>("/usr/libexec/uke-control/brightness-curve"),argv[3],nullptr};
+            execv(request[0],request);
+            throw std::runtime_error("The native brightness preference helper is missing");
+        }
         if(command=="desktop"&&argc==4){auto result=uke::desktop::plasma_set(argv[2],argv[3]);uke::cli::print(result.output,as_json);return result.status;}
         if(command=="channel"||command=="update") {
             execv("/usr/libexec/uke-control/packages",argv+1);
@@ -177,8 +182,8 @@ static int run(int argc,char** argv,bool as_json) {
             if(argc==3&&std::string_view(argv[2])=="enable-cap80") {
                 auto result=uke::charge_enable_preconfigured_cap();uke::cli::print(result.output,as_json);return result.status;
             }
-            if(argc==3&&std::string_view(argv[2])=="apply-cap80") {
-                auto result=uke::charge_apply_preconfigured_cap();uke::cli::print(result.output,as_json);return result.status;
+            if(argc==3&&(std::string_view(argv[2])=="apply-cap80"||std::string_view(argv[2])=="apply-cap80-online")) {
+                auto result=uke::charge_apply_preconfigured_cap(std::string_view(argv[2])=="apply-cap80-online");uke::cli::print(result.output,as_json);return result.status;
             }
             if(argc==3&&(std::string_view(argv[2])=="capabilities"||std::string_view(argv[2])=="admission"||std::string_view(argv[2])=="protocols"||std::string_view(argv[2])=="protocol-inspect"||std::string_view(argv[2])=="settings"||std::string_view(argv[2])=="protection"||std::string_view(argv[2])=="protection-status")) {
                 auto result=uke::charge_control_query(argv[2]);uke::cli::print(result.output,as_json);return result.status;

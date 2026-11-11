@@ -25,6 +25,27 @@ int main(int argc, char **argv) {
         }
         assert(rejected);
     };
+    for (const int error : {EINTR, EAGAIN, EINVAL, EIO, EHOSTDOWN}) {
+        unsigned calls = 0;
+        rejects([&] {
+            sysfs_store_once("1\n", [&](const char *data, size_t size) -> ssize_t {
+                ++calls; assert(std::string(data, size) == "1\n"); errno = error; return -1;
+            });
+        }, "control_store_failed_no_retry_errno_" + std::to_string(error));
+        assert(calls == 1);
+    }
+    for (ssize_t short_count : {0, 1}) {
+        unsigned calls = 0;
+        rejects([&] {
+            sysfs_store_once("1\n", [&](const char *, size_t) -> ssize_t {
+                ++calls; errno = EAGAIN; return short_count;
+            });
+        }, "control_store_short_no_retry_bytes_" + std::to_string(short_count));
+        assert(calls == 1);
+    }
+    unsigned stores = 0;
+    sysfs_store_once("1\n", [&](const char *, size_t size) -> ssize_t { ++stores; return size; });
+    assert(stores == 1);
     rejects([] { read_fd(-1, "uke_charge_settings"); },
         "control_metadata_read_failed_uke_charge_settings_errno_" + std::to_string(EBADF));
     int descriptors[2];

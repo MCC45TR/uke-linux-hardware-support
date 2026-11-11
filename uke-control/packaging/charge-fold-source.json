@@ -1,0 +1,290 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "version": "2.17.0",
+  "release": 1,
+  "parents": {
+    "control": {
+      "build": 11300991,
+      "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11300991/uke-control-2.16.0-2.src.rpm",
+      "sha256": "d0f21d8132ec718a68258872f9c3e65168b01ca3cdd9d54c0d7a28c0f3743085",
+      "spec_sha256": "7572bff2614d7a6ae8837a7655f62149b06d42a5b0d7f157581aa7b8fe21ea4b"
+    },
+    "helper": {
+      "build": 11250670,
+      "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11250670/uke-battery-observer-1.4.1-7.src.rpm",
+      "sha256": "10cb0a2cf803a98443bf24eeabc2cae249bc8e6436dae3068b22f6d5b49b3de2"
+    }
+  },
+  "native91": {
+    "build": 11303088,
+    "source": "89373a27cab679da28a39179e58fd34099f857a6",
+    "receipt_sha256": "51986791274779797bef63eef648bdd3647656eaa6242df4cb9ff70590acca42"
+  },
+  "actual_control_source_units": [
+    {
+      "path": "src/backend.cpp",
+      "before_sha256": "cbad1b414549be198c8d3b84c63443752e3a4b33382584108fa306d728bcaf4a",
+      "native91_parent_sha256": "cbad1b414549be198c8d3b84c63443752e3a4b33382584108fa306d728bcaf4a",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "5286c6b21f47d5e496813d743c125e4e059c649d0cff2b3e117b6e5dd6d26d3f"
+    },
+    {
+      "path": "src/backend.hpp",
+      "before_sha256": "d562ae6f6007f7f3826578b126e905dac10d6c44d2cabff1d550a36c4f5bf864",
+      "native91_parent_sha256": "d562ae6f6007f7f3826578b126e905dac10d6c44d2cabff1d550a36c4f5bf864",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "c5a2b90e8720196c8315c53405b0dee9ac60d62feb7404a2e32484cb84138f2f"
+    },
+    {
+      "path": "src/charge-client.cpp",
+      "before_sha256": "f6d785b2288445676e42a26e3c7ce1f9496579c44643bfaee531e76fd1e6cb9e",
+      "native91_parent_sha256": "f6d785b2288445676e42a26e3c7ce1f9496579c44643bfaee531e76fd1e6cb9e",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "8c61f76dafa6cf0ec410956fe7cf46a4d492408d8dfabda08e5503bca504d35a"
+    },
+    {
+      "path": "src/charge-client.hpp",
+      "before_sha256": "b114262157ac4f21be262a695ee6301f3535d7b459cdbc008bfeafd9e0b4d433",
+      "native91_parent_sha256": "b114262157ac4f21be262a695ee6301f3535d7b459cdbc008bfeafd9e0b4d433",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "42a94a334ca6e374dac96f1abf90d6e057b7c2853fbc059c7ad026ef915446ae"
+    },
+    {
+      "path": "src/charge-intent.hpp",
+      "before_sha256": "e2910e52efa7b600ae1aadff74c4ab6242197d2b70d54bd4b2f036dc84498472",
+      "native91_parent_sha256": "e2910e52efa7b600ae1aadff74c4ab6242197d2b70d54bd4b2f036dc84498472",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "c4e54a02ff137be8bffc79cc6d0a6a9e7f1b4e45d22d2ee20a22dea02fa0af26"
+    },
+    {
+      "path": "src/main.cpp",
+      "before_sha256": "7fc9285a2488a8bc4f8751cc39867496abf63757b8581add0cdf2b6872afb8ac",
+      "native91_parent_sha256": "83c22526622f75d42081691958f2abe79e461b65f488b1d863677087400dcfe2",
+      "native91_parent_byte_exact": false,
+      "after_sha256": "cf2282b048b806fd629a023846f1a063fe5807d0c8b5c55054ac88615f1187a4"
+    },
+    {
+      "path": "src/cli.cpp",
+      "before_sha256": "dccaaa0fc525f2d49803ea85b1609abbdeab4a08b141c443ca6bb0852b51c306",
+      "native91_parent_sha256": "734ce16e75f588ee4dfacb734ecb5beff30bd931633c65bc168e85f015ee77d4",
+      "native91_parent_byte_exact": false,
+      "after_sha256": "eaed5971bc1e8ea6039cbae2340b20d422e592762034a4c9f82e4aa8f2aec219"
+    },
+    {
+      "path": "tests/charge-client.cpp",
+      "before_sha256": "fff87e7038f248bd2f5e86f6dfd61b6836af3fef1ade73a55d9797e1858270b6",
+      "native91_parent_sha256": "fff87e7038f248bd2f5e86f6dfd61b6836af3fef1ade73a55d9797e1858270b6",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "acfd6ef8e2350ad708b68f84d70b546c00208ccad8d065acd3286ec4e86fe7e4"
+    },
+    {
+      "path": "tests/charge-intent.cpp",
+      "before_sha256": "c4abb5f92ca3095e239459d4b3368907a4073307509fdf9d790c79c776db833e",
+      "native91_parent_sha256": "c4abb5f92ca3095e239459d4b3368907a4073307509fdf9d790c79c776db833e",
+      "native91_parent_byte_exact": true,
+      "after_sha256": "da741f969083bad6ef88ff114223cabef84cfb55d369ddc73df5347053c43327"
+    }
+  ],
+  "runtime_payload_paths": [
+    "Makefile",
+    "LICENSE",
+    "src/battery/checkpoint.cpp",
+    "src/battery/collector.cpp",
+    "src/battery/collector.hpp",
+    "src/battery/control-main.cpp",
+    "src/battery/control-profile.cpp",
+    "src/battery/control.cpp",
+    "src/battery/control.hpp",
+    "src/battery/demand.hpp",
+    "src/battery/main.cpp",
+    "src/battery/model.hpp",
+    "src/battery/pack-variant.hpp",
+    "src/battery/pd-contract.hpp",
+    "src/battery/profile.cpp",
+    "src/battery/profile.hpp",
+    "src/battery/provider.hpp",
+    "src/battery/record.cpp",
+    "src/battery/record.hpp",
+    "src/battery/service.cpp",
+    "src/battery/session.cpp",
+    "src/battery/session.hpp",
+    "src/battery/source-policy.hpp",
+    "tests/charge-control.cpp",
+    "docs/CHARGE-CONTROL.md",
+    "docs/CHARGING-PROTOCOLS.md",
+    "docs/BATTERY-LONGEVITY.md",
+    "docs/CHARGE-PUMP-PROTECTION.md",
+    "docs/OSS-CHARGING-INVENTORY.tsv",
+    "docs/CHARGING-DOCUMENTS.tsv",
+    "manifests/control-profile.json",
+    "manifests/protection-readiness.json",
+    "packaging/upower/60-uke-battery-safety.conf",
+    "packaging/systemd/uke-charge-control.service",
+    "packaging/systemd/uke-charge-automatic.service",
+    "packaging/systemd/uke-charge-protection.service",
+    "packaging/systemd/91-uke-charge-control.preset",
+    "packaging/udev/80-uke-charge-protection.rules"
+  ],
+  "native91_runtime_replacements": [
+    "src/battery/control-main.cpp",
+    "src/battery/control.cpp",
+    "src/battery/control.hpp",
+    "tests/charge-control.cpp",
+    "tests/charge-io.cpp",
+    "docs/CHARGE-CONTROL.md"
+  ],
+  "unchanged_runtime_data": [
+    {
+      "path": "manifests/control-profile.json",
+      "sha256": "f699f3fa6d21cb4ae9a7f5c236a0acf086ba249d39f96920ed0f8a8883dcb5cf"
+    },
+    {
+      "path": "manifests/protection-readiness.json",
+      "sha256": "196041fef8c72dc5f068cbb33a9a909063ba56759c4138011ecfd15e1ac64c39"
+    },
+    {
+      "path": "packaging/upower/60-uke-battery-safety.conf",
+      "sha256": "d7749d1b67d5907c327eb2bb93f67876878dc3a2a174f6ab5f2a929562631918"
+    },
+    {
+      "path": "packaging/systemd/uke-charge-control.service",
+      "sha256": "6833bfc9092159e4c8037d4b7abaf1d9592792296c9a3db925c03142e5ee85ff"
+    },
+    {
+      "path": "packaging/systemd/uke-charge-automatic.service",
+      "sha256": "5c5ae5a99e8e9a58cfe13238efabbf1b1941c1d7d86c1dff02a05d5a9bf7a99c"
+    },
+    {
+      "path": "packaging/systemd/uke-charge-protection.service",
+      "sha256": "0ea725407f403f685c8cba010703506776d81a01a45356548724a9c0bd5c88ad"
+    },
+    {
+      "path": "packaging/systemd/91-uke-charge-control.preset",
+      "sha256": "6c00d64c5e465facdd0092de64f74efadf515362737908135f7696bad13df072"
+    },
+    {
+      "path": "packaging/udev/80-uke-charge-protection.rules",
+      "sha256": "44e22cbf28eba5aa4dfee7248f6f66af150abfb874dbaa941718dae7ec6171db"
+    }
+  ],
+  "old_helper_compatibility": "1.4.1-8",
+  "existing_output_names": [
+    "uke-control",
+    "uke-control-client-devel",
+    "uke-control-tui"
+  ],
+  "expected_installed_name_delta": -1,
+  "new_runtime_packages": 0,
+  "new_services": 0,
+  "existing_protection_polling_unchanged": true,
+  "full_native_qualified": false,
+  "rpm_migration_qualified": false,
+  "physical_cutoff_accepted": false,
+  "source_assets": [
+    {
+      "path": "uke-control/src/backend.cpp",
+      "sha256": "5286c6b21f47d5e496813d743c125e4e059c649d0cff2b3e117b6e5dd6d26d3f"
+    },
+    {
+      "path": "uke-control/src/backend.hpp",
+      "sha256": "c5a2b90e8720196c8315c53405b0dee9ac60d62feb7404a2e32484cb84138f2f"
+    },
+    {
+      "path": "uke-control/src/charge-client.cpp",
+      "sha256": "8c61f76dafa6cf0ec410956fe7cf46a4d492408d8dfabda08e5503bca504d35a"
+    },
+    {
+      "path": "uke-control/src/charge-client.hpp",
+      "sha256": "42a94a334ca6e374dac96f1abf90d6e057b7c2853fbc059c7ad026ef915446ae"
+    },
+    {
+      "path": "uke-control/src/charge-intent.hpp",
+      "sha256": "c4e54a02ff137be8bffc79cc6d0a6a9e7f1b4e45d22d2ee20a22dea02fa0af26"
+    },
+    {
+      "path": "uke-control/src/cli.cpp",
+      "sha256": "6f57d3a3be6ae80609d314fc13a4d5f7666f0f5581645e713e1ae5a63e0ec640"
+    },
+    {
+      "path": "uke-control/src/main.cpp",
+      "sha256": "1b922cb4991bc3f41769db3800b208f0d68e2cfd6f7e4f5ae7ec5b7dea2cfd46"
+    },
+    {
+      "path": "uke-control/tests/charge-client.cpp",
+      "sha256": "acfd6ef8e2350ad708b68f84d70b546c00208ccad8d065acd3286ec4e86fe7e4"
+    },
+    {
+      "path": "uke-control/tests/charge-intent.cpp",
+      "sha256": "da741f969083bad6ef88ff114223cabef84cfb55d369ddc73df5347053c43327"
+    },
+    {
+      "path": "uke-platform-runtime/docs/CHARGE-CONTROL.md",
+      "sha256": "de31ffe19db6f4047801b1d17be115249ee40e492d47d7a486c2917013799a9e"
+    },
+    {
+      "path": "uke-platform-runtime/src/battery/control-main.cpp",
+      "sha256": "7df53b33452d4601e95e4a896d2e8aa3d02097fc382cd9c0b4b79266663b5a04"
+    },
+    {
+      "path": "uke-platform-runtime/src/battery/control.cpp",
+      "sha256": "c4ae6df3acd376b18f446c0db3706eed34e13b13c0436318b82231b422614f23"
+    },
+    {
+      "path": "uke-platform-runtime/src/battery/control.hpp",
+      "sha256": "8e98e3c6c48a6efaeb788c68978bcb0c2379fa119c8660ff25c6472d36b8090a"
+    },
+    {
+      "path": "uke-platform-runtime/tests/charge-control.cpp",
+      "sha256": "528ee8a099eb98271d8b669419b98067051404ec7730fc561eea6391afd87da4"
+    },
+    {
+      "path": "uke-platform-runtime/tests/charge-io.cpp",
+      "sha256": "c4fc3adf8d6d68cac2ba0191c2c7e69f884b4792b86070d6f9166467f7aa329e"
+    },
+    {
+      "path": "uke-control/docs/CHARGE-ONLINE-CAP.md",
+      "sha256": "a5a2653c2aed97ec1c5dca3f2cafc975312dd89af0549b21384cab63d84cd4d9"
+    },
+    {
+      "path": "uke-control/packaging/check-charge-bridge-native.sh",
+      "sha256": "4a6a107ec41536c0c4922d3d12832e43a9af866b54eca3127132299923ddb29f"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-charge-check.sh",
+      "sha256": "d436219b68559429eaaac8946735a2a24a6df81729e29d631f1207f51f76bf04"
+    },
+    {
+      "path": "uke-control/packaging/charge-bridge-native91.patch",
+      "sha256": "4e3fe896c529439c2b7a4bcd213f144a51f8fc24007454128a6d77f4d579bc8e"
+    },
+    {
+      "path": "uke-control/packaging/charge-unit-state.sh",
+      "sha256": "2eca63f6d810ddae58ddbbdfffa2839188770ed2624cbaa6da6d89b00e5a4186"
+    },
+    {
+      "path": "uke-control/packaging/fold-charge-spec.sh",
+      "sha256": "c4b8916ed77f6b621531c245845e31306643a77ffa4673f7be736ae882ea7796"
+    },
+    {
+      "path": "uke-control/packaging/apply-charge-overlay.sh",
+      "sha256": "11b5d4f36237a3713f56b1c61805f19b53dd027778cf5961e77d87fbde7868d0"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-charge-fold.sh",
+      "sha256": "0b72300e4159eaf4cd1554d4b0f4432feb1cd27573b4d7c44069d0d617856331"
+    },
+    {
+      "path": "uke-control/tests/charge-unit-state.sh",
+      "sha256": "55733448b89157b601bbc802de4d2036b26658da5509a970badc163fb31a909a"
+    },
+    {
+      "path": "uke-control/docs/CHARGE-CONSOLIDATION.md",
+      "sha256": "44811d035d67b05c4d73d181ac752aa58c32c98473f96a7f778932dfe22de38f"
+    },
+    {
+      "path": "uke-control/packaging/charge-bridge-source.json",
+      "sha256": "d74c2f2de5bfad43867e9ea3b2d8107cadd624946a0b466fe1fcfa2f34ae5535"
+    }
+  ]
+}
