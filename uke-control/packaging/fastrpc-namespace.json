@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "scope": "Software-only native RootDirectory fixture for original Fedora SSC integration",
+  "ready_source": "daca4988e5fdca24986cebf419857d74d98b3c01",
+  "ready_build": 11310322,
+  "ready_srpm_sha256": "581003329e3a3d4315f6f1b9a4728e72d2507cb2141f815b9443985fe833e914",
+  "ready_native_seconds": 57,
+  "ready_real_fedora_cases": 9,
+  "namespace_target_kernel": "7.3.3-24-unstable",
+  "namespace_systemd": "262.2-1.fc46",
+  "namespace_fixture_passed": true,
+  "shared_registry_aliases": 2,
+  "readonly_config_aliases": 2,
+  "readonly_firmware_and_soc_vector": true,
+  "host_settings_and_dsp_devices_absent": true,
+  "source_hashes_unchanged": true,
+  "temporary_tree_and_unit_removed": true,
+  "private_network_omitted_to_preserve_sysfs_boundary": true,
+  "first_fixture_failures": [
+    "missing AArch64 interpreter",
+    "PrivateNetwork sysfs priority over tmpfs",
+    "fixture shell quoting;fixed before success"
+  ],
+  "failed_build98": {
+    "id": 11310290,
+    "reason": "install before check-created receipt",
+    "both_cpp_compiled": true,
+    "fixtures_not_run": true
+  },
+  "runtime_provider_changed": false,
+  "native_compilation_on_tablet": false,
+  "private_or_factory_data_read": false,
+  "physical_acceptance": false,
+  "new_runtime_packages": 0,
+  "remaining": [
+    "original Fedora file API checks",
+    "library/config paths",
+    "stock autostart and native DSP ownership",
+    "registry refresh and read-only persist",
+    "SELinux and lifecycle",
+    "signed DNF transition and rollback"
+  ],
+  "source_assets": [
+    {
+      "path": "uke-control/tests/fastrpc-namespace.sh",
+      "sha256": "0363af457e4599a99eb5e4eafab2a34e1f9a36519a2887be9d10c52b15007ee2"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-NAMESPACE.md",
+      "sha256": "edf836522a79b8bc4268ae29f28a00e66736b77afbcbec02ebff84e633cc724c"
+    }
+  ]
+}
