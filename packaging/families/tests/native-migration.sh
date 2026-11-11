@@ -6,6 +6,7 @@ audit=$root/packaging/families/host/native-migration-audit.sh
 guard=$root/packaging/families/host/check-source-retirement.sh
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
+trap 'printf "Native migration fixture failed at line %s: %s\n" "$LINENO" "$BASH_COMMAND" >&2; tail -n 4 "$stage/"*.err >&2' ERR
 cat > "$stage/copr.json" <<'JSON'
 {"items":[{"id":1,"name":"uke-upower"},{"id":2,"name":"uke-battery-observer"}],"meta":{"complete":true,"resource":"package","ownername":"mcc45tr","projectname":"uke-linux-unstable"}}
 JSON
