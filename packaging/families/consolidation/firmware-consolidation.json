@@ -20,7 +20,7 @@
   },
   "result": {
     "version": "3.0.304.0-15",
-    "spec_sha256": "71d2e99fde25dcf60ec2503677d33444648f0482a938f5f00681d29854a9a9d2",
+    "spec_sha256": "c2115d50fde7e3c2bfcc992451db7f0328e1a0188b7c7bcbe7387c760f668c0d",
     "runtime_names": [
       "uke-firmware"
     ],
@@ -37,7 +37,7 @@
   "source_assets": [
     {
       "path": "packaging/families/host/fold-speaker-firmware.mjs",
-      "sha256": "41c7707451c8ec50bb70702e69e362ee8ee6145f8e3336e9829e117aad9dcec1"
+      "sha256": "458227b250d0caf27206a47cf7205cf7226a31499f08c240f0f6cc275d27c3c2"
     },
     {
       "path": "packaging/families/host/copr-firmware-consolidation.sh",

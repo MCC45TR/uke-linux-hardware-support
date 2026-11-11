@@ -22,9 +22,11 @@ test "$(find %{buildroot}/usr/lib/firmware %{buildroot}/usr/share/uke-sensors -t
 `;
 const files=`%config(noreplace) /usr/lib/firmware/qcom/uke/audio/fs19xx.fsm
 %dir %{_docdir}/uke-speaker-firmware
-%doc %{_docdir}/uke-speaker-firmware/README.md %{_docdir}/uke-speaker-firmware/provenance.json
+%doc %{_docdir}/uke-speaker-firmware/README.md
+%doc %{_docdir}/uke-speaker-firmware/provenance.json
 %dir %{_licensedir}/uke-speaker-firmware
-%license %{_licensedir}/uke-speaker-firmware/LICENSE.Apache-2.0 %{_licensedir}/uke-speaker-firmware/odm-NOTICE.xml.gz
+%license %{_licensedir}/uke-speaker-firmware/LICENSE.Apache-2.0
+%license %{_licensedir}/uke-speaker-firmware/odm-NOTICE.xml.gz
 `;
 const changes=[['Release: 14.fc46\n','Release: 15%{?dist}\n'],['License: LicenseRef-Proprietary\n','License: LicenseRef-Proprietary AND Apache-2.0\n'],['%description -n uke-firmware\n',header+'%description -n uke-firmware\n'],['%build\n',prep+'%build\n'],['%install\n','%install\n'+install],['%files -n uke-firmware\n',check+'%files -n uke-firmware\n'+files]];
 for(const[from,to]of changes){if(body.split(from).length!==2)throw Error('Ambiguous firmware boundary');body=body.replace(from,()=>to);}
