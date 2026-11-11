@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "parent": {
+    "build": 11310322,
+    "nvr": "uke-kernel-migration-check-7.3.3-99",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-kernel-migration-check-7.3.3-99.src.rpm",
+    "srpm_sha256": "581003329e3a3d4315f6f1b9a4728e72d2507cb2141f815b9443985fe833e914",
+    "spec_sha256": "2c2c05e2b584c2b541b382c23c2961d57e29ec6b709b0de7e941bf141ce0d7b8",
+    "source_archive_sha256": "4181b277f27ddaf68eaa8efc56f88ce675958e3c89235b103d2a4d26614d1f5e",
+    "source_inputs_unchanged": true,
+    "all_nine_readiness_cases_retained": true
+  },
+  "fedora": {
+    "nvr": "fastrpc-1.0.8-1.fc46.aarch64",
+    "rpm_header_sha256": "b37b0d25a70277991bac7e3722315c08472bc3ff48b78467a00cafe023c6f8cc",
+    "library_elf_sha256": "f7b8e3fa9dba51b913ba8c9c6e82227f8749fcbbd67228e4a11bd57e1635347d",
+    "no_library_rebuild": true,
+    "no_runtime_api_delta": true
+  },
+  "upstream": {
+    "commit": "d247519650fe5cb16de6c78edaa95bcc4be25073",
+    "url": "https://github.com/qualcomm/fastrpc/archive/v1.0.8/fastrpc-1.0.8.tar.gz",
+    "archive_sha256": "b8582e8d816fd89c0f8348740f682277ca639e22d557808703d7056477ef0f02",
+    "apps_std_header_sha256": "170f337fefbaccc505e6560823e9aa2c35c9b9b150ba467fcf9fb54f776fcf08",
+    "license_sha256": "683e80f5436e6b0761139e626d2c764870ea0ed19b14916ef4c82772b99c4d44",
+    "license": "BSD-3-Clause",
+    "header_test_only": true
+  },
+  "result": {
+    "native_revision": 100,
+    "source_only": true,
+    "native_qualified": false,
+    "ioctl_syscalls_denied": true,
+    "no_dsp_node_required": true,
+    "unprivileged_fixture": true,
+    "new_runtime_packages": 0,
+    "provider_transition": false,
+    "physical_acceptance": false,
+    "full_kernel_reserved": false
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/tests/fastrpc-files.cpp",
+      "sha256": "bd76353e3b5a61d4d6d87216c1b9eae8432905ac2f9bf0b1ced358337eb989a8"
+    },
+    {
+      "path": "uke-control/packaging/fold-fastrpc-files-spec.mjs",
+      "sha256": "3e85c179621da0108185369eca0c64a09b922ae56865f50719b73e2325b0921b"
+    },
+    {
+      "path": "uke-control/packaging/copr-fastrpc-files-check.sh",
+      "sha256": "3d4e7019907c554bc219983bb15c9f694a29b47f412e31d163f15bc9c8470838"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-FILES.md",
+      "sha256": "0991398507e233eda7998da8527160788e511fe8539362e47d146d1cf5af080b"
+    }
+  ]
+}
