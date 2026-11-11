@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "firmware": {
+    "build": 11228129,
+    "nvr": "uke-firmware-3.0.304.0-14.fc46",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-firmware-3.0.304.0-14.fc46.src.rpm",
+    "srpm_sha256": "e7c65f64ba01d35f0abebf354074ce92a75ea4073a0a3b3d52330e0bd62d605a",
+    "spec_sha256": "3678b35b3b3514b92620b231bbd9ec368e1c46cfba5a4ae71c6f07c438fe43d3",
+    "archive_sha256": "c80082fb5bd63cc3d2dfd6c4cc44ba97a32d59a95698e8923a6b081beaa745da"
+  },
+  "speaker": {
+    "build": 11228080,
+    "nvr": "uke-speaker-firmware-3.0.304.0-2",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-speaker-firmware-3.0.304.0-2.src.rpm",
+    "srpm_sha256": "268167456d756bff93be9463052fed6879d5011bed5f1a42ae62c4bbc8b8f638",
+    "archive_sha256": "4a67f90470450d84b41134853f9ad32114ea3f9144ef909a7d01159d01cd69cd",
+    "preset_sha256": "f319e71d60ed19d539296665fa06cc07fbcf93bf82f773c787bed65289129e7b",
+    "config_noreplace_retained": true
+  },
+  "result": {
+    "version": "3.0.304.0-15",
+    "spec_sha256": "71d2e99fde25dcf60ec2503677d33444648f0482a938f5f00681d29854a9a9d2",
+    "runtime_names": [
+      "uke-firmware"
+    ],
+    "parent_firmware_files": 217,
+    "final_firmware_files": 218,
+    "unchanged_both_archives": true,
+    "new_executables": 0,
+    "new_services": 0,
+    "new_runtime_packages": 0,
+    "native_qualified": false,
+    "installed": false,
+    "old_producer_retired": false
+  },
+  "source_assets": [
+    {
+      "path": "packaging/families/host/fold-speaker-firmware.mjs",
+      "sha256": "41c7707451c8ec50bb70702e69e362ee8ee6145f8e3336e9829e117aad9dcec1"
+    },
+    {
+      "path": "packaging/families/host/copr-firmware-consolidation.sh",
+      "sha256": "e5f9bf2be438a0d503221ae9b045a4f1f47d3aba07f4d5ee3c9e8c8843cb0470"
+    },
+    {
+      "path": "packaging/families/consolidation/FIRMWARE-CONSOLIDATION.md",
+      "sha256": "08d6d3cc4c964e633ae20d66b31092cc8d0cb8201a2a5984f3b94560329b9bb3"
+    }
+  ]
+}
