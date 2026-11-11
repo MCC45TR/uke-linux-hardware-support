@@ -15,7 +15,7 @@ cpio -t --quiet < "$work/parent.cpio" | awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{ex
 mkdir "$output" "$work/overlay" "$work/runtime"
 (cd "$output";cpio -idm --quiet --no-absolute-filenames < "$work/parent.cpio")
 curl -qfsSL --retry 2 --max-time 180 \
- https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11264671/uke-speaker-runtime-0.4-3.src.rpm -o "$work/runtime.rpm"
+ https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-speaker-runtime-0.4-3.src.rpm -o "$work/runtime.rpm"
 printf '%s  %s\n' 22f97cc686e6746cb035865fbf9ba6e7161d3ba00034f8dc7742dd942db286c4 "$work/runtime.rpm" | sha256sum -c --strict --quiet -
 rpm2cpio "$work/runtime.rpm" > "$work/runtime.cpio"
 cpio -t --quiet < "$work/runtime.cpio" | awk '/^\/|(^|\/)\.\.($|\/)/{bad=1}END{exit bad}'
