@@ -23,13 +23,18 @@ rpm2cpio "$fedora_rpm" | cpio --quiet -i --to-stdout ./etc/selinux/targeted/poli
 echo '63ce943b9b060e81b714501cce086bc509f0b9f6457e2fb468824aa35482538c  baseline.35' | sha256sum -c -
 for item in baseline fork fedora; do
     checkpolicy -b -M -C -o "$item.cil" "$item.35"
+    # Binary decompilation does not retain CIL's attribute-expansion flags.
+    # Preserve every existing attribute during this test-only round trip.
+    gawk 'match($0,/^\(typeattribute ([[:alnum:]_]+)\)$/,m) {
+        print "(expandtypeattribute " m[1] " false)"
+    }' "$item.cil" > "$item.keep.cil"
 done
 [[ $(grep -Ec '^[[:space:]]*\(allow .* \(io_uring \([^)]*allowed' fork.cil) == 100 ]]
 [[ $(grep -Ec '^[[:space:]]*\(allow .* \(system \([^)]*firmware_load' fork.cil) == 8 ]]
 for item in baseline fedora; do
     gawk -f "$composer" "$item.cil" > "$item-compat.cil"
     printf 'Compile offline composition: %s\n' "$item"
-    timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o "$item-compat.35" "$item.cil" "$item-compat.cil"
+    timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o "$item-compat.35" "$item.cil" "$item.keep.cil" "$item-compat.cil"
 done
 gawk -f "$composer" fork.cil > already-adopted.cil
 ! grep -q '^[[:space:]]*(' already-adopted.cil
@@ -40,16 +45,28 @@ gawk -f "$composer" fork.cil > already-adopted.cil
 normalize() {
     timeout -k 15s 300s "$canonical" "$1" < "$2" | sort -u > "$3"
 }
+compare_records() {
+    if ! cmp "$1" "$2"; then
+        diff -u "$1" "$2" | awk 'NR<=80{print}' || true
+        return 1
+    fi
+}
+printf '%s\n' 'Check the unchanged binary-policy round trip before adapter parity.'
+timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o roundtrip.35 baseline.cil baseline.keep.cil
+checkpolicy -b -M -C -o roundtrip.cil roundtrip.35
+normalize full baseline.cil original.full
+normalize full roundtrip.cil roundtrip.full
+compare_records original.full roundtrip.full
 printf '%s\n' 'Compare complete historical policy representation.'
 checkpolicy -b -M -C -o baseline-linked.cil baseline-compat.35
 checkpolicy -b -M -C -o fedora-linked.cil fedora-compat.35
 normalize full fork.cil fork.full
 normalize full baseline-linked.cil baseline.full
-cmp fork.full baseline.full
+compare_records fork.full baseline.full
 printf '%s\n' 'Complete historical normalized representation matches.' > "$result/fork-parity.txt"
 normalize old fedora.cil fedora.old
 normalize old fedora-linked.cil fedora-compat.old
-cmp fedora.old fedora-compat.old
+compare_records fedora.old fedora-compat.old
 sha256sum fork.full baseline.full fedora.old fedora-compat.old > "$result/policy-representation.sha256"
 
 for item in baseline-compat fedora-compat; do
@@ -79,7 +96,7 @@ sesearch --allow -s sshd_t -t sshd_t -c io_uring -p allowed fedora-compat.35 > q
 
 # Prove that the parity observer rejects removal of the firmware grant.
 sed '/^(allow kernel_t lib_t (system (firmware_load)))$/d' baseline-compat.cil > broken.cil
-timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o broken.35 baseline.cil broken.cil
+timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o broken.35 baseline.cil baseline.keep.cil broken.cil
 checkpolicy -b -M -C -o broken-linked.cil broken.35
 normalize full broken-linked.cil broken.full
 ! cmp -s fork.full broken.full
@@ -92,7 +109,7 @@ printf '%s\n' '(allow named_t self (io_uring (allowed)))' >> partial.cil
 gawk -f "$composer" partial.cil > partial-compat.cil
 ! grep -q firmware_load partial-compat.cil
 ! grep -q '(io_uring (allowed))' partial-compat.cil
-timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o partial-compat.35 partial.cil partial-compat.cil
+timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o partial-compat.35 partial.cil fedora.keep.cil partial-compat.cil
 sesearch --allow -s named_t -t named_t -c io_uring -p allowed partial-compat.35 > query
 grep -q 'allow ' query
 sesearch --allow -s unconfined_t -t unconfined_t -c io_uring -p allowed partial-compat.35 > query

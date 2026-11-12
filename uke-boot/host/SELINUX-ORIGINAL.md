@@ -67,3 +67,12 @@ permissions to check all existing Fedora45.24 records. Native fixtures and a
 real missing-firmware-grant mutant must reject altered records. This is strict
 representation equality,not an arbitrary semantic-equivalence solver. The
 normalizer is a build tool and is never installed in a runtime package.
+
+Native11317725/release3 passes the C++ fixtures and both compositions but strict
+record equality stops;round trips lose19 attributes on both original versions.
+Binary CIL decompilation does not retain compiler attribute-expansion flags.
+The follow-up preserves each existing attribute with standard expandtypeattribute
+false in test-only inputs and first requires a complete unchanged-policy round
+trip. No attribute or rule is ignored by the comparison. A bounded record diff
+is emitted on refusal. These flags repair the experimental binary round trip;
+they are not part of the proposed runtime compatibility module.

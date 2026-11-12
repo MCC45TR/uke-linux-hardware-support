@@ -19,7 +19,7 @@ cp "$src/selinux-original-probe.sh" "$src/selinux-original-compose.awk" "$src/se
 cat > "$work/SPECS/probe.spec" <<'SPEC'
 Name: uke-selinux-original-check
 Version: 1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Offline original Fedora SELinux composition qualification
 License: GPL-2.0-or-later
 BuildArch: noarch
