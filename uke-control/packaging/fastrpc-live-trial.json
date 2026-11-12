@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "kernel": "7.3.3-24-unstable",
+  "control": "2.17.0-6.fc46",
+  "fedora_fastrpc": "1.0.8-1.fc46",
+  "original_library_rebuild": false,
+  "source_code_complete": true,
+  "independent_public_recovery_timer_passed": true,
+  "first_live_attempt": {
+    "result": "EXEC203 before SDK execution",
+    "cause": "Late BindPaths reset clears both writable and readonly lists",
+    "automatic_restore": true
+  },
+  "live_trial": 3,
+  "real_root_and_sensors_ready": true,
+  "original_library_process_maps_verified": true,
+  "stationary_legacy_fedora_and_restarted_dimensions_equal": true,
+  "all_sample_status": 3,
+  "manual_root_restart_fresh_pids": true,
+  "proxy_accelerometer_and_ambient_light_present": true,
+  "idle_seconds": 10,
+  "idle_cpu_delta_ns": [
+    0,
+    0
+  ],
+  "memory_swap_bytes": [
+    0,
+    0
+  ],
+  "selinux": "Enforcing",
+  "tmpfs_noswap": true,
+  "tmpfs_limit_bytes": 16777216,
+  "registry_parent_file_count": 216,
+  "registry_leaf_file_count": 214,
+  "accepted_cache_generation_retained": true,
+  "adsp_and_wpss_crash_counts": 0,
+  "all_five_unit_states_restored": true,
+  "owned_override_mount_and_tree_removed": true,
+  "private_or_raw_sample_bytes_retained": false,
+  "provider_permanently_changed": false,
+  "new_runtime_packages": 0,
+  "table_native_compilation": false,
+  "suspend_resume_qualified": false,
+  "physical_accuracy_qualified": false,
+  "source_assets": [
+    {
+      "path": "uke-control/tests/fastrpc-live-trial.sh",
+      "sha256": "385ae4c5d5a1fafa205fc22645c9b34a1ca778fa25ea0666b4bf7c71a4098675"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-LIVE-TRIAL.md",
+      "sha256": "a7207dd36c397ab42f187ce884342e5ad20665c7d155e8fbe9933215911f2d54"
+    }
+  ]
+}
