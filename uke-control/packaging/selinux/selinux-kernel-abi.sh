@@ -89,7 +89,8 @@ guard_module() {
     fi
     if [[ -e $dir ]]; then
         [[ -d $dir && ! -L $dir && -O $dir && -f $dir/lang_ext && ! -L $dir/lang_ext && $(cat "$dir/lang_ext") == cil ]]
-        unpack_cil "$dir/hll" "$work/installed.cil"
+        # Direct CIL modules have a cil payload and no HLL source file.
+        unpack_cil "$dir/cil" "$work/installed.cil"
         [[ $(head -n 1 "$work/installed.cil") == "$marker" ]] || {
             echo 'Existing SELinux ABI module is not Control-managed' >&2; return 1;
         }

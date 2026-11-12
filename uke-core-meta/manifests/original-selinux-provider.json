@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "parent_copr_build": 11315612,
+  "parent_srpm_url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-core-meta-1.0.7-23.src.rpm",
+  "parent_srpm_sha256": "97eac888c12e5342d27023aa6c3e2fb963bc4822ca642c04f8ef0c09863e111e",
+  "parent_spec_sha256": "3534a0465f5cd096d5a6f708308291877c3a61ff2d5ae518d3e57484be64216b",
+  "source_archive_sha256": "11936232165f075426ce87c93cf1eb6c07631f16489dd57dbb4ddd75ff780695",
+  "version": "1.0.7",
+  "release": 24,
+  "payload_changed": false,
+  "new_runtime_packages": 0,
+  "automatic_provider_retirement": false,
+  "dnf_transition_accepted": false,
+  "stock_runtime_parity_accepted": false
+}

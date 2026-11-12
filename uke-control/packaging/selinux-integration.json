@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "parent": {
+    "build": 11316274,
+    "nvr": "uke-control-2.17.0-14",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.17.0-14.src.rpm",
+    "srpm_sha256": "a796fed10da1249639f5e28066b977801747e84f4bca2614ef0322310230f502",
+    "spec_sha256": "c0d2c54138d3c25cc0b09dc2ff613991c916b4f5a22963d2d9c86b8360f25e26",
+    "non_spec_sources": 62
+  },
+  "result": {
+    "version": "2.17.0-15",
+    "spec_sha256": "5a0b9d5236a9d071095e77ce0dbe6cb29b80a7f8968b972e3295327637723efc",
+    "runtime_names": [
+      "uke-control",
+      "uke-control-client-devel",
+      "uke-control-tui"
+    ],
+    "new_runtime_packages": 0,
+    "native_qualified": false,
+    "delivered": false,
+    "original_policy_device_accepted": false
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/packaging/selinux/selinux-kernel-abi.sh",
+      "sha256": "55a743643027e4dedaef160c2a6db51137904c598746bf609c502582227be733"
+    },
+    {
+      "path": "uke-control/packaging/selinux/compose-kernel-abi.awk",
+      "sha256": "b9787f675f58c835aff3cdbe57ff3f2511b899ff8f6c88aa1833490c0ca43d00"
+    },
+    {
+      "path": "uke-control/packaging/check-selinux-integration.sh",
+      "sha256": "dca0371c02bf62674c7db798cc770c23666f370a481a94fec4a58759a37ce8d1"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-selinux.sh",
+      "sha256": "d68385229f6f5135735cdc0ca01edc79cc7be7a5c09a1b8144efe0f3a5e7d1d3"
+    },
+    {
+      "path": "uke-control/packaging/prepare-control-selinux.sh",
+      "sha256": "70972d18755b72c8617c17a7b1deb96a3456abaa663b0f2269aee5f8d645b173"
+    },
+    {
+      "path": "uke-control/packaging/fold-selinux-spec.mjs",
+      "sha256": "c27274a1f20aee22bb851ad49acb076dc4df9fb32ba1be4fbb6b039310f5e769"
+    },
+    {
+      "path": "uke-control/docs/SELINUX-ORIGINAL.md",
+      "sha256": "a4e39c9eebcfd58acfa16a87f9319037fd642769ef843238832192d4835139b1"
+    }
+  ]
+}

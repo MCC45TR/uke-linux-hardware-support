@@ -139,3 +139,17 @@ gates, at the first production-helper lifecycle. It is not an accepted helper
 result. Release7 adds phase/line diagnostics and private-fixture shell tracing;
 disabled live roots also skip selected-profile parsing. No device policy or
 package changed during this investigation.
+
+The historical SELinux source/base/targeted cohort and Core23 source/runtime
+are now retained in the existing consolidation recovery release. Public full
+streams reproduce all five original SHA-256 values. The source recipe uses
+those archived historical policy inputs; retiring build11246701 will no longer
+break this source dependency. No producer has been removed at this stage.
+
+Release7 diagnostics locate the helper failure: direct CIL modules retain a
+cil payload without an hll file. The ownership guard and foreign-module fixture
+now inspect the direct CIL payload while retaining the language/priority/marker
+checks. This corrects the store format assumption; no existing policy record
+comparison is relaxed. Control15 keeps all62 Control14 source inputs and its
+complete recipe/checks. Core24 changes only the dependency gate and release;
+actual RPM/DNF and device acceptance still remain open.

@@ -199,12 +199,12 @@ compose "$work/fedora" "$work/integration-reupgrade.cil"
 cp "$work/uke_kernel_compat.cil" "$work/managed.cil"
 sed '1s/.*/; unrelated fixture module/' "$work/managed.cil" > "$work/uke_kernel_compat.cil"
 run_semodule "$work/fedora" -X 400 -i "$work/uke_kernel_compat.cil"
-sha256sum "$work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat/hll" > "$work/foreign.before"
+sha256sum "$work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat/cil" > "$work/foreign.before"
 if run_integration stage > "$work/refusal.log" 2>&1; then
     echo 'Foreign module was accepted' >&2; exit 1
 fi
 grep -q 'not Control-managed' "$work/refusal.log"
-sha256sum "$work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat/hll" > "$work/foreign.after"
+sha256sum "$work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat/cil" > "$work/foreign.after"
 equal "$work/foreign.before" "$work/foreign.after"
 cp "$work/managed.cil" "$work/uke_kernel_compat.cil"
 run_semodule "$work/fedora" -X 400 -i "$work/uke_kernel_compat.cil"
