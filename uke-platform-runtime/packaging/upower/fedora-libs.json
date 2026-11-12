@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "parent": {
+    "build": 11228197,
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/11228197/uke-upower-1.91.5-20.fc46.src.rpm",
+    "srpm_sha256": "33859b02e3252ccc31a06751d92c978baf2ea52a103186288fb6a938c3df36bb",
+    "spec_sha256": "42eef00f60e2ef22b41c00cafb0c6e3d37521073365235bdb7835add33324aea",
+    "archive_sha256": "497f7084ad502a9d9a98d3dae84d47eeef4f70160a0472a455528244524e6dca"
+  },
+  "result": {
+    "version": "1.91.5-21.fc46",
+    "spec_sha256": "bb681beaf60106693f46d78447273394deebdcba76ba2b145d2d77e22491c285",
+    "runtime_names": [
+      "uke-upower"
+    ],
+    "existing_development_bridges": [
+      "uke-upower-devel",
+      "uke-upower-devel-docs"
+    ],
+    "retired_library_name": "uke-upower-libs",
+    "new_runtime_packages": 0
+  },
+  "original_fedora_library": "upower-libs-1.91.5-1.fc46.aarch64",
+  "original_abi_rows": 197,
+  "typelib_sha256": "a6018eaba2f369def3eae7deab9ed15ed168375220527ad5548521e23272c635",
+  "necessary_daemon_patches_retained": 5,
+  "daemon_source_archive_unchanged": true,
+  "whole_recipe_inverse_required": true,
+  "accepted_current24_read_only_library_trial": true,
+  "native_qualified": false,
+  "signed_dnf_transition_qualified": false,
+  "full_original_daemon_parity": false,
+  "source_assets": [
+    {
+      "path": "uke-platform-runtime/packaging/upower/fold-fedora-libs-spec.mjs",
+      "sha256": "4766b328ea5d44641d305b5fdbc03fd7f971efe4bb7d3c0f4706196263a5cebf"
+    },
+    {
+      "path": "uke-platform-runtime/packaging/upower/retire-built-library-files.sh",
+      "sha256": "bf1ab98cafc05897bd3d28bb3ab5f6d79032462f713371ead9747917429ac674"
+    },
+    {
+      "path": "uke-platform-runtime/packaging/upower/check-stock-library.sh",
+      "sha256": "dde69b62167e7247365c0c1e0cc2fa43ca0fd3763dbaceebb60a7104e1ae842c"
+    },
+    {
+      "path": "uke-platform-runtime/packaging/upower/copr-fedora-libs.sh",
+      "sha256": "b863c78a995780ae41e387bac00c7127e502b560339fb347e6cc45d778c254e9"
+    },
+    {
+      "path": "uke-platform-runtime/packaging/upower/FEDORA-LIBRARY-RETURN.md",
+      "sha256": "9b216e41116df4c157156f55152ced338ec742d25d261c5c4fb6409d281f224e"
+    }
+  ]
+}
