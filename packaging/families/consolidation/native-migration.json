@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "review_date": "2026-11-11",
+  "review_date": "2026-11-12",
   "copr": {
     "owner": "mcc45tr",
     "project": "uke-linux-unstable"
@@ -30,13 +30,14 @@
       "producers": [
         "uke-upower"
       ],
-      "destination": "native-interfaces",
+      "destination": "original-userspace",
       "original_packages": [
         "upower",
         "upower-libs"
       ],
-      "remaining_work": "Use native power_supply control, events and error semantics. Stock 1.91.5 still differs on unknown health and late capacity; Core22 permits the standard provider but is not installed. Qualify threshold errors, wireless, settings/history, DNF and physical charging before removing the fork.",
-      "retirement_eligible": false
+      "remaining_work": "Original Fedora upower/upower-libs1.91.5-1 delivered through normal-channel Core23; current telemetry,configuration,active/enabled state,real reinstall and fresh Core/KDE/GNOME plans pass. Signed20 recovery and rollback solver are preserved. Known original health/late-data/error cases,cold boot,suspend,history and electrical charging qualification remain open;do not reintroduce a daemon/library fork.",
+      "retirement_eligible": false,
+      "runtime_provider_retired": true
     },
     {
       "id": "battery-services",
@@ -559,6 +560,13 @@
         "uke-speaker-firmware"
       ],
       "replacement": "Existing firmware3.0.304.0-15 preserves the exact preset and noreplace/license ownership;keep archived signed firmware14/speaker2 recovery."
+    },
+    {
+      "names": [
+        "upower",
+        "uke-upower"
+      ],
+      "replacement": "Original Fedora upower/upower-libs with Core23. Preserve the signed20 recovery archive and remaining native/physical qualifications; no project daemon or library rebuild."
     }
   ]
 }

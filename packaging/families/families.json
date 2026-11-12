@@ -55,7 +55,7 @@
       "name": "uke-power",
       "version": "1.6.0",
       "requires": [
-        "uke-upower",
+        "upower >= 1.91.5",
         "power-profiles-daemon",
         "uke-kernel(platform-profile-qos-v1) >= 1",
         "uke-boot-integration >= 1.3.4"
