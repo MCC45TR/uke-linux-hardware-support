@@ -156,7 +156,7 @@ equal "$work/fedora.hll.before" "$work/fedora.hll.final"
 
 printf '%s\n' 'Exercise the production Control helper with offline roots and pre-update snapshots.'
 run_integration() {
-    timeout -k 15s 300s bash "$integration" --root "$work/fedora" --profile targeted "$1"
+    timeout -k 15s 300s bash -x "$integration" --root "$work/fedora" --profile targeted "$1"
 }
 run_integration capture
 [[ -f $work/fedora/run/uke-selinux-migration/targeted.before.35 ]]

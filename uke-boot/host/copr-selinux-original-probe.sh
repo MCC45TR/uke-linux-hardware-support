@@ -27,7 +27,7 @@ cp "$src/../../LICENSE" "$work/SOURCES/CONTROL-MIT-LICENSE"
 cat > "$work/SPECS/probe.spec" <<'SPEC'
 Name: uke-selinux-original-check
 Version: 1.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 Summary: Offline original Fedora SELinux composition qualification
 License: GPL-2.0-or-later AND MIT
 BuildArch: noarch

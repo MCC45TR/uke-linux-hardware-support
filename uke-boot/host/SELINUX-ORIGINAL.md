@@ -133,3 +133,9 @@ replaces RPM-owned policy.kern as an update would,checks reinstall/fork-first
 rollback/reupgrade,retains disabled bind/original HLL records and rejects a
 foreign same-name module without changing it. RPM hooks and actual device
 checks remain separate. This source candidate is not installed on the device.
+
+Build11318060/release6 fails after the earlier representation and module-store
+gates, at the first production-helper lifecycle. It is not an accepted helper
+result. Release7 adds phase/line diagnostics and private-fixture shell tracing;
+disabled live roots also skip selected-profile parsing. No device policy or
+package changed during this investigation.

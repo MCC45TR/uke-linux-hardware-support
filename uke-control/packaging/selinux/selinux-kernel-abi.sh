@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Demand-only RPM integration; no service, timer or hardware operation.
 set -Eeuo pipefail
+trap 'printf "SELinux integration failed: phase=%s line=%s\n" "${mode:-arguments}" "$LINENO" >&2' ERR
 export LC_ALL=C
 umask 077
 root=/
@@ -95,7 +96,7 @@ guard_module() {
     fi
 }
 active_profile=
-if ! $offline; then
+if ! $offline && selinuxenabled; then
     active_profile=$(awk -F= '/^[[:space:]]*SELINUXTYPE[[:space:]]*=/ {
         v=$2;sub(/[[:space:]]*#.*/,"",v);gsub(/["\047[:space:]]/,"",v);print v
     }' /etc/selinux/config)
