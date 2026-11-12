@@ -305,8 +305,9 @@
       "original_packages": [
         "accountsservice"
       ],
-      "remaining_work": "Qualify original optional-TCB ENOENT semantics while preserving genuine permission/I/O errors and normal accounts; seek upstream/Fedora correction rather than kernel workarounds.",
-      "retirement_eligible": false
+      "remaining_work": "Original Fedora accountsservice26.27.3-2.fc45 delivered;normal DNF,exact executable,read-only cached-user/user-property parity,preferences and saved active/enabled state pass. Original DaemonVersion26.29.1 differs from its NVR and former fork26.27.3;the absent optional TCB warning remains diagnostic. Real reinstall preserves state and identical running bytes without automatic restart;explicit refresh is separately recorded. Preserve signed16 recovery and qualify remaining account mutations/authentication/cold-boot history without reviving the fork.",
+      "retirement_eligible": false,
+      "runtime_provider_retired": true
     },
     {
       "id": "display-ddc",
@@ -500,6 +501,30 @@
       "original_packages": [],
       "remaining_work": "Keep essential native source/ARM64 qualification and required receipts. Retire temporary diagnostics only after all live build, source, runtime and recovery references close.",
       "retirement_eligible": false
+    },
+    {
+      "id": "laptop-keyboard",
+      "sources": [
+        "uke-plasma-keyboard-custom"
+      ],
+      "producers": [],
+      "destination": "original-userspace",
+      "original_packages": [
+        "plasma-keyboard"
+      ],
+      "remaining_work": "Retain the explicitly requested independent keyboard application alongside the original Plasma Keyboard. The remaining delta is the configurable laptop keyboard/touchpad surface, physical sizing, language and toolbar policy, and same-RPM native KWin routing/refresh integration. These are application/compositor policies, not hardware protocols suitable for kernel/DT or a separate bridge RPM. Propose compatible changes upstream and retire the application only after equivalent original-package features, settings, DNF ownership and rollback are qualified. Release32 passes native software checks; physical input, lock, refresh restoration, native30-60 VRR and future-image acceptance remain open.",
+      "retirement_eligible": false,
+      "external_copr": {
+        "owner": "mcc45tr",
+        "project": "uke-plasma-keyboard-custom",
+        "producer_name": "uke-plasma-keyboard-custom",
+        "producer_id": 3281444,
+        "qualified_build": 11315666,
+        "qualified_source": "8a48b46f67f6b75c40adbc540bc9496eba900a0f",
+        "qualified_version": "0.1.0-32",
+        "review_date": "2026-11-12"
+      },
+      "source_repository": "https://github.com/MCC45TR/uke-plasma-keyboard-custom"
     }
   ],
   "retired_source_families": [
@@ -567,6 +592,13 @@
         "uke-upower"
       ],
       "replacement": "Original Fedora upower/upower-libs with Core23. Preserve the signed20 recovery archive and remaining native/physical qualifications; no project daemon or library rebuild."
+    },
+    {
+      "names": [
+        "accountsservice",
+        "uke-accountsservice"
+      ],
+      "replacement": "Original Fedora accountsservice daemon/client/SDK. Preserve the signed16 recovery archive and remaining authentication/account-lifecycle checks;no project daemon or library rebuild."
     }
   ]
 }
