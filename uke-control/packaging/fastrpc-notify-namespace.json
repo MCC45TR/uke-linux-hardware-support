@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "kernel": "7.3.3-24-unstable",
+  "systemd": "262.2-1.fc46",
+  "fixture_revision": 23,
+  "software_only": true,
+  "source_code_complete": true,
+  "target_fixture_passed": true,
+  "type_notify_main_only": true,
+  "flock_shared_no_fork": true,
+  "minimal_root_and_empty_proc_sys": true,
+  "explicit_notify_socket_bind": true,
+  "af_unix_only": true,
+  "empty_capabilities": true,
+  "memory_deny_write_execute": true,
+  "tmpfs_size_bytes": 16777216,
+  "tmpfs_noswap_verified": true,
+  "public_vector_only": true,
+  "temporary_unit_mount_and_tree_removed": true,
+  "production_services_changed": false,
+  "dsp_or_factory_access": false,
+  "native_compilation": false,
+  "provider_transition": false,
+  "source_assets": [
+    {
+      "path": "uke-control/tests/fastrpc-notify-namespace.sh",
+      "sha256": "967b21c65efbe335fb57d35953f5940b0d9d5bf799db8f74e033305b28ab770d"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-NOTIFY-NAMESPACE.md",
+      "sha256": "a872cea8635582bc0877b849a9b4a8266258871e8768d5174d98ab5eaf0cd827"
+    }
+  ]
+}
