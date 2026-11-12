@@ -153,3 +153,14 @@ checks. This corrects the store format assumption; no existing policy record
 comparison is relaxed. Control15 keeps all62 Control14 source inputs and its
 complete recipe/checks. Core24 changes only the dependency gate and release;
 actual RPM/DNF and device acceptance still remain open.
+
+Production helper11318154/release8 succeeds in526s. Actual sourcec4be7407,
+SRPM96aacf5d,specea55312b and signed report8c0f0722 match reviewed inputs. All
+previous policy gates and the exact helper's private-root capture/stage/finish,
+payload replacement,reinstall,fork-first rollback and original reupgrade pass.
+Original100 HLL bytes,disabled bind and foreign-module refusal remain intact.
+
+Control15/11318161 then passes its required helper gate and enters the full
+native runtime build. Actual SRPMa83f94f9/spec5a0b9d52,all62 parent inputs and
+the sealed integration overlay match. Native runtime success,signed RPM/DNF,
+actual active-policy checks and provider retirement remain separate gates.

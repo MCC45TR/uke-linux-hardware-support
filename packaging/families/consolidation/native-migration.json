@@ -360,7 +360,7 @@
         "selinux-policy",
         "selinux-policy-targeted"
       ],
-      "remaining_work": "Signed original Fedora45.24-1 lacks newer kernel definitions. COPR11317794/sourceec7b1a8d qualifies standard CIL class/common composition: complete historical normalized policy and every original Fedora24 old-permission record match,seven grants/denials,caps/permissive and negative/partial/full-adoption controls pass. Test-only binary round trips preserve all original attributes. Existing Control still needs original-base definition detection,modular-store/neverallow,normal DNF/reinstall/rollback and device acceptance before retiring3271589. Keep Enforcing and kernel checks;no new base-policy fork.",
+      "remaining_work": "Signed original Fedora45.24-1 plus existing Control CIL integration passes native526s COPR11318154/sourcec4be7407: full historical and original old-permission records,seven grant/deny,negative/adoption and real helper capture/stage/finish,reinstall/fork-first rollback/reupgrade,disabled bind/original100 HLL and foreign-module refusal. Control15/11318161 uses unchanged62 Control14 inputs and reviewed spec5a0b9d52;full native runtime build in progress. Core24 preserves Core23 payload and gates original policy plus Control ABI. Actual signed RPM/DNF/device lifecycle and source/recovery closure remain required before retiring3271589 and temporary3281815. Keep Enforcing and native kernel checks;no base-policy fork or extra runtime bridge RPM.",
       "retirement_eligible": false
     },
     {
