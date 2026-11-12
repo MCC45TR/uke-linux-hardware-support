@@ -93,8 +93,9 @@ for (const [section, phase] of [['%pre -n uke-control\n', 'save'], ['%posttrans 
     change(section, section+extra);
 }
 change('%post -n uke-control\n', '%post -n uke-control\n%systemd_post uke-pogo-auth.service\n%systemd_user_post uke-pogo-desktop.service\n%udev_rules_update\n');
-change('%postun -n uke-control\n', '%postun -n uke-control\n%systemd_postun uke-pogo-auth.service\n%systemd_user_postun uke-pogo-desktop.service\n%udev_rules_update\n');
-change('%preun -n uke-control\n', '%preun -n uke-control\n%systemd_preun uke-pogo-auth.service\n%systemd_user_preun uke-pogo-desktop.service\n');
+const rollback = (phase, label) => `(\n# UKE_CONTROL_POGO_${label}_BEGIN\nphase=${phase}\n${fragment}# UKE_CONTROL_POGO_${label}_END\n) || exit $?\n`;
+change('%postun -n uke-control\n', '%postun -n uke-control\n%systemd_postun uke-pogo-auth.service\n%systemd_user_postun uke-pogo-desktop.service\n%udev_rules_update\n'+rollback('restore-upgrade', 'POSTUN_RESTORE'));
+change('%preun -n uke-control\n', '%preun -n uke-control\n'+rollback('save-upgrade', 'PREUN_SAVE')+'%systemd_preun uke-pogo-auth.service\n%systemd_user_preun uke-pogo-desktop.service\n');
 change('\n%files\n', `
 %files
 /usr/libexec/uke-pogo-auth

@@ -32,12 +32,35 @@ snapshot() {
  valid_enabled "$enabled" && valid_active "$active" || return 1
  (umask 077;printf '%s\n%s\n' "$enabled" "$active" > "$state_dir/$target")
 }
+known_owner() {
+ owners=$(/usr/bin/rpm -qf --qf '%{NAME}\n' "$1" 2>/dev/null) || return 1
+ [ -n "$owners" ] || return 1
+ while IFS= read -r owner;do
+  case "$owner" in "$2"|uke-control) :;; *) return 1;;esac
+ done <<OWNERS
+$owners
+OWNERS
+}
+case "$phase" in
+ save-upgrade|restore-upgrade)
+  case "${1-}" in ''|*[!0-9]*) exit 1;;esac
+  [ "$1" -gt 0 ] || exit 0
+  if [ "$phase" = save-upgrade ];then
+   if [ -e "$state_dir" ] || [ -L "$state_dir" ];then
+    private_directory && [ -f "$state_dir/complete" ] && [ ! -L "$state_dir/complete" ] &&
+     [ "$(/usr/bin/cat "$state_dir/complete")" = 1 ] || exit 1
+    # A newer provider's pre already captured the pre-transaction preference.
+    exit 0
+   fi
+   phase=save
+  else phase=restore;fi
+ ;;
+esac
 case "$phase" in
  save)
-  auth=$(/usr/bin/rpm -qf --qf '%{NAME}' /usr/libexec/uke-pogo-auth 2>/dev/null) || :
-  desktop=$(/usr/bin/rpm -qf --qf '%{NAME}' /usr/libexec/uke-pogo-desktop 2>/dev/null) || :
-  case "$auth" in uke-pogo-auth|uke-control) auth=yes;; *) auth=no;;esac
-  case "$desktop" in uke-pogo-desktop|uke-control) desktop=yes;; *) desktop=no;;esac
+  auth=no;desktop=no
+  if known_owner /usr/libexec/uke-pogo-auth uke-pogo-auth;then auth=yes;fi
+  if known_owner /usr/libexec/uke-pogo-desktop uke-pogo-desktop;then desktop=yes;fi
   [ "$auth" = yes ] || [ "$desktop" = yes ] || exit 0
   [ ! -e "$state_dir" ] && [ ! -L "$state_dir" ] || exit 1
   /usr/bin/mkdir -m700 "$state_dir"

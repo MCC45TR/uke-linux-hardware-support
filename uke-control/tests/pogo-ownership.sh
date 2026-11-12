@@ -21,9 +21,10 @@ printf '0\n'
 SH
 cat > "$work/bin/rpm" <<'SH'
 #!/usr/bin/bash
-[[ $# == 4 && $1 == -qf && $2 == --qf && $3 == '%{NAME}' ]] || exit 1
+[[ $# == 4 && $1 == -qf && $2 == --qf && $3 == '%{NAME}\n' ]] || exit 1
 [[ ! -e $POGO_FIXTURE/model/fresh ]] || exit 1
-if [[ -e $POGO_FIXTURE/model/folded ]];then printf 'uke-control';else printf '%s' "${4##*/}";fi
+if [[ -e $POGO_FIXTURE/model/mixed ]];then printf 'uke-control\n%s\n' "${4##*/}"
+elif [[ -e $POGO_FIXTURE/model/folded ]];then printf 'uke-control\n';else printf '%s\n' "${4##*/}";fi
 SH
 cat > "$work/bin/stat" <<'SH'
 #!/usr/bin/bash
@@ -60,7 +61,7 @@ sed -e "s|/run/uke-control-pogo-migration|$work/run/state|g" \
  -e "s|/usr/bin/id|$work/bin/id|g" -e "s|/usr/bin/rpm|$work/bin/rpm|g" \
  -e "s|/usr/bin/stat|$work/bin/stat|g" -e "s|/usr/bin/systemctl|$work/bin/systemctl|g" \
  "$root/packaging/pogo-ownership.sh" > "$work/fragment"
-run_phase(){ phase=$1 /usr/bin/bash "$work/fragment"; }
+run_phase(){ phase=$1 /usr/bin/bash "$work/fragment" "${@:2}"; }
 reset_model(){
  [[ ! -e $work/run/state ]]
  printf 'static\n' > "$work/model/system.enabled"
@@ -115,6 +116,27 @@ run_phase restore
 grep -Fxq 'user-1000 try-restart' "$work/model/calls"
 unlink "$work/model/folded"
 reset_model
+touch "$work/model/mixed"
+run_phase save-upgrade 1
+printf 'inactive\n' > "$work/model/user-1000.active"
+# A second save must retain the earlier active state, not overwrite it.
+run_phase save-upgrade 1
+[[ $(sed -n 2p "$work/run/state/user-1000") == active ]]
+run_phase restore-upgrade 1
+[[ $(cat "$work/model/user-1000.active") == active ]]
+grep -Fxq 'user-1000 start' "$work/model/calls"
+unlink "$work/model/mixed"
+reset_model
+run_phase save-upgrade 0
+run_phase restore-upgrade 0
+[[ ! -e $work/run/state ]]
+! grep -Eq ' (start|try-restart|enable)$' "$work/model/calls"
+run_phase save
+printf 'inactive\n' > "$work/model/user-1000.active"
+run_phase restore-upgrade 0
+[[ $(cat "$work/model/user-1000.active") == inactive && -f $work/run/state/complete ]]
+run_phase restore
+reset_model
 printf 'enabled-runtime\n' > "$work/model/user-1000.enabled"
 run_phase save
 printf 'disabled\n' > "$work/model/user-1000.enabled"
@@ -137,4 +159,4 @@ if run_phase restore;then exit 1;fi
 [[ -f $work/run/state/complete && -f $work/run/state/user-1000 ]]
 unlink "$work/model/fail-start"
 run_phase restore
-printf 'Pogo ownership: active/static restore,inactive/masked preservation,enabled/runtime state,reinstall refresh,fresh skip,symlink and failed-restore retention pass.\n'
+printf 'Pogo ownership: active/static restore,inactive/masked preservation,enabled/runtime state,reinstall/rollback refresh,mixed known owners,full-removal refusal,fresh skip,symlink and failed-restore retention pass.\n'

@@ -72,3 +72,13 @@ Control14 adds the standard systemd install/remove/reload macros alongside
 the user-unit hooks. Removing Control must stop the root helper; ordinary
 upgrades still restore its captured state. Candidate13 is not delivered or
 used to retire either standalone producer.
+
+Control14 also snapshots in preun when an upgrade has no earlier receipt and
+restores in postun when another package instance remains. This covers returning
+to accepted Control12 plus the signed standalone helpers, whose old install
+scripts do not refresh running helpers. Mixed ownership during an RPM
+replacement accepts only the two known standalone names and Control. An
+earlier pre-transaction receipt is never overwritten. Full removal skips
+restoration and uses the normal system/user unit removal hooks; it cannot
+start either helper. The same data fixture exercises the mixed-owner rollback,
+preexisting receipt and full-removal paths.

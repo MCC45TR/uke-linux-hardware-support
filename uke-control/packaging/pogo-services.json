@@ -177,7 +177,7 @@
   },
   "result": {
     "version": "2.17.0-14",
-    "spec_sha256": "291e87c160e4181d379b3c31c1ad1fc0e82be486b274d6d285281aeab1a44446",
+    "spec_sha256": "c0d2c54138d3c25cc0b09dc2ff613991c916b4f5a22963d2d9c86b8360f25e26",
     "runtime_names": [
       "uke-control",
       "uke-control-client-devel",
@@ -204,12 +204,15 @@
       "source": "054f661dda7bca8a03564581202daadc80c45c3e",
       "installed": false,
       "root_auth_uninstall_hook_missing": true
-    }
+    },
+    "rollback_live_process_refresh": true,
+    "full_removal_never_restores": true,
+    "known_mixed_file_owners_checked": true
   },
   "source_assets": [
     {
       "path": "uke-control/docs/POGO-INTEGRATION.md",
-      "sha256": "862f69340d581c30fa308f0b1af7fc016c95e387bf59ae2ec5e28044d77ea171"
+      "sha256": "8e868471f8b4c5071e3e3289fd2599ea803ab87ae3b6f91a0ee1a68d3a360608"
     },
     {
       "path": "uke-control/packaging/build-pogo-auth.sh",
@@ -225,7 +228,7 @@
     },
     {
       "path": "uke-control/packaging/fold-pogo-spec.mjs",
-      "sha256": "3071f4650abebe329026e11ef5eca50dcd421b8dd3c8352da434b763ff2fa8b5"
+      "sha256": "d2a1ace84d6aabc004d46aaffea245d69b85aca895ab4e42c6ed358fc02af56b"
     },
     {
       "path": "uke-control/packaging/patch-pogo-sources.mjs",
@@ -233,7 +236,7 @@
     },
     {
       "path": "uke-control/packaging/pogo-ownership.sh",
-      "sha256": "ba5a7a206f851fccb6f935a0f01a4373e62c6205ca96b1763b312017a2310ff9"
+      "sha256": "96c72e3e21e7495e4124621ec602b35741fb9b71efb336bdb2d02703ae0b2247"
     },
     {
       "path": "uke-control/src/pogo-runtime.hpp",
@@ -245,7 +248,7 @@
     },
     {
       "path": "uke-control/tests/pogo-ownership.sh",
-      "sha256": "0c16b7e4a6b4446503a38bb859396ddfb4cf9be4b97e502066e6559c1e3008b7"
+      "sha256": "022a4ecf906dc4368a13321d089cdd4cf82946935a76575c4a98d1602b4cdd3c"
     },
     {
       "path": "uke-control/tests/pogo-runtime.cpp",

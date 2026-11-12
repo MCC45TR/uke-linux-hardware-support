@@ -46,3 +46,12 @@ auth4 recipe. Control14 adds the corresponding systemd lifecycle macros.
 Candidate13 remains uninstalled; its live build is observed to completion,
 without cancellation, replay or producer retirement. Native and delivery
 acceptance for the corrected candidate remain open.
+
+Before submitting14, the rollback review also finds that the accepted old
+standalone helpers have no automatic live-process refresh on installation.
+The candidate now captures a missing receipt in preun and restores it in
+postun while a package instance remains. It accepts only known owners during
+RPM replacement, preserves an earlier receipt and never restores on complete
+removal. New data-only cases exercise the actual shared fragment with mixed
+owners, rollback, preexisting state and removal. All retained state fixtures
+pass. This source preparation remains distinct from a real DNF rollback.
