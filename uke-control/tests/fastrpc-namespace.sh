@@ -15,28 +15,30 @@ cleanup(){
  find "$work" -depth -delete
 }
 trap cleanup EXIT
-mkdir -p "$work"/{payload/registry,payload/config,payload/dsp,payload/socinfo,root/usr/bin,root/usr/lib64,root/usr/lib/qcom/adsp,root/vendor/etc/sensors/config,root/odm/etc/sensors/config,root/system,root/sys/devices/soc0,root/mnt/vendor/persist/sensors/registry/registry,root/persist/sensors/registry/registry}
+mkdir -p "$work"/{payload/registry/registry,payload/config,payload/dsp,payload/socinfo,root/usr/bin,root/usr/lib64,root/usr/lib/qcom/adsp,root/vendor/etc/sensors/config,root/odm/etc/sensors/config,root/system,root/sys/devices/soc0,root/mnt/vendor,root/persist/sensors/registry/registry}
 mkdir "$work/root/proc"
+ln -s /persist "$work/root/mnt/vendor/persist"
 for item in bin lib64;do ln -s "usr/$item" "$work/root/$item";done
 ln -s usr/lib "$work/root/lib"
 touch "$work/root/usr/lib/ld-linux-aarch64.so.1"
-printf 'public registry vector\n' > "$work/payload/registry/public-vector"
+printf 'public registry vector\n' > "$work/payload/registry/registry/public-vector"
+printf 'public registry version\n' > "$work/payload/registry/sns_reg_version"
 printf 'public json list\n' > "$work/payload/config/json.lst"
 printf 'public config vector\n' > "$work/payload/sns_reg.conf"
 printf 'public firmware vector,not executable\n' > "$work/payload/dsp/sns_tppe.so"
 printf 'public soc vector\n' > "$work/payload/socinfo/soc_id"
 printf 'public outside vector\n' > "$work/public-outside"
-ln -s "$work/public-outside" "$work/payload/registry/host-escape"
-ln -s "/proc/1/root$work/public-outside" "$work/payload/registry/proc-escape"
-ln -s /vendor/etc/sensors/config/json.lst "$work/payload/registry/readonly-link"
+ln -s "$work/public-outside" "$work/payload/registry/registry/host-escape"
+ln -s "/proc/1/root$work/public-outside" "$work/payload/registry/registry/proc-escape"
+ln -s /vendor/etc/sensors/config/json.lst "$work/payload/registry/registry/readonly-link"
 touch "$work/root/vendor/etc/sensors/sns_reg_config"
 ln -s /vendor "$work/root/system/vendor"
 sha256sum "$work/payload/config/json.lst" "$work/payload/sns_reg.conf" "$work/payload/dsp/sns_tppe.so" "$work/payload/socinfo/soc_id" > "$output/readonly-before.sha256"
 systemd-run --quiet --wait --pipe --collect --unit="$unit" --setenv=LC_ALL=C \
  -p "RootDirectory=$work/root" \
  -p "BindReadOnlyPaths=/usr/bin /usr/lib64 /usr/lib/ld-linux-aarch64.so.1 $work/payload/config:/vendor/etc/sensors/config $work/payload/config:/odm/etc/sensors/config $work/payload/sns_reg.conf:/vendor/etc/sensors/sns_reg_config $work/payload/dsp:/usr/lib/qcom/adsp $work/payload/socinfo:/sys/devices/soc0" \
- -p "BindPaths=$work/payload/registry:/persist/sensors/registry/registry $work/payload/registry:/mnt/vendor/persist/sensors/registry/registry" \
- -p 'ReadWritePaths=/persist/sensors/registry/registry /mnt/vendor/persist/sensors/registry/registry' \
+ -p "BindPaths=$work/payload/registry:/persist/sensors/registry" \
+ -p 'ReadWritePaths=/persist/sensors/registry' \
  -p ProtectSystem=strict -p ProtectHome=yes -p PrivateDevices=yes \
  -p 'TemporaryFileSystem=/sys:ro /proc:ro' \
  -p MountAPIVFS=no \
@@ -52,6 +54,11 @@ systemd-run --quiet --wait --pipe --collect --unit="$unit" --setenv=LC_ALL=C \
   grep -Fqx "public soc vector" /sys/devices/soc0/soc_id
   test ! -e /etc/senemos/kernel-update.conf
   cmp /persist/sensors/registry/registry/public-vector /mnt/vendor/persist/sensors/registry/registry/public-vector
+  grep -Fqx "public registry version" /mnt/vendor/persist/sensors/registry/sns_reg_version
+  printf "public temporary registry\n" > /persist/sensors/registry/fstempfile
+  mv /persist/sensors/registry/fstempfile /mnt/vendor/persist/sensors/registry/registry/from-parent
+  grep -Fqx "public temporary registry" /persist/sensors/registry/registry/from-parent
+  test ! -e /mnt/vendor/persist/sensors/registry/fstempfile
   cmp /vendor/etc/sensors/config/json.lst /odm/etc/sensors/config/json.lst
   cmp /vendor/etc/sensors/sns_reg_config /system/vendor/etc/sensors/sns_reg_config
   grep -Fqx "public firmware vector,not executable" /usr/lib/qcom/adsp/sns_tppe.so
@@ -66,9 +73,10 @@ systemd-run --quiet --wait --pipe --collect --unit="$unit" --setenv=LC_ALL=C \
   if (printf bad >> /persist/sensors/registry/registry/readonly-link) 2>/dev/null; then exit 1; fi
   printf "Native RootDirectory/binds:shared synthetic registry,readonly config/firmware,aliases and absent DSP/host settings passed.\n"
   printf "Empty proc and host/proc symlink escapes refused;readonly link cannot bypass bind permissions.\n"
+  printf "Complete registry parent and cross-alias temporary-file rename passed on one bind mount.\n"
  ' < /dev/null > "$output/result.log" 2>&1
 sha256sum -c --strict --quiet "$output/readonly-before.sha256"
-grep -Fqx 'public changed registry' "$work/payload/registry/new-vector"
+grep -Fqx 'public changed registry' "$work/payload/registry/registry/new-vector"
 cleanup
 trap - EXIT
 [[ ! -e $work ]]

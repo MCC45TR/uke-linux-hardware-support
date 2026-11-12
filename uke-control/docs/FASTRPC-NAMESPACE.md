@@ -11,8 +11,8 @@ RootDirectory and standard bind mounts:
 
 | DSP path | Current cache source | Access |
 | --- | --- | --- |
-| /persist/sensors/registry/registry | state/sensors/persist | read/write |
-| /mnt/vendor/persist/sensors/registry/registry | same registry | read/write alias |
+| /persist/sensors/registry | state/sensors/persist | read/write parent |
+| /mnt/vendor/persist | private /persist alias | same bind mount |
 | /vendor/etc/sensors/config | state/sensors/config | read-only |
 | /odm/etc/sensors/config | same config | read-only alias |
 | /vendor/etc/sensors/sns_reg_config | state/sensors/sns_reg.conf | read-only |
@@ -25,6 +25,13 @@ equal config aliases,read-only config/firmware/SoC write refusals and unchanged
 source hashes. DSP devices,host kernel-update configuration and remoteproc sysfs
 are absent in that fixture. It does not exercise real FastRPC file requests,
 all SoC attributes,live calibration,service restart or suspend.
+
+The actual SSC32 build_persist_dir maps the complete registry parent when
+state/sensors/persist exists. It contains registry/,sns_reg_version and the
+temporary fstempfile used before a rename. The earlier leaf-only fixture did
+not model this layout. The corrected fixture verifies parent temporary-file
+creation and rename into the registry across both aliases. A fixed private
+alias uses one bind mount, preserving atomic rename across the two names.
 
 Root construction must include the AArch64 interpreter at
 /lib/ld-linux-aarch64.so.1. Bind the original /usr/bin,/usr/lib64 and the
@@ -52,6 +59,7 @@ qualified the original Fedora listener/stubs and Control notification adapter
 with synthetic RPCs. Combining that result with this filesystem fixture does
 not prove a complete provider switch. Native100 qualifies 87 original library
 file API checks and native102 qualifies the single-session worker and source
-ABI. Required live library/config paths,boot/autostart ownership,readiness,
-private-RAM registry refresh,SELinux,crash/suspend,and signed DNF rollback.
+ABI. Live library/config paths,boot/autostart ownership,readiness,
+private-RAM registry refresh,SELinux,crash/suspend and signed DNF rollback
+still require qualification for the original provider.
 Retain the current provider until those gates pass.

@@ -43,18 +43,24 @@
   "source_assets": [
     {
       "path": "uke-control/tests/fastrpc-namespace.sh",
-      "sha256": "0886107ced107e97181dc8e96fa54076902d2de494c06802f233ddfc7b228318"
+      "sha256": "c61231a3f87da4ac4067063b94cd999d4b611d2c402b9db1676456a642f91389"
     },
     {
       "path": "uke-control/docs/FASTRPC-NAMESPACE.md",
-      "sha256": "440471d7c26bbf31b830b1a7a3a98a01aade9c0582598f7f6698def104518003"
+      "sha256": "4fe3df7492adcf39e61a9d30a68f3f2f145c0974ff6c81d7e2f2abeb31f1a2e2"
     }
   ],
-  "namespace_fixture_revision": 12,
+  "namespace_fixture_revision": 13,
   "proc_empty_and_readonly": true,
   "host_and_proc_symlink_escapes_refused": true,
   "readonly_bind_enforced_through_symlink": true,
   "file_api_qualification_build": 11310493,
   "session_and_abi_qualification_build": 11310532,
-  "readonly_input_hashes_unchanged": true
+  "readonly_input_hashes_unchanged": true,
+  "whole_registry_parent_mapped": true,
+  "parent_version_and_temporary_file_tested": true,
+  "cross_alias_rename_on_single_bind_passed": true,
+  "persist_alias_is_private_symlink": true,
+  "old_leaf_mapping_superseded": true,
+  "mapping_source": "SSC32 hexagonrpc/rpcd_builder.c build_persist_dir plus ssc-cache.cpp"
 }
