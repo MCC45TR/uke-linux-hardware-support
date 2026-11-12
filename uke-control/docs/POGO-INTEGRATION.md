@@ -1,6 +1,6 @@
 # Pogo integration in Control
 
-12 November 2026. Candidate Control 2.17.0-13 folds the accepted pogo-auth4
+12 November 2026. Candidate Control 2.17.0-14 folds the accepted pogo-auth4
 and pogo-desktop5 sources into the existing Control RPM. It creates no runtime
 subpackage, firmware payload, desktop fork or unconditional authentication unit.
 Build, signed delivery and physical acceptance are separate gates.
@@ -65,3 +65,10 @@ notice remain packaged. Original protocol/credential and desktop state tests,
 new event/stop tests and every Control12 native gate are retained. Native
 results, normal DNF/fresh/reinstall/rollback, session startup and unavailable
 physical attachment/input/light/suspend tests must be recorded independently.
+
+A review of the first Control13 candidate found that its root auth unit had
+no system-unit removal hook, matching the standalone auth4's old omission.
+Control14 adds the standard systemd install/remove/reload macros alongside
+the user-unit hooks. Removing Control must stop the root helper; ordinary
+upgrades still restore its captured state. Candidate13 is not delivered or
+used to retire either standalone producer.

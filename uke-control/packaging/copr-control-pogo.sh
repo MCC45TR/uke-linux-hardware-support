@@ -50,8 +50,8 @@ bash "$owner/tests/pogo-ownership.sh" "$owner"
 bash "$owner/tests/ssc-unit-state.sh" --data-only "$output/uke-control.spec"
 bash "$owner/tests/ssc-refresh.sh" --data-only "$output/uke-control.spec"
 bash "$owner/tests/ssc-cache-postun.sh" --data-only "$output/uke-control.spec"
-[[ $(rpmspec --define "_sourcedir $output" -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-13.fc46 ]]
+[[ $(rpmspec --define "_sourcedir $output" -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-14.fc46 ]]
 rpmspec --define "_sourcedir $output" -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui > "$work/expected"
 cmp "$work/names" "$work/expected"
-printf 'Control13:61 actual parent inputs exact,whole recipe/source inverses,pogo ownership and inherited SSC state cases;three existing output names.\n'
+printf 'Control14:61 actual parent inputs exact,whole recipe/source inverses,pogo ownership and inherited SSC state cases;three existing output names.\n'

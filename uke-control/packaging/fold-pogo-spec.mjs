@@ -6,7 +6,7 @@ const [path, manifest, owner] = process.argv.slice(2);
 const contract = JSON.parse(fs.readFileSync(manifest));
 const before = fs.readFileSync(path, 'utf8');
 assert.equal(crypto.createHash('sha256').update(before).digest('hex'), contract.parent.spec_sha256);
-assert.equal(contract.result.version, '2.17.0-13');
+assert.equal(contract.result.version, '2.17.0-14');
 const split = before.indexOf('%changelog\n');
 assert(split > 0);
 let body = before.slice(0, split);
@@ -17,7 +17,7 @@ const change = (old, value) => {
     applied.push([old, value]);
 };
 assert.equal((body.match(/Release: 12%\{\?dist\}/g) || []).length, 3);
-body = body.replaceAll('Release: 12%{?dist}', 'Release: 13%{?dist}').replaceAll('2.17.0-12', '2.17.0-13');
+body = body.replaceAll('Release: 12%{?dist}', 'Release: 14%{?dist}').replaceAll('2.17.0-12', '2.17.0-14');
 const license = 'MIT AND Apache-2.0 AND GPL-3.0-or-later AND GPL-2.0-only AND (GPL-2.0-only WITH Linux-syscall-note)';
 change('\nSourceLicense: '+license+'\n', '\nSourceLicense: '+license+' AND BSD-2-Clause AND BSD-3-Clause\n');
 change('\nLicense: '+license+'\n', '\nLicense: '+license+' AND BSD-2-Clause AND BSD-3-Clause\n');
@@ -92,9 +92,9 @@ for (const [section, phase] of [['%pre -n uke-control\n', 'save'], ['%posttrans 
     const extra = `(\n# UKE_CONTROL_POGO_${phase.toUpperCase()}_BEGIN\nphase=${phase}\n${fragment}# UKE_CONTROL_POGO_${phase.toUpperCase()}_END\n) || exit $?\n`;
     change(section, section+extra);
 }
-change('%post -n uke-control\n', '%post -n uke-control\n%systemd_user_post uke-pogo-desktop.service\n%udev_rules_update\n');
-change('%postun -n uke-control\n', '%postun -n uke-control\n%systemd_user_postun uke-pogo-desktop.service\n%udev_rules_update\n');
-change('%preun -n uke-control\n', '%preun -n uke-control\n%systemd_user_preun uke-pogo-desktop.service\n');
+change('%post -n uke-control\n', '%post -n uke-control\n%systemd_post uke-pogo-auth.service\n%systemd_user_post uke-pogo-desktop.service\n%udev_rules_update\n');
+change('%postun -n uke-control\n', '%postun -n uke-control\n%systemd_postun uke-pogo-auth.service\n%systemd_user_postun uke-pogo-desktop.service\n%udev_rules_update\n');
+change('%preun -n uke-control\n', '%preun -n uke-control\n%systemd_preun uke-pogo-auth.service\n%systemd_user_preun uke-pogo-desktop.service\n');
 change('\n%files\n', `
 %files
 /usr/libexec/uke-pogo-auth
@@ -114,8 +114,8 @@ for (const [old, value] of applied.toReversed()) {
     assert.equal(inverse.split(value).length, 2, 'Ambiguous pogo recipe inverse: '+old.slice(0, 48));
     inverse = inverse.replace(value, () => old);
 }
-inverse = inverse.replaceAll('Release: 13%{?dist}', 'Release: 12%{?dist}').replaceAll('2.17.0-13', '2.17.0-12');
+inverse = inverse.replaceAll('Release: 14%{?dist}', 'Release: 12%{?dist}').replaceAll('2.17.0-14', '2.17.0-12');
 assert.equal(inverse+history, before, 'Unrelated Control12 recipe changed');
-const entry = '* Thu Nov 12 2026 Uke contributors - 2.17.0-13\n- Fold pogo authentication and Plasma integration into existing Control.\n- Admit the qualified 7.3.3 bridge family and block on request or stop events.\n- Preserve trusted input checks, original desktops and service preferences.\n\n';
+const entry = '* Thu Nov 12 2026 Uke contributors - 2.17.0-14\n- Fold pogo authentication and Plasma integration into existing Control.\n- Admit the qualified 7.3.3 bridge family and block on request or stop events.\n- Preserve trusted input checks, original desktops and service preferences.\n\n';
 fs.writeFileSync(path, body+history.replace('%changelog\n', '%changelog\n'+entry));
-console.log('Control13: whole Control12 recipe inverse passes; only declared pogo ownership/runtime/conditional dependencies change.');
+console.log('Control14: whole Control12 recipe inverse passes; only declared pogo ownership/runtime/conditional dependencies change.');

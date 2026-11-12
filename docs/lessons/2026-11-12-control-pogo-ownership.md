@@ -39,3 +39,10 @@ reinstall and rollback are pending. Physical attachment, secure-world
 authentication, keyboard input, lights and suspend remain unverified without
 the accessory. No TEE operation, firmware write, kernel selection or reboot
 was performed during preparation.
+
+The source audit of candidate13/COPR11316177 found a root-unit uninstall gap:
+only the desktop helper had standard removal hooks, also absent in the old
+auth4 recipe. Control14 adds the corresponding systemd lifecycle macros.
+Candidate13 remains uninstalled; its live build is observed to completion,
+without cancellation, replay or producer retirement. Native and delivery
+acceptance for the corrected candidate remain open.
