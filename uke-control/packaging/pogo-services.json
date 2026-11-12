@@ -1,0 +1,289 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "parent": {
+    "build": 11311699,
+    "nvr": "uke-control-2.17.0-12",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.17.0-12.src.rpm",
+    "srpm_sha256": "2ba8be7a875ef8ee0571b5c6fc9c0ee2edddc2914dabff4af1c53704597e574c",
+    "spec_sha256": "d9e8de47a955cc0d0222a1c65da80e1174a8a2b4669fb097796c5bba53f15404",
+    "non_spec_sources": 61
+  },
+  "inputs": {
+    "auth": {
+      "build": 11263799,
+      "nvr": "uke-pogo-auth-0.1-4",
+      "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-pogo-auth-0.1-4.src.rpm",
+      "srpm_sha256": "414c513e76cb2ceaeb84629ba7fe749e7e4b6bd5e3e3b7027ca0b7c550f537d0",
+      "files": [
+        {
+          "path": "uke-boot/src/oem-video.hpp",
+          "sha256": "19b1897ee6de470013f7d3ea40fb5db6b97aa26e7ae9b2d77380308a7b552cdb"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/auth-image.hpp",
+          "sha256": "4edf4a0991da3f883e99c323db1476bc473e0d4d6045cd894a211cac8347a0a3"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/fat.hpp",
+          "sha256": "f12327539419bb1af8c2df06aa3712459ed807830dbbf61abaf4412bc701c986"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/idle-current.hpp",
+          "sha256": "392107ef7fa001aeff679b3bae57d20dd854b5b3fdcf9c1c7b5f7f00d252c73c"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/import.cpp",
+          "sha256": "399d05439f28ade49884cc2d14f9cdf09406e46c211297541764a85073fe3a52"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/local.hpp",
+          "sha256": "0ae5b4afcc2596b9e279494b25ee541d05ab303db23b670aa78f0fc8bde4f5a1"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/managed.hpp",
+          "sha256": "6f59adf619e13dea4abc00662a4facf52256e204127045924826ce7840c68b91"
+        },
+        {
+          "path": "uke-cdsp-pogo-firmware/src/publish.hpp",
+          "sha256": "b85e39e59dbcf8bffd5c248f657c95bb8a07a647d32d30e1b7c18013edf0e19e"
+        },
+        {
+          "path": "uke-pogo-auth/LICENSE",
+          "sha256": "789c765087a6aec36326a6f8ba9358da5341be4da5d0a930c35f89f9870de4e9"
+        },
+        {
+          "path": "uke-pogo-auth/README.md",
+          "sha256": "eff7532cac97a5911660277e6904166fcb7947de1c3dcb37e1cf22ebab9c196f"
+        },
+        {
+          "path": "uke-pogo-auth/manifests/upstreams.json",
+          "sha256": "caff1071183392dfaa3dc20e1cab42079d8c2def87a58e44354ab75bf9ef532d"
+        },
+        {
+          "path": "uke-pogo-auth/packaging/build.sh",
+          "sha256": "af29b25cb51537379b0a5809212d8d946ffc397c973017dffdb81c1f939d98ee"
+        },
+        {
+          "path": "uke-pogo-auth/packaging/copr-source.sh",
+          "sha256": "f18047e9fcdd0bac054790c533e04b14fed5e129d3764a3bba90ac9d3d254dc3"
+        },
+        {
+          "path": "uke-pogo-auth/packaging/uke-pogo-auth.service",
+          "sha256": "142950976b1a49dda85c75a0764dfb249a0884294ae7a6d1d1eab5cd619c99f2"
+        },
+        {
+          "path": "uke-pogo-auth/packaging/uke-pogo-auth.spec",
+          "sha256": "647d17a5ae9792a950bc21557592cf41502e2f46755968bbfbb85dcb37c6c8e9"
+        },
+        {
+          "path": "uke-pogo-auth/patches/0001-qcomtee-refuse-credential-encoding-errors.patch",
+          "sha256": "c5b2665107223bdfb0865df436fdefd4ac18aaa3f6370e33c58e17a9815ef08c"
+        },
+        {
+          "path": "uke-pogo-auth/src/main.cpp",
+          "sha256": "37d166877c364da8be13b30420645473c035341076931bf3fba7838661231483"
+        },
+        {
+          "path": "uke-pogo-auth/src/protocol.hpp",
+          "sha256": "f00dc938c0bc940728ec00ba56d3842b9db8e36bab70560b0ce86e6979112814"
+        },
+        {
+          "path": "uke-pogo-auth/tests/check.sh",
+          "sha256": "1e4c7abb31c1fb5079fd6b49f41d87af4990450cbed422d61ea556359b02b5ad"
+        },
+        {
+          "path": "uke-pogo-auth/tests/contract.cpp",
+          "sha256": "2abec9f79c0bf3b7f0c5f5c1bf384540930c5ac5a2ef655b55899d596ee456a6"
+        },
+        {
+          "path": "uke-pogo-auth/tests/credentials.c",
+          "sha256": "4411f4b33b90d54c2e629193c4ce6d872dfc9cf2f886ed86c697afe6d89c2c35"
+        },
+        {
+          "path": "uke-pogo-auth/tests/credentials.sh",
+          "sha256": "44088627162517c9a28d9030688e08ab6f3614a59541e8d8963d30a191083c61"
+        }
+      ]
+    },
+    "desktop": {
+      "build": 11263811,
+      "nvr": "uke-pogo-desktop-0.1-5",
+      "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-pogo-desktop-0.1-5.src.rpm",
+      "srpm_sha256": "f6730a246c88da5e638cd3731a1fd45d5a4432462f75b3f2c5c88c37995702ce",
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "789c765087a6aec36326a6f8ba9358da5341be4da5d0a930c35f89f9870de4e9"
+        },
+        {
+          "path": "README.md",
+          "sha256": "ae5ce24c0b473051afa853375cc6eecff0bd4ca57c668e144d7b320ebfa12564"
+        },
+        {
+          "path": "packaging/70-uke-pogo.rules",
+          "sha256": "98a476d3e2c88daba0ea670496a6cc98993c8ad2e48e4a9302f7ab4fcc597336"
+        },
+        {
+          "path": "packaging/build.sh",
+          "sha256": "ad22ea0c04d3202957b80b726b44813f123f4ad5ebfae52234babff0036f63a3"
+        },
+        {
+          "path": "packaging/copr-source.sh",
+          "sha256": "e276cc611a035f43118d77ed6f35f953baab5cb99bd933986d3804e5a2b1f5cc"
+        },
+        {
+          "path": "packaging/pogo-attachment.conf",
+          "sha256": "72d9270d045e96a1de6a399b00e9706d701a90f4b65ffd47d307eb037a2fbeba"
+        },
+        {
+          "path": "packaging/uke-pogo-desktop.desktop",
+          "sha256": "389bc6bf4b8f209b53fbb65b0e4dac69261ddb2fe02e98870de02fa50be5c543"
+        },
+        {
+          "path": "packaging/uke-pogo-desktop.service",
+          "sha256": "39517163995c2a7f5e463f809c9834182e4b7f29460d2729765e062842b597a3"
+        },
+        {
+          "path": "packaging/uke-pogo-desktop.spec",
+          "sha256": "56894227d15482aef538fe5b1c781381d9fa820041db5f209065dd536c5b32bb"
+        },
+        {
+          "path": "qualification-20261105-v3.json",
+          "sha256": "2ec1e5fbb6993e305f066322411515a36f432e9f33e7a75b32d2899edbbdec11"
+        },
+        {
+          "path": "qualification-20261105.json",
+          "sha256": "24ff09aafe521b93a99db88ece8744af96bc7bf4643b9b2a5f6d617775bd3879"
+        },
+        {
+          "path": "src/main.cpp",
+          "sha256": "7723be1dccc531ead5b3c9a65b018c9a8d343ff55fc0369c3e90132bdffc1daa"
+        },
+        {
+          "path": "src/state.hpp",
+          "sha256": "ed4f37e9aaa55e3b9bbb4e2445cec44a15a9faa0aee996d5257e09988c4a1d8d"
+        },
+        {
+          "path": "tests/check.sh",
+          "sha256": "d52e6bdd48fcfbec1a91894368a91c711cd1fd39d0368b9fceeeee06910bcc70"
+        },
+        {
+          "path": "tests/state.cpp",
+          "sha256": "02881ff6d6af65186c53c0f834964ac51726158535a575e9b457efe6472f64f1"
+        }
+      ]
+    }
+  },
+  "result": {
+    "version": "2.17.0-13",
+    "spec_sha256": "bf3d5e48feb42fd97de7b0a3c40a4f1c4f63619ca87ec36add75b9a1fcfad947",
+    "runtime_names": [
+      "uke-control",
+      "uke-control-client-devel",
+      "uke-control-tui"
+    ],
+    "new_runtime_packages": 0,
+    "native_qualified": false,
+    "delivered": false,
+    "physical_pogo_acceptance": false,
+    "auth_ta_and_protocol_inputs_unchanged": true,
+    "system_auth_condition_no_longer_needs_qt": true,
+    "qt_runtime_dependencies_conditional_on_powerdevil": true,
+    "healthy_idle_without_timeout_or_sleep": true,
+    "stop_signal_before_poll_covered": true,
+    "desktop_cpp_unchanged": true,
+    "desktop_attachment_unit_condition_changed": true,
+    "original_fedora_qcomtee_runtime": true,
+    "runtime_embeds_qcomtee_or_qcbor": false,
+    "legacy_qcbor_fixture_test_only": true
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/docs/POGO-INTEGRATION.md",
+      "sha256": "d23832d71f630f162f46fdeb4aae3fad85aca1167621f71934e9800eeef05a74"
+    },
+    {
+      "path": "uke-control/packaging/build-pogo-auth.sh",
+      "sha256": "68cca86c2e5965a5f61fb8cec763c4165a50aecc63874ca1131bff61cbea1f1b"
+    },
+    {
+      "path": "uke-control/packaging/check-pogo-integration.sh",
+      "sha256": "9a824522a3a87c166c7b135169649b3d3b3d66284b5d3039cf9f89c2b076dde7"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-pogo.sh",
+      "sha256": "11afc62720bfb17d649eeecef5d61ae0abb8c5897f2796c0394adfc710b58062"
+    },
+    {
+      "path": "uke-control/packaging/fold-pogo-spec.mjs",
+      "sha256": "4d31fd949a8508b25a403728eacf16a9704a366c5e0840b4304ee9134f46e677"
+    },
+    {
+      "path": "uke-control/packaging/patch-pogo-sources.mjs",
+      "sha256": "73de477b5d94597eedbe603a18edaf5a86cfe2716d9d0b8f68f7b309a43130df"
+    },
+    {
+      "path": "uke-control/packaging/pogo-ownership.sh",
+      "sha256": "ba5a7a206f851fccb6f935a0f01a4373e62c6205ca96b1763b312017a2310ff9"
+    },
+    {
+      "path": "uke-control/src/pogo-runtime.hpp",
+      "sha256": "74aab4d33cf9265dbe214084e3a8a70956ecb2f38bbaf14800df1cd97cc419bf"
+    },
+    {
+      "path": "uke-control/tests/pogo-fedora-credentials.c",
+      "sha256": "f2caf42ca3f50b338231716f94f38d2ecfcb8dae5ad2de7fe451fdaf8c42c919"
+    },
+    {
+      "path": "uke-control/tests/pogo-ownership.sh",
+      "sha256": "0c16b7e4a6b4446503a38bb859396ddfb4cf9be4b97e502066e6559c1e3008b7"
+    },
+    {
+      "path": "uke-control/tests/pogo-runtime.cpp",
+      "sha256": "31a2f4c1e933a642eba4c0ec64339a06418a4467761b45cfd7c14a0733e6335b"
+    },
+    {
+      "path": "uke-control/tests/pogo-runtime.sh",
+      "sha256": "f63eaf2f97052776c8fc10cb54b4728e886bb450241566d9c50a3aece00e6c07"
+    }
+  ],
+  "optional_desktop_requires": [
+    "ld-linux-aarch64.so.1()(64bit)",
+    "ld-linux-aarch64.so.1(GLIBC_2.17)(64bit)",
+    "libQt6Core.so.6()(64bit)",
+    "libQt6Core.so.6(Qt_6)(64bit)",
+    "libQt6Core.so.6(Qt_6.12)(64bit)",
+    "libQt6DBus.so.6()(64bit)",
+    "libQt6DBus.so.6(Qt_6)(64bit)",
+    "libc.so.6()(64bit)",
+    "libc.so.6(GLIBC_2.17)(64bit)",
+    "libc.so.6(GLIBC_2.34)(64bit)",
+    "libc.so.6(GLIBC_ABI_DT_RELR)(64bit)",
+    "libgcc_s.so.1()(64bit)",
+    "libgcc_s.so.1(GCC_3.0)(64bit)",
+    "libgcc_s.so.1(GCC_3.3.1)(64bit)",
+    "libstdc++.so.6()(64bit)",
+    "libstdc++.so.6(CXXABI_1.3)(64bit)",
+    "libstdc++.so.6(CXXABI_1.3.9)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4.21)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4.26)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4.32)(64bit)",
+    "libstdc++.so.6(GLIBCXX_3.4.9)(64bit)",
+    "rtld(GNU_HASH)"
+  ],
+  "fedora_qcomtee": {
+    "nvr": "quic-teec-1.0.2-3.fc46",
+    "srpm_sha256": "291fcd39de0c04cad343ff33195f62d00f12ce7d7ab3d9d4765b7dd1ee4e0021",
+    "public_headers_byte_equal": true,
+    "object_and_memory_implementations_byte_equal": true,
+    "backend": "original Fedora libcbor",
+    "patches": [
+      "https://github.com/qualcomm/quic-teec/pull/30",
+      "https://github.com/qualcomm/quic-teec/pull/31"
+    ],
+    "native_credential_callback_pending": true,
+    "tee_acceptance": false
+  }
+}
