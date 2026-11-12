@@ -1,0 +1,11 @@
+[Unit]
+Description=Private non-swappable Uke SSC cache
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+Before=uke-ssc-cache.service
+StopWhenUnneeded=yes
+
+[Mount]
+What=tmpfs
+Where=/run/uke-ssc/fedora
+Type=tmpfs
+Options=size=16M,nr_inodes=1024,mode=0700,noswap,nosuid,nodev,noexec

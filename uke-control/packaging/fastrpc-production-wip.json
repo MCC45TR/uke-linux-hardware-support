@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "state": "source-in-preparation",
+  "production_recipe_complete": false,
+  "native_executed": false,
+  "installed": false,
+  "new_runtime_packages": 0,
+  "accepted_control": "2.17.0-6",
+  "accepted_legacy_provider_retained": true,
+  "bounded_live_prerequisite_source": "72f8f069",
+  "cache_algorithm": {
+    "legacy_source_sha256": "b135389fb30f54ea632db23f6bb1a0a5bd99cb399e19fd74725a791c68bf0afc",
+    "legacy_source_unchanged": true,
+    "initial_old_and_new_reader_locks": true,
+    "accepted_registry_and_parent_import": true,
+    "atomic_publication_retained": true,
+    "warm_new_generation_independent": true,
+    "factory_writes": false
+  },
+  "mount": {
+    "where": "/run/uke-ssc/fedora",
+    "tmpfs_limit_bytes": 16777216,
+    "noswap": true,
+    "unit_name_escaped_by_systemd": true
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/src/ssc-cache.cpp",
+      "sha256": "df3fac5fee76c0463add971d88ede9c641af4dd0246ab3ea0e2043b6ae5be593"
+    },
+    {
+      "path": "uke-control/tests/ssc-cache-migration.cpp",
+      "sha256": "6faa81f897f6fb8d8c2f9a180a75b96d35b0c96c960fc5fceb6c769ae122ef4e"
+    },
+    {
+      "path": "uke-control/src/fastrpc/run-uke\\x2dssc-fedora.mount",
+      "sha256": "d923bffce8511e8ff74b57c5ee4160bbf3faa2cb3505540c73eeefda28d223a1"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-PRODUCTION-WIP.md",
+      "sha256": "2db327d4583260269d1e00d94a9e207d203a4f4cfe8a8e0b9a925bc24a246b72"
+    }
+  ]
+}
