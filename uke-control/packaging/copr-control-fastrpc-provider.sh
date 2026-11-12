@@ -17,7 +17,7 @@ rpm2cpio "$work/parent.rpm" | cpio -t --quiet | awk '/^\/|(^|\/)\.\.($|\/)/{bad=
 rpm2cpio "$work/parent.rpm" | (cd "$output";cpio -idm --quiet --no-absolute-filenames)
 [[ $(find "$output" -maxdepth 1 -type f ! -name uke-control.spec | wc -l) == 60 ]]
 (cd "$output";find . -type f ! -name uke-control.spec -print0 | sort -z | xargs -0 sha256sum > "$work/parent.sha256")
-for file in src/ssc-cache.cpp tests/ssc-cache-migration.cpp tests/systemd-verify-runtime.cpp tests/systemd-verify-runtime-probe.cpp tests/fastrpc-static-root.sh tests/fastrpc-live-trial.sh packaging/stage-fastrpc-root.sh packaging/check-fastrpc-provider.sh docs/FASTRPC-PROVIDER.md docs/FASTRPC-STATIC-ROOT.md;do
+for file in src/ssc-cache.cpp tests/ssc-cache-migration.cpp tests/systemd-verify-runtime.cpp tests/systemd-verify-runtime-probe.cpp tests/fastrpc-static-root.sh tests/fastrpc-live-trial.sh tests/ssc-cache-postun.sh tests/ssc-cache-postun-target.sh packaging/ssc-cache-postun.sh packaging/stage-fastrpc-root.sh packaging/check-fastrpc-provider.sh docs/FASTRPC-PROVIDER.md docs/FASTRPC-STATIC-ROOT.md;do
  install -Dm644 "$owner/$file" "$work/overlay/$file"
 done
 for file in "$owner"/src/fastrpc/*;do install -Dm644 "$file" "$work/overlay/src/fastrpc/$(basename "$file")";done
@@ -31,8 +31,9 @@ printf '%s  %s\n' "$(jq -er .result.spec_sha256 "$contract")" "$output/uke-contr
 (cd "$output";sha256sum -c --strict --quiet "$work/parent.sha256")
 bash "$owner/tests/ssc-unit-state.sh" --data-only "$output/uke-control.spec"
 bash "$owner/tests/ssc-refresh.sh" --data-only "$output/uke-control.spec"
-[[ $(rpmspec --define "_sourcedir $output" -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-11.fc46 ]]
+bash "$owner/tests/ssc-cache-postun.sh" --data-only "$output/uke-control.spec"
+[[ $(rpmspec --define "_sourcedir $output" -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-12.fc46 ]]
 rpmspec --define "_sourcedir $output" -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui > "$work/expected"
 cmp "$work/names" "$work/expected"
-printf 'Control11:60 actual Control6 sources unchanged;single provider layer,whole recipe inverse,5-unit state and16 refresh cases;three existing output names only.\n'
+printf 'Control12:60 actual Control6 sources unchanged;single provider layer,whole recipe inverse,5-unit state and16 refresh cases;three existing output names only.\n'

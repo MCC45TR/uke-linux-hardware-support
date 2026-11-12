@@ -73,5 +73,13 @@ int main(int argc,char **argv) {
     assert(read(base/"state/sensors/persist/runtime-only")=="public parent-level state");
     assert(same_input(root/"usr/share/uke-sensors/odm",base/"state/sensors/config"));
     assert(read(legacy/"state/sensors/persist/registry/calibration")=="public later old change");
-    std::cout<<"SSC noswap-generation migration:accepted RAM,parent metadata,old-reader/private-mode/incomplete/symlink refusals,factory unchanged,and independent warm refresh passed\n";
+    // A qualified downgrade retires the new mount. A later upgrade must import
+    // the accepted provider's latest RAM state rather than reuse stale new RAM.
+    fs::remove_all(base/"state");
+    write(legacy/"state/sensors/persist/registry/calibration","public rollback session change");
+    seed(root,base);
+    assert(read(base/"state/sensors/persist/registry/calibration")=="public rollback session change");
+    assert(read(base/"state/sensors/persist/runtime-only")=="public parent-level state");
+    assert(read(root/"mnt/vendor/persist/sensors/registry/registry/calibration")=="public factory vector");
+    std::cout<<"SSC noswap-generation migration:accepted RAM,parent metadata,old-reader/private-mode/incomplete/symlink refusals,factory unchanged,independent warm refresh,and post-rollback reimport passed\n";
 }

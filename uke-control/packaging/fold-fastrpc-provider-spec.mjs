@@ -3,13 +3,13 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 const [path,contract]=process.argv.slice(2),m=JSON.parse(fs.readFileSync(contract));
 const before=fs.readFileSync(path,'utf8');
-assert.equal(m.result.version,'2.17.0-11');
+assert.equal(m.result.version,'2.17.0-12');
 assert.equal(crypto.createHash('sha256').update(before).digest('hex'),m.parent.spec_sha256);
 const split=before.indexOf('%changelog\n');assert(split>0);
 let body=before.slice(0,split);const history=before.slice(split);
 assert.equal(body.split('Release: 6%{?dist}\n').length,4);
 assert.equal((body.match(/2[.]17[.]0-6/g)||[]).length,12);
-body=body.replaceAll('Release: 6%{?dist}\n','Release: 11%{?dist}\n').replaceAll('2.17.0-6','2.17.0-11');
+body=body.replaceAll('Release: 6%{?dist}\n','Release: 12%{?dist}\n').replaceAll('2.17.0-6','2.17.0-12');
 const prep=`
 fastrpc_overlay=%{_builddir}/uke-control-fastrpc-provider
 mkdir "$fastrpc_overlay"
@@ -32,8 +32,12 @@ bash "$fastrpc_overlay/packaging/stage-fastrpc-root.sh" %{buildroot}/usr/share/u
 install -Dm644 "$fastrpc_overlay/docs/FASTRPC-PROVIDER.md" %{buildroot}%{_docdir}/%{name}/FASTRPC-PROVIDER.md
 `;
 const check=`
+bash %{_builddir}/uke-control-fastrpc-provider/tests/ssc-cache-postun.sh %{_specdir}/uke-control.spec
 bash %{_builddir}/uke-control-fastrpc-provider/packaging/check-fastrpc-provider.sh %{_builddir}/uke-control-fastrpc-provider %{_builddir}/uke-control-ssc-overlay %{buildroot}
 `;
+const cleanup=fs.readFileSync(new URL('./ssc-cache-postun.sh',import.meta.url),'utf8');
+assert(!cleanup.includes('%'));
+const postun='\n(\n# UKE_FASTRPC_MOUNT_POSTUN_BEGIN\n'+cleanup+'# UKE_FASTRPC_MOUNT_POSTUN_END\n) || exit $?\n';
 const oldUnits='for name in cache root sensors;do\n install -Dm644 "$ssc/inputs/uke-ssc-$name.service" %{buildroot}/usr/lib/systemd/system/uke-ssc-$name.service\ndone\n';
 const changes=[
  ['Source59: uke-fastrpc-session-1.tar.xz\n','Source59: uke-fastrpc-session-1.tar.xz\nSource60: uke-control-fastrpc-provider.tar.xz\n'],
@@ -44,6 +48,7 @@ const changes=[
  ['install -Dm755 "$ssc/legacy/uke-ssc-cache" %{buildroot}/usr/libexec/uke-ssc-cache\n','install -Dm755 "$fastrpc_overlay/uke-ssc-cache" %{buildroot}/usr/libexec/uke-ssc-cache\n'],
  [oldUnits,''],
  ['\n%check\n','\n%check\n'+check],
+ ['%postun -n uke-control\n','%postun -n uke-control\n'+postun],
  ['%doc SSC-SERVICES.md\n/usr/libexec/uke-hexagonrpcd\n','%doc %{_docdir}/%{name}/FASTRPC-PROVIDER.md\n%dir /usr/share/uke-control\n/usr/share/uke-control/fastrpc-root\n/usr/lib/systemd/system/run-uke*.mount\n'],
 ];
 // Keep markers for deleted blocks so complete reversal remains unambiguous.
@@ -51,8 +56,8 @@ const applied=[];
 for(const [old,replacement]of changes){assert.equal(body.split(old).length,2,'Ambiguous provider delta');const next=replacement||`# UKE_FASTRPC_RETIRED_BLOCK_${applied.length}\n`;body=body.replace(old,()=>next);applied.push([old,next]);}
 let inverse=body;
 for(const [old,next]of applied.toReversed()){assert.equal(inverse.split(next).length,2,'Ambiguous provider inverse');inverse=inverse.replace(next,()=>old);}
-inverse=inverse.replaceAll('Release: 11%{?dist}\n','Release: 6%{?dist}\n').replaceAll('2.17.0-11','2.17.0-6');
+inverse=inverse.replaceAll('Release: 12%{?dist}\n','Release: 6%{?dist}\n').replaceAll('2.17.0-12','2.17.0-6');
 assert.equal(inverse+history,before,'Unrelated Control6 recipe changed');
-const entry='* Thu Nov 12 2026 Uke contributors - 2.17.0-11\n- Use original Fedora FastRPC through the existing Control session integration.\n- Disable implicit journal socket mounts in the installed SELinux namespace.\n- Preserve the accepted sensor registry when moving to private noswap RAM.\n- Retain source/native regression gates and remove the legacy protocol runtime.\n\n';
+const entry='* Thu Nov 12 2026 Uke contributors - 2.17.0-12\n- Use original Fedora FastRPC through the existing Control session integration.\n- Disable implicit journal socket mounts in the installed SELinux namespace.\n- Preserve the accepted sensor registry when moving to private noswap RAM.\n- Retire the private cache mount only when the incoming package removes its provider.\n- Retain source/native regression gates and remove the legacy protocol runtime.\n\n';
 fs.writeFileSync(path,body+history.replace('%changelog\n',()=>'%changelog\n'+entry));
-console.log('Control11:whole Control6 recipe inverse passed;only declared provider/cache/namespace/packaging deltas.');
+console.log('Control12:whole Control6 recipe inverse passed;only declared provider/cache/namespace/packaging deltas.');

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "date": "2026-11-12",
-  "state": "installed-selinux-namespace-fix-qualified-in-bounded-trial-native11-pending",
+  "state": "provider-removal-mount-lifecycle-source-qualified-native12-pending",
   "production_recipe_complete": true,
   "native_executed": false,
   "installed": false,
@@ -33,7 +33,7 @@
     },
     {
       "path": "uke-control/tests/ssc-cache-migration.cpp",
-      "sha256": "6faa81f897f6fb8d8c2f9a180a75b96d35b0c96c960fc5fceb6c769ae122ef4e"
+      "sha256": "038d2f930f0448ae54948f51125891306f6ffcb8633400e6b79e768769d05408"
     },
     {
       "path": "uke-control/packaging/stage-fastrpc-root.sh",
@@ -45,15 +45,15 @@
     },
     {
       "path": "uke-control/packaging/fold-fastrpc-provider-spec.mjs",
-      "sha256": "22dc048806bd27cad4dd5f94691e9f1adffcaae3e4a2303df0b4f5f6d0d718d5"
+      "sha256": "60cf19292735f23832fe4eb10ad61b065300a42d5c7735dc8844c9d4aa2888c0"
     },
     {
       "path": "uke-control/packaging/copr-control-fastrpc-provider.sh",
-      "sha256": "660e69dd3adc4651564da5e8deecdb809912d0f310ba8548046ab9cefd7367d2"
+      "sha256": "0fb85519852d35f6a0e23cf14a1aacccbc2fccafb7bb6f3b3e60d3d7a644ec88"
     },
     {
       "path": "uke-control/docs/FASTRPC-PROVIDER.md",
-      "sha256": "f6b9ae2e1b5e437670449eff2dfd1b01766edcc0ee3525eef3c4948dbe5ea262"
+      "sha256": "b33b0f8067bd51f48c653896ad28ab935a139ed4c4cf9c46ec8de6c9bbd3d99b"
     },
     {
       "path": "uke-control/src/fastrpc/run-uke\\x2dssc-fedora.mount",
@@ -92,18 +92,33 @@
       "sha256": "58ee274f32224dbf76c2308a4ed89d992f013ff301a7fe88d6baf25270e06e49"
     },
     {
+      "path": "uke-control/packaging/ssc-cache-postun.sh",
+      "sha256": "1b3e33a5f31fc0f61d517c04711bb442611fb4713da0ecab4ed85ee91ccc31ab"
+    },
+    {
+      "path": "uke-control/tests/ssc-cache-postun.sh",
+      "sha256": "9e37abc7e3c687b177c27eaf01548374e71bb6a1842c2defaaf79e943aceaf6d"
+    },
+    {
+      "path": "uke-control/tests/ssc-cache-postun-target.sh",
+      "sha256": "7903b9e6dc5e5ef23f02a404a00c382486f29c38d45aca80ce2d81502bc0ce66"
+    },
+    {
       "path": "uke-control/docs/FASTRPC-PRODUCTION-WIP.md",
-      "sha256": "fe5f01ed793458044fcec26ed5e821c042e3176bf86da383065a407e373f9c81"
+      "sha256": "bed7ca3ac886cbe10d634b73ea7aafe522e89a1a233f93c8d8b991067aecca05"
     }
   ],
-  "production_recipe_sha256": "d1107a22dcd081dfc9796dd96e238da3bf2649172f1db892e4910a64074925de",
+  "production_recipe_sha256": "6e7deb36abac880f5cea98498d0eb84f1228886ec75ad266108f241d59a7e760",
   "production_units_parse_on_target": true,
   "static_root_data_only_verified": true,
   "cache_native_passed_in_failed_candidate7": true,
   "full_native_qualified": false,
-  "candidate_version": "2.17.0-11",
+  "candidate_version": "2.17.0-12",
   "previous_candidate9_complete_native_checks_passed": true,
   "previous_candidate10_full_native_qualified_but_installed_namespace_failed": true,
   "static_usr_t_software_fixture3_passed": true,
-  "static_usr_t_live1_passed_and_restored": true
+  "static_usr_t_live1_passed_and_restored": true,
+  "postun_source_data_tests_passed": true,
+  "postun_target_software_fixture1_passed": true,
+  "post_rollback_reimport_native_pending": true
 }

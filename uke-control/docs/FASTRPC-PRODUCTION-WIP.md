@@ -117,3 +117,30 @@ from10. Candidate11 still requires its own full COPR/source/signature/DNF and
 fresh/reinstall/rollback checks. Cold boot, suspend and full sensor accuracy
 remain separate acceptance gates. See FASTRPC-STATIC-ROOT.md and the canonical
 migration lesson for the failure, recovery and exact original systemd sources.
+
+## Candidate12: retire only an outgoing provider's mount
+
+Candidate11 source/native qualification continues, but device installation is
+withheld while the downgrade boundary is corrected. Candidate10 recovery left
+its StopWhenUnneeded=no mount active until explicit cleanup. The cache source
+correctly preserves its warm generation during normal operation; reusing that
+generation after a legacy-provider downgrade/re-upgrade would miss the latest
+legacy RAM changes. A supported RPM transition must retire that mount itself.
+
+Candidate12 adds an embedded postun block, guarded by the incoming mount-unit
+file's absence and a running system manager. It stops the three old reader/cache
+units and their mount in one transaction. Incoming6's existing state snapshot
+and refresh restore consumers. Retained-provider upgrades/reinstalls and offline
+transactions do nothing; ordinary cache restarts still preserve warm RAM.
+Twelve data-only manager/provider/count cases plus failed-stop refusal pass.
+The target software fixture uses the actual rendered block with private unit
+names and a public noswap tmpfs vector: normal restart and retained postun keep
+its inode; removing the unit leaves the mount active until postun, which stops
+readers and unmounts. The accepted vector and production service/cache state
+remain unchanged. No DSP operation or private input is part of this fixture.
+
+The native synthetic cache test additionally covers re-import after retired
+new RAM and a later accepted-provider change. Its native12 execution, expanded
+postun test, complete source/RPM/DNF lifecycle and physical gates remain pending.
+Production cache C++, unit files, static tree and existing helpers are unchanged
+from11; only the package lifecycle, qualification and documentation change.

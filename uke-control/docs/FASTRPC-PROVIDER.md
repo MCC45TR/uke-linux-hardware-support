@@ -25,6 +25,16 @@ atomically and retain their own state. The accepted old RAM generation remains
 available during rollback qualification. No disk backup or factory write occurs.
 Cache/provider stop-start cycles retain the mount and warm state.
 
+The outgoing RPM's postun checks whether the incoming package still supplies
+the private mount unit. Retained-provider upgrades/reinstalls leave warm RAM
+alone. Downgrade to accepted Control6 or removal stops the old readers/cache
+and unmounts in one systemd transaction; incoming Control6's pre/posttrans
+snapshot preserves the five consumer states and enable/mask preferences. An
+offline image transaction does not contact systemd. A later upgrade can import
+the accepted provider's current RAM generation instead of reusing stale RAM
+from its previous installation. No factory input or accepted old generation is
+removed, and no executable cleanup helper is added to the runtime payload.
+
 The cache unit verifies read-only factory input and the actual tmpfs/noswap mount
 before running. Private session processes have no capabilities, AF_UNIX only,
 MDWE, zero permitted swap and no core dumps. SDK stdout/stderr is disabled to
