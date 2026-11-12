@@ -34,6 +34,24 @@ remain separate from active state and are preserved through supported DNF
 transactions. The Adaptive target is restored only if it was previously active,
 and a newly applied explicit mask takes precedence.
 
+Both sessions explicitly set BindLogSockets=no. Original systemd262.2 otherwise
+implies journal socket binding for PrivateDevices with RootDirectory, even with
+MountAPIVFS=no and null standard output. The installed usr_t static root rejects
+init_t creation of missing journal mount targets under Enforcing SELinux. The
+sessions need only the explicit notification socket; no journal sockets or
+SELinux policy relaxation are required. Source: systemd v262.2
+src/core/execute.c:exec_context_get_effective_bind_log_sockets and
+src/core/namespace.c:bind_log_sockets_table.
+
+The target software fixture uses the actual static-tree staging and usr_t label,
+substitutes unmodified Fedora sleep at the SDK executable mount target, and
+keeps production services live. The implicit-binding baseline fails226; explicit
+no starts, with journal sockets absent, notify available and the existing cache
+and service states retained. A separate bounded real-listener trial uses the
+same static label, observes stationary outputs and fresh restart PIDs, then
+automatically restores accepted Control6. Both fixtures remain source tests;
+neither installs a local binary or proves cold boot or suspend acceptance.
+
 Bounded tests on kernel24 with Control6's existing helpers and original Fedora
 fastrpc1.0.8-1 verify both actual ready sessions, stationary accelerometer/gyro
 and dual-light shapes/status, fresh PIDs after a root restart, proxy presence,

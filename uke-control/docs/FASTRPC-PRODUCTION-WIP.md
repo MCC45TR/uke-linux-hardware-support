@@ -91,3 +91,29 @@ Preserve
 all existing Control features, output names, enable/mask preferences, cache
 recovery and accepted kernel/recovery. Do not retire the working provider on
 the strength of unbuilt source.
+
+## Installed-label correction for candidate11
+
+Candidate10 passes all native tests and signed payload checks, but the installed
+service fails226/NAMESPACE before SDK execution. Original systemd262.2 implies
+log-socket binds for PrivateDevices with RootDirectory. SELinux denies init_t
+creation of the missing dev-log mount target under the installed usr_t tree.
+Accepted6 is restored through signed DNF, all seven states and stationary
+samples return, and10 is withdrawn from COPR and refreshed metadata.
+
+Candidate11 explicitly disables those unnecessary log-socket binds in both
+sessions. The actual usr_t software fixture reproduces the baseline226 and
+passes with explicit no; only original sleep runs. A bounded real Fedora
+listener trial using the same static label then passes readiness, stationary
+accel/gyro/dual-ALS shapes and status3, fresh restart PIDs, zero10s idle CPU
+delta and zero swap. Automatic accepted6 recovery removes the owned static
+tree, transient overrides and private cache. The first two software-observer
+attempts stopped on the immediate executable-path assertion; Type=exec reports
+flock before its child exec. The accepted fixture waits for the original sleep
+inode before inspection. No policy, label exception or local binary is added.
+
+The cache algorithm, mount, static-tree data and original libraries are unchanged
+from10. Candidate11 still requires its own full COPR/source/signature/DNF and
+fresh/reinstall/rollback checks. Cold boot, suspend and full sensor accuracy
+remain separate acceptance gates. See FASTRPC-STATIC-ROOT.md and the canonical
+migration lesson for the failure, recovery and exact original systemd sources.

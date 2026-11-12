@@ -22,6 +22,7 @@ BindPaths=/run/uke-ssc/fedora/state/sensors/persist:/persist/sensors/registry /r
 ReadWritePaths=/persist/sensors/registry /run/uke-ssc/registry.lock
 TemporaryFileSystem=/sys:ro /proc:ro
 MountAPIVFS=no
+BindLogSockets=no
 PrivateMounts=yes
 PrivateDevices=yes
 PrivateTmp=yes

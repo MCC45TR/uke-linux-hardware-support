@@ -7,6 +7,16 @@ export LC_ALL=C SYSTEMD_PAGER=cat SYSTEMD_COLORS=0
 units=(uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service iio-sensor-proxy.service uke-adaptive-display.target)
 consumers=(uke-adaptive-display.target iio-sensor-proxy.service uke-ssc-sensors.service uke-ssc-root.service)
 
+remove_static_root() {
+ local work=$1 parent
+ [[ -f $work/static-root-parent ]] || return 0
+ parent=$(cat "$work/static-root-parent")
+ [[ $parent =~ ^/usr/share/uke-control/fastrpc-live\.[[:alnum:]]{8}$ ]]
+ [[ -d $parent && ! -L $parent && $(stat -c '%u:%g:%a' "$parent") == 0:0:700 ]]
+ find "$parent" -depth -delete
+ rm -f -- "$work/static-root-parent"
+}
+
 observe_samples() {
  local destination=$1 datatype property
  for datatype in accel gyro ambient_light ambient_light_back_strm; do
@@ -62,7 +72,7 @@ restore() {
  done < "$work/expected"
  if mountpoint --quiet "$work/ram"; then umount "$work/ram"; fi
  # No private data was ever placed outside the noswap mount.
- find "$work/root" -depth -delete
+ if [[ -f $work/static-root-parent ]];then remove_static_root "$work";else find "$work/root" -depth -delete;fi
  while read -r unit active enabled; do
   current=$(systemctl is-enabled "$unit") || :
   # A deliberate new mask wins over the saved active state.
@@ -78,7 +88,7 @@ if [[ ${1-} == --restore ]]; then
  restore "$2"
  exit
 fi
-[[ $EUID == 0 && $# == 3 && ( $1 == live || $1 == recovery ) ]]
+[[ $EUID == 0 && $# == 3 && ( $1 == live || $1 == live-static || $1 == recovery ) ]]
 mode=$1
 output=$(realpath -m "$2")
 [[ ! -e $output && ! -L $output ]]
@@ -107,6 +117,7 @@ finish() {
   umount "$work/ram"
  fi
  if [[ -e $work/restored || $armed == false ]]; then
+  remove_static_root "$work"
   find "$work" -depth -delete
  fi
  exit "$result"
@@ -157,7 +168,20 @@ done > "$output/dsp-before.txt"
 stat -c '%i' /run/uke-ssc/state > "$output/cache-inode-before.txt"
 find /run/uke-ssc/state/sensors/persist/registry -type f -printf '.\n' | wc -l > "$output/registry-count-before.txt"
 observe_samples "$output/samples-legacy.txt"
-mkdir -p "$work/ram" "$work/root"/{usr/bin,usr/lib64,usr/libexec/uke-control,usr/lib/qcom/adsp,run/systemd,run/uke-ssc,dev/dma_heap,sys/devices/soc0,proc,mnt/vendor,persist/sensors/registry,vendor/etc/sensors/config,odm/etc/sensors/config,system,tmp,var/tmp}
+mkdir -p "$work/ram"
+session_root=$work/root
+if [[ $mode == live-static ]];then
+ owner=$(cd -- "$(dirname -- "$0")/.." && pwd)
+ [[ $(stat -c '%u:%g:%a' /usr/share/uke-control) == 0:0:700 ]]
+ static_parent=$(mktemp -d /usr/share/uke-control/fastrpc-live.XXXXXXXX)
+ printf '%s\n' "$static_parent" > "$work/static-root-parent"
+ session_root=$static_parent/root
+ bash "$owner/packaging/stage-fastrpc-root.sh" "$session_root"
+ restorecon -RF "$static_parent"
+ stat -c '%C' "$session_root" > "$output/root-context.txt"
+ grep -Fqx system_u:object_r:usr_t:s0 "$output/root-context.txt"
+else
+mkdir -p "$work/root"/{usr/bin,usr/lib64,usr/libexec/uke-control,usr/lib/qcom/adsp,run/systemd,run/uke-ssc,dev/dma_heap,sys/devices/soc0,proc,mnt/vendor,persist/sensors/registry,vendor/etc/sensors/config,odm/etc/sensors/config,system,tmp,var/tmp}
 for alias in bin lib64; do ln -s "usr/$alias" "$work/root/$alias"; done
 ln -s usr/lib "$work/root/lib"
 ln -s /persist "$work/root/mnt/vendor/persist"
@@ -167,6 +191,7 @@ touch "$work/root/usr/bin/flock" "$work/root/usr/lib/ld-linux-aarch64.so.1" \
  "$work/root/usr/libexec/uke-control/fastrpc-session" "$work/root/run/systemd/notify" \
  "$work/root/run/uke-ssc/registry.lock" "$work/root/dev/fastrpc-adsp" "$work/root/dev/dma_heap/system" \
  "$work/root/vendor/etc/sensors/sns_reg_config"
+fi
 mount -t tmpfs -o size=16M,nr_inodes=1024,mode=0700,noswap,nosuid,nodev,noexec tmpfs "$work/ram"
 findmnt --mountpoint "$work/ram" --noheadings --output FSTYPE,OPTIONS > "$output/ram-options.txt"
 grep -Eq '^tmpfs[[:space:]].*(^|,)noswap(,|$)' "$output/ram-options.txt"
@@ -197,7 +222,7 @@ ExecCondition=
 ExecStart=
 ExecStart=/usr/bin/flock --shared --no-fork /run/uke-ssc/registry.lock /usr/libexec/uke-control/fastrpc-session $session
 Environment=UKE_FASTRPC_NOTIFY=listener-v1 LD_PRELOAD=/usr/lib64/uke-control/libuke-fastrpc-notify.so ADSP_LIBRARY_PATH=/usr/lib/qcom/adsp
-RootDirectory=$work/root
+RootDirectory=$session_root
 WorkingDirectory=/
 RuntimeDirectory=
 # Either empty bind setting clears both lists; reset once before all entries.
@@ -209,6 +234,7 @@ ReadWritePaths=
 ReadWritePaths=/persist/sensors/registry /run/uke-ssc/registry.lock
 TemporaryFileSystem=/sys:ro /proc:ro
 MountAPIVFS=no
+BindLogSockets=no
 PrivateMounts=yes
 PrivateDevices=yes
 PrivateTmp=yes
