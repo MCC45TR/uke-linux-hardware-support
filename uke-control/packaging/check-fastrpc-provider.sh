@@ -25,7 +25,22 @@ const [path,binary]=process.argv.slice(2);const data=fs.readFileSync(path,'utf8'
 assert.equal(data.split('ExecStart=/usr/libexec/uke-ssc-cache\n').length,2);
 fs.writeFileSync(path,data.replace('ExecStart=/usr/libexec/uke-ssc-cache\n',()=>`ExecStart=${binary}\n`));
 JS
-systemd-analyze verify "$work/units/"*
+# v262 creates its fixed system runtime prefix before --root is applied.
+# Redirect only that public path API in this build-only process. Keep system
+# scope, original unit bytes/settings and the original systemd binary.
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -fPIC -shared \
+ "$overlay/tests/systemd-verify-runtime.cpp" $(pkg-config --cflags libsystemd) -ldl -o "$work/libverify-runtime.so"
+mkdir -m700 "$work/verify-runtime"
+g++ -std=c++17 -O2 -Wall -Wextra -Werror "$overlay/tests/systemd-verify-runtime-probe.cpp" \
+ $(pkg-config --cflags --libs libsystemd) -o "$work/runtime-probe"
+readelf --wide --dyn-syms /usr/bin/systemd-analyze | grep -E 'UND sd_path_lookup@' > "$work/analyzer-lookup-import.txt"
+[[ -s $work/analyzer-lookup-import.txt ]]
+original_state_path=$("$work/runtime-probe" state)
+[[ $(UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so" "$work/runtime-probe" runtime) == "$work/verify-runtime" ]]
+[[ $(UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so" "$work/runtime-probe" state) == "$original_state_path" ]]
+if env --unset=UKE_VERIFY_RUNTIME LD_PRELOAD="$work/libverify-runtime.so" "$work/runtime-probe" runtime > "$work/missing-runtime.log" 2>&1;then exit 1;fi
+UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so" \
+ systemd-analyze --generators=no --man=no verify "$work/units/"*
 [[ ! -e $buildroot/usr/libexec/uke-hexagonrpcd ]]
 [[ -x $buildroot/usr/libexec/uke-ssc-cache ]]
 [[ $(find "$buildroot/usr/lib/systemd/system" -maxdepth 1 -name 'run-uke*.mount' -type f | wc -l) == 1 ]]

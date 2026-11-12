@@ -30,8 +30,8 @@
     "physical_accuracy_or_suspend_acceptance": false
   },
   "result": {
-    "version": "2.17.0-7",
-    "spec_sha256": "88be8787393288f95eada7918318d3b1a329525ec1ebb4f280a5d027ffbc73c9",
+    "version": "2.17.0-8",
+    "spec_sha256": "e52bd94488a371cab75e47c27511de0d2788a37d6c2460f0ac59e0e9ff5d7460",
     "runtime_names": [
       "uke-control",
       "uke-control-client-devel",
@@ -47,7 +47,9 @@
     "native_qualified": false,
     "delivered": false,
     "cold_boot_accepted": false,
-    "local_rpmspec_unavailable_native_source_worker_query_pending": true
+    "local_rpmspec_unavailable_native_source_worker_query_pending": true,
+    "original_systemd_binary_unchanged": true,
+    "test_only_runtime_prefix_interposer_not_installed": true
   },
   "source_assets": [
     {
@@ -64,15 +66,15 @@
     },
     {
       "path": "uke-control/packaging/check-fastrpc-provider.sh",
-      "sha256": "cfaf4f03cf3db0ab74412496e725904069ea58b6e30942134b0cc36a9c48c6ef"
+      "sha256": "3e55571680ad476578ba1f026dfb8a6c3f647ab71935cbc32db0e0431760dff8"
     },
     {
       "path": "uke-control/packaging/fold-fastrpc-provider-spec.mjs",
-      "sha256": "86657126df8d0c7c7a96d27962ae1e17589c142c4d6de3774f4ffaba2522ebe3"
+      "sha256": "b62211b28256c563962cb245a8d02d28c162b8e80b401a5b8d8f3dce412d0d55"
     },
     {
       "path": "uke-control/packaging/copr-control-fastrpc-provider.sh",
-      "sha256": "5386d0fa3cf159e5acc107e81d9c86df12ea9ea5438d481adf9e5ea2ac27ae24"
+      "sha256": "45232976939aeb125f92b8348341a91a5a2cb74794d85f198c8a77dc0141a3b1"
     },
     {
       "path": "uke-control/docs/FASTRPC-PROVIDER.md",
@@ -93,6 +95,24 @@
     {
       "path": "uke-control/src/fastrpc/uke-ssc-sensors.service",
       "sha256": "f8e2056c347bd8e44da02e89aeedb292860a0539813eace3bb0d998cca649f16"
+    },
+    {
+      "path": "uke-control/tests/systemd-verify-runtime.cpp",
+      "sha256": "eb2177e24c89ccae12c9b01f3c0eaeee2cfc2f53fd532a15072024c1f864da17"
+    },
+    {
+      "path": "uke-control/tests/systemd-verify-runtime-probe.cpp",
+      "sha256": "61ae0f485258cb6e81f201b4ae0708a810d252b04e965c64ded11172e7c7a602"
     }
-  ]
+  ],
+  "previous_failed_candidate": {
+    "version": "2.17.0-7",
+    "build": 11311279,
+    "srpm_sha256": "2d4a52537054d53fdfc0a31b6b584087114e6cd0eb9c137227e97b389501a5e1",
+    "spec_sha256": "88be8787393288f95eada7918318d3b1a329525ec1ebb4f280a5d027ffbc73c9",
+    "cache_and_migration_native_fixtures_passed": true,
+    "full_parent_checks_reached": false,
+    "failure": "Original system analyzer creates host runtime directory before --root;unprivileged mockbuild denied",
+    "production_cpp_units_and_static_root_unchanged": true
+  }
 }
