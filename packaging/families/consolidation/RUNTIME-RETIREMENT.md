@@ -44,3 +44,31 @@ names. Hardware source contracts43081867981 and the complete30-producer/
 31-installed-name inventory pass without unknown entries. Device names fell
 36 to31;producer definitions33 to30. Required original-provider and hardware
 parity work remains open. Current kernel23/A,rollback21/B and gain223 remain.
+
+## 12 November: pogo helpers in Control14
+
+Control2.17.0-14/COPR11316274 (source777add14) preserves all61 accepted12
+inputs,36 parent ELF code/ABI/library interfaces,233 data files and the exact
+original desktop C++. Both new helpers,units/rules/autostart and notices now
+belong to Control. Original Fedora quic-teec1.0.2-3 supplies QCOMTEE/libcbor;
+QCOMTEE/QCBOR are no longer embedded. The unchanged MINK adapter remains
+because Fedora supplies only its IDL compiler. Native callback/protocol,
+sanitized stop/event and ownership tests pass;full native build takes1271s.
+
+Normal DNF replaces Control/TUI12 and the two standalone pogo RPMs with14
+and original Fedora QCOMTEE. Real14 reinstall,accepted signed12+auth4+desktop5
+rollback and repository reupgrade pass with automatic live helper refresh,
+saved system/user states,unchanged PowerDevil,preferences,private noswap
+cache generation and raw24B/23A retained. No manual unit start is required.
+Fresh minimal/Core23/KDE37/GNOME37 graphs exclude all retired providers;
+minimal/Core acquire no Qt or KDE runtime. The native auth firmware check
+now admits the existing7.3.3 family without opening a TEE. Its root unit
+remains inactive;attachment returns255 without an accessory.
+
+Control14's three signed RPMs,source,thirteen's source/qualification and the
+recovery manifest/hashes have eight public digest/size/stream readbacks in
+the existing archive. Accepted standalone sources/runtimes have separate
+verified recovery assets. Producer/API/refreshed-metadata closure is recorded
+separately after deletion. Device Uke names fall27 to25;these counts do not
+establish physical accessory,TEE,input,lights,suspend or whole-goal acceptance.
+Gain223 and the original Fedora UPower/AccountsService returns remain retained.

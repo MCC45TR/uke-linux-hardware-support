@@ -1,5 +1,13 @@
 # Native hardware ownership and original distribution packages
 
+12 November checkpoint: Control14 owns the two pogo helpers after signed DNF,
+real reinstall and old-provider rollback/reupgrade. Original Fedora QCOMTEE
+replaces embedded QCOMTEE/QCBOR;UPower and AccountsService also use original
+Fedora packages. There are25 installed Uke names;producer retirement and the
+remaining sensor,graphics,firmware,kernel/DT and physical gates stay separate.
+See [runtime retirement](RUNTIME-RETIREMENT.md) and the current inventory.
+The dated11November baseline below is historical.
+
 11 November 2026. POCO Pad X1 / Uke, Fedora Rawhide AArch64,
 running kernel `7.3.3-22-unstable`, Control/TUI `2.17.0-1`.
 
