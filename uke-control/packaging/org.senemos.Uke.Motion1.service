@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.senemos.Uke.Motion1
+Exec=/usr/libexec/uke-control/motion
+User=root
+SystemdService=uke-control-motion.service

@@ -1,0 +1,73 @@
+{
+  "schema": "org.uke.control.motion.integration.v1",
+  "release": 16,
+  "production_admitted": false,
+  "parent": {
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-15.fc46.src.rpm",
+    "srpm_sha256": "d6be728b7fb2bb52497dbd91470249ff276e857d2de60db2d5e8659ca52bb71a",
+    "spec_sha256": "5a0b9d5236a9d071095e77ce0dbe6cb29b80a7f8968b972e3295327637723efc",
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+  },
+  "source_assets": [
+    {
+      "path": "uke-control/packaging/motion.mk",
+      "sha256": "53e9a1ffef2d59ed907c24b2c57fd7fd41728b2c9b72502936f8e9426b4c5f0b"
+    },
+    {
+      "path": "uke-control/packaging/org.senemos.Uke.Motion1.conf",
+      "sha256": "0529070132a7d3900e0084ac0fb01de9792d4ead8cc81ec2dddbdd0b9c96cb66"
+    },
+    {
+      "path": "uke-control/packaging/org.senemos.Uke.Motion1.service",
+      "sha256": "c277e3e3c458e68ec9ac0d7b14cc1a4444c4b43d2b4bff6eaa038928c996bd75"
+    },
+    {
+      "path": "uke-control/packaging/org.senemos.uke.motion.policy",
+      "sha256": "04f86ea2e2dae343a7fc1124f6ec04356c69dded8f6efd535ead3477981d67c8"
+    },
+    {
+      "path": "uke-control/packaging/uke-control-motion.service",
+      "sha256": "3af3d93df771a1ce212d2b97d00718adaf2ee1557a62a9ad5b73c2ea4323a259"
+    },
+    {
+      "path": "uke-control/src/motion-broker.cpp",
+      "sha256": "9d8ca7be33497db72762274804013ae537704f96b02c39351f88d44a1e1dee11"
+    },
+    {
+      "path": "uke-control/src/motion-broker.hpp",
+      "sha256": "b651e1b3d6605a41625b219c4674667c35ef2348cd0fc7f886f15ff4a1f2b20e"
+    },
+    {
+      "path": "uke-control/src/motion-iio.cpp",
+      "sha256": "8b9a577d3f15787d8b22089dba5778000984834335000de856e26f7b8af97b07"
+    },
+    {
+      "path": "uke-control/src/motion-ownership.hpp",
+      "sha256": "a76e3e14b93ea4d17713d4781c359387bfae577bed9731310fcaea4124ee08ce"
+    },
+    {
+      "path": "uke-control/src/motion-sample.hpp",
+      "sha256": "b15e89b01d80a123e87ef359e6a892e358352417ad30276e2af797c0e4b47b40"
+    },
+    {
+      "path": "uke-control/src/motion-service.cpp",
+      "sha256": "ae7bcc3e64cd0bbc1045a9709f5367617293f29f671847e0bfd0d973e9047290"
+    },
+    {
+      "path": "uke-control/src/motion-source.hpp",
+      "sha256": "1e89f0684eb106ca4664373c766de3fb2e2d236a9485220230ceb25b7c173e36"
+    },
+    {
+      "path": "uke-control/tests/motion-bus.cpp",
+      "sha256": "c7d0081385a31607413624561904f7b9dfc0ed73c806a95c1fd2791d59ad6bd2"
+    },
+    {
+      "path": "uke-control/tests/motion-ownership.cpp",
+      "sha256": "f620c223b14db2b00b2ef6e2bf242df3323cf02fddbd592ca776325cafeaa2f9"
+    },
+    {
+      "path": "uke-control/tests/motion-sample.cpp",
+      "sha256": "a897d63680efb7180daf387f116fbcb137c6fb983a5da861c49e8536088ea2f0"
+    }
+  ]
+}

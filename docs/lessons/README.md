@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-CONTROL-MOTION-20261113: lease a proved IIO frame without polling](2026-11-13-control-motion-iio.md)
+
 - [UKE-CONTROL-POGO-20261112: consolidate helpers with original Fedora QCOMTEE](2026-11-12-control-pogo-ownership.md)
 
 - [UKE-NATIVE-PACKAGES-20261111: distinguish ownership coverage from retirement](2026-11-11-native-package-migration.md)
