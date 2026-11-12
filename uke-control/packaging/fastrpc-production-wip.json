@@ -53,7 +53,7 @@
     },
     {
       "path": "uke-control/docs/FASTRPC-PROVIDER.md",
-      "sha256": "b33b0f8067bd51f48c653896ad28ab935a139ed4c4cf9c46ec8de6c9bbd3d99b"
+      "sha256": "68103dce0e016853aca521d82771552a6e983edf0a5eadaccaf30678f8230f5f"
     },
     {
       "path": "uke-control/src/fastrpc/run-uke\\x2dssc-fedora.mount",
@@ -93,22 +93,22 @@
     },
     {
       "path": "uke-control/packaging/ssc-cache-postun.sh",
-      "sha256": "1b3e33a5f31fc0f61d517c04711bb442611fb4713da0ecab4ed85ee91ccc31ab"
+      "sha256": "e20e7e40b446c6b37c1289326784d8304b0138a13d6e8dc96a42e47bc1545092"
     },
     {
       "path": "uke-control/tests/ssc-cache-postun.sh",
-      "sha256": "9e37abc7e3c687b177c27eaf01548374e71bb6a1842c2defaaf79e943aceaf6d"
+      "sha256": "e585b522a1bbba91d132d09b7e37169b0dec1b2545fa24098df32f447d75e95e"
     },
     {
       "path": "uke-control/tests/ssc-cache-postun-target.sh",
-      "sha256": "7903b9e6dc5e5ef23f02a404a00c382486f29c38d45aca80ce2d81502bc0ce66"
+      "sha256": "9ca685d71565293e6d3ed9529eff2180401af31430ca17d42746eaccb36769c6"
     },
     {
       "path": "uke-control/docs/FASTRPC-PRODUCTION-WIP.md",
-      "sha256": "bed7ca3ac886cbe10d634b73ea7aafe522e89a1a233f93c8d8b991067aecca05"
+      "sha256": "978ead91ac9b2db6faecadc88bc3c5a69eb98d9daa0221453d1cf5eaadcf557f"
     }
   ],
-  "production_recipe_sha256": "6e7deb36abac880f5cea98498d0eb84f1228886ec75ad266108f241d59a7e760",
+  "production_recipe_sha256": "d9e8de47a955cc0d0222a1c65da80e1174a8a2b4669fb097796c5bba53f15404",
   "production_units_parse_on_target": true,
   "static_root_data_only_verified": true,
   "cache_native_passed_in_failed_candidate7": true,
@@ -120,5 +120,6 @@
   "static_usr_t_live1_passed_and_restored": true,
   "postun_source_data_tests_passed": true,
   "postun_target_software_fixture1_passed": true,
-  "post_rollback_reimport_native_pending": true
+  "post_rollback_reimport_native_pending": true,
+  "postun_target_software_fixture2_passed": true
 }

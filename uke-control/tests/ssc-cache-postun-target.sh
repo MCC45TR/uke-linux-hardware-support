@@ -97,11 +97,12 @@ systemctl daemon-reload
 systemctl is-active --quiet "$mount_unit"
 sh "$work/cleanup" 1
 ! mountpoint --quiet "$work/cache"
+sh "$work/cleanup" 1
 [[ ! -e $work/cache/vector && $(cat "$work/accepted-vector") == 'public accepted vector' ]]
 for unit in "${owned[@]}";do [[ $(systemctl show -p ActiveState --value "$unit") == inactive ]];done
 for unit in uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service iio-sensor-proxy.service uke-adaptive-display.target;do
  systemctl show -p ActiveState -p UnitFileState "$unit" | cmp - "$output/$unit.before"
 done
 stat -c '%d:%i' /run/uke-ssc/state | cmp - "$output/accepted-generation.before"
-printf 'Original systemd:normal restart/retained postun preserve warm tmpfs inode;removed provider stops readers and unmounts;accepted vector and production state retained.\n' > "$output/result.txt"
+printf 'Original systemd:normal restart/retained postun preserve warm tmpfs inode;removed provider stops readers and unmounts;inactive repeated cleanup succeeds;accepted vector and production state retained.\n' > "$output/result.txt"
 touch "$output/complete"

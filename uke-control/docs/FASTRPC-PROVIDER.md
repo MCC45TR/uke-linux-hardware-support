@@ -34,6 +34,9 @@ offline image transaction does not contact systemd. A later upgrade can import
 the accepted provider's current RAM generation instead of reusing stale RAM
 from its previous installation. No factory input or accepted old generation is
 removed, and no executable cleanup helper is added to the runtime payload.
+Inactive or absent units need no stop job, so repeating removal cleanup is
+harmless. Active and transitional states are quiesced; an unknown state or failed
+stop reports failure instead of claiming that the cache was retired.
 
 The cache unit verifies read-only factory input and the actual tmpfs/noswap mount
 before running. Private session processes have no capabilities, AF_UNIX only,

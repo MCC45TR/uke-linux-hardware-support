@@ -6,5 +6,17 @@
 # unmounting; incoming posttrans/refresh restores the captured service states.
 if [ -d /run/systemd/system ] &&
    [ ! -f '/usr/lib/systemd/system/run-uke\x2dssc-fedora.mount' ]; then
-    /usr/bin/systemctl stop uke-ssc-sensors.service uke-ssc-root.service uke-ssc-cache.service 'run-uke\x2dssc-fedora.mount' || exit $?
+    pending=''
+    for unit in uke-ssc-sensors.service uke-ssc-root.service uke-ssc-cache.service 'run-uke\x2dssc-fedora.mount'; do
+        state=$(/usr/bin/systemctl show --property=ActiveState --value "$unit") || exit $?
+        case "$state" in
+            inactive) :;;
+            active|reloading|refreshing|activating|deactivating|maintenance|failed) pending="$pending $unit";;
+            *) exit 1;;
+        esac
+    done
+    if [ -n "$pending" ]; then
+        set -f
+        /usr/bin/systemctl stop $pending || exit $?
+    fi
 fi

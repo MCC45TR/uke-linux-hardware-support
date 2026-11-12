@@ -31,7 +31,7 @@
   },
   "result": {
     "version": "2.17.0-12",
-    "spec_sha256": "6e7deb36abac880f5cea98498d0eb84f1228886ec75ad266108f241d59a7e760",
+    "spec_sha256": "d9e8de47a955cc0d0222a1c65da80e1174a8a2b4669fb097796c5bba53f15404",
     "runtime_names": [
       "uke-control",
       "uke-control-client-devel",
@@ -53,7 +53,8 @@
     "previous_accepted_control6_retained": true,
     "installed_static_root_selinux_fix": true,
     "missing_provider_postun_mount_cleanup": true,
-    "retained_provider_warm_mount_unchanged": true
+    "retained_provider_warm_mount_unchanged": true,
+    "production_cpp_units_and_static_root_byte_equal_to11": true
   },
   "source_assets": [
     {
@@ -82,7 +83,7 @@
     },
     {
       "path": "uke-control/docs/FASTRPC-PROVIDER.md",
-      "sha256": "b33b0f8067bd51f48c653896ad28ab935a139ed4c4cf9c46ec8de6c9bbd3d99b"
+      "sha256": "68103dce0e016853aca521d82771552a6e983edf0a5eadaccaf30678f8230f5f"
     },
     {
       "path": "uke-control/src/fastrpc/run-uke\\x2dssc-fedora.mount",
@@ -122,15 +123,15 @@
     },
     {
       "path": "uke-control/packaging/ssc-cache-postun.sh",
-      "sha256": "1b3e33a5f31fc0f61d517c04711bb442611fb4713da0ecab4ed85ee91ccc31ab"
+      "sha256": "e20e7e40b446c6b37c1289326784d8304b0138a13d6e8dc96a42e47bc1545092"
     },
     {
       "path": "uke-control/tests/ssc-cache-postun.sh",
-      "sha256": "9e37abc7e3c687b177c27eaf01548374e71bb6a1842c2defaaf79e943aceaf6d"
+      "sha256": "e585b522a1bbba91d132d09b7e37169b0dec1b2545fa24098df32f447d75e95e"
     },
     {
       "path": "uke-control/tests/ssc-cache-postun-target.sh",
-      "sha256": "7903b9e6dc5e5ef23f02a404a00c382486f29c38d45aca80ce2d81502bc0ce66"
+      "sha256": "9ca685d71565293e6d3ed9529eff2180401af31430ca17d42746eaccb36769c6"
     }
   ],
   "previous_failed_candidates": [
@@ -206,10 +207,12 @@
   "postun_prerequisite": {
     "data_only_cases": 12,
     "failed_stop_refuses_success": true,
-    "real_systemd_software_fixture": 1,
+    "real_systemd_software_fixture": 2,
     "normal_restart_and_retained_provider_keep_warm_inode": true,
     "missing_provider_stops_readers_and_unmounts": true,
     "accepted_vector_and_production_state_retained": true,
-    "actual_package_downgrade_pending": true
+    "actual_package_downgrade_pending": true,
+    "non_inactive_states": 7,
+    "inactive_idempotence_and_unknown_state_refusal": true
   }
 }

@@ -139,6 +139,12 @@ its inode; removing the unit leaves the mount active until postun, which stops
 readers and unmounts. The accepted vector and production service/cache state
 remain unchanged. No DSP operation or private input is part of this fixture.
 
+The second target fixture also repeats cleanup after units are inactive or no
+longer loaded. It passes without an unknown-unit stop error. Seven non-inactive
+states, inactive idempotence and unknown-state refusal supplement the12 data
+cases. Only existing active/transitional/failed units enter the single stop
+transaction; a failed stop does not become cleanup success.
+
 The native synthetic cache test additionally covers re-import after retired
 new RAM and a later accepted-provider change. Its native12 execution, expanded
 postun test, complete source/RPM/DNF lifecycle and physical gates remain pending.
