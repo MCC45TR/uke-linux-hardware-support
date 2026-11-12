@@ -37,3 +37,21 @@ Primary implementation references:
 
 Hardware/OEM donor code is not used: this change concerns standard SELinux
 policy composition, not a device protocol or a kernel security-hook change.
+
+The follow-up composer derives io_uring subjects from the original linked
+policy's create grants to io_uring_t, retaining their Boolean conditions and
+attribute membership. On the reviewed 45.23 data there are13 source grants;
+the compiler expands them to the100 historical io_uring decisions. The six
+existing wildcard/system-role grants and the conditional firmware load grant
+remain explicit compatibility policy. They are gated by the original grants
+and missing permission definitions. No BPF token or memfd capability is enabled.
+A synthetic partial-adoption fixture and an already-adopted input must leave
+original definitions and decisions in control. The runtime store and trigger
+mechanism are deliberately not implemented or accepted by this experiment.
+
+The first source job11316733 ended before native qualification because the
+custom worker returned an SRPM instead of unpacked spec/sources.192005c9 corrects
+that source contract; job11316745 contains the exact unchanged policy probe.
+A follow-up also recognizes sediff's zero-count headers rather than expecting
+empty output, and emits stage markers. No result from the earlier observer is
+accepted merely because its process ran or produced a binary policy.

@@ -7,7 +7,7 @@ export LC_ALL=C
 baseline_srpm=$1
 fork_rpm=$2
 fedora_rpm=$3
-reference=$4
+composer=$4
 result=$5
 mkdir -p "$result"
 work=$(mktemp -d)
@@ -20,22 +20,15 @@ echo '63ce943b9b060e81b714501cce086bc509f0b9f6457e2fb468824aa35482538c  baseline
 for item in baseline fork fedora; do
     checkpolicy -b -M -C -o "$item.cil" "$item.35"
 done
-cat > definitions.cil <<'CIL'
-(common uke_system_compat (firmware_load kexec_image_load kexec_initramfs_load policy_load x509_certificate_load))
-(classcommon system uke_system_compat)
-(common uke_bpf_compat (map_create_as prog_load_as))
-(classcommon bpf uke_bpf_compat)
-(common uke_io_uring_compat (allowed))
-(classcommon io_uring uke_io_uring_compat)
-(class memfd_file (execute_no_trans entrypoint))
-(classcommon memfd_file file)
-(classorder (unordered memfd_file))
-CIL
-cat definitions.cil "$reference" > compatibility.cil
-[[ $(grep -c '(allow ' "$reference") == 108 ]]
+[[ $(grep -Ec '^[[:space:]]*\(allow .* \(io_uring \([^)]*allowed' fork.cil) == 100 ]]
+[[ $(grep -Ec '^[[:space:]]*\(allow .* \(system \([^)]*firmware_load' fork.cil) == 8 ]]
 for item in baseline fedora; do
-    secilc -M true -c 35 -f /dev/null -o "$item-compat.35" "$item.cil" compatibility.cil
+    gawk -f "$composer" "$item.cil" > "$item-compat.cil"
+    printf 'Compile offline composition: %s\n' "$item"
+    secilc -M true -c 35 -f /dev/null -o "$item-compat.35" "$item.cil" "$item-compat.cil"
 done
+gawk -f "$composer" fork.cil > already-adopted.cil
+! grep -q '^[[:space:]]*(' already-adopted.cil
 
 # Compare decisions by names, including Boolean conditions and transitions;
 # the common layout and permission numbers are deliberately different.
@@ -44,8 +37,19 @@ differences=(--allow --auditallow --dontaudit --allowxperm --auditallowxperm
     --role_trans --range_trans --constrain --mlsconstrain --validatetrans
     --mlsvalidatetrans --initialsid --fs_use --genfscon --netifcon --nodecon
     --portcon --default --property --polcap --typebounds)
-sediff "${differences[@]}" fork.35 baseline-compat.35 > "$result/fork-parity.txt"
-[[ ! -s $result/fork-parity.txt ]]
+printf '%s\n' 'Compare complete historical decisions by name and condition.'
+sediff --stats "${differences[@]}" fork.35 baseline-compat.35 > "$result/fork-parity.txt"
+cat "$result/fork-parity.txt"
+# Explicitly selected sediff categories print zero-count headers too.
+# Require recognized, exclusively zero-count headers; reject unknown output.
+awk '
+    NF {
+        seen++
+        if ($0 !~ /^[[:alnum:] _]+ \(0 (Added|Removed|Modified)(, 0 (Added|Removed|Modified))*\)$/)
+            bad=1
+    }
+    END { exit bad || !seen }
+' "$result/fork-parity.txt"
 
 for item in baseline-compat fedora-compat; do
     seinfo --polcap -x "$item.35" | sort > "$item.cap"
@@ -73,13 +77,27 @@ sesearch --allow -s sshd_t -t sshd_t -c io_uring -p allowed fedora-compat.35 > q
 ! grep -q 'allow ' query
 
 # Prove that the parity observer rejects removal of the firmware grant.
-sed '/^(allow kernel_t lib_t (system (firmware_load)))$/d' compatibility.cil > broken.cil
+sed '/^(allow kernel_t lib_t (system (firmware_load)))$/d' baseline-compat.cil > broken.cil
 secilc -M true -c 35 -f /dev/null -o broken.35 baseline.cil broken.cil
 sediff --allow fork.35 broken.35 > "$result/negative-control.txt"
 grep -q firmware_load "$result/negative-control.txt"
 
+printf '%s\n' 'Check a synthetic partial original-policy adoption.'
+sed -e 's/^(class system (/\0firmware_load /' -e 's/^(class io_uring (/\0allowed /' fedora.cil > partial.cil
+printf '%s\n' '(allow named_t self (io_uring (allowed)))' >> partial.cil
+gawk -f "$composer" partial.cil > partial-compat.cil
+! grep -q firmware_load partial-compat.cil
+! grep -q '(io_uring (allowed))' partial-compat.cil
+secilc -M true -c 35 -f /dev/null -o partial-compat.35 partial.cil partial-compat.cil
+sesearch --allow -s named_t -t named_t -c io_uring -p allowed partial-compat.35 > query
+grep -q 'allow ' query
+sesearch --allow -s unconfined_t -t unconfined_t -c io_uring -p allowed partial-compat.35 > query
+! grep -q 'allow ' query
+sesearch --allow -s kernel_t -t lib_t -c system -p firmware_load partial-compat.35 > query
+! grep -q 'allow ' query
+
 sediff --allow fedora.35 fedora-compat.35 > "$result/fedora-delta.txt"
-sha256sum compatibility.cil > "$result/compatibility.sha256"
+sha256sum baseline-compat.cil fedora-compat.cil already-adopted.cil partial-compat.cil > "$result/compatibility.sha256"
 rpm -q checkpolicy secilc libsepol setools-console > "$result/tools.txt"
-printf '%s\n' '{"offline_only":true,"reference_rules":108,"historical_decision_parity":true,"fedora45_24_compiles":true,"bounded_grants_and_denials":7,"capabilities_and_permissive_unchanged":true,"negative_control":true,"normal_dnf_transition":false,"future_base_adaptation":false,"device_installed":false}' > "$result/result.json"
-printf '%s\n' 'Offline class/common composition and historical decision parity passed; no policy loaded. DNF and future-base adaptation remain unqualified.'
+printf '%s\n' '{"offline_only":true,"reference_rules":108,"historical_decision_parity":true,"fedora45_24_compiles":true,"bounded_grants_and_denials":7,"capabilities_and_permissive_unchanged":true,"negative_control":true,"derived_io_subjects":true,"synthetic_partial_and_full_adoption":true,"normal_dnf_transition":false,"future_base_runtime_adaptation":false,"device_installed":false}' > "$result/result.json"
+printf '%s\n' 'Offline class/common composition, derived subjects and historical decision parity passed; no policy loaded. Runtime store and DNF remain unqualified.'

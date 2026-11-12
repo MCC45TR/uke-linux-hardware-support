@@ -360,7 +360,7 @@
         "selinux-policy",
         "selinux-policy-targeted"
       ],
-      "remaining_work": "Audit the exact remaining base-policy delta and qualify original Fedora policy with narrowly scoped existing integration modules; retain confinement and supported upgrades.",
+      "remaining_work": "Signed original Fedora45.24-1 still lacks five system permissions,two BPF permissions,io_uring allowed and memfd_file. Offline standard CIL composition is under COPR qualification; preserve all historical decisions,capabilities,permissive types and Enforcing. A linked-policy-derived io_uring subject set avoids a frozen domain list. Existing Control must qualify modular-store/neverallow,original-policy adoption,normal DNF,reinstall and rollback before retiring producer3271589. Do not remove kernel checks or accept unknown-permission fallback as parity.",
       "retirement_eligible": false
     },
     {
@@ -372,8 +372,10 @@
         "tailscale"
       ],
       "destination": "original-userspace",
-      "original_packages": [],
-      "remaining_work": "Audit the rebuilt source and select an unmodified supported upstream/distribution provider if available. VPN/session logic stays in userspace; do not fabricate a Fedora replacement or remove remote-access functionality.",
+      "original_packages": [
+        "tailscale"
+      ],
+      "remaining_work": "Original Fedora1.104.4-1 is available in refreshed46 metadata. Current1.1 rebuild only labels completed direct-resolver temporaries before atomic rename; original Fedora labels after rename. Preserve DNS/network/SELinux ordering,service and preferences before retiring3270176. No systemd-resolved provider is currently installed; adding it or changing resolver ownership is not already verified parity. VPN/session logic stays in original userspace; do not build another Tailscale fork or move resolver policy into the kernel.",
       "retirement_eligible": false
     },
     {
