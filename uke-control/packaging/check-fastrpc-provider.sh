@@ -52,6 +52,7 @@ UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so
 printf 'Provider phase:installed-static-root\n'
 [[ ! -e $buildroot/usr/libexec/uke-hexagonrpcd ]]
 [[ -x $buildroot/usr/libexec/uke-ssc-cache ]]
+cmp "$overlay/docs/FASTRPC-PROVIDER.md" "$buildroot/usr/share/doc/uke-control/FASTRPC-PROVIDER.md"
 [[ $(find "$buildroot/usr/lib/systemd/system" -maxdepth 1 -name 'run-uke*.mount' -type f | wc -l) == 1 ]]
 node --input-type=module - "$buildroot/usr/share/uke-control/fastrpc-root" <<'JS'
 import fs from 'node:fs';import assert from 'node:assert/strict';const root=process.argv[2];let files=0,links=0;

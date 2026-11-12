@@ -41,15 +41,15 @@
     },
     {
       "path": "uke-control/packaging/check-fastrpc-provider.sh",
-      "sha256": "21c50b2f0bef6e336cef929720349f33c8e832183896076f95787043bdd8e9a6"
+      "sha256": "d118f29e14b300848e8009d1664bf9291312793fa9bf4a132142d856293173d0"
     },
     {
       "path": "uke-control/packaging/fold-fastrpc-provider-spec.mjs",
-      "sha256": "07687685b1b8e76c886f8bace90792ac42697c93b2c39924996756b3a7ff3a01"
+      "sha256": "2359591cea2d46438d4d831abe84559d7d331115f77f4261d915563fc16d7435"
     },
     {
       "path": "uke-control/packaging/copr-control-fastrpc-provider.sh",
-      "sha256": "3ee3d76641dfcafbb4c3fd864f7fba6f78f33748c151806cac73335d43e9a7c9"
+      "sha256": "c8f924dbb450e736456dc588bf8e6331edc8e5611b24b540c29b794b14baaacf"
     },
     {
       "path": "uke-control/docs/FASTRPC-PROVIDER.md",
@@ -81,13 +81,14 @@
     },
     {
       "path": "uke-control/docs/FASTRPC-PRODUCTION-WIP.md",
-      "sha256": "23727ec7ae0d48efa7c1a1c547c497b4f69077c344eada230df02e65338f528a"
+      "sha256": "49826897308733ef4d256bb42c92198f319bae9cbdfa5dc8a86d44d1050fd2aa"
     }
   ],
-  "production_recipe_sha256": "13658848ae7e19d5057ffb0b5fa6b90174243dada0d85d8f235eabe76a6be14b",
+  "production_recipe_sha256": "274c0ec52b3b4334b1e04cd84b7014b05562380e7c683901f4ce31acf5f7bd51",
   "production_units_parse_on_target": true,
   "static_root_data_only_verified": true,
   "cache_native_passed_in_failed_candidate7": true,
   "full_native_qualified": false,
-  "candidate_version": "2.17.0-9"
+  "candidate_version": "2.17.0-10",
+  "previous_candidate9_complete_native_checks_passed": true
 }

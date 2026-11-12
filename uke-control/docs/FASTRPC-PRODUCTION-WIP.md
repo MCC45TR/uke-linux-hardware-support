@@ -1,6 +1,6 @@
 # Original Fedora FastRPC production transition in preparation
 
-Source candidate only,12 November2026. The Control2.17.0-9 recipe is prepared;
+Source candidate only,12 November2026. The Control2.17.0-10 recipe is prepared;
 no native build or RPM installation is claimed. Control2.17.0-6 remains the accepted
 provider. Bounded live trial72f8f069 qualifies prerequisites, not the complete
 transition.
@@ -28,6 +28,14 @@ package on the target has the sd_path_lookup import in libsystemd-core, while
 the main executable imports that library. Candidate9 follows the loader's
 core-library path and adds named fixture phase diagnostics. Production source
 remains byte-identical; full unit-parser/interposer acceptance is still pending.
+
+Candidate9/COPR11311349 passes every new provider fixture and the full existing
+native check suite. RPM file processing then rejects the documentation path:
+an absolute build-directory path under %doc is treated as an installed payload
+path, not a source to copy. Candidate10 explicitly installs the document below
+the package doc directory and lists that installed path as %doc. An early native
+byte comparison checks its staged location. Production cache, unit and static
+root source bytes remain unchanged; RPM/signature/DNF acceptance is pending.
 
 Use the existing Control cache helper with a dedicated16MiB noswap tmpfs at
 /run/uke-ssc/fedora, mounted by a standard systemd mount unit. Keep hardware
