@@ -360,7 +360,7 @@
         "selinux-policy",
         "selinux-policy-targeted"
       ],
-      "remaining_work": "Signed original Fedora45.24-1 still lacks five system permissions,two BPF permissions,io_uring allowed and memfd_file. Offline standard CIL composition is under COPR qualification; preserve all historical decisions,capabilities,permissive types and Enforcing. A linked-policy-derived io_uring subject set avoids a frozen domain list. Existing Control must qualify modular-store/neverallow,original-policy adoption,normal DNF,reinstall and rollback before retiring producer3271589. Do not remove kernel checks or accept unknown-permission fallback as parity.",
+      "remaining_work": "Signed original Fedora45.24-1 lacks newer kernel definitions. COPR11317794/sourceec7b1a8d qualifies standard CIL class/common composition: complete historical normalized policy and every original Fedora24 old-permission record match,seven grants/denials,caps/permissive and negative/partial/full-adoption controls pass. Test-only binary round trips preserve all original attributes. Existing Control still needs original-base definition detection,modular-store/neverallow,normal DNF/reinstall/rollback and device acceptance before retiring3271589. Keep Enforcing and kernel checks;no new base-policy fork.",
       "retirement_eligible": false
     },
     {

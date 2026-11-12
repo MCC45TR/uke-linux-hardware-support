@@ -76,3 +76,31 @@ false in test-only inputs and first requires a complete unchanged-policy round
 trip. No attribute or rule is ignored by the comparison. A bounded record diff
 is emitted on refusal. These flags repair the experimental binary round trip;
 they are not part of the proposed runtime compatibility module.
+
+Job11317794/release4 succeeds in160s. Actual SRPM4a56684a/spec8fffbe13 and
+four executable/data sources plus three binary input hashes match. The signed
+text-only reportfd03d6f6 passes both trusted signatures/digests. The unchanged
+round trip,full historical normalized records (753e9494),all original Fedora24
+old-permission records (a9a49069),seven grants/denials,capabilities/permissive,
+negative firmware mutant and partial/full adoption pass. No record is ignored
+to obtain parity. These are offline qualifications;original-base detection,
+real modular-store/neverallow,DNF lifecycle and device retirement remain open.
+
+The module-store follow-up separates original base CIL definitions from linked
+policy rules. A loaded compatibility module must not be mistaken for native
+Fedora adoption during reinstall. Rule references use standard optional blocks
+so a pre-update snapshot cannot revive a removed or disabled domain. Fresh
+record equality remains required with these wrappers.
+
+The real-store fixture uses unprivileged COPR roots with semodule -n -p ROOT,
+explicit expand-check=1,and exact existing RGB/SSC policy inputs. It disables
+bind after capturing a stale domain snapshot,then tests install/refresh/
+reinstall,fork-first rollback and original reupgrade. Original100 HLL source
+hashes,the disabled-module setting and normalized records must remain intact.
+The RGB binary comes from the verified Control14 recovery asset ea9ad71e and
+has hashcabcbfc7;its original MIT source/context/license accompany the test.
+SSC policye0eba7d4 is the exact existing3.9-24 input. These are private offline
+store operations,no host load or device DNF transaction. Production RPM hooks,
+pre-update snapshots and the supported original-provider delivery still need
+qualification. Current DNF configuration reports allow_vendor_change=1;an
+assumed mandatory vendor override is not the device's current setting.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Experimental offline composer for checkpolicy -b -M -C output.
+# Experimental offline composer: original base CIL, then linked binary CIL.
 # This does not install or load policy. Runtime lifecycle is not qualified.
 function has(words, item) { return (" " words " ") ~ (" " item " ") }
 function rule(text) {
@@ -23,14 +23,20 @@ function extend(class, names,    n,i,a,missing) {
         definitions[++nd]="(common uke_" class "_compat (" missing "))\n(classcommon " class " uke_" class "_compat)"
     }
 }
-BEGIN { depth=0 }
+BEGIN { depth=0; if(ARGC!=3) bad=1 }
 {
     line=$0; sub(/^[ \t]+/,"",line); sub(/[ \t]+$/,"",line)
-    if(match(line,/^\(class ([[:alnum:]_]+) \(([^()]*)\)\)$/,m)) {
-        declared[m[1]]=1; perms[m[1]]=m[2]
+    if(ARGIND==1) {
+        if(match(line,/^\(class ([[:alnum:]_]+) \(([^()]*)\)\)$/,m)) {
+            declared[m[1]]=1; perms[m[1]]=m[2]
+        }
+        if(match(line,/^\(classcommon ([[:alnum:]_]+) ([[:alnum:]_]+)\)$/,m)) common[m[1]]=m[2]
+        if(match(line,/^\(common ([[:alnum:]_]+) \(([^()]*)\)\)$/,m)) commons[m[1]]=m[2]
+        next
     }
-    if(match(line,/^\(classcommon ([[:alnum:]_]+) ([[:alnum:]_]+)\)$/,m)) common[m[1]]=m[2]
-    if(match(line,/^\(common ([[:alnum:]_]+) \(([^()]*)\)\)$/,m)) commons[m[1]]=m[2]
+    if(ARGIND!=2) { bad=1; next }
+    if(line=="(type kernel_t)") kernel_type=1
+    if(line=="(type lib_t)") firmware_type=1
     if(line ~ /^\(booleanif /) {
         if(depth!=0) bad=1
         condition=line
@@ -61,7 +67,7 @@ BEGIN { depth=0 }
     if(depth==0) { condition=""; branch="" }
 }
 END {
-    if(depth!=0) bad=1
+    if(depth!=0 || ARGIND!=2 || !kernel_type || !firmware_type) bad=1
     for(class in common) perms[class]=perms[class] " " commons[common[class]]
     if(!declared["system"] || !declared["bpf"] || !declared["io_uring"] || commons["file"]=="") bad=1
     extend("system","firmware_load kexec_image_load kexec_initramfs_load policy_load x509_certificate_load")
@@ -84,10 +90,10 @@ END {
             if(list=="") continue
             text=gensub(/SYS ([[:alnum:]_]+) ([[:alnum:]_]+)/,"(allow \\1 \\2 (system (" list ")))","g",text)
         }
-        print text
+        print "(optional uke_kernel_abi_rule_" i "\n    " text "\n)"
     }
     if(needed["system","firmware_load"]) {
-        print "(allow kernel_t lib_t (system (firmware_load)))"
-        print "(booleanif secure_mode_insmod (false (allow can_load_kernmodule lib_t (system (firmware_load)))))"
+        print "(optional uke_kernel_abi_firmware (allow kernel_t lib_t (system (firmware_load))))"
+        print "(optional uke_kernel_abi_module_firmware (booleanif secure_mode_insmod (false (allow can_load_kernmodule lib_t (system (firmware_load))))))"
     }
 }

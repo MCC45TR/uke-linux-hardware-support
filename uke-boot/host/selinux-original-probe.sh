@@ -32,12 +32,14 @@ done
 [[ $(grep -Ec '^[[:space:]]*\(allow .* \(io_uring \([^)]*allowed' fork.cil) == 100 ]]
 [[ $(grep -Ec '^[[:space:]]*\(allow .* \(system \([^)]*firmware_load' fork.cil) == 8 ]]
 for item in baseline fedora; do
-    gawk -f "$composer" "$item.cil" > "$item-compat.cil"
+    gawk -f "$composer" "$item.cil" "$item.cil" > "$item-compat.cil"
     printf 'Compile offline composition: %s\n' "$item"
     timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o "$item-compat.35" "$item.cil" "$item.keep.cil" "$item-compat.cil"
 done
-gawk -f "$composer" fork.cil > already-adopted.cil
+gawk -f "$composer" fork.cil fork.cil > already-adopted.cil
 ! grep -q '^[[:space:]]*(' already-adopted.cil
+gawk -f "$composer" baseline.cil fork.cil > reinstall-compat.cil
+cmp baseline-compat.cil reinstall-compat.cil
 
 # Compare the complete decompiled representation without SETools' potentially
 # quadratic attribute-pair expansion. Flatten only common permission layout;
@@ -95,7 +97,7 @@ sesearch --allow -s sshd_t -t sshd_t -c io_uring -p allowed fedora-compat.35 > q
 ! grep -q 'allow ' query
 
 # Prove that the parity observer rejects removal of the firmware grant.
-sed '/^(allow kernel_t lib_t (system (firmware_load)))$/d' baseline-compat.cil > broken.cil
+sed '/^(optional uke_kernel_abi_firmware /d' baseline-compat.cil > broken.cil
 timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o broken.35 baseline.cil baseline.keep.cil broken.cil
 checkpolicy -b -M -C -o broken-linked.cil broken.35
 normalize full broken-linked.cil broken.full
@@ -106,7 +108,7 @@ sesearch --allow -s kernel_t -t lib_t -c system -p firmware_load broken.35 > "$r
 printf '%s\n' 'Check a synthetic partial original-policy adoption.'
 sed -e 's/^(class system (/\0firmware_load /' -e 's/^(class io_uring (/\0allowed /' fedora.cil > partial.cil
 printf '%s\n' '(allow named_t self (io_uring (allowed)))' >> partial.cil
-gawk -f "$composer" partial.cil > partial-compat.cil
+gawk -f "$composer" partial.cil partial.cil > partial-compat.cil
 ! grep -q firmware_load partial-compat.cil
 ! grep -q '(io_uring (allowed))' partial-compat.cil
 timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o partial-compat.35 partial.cil fedora.keep.cil partial-compat.cil
