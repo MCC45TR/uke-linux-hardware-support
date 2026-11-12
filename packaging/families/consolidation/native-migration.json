@@ -116,8 +116,9 @@
         "mesa-libEGL",
         "mesa-filesystem"
       ],
-      "remaining_work": "Kernel owns DRM/MSM resources, not compilers or graphics APIs. Resolve AArch64 JIT, Adreno732 identity, display-fd and UBWC differences upstream; qualify original Fedora GL/Vulkan/compute, DMA-BUF and suspend without CPU-render fallback.",
-      "retirement_eligible": false
+      "remaining_work": "Signed original Fedora Mesa 26.3.0-1 still fails direct-display enumeration on kernel 24. AArch64 JIT and fuse matching are upstream;  FD735 labeling, render-only display-fd handling, TP UBWC hint and worker scheduling remain distinct. Original 26.3 GPU arithmetic passes with current Mesa-maintained builtins but its declared Fedora libclc22 data fails program linkage. Complete coherent original GL/Vulkan/compute, sandbox/display, DNF and recovery parity without forging KMS capability or moving compilers into kernel/DT. No new fork build. See https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/research/UKE-ORIGINAL-GRAPHICS-PARITY-2026-11-12.md",
+      "retirement_eligible": false,
+      "last_original_provider_qualification": "2026-11-12: source and bounded live evidence; retirement not qualified"
     },
     {
       "id": "compute-bitcode",
@@ -131,8 +132,9 @@
       "original_packages": [
         "libclc22-spirv"
       ],
-      "remaining_work": "Original signed 22.1.8-4 can enumerate the GPU in an isolated namespace but compiler/bitcode compatibility and shader/compute correctness remain unqualified. Do not move compiler data into the kernel.",
-      "retirement_eligible": false
+      "remaining_work": "Seven uncached kernel 24 GPU cases supersede enumeration-only evidence: current data passes 1024 integer+4096 bounded float values under installed Mesa 17 and signed Fedora 26.3; original Fedora libclc22 fails CL_BUILD_PROGRAM_FAILURE(-11) under both; diagnostic Fedora libclc23 layouts cause isolated userspace SIGSEGV under both. Final installed pair passes; host files/packages/boot retained. Fedora 26.3 still requires/searches libclc22; MR 40601 is draft. Require a supported signed distribution builtin/consumer tuple and normal DNF/rollback before retirement; no compiler-data bridge or new fork version. See https://github.com/MCC45TR/uke-linux-docs/blob/main/docs/research/UKE-ORIGINAL-GRAPHICS-PARITY-2026-11-12.md",
+      "retirement_eligible": false,
+      "last_original_provider_qualification": "2026-11-12: linkage/layout failures; retirement not qualified"
     },
     {
       "id": "video",
@@ -390,7 +392,7 @@
       "original_packages": [
         "freecad"
       ],
-      "remaining_work": "Audit exact feature/dependency differences and validate an original distribution package with document/UI parity and rollback; no CAD functionality belongs in the kernel.",
+      "remaining_work": "Retain the explicitly requested optional upstream FreeCAD 1.1.4 application while refreshed Fedora 46 metadata provides no freecad/freecad-data package. The exact upstream release, three build/test fixes, Fedora review 2386504 and Python-workbench exception are documented in packaging/families/freecad/README.md and source-lock.json. Return when an original distribution provider preserves document/UI/features, settings, DNF ownership and rollback. No CAD functionality belongs in kernel/DT.",
       "retirement_eligible": false
     },
     {
