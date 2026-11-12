@@ -505,14 +505,16 @@
       "id": "source-checks",
       "sources": [
         "uke-kernel-migration-check",
-        "uke-boot-graph-audit-unstable"
+        "uke-boot-graph-audit-unstable",
+        "uke-selinux-original-check"
       ],
       "producers": [
-        "uke-kernel-migration-check"
+        "uke-kernel-migration-check",
+        "uke-selinux-original-check"
       ],
       "destination": "build",
       "original_packages": [],
-      "remaining_work": "Keep essential native source/ARM64 qualification and required receipts. Retire temporary diagnostics only after all live build, source, runtime and recovery references close.",
+      "remaining_work": "Keep essential native kernel/ARM64 qualification. Temporary policy checker3281815 is uninstalled,auto-rebuild=false; actual11317794/ec7b1a8d qualifies offline representations,and11317989/57801a2c qualifies real private-store lifecycle next. Its producer default192005c9 remains unqualified;use recorded explicit handles,not a duplicate manual rebuild. Archive required signed sources/reports and retire this temporary producer only after runtime/source/recovery references close. No runtime bridge RPM.",
       "retirement_eligible": false
     },
     {
