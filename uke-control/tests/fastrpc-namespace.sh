@@ -16,6 +16,7 @@ cleanup(){
 }
 trap cleanup EXIT
 mkdir -p "$work"/{payload/registry,payload/config,payload/dsp,payload/socinfo,root/usr/bin,root/usr/lib64,root/usr/lib/qcom/adsp,root/vendor/etc/sensors/config,root/odm/etc/sensors/config,root/system,root/sys/devices/soc0,root/mnt/vendor/persist/sensors/registry/registry,root/persist/sensors/registry/registry}
+mkdir "$work/root/proc"
 for item in bin lib64;do ln -s "usr/$item" "$work/root/$item";done
 ln -s usr/lib "$work/root/lib"
 touch "$work/root/usr/lib/ld-linux-aarch64.so.1"
@@ -24,6 +25,10 @@ printf 'public json list\n' > "$work/payload/config/json.lst"
 printf 'public config vector\n' > "$work/payload/sns_reg.conf"
 printf 'public firmware vector,not executable\n' > "$work/payload/dsp/sns_tppe.so"
 printf 'public soc vector\n' > "$work/payload/socinfo/soc_id"
+printf 'public outside vector\n' > "$work/public-outside"
+ln -s "$work/public-outside" "$work/payload/registry/host-escape"
+ln -s "/proc/1/root$work/public-outside" "$work/payload/registry/proc-escape"
+ln -s /vendor/etc/sensors/config/json.lst "$work/payload/registry/readonly-link"
 touch "$work/root/vendor/etc/sensors/sns_reg_config"
 ln -s /vendor "$work/root/system/vendor"
 sha256sum "$work/payload/config/json.lst" "$work/payload/sns_reg.conf" "$work/payload/dsp/sns_tppe.so" "$work/payload/socinfo/soc_id" > "$output/readonly-before.sha256"
@@ -33,7 +38,7 @@ systemd-run --quiet --wait --pipe --collect --unit="$unit" --setenv=LC_ALL=C \
  -p "BindPaths=$work/payload/registry:/persist/sensors/registry/registry $work/payload/registry:/mnt/vendor/persist/sensors/registry/registry" \
  -p 'ReadWritePaths=/persist/sensors/registry/registry /mnt/vendor/persist/sensors/registry/registry' \
  -p ProtectSystem=strict -p ProtectHome=yes -p PrivateDevices=yes \
- -p TemporaryFileSystem=/sys:ro \
+ -p 'TemporaryFileSystem=/sys:ro /proc:ro' \
  -p MountAPIVFS=no \
  -p PrivateMounts=yes \
  -p NoNewPrivileges=yes -p CapabilityBoundingSet= \
@@ -42,6 +47,8 @@ systemd-run --quiet --wait --pipe --collect --unit="$unit" --setenv=LC_ALL=C \
  -- /usr/bin/bash --noprofile --norc -ceu '
   test ! -e /dev/fastrpc-adsp
   test ! -e /sys/class/remoteproc
+  test ! -e /proc/self
+  test ! -e /proc/1/root
   grep -Fqx "public soc vector" /sys/devices/soc0/soc_id
   test ! -e /etc/senemos/kernel-update.conf
   cmp /persist/sensors/registry/registry/public-vector /mnt/vendor/persist/sensors/registry/registry/public-vector
@@ -54,7 +61,11 @@ systemd-run --quiet --wait --pipe --collect --unit="$unit" --setenv=LC_ALL=C \
   if (printf bad >> /vendor/etc/sensors/sns_reg_config) 2>/dev/null; then exit 1; fi
   if (printf bad >> /usr/lib/qcom/adsp/sns_tppe.so) 2>/dev/null; then exit 1; fi
   if (printf bad >> /sys/devices/soc0/soc_id) 2>/dev/null; then exit 1; fi
+  if cat /persist/sensors/registry/registry/host-escape 2>/dev/null; then exit 1; fi
+  if cat /persist/sensors/registry/registry/proc-escape 2>/dev/null; then exit 1; fi
+  if (printf bad >> /persist/sensors/registry/registry/readonly-link) 2>/dev/null; then exit 1; fi
   printf "Native RootDirectory/binds:shared synthetic registry,readonly config/firmware,aliases and absent DSP/host settings passed.\n"
+  printf "Empty proc and host/proc symlink escapes refused;readonly link cannot bypass bind permissions.\n"
  ' < /dev/null > "$output/result.log" 2>&1
 sha256sum -c --strict --quiet "$output/readonly-before.sha256"
 grep -Fqx 'public changed registry' "$work/payload/registry/new-vector"

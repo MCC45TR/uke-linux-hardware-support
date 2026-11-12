@@ -34,7 +34,6 @@
   "physical_acceptance": false,
   "new_runtime_packages": 0,
   "remaining": [
-    "original Fedora file API checks",
     "library/config paths",
     "stock autostart and native DSP ownership",
     "registry refresh and read-only persist",
@@ -44,12 +43,18 @@
   "source_assets": [
     {
       "path": "uke-control/tests/fastrpc-namespace.sh",
-      "sha256": "470064a89cf886b939efe9370fffaa6df141acb63e445cd3a20c2f7c26f8a978"
+      "sha256": "0886107ced107e97181dc8e96fa54076902d2de494c06802f233ddfc7b228318"
     },
     {
       "path": "uke-control/docs/FASTRPC-NAMESPACE.md",
-      "sha256": "63083678e09b32a7a456a2dbf4306cb006e75101bc37b56741f90b9f2965aa4d"
+      "sha256": "440471d7c26bbf31b830b1a7a3a98a01aade9c0582598f7f6698def104518003"
     }
   ],
-  "whitespace_followup": "Only trailing empty lines normalized after the successful target fixture;behavior unchanged."
+  "namespace_fixture_revision": 12,
+  "proc_empty_and_readonly": true,
+  "host_and_proc_symlink_escapes_refused": true,
+  "readonly_bind_enforced_through_symlink": true,
+  "file_api_qualification_build": 11310493,
+  "session_and_abi_qualification_build": 11310532,
+  "readonly_input_hashes_unchanged": true
 }

@@ -39,11 +39,19 @@ selected SoC subtree,and an address-family allow-list. It omits PrivateNetwork,
 matching the existing SSC units. Live FastRPC address-family requirements still
 need qualification. No systemd fork or global policy change is involved.
 
+The extended target fixture also mounts an empty, read-only /proc. It refuses
+host and /proc/1/root symlink escapes from the writable synthetic registry,
+and a symlink cannot bypass a read-only config bind. Input hashes remain equal
+and the transient unit/tree are removed. These are public software vectors;
+no factory data, production service or DSP is touched. Production confinement
+must keep this boundary and expose only required executables and devices.
+
 Source and native readiness are separate:
 [COPR11310322](https://copr.fedorainfracloud.org/coprs/mcc45tr/uke-linux-unstable/build/11310322/)
 qualified the original Fedora listener/stubs and Control notification adapter
 with synthetic RPCs. Combining that result with this filesystem fixture does
-not prove a complete provider switch. Next qualify original Fedora library
-file APIs,required library/config paths,boot/autostart ownership,readiness,
+not prove a complete provider switch. Native100 qualifies 87 original library
+file API checks and native102 qualifies the single-session worker and source
+ABI. Required live library/config paths,boot/autostart ownership,readiness,
 private-RAM registry refresh,SELinux,crash/suspend,and signed DNF rollback.
 Retain the current provider until those gates pass.
