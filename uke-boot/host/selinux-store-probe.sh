@@ -5,7 +5,7 @@ set -Eeuo pipefail
 export LC_ALL=C
 umask 077
 ulimit -v 1572864
-[[ $# == 7 && ${UKE_POLICY_OFFLINE_FIXTURE:-} == 1 && $EUID != 0 ]]
+[[ $# == 8 && ${UKE_POLICY_OFFLINE_FIXTURE:-} == 1 && $EUID != 0 ]]
 fedora=$1
 fork=$2
 composer=$3
@@ -13,6 +13,7 @@ canonical=$4
 rgb=$5
 ssc=$6
 result=$7
+integration=$8
 mkdir -p "$result"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -153,8 +154,65 @@ equal "$work/fedora.disabled" "$work/disabled.reupgrade"
 hll_hashes "$work/fedora" > "$work/fedora.hll.final"
 equal "$work/fedora.hll.before" "$work/fedora.hll.final"
 
+printf '%s\n' 'Exercise the production Control helper with offline roots and pre-update snapshots.'
+run_integration() {
+    timeout -k 15s 300s bash "$integration" --root "$work/fedora" --profile targeted "$1"
+}
+run_integration capture
+[[ -f $work/fedora/run/uke-selinux-migration/targeted.before.35 ]]
+run_integration stage
+run_integration finish
+[[ ! -e $work/fedora/run/uke-selinux-migration/targeted.before.35 ]]
+compiled "$work/fedora" "$work/integration-reinstall.cil"
+normalize full "$work/integration-reinstall.cil" "$work/integration-reinstall.full"
+equal "$work/reupgrade.full" "$work/integration-reinstall.full"
+
+run_integration capture
+cp -a "$work/fork/var/lib/selinux/targeted/active/modules/100/." \
+    "$work/fedora/var/lib/selinux/targeted/active/modules/100/"
+rpm2cpio "$fork" | cpio --quiet -i --to-stdout ./var/lib/selinux/targeted/active/policy.kern \
+    > "$work/fedora/var/lib/selinux/targeted/active/policy.kern"
+run_integration stage
+run_integration finish
+[[ ! -d $work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat ]]
+compiled "$work/fedora" "$work/integration-rollback.cil"
+normalize full "$work/integration-rollback.cil" "$work/integration-rollback.full"
+equal "$work/fork-reference.full" "$work/integration-rollback.full"
+
+run_integration capture
+cp -a "$work/fresh/var/lib/selinux/targeted/active/modules/100/." \
+    "$work/fedora/var/lib/selinux/targeted/active/modules/100/"
+rpm2cpio "$fedora" | cpio --quiet -i --to-stdout ./var/lib/selinux/targeted/active/policy.kern \
+    > "$work/fedora/var/lib/selinux/targeted/active/policy.kern"
+run_integration stage
+run_integration finish
+compiled "$work/fedora" "$work/integration-reupgrade.cil"
+normalize full "$work/integration-reupgrade.cil" "$work/integration-reupgrade.full"
+equal "$work/reupgrade.full" "$work/integration-reupgrade.full"
+disabled "$work/fedora" > "$work/disabled.integration"
+equal "$work/fedora.disabled" "$work/disabled.integration"
+hll_hashes "$work/fedora" > "$work/fedora.hll.integration"
+equal "$work/fedora.hll.before" "$work/fedora.hll.integration"
+
+printf '%s\n' 'Refuse an unrelated same-name module without replacing its content.'
+compose "$work/fedora" "$work/integration-reupgrade.cil"
+cp "$work/uke_kernel_compat.cil" "$work/managed.cil"
+sed '1s/.*/; unrelated fixture module/' "$work/managed.cil" > "$work/uke_kernel_compat.cil"
+run_semodule "$work/fedora" -X 400 -i "$work/uke_kernel_compat.cil"
+sha256sum "$work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat/hll" > "$work/foreign.before"
+if run_integration stage > "$work/refusal.log" 2>&1; then
+    echo 'Foreign module was accepted' >&2; exit 1
+fi
+grep -q 'not Control-managed' "$work/refusal.log"
+sha256sum "$work/fedora/var/lib/selinux/targeted/active/modules/400/uke_kernel_compat/hll" > "$work/foreign.after"
+equal "$work/foreign.before" "$work/foreign.after"
+cp "$work/managed.cil" "$work/uke_kernel_compat.cil"
+run_semodule "$work/fedora" -X 400 -i "$work/uke_kernel_compat.cil"
+
 sha256sum "$work/composed.full" "$work/refreshed.full" "$work/reinstalled.full" \
     "$work/rollback.full" "$work/fork-reference.full" "$work/reupgrade.full" \
     | sed "s@$work/@@g" > "$result/store-representation.sha256"
-printf '%s\n' '{"offline_only":true,"targeted_store":true,"current_rgb_ssc_inputs":true,"disabled_bind_preserved":true,"stale_type_snapshot":true,"old_permission_records_equal":true,"reinstall_records_equal":true,"fork_first_rollback_equal":true,"original_reupgrade_equal":true,"original_hll_sources_unchanged":true,"device_policy_loaded":false,"actual_dnf_transaction":false}' > "$result/store-result.json"
+sha256sum "$work/integration-reinstall.full" "$work/integration-rollback.full" "$work/integration-reupgrade.full" \
+    | sed "s@$work/@@g" > "$result/integration-representation.sha256"
+printf '%s\n' '{"offline_only":true,"targeted_store":true,"current_rgb_ssc_inputs":true,"disabled_bind_preserved":true,"stale_type_snapshot":true,"old_permission_records_equal":true,"reinstall_records_equal":true,"fork_first_rollback_equal":true,"original_reupgrade_equal":true,"original_hll_sources_unchanged":true,"production_helper_offline_lifecycle":true,"prefab_replacement_snapshot":true,"foreign_module_refused":true,"device_policy_loaded":false,"actual_dnf_transaction":false}' > "$result/store-result.json"
 printf '%s\n' 'Private native module-store lifecycle passed; no host policy loaded. Actual RPM/DNF ordering remains a separate gate.'

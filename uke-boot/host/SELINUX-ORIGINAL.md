@@ -104,3 +104,32 @@ store operations,no host load or device DNF transaction. Production RPM hooks,
 pre-update snapshots and the supported original-provider delivery still need
 qualification. Current DNF configuration reports allow_vendor_change=1;an
 assumed mandatory vendor override is not the device's current setting.
+
+Actual11317989/release5 succeeds in325s. SRPMe43a7ecd/spece0af8e98 and six code/
+data files,three binary pins,RGBpp/SSCcil and accompanying MIT sources match.
+Signed report8d83cd11 passes both trusted signatures/digests. Original-base/
+linked-input separation and optional stale references retain all earlier gates.
+The real private store preserves disabled bind,all original100 HLL bytes and
+full records through install/refresh/reinstall,fork-first rollback and original
+reupgrade. Composed/refreshed/reinstall/reupgrade hashes are3ba98da2;rollback/
+fork-reference184ed1a5. Non-root ownership warnings do not establish root file
+ownership parity. No host policy is loaded or report RPM installed. The next
+work is existing Control integration,Core dependency closure,RPM ordering,
+normal signed DNF and device checks,then recovery/source closure and producer
+retirement. Kernel25,boot,stable,charging and speaker limits are unchanged.
+
+The candidate integration now lives under existing Control's SELinux packaging.
+The composer gains only a managed-owner comment;its two-input optional-rule
+logic is unchanged. A demand-only shell helper captures pre-update policy data,
+stages two no-reload links,refreshes from the actual resulting store,and forces
+final rebuild before reloading only the live root's selected policy. Alternate
+roots always remain no-reload. Original base100 files are read,not overwritten.
+Unknown same-name modules or priorities are refused;only Control-marked400
+state can be replaced or removed on native base adoption. No service/timer,
+new runtime RPM,hardware operation or desktop policy is introduced.
+
+The next private-store test invokes this exact helper for capture/stage/finish,
+replaces RPM-owned policy.kern as an update would,checks reinstall/fork-first
+rollback/reupgrade,retains disabled bind/original HLL records and rejects a
+foreign same-name module without changing it. RPM hooks and actual device
+checks remain separate. This source candidate is not installed on the device.

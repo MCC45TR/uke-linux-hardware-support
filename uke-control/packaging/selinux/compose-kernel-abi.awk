@@ -76,7 +76,7 @@ END {
     if(!declared["memfd_file"])
         definitions[++nd]="(class memfd_file (execute_no_trans entrypoint))\n(classcommon memfd_file file)\n(classorder (unordered memfd_file))"
     if(bad) exit 1
-    print "; Experimental offline kernel compatibility composition; no policy load."
+    print "; uke-control managed kernel ABI compatibility v1"
     for(i=1;i<=nd;i++) print definitions[i]
     for(i=1;i<=nr;i++) {
         text=rules[i]
