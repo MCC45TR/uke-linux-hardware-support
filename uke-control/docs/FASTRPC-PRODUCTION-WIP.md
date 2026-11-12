@@ -19,6 +19,11 @@ reseeding from factory persist. Refresh config/plugin/SoC through the existing
 atomic publication path. A warm new generation owns subsequent changes and
 must never be overwritten from stale legacy state. Keep the accepted old RAM
 generation during qualification and signed rollback; create no disk backup.
+Keep the mount across ordinary cache/provider stop-start cycles, preserving
+the existing warm-generation lifetime. Unmount only through shutdown or a
+qualified explicit removal/rollback. Automatic StopWhenUnneeded unmounting
+would discard that RAM generation and is disabled. The cache unit must verify
+the mount's tmpfs/noswap contract before the helper runs.
 
 The new project source is derived from the exact SSC32 GPL-3.0-or-later cache
 helper, SHA256 b135389fb30f54ea632db23f6bb1a0a5bd99cb399e19fd74725a791c68bf0afc.

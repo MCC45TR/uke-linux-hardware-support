@@ -2,10 +2,13 @@
 Description=Private non-swappable Uke SSC cache
 ConditionFirmware=device-tree-compatible(xiaomi,uke)
 Before=uke-ssc-cache.service
-StopWhenUnneeded=yes
+# Cache restarts must retain the warm disposable registry until shutdown or
+# an explicit qualified package removal/rollback, as with RuntimeDirectoryPreserve.
+StopWhenUnneeded=no
 
 [Mount]
 What=tmpfs
 Where=/run/uke-ssc/fedora
 Type=tmpfs
+DirectoryMode=0700
 Options=size=16M,nr_inodes=1024,mode=0700,noswap,nosuid,nodev,noexec

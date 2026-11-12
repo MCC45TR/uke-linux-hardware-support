@@ -22,7 +22,9 @@
     "where": "/run/uke-ssc/fedora",
     "tmpfs_limit_bytes": 16777216,
     "noswap": true,
-    "unit_name_escaped_by_systemd": true
+    "unit_name_escaped_by_systemd": true,
+    "keep_warm_generation_across_cache_restart": true,
+    "cache_unit_must_verify_tmpfs_noswap": true
   },
   "source_assets": [
     {
@@ -35,11 +37,11 @@
     },
     {
       "path": "uke-control/src/fastrpc/run-uke\\x2dssc-fedora.mount",
-      "sha256": "d923bffce8511e8ff74b57c5ee4160bbf3faa2cb3505540c73eeefda28d223a1"
+      "sha256": "6b30b78f4e63059166722333cc9d260d8f7e04819042057813285786014691f0"
     },
     {
       "path": "uke-control/docs/FASTRPC-PRODUCTION-WIP.md",
-      "sha256": "2db327d4583260269d1e00d94a9e207d203a4f4cfe8a8e0b9a925bc24a246b72"
+      "sha256": "3777fc2e06e850e1cedf7e445d698b0858112ae66df84f545a7346654a068bd3"
     }
   ]
 }
