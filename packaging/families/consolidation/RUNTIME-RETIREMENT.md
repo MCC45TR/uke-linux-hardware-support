@@ -72,3 +72,24 @@ verified recovery assets. Producer/API/refreshed-metadata closure is recorded
 separately after deletion. Device Uke names fall27 to25;these counts do not
 establish physical accessory,TEE,input,lights,suspend or whole-goal acceptance.
 Gain223 and the original Fedora UPower/AccountsService returns remain retained.
+
+The two standalone producers3275801/3276016 now return404. Their deletion
+also removes associated builds11260266(auth3/custom),11263799(auth4) and
+11263811(desktop5);no second build deletion is sent for already absent handles.
+Superseded Control13/11316177 is deleted separately after its source and
+qualification archive readback. The historical auth3 source and concise
+retirement records have three additional public readbacks.
+
+Checksummed refreshed primary metadata has816 package records and no pogo,
+superseded13,UPower or AccountsService fork outputs. The configured repository's
+781 rows confirm the same absence;accepted12 and current14 retain their three
+runtime outputs. A complete25-producer/25-installed-Uke-name inventory has
+no unknown source or producer. Control's producer3266603 pins the exact
+qualified777add14 worker and build dependencies,with automatic rebuilds
+disabled and a successful-NVR guard. The later retirement-policy commits do
+not rebuild the accepted version.
+
+A ten-second live desktop-helper sample reports zero CPU time added and zero
+swap use. ADSP/WPSS remain running with crash counts0;CDSP stays offline/crash0.
+Protected calibration remains local and read-only. Hardware wakeups,cold boot,
+secure-world authentication and physical accessory acceptance remain open.

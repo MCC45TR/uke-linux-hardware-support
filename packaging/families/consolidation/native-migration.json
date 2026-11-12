@@ -222,10 +222,11 @@
         "quic-teec",
         "libinput"
       ],
-      "remaining_work": "Control2.17.0-14 owns the retained authentication client and standard system unit;original Fedora QCOMTEE/libcbor replaces embedded QCOMTEE/QCBOR while the original MINK adapter remains necessary. Exact board/TA/protocol and kernel bridge ownership remain. Native callbacks/event/stop tests,normal signed DNF,reinstall,signed Control12+auth4+desktop5 rollback/reupgrade and fresh profiles pass. Retire the redundant source after archive closure. Physical attach/authentication,input,pointer,lights and suspend remain unverified;do not claim hardware acceptance.",
+      "remaining_work": "Control2.17.0-14 owns the retained authentication client and standard system unit;original Fedora QCOMTEE/libcbor replaces embedded QCOMTEE/QCBOR while the original MINK adapter remains necessary. Exact board/TA/protocol and kernel bridge ownership remain. Native callbacks/event/stop tests,normal signed DNF,reinstall,signed Control12+auth4+desktop5 rollback/reupgrade and fresh profiles pass. The redundant producer and all old outputs are retired after public archive and supported DNF closure. Physical attach/authentication,input,pointer,lights and suspend remain unverified;do not claim hardware acceptance.",
       "retirement_eligible": false,
       "runtime_provider_retired": true,
-      "provider_source": "uke-control"
+      "provider_source": "uke-control",
+      "producer_retired": true
     },
     {
       "id": "pogo-session",
@@ -244,7 +245,8 @@
       "remaining_work": "Control14 owns the unchanged desktop C++,user unit,autostart and udev rules using original UPower/PowerDevil. Qt is conditional on PowerDevil;system attachment admission uses the native helper. Normal DNF,reinstall and old-provider rollback/reupgrade preserve states and refresh the live helper automatically;original PowerDevil remains untouched. Preserve per-session settings and complete physical accessory/input/light/suspend acceptance.",
       "retirement_eligible": false,
       "runtime_provider_retired": true,
-      "provider_source": "uke-control"
+      "provider_source": "uke-control",
+      "producer_retired": true
     },
     {
       "id": "firmware",

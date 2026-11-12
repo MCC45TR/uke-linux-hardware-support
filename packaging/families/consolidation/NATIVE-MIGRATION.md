@@ -3,8 +3,8 @@
 12 November checkpoint: Control14 owns the two pogo helpers after signed DNF,
 real reinstall and old-provider rollback/reupgrade. Original Fedora QCOMTEE
 replaces embedded QCOMTEE/QCBOR;UPower and AccountsService also use original
-Fedora packages. There are25 installed Uke names;producer retirement and the
-remaining sensor,graphics,firmware,kernel/DT and physical gates stay separate.
+Fedora packages. There are25 installed Uke names and25 mapped main producers after retirement.
+The remaining sensor,graphics,firmware,kernel/DT and physical gates stay open.
 See [runtime retirement](RUNTIME-RETIREMENT.md) and the current inventory.
 The dated11November baseline below is historical.
 
