@@ -1,0 +1,28 @@
+[Unit]
+Description=Prepare the private Uke sensor cache in non-swappable RAM
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+Requires=run-uke\x2dssc-fedora.mount
+After=run-uke\x2dssc-fedora.mount
+RequiresMountsFor=/mnt/vendor/persist
+Before=uke-ssc-root.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecCondition=/usr/bin/findmnt --mountpoint /mnt/vendor/persist --options ro --noheadings
+ExecCondition=/usr/bin/findmnt --mountpoint /run/uke-ssc/fedora --types tmpfs --options noswap --noheadings
+ExecStart=/usr/libexec/uke-ssc-cache
+RuntimeDirectory=uke-ssc
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/mnt/vendor/persist
+ReadWritePaths=/run/uke-ssc
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+NoNewPrivileges=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_UNIX
+MemorySwapMax=0
+LimitCORE=0

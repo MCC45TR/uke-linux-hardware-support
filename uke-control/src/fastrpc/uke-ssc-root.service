@@ -1,0 +1,45 @@
+[Unit]
+Description=Uke ADSP root session with the original Fedora FastRPC listener
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/dev/fastrpc-adsp
+BindsTo=dev-fastrpc\x2dadsp.device
+After=dev-fastrpc\x2dadsp.device
+Requires=uke-ssc-cache.service
+After=uke-ssc-cache.service
+Before=uke-ssc-sensors.service iio-sensor-proxy.service
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/bin/flock --shared --no-fork /run/uke-ssc/registry.lock /usr/libexec/uke-control/fastrpc-session root
+Environment=UKE_FASTRPC_NOTIFY=listener-v1 LD_PRELOAD=/usr/lib64/uke-control/libuke-fastrpc-notify.so ADSP_LIBRARY_PATH=/usr/lib/qcom/adsp
+RootDirectory=/usr/share/uke-control/fastrpc-root
+WorkingDirectory=/
+BindReadOnlyPaths=/usr/lib64 /usr/lib/ld-linux-aarch64.so.1 /usr/bin/flock /usr/libexec/uke-control/fastrpc-session /run/systemd/notify /run/uke-ssc/fedora/state/sensors/config:/vendor/etc/sensors/config /run/uke-ssc/fedora/state/sensors/config:/odm/etc/sensors/config /run/uke-ssc/fedora/state/sensors/sns_reg.conf:/vendor/etc/sensors/sns_reg_config /run/uke-ssc/fedora/state/dsp/adsp:/usr/lib/qcom/adsp /run/uke-ssc/fedora/state/socinfo:/sys/devices/soc0
+BindPaths=/run/uke-ssc/fedora/state/sensors/persist:/persist/sensors/registry /run/uke-ssc/fedora/registry.lock:/run/uke-ssc/registry.lock /dev/fastrpc-adsp /dev/dma_heap/system
+ReadWritePaths=/persist/sensors/registry /run/uke-ssc/registry.lock
+TemporaryFileSystem=/sys:ro /proc:ro
+MountAPIVFS=no
+PrivateMounts=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+MemoryDenyWriteExecute=yes
+MemorySwapMax=0
+DevicePolicy=closed
+DeviceAllow=/dev/fastrpc-adsp rw
+DeviceAllow=/dev/dma_heap/system rw
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=10
+TimeoutStopFailureMode=terminate
+LimitCORE=0
+StandardOutput=null
+StandardError=null

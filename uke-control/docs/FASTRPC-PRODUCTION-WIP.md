@@ -1,7 +1,7 @@
 # Original Fedora FastRPC production transition in preparation
 
-Source work only,12 November2026. No production recipe, native build or RPM
-installation is claimed by this document. Control2.17.0-6 remains the accepted
+Source candidate only,12 November2026. The Control2.17.0-7 recipe is prepared;
+no native build or RPM installation is claimed. Control2.17.0-6 remains the accepted
 provider. Bounded live trial72f8f069 qualifies prerequisites, not the complete
 transition.
 
@@ -34,11 +34,28 @@ reader refusal, modes/incomplete/symlink refusals, unchanged factory input,
 parent metadata and independent warm refresh. Run it and all existing cache
 tests in COPR, never with the tablet compiler.
 
-Remaining implementation: production root/sensor units and static RootDirectory,
-mount/cache ordering and namespace flags, refresh trigger/state transitions,
-actual Control6 recipe inversion and unchanged-source closure, removal of the
-legacy protocol ELF from runtime, native tests, signed RPM audit, DNF upgrade,
+Prepared source includes production root/sensor/cache units and a static
+RootDirectory buildroot-data helper. The units retain the qualified private
+namespace/device boundaries, require the cache mount, verify its tmpfs/noswap
+contract and use the original Fedora listener through existing Control helpers.
+All four units pass systemd-analyze verify on the current target, without
+installation or activation. Static root staging contains empty mount targets
+and fixed internal aliases only; it copies no binaries or private inputs.
+
+The candidate recipe preserves all60 actual Control6 source files and adds one
+provider archive. Complete recipe reversal and the existing5-unit state and16
+refresh-cascade fixtures pass as data-only checks. Runtime installation of the
+legacy protocol ELF is removed; the cumulative historical regression sources
+and checks remain. The cache binary is rebuilt from the new project source;
+the original Fedora libraries and existing Control session/notification helpers
+are unchanged. The static root's8 empty targets use private non-executable0600
+modes so RPM can read its empty payload during package construction.
+
+Remaining qualification: actual COPR source closure and native tests, mount
+removal/downgrade lifecycle, signed RPM audit, DNF upgrade,
 fresh/reinstall/archived6 rollback and measured runtime/physical gates. Preserve
+fresh-boot original-provider acceptance separately from warm live attachment.
+Preserve
 all existing Control features, output names, enable/mask preferences, cache
 recovery and accepted kernel/recovery. Do not retire the working provider on
 the strength of unbuilt source.

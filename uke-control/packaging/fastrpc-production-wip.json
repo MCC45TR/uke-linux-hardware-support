@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "date": "2026-11-12",
-  "state": "source-in-preparation",
-  "production_recipe_complete": false,
+  "state": "production-candidate-source-prepared-native-pending",
+  "production_recipe_complete": true,
   "native_executed": false,
   "installed": false,
   "new_runtime_packages": 0,
@@ -36,12 +36,47 @@
       "sha256": "6faa81f897f6fb8d8c2f9a180a75b96d35b0c96c960fc5fceb6c769ae122ef4e"
     },
     {
+      "path": "uke-control/packaging/stage-fastrpc-root.sh",
+      "sha256": "cbffc2c545928b74a018aae1d37a4d9d8de448f82022fbede704a5d3958da558"
+    },
+    {
+      "path": "uke-control/packaging/check-fastrpc-provider.sh",
+      "sha256": "cfaf4f03cf3db0ab74412496e725904069ea58b6e30942134b0cc36a9c48c6ef"
+    },
+    {
+      "path": "uke-control/packaging/fold-fastrpc-provider-spec.mjs",
+      "sha256": "86657126df8d0c7c7a96d27962ae1e17589c142c4d6de3774f4ffaba2522ebe3"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-fastrpc-provider.sh",
+      "sha256": "5386d0fa3cf159e5acc107e81d9c86df12ea9ea5438d481adf9e5ea2ac27ae24"
+    },
+    {
+      "path": "uke-control/docs/FASTRPC-PROVIDER.md",
+      "sha256": "0302f3ffad0b078fe3fb70966d0ab6e738517cc5cd443baae2564ee451bce619"
+    },
+    {
       "path": "uke-control/src/fastrpc/run-uke\\x2dssc-fedora.mount",
       "sha256": "6b30b78f4e63059166722333cc9d260d8f7e04819042057813285786014691f0"
     },
     {
+      "path": "uke-control/src/fastrpc/uke-ssc-cache.service",
+      "sha256": "0896d0e139bb70e81eca755380485409b7f77910478cfd61ed58f5f310a5ee09"
+    },
+    {
+      "path": "uke-control/src/fastrpc/uke-ssc-root.service",
+      "sha256": "6eac78761696b95a245f71e293e4ea9cb7b60ecac9dfa6bac9ee552a3a39a197"
+    },
+    {
+      "path": "uke-control/src/fastrpc/uke-ssc-sensors.service",
+      "sha256": "f8e2056c347bd8e44da02e89aeedb292860a0539813eace3bb0d998cca649f16"
+    },
+    {
       "path": "uke-control/docs/FASTRPC-PRODUCTION-WIP.md",
-      "sha256": "3777fc2e06e850e1cedf7e445d698b0858112ae66df84f545a7346654a068bd3"
+      "sha256": "599c939a3ca13db7cd37d9a332d7071f5810284c0c790d490a41524c22d4de29"
     }
-  ]
+  ],
+  "production_recipe_sha256": "88be8787393288f95eada7918318d3b1a329525ec1ebb4f280a5d027ffbc73c9",
+  "production_units_parse_on_target": true,
+  "static_root_data_only_verified": true
 }
