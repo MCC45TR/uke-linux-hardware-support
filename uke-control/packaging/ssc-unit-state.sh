@@ -4,14 +4,14 @@ set -eu
 set -f
 export LC_ALL=C
 state_dir=/run/uke-control-ssc-migration
-units='uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service iio-sensor-proxy.service'
+units='uke-ssc-cache.service uke-ssc-root.service uke-ssc-sensors.service iio-sensor-proxy.service uke-adaptive-display.target'
 [ "$(/usr/bin/id -u)" = 0 ] || exit 1
 [ -d /run/systemd/system ] || exit 0
 valid_enabled() {
     case "$1" in enabled|enabled-runtime|disabled|static|indirect|masked|masked-runtime) return 0;; *) return 1;; esac
 }
 valid_unit() {
-    case "$1" in uke-ssc-cache.service|uke-ssc-root.service|uke-ssc-sensors.service|iio-sensor-proxy.service) return 0;; *) return 1;; esac
+    case "$1" in uke-ssc-cache.service|uke-ssc-root.service|uke-ssc-sensors.service|iio-sensor-proxy.service|uke-adaptive-display.target) return 0;; *) return 1;; esac
 }
 enabled_state() {
     value=$(/usr/bin/systemctl is-enabled "$1" 2>/dev/null) || :
@@ -20,8 +20,11 @@ enabled_state() {
 }
 case "$phase" in
 save)
-    old=$(/usr/bin/rpm -q --qf '%{NAME}' uke-ssc-fileservice 2>/dev/null) || exit 0
-    [ "$old" = uke-ssc-fileservice ] || exit 0
+    old=$(/usr/bin/rpm -q --qf '%{NAME}' uke-ssc-fileservice 2>/dev/null) || old=''
+    if [ "$old" != uke-ssc-fileservice ];then
+        old=$(/usr/bin/rpm -qf --qf '%{NAME}' /usr/lib/systemd/system/uke-ssc-root.service 2>/dev/null) || exit 0
+        [ "$old" = uke-control ] || exit 0
+    fi
     [ ! -e "$state_dir" ] && [ ! -L "$state_dir" ] || exit 1
     snapshot=''
     for unit in $units;do
@@ -49,10 +52,10 @@ restore)
     [ "$(/usr/bin/wc -c < "$record")" -le 1024 ] || exit 1
     /usr/bin/awk '
       NR==1 {if(NF!=2 || $1!="v1" || $2!~/^[0-9]+$/)exit 1;next}
-      {if(NF!=3 || seen[$1]++ || $1!~/^(uke-ssc-(cache|root|sensors)|iio-sensor-proxy)[.]service$/ ||
+      {if(NF!=3 || seen[$1]++ || $1!~/^((uke-ssc-(cache|root|sensors)|iio-sensor-proxy)[.]service|uke-adaptive-display[.]target)$/ ||
           $2!~/^(active|inactive|failed)$/ || $3!~/^(enabled|enabled-runtime|disabled|static|indirect|masked|masked-runtime)$/ ||
           ($2=="active" && $3~/^masked/))exit 1;n++}
-      END{if(NR!=5 || n!=4)exit 1}' "$record" || exit 1
+      END{if(NR!=6 || n!=5)exit 1}' "$record" || exit 1
     timestamp=$(/usr/bin/awk 'NR==1{print $2}' "$record")
     now=$(/usr/bin/date +%s)
     [ "$timestamp" -le "$now" ] && [ "$((now-timestamp))" -le 3600 ] || exit 1

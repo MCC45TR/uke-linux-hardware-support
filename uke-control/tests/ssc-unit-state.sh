@@ -35,6 +35,10 @@ else exec /usr/bin/stat "$@";fi
 STAT
 cat > "$work/bin/rpm" <<'RPM'
 #!/usr/bin/bash
+if [[ $1 == -qf ]];then
+ [[ ${UKE_SSC_OWNER_CONTROL:-no} == yes ]] || exit 1
+ printf 'uke-control';exit 0
+fi
 [[ ${UKE_SSC_OLD:-yes} == yes ]] || exit 1
 printf 'uke-ssc-fileservice'
 RPM
@@ -44,10 +48,10 @@ set -Eeuo pipefail
 printf '%s\n' "$*" >> "$UKE_SSC_CALLS"
 case $1 in
  is-enabled)
-  case $2 in uke-ssc-cache.service|uke-ssc-root.service|uke-ssc-sensors.service|iio-sensor-proxy.service) :;; *) exit 91;; esac
+  case $2 in uke-ssc-cache.service|uke-ssc-root.service|uke-ssc-sensors.service|iio-sensor-proxy.service|uke-adaptive-display.target) :;; *) exit 91;; esac
   if [[ ${UKE_SSC_PHASE:-save} == restore ]];then printf '%s\n' "${UKE_SSC_CURRENT_STATE:-disabled}"
   else printf '%s\n' "${UKE_SSC_SAVED_STATE:-disabled}";fi;;
- show) case ${*: -1} in uke-ssc-cache.service|uke-ssc-root.service|uke-ssc-sensors.service|iio-sensor-proxy.service) :;; *) exit 92;; esac;printf '%s\n' "${UKE_SSC_SAVED_ACTIVE:-inactive}";;
+ show) case ${*: -1} in uke-ssc-cache.service|uke-ssc-root.service|uke-ssc-sensors.service|iio-sensor-proxy.service|uke-adaptive-display.target) :;; *) exit 92;; esac;printf '%s\n' "${UKE_SSC_SAVED_ACTIVE:-inactive}";;
  daemon-reload|--no-reload|start) :;;
  *) exit 93;;
 esac
@@ -72,12 +76,15 @@ for enabled in enabled enabled-runtime disabled static indirect masked masked-ru
    masked-runtime) grep -Fxq -- '--no-reload mask --runtime uke-ssc-root.service' "$work/calls";;
    disabled|static|indirect) ! grep -Eq '(enable|mask)' "$work/calls";;
   esac
-  if [[ $active == active ]];then [[ $(grep -c '^start ' "$work/calls") == 4 ]];grep -Fxq 'start uke-ssc-root.service' "$work/calls";else ! grep -Fxq 'start uke-ssc-root.service' "$work/calls";fi
+  if [[ $active == active ]];then [[ $(grep -c '^start ' "$work/calls") == 5 ]];grep -Fxq 'start uke-ssc-root.service' "$work/calls";else ! grep -Fxq 'start uke-ssc-root.service' "$work/calls";fi
  done
 done
 bash "$work/RESTORE"
 UKE_SSC_OLD=no bash "$work/SAVE"
 [[ ! -e $work/state ]]
+UKE_SSC_OLD=no UKE_SSC_OWNER_CONTROL=yes bash "$work/SAVE"
+[[ $(wc -l < "$work/state/units") == 6 ]]
+UKE_SSC_PHASE=restore bash "$work/RESTORE"
 UKE_SSC_SAVED_STATE=enabled UKE_SSC_SAVED_ACTIVE=active bash "$work/SAVE"
 : > "$work/calls"
 UKE_SSC_PHASE=restore UKE_SSC_CURRENT_STATE=masked bash "$work/RESTORE"
@@ -110,4 +117,4 @@ for alteration in foreign duplicate malformed future stale mode hardlink symlink
  rmdir "$work/state"
 done
 ! grep -Fq uke-battery.service "$work/RESTORE"
-printf 'SSC four-unit migration: seven enable states,active/inactive,new masks,fresh/idempotent and malformed/link/stale/transition refusals pass;fake systemd only.\n'
+printf 'SSC five-unit migration: seven enable states,active/inactive,new masks,fresh/idempotent and malformed/link/stale/transition refusals pass;fake systemd only.\n'

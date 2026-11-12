@@ -9,9 +9,21 @@ consumer ordering are preserved. Runtime paths, private RAM registry, shared
 reader lock, atomic refresh, read-only persist and native-label copy remain.
 The old RPM name and OEM-defaults capability are provided virtually by Control.
 DNF obsoletes only the old SSC package; Core and Adaptive dependencies remain
-satisfied. Four unit states are saved before the ownership transaction and
+satisfied. Five unit states are saved before the ownership transaction and
 restored afterward in dependency order without enabling a disabled service.
 New explicit masks take precedence. Invalid or stale snapshots are refused.
+The Adaptive target is a dependent consumer and is restored last. Cache
+refresh also snapshots its active state and restores it after successful SSC
+restart, while respecting a new mask and never enabling an inactive target.
+
+Control5 passed source, native and payload checks, but its target DNF test
+exposed a missing dependent: SSC/proxy restarts stopped the active, disabled
+Adaptive target. Starting that already active target restored the device
+state. Control6 expands the state set from four to five units, covers upgrades
+where Control already owns SSC, and adds 16 simulated dependency-cascade
+cases plus refresh-failure refusal. The five-unit state matrix remains a
+separate gate. This correction needs a new signed RPM and target DNF check;
+the one-time restoration is not a distributable fix.
 
 The current protocol helper remains a temporary compatibility provider because
 the original Fedora library has not yet passed complete live namespace,
