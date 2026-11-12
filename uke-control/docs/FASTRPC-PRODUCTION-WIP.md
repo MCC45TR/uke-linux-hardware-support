@@ -1,6 +1,6 @@
 # Original Fedora FastRPC production transition in preparation
 
-Source candidate only,12 November2026. The Control2.17.0-8 recipe is prepared;
+Source candidate only,12 November2026. The Control2.17.0-9 recipe is prepared;
 no native build or RPM installation is claimed. Control2.17.0-6 remains the accepted
 provider. Bounded live trial72f8f069 qualifies prerequisites, not the complete
 transition.
@@ -17,9 +17,17 @@ systemd262 manager_startup creates the runtime prefix before applying --root
 to unit lookup paths. A build-only C++ path interposer redirects only
 SD_PATH_SYSTEM_RUNTIME for the unchanged system analyzer. Its API probe checks
 the private prefix, unchanged forwarding of other path types, and failure when
-the scope is missing. The analyzer's dynamic import is checked. System scope,
+the scope is missing. The analyzer core library's dynamic import is checked. System scope,
 unit settings and the distribution binary remain unchanged; no runtime shim
 or altered systemd package is installed. The fixture compiles in COPR only.
+
+Candidate8/COPR11311317 also passes both cache fixtures, then fails at a silent
+qualification assertion before the complete parent checks. Its import gate
+incorrectly examines the main analyzer ELF. The same original Fedora262.2-1
+package on the target has the sd_path_lookup import in libsystemd-core, while
+the main executable imports that library. Candidate9 follows the loader's
+core-library path and adds named fixture phase diagnostics. Production source
+remains byte-identical; full unit-parser/interposer acceptance is still pending.
 
 Use the existing Control cache helper with a dedicated16MiB noswap tmpfs at
 /run/uke-ssc/fedora, mounted by a standard systemd mount unit. Keep hardware

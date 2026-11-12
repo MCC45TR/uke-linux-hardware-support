@@ -3,13 +3,13 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 const [path,contract]=process.argv.slice(2),m=JSON.parse(fs.readFileSync(contract));
 const before=fs.readFileSync(path,'utf8');
-assert.equal(m.result.version,'2.17.0-8');
+assert.equal(m.result.version,'2.17.0-9');
 assert.equal(crypto.createHash('sha256').update(before).digest('hex'),m.parent.spec_sha256);
 const split=before.indexOf('%changelog\n');assert(split>0);
 let body=before.slice(0,split);const history=before.slice(split);
 assert.equal(body.split('Release: 6%{?dist}\n').length,4);
 assert.equal((body.match(/2[.]17[.]0-6/g)||[]).length,12);
-body=body.replaceAll('Release: 6%{?dist}\n','Release: 8%{?dist}\n').replaceAll('2.17.0-6','2.17.0-8');
+body=body.replaceAll('Release: 6%{?dist}\n','Release: 9%{?dist}\n').replaceAll('2.17.0-6','2.17.0-9');
 const prep=`
 fastrpc_overlay=%{_builddir}/uke-control-fastrpc-provider
 mkdir "$fastrpc_overlay"
@@ -50,8 +50,8 @@ const applied=[];
 for(const [old,replacement]of changes){assert.equal(body.split(old).length,2,'Ambiguous provider delta');const next=replacement||`# UKE_FASTRPC_RETIRED_BLOCK_${applied.length}\n`;body=body.replace(old,()=>next);applied.push([old,next]);}
 let inverse=body;
 for(const [old,next]of applied.toReversed()){assert.equal(inverse.split(next).length,2,'Ambiguous provider inverse');inverse=inverse.replace(next,()=>old);}
-inverse=inverse.replaceAll('Release: 8%{?dist}\n','Release: 6%{?dist}\n').replaceAll('2.17.0-8','2.17.0-6');
+inverse=inverse.replaceAll('Release: 9%{?dist}\n','Release: 6%{?dist}\n').replaceAll('2.17.0-9','2.17.0-6');
 assert.equal(inverse+history,before,'Unrelated Control6 recipe changed');
-const entry='* Thu Nov 12 2026 Uke contributors - 2.17.0-8\n- Use original Fedora FastRPC through the existing Control session integration.\n- Preserve the accepted sensor registry when moving to private noswap RAM.\n- Retain source/native regression gates and remove the legacy protocol runtime.\n\n';
+const entry='* Thu Nov 12 2026 Uke contributors - 2.17.0-9\n- Use original Fedora FastRPC through the existing Control session integration.\n- Preserve the accepted sensor registry when moving to private noswap RAM.\n- Retain source/native regression gates and remove the legacy protocol runtime.\n\n';
 fs.writeFileSync(path,body+history.replace('%changelog\n',()=>'%changelog\n'+entry));
-console.log('Control8:whole Control6 recipe inverse passed;only declared provider/cache/namespace/packaging deltas.');
+console.log('Control9:whole Control6 recipe inverse passed;only declared provider/cache/namespace/packaging deltas.');

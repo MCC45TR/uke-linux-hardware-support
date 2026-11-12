@@ -12,9 +12,12 @@ mkdir -p "$work"/{src,tests,units,fixtures}
 install -m644 "$overlay/src/ssc-cache.cpp" "$work/src/ssc-cache.cpp"
 install -m644 "$parent/inputs/ssc-cache-test.cpp" "$work/tests/cache-parent.cpp"
 install -m644 "$overlay/tests/ssc-cache-migration.cpp" "$work/tests/cache-migration.cpp"
+printf 'Provider phase:compile-cache-fixtures\n'
 g++ -std=c++20 -O2 -Wall -Wextra -Werror -UNDEBUG "$work/tests/cache-parent.cpp" -o "$work/cache-parent"
 g++ -std=c++20 -O2 -Wall -Wextra -Werror -UNDEBUG "$work/tests/cache-migration.cpp" -o "$work/cache-migration"
+printf 'Provider phase:parent-cache-regression\n'
 "$work/cache-parent" "$work/fixtures/parent"
+printf 'Provider phase:registry-migration\n'
 "$work/cache-migration" "$work/fixtures/migration"
 cp "$overlay/src/fastrpc/"* "$work/units/"
 # Only the uninstalled cache binary's executable path is relocated for offline
@@ -33,14 +36,20 @@ g++ -std=c++17 -O2 -Wall -Wextra -Werror -fPIC -shared \
 mkdir -m700 "$work/verify-runtime"
 g++ -std=c++17 -O2 -Wall -Wextra -Werror "$overlay/tests/systemd-verify-runtime-probe.cpp" \
  $(pkg-config --cflags --libs libsystemd) -o "$work/runtime-probe"
-readelf --wide --dyn-syms /usr/bin/systemd-analyze | grep -E 'UND sd_path_lookup@' > "$work/analyzer-lookup-import.txt"
+printf 'Provider phase:analyzer-core-import\n'
+analyzer_core=$(ldd /usr/bin/systemd-analyze | awk '$1~/^libsystemd-core-/ && $2=="=>" && $3~/^\//{print $3}')
+[[ -n $analyzer_core && -f $analyzer_core ]]
+readelf --wide --dyn-syms "$analyzer_core" | grep -E 'UND sd_path_lookup@' > "$work/analyzer-lookup-import.txt"
 [[ -s $work/analyzer-lookup-import.txt ]]
+printf 'Provider phase:runtime-prefix-api-probe\n'
 original_state_path=$("$work/runtime-probe" state)
 [[ $(UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so" "$work/runtime-probe" runtime) == "$work/verify-runtime" ]]
 [[ $(UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so" "$work/runtime-probe" state) == "$original_state_path" ]]
 if env --unset=UKE_VERIFY_RUNTIME LD_PRELOAD="$work/libverify-runtime.so" "$work/runtime-probe" runtime > "$work/missing-runtime.log" 2>&1;then exit 1;fi
+printf 'Provider phase:original-system-analyzer\n'
 UKE_VERIFY_RUNTIME="$work/verify-runtime" LD_PRELOAD="$work/libverify-runtime.so" \
  systemd-analyze --generators=no --man=no verify "$work/units/"*
+printf 'Provider phase:installed-static-root\n'
 [[ ! -e $buildroot/usr/libexec/uke-hexagonrpcd ]]
 [[ -x $buildroot/usr/libexec/uke-ssc-cache ]]
 [[ $(find "$buildroot/usr/lib/systemd/system" -maxdepth 1 -name 'run-uke*.mount' -type f | wc -l) == 1 ]]
