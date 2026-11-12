@@ -12,7 +12,7 @@
     "cause": "Late BindPaths reset clears both writable and readonly lists",
     "automatic_restore": true
   },
-  "live_trial": 3,
+  "live_trial": 4,
   "real_root_and_sensors_ready": true,
   "original_library_process_maps_verified": true,
   "stationary_legacy_fedora_and_restarted_dimensions_equal": true,
@@ -40,17 +40,18 @@
   "private_or_raw_sample_bytes_retained": false,
   "provider_permanently_changed": false,
   "new_runtime_packages": 0,
-  "table_native_compilation": false,
   "suspend_resume_qualified": false,
   "physical_accuracy_qualified": false,
   "source_assets": [
     {
       "path": "uke-control/tests/fastrpc-live-trial.sh",
-      "sha256": "385ae4c5d5a1fafa205fc22645c9b34a1ca778fa25ea0666b4bf7c71a4098675"
+      "sha256": "9adae5f5afa9699ef17b99eabfc7fa3d13c1b0440e9f1479a52970ed3b3310fa"
     },
     {
       "path": "uke-control/docs/FASTRPC-LIVE-TRIAL.md",
-      "sha256": "a7207dd36c397ab42f187ce884342e5ad20665c7d155e8fbe9933215911f2d54"
+      "sha256": "2670a3a29dc94a9191c4ef64329f8dbca63544f9761daaea042d8c962169679e"
     }
-  ]
+  ],
+  "owned_empty_dropin_directories_removed": true,
+  "tablet_native_compilation": false
 }

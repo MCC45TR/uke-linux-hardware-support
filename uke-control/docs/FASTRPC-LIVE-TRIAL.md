@@ -62,6 +62,13 @@ transition, dependency closure and signed DNF/reinstall/rollback are qualified.
 The legacy protocol remains a documented temporary exception inside Control;
 no extra runtime RPM is introduced.
 
+Trial4 repeats the accepted stationary/restart checks after adding ownership
+markers for newly created runtime drop-in directories. All checks pass and
+both owned empty directories are removed on recovery. Pre-existing directories
+are preserved. The initial non-root mount-unit parser check could not traverse
+those empty private directories; cleanup removes that limitation, and both
+root and subsequent non-root verification pass without permission changes.
+
 References:
 
 - [systemd262 execution settings](https://github.com/systemd/systemd/blob/v262/man/systemd.exec.xml),

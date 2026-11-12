@@ -47,6 +47,9 @@ restore() {
  systemctl stop "${consumers[@]}"
  for unit in uke-ssc-root.service uke-ssc-sensors.service; do
   rm -f -- "/run/systemd/system/$unit.d/90-$(basename "$work").conf"
+  if [[ -e $work/created-$unit-dropin ]]; then
+   rmdir -- "/run/systemd/system/$unit.d" 2>/dev/null || :
+  fi
  done
  systemctl daemon-reload
  systemctl reset-failed uke-ssc-root.service uke-ssc-sensors.service
@@ -168,7 +171,10 @@ mount -t tmpfs -o size=16M,nr_inodes=1024,mode=0700,noswap,nosuid,nodev,noexec t
 findmnt --mountpoint "$work/ram" --noheadings --output FSTYPE,OPTIONS > "$output/ram-options.txt"
 grep -Eq '^tmpfs[[:space:]].*(^|,)noswap(,|$)' "$output/ram-options.txt"
 for service in uke-ssc-root.service uke-ssc-sensors.service; do
- mkdir -p "/run/systemd/system/$service.d"
+ if [[ ! -d /run/systemd/system/$service.d ]]; then
+  mkdir "/run/systemd/system/$service.d"
+  touch "$work/created-$service-dropin"
+ fi
  [[ ! -e /run/systemd/system/$service.d/90-$unit.conf ]]
 done
 systemd-run --quiet --unit="$unit-recovery" --on-active=75s --timer-property=AccuracySec=1s \
