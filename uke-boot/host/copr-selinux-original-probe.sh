@@ -45,5 +45,5 @@ bash %{SOURCE0} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE1} %{buildroot}%{_datad
 %files
 %{_datadir}/%{name}/
 SPEC
-rpmbuild --define "_topdir $work" --define '_srcrpmdir %{_topdir}/SRPMS' -bs "$work/SPECS/probe.spec"
-cp "$work"/SRPMS/*.src.rpm "$result/"
+cp "$work/SPECS/probe.spec" "$result/"
+cp "$work"/SOURCES/* "$result/"
