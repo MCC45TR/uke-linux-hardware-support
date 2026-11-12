@@ -55,3 +55,15 @@ that source contract; job11316745 contains the exact unchanged policy probe.
 A follow-up also recognizes sediff's zero-count headers rather than expecting
 empty output, and emits stage markers. No result from the earlier observer is
 accepted merely because its process ran or produced a binary policy.
+
+Native11317363/release2 compiles both original-policy compositions within81s
+(total job) but SETools' complete semantic diff raises MemoryError under the
+1.5GiB bound. This is not a confinement mismatch or a pass. The follow-up uses
+a COPR-only C++ normalizer over checkpolicy's complete binary-policy CIL output.
+It flattens common permission layout,sorts only permission/type-member sets,
+retains Boolean branches,label sequence and every other statement,and compares
+complete records. A second comparison filters only the documented new class/
+permissions to check all existing Fedora45.24 records. Native fixtures and a
+real missing-firmware-grant mutant must reject altered records. This is strict
+representation equality,not an arbitrary semantic-equivalence solver. The
+normalizer is a build tool and is never installed in a runtime package.

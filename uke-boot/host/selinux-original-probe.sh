@@ -6,12 +6,13 @@ export LC_ALL=C
 # Keep policy experiments bounded on the default COPR worker. Resource refusal
 # is a failed qualification, never a reason to alter or load the device policy.
 ulimit -v 1572864
-[[ $# == 5 ]]
+[[ $# == 6 ]]
 baseline_srpm=$1
 fork_rpm=$2
 fedora_rpm=$3
 composer=$4
-result=$5
+canonical=$5
+result=$6
 mkdir -p "$result"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -33,26 +34,23 @@ done
 gawk -f "$composer" fork.cil > already-adopted.cil
 ! grep -q '^[[:space:]]*(' already-adopted.cil
 
-# Compare decisions by names, including Boolean conditions and transitions;
-# the common layout and permission numbers are deliberately different.
-differences=(--allow --auditallow --dontaudit --allowxperm --auditallowxperm
-    --dontauditxperm --type_trans --type_change --type_member --role_allow
-    --role_trans --range_trans --constrain --mlsconstrain --validatetrans
-    --mlsvalidatetrans --initialsid --fs_use --genfscon --netifcon --nodecon
-    --portcon --default --property --polcap --typebounds)
-printf '%s\n' 'Compare complete historical decisions by name and condition.'
-timeout -k 15s 300s sediff --stats "${differences[@]}" fork.35 baseline-compat.35 > "$result/fork-parity.txt"
-cat "$result/fork-parity.txt"
-# Explicitly selected sediff categories print zero-count headers too.
-# Require recognized, exclusively zero-count headers; reject unknown output.
-awk '
-    NF {
-        seen++
-        if ($0 !~ /^[[:alnum:] _]+ \(0 (Added|Removed|Modified)(, 0 (Added|Removed|Modified))*\)$/)
-            bad=1
-    }
-    END { exit bad || !seen }
-' "$result/fork-parity.txt"
+# Compare the complete decompiled representation without SETools' potentially
+# quadratic attribute-pair expansion. Flatten only common permission layout;
+# retain names, Boolean branches, label order and all other policy statements.
+normalize() {
+    timeout -k 15s 300s "$canonical" "$1" < "$2" | sort -u > "$3"
+}
+printf '%s\n' 'Compare complete historical policy representation.'
+checkpolicy -b -M -C -o baseline-linked.cil baseline-compat.35
+checkpolicy -b -M -C -o fedora-linked.cil fedora-compat.35
+normalize full fork.cil fork.full
+normalize full baseline-linked.cil baseline.full
+cmp fork.full baseline.full
+printf '%s\n' 'Complete historical normalized representation matches.' > "$result/fork-parity.txt"
+normalize old fedora.cil fedora.old
+normalize old fedora-linked.cil fedora-compat.old
+cmp fedora.old fedora-compat.old
+sha256sum fork.full baseline.full fedora.old fedora-compat.old > "$result/policy-representation.sha256"
 
 for item in baseline-compat fedora-compat; do
     seinfo --polcap -x "$item.35" | sort > "$item.cap"
@@ -82,8 +80,11 @@ sesearch --allow -s sshd_t -t sshd_t -c io_uring -p allowed fedora-compat.35 > q
 # Prove that the parity observer rejects removal of the firmware grant.
 sed '/^(allow kernel_t lib_t (system (firmware_load)))$/d' baseline-compat.cil > broken.cil
 timeout -k 15s 300s secilc -M true -c 35 -f /dev/null -o broken.35 baseline.cil broken.cil
-timeout -k 15s 300s sediff --allow fork.35 broken.35 > "$result/negative-control.txt"
-grep -q firmware_load "$result/negative-control.txt"
+checkpolicy -b -M -C -o broken-linked.cil broken.35
+normalize full broken-linked.cil broken.full
+! cmp -s fork.full broken.full
+sesearch --allow -s kernel_t -t lib_t -c system -p firmware_load broken.35 > "$result/negative-control.txt"
+! grep -q 'allow ' "$result/negative-control.txt"
 
 printf '%s\n' 'Check a synthetic partial original-policy adoption.'
 sed -e 's/^(class system (/\0firmware_load /' -e 's/^(class io_uring (/\0allowed /' fedora.cil > partial.cil
@@ -99,8 +100,7 @@ sesearch --allow -s unconfined_t -t unconfined_t -c io_uring -p allowed partial-
 sesearch --allow -s kernel_t -t lib_t -c system -p firmware_load partial-compat.35 > query
 ! grep -q 'allow ' query
 
-timeout -k 15s 300s sediff --allow fedora.35 fedora-compat.35 > "$result/fedora-delta.txt"
 sha256sum baseline-compat.cil fedora-compat.cil already-adopted.cil partial-compat.cil > "$result/compatibility.sha256"
 rpm -q checkpolicy secilc libsepol setools-console > "$result/tools.txt"
-printf '%s\n' '{"offline_only":true,"reference_rules":108,"historical_decision_parity":true,"fedora45_24_compiles":true,"bounded_grants_and_denials":7,"capabilities_and_permissive_unchanged":true,"negative_control":true,"derived_io_subjects":true,"synthetic_partial_and_full_adoption":true,"normal_dnf_transition":false,"future_base_runtime_adaptation":false,"device_installed":false}' > "$result/result.json"
+printf '%s\n' '{"offline_only":true,"reference_rules":108,"historical_normalized_representation_equal":true,"fedora_existing_permission_representation_equal":true,"fedora45_24_compiles":true,"bounded_grants_and_denials":7,"capabilities_and_permissive_unchanged":true,"negative_control":true,"derived_io_subjects":true,"synthetic_partial_and_full_adoption":true,"normal_dnf_transition":false,"future_base_runtime_adaptation":false,"device_installed":false}' > "$result/result.json"
 printf '%s\n' 'Offline class/common composition, derived subjects and historical decision parity passed; no policy loaded. Runtime store and DNF remain unqualified.'
