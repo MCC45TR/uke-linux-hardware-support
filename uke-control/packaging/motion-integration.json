@@ -15,7 +15,7 @@
     },
     {
       "path": "uke-control/packaging/motion.mk",
-      "sha256": "e0ec2c17c7718dbfda8ccd20dd1e4fbe14c5ceb24410b09755c2647bf61aab4c"
+      "sha256": "bfa9a615656d191b253540e85125c8992c3e44db939cc2e74f3a6c8526c31517"
     },
     {
       "path": "uke-control/packaging/org.senemos.Uke.Motion1.conf",
@@ -43,15 +43,19 @@
     },
     {
       "path": "uke-control/src/motion-iio.cpp",
-      "sha256": "8b9a577d3f15787d8b22089dba5778000984834335000de856e26f7b8af97b07"
+      "sha256": "21125fc3f034195729b9bdae04040ae2813ce848477e6392f6a6da0197304cdf"
+    },
+    {
+      "path": "uke-control/src/motion-journal.hpp",
+      "sha256": "9ede699f7d6458d84a9bc5f2a04949d05ee74d9e0a8db9f89a7f63ed5e8ae905"
     },
     {
       "path": "uke-control/src/motion-ownership.hpp",
-      "sha256": "b04baf0d46cb6eb3c8dead0c05fe03f2223dfee6e5a6e6184c982fe8d5082300"
+      "sha256": "21cdf055ed633f917056e0371b8550e77e6e34ec89f717531c3bb602b079e8b8"
     },
     {
       "path": "uke-control/src/motion-sample.hpp",
-      "sha256": "b15e89b01d80a123e87ef359e6a892e358352417ad30276e2af797c0e4b47b40"
+      "sha256": "7e47d3250964f450e15688109da8768c02de52e3c24fc91f86dce2c4bec32d24"
     },
     {
       "path": "uke-control/src/motion-service.cpp",
@@ -66,6 +70,10 @@
       "sha256": "c7d0081385a31607413624561904f7b9dfc0ed73c806a95c1fd2791d59ad6bd2"
     },
     {
+      "path": "uke-control/tests/motion-journal.cpp",
+      "sha256": "929d0d8b830a821b107b9534743f5f6608ac9c44841307d87025c053de9faee8"
+    },
+    {
       "path": "uke-control/tests/motion-ownership.cpp",
       "sha256": "e516806130555f34ae3702f51b0d06e5f0fc3611f56f3f70b12846fe7bf6f24e"
     },
@@ -75,7 +83,7 @@
     },
     {
       "path": "uke-control/tests/motion-sample.cpp",
-      "sha256": "a897d63680efb7180daf387f116fbcb137c6fb983a5da861c49e8536088ea2f0"
+      "sha256": "33e25edb171d599010489100c9a18157beaab9cf8981926514f1e7dc93d9ad3a"
     }
   ]
 }

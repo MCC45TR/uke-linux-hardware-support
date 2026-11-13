@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "motion-source.hpp"
 #include "motion-ownership.hpp"
+#include "motion-journal.hpp"
 #include <cerrno>
 #include <cstring>
 #include <filesystem>
@@ -37,10 +38,6 @@ bool write_file(const fs::path& path,std::string_view text) {
     Fd fd(::open(path.c_str(),O_WRONLY|O_CLOEXEC|O_NOFOLLOW));
     return fd.value>=0&&::write(fd.value,text.data(),text.size())==ssize_t(text.size());
 }
-bool safe_dir(const fs::path& path) {
-    struct stat st{};
-    return ::lstat(path.c_str(),&st)==0&&S_ISDIR(st.st_mode)&&st.st_uid==0&&(st.st_mode&0777)==0700;
-}
 struct Device final:Store {
     fs::path directory;
     Fd fd;
@@ -73,30 +70,24 @@ struct Device final:Store {
         return setting_path(path)&&write_file(directory/std::string(path),text);
     }
     bool save(const std::vector<Setting>& settings)override {
-        if(!safe_dir(fs::path(journal_path).parent_path())||::access(journal_path,F_OK)==0)return false;
         Json::Value root(Json::objectValue);root["version"]=1;root["path"]=directory.string();
         root["inode"]=Json::UInt64(inode);root["device"]=Json::UInt64(device);
         root["major"]=device_major;root["minor"]=device_minor;root["settings"]=Json::arrayValue;
         for(const auto& s:settings){Json::Value row(Json::arrayValue);row.append(s.path);row.append(s.before);row.append(s.after);root["settings"].append(row);}
         Json::StreamWriterBuilder writer;writer["indentation"]="";const auto text=Json::writeString(writer,root);
-        const std::string temporary=std::string(journal_path)+".new";
-        Fd output(::open(temporary.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC,0600));
-        if(output.value<0)return false;
-        if(::write(output.value,text.data(),text.size())!=ssize_t(text.size())||::fsync(output.value)<0){::unlink(temporary.c_str());return false;}
-        const bool renamed=::syscall(SYS_renameat2,AT_FDCWD,temporary.c_str(),AT_FDCWD,journal_path,RENAME_NOREPLACE)==0;
-        ::unlink(temporary.c_str());return renamed;
+        return Journal(journal_path).save(text);
     }
-    bool clear()override {return ::unlink(journal_path)==0||errno==ENOENT;}
+    bool clear()override {return Journal(journal_path).clear();}
 };
 bool recover() {
-    struct stat st{};
-    if(::lstat(journal_path,&st)<0)return errno==ENOENT;
-    if(!safe_dir(fs::path(journal_path).parent_path())||!S_ISREG(st.st_mode)||st.st_uid!=0||
-       (st.st_mode&0777)!=0600||st.st_nlink!=1||st.st_size>16384)return false;
-    const auto text=read_file(journal_path,16384);if(!text)return false;
+    Journal journal(journal_path);
+    if(!journal.discard_pending())return false;
+    const auto data=journal.load();
+    if(data.status==Journal::Status::missing)return true;
+    if(data.status!=Journal::Status::valid)return false;
     Json::CharReaderBuilder parser;parser["failIfExtra"]=true;parser["rejectDupKeys"]=true;
     std::unique_ptr<Json::CharReader> reader(parser.newCharReader());Json::Value root;std::string error;
-    if(!reader->parse(text->data(),text->data()+text->size(),&root,&error)||!root.isObject()||
+    if(!reader->parse(data.text.data(),data.text.data()+data.text.size(),&root,&error)||!root.isObject()||
        root["version"]!=1||!root["path"].isString()||!root["inode"].isUInt64()||!root["device"].isUInt64()||
        !root["major"].isUInt()||!root["minor"].isUInt()||!root["settings"].isArray()||root["settings"].size()>11)return false;
     std::vector<Setting> settings;
@@ -153,7 +144,7 @@ private:
     std::vector<Setting> m_settings;
     bool prepare(Device& device,const Mount& mount) {
         std::vector<Channel> channels;std::vector<Setting> settings;
-        for(auto name:{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_x","in_accel_y","in_accel_z","in_timestamp"}){
+        for(auto name:{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_linear_x","in_accel_linear_y","in_accel_linear_z","in_timestamp"}){
             const std::string prefix=std::string("scan_elements/")+name;
             const auto index=read_file(device.directory/(prefix+"_index")),type=read_file(device.directory/(prefix+"_type"));
             if(!index||!type)return false;
@@ -170,7 +161,7 @@ private:
         for(const auto& entry:fs::directory_iterator(device.directory/"scan_elements",error)){
             if(error)return false;
             const auto filename=entry.path().filename().string();
-            if(filename.ends_with("_en")&&!setting_path("scan_elements/"+filename)&&read_file(entry.path())!="0")return false;
+            if(filename.ends_with("_en")&&!setting_path("scan_elements/"+filename))return false;
         }
         for(unsigned axis=0;axis<3;++axis){
             const auto scale=read_file(device.directory/(std::string("in_gravity_")+"xyz"[axis]+"_scale"));

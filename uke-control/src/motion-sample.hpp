@@ -112,7 +112,7 @@ struct Layout {
     static std::optional<Layout> make(std::vector<Channel> channels) {
         if(channels.size()<4||channels.size()>7)return {};
         std::sort(channels.begin(),channels.end(),[](const auto& a,const auto& b){return a.index<b.index;});
-        const std::array<std::string_view,7> names{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_x","in_accel_y","in_accel_z","in_timestamp"};
+        const std::array<std::string_view,7> names{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_linear_x","in_accel_linear_y","in_accel_linear_z","in_timestamp"};
         std::size_t size=0,alignment=1;unsigned seen=0;
         for(std::size_t i=0;i<channels.size();++i){
             auto& channel=channels[i];

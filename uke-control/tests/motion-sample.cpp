@@ -35,7 +35,7 @@ void binary() {
     assert(!ScanType{}.read(negative));
     const auto type=*ScanType::parse("le:s64/64>>0");
     std::vector<Channel> channels;
-    for(auto name:{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_x","in_accel_y","in_accel_z","in_timestamp"})
+    for(auto name:{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_linear_x","in_accel_linear_y","in_accel_linear_z","in_timestamp"})
         channels.push_back({name,unsigned(channels.size()),type});
     const auto layout=Layout::make(channels);assert(layout&&layout->bytes==56);
     std::array<std::byte,56> packet{};put(std::span(packet).subspan(16,8),9810000);put(std::span(packet).subspan(24,8),5000000);

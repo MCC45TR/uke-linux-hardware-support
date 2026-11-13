@@ -97,3 +97,22 @@ Braces correct the test without reducing warning flags or its assertions.
 Additional source validates journal attribute values and tests the actual
 non-interactive Polkit encoding, bounded asynchronous failures and cancellation.
 Those updates require a new native run; the first job is not qualification.
+
+Focused11318702/source6eefac90/manifest435886f5 passes all four fixture groups
+in the Fedora45 x86 source worker with GCC16 and unchanged warning/assertion
+flags. Its actual worker script matches the request. The result directory now
+contains a spec and sources, as required by the official custom-source API;
+the previous keyboard diagnostic's SRPM-only result was not accepted output.
+An empty target list selects the project's default chroot: the56-second
+Rawhide ARM job built only a noarch receipt, not the component's ARM objects.
+The receipt has two trusted signatures, SHA256c676a7d9; it installs one text
+file and has no scriptlets. Temporary producer3282524 is auto_rebuild=false
+and remains necessary while this qualification work is active.
+
+Read-only tablet scan metadata then corrected the linear-acceleration names
+to `in_accel_linear_[xyz]`. All seven scan indices/types are observed, not
+assumed; current scale is0.000001 and the inactive buffer uses realtime.
+No sysfs configuration or character device was opened. A separate journal
+file layer now supports actual private-file tests of atomic no-replace,
+abandoned precommit cleanup, bounded data and mode/owner/hardlink/symlink
+refusal. Those changes and the exact scan names await the next native run.

@@ -17,7 +17,7 @@ inline bool setting_path(std::string_view path) {
     if(path=="buffer/enable"||path=="buffer/length"||path=="buffer/watermark"||path=="current_timestamp_clock")return true;
     if(!path.starts_with("scan_elements/")||!path.ends_with("_en"))return false;
     path.remove_prefix(14);path.remove_suffix(3);
-    for(auto name:{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_x","in_accel_y","in_accel_z","in_timestamp"})if(path==name)return true;
+    for(auto name:{"in_gravity_x","in_gravity_y","in_gravity_z","in_accel_linear_x","in_accel_linear_y","in_accel_linear_z","in_timestamp"})if(path==name)return true;
     return false;
 }
 inline bool settings_valid(const std::vector<Setting>& settings) {
