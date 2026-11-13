@@ -144,3 +144,10 @@ and a real sd-event heartbeat/frozen-loop fixture are not yet native-qualified;
 the latter simulates supervisor termination and cannot establish systemd unit
 or tablet acceptance. An authorization-setup exception also gains a regression
 test to ensure one cancellation reply rather than a second method error.
+
+Focused11318767/source502c7087/manifestd03b4118 verifies all22 inputs and
+compiles the service plus the new local policy using Fedora's original policy
+development package. Its new watchdog fixture then fails to compile because
+`<cstdint>` was missing; no fixture or Clang/sanitizer run occurred in this
+attempt. Add the explicit standard headers and rerun the same gates. This is
+not a runtime policy load or device result.

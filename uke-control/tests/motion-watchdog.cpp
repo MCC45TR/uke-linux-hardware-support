@@ -2,11 +2,13 @@
 #include <cassert>
 #include <cerrno>
 #include <csignal>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <poll.h>
 #include <string>
+#include <string_view>
 #include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
