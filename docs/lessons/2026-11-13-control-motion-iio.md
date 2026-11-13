@@ -116,3 +116,31 @@ No sysfs configuration or character device was opened. A separate journal
 file layer now supports actual private-file tests of atomic no-replace,
 abandoned precommit cleanup, bounded data and mode/owner/hardlink/symlink
 refusal. Those changes and the exact scan names await the next native run.
+
+Focused11318757/source5322bce5/manifestc1e232f5 passes all five groups,
+including actual private journal files. The worker script and19 inputs match;
+the57-second ARM job is again only a noarch receipt. Component ARM compilation,
+device IIO ownership and the provider's actual systemd supervision remain open.
+
+SELinux integration is now prepared against original Fedora policy
+`5df11316337c290e108c8e8df637c31e87494c08` (GPL-2.0):
+`policy/modules/contrib/iiosensorproxy.te/fc` and the standard systemd/init
+interfaces. The exact TE SHA256 is
+`56d138efdd37b2e29ecae5776688c356658e37ba175ab58b31b4bed0cafc6d28`.
+That original domain already reads IIO and manages sysfs. The new helper reuses
+it with an explicit mandatory unit context, empty capability set and no new
+raw-device/user grant or shared-sysfs relabel. A small separate local module
+adds only its private runtime journal, session-status/watch access, watchdog
+notification and Motion1 D-Bus communication. Original policy files, SensorProxy
+and Core24 remain unchanged. A disabled/missing original domain must fail
+activation; do not silently enable a user-disabled module or fall back to init_t.
+
+The remaining userspace delta is the numeric, authenticated, demand-leased API
+that original SensorProxy does not expose. Kernel/DT still owns hardware frame,
+timestamp and resource admission. If an original upstream service gains the
+required numeric semantics and lifecycle, port the client and retire this
+internal helper through a parity-checked DNF transition. The new local policy
+and a real sd-event heartbeat/frozen-loop fixture are not yet native-qualified;
+the latter simulates supervisor termination and cannot establish systemd unit
+or tablet acceptance. An authorization-setup exception also gains a regression
+test to ensure one cancellation reply rather than a second method error.

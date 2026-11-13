@@ -1,0 +1,2 @@
+/usr/libexec/uke-control/motion -- gen_context(system_u:object_r:iiosensorproxy_exec_t,s0)
+/run/uke-control-motion(/.*)? gen_context(system_u:object_r:uke_motion_runtime_t,s0)

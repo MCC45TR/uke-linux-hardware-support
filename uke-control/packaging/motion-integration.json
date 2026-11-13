@@ -11,15 +11,15 @@
   "source_assets": [
     {
       "path": "uke-control/packaging/motion-assets.mjs",
-      "sha256": "c0cc6ecc6a93878d8bb85ef47fd824dbbac091b95bb92441a0502c50dc62356b"
+      "sha256": "1497221ceae66c58117c6a8c3bb4aa086bf5cbd4963748b3b8b9155da0a78b76"
     },
     {
       "path": "uke-control/packaging/motion.mk",
-      "sha256": "bfa9a615656d191b253540e85125c8992c3e44db939cc2e74f3a6c8526c31517"
+      "sha256": "42b320323d7719d152bc2ade19daf7aec8389f03c51c8e27756251d4789aca48"
     },
     {
       "path": "uke-control/packaging/org.senemos.Uke.Motion1.conf",
-      "sha256": "0529070132a7d3900e0084ac0fb01de9792d4ead8cc81ec2dddbdd0b9c96cb66"
+      "sha256": "513f61590107bc52b29bc772fb692aa564c7afb3c740e6ff240c54a9755f84a4"
     },
     {
       "path": "uke-control/packaging/org.senemos.Uke.Motion1.service",
@@ -30,12 +30,20 @@
       "sha256": "04f86ea2e2dae343a7fc1124f6ec04356c69dded8f6efd535ead3477981d67c8"
     },
     {
+      "path": "uke-control/packaging/selinux/uke_control_motion.fc",
+      "sha256": "27d4e57dc9f4dcaa68b488e634ca7b47f739fe70e57a472df8d0037a1474ae27"
+    },
+    {
+      "path": "uke-control/packaging/selinux/uke_control_motion.te",
+      "sha256": "3a572c09146ee9698f872b592982513929fd0f3993d78f8a629e4ec9b3355589"
+    },
+    {
       "path": "uke-control/packaging/uke-control-motion.service",
-      "sha256": "3af3d93df771a1ce212d2b97d00718adaf2ee1557a62a9ad5b73c2ea4323a259"
+      "sha256": "d0a876013357233067a80f436ec0656d9dc70c88f74285820506ca464a1ef01e"
     },
     {
       "path": "uke-control/src/motion-broker.cpp",
-      "sha256": "7147ba1aedd2e7bac3079e601d378772b98e056284bd44490ff041caf37739da"
+      "sha256": "0229659526ccfff336c6b5568989ccd8f1128e9dabd2560ea812892c78c9bf0a"
     },
     {
       "path": "uke-control/src/motion-broker.hpp",
@@ -67,7 +75,7 @@
     },
     {
       "path": "uke-control/tests/motion-bus.cpp",
-      "sha256": "c7d0081385a31607413624561904f7b9dfc0ed73c806a95c1fd2791d59ad6bd2"
+      "sha256": "a8b9357afc937002b69116da1f4f10b1284170ab10fe469c6b81240be4552180"
     },
     {
       "path": "uke-control/tests/motion-journal.cpp",
@@ -84,6 +92,10 @@
     {
       "path": "uke-control/tests/motion-sample.cpp",
       "sha256": "33e25edb171d599010489100c9a18157beaab9cf8981926514f1e7dc93d9ad3a"
+    },
+    {
+      "path": "uke-control/tests/motion-watchdog.cpp",
+      "sha256": "fce53da668019bde01a6bf5dfa3ef95b1b30e8ebe82e0b7e110856efdf63ede4"
     }
   ]
 }

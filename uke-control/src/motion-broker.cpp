@@ -119,7 +119,8 @@ int Broker::claim(sd_bus_message* message,void* data,sd_bus_error* error) {
         if(self.m_idle)sd_event_source_set_enabled(self.m_idle,SD_EVENT_OFF);
         return 1;
     }catch(...){
-        const char* sender=sd_bus_message_get_sender(message);if(sender)self.release(sender);
+        const char* sender=sd_bus_message_get_sender(message);
+        if(sender&&self.m_pending.contains(sender)){self.release(sender);return 1;}
         return sd_bus_error_set_const(error,SD_BUS_ERROR_FAILED,"Motion authorization failed");
     }
 }

@@ -18,6 +18,7 @@ RuntimeDirectoryMode=0700
 RuntimeDirectoryPreserve=yes
 UMask=0077
 NoNewPrivileges=yes
+SELinuxContext=system_u:system_r:iiosensorproxy_t:s0
 CapabilityBoundingSet=
 AmbientCapabilities=
 ProtectSystem=strict

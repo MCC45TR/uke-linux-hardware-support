@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
 #include <systemd/sd-event.h>
 #ifdef NDEBUG
 #error Assertions are required
@@ -14,10 +15,10 @@ std::uint64_t clock_now() {
     return std::uint64_t(ts.tv_sec)*1000000+std::uint64_t(ts.tv_nsec)/1000;
 }
 struct Auth:Authorizer {
-    bool eligible=true;std::uint64_t next=0;unsigned cancelled=0;
+    bool eligible=true,throw_request=false;std::uint64_t next=0;unsigned cancelled=0;
     std::map<std::uint64_t,Ready> waiting;
     bool active(uid_t)const override{return eligible;}
-    std::uint64_t request(sd_bus_message*,Ready ready)override{waiting.emplace(++next,std::move(ready));return next;}
+    std::uint64_t request(sd_bus_message*,Ready ready)override{if(throw_request)throw std::runtime_error("Fixture request failure");waiting.emplace(++next,std::move(ready));return next;}
     void cancel(std::uint64_t id)override{cancelled+=waiting.erase(id);}
     void finish(bool allowed){assert(waiting.size()==1);auto node=waiting.extract(waiting.begin());node.mapped()(allowed);}
 };
@@ -83,6 +84,7 @@ void authorization() {
     Fixture f;Client a(f.event);
     f.auth.eligible=false;Answer inactive;a.call("Claim",inactive);f.until([&]{return inactive.done;});assert(!inactive.accepted&&!f.sensor->starts&&f.auth.waiting.empty());
     f.auth.eligible=true;Answer denied;a.call("Claim",denied);f.until([&]{return !f.auth.waiting.empty();});f.auth.finish(false);f.until([&]{return denied.done;});assert(!denied.accepted&&!f.sensor->starts);
+    f.auth.throw_request=true;Answer unavailable;a.call("Claim",unavailable);f.until([&]{return unavailable.done;});assert(!unavailable.accepted&&f.auth.waiting.empty()&&!f.sensor->starts);f.auth.throw_request=false;
     Answer pending;a.call("Claim",pending);f.until([&]{return !f.auth.waiting.empty();});f.release(a);f.until([&]{return pending.done;});assert(!pending.accepted&&f.auth.cancelled==1&&f.auth.waiting.empty()&&!f.sensor->starts);
     Answer lost;
     {Client temporary(f.event);temporary.call("Claim",lost);f.until([&]{return !f.auth.waiting.empty();});}
