@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #pragma once
+#include <charconv>
 #include <functional>
 #include <optional>
 #include <string>
@@ -25,6 +26,14 @@ inline bool settings_valid(const std::vector<Setting>& settings) {
         const auto& s=settings[i];
         if(!setting_path(s.path)||s.before.empty()||s.after.empty()||s.before.size()>64||s.after.size()>64||
            s.before.find_first_of("\r\n\0",0,3)!=s.before.npos||s.after.find_first_of("\r\n\0",0,3)!=s.after.npos)return false;
+        if(s.path=="current_timestamp_clock"){
+            bool known=false;
+            for(auto clock:{"monotonic","monotonic_raw","realtime","boottime","realtime_coarse","monotonic_coarse","tai"})known|=s.before==clock;
+            if(!known||s.after!="boottime")return false;
+        }else if(s.path=="buffer/length"||s.path=="buffer/watermark"){
+            unsigned long long value=0;const auto result=std::from_chars(s.before.data(),s.before.data()+s.before.size(),value);
+            if(result.ec!=std::errc()||result.ptr!=s.before.data()+s.before.size()||!value||s.after!=(s.path=="buffer/length"?"4":"1"))return false;
+        }else if((s.before!="0"&&s.before!="1")||s.after!="1")return false;
         for(std::size_t j=0;j<i;++j)if(settings[j].path==s.path)return false;
     }
     return settings.back().path=="buffer/enable"&&settings.back().before=="0"&&settings.back().after=="1";

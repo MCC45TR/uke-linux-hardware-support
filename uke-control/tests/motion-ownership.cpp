@@ -35,6 +35,9 @@ int main() {
     auto bad=settings;bad[0].path="../enable";assert(!settings_valid(bad));
     bad=settings;bad[0].before="monotonic\nboottime";assert(!settings_valid(bad));
     bad=settings;bad.push_back(settings.back());assert(!settings_valid(bad));
+    bad=settings;bad[0].before="unknown";assert(!settings_valid(bad));
+    bad=settings;bad[1].before="-1";assert(!settings_valid(bad));
+    bad=settings;bad[1].after="999";assert(!settings_valid(bad));
     {
         auto f=fresh();assert(configure(f,settings));assert(f.writes.back()=="buffer/enable");
         f.writes.clear();assert(restore(f,settings));assert(f.writes.front()=="buffer/enable");assert(f.journal.empty());
@@ -42,7 +45,8 @@ int main() {
     }
     for(int failure=1;failure<=int(settings.size());++failure){
         auto f=fresh();f.fail_write=failure;assert(!configure(f,settings));
-        for(const auto& s:settings)assert(f.values[s.path]==s.before);assert(f.journal.empty());
+        for(const auto& s:settings){assert(f.values[s.path]==s.before);}
+        assert(f.journal.empty());
     }
     for(std::size_t crash=0;crash<=settings.size();++crash){
         auto f=fresh();assert(f.save(settings));

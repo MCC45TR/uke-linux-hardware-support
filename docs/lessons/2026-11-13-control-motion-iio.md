@@ -88,3 +88,12 @@ through COPR. Verify the complete inherited source/payload/dependency and
 service-state closure before any DNF delivery. The current gravity mount,
 hardware-time conversion and physical45/40 behavior are not established. A
 streaming-cache callback fix does not by itself prove those properties.
+
+First focused COPR11318696 uses immutable sourcea6b4e604 and manifest8b79e705.
+All15 asset hashes match. GCC16 compiled the service and scalar test with
+`-Wall -Wextra -Werror`; compilation of the transaction test then failed on
+misleading indentation. No tests ran and no receipt/runtime RPM was produced.
+Braces correct the test without reducing warning flags or its assertions.
+Additional source validates journal attribute values and tests the actual
+non-interactive Polkit encoding, bounded asynchronous failures and cancellation.
+Those updates require a new native run; the first job is not qualification.

@@ -10,8 +10,12 @@
   },
   "source_assets": [
     {
+      "path": "uke-control/packaging/motion-assets.mjs",
+      "sha256": "c0cc6ecc6a93878d8bb85ef47fd824dbbac091b95bb92441a0502c50dc62356b"
+    },
+    {
       "path": "uke-control/packaging/motion.mk",
-      "sha256": "53e9a1ffef2d59ed907c24b2c57fd7fd41728b2c9b72502936f8e9426b4c5f0b"
+      "sha256": "e0ec2c17c7718dbfda8ccd20dd1e4fbe14c5ceb24410b09755c2647bf61aab4c"
     },
     {
       "path": "uke-control/packaging/org.senemos.Uke.Motion1.conf",
@@ -31,7 +35,7 @@
     },
     {
       "path": "uke-control/src/motion-broker.cpp",
-      "sha256": "9d8ca7be33497db72762274804013ae537704f96b02c39351f88d44a1e1dee11"
+      "sha256": "7147ba1aedd2e7bac3079e601d378772b98e056284bd44490ff041caf37739da"
     },
     {
       "path": "uke-control/src/motion-broker.hpp",
@@ -43,7 +47,7 @@
     },
     {
       "path": "uke-control/src/motion-ownership.hpp",
-      "sha256": "a76e3e14b93ea4d17713d4781c359387bfae577bed9731310fcaea4124ee08ce"
+      "sha256": "b04baf0d46cb6eb3c8dead0c05fe03f2223dfee6e5a6e6184c982fe8d5082300"
     },
     {
       "path": "uke-control/src/motion-sample.hpp",
@@ -63,7 +67,11 @@
     },
     {
       "path": "uke-control/tests/motion-ownership.cpp",
-      "sha256": "f620c223b14db2b00b2ef6e2bf242df3323cf02fddbd592ca776325cafeaa2f9"
+      "sha256": "e516806130555f34ae3702f51b0d06e5f0fc3611f56f3f70b12846fe7bf6f24e"
+    },
+    {
+      "path": "uke-control/tests/motion-polkit.cpp",
+      "sha256": "d58ca240418148a7d9429733d5bc32d60725fc657c9987ce2a9d0299eebada6e"
     },
     {
       "path": "uke-control/tests/motion-sample.cpp",

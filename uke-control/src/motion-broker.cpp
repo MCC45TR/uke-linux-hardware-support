@@ -16,9 +16,10 @@ public:
         if(uid==0)return false;
         char* raw=nullptr;if(sd_uid_get_display(uid,&raw)<0)return false;
         const std::unique_ptr<char,decltype(&std::free)> session(raw,std::free);
+        if(!raw||!*raw)return false;
         uid_t owner=0;char* raw_seat=nullptr;
         const bool local=sd_session_get_uid(raw,&owner)>=0&&owner==uid&&sd_session_is_active(raw)>0&&
-            sd_session_is_remote(raw)==0&&sd_session_get_seat(raw,&raw_seat)>=0;
+            sd_session_is_remote(raw)==0&&sd_session_get_seat(raw,&raw_seat)>=0&&raw_seat&&*raw_seat;
         std::free(raw_seat);return local;
     }
     std::uint64_t request(sd_bus_message* message,Ready ready)override {
