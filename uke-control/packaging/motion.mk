@@ -8,7 +8,10 @@ motion_out ?= build/motion
 motion_flags := $(shell pkg-config --cflags libsystemd jsoncpp)
 motion_libs := $(shell pkg-config --libs libsystemd jsoncpp)
 .PHONY: all check
-all: $(motion_out)/motion $(motion_out)/selinux/uke_control_motion.pp
+all: $(motion_out)/motion $(motion_out)/selinux/uke_control_motion.cil
+$(motion_out)/selinux/uke_control_motion.cil: $(motion_out)/selinux/uke_control_motion.pp
+	{ printf '%s\n' '; uke-control managed Motion1 policy v1'; /usr/libexec/selinux/hll/pp < $<; } > $@.tmp
+	mv -- $@.tmp $@
 $(motion_out)/selinux/uke_control_motion.pp: packaging/selinux/uke_control_motion.te packaging/selinux/uke_control_motion.fc | $(motion_out)
 	mkdir -p $(motion_out)/selinux
 	cp packaging/selinux/uke_control_motion.{te,fc} $(motion_out)/selinux/

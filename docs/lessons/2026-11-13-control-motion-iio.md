@@ -182,3 +182,13 @@ pass real semodule/checkpolicy operations. The source-worker report is an
 unsigned SRPM output with valid digests; signed final receipt admission is
 separate. No C++ group was rerun in this policy-only job (retain native5), and
 no ARM component, unit, ownership lifecycle, frame/time or device claim follows.
+
+The remaining package-policy lifecycle source is now prepared. The existing
+standard PP build converts to marked CIL through Fedora's original HLL compiler.
+A transaction-only helper operates in the selected policy stores, preserves a
+user-disabled owned module during reinstall, refuses other priorities/unmarked
+ownership, and removes only its managed module. No original module is enabled;
+original sensor-domain disable remains authoritative. Private fixtures call the
+actual helper and compare complete module/policy hashes after foreign refusal.
+Disabled-owned, competing-priority and same-priority foreign scenarios are new
+unqualified cases. No RPM scriptlet integration, runtime17 or physical claim yet.

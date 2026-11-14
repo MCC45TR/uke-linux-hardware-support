@@ -337,11 +337,11 @@
   "source_assets": [
     {
       "path": "uke-control/packaging/motion-assets.mjs",
-      "sha256": "1497221ceae66c58117c6a8c3bb4aa086bf5cbd4963748b3b8b9155da0a78b76"
+      "sha256": "ee0b84a6916d1f357b3586119e4b8461cb1e135e2690935c7d5ad558d2303c1b"
     },
     {
       "path": "uke-control/packaging/motion.mk",
-      "sha256": "42b320323d7719d152bc2ade19daf7aec8389f03c51c8e27756251d4789aca48"
+      "sha256": "a34afa6b7660b42d17f6c064ec23b5620747c15b25a8cbca7d2ff1ff13ae1cb5"
     },
     {
       "path": "uke-control/packaging/org.senemos.Uke.Motion1.conf",
@@ -354,6 +354,10 @@
     {
       "path": "uke-control/packaging/org.senemos.uke.motion.policy",
       "sha256": "04f86ea2e2dae343a7fc1124f6ec04356c69dded8f6efd535ead3477981d67c8"
+    },
+    {
+      "path": "uke-control/packaging/selinux/motion-policy.sh",
+      "sha256": "4df8f893b6539d795a507b73bcb65383d52d1648f53284b8723915978958cef8"
     },
     {
       "path": "uke-control/packaging/selinux/uke_control_motion.fc",
@@ -413,7 +417,7 @@
     },
     {
       "path": "uke-control/tests/motion-policy.sh",
-      "sha256": "28b9459627eb6274fce66d615873bf35f015dd236fa99e16ca109bd13cc1d6f7"
+      "sha256": "dfcf6ae0f5fac6360eca422fee0d2df2623add2797e2b95afc6a88ad0b71a142"
     },
     {
       "path": "uke-control/tests/motion-polkit.cpp",
