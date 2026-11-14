@@ -230,3 +230,10 @@ parent16 URL was streamed and matched f1ef6c12 without retaining another copy.
 The31-source-asset packet and exactly three existing package names are prepared;
 COPR source parsing, complete ARM builds and actual service/rollback acceptance
 remain open. No original provider, device state or production admission changed.
+
+Integration8/11327821 verifies all31 assets, all64 signed16 inputs, both trusted
+signatures and the exact d1dffafd recipe inverse. Source assembly then refuses a
+missing ssc-unit-state.sh: the three retained SSC fixture dependencies were not
+in the downloaded packet. No candidate17 SRPM or native build was produced.
+Add those three unchanged fixture sources to the sealed34-asset packet; preserve
+all tests and the rendered recipe, policy, unit and production C++ bytes.

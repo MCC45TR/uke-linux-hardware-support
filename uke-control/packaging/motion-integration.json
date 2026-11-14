@@ -353,7 +353,7 @@
     },
     {
       "path": "uke-control/packaging/motion-assets.mjs",
-      "sha256": "f36c1268feb1a89078382dca9e66d9fae242d7fc093639a84bfbbaebbc84fe17"
+      "sha256": "3bc604a43962e19716018eb412beb53da1fee52bc70d3e751f9fd56c079554db"
     },
     {
       "path": "uke-control/packaging/motion-lifecycle.sh",
@@ -458,6 +458,18 @@
     {
       "path": "uke-control/tests/motion-watchdog.cpp",
       "sha256": "396c524cfbf9b72a758f7e4edc60d6f0c6b34186adb942efc6454436152bdfd8"
+    },
+    {
+      "path": "uke-control/tests/ssc-cache-postun.sh",
+      "sha256": "e585b522a1bbba91d132d09b7e37169b0dec1b2545fa24098df32f447d75e95e"
+    },
+    {
+      "path": "uke-control/tests/ssc-refresh.sh",
+      "sha256": "3d5e5d0c86ef5e087f6ea5ddece14d9a09a391bb3433ec808cad3d9e1b803e82"
+    },
+    {
+      "path": "uke-control/tests/ssc-unit-state.sh",
+      "sha256": "6e0b9109607e63b355580e635bc846717e92a4cef1c17414410e3d68a867cf49"
     }
   ],
   "policy_fixture": {
