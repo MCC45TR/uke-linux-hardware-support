@@ -1,0 +1,10 @@
+{
+  "label": "control-integration-bd38e9f5",
+  "base": "d7fe569d4732ed175c91bc8ed4ec399fd338a2ab",
+  "branch": "fix/selinux-kernel-compat-20261103",
+  "staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "unstaged_sha256": "7605a8f2ecb74ed79923c26860d39b66385cde6454718cf15a162f48df1a8db2",
+  "untracked": [],
+  "private_only": [],
+  "omitted": []
+}

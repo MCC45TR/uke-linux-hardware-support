@@ -1,0 +1,69 @@
+{
+  "label": "uke-linux-hardware-support-a9c4b842",
+  "base": "6f272d03b1e05d9d67ab50f29b75177c49141b74",
+  "branch": "main",
+  "staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "unstaged_sha256": "99f4edecd33cabf08bbfc8c5d94b8fa48cb1fdf512595777443b72ad34dc2d27",
+  "untracked": [
+    {
+      "path": "docs/lessons/2026-11-11-native-package-migration.md",
+      "sha256": "1e3df333ecc7affd0a317bb0f9784383b06656006398fb7cea5b4b82851c2a7f",
+      "mode": 420
+    },
+    {
+      "path": "packaging/families/consolidation/NATIVE-MIGRATION.md",
+      "sha256": "7d27f073de2df5c18d1232c31bd55780c7b663bb0521a77af1dce61398e5af42",
+      "mode": 420
+    },
+    {
+      "path": "packaging/families/consolidation/native-migration.json",
+      "sha256": "1e66a3b7200e12957227adc477ba85f773d88b2aa2d45f8e0dd46c4e5ce3bc48",
+      "mode": 420
+    },
+    {
+      "path": "packaging/families/host/check-source-retirement.sh",
+      "sha256": "21fab1acbcedb21981705905d9c53419684535260f7f128583b90f66d452e2b1",
+      "mode": 420
+    },
+    {
+      "path": "packaging/families/host/native-migration-audit.jq",
+      "sha256": "4b1d2edeb85425eff964d5bc75397c60c47e597d333dc2a8db38e6de5c1c35ad",
+      "mode": 420
+    },
+    {
+      "path": "packaging/families/host/native-migration-audit.sh",
+      "sha256": "8ab1bef726ac29d6de8a73321c979b8f492e2034dd8ca89aa3dfdf7885a3f421",
+      "mode": 420
+    },
+    {
+      "path": "packaging/families/tests/native-migration.sh",
+      "sha256": "5090463e88c992d5b968597452c4b7d2a4c0c9ed67ec879ba782fe299b6f7d67",
+      "mode": 420
+    },
+    {
+      "path": "uke-platform-runtime/src/battery/pack-variant.hpp",
+      "sha256": "2ec6173d186124d3d15278f3f3e3b8eec6c7fcf9ee410a57472903c74248bc27",
+      "mode": 420
+    },
+    {
+      "path": "uke-platform-runtime/tests/battery-pack-variant.cpp",
+      "sha256": "a15b547fba851c4c3ed97264feeb3a9f46c2c5374e074f9c366b5b6ce932413e",
+      "mode": 420
+    }
+  ],
+  "private_only": [
+    {
+      "path": "uke-control/referances/rollback-mode-inputs/uke-control-2.8.1-11.fc46.src.rpm",
+      "reason": "Private/reference/binary/unreviewed-large content retained only in ZIP"
+    },
+    {
+      "path": "uke-control/referances/rollback-mode-inputs/uke-control-2.8.1-12.fc46.src.rpm",
+      "reason": "Private/reference/binary/unreviewed-large content retained only in ZIP"
+    },
+    {
+      "path": "uke-control/referances/rollback-mode-inputs/uke-control-2.8.1-13.fc46.src.rpm",
+      "reason": "Private/reference/binary/unreviewed-large content retained only in ZIP"
+    }
+  ],
+  "omitted": []
+}

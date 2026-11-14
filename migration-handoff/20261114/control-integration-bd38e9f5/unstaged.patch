@@ -1,0 +1,51 @@
+diff --git a/packaging/families/control-gui/prepare.sh b/packaging/families/control-gui/prepare.sh
+index 489913b3..12226c1e 100644
+--- a/packaging/families/control-gui/prepare.sh
++++ b/packaging/families/control-gui/prepare.sh
+@@ -46,7 +46,7 @@ awk -F '\t' -v increment="$increment" 'BEGIN{OFS="\t"} $3 !~ /^[0-9]+[.]fc46$/ {
+ top="$out/rpmbuild"
+ mkdir -p "$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
+ cp "$stage/input/uke-control-2.8.1.tar.xz" "$top/SOURCES/"
+-cp "$stage/input/uke-control.spec" "$top/SOURCES/uke-control-published.spec"
++cp "$stage/input/uke-control.spec" "$top/SOURCES/uke-control-published-spec.txt"
+ cp "$manifest" "$here/copr-public-key.asc" "$top/SOURCES/"
+ mkdir "$stage/contract"
+ cp "$root/uke-control/src/"{frontend.hpp,frontend-request.cpp,client.hpp} "$stage/contract/"
+diff --git a/packaging/families/control-gui/rewrite.awk b/packaging/families/control-gui/rewrite.awk
+index 8997ad86..005ea9e0 100644
+--- a/packaging/families/control-gui/rewrite.awk
++++ b/packaging/families/control-gui/rewrite.awk
+@@ -90,7 +90,7 @@ function gnome_preamble() {
+ /^Source0:/ {
+     print
+     print "Source1: uke-control-frontend-contract.tar.xz"
+-    print "Source2: uke-control-published.spec"
++    print "Source2: uke-control-published-spec.txt"
+     print "Source3: input.json"
+     print "Source4: copr-public-key.asc"
+     next
+@@ -109,7 +109,10 @@ function gnome_preamble() {
+         print "Provides: /usr/libexec/uke-control/frontend-request"
+         print "Requires: uke-control-client%{?_isa} = " version["uke-control"] "-" newer["uke-control"]
+     }
+-    if(current=="uke-kde-plasma-meta") print "Requires: uke-control-qt >= 1.0.0-2"
++    if(current=="uke-kde-plasma-meta") {
++        print "Requires: uke-control-qt >= 1.0.0-2"
++        print "Requires: hunspell-tr"
++    }
+     next
+ }
+ /^%(prep|build|install|check)([[:space:]]|$)/ {
+diff --git a/packaging/families/control-gui/tests.sh b/packaging/families/control-gui/tests.sh
+index 7b9ab1b5..f8d929d5 100644
+--- a/packaging/families/control-gui/tests.sh
++++ b/packaging/families/control-gui/tests.sh
+@@ -7,7 +7,7 @@ make srpm outdir=build/backend
+ make srpm PHASE=metas outdir=build/metas
+ top=build/backend/rpmbuild
+ metatop=build/metas/rpmbuild
+-old="$top/SOURCES/uke-control-published.spec"
++old="$top/SOURCES/uke-control-published-spec.txt"
+ new="$top/SPECS/uke-control.spec"
+ # The imported nested archives contain the existing DNF/boot/device behavior.
+ stage=$(mktemp -d)

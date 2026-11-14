@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-14",
+  "purpose": "Source handoff snapshots, not merged or runtime-qualified changes",
+  "repository": "uke-linux-hardware-support",
+  "origin": "https://github.com/MCC45TR/uke-linux-hardware-support.git",
+  "snapshots": [
+    {
+      "label": "uke-linux-hardware-support-a9c4b842",
+      "base": "6f272d03b1e05d9d67ab50f29b75177c49141b74",
+      "branch": "main",
+      "staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unstaged_sha256": "99f4edecd33cabf08bbfc8c5d94b8fa48cb1fdf512595777443b72ad34dc2d27",
+      "untracked": [
+        {
+          "path": "docs/lessons/2026-11-11-native-package-migration.md",
+          "sha256": "1e3df333ecc7affd0a317bb0f9784383b06656006398fb7cea5b4b82851c2a7f",
+          "mode": 420
+        },
+        {
+          "path": "packaging/families/consolidation/NATIVE-MIGRATION.md",
+          "sha256": "7d27f073de2df5c18d1232c31bd55780c7b663bb0521a77af1dce61398e5af42",
+          "mode": 420
+        },
+        {
+          "path": "packaging/families/consolidation/native-migration.json",
+          "sha256": "1e66a3b7200e12957227adc477ba85f773d88b2aa2d45f8e0dd46c4e5ce3bc48",
+          "mode": 420
+        },
+        {
+          "path": "packaging/families/host/check-source-retirement.sh",
+          "sha256": "21fab1acbcedb21981705905d9c53419684535260f7f128583b90f66d452e2b1",
+          "mode": 420
+        },
+        {
+          "path": "packaging/families/host/native-migration-audit.jq",
+          "sha256": "4b1d2edeb85425eff964d5bc75397c60c47e597d333dc2a8db38e6de5c1c35ad",
+          "mode": 420
+        },
+        {
+          "path": "packaging/families/host/native-migration-audit.sh",
+          "sha256": "8ab1bef726ac29d6de8a73321c979b8f492e2034dd8ca89aa3dfdf7885a3f421",
+          "mode": 420
+        },
+        {
+          "path": "packaging/families/tests/native-migration.sh",
+          "sha256": "5090463e88c992d5b968597452c4b7d2a4c0c9ed67ec879ba782fe299b6f7d67",
+          "mode": 420
+        },
+        {
+          "path": "uke-platform-runtime/src/battery/pack-variant.hpp",
+          "sha256": "2ec6173d186124d3d15278f3f3e3b8eec6c7fcf9ee410a57472903c74248bc27",
+          "mode": 420
+        },
+        {
+          "path": "uke-platform-runtime/tests/battery-pack-variant.cpp",
+          "sha256": "a15b547fba851c4c3ed97264feeb3a9f46c2c5374e074f9c366b5b6ce932413e",
+          "mode": 420
+        }
+      ],
+      "private_only": [
+        {
+          "path": "uke-control/referances/rollback-mode-inputs/uke-control-2.8.1-11.fc46.src.rpm",
+          "reason": "Private/reference/binary/unreviewed-large content retained only in ZIP"
+        },
+        {
+          "path": "uke-control/referances/rollback-mode-inputs/uke-control-2.8.1-12.fc46.src.rpm",
+          "reason": "Private/reference/binary/unreviewed-large content retained only in ZIP"
+        },
+        {
+          "path": "uke-control/referances/rollback-mode-inputs/uke-control-2.8.1-13.fc46.src.rpm",
+          "reason": "Private/reference/binary/unreviewed-large content retained only in ZIP"
+        }
+      ],
+      "omitted": []
+    },
+    {
+      "label": "control-integration-bd38e9f5",
+      "base": "d7fe569d4732ed175c91bc8ed4ec399fd338a2ab",
+      "branch": "fix/selinux-kernel-compat-20261103",
+      "staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unstaged_sha256": "7605a8f2ecb74ed79923c26860d39b66385cde6454718cf15a162f48df1a8db2",
+      "untracked": [],
+      "private_only": [],
+      "omitted": []
+    },
+    {
+      "label": "uke-control-motion-20261113-13c24232",
+      "base": "f004918056356e8748f6a29de451e85ef642ae3a",
+      "branch": null,
+      "staged_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unstaged_sha256": "0546855a86623dce7744b63997ed8cd009f192d26d3afe351f48098c60cc9e54",
+      "untracked": [],
+      "private_only": [],
+      "omitted": []
+    }
+  ],
+  "other_bases": [
+    {
+      "label": "uke-rtc-update-422272d9",
+      "base": "a96607feb3d78fae3397f890de7e71ee8810d479",
+      "branch": "fix/rtc-persistence-20261103"
+    },
+    {
+      "label": "uke-issue14-support-fb2fd704",
+      "base": "078c6e3e1eb39cc266229e11894216dc5b82ca0c",
+      "branch": "fix/issue14-boot-metadata"
+    },
+    {
+      "label": "uke-pogo-desktop-support-3cacca16",
+      "base": "c3ad95fb679907846899d9c4e307858467119ac5",
+      "branch": "feat/pogo-desktop-20261105"
+    },
+    {
+      "label": "uke-rollback-update-7e155003",
+      "base": "dd4c8b7f8e46e0301a0bdc7c9c36605945d39c4c",
+      "branch": "fix/rollback-health-20261103"
+    },
+    {
+      "label": "uke-seamless-update-0a5a42b2",
+      "base": "3f7005d59fa046c8d125d69db62c3a07f32cc815",
+      "branch": "fix/seamless-dnf-20261103"
+    },
+    {
+      "label": "uke-audio-support-cfc3fd0b",
+      "base": "c19de32b5213aa693303e7d5b7645e39f00bd3e3",
+      "branch": "audio/speech-20261103"
+    },
+    {
+      "label": "uke-cdsp-pogo-support-6c730c67",
+      "base": "d0ac0ceec348863d6143a7b642d85e52e1283750",
+      "branch": "feat/cdsp-pogo-firmware-20261104"
+    },
+    {
+      "label": "uke-linux-hardware-support-a9c4b842",
+      "base": "6f272d03b1e05d9d67ab50f29b75177c49141b74",
+      "branch": "main"
+    },
+    {
+      "label": "uke-o82-hardware-d0fceff6",
+      "base": "01cc86627de9b903f2fe7f87599d0bd09f97ccdb",
+      "branch": "fix/o82-36-firmware-20261103"
+    },
+    {
+      "label": "support-policy-b9979637",
+      "base": "33249061aa3dfc948164580429a66cac13d67801",
+      "branch": "fix/rollback-modes-20261104"
+    },
+    {
+      "label": "support-seamless-e2f76533",
+      "base": "453cee4950bcb84015c5b6b964eff82c03506832",
+      "branch": "fix/seamless-policy-20261104"
+    },
+    {
+      "label": "trial-update-support-1eb1a3fe",
+      "base": "b5f1adb991bc39743cea75ebd5b6e4292592b354",
+      "branch": "fix/selected-profile-trigger-20261104"
+    },
+    {
+      "label": "support-060f80bf",
+      "base": "e633750b4337cb296e4af7403bdd330df5ba46dd",
+      "branch": "publish/uke-variants-20261102"
+    },
+    {
+      "label": "boot-source102-8e23b898",
+      "base": "5903eb71f5cd949e32fb009e989c3af117aa866d",
+      "branch": null
+    },
+    {
+      "label": "hardware-a72fb056",
+      "base": "417e5294092141da426605652aac033cc0de3460",
+      "branch": null
+    },
+    {
+      "label": "boot-touch-health-source-40078e05",
+      "base": "c2dcdc3adc74e3eb2b3d26a8b59d7521b7da9fbc",
+      "branch": "fix/touch-health-stats-20261103"
+    },
+    {
+      "label": "control-integration-bd38e9f5",
+      "base": "d7fe569d4732ed175c91bc8ed4ec399fd338a2ab",
+      "branch": "fix/selinux-kernel-compat-20261103"
+    },
+    {
+      "label": "control-source-94bd953c",
+      "base": "ffce26f3b21eaaaf40d8a424ada8ebe37cec96ca",
+      "branch": "fix/core-audit-tools-20261103"
+    },
+    {
+      "label": "native-firmware-barrier-source-8a8ec61a",
+      "base": "0d79f8fa636a21b91a817224af0ec9d2b8b7d366",
+      "branch": null
+    },
+    {
+      "label": "rtc-counter-offset-source-d142ecaa",
+      "base": "818246b4bb1b2481e479eafa29e3026befa56858",
+      "branch": "fix/rtc-counter-offset-20261105"
+    },
+    {
+      "label": "sensors-source-302f3d0c",
+      "base": "a77ccc39ae7b29856e4ab029415ac09b0440ff7b",
+      "branch": "fix/ssc-measurement-lifetime-20261103"
+    },
+    {
+      "label": "uke-closed-cover-health-20261113-70e97c86",
+      "base": "c4ea721ad38f311eac11faf7e602736ed15ea138",
+      "branch": null
+    },
+    {
+      "label": "uke-control-motion-20261113-13c24232",
+      "base": "f004918056356e8748f6a29de451e85ef642ae3a",
+      "branch": null
+    },
+    {
+      "label": "uke-control-worktree-20261104-84e2dd58",
+      "base": "05ea2d3e308e5fb215f6bcacc54bf2baec19c429",
+      "branch": "fix/control-update-20261104"
+    },
+    {
+      "label": "uke-kernel-manager-20261105-f50a2706",
+      "base": "a20ee0648e1b6ecc658722ddea80ab6f874b4e45",
+      "branch": "feat/senemos-kernel-manager-20261105"
+    },
+    {
+      "label": "uke-manager-expansion-20261105-ebba9413",
+      "base": "c87e2a9d4d3b0b4cc9f753cad62a34df6b3b1be1",
+      "branch": "feat/kernel-manager-expansion-20261105"
+    },
+    {
+      "label": "uke-qt-kernel-accessories-20261104-f556ecdd",
+      "base": "94958d13044d5665e2fbca21ce09f34b4dce3661",
+      "branch": "feat/qt-kernel-accessories-20261104"
+    },
+    {
+      "label": "uke-qt-settings-plan-20261104-4e7c93c8",
+      "base": "79a2d0d34c7416f556274dd52c4dafab4abf64d0",
+      "branch": "feat/qt-topic-settings-20261104"
+    },
+    {
+      "label": "uke-qt-waydroid-installer-20261105-7db16756",
+      "base": "48536d72926ddefeba3db89312a1f9addabdfb3e",
+      "branch": "feat/qt-waydroid-installer-20261105"
+    },
+    {
+      "label": "uke-qt-worktree-20261104-59e218d6",
+      "base": "02536c1b6a95a4dd478b86559088cf9f99cc5302",
+      "branch": "feat/qt-themed-actions-20261104"
+    },
+    {
+      "label": "uke-slot-worktree-20261104-57ee7f53",
+      "base": "b5605a38d4e923ebe9f105383ad948699e9b35bc",
+      "branch": "feat/guarded-slot-selection-20261104"
+    },
+    {
+      "label": "uke-vaapi-encoder-worktree-20261103-fe1e7167",
+      "base": "2d67669811cc1a497b7b5cffdc4326a2990d457e",
+      "branch": "fix/vaapi-encoder-copy-20261103"
+    },
+    {
+      "label": "uke-waydroid-media-20261105-8cf7122a",
+      "base": "c55902532a8664b64fb90a5a7b3936a61bca564c",
+      "branch": "fix/waydroid-media-20261105"
+    },
+    {
+      "label": "uke-waydroid-support-20261104-ff71b8dd",
+      "base": "97272f10732e51756bfb79d89bbe3abfadf22d22",
+      "branch": "fix/waydroid-binder-labels-20261104"
+    }
+  ],
+  "restoration": "Checkout each exact base in an isolated worktree; git apply --index staged.patch; git apply unstaged.patch; copy untracked files. Private-only deltas and cached Git objects are in the Desktop ZIP."
+}

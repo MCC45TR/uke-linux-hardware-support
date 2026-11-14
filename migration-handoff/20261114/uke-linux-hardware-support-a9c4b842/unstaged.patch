@@ -1,0 +1,270 @@
+diff --git a/docs/lessons/README.md b/docs/lessons/README.md
+index 94153deb..8cc3ea77 100644
+--- a/docs/lessons/README.md
++++ b/docs/lessons/README.md
+@@ -1,5 +1,7 @@
+ # Integration lessons
+ 
++- [UKE-NATIVE-PACKAGES-20261111: distinguish ownership coverage from retirement](2026-11-11-native-package-migration.md)
++
+ - [UKE-GUI-PACKAGES-20261102: publish matched SDK, GUI and desktop dependencies](2026-11-02-gui-packages.md)
+ - [UKE-KIRIGAMI-20261102: separate presentation from guarded C++ operations](2026-11-02-kirigami-interface.md)
+ - [UKE-QT-KDE-20261102: use native KDE appearance and responsive settings](2026-11-02-qt-kde-interface.md)
+diff --git a/packaging/families/Makefile b/packaging/families/Makefile
+index 21de037d..a643323c 100644
+--- a/packaging/families/Makefile
++++ b/packaging/families/Makefile
+@@ -3,10 +3,13 @@ SHELL := /bin/bash
+ .ONESHELL:
+ FAMILY ?= uke-core
+ outdir ?= $(CURDIR)/build/$(FAMILY)
+-.PHONY: srpm check
++.PHONY: srpm check check-native-migration
+ srpm:
+ 	bash host/compose.sh '$(FAMILY)' '$(outdir)'
++check-native-migration:
++	bash tests/native-migration.sh
+ check:
++	bash tests/native-migration.sh
+ 	bash tests/split-spec.sh
+ 	bash tests/filelists.sh
+ 	bash tests/cohort.sh
+diff --git a/packaging/families/README.md b/packaging/families/README.md
+index e6746c5f..27e5ed1c 100644
+--- a/packaging/families/README.md
++++ b/packaging/families/README.md
+@@ -1,5 +1,9 @@
+ # COPR source families
+ 
++11 November 2026: the [native ownership inventory and source guard](consolidation/NATIVE-MIGRATION.md)
++cover all current unstable producers, installed project sources and same-name
++rebuilds. Coverage is separate from functional parity and retirement acceptance.
++
+ 1 November 2026: `mcc45tr/uke-linux-unstable` uses 23 active source producers,
+ with only `fedora-rawhide-aarch64` enabled. The existing
+ [`uke-control` source family](consolidation/control-family-results.md) owns
+diff --git a/packaging/families/families.json b/packaging/families/families.json
+index 81e06253..534c3c8e 100644
+--- a/packaging/families/families.json
++++ b/packaging/families/families.json
+@@ -92,9 +92,10 @@
+         "uke-platform-runtime/docs/CHARGING-PROTOCOLS.md",
+         "uke-platform-runtime/tests/battery-model.cpp",
+         "uke-platform-runtime/tests/battery-engineering.cpp",
+-        "uke-platform-runtime/docs/BATTERY-LONGEVITY.md"
++        "uke-platform-runtime/docs/BATTERY-LONGEVITY.md",
++        "uke-platform-runtime/tests/battery-pack-variant.cpp"
+       ],
+-      "release": 1
++      "release": 2
+     },
+     {
+       "name": "uke-sensors",
+diff --git a/packaging/families/host/compose.sh b/packaging/families/host/compose.sh
+index 354b39d5..f7193929 100644
+--- a/packaging/families/host/compose.sh
++++ b/packaging/families/host/compose.sh
+@@ -1,6 +1,10 @@
+ #!/usr/bin/env bash
+ # Compose complete source recipes into a source family; no binary repackaging.
+ set -Eeuo pipefail
++source_policy_root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
++if [[ -n ${SOURCE_PACKAGE:-} ]]; then
++    bash "$source_policy_root/packaging/families/host/check-source-retirement.sh" "$SOURCE_PACKAGE"
++fi
+ # Expand upstream source recipes in the selected Fedora worker, without binary retagging.
+ fedora_number=$(rpm --eval '%{fedora}')
+ [[ $fedora_number =~ ^[0-9]+$ ]]
+@@ -30,6 +34,18 @@ if [[ $family == uke-control || $family =~ ^uke-(meta|power|sensor|audio|video|d
+ catalog=packaging/families/families.json
+ if [[ $integration == true ]]; then catalog=packaging/families/integrations.json; fi
+ profile=$(jq -ce --arg name "$family" '.families[]|select(.name==$name)' "$catalog")
++# Check frozen/umbrella inputs before downloads, local source generation or
++# output creation. SOURCE_PACKAGE alone does not cover archived children.
++if [[ $integration == true ]]; then
++    while IFS= read -r source_key; do
++        bash "$root/packaging/families/host/check-source-retirement.sh" "$source_key"
++    done < <(jq -r '.sources[].name' <<<"$profile")
++elif [[ -z $standalone ]]; then
++    while IFS= read -r source_key; do
++        bash "$root/packaging/families/host/check-source-retirement.sh" "$source_key"
++    done < <(jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' uke-desktop-packaging/manifests/native-runtime.json;
++        jq -r --arg family "$family" '.[]|select(.family==$family)|.name' packaging/families/source-inputs.json)
++fi
+ if [[ $integration == true && $family == uke-control ]];then
+     standalone=uke-control
+     [[ $(jq -r '.sources[0].name' <<<"$profile") == "$standalone" ]]
+diff --git a/packaging/families/host/standalone.sh b/packaging/families/host/standalone.sh
+index bb6452a2..79bc6025 100644
+--- a/packaging/families/host/standalone.sh
++++ b/packaging/families/host/standalone.sh
+@@ -5,6 +5,7 @@ root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
+ cd "$root"
+ key=${1:?source package}; output=$(realpath -m "${2:?output directory}")
+ [[ $key =~ ^[a-zA-Z0-9+_.-]+$ ]]
++bash "$root/packaging/families/host/check-source-retirement.sh" "$key"
+ grep -Eq '^VERSION="?(Rawhide|[0-9]+ \(Rawhide( Prerelease)?\))"?$|^VERSION_ID="?rawhide"?$' /etc/os-release || { echo 'Use a Rawhide source worker' >&2; exit 1; }
+ [[ $(rpm --eval '%{_host_cpu}') == aarch64 ]]
+ stage=$(mktemp -d)
+diff --git a/uke-desktop-packaging/src/native-runtime/prepare-source.sh b/uke-desktop-packaging/src/native-runtime/prepare-source.sh
+index 8f5d5402..04be86f6 100644
+--- a/uke-desktop-packaging/src/native-runtime/prepare-source.sh
++++ b/uke-desktop-packaging/src/native-runtime/prepare-source.sh
+@@ -4,6 +4,7 @@ set -Eeuo pipefail
+ name=${1:?package}
+ top=${2:?RPM topdir}
+ project=${3:?repository root}
++bash "$project/../packaging/families/host/check-source-retirement.sh" "$name"
+ profile=$(jq -ce --arg name "$name" '.packages[] | select(.name==$name)' "$project/manifests/native-runtime.json")
+ version=$(jq -er .version <<< "$profile")
+ release=$(jq -er .release <<< "$profile")
+diff --git a/uke-platform-runtime/Makefile b/uke-platform-runtime/Makefile
+index 3d12a2bd..2b56860b 100644
+--- a/uke-platform-runtime/Makefile
++++ b/uke-platform-runtime/Makefile
+@@ -12,7 +12,7 @@ all: $(outdir)/uke-battery $(outdir)/uke-charge-control $(outdir)/uke-offline-ch
+ $(outdir)/uke-offline-charge: src/offline/main.cpp src/offline/boot-mode.hpp src/offline/io.hpp src/offline/screen.hpp src/offline/sampler.hpp src/battery/provider.hpp
+ 	mkdir -p "$(outdir)"
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -ffile-prefix-map=$(CURDIR)=. src/offline/main.cpp $$(pkg-config --cflags --libs libdrm) $(LDFLAGS) -o "$@"
+-$(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp src/battery/record.hpp src/battery/provider.hpp src/battery/demand.hpp
++$(outdir)/uke-battery: $(battery_sources) src/battery/collector.hpp src/battery/model.hpp src/battery/session.hpp src/battery/profile.hpp src/battery/record.hpp src/battery/provider.hpp src/battery/demand.hpp src/battery/pack-variant.hpp
+ 	mkdir -p "$(outdir)"
+ 	pkg-config --atleast-version=257 libsystemd
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror -pthread -ffile-prefix-map=$(CURDIR)=. $(battery_sources) $$(pkg-config --cflags --libs libsystemd) $(LDFLAGS) -o "$@"
+@@ -30,6 +30,8 @@ validate:
+ 	jq -e '[.features[].id] as $$ids | .integrated_inventory_review_required == true and .part_identity_verified == false and .firmware_activation_observed_this_review == false and ($$ids | length) == ($$ids | unique | length) and (["charge_pump_bus_ovp_ocp", "charge_pump_battery_ovp_ocp", "charge_pump_watchdog", "pack_thermistor_open_short", "regulator_ocp_uv_notifications", "pm7550ba_bcl_brownout"] - $$ids | length == 0)' manifests/protection-readiness.json >/dev/null
+ test-native:
+ 	mkdir -p "$(outdir)"
++	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/battery-pack-variant.cpp -o "$(outdir)/test-battery-pack-variant"
++	"$(outdir)/test-battery-pack-variant"
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -Wall -Wextra -Werror tests/battery-demand.cpp -o "$(outdir)/test-battery-demand"
+ 	"$(outdir)/test-battery-demand"
+ 	bash tests/battery-model.sh
+diff --git a/uke-platform-runtime/README.md b/uke-platform-runtime/README.md
+index 7be170e4..2278a2dc 100644
+--- a/uke-platform-runtime/README.md
++++ b/uke-platform-runtime/README.md
+@@ -88,3 +88,12 @@ and `uke-offline-charge` packages for Fedora AArch64. The observer remains read-
+ runtime package names and distribution targets are not implemented by this
+ recipe. Python does not enter its target payload. Archives stay in
+ `referances/`; original implementation lives in `src/`.
++## Battery supplier identity
++
++2 November 2026: the observer reads standard `manufacturer` and `model_name`
++fields and reports a bounded NVT/Sunwoda supplier hint. Missing, conflicting or
++unrecognized identities remain explicit. A hint does not select current,
++voltage, termination or thermal limits; the existing firmware charging owner
++and unqualified electrical-profile gates remain in effect. Source fixtures
++cover both names, token boundaries and conflicting/malformed data. Hardware
++acceptance and the selected pack's electrical qualification remain separate.
+diff --git a/uke-platform-runtime/packaging/uke-battery-observer.spec b/uke-platform-runtime/packaging/uke-battery-observer.spec
+index 6edc75b9..7cff9fd7 100644
+--- a/uke-platform-runtime/packaging/uke-battery-observer.spec
++++ b/uke-platform-runtime/packaging/uke-battery-observer.spec
+@@ -1,7 +1,7 @@
+ %global debug_package %{nil}
+ Name: uke-battery-observer
+ Version: 1.4.1
+-Release: 1%{?dist}
++Release: 2%{?dist}
+ Summary: Read-only native battery observation for Xiaomi Uke
+ License: MIT
+ URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-platform-runtime
+@@ -118,6 +118,10 @@ sha256sum -c SOURCE-SHA256SUMS
+ %{_datadir}/uke-battery/model-profile.json
+ 
+ %changelog
++* Mon Nov 02 2026 Uke Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.1-2
++- Report bounded NVT and Sunwoda supplier hints from standard battery identity.
++- Preserve firmware charging ownership and electrical qualification requirements.
++
+ * Thu Oct 29 2026 Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com> - 1.4.1-1
+ - Require a reviewed integrated-protection inventory before charge admission.
+ - Record charge-pump, pack, PMIC and connector ownership and unresolved coverage.
+diff --git a/uke-platform-runtime/src/battery/collector.cpp b/uke-platform-runtime/src/battery/collector.cpp
+index 09ae6750..05bb72a6 100644
+--- a/uke-platform-runtime/src/battery/collector.cpp
++++ b/uke-platform-runtime/src/battery/collector.cpp
+@@ -2,6 +2,7 @@
+ #include "collector.hpp"
+ #include "profile.hpp"
+ #include "provider.hpp"
++#include "pack-variant.hpp"
+ #include <algorithm>
+ #include <array>
+ #include <cerrno>
+@@ -134,6 +135,7 @@ Epoch epoch(const Reading &r) {
+ }
+ struct Field { const char *supply, *name, *unit; bool numeric; };
+ constexpr Field fields[] = {
++	{"battery", "manufacturer", "text", false}, {"battery", "model_name", "text", false},
+     {"battery", "status", "enum", false}, {"battery", "health", "enum", false},
+     {"battery", "present", "boolean", true}, {"battery", "capacity", "percent", true},
+     {"battery", "voltage_now", "uV", true}, {"battery", "voltage_ocv", "uV", true},
+@@ -250,7 +252,7 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
+         << ",\"driver_instance_boottime_ns\":" << (last.valid ? std::to_string(last.instance) : "null")
+         << ",\"attach_generation\":null,\"protocol\":null,\"contract\":null,\"cable_identity\":null,\"fields\":{";
+     std::optional<int64_t> online, current;
+-    std::string health_label, battery_status;
++    std::string health_label, battery_status, manufacturer, model;
+     Observation sample; sample.fault = true;
+     sample.valid = coherent; sample.boottime_ns = end; sample.monotonic_ns = now(CLOCK_MONOTONIC);
+     if (last.valid) sample.epoch = std::to_string(last.instance) + ":" + std::to_string(last.firmware) + ":" +
+@@ -286,6 +288,8 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
+             else if (name == "cycle_count") sample.hardware_cycles = n;
+             else if (name == "status") battery_status = r.text;
+             else if (name == "health") { health_label = r.text; sample.fault = r.text != "Good"; }
++            else if (name == "manufacturer") manufacturer = r.text;
++            else if (name == "model_name") model = r.text;
+         }
+     }
+     const char *direction = !current ? "unknown" : *current > 0 ? "charging_current_observed" :
+@@ -310,7 +314,9 @@ std::string collect(const std::string &sysfs_root, ModelSession &models, bool in
+     const auto &qualification = profile.qualification;
+     sample.battery_id = profile.battery_id; sample.boot_id = identity.boot_id;
+     const auto derived = models.observe(sample, qualification);
+-    out << "},\"battery_flow\":" << quote(direction) << ",\"safety\":\"unknown_safety_state\""
++    out << "},\"pack_variant\":{\"supplier_hint\":" << quote(std::string(pack_supplier_hint(manufacturer, model)))
++        << ",\"source\":\"standard_power_supply_identity\",\"qualified\":false,\"electrical_profile_applied\":false}"
++        << ",\"battery_flow\":" << quote(direction) << ",\"safety\":\"unknown_safety_state\""
+         << ",\"power_path\":{\"observation\":" << quote(power_path)
+         << ",\"reported_battery_status\":" << (battery_status.empty() ? "null" : quote(battery_status))
+         << ",\"external_source_reported_online\":" << (!online ? "null" : *online ? "true" : "false")
+diff --git a/uke-platform-runtime/tests/battery-collector.sh b/uke-platform-runtime/tests/battery-collector.sh
+index 25eb52cc..84c19355 100755
+--- a/uke-platform-runtime/tests/battery-collector.sh
++++ b/uke-platform-runtime/tests/battery-collector.sh
+@@ -6,7 +6,7 @@ work=$(mktemp -d)
+ trap 'rm -r -- "$work"' EXIT
+ "${CXX:-c++}" -std=c++17 -O2 -Wall -Wextra -Werror "$root/tests/provider-identity.cpp" -o "$work/provider-identity"
+ "$work/provider-identity" "$work/provider-fixture"
+-make -C "$root" outdir="$work/build" all
++make -C "$root" outdir="$work/build" "$work/build/uke-battery"
+ sys=$work/sys
+ mkdir -p "$sys/firmware/devicetree/base" "$sys/class/power_supply" "$sys/devices/charger" "$sys/bus/auxiliary/drivers/qcom_battmgr.pmic_glink_power_supply"
+ printf 'xiaomi,uke\0qcom,sm7675\0' > "$sys/firmware/devicetree/base/compatible"
+@@ -19,6 +19,8 @@ done
+ printf '1 1 1 1 1 0 0 0 0 0 100 99\n' > "$sys/devices/charger/uke_battmgr_state"
+ printf 'Discharging\n' > "$sys/class/power_supply/qcom-battmgr-bat/status"
+ printf 'Good\n' > "$sys/class/power_supply/qcom-battmgr-bat/health"
++printf 'NVT\n' > "$sys/class/power_supply/qcom-battmgr-bat/manufacturer"
++printf 'BMXX\n' > "$sys/class/power_supply/qcom-battmgr-bat/model_name"
+ printf '%s\n' -500000 > "$sys/class/power_supply/qcom-battmgr-bat/current_now"
+ printf '%s\n' 4000000 > "$sys/class/power_supply/qcom-battmgr-bat/voltage_now"
+ printf '%s\n' -2000000 > "$sys/class/power_supply/qcom-battmgr-bat/power_now"
+@@ -28,6 +30,15 @@ mkdir -p "$sys/class/thermal/thermal_zone0"
+ printf 'pmic_bcl_current\n' > "$sys/class/thermal/thermal_zone0/type"
+ printf '125000\n' > "$sys/class/thermal/thermal_zone0/temp"
+ "$work/build/uke-battery" --sysfs-root "$sys" > "$work/snapshot.json"
++jq -e '.pack_variant.supplier_hint == "nvt" and (.pack_variant.qualified | not) and (.pack_variant.electrical_profile_applied | not)' "$work/snapshot.json" >/dev/null
++for supplier in SUNWODA Unknown; do
++    printf '%s\n' "$supplier" > "$sys/class/power_supply/qcom-battmgr-bat/manufacturer"
++    "$work/build/uke-battery" --sysfs-root "$sys" > "$work/variant.json"
++    expected=unknown
++    [[ $supplier != SUNWODA ]] || expected=sunwoda
++    jq -e --arg expected "$expected" '.pack_variant.supplier_hint==$expected and (.pack_variant.electrical_profile_applied|not)' "$work/variant.json" >/dev/null
++done
++printf 'NVT\n' > "$sys/class/power_supply/qcom-battmgr-bat/manufacturer"
+ jq -e '.schema_version == 1 and .origin == "fixture" and .provider_verified and .snapshot_coherent
+     and .external_power_with_negative_battery_current and .fields["battery.power_now"].value == -2000000
+     and .fields["battery.cycle_count"].value == 0 and .fields["battery.cycle_count"].validity == "unqualified"
