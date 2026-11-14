@@ -255,23 +255,61 @@ candidate into67 flat files and checks all64 parent inputs and spec again. Froze
 9c31cc3e, reciped1dffafd and overlay20a40ae0 remain identical; no production code,
 acceptance gate, default producer or device state changes for this correction.
 
-Corrected full build11327855 imports the expected Control2.17.0-17 source and
+Corrected full build 11327855 imports the expected Control 2.17.0-17 source and
 starts the Rawhide ARM worker. Published source a139d67ab8a7b5ca174bfdf872025f3726140d2602be5cf47764eae64bfa7d53
-has67 header files: all64 inherited inputs retain names, sizes and hashes;
-recipe d1dffafd, Motion archive20a40ae0 and the original build-only policy fixture
+has 67 header files: all 64 inherited inputs retain names, sizes and hashes;
+recipe d1dffafd, Motion archive 20a40ae0 and the original build-only policy fixture
 match the source qualification. The default producer is independently unchanged
-after submission (script53087127, auto_rebuild=false). This establishes source
+after submission (script 53087127, auto_rebuild=false). This establishes source
 delivery only; native checks, signed runtime packages, DNF and real unit/IIO
 acceptance remain separate. No local compilation, installation or boot change.
 
-The ARM job11327855 fails after536 seconds at the new payload check. Both six-
+The ARM job 11327855 fails after 536 seconds at the new payload check. Both six-
 group GCC and Clang sanitizer suites and the original-policy ownership fixture
 pass first. The check incorrectly compares the unstripped build ELF with the
 installed ELF after Fedora's brp-strip, brp-strip-comment-note and brp-strip-lto;
 their section-table offsets differ. No runtime RPM is published and the inherited
-checks after this new check have not run. Candidate18 retains the exact same
+checks after this new check have not run. Candidate 18 retains the exact same
 production C++, unit, policy and lifecycle hooks, but replays those same three
 Fedora tools on a private copy before requiring byte-for-byte executable equality.
-It still derives from signed16 and preserves all64 inputs and the complete recipe
-inverse. A new release avoids reusing the published17 source identity. Native
+It still derives from signed 16 and preserves all 64 inputs and the complete recipe
+inverse. A new release avoids reusing the published 17 source identity. Native
 qualification of this correction and real unit/DNF acceptance remain open.
+
+Fresh device ownership queries correct one statement in the frozen Motion1
+contract: the installed SensorProxy runtime is uke-iio-sensor-proxy 3.9-24,
+with uke-libssc 0.4.4-26, rather than the original Fedora SensorProxy RPM.
+The service and executable belong to that retained adaptation. The reused
+SELinux domain and base policy are from the original Fedora policy. Motion does
+not remove, replace or restart the existing provider; its retirement still needs
+kernel/DT support and measured parity. Correct the packaged contract before
+normal publication. The frozen build 11327890 remains source 39f862f2; this
+ownership correction does not change its production C++ or admit sensor data.
+
+Build 11327890 at 39f862f2 succeeds in 1,408 seconds. Both six-group compiler
+suites, the original Fedora policy-store fixture, exact post-BRP payload and
+private lifecycle checks pass, followed by all inherited Control checks. Signed
+main RPM 4921d868, TUI 22d0a188, devel a450bce8 and source 91145287 each have both
+trusted 2204 signatures. All 67 signed source header files equal the reviewed
+source-worker inputs. The 38 inherited ELF programs/libraries retain loadable
+code, ABI and library requirements; 251 data files, eight links and equivalent
+RGB policy are unchanged. Eight declared Motion paths are added. All inherited
+scriptlet statements and triggers retain their order after the six declared
+additions; the complete source recipe inverse also protects heredoc whitespace.
+
+The RPM audit initially rejects three additional libsystemd symbol requirements.
+ELF inspection attributes them to sd_uid_get_display (213), sd_bus_match_signal
+(237) and sd_event_add_time_relative (247) in the new Motion binary. Existing
+systemd >= 256 and installed systemd-libs 262.2 satisfy them; no dependency is
+removed and no additional runtime package is needed. The other explicit addition
+is the restorecon executable. A read-only DNF preview resolves only Control/TUI
+16 to 18 (two packages, approximately 2 MiB download and 167 KiB additional
+installed storage); assumeno aborts without applying the transaction.
+
+Preparation for 19 corrects the packaged provider ownership/status text and
+advances release metadata without changing production C++, unit, policy or
+lifecycle bytes. Its recipe equals 18 after release normalization and still
+inverts to the complete signed16 parent. No 19 build is submitted. The actual
+18 unit, SELinux execution, DNF upgrade/rollback and frozen-loop watchdog tests
+remain open, as do numeric frame/time admission and physical keyboard acceptance.
+Normal producers and installed Control16/Uke39 remain unchanged.

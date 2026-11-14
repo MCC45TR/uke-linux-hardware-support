@@ -58,8 +58,8 @@ node "$owner/packaging/fold-motion-spec.mjs" "$output/uke-control.spec" "$contra
 for fixture in ssc-unit-state ssc-refresh ssc-cache-postun motion-lifecycle;do
  bash "$owner/tests/$fixture.sh" --data-only "$output/uke-control.spec"
 done
-[[ $(rpmspec --target aarch64 --define 'dist .fc46' --define "_sourcedir $output" -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-18.fc46 ]]
+[[ $(rpmspec --target aarch64 --define 'dist .fc46' --define "_sourcedir $output" -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$output/uke-control.spec") == uke-control-2.17.0-19.fc46 ]]
 rpmspec --target aarch64 --define 'dist .fc46' --define "_sourcedir $output" -q --qf '%{NAME}\n' "$output/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui | cmp - "$work/names"
 [[ $(find "$output" -maxdepth 1 -type f ! -name uke-control.spec | wc -l) == 66 ]]
-printf 'Control18: all64 parent inputs preserved, full recipe inverse passed,66 sources and exactly three existing RPM names.\n'
+printf 'Control19: all64 parent inputs preserved, full recipe inverse passed,66 sources and exactly three existing RPM names.\n'

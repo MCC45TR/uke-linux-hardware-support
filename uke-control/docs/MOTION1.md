@@ -1,8 +1,9 @@
 # Leased display inclination
 
-Status, 14 November 2026: source and private fixtures are qualified in part.
-No Motion1 runtime has been delivered. Production IIO admission is explicitly
-false. Kernel 26 does not admit the fitted gravity frame or acquisition-clock
+Status, 14 November 2026: Control18 passes complete ARM source, native and signed
+RPM qualification. Actual unit lifecycle, DNF transitions and numeric sensor
+admission remain unqualified. No Motion1 runtime has been delivered. Production
+IIO admission is explicitly false. Kernel 26 does not admit the fitted gravity frame or acquisition-clock
 mapping; an orientation label, rigid-body identifier, arrival timestamp or
 another sensor's matrix cannot substitute for that evidence.
 
@@ -10,7 +11,10 @@ The numeric provider belongs inside the existing Control RPM. It is necessary
 because original SensorProxy exposes categorical orientation rather than the
 fresh screen-normal angle needed by the keyboard’s 45/40-degree policy. Hardware
 protocols, topology and timestamp semantics remain in the kernel and Device Tree.
-Original Fedora SensorProxy, SELinux policy and KDE packages remain installed.
+The existing SensorProxy integration, original Fedora SELinux policy and KDE
+packages are retained. On the qualification tablet, the SensorProxy service and
+executable belong to uke-iio-sensor-proxy 3.9-24; Motion1 does not migrate or
+replace that provider.
 There is no additional hardware-bridge runtime RPM.
 
 ## Session interface

@@ -1,6 +1,6 @@
 {
   "schema": "org.uke.control.motion.integration.v1",
-  "release": 18,
+  "release": 19,
   "production_admitted": false,
   "parent": {
     "build": 11321859,
@@ -337,7 +337,7 @@
   "source_assets": [
     {
       "path": "uke-control/docs/MOTION1.md",
-      "sha256": "ec42bd93d718622859ec7ad2d2b409768bc2f96dce46f61f4f92961a91867619"
+      "sha256": "72ee25296c9a74c77cf357ba1f352d2ec8cc6d84275338539ee4fc7c316d99ea"
     },
     {
       "path": "uke-control/packaging/check-motion-integration.sh",
@@ -349,7 +349,7 @@
     },
     {
       "path": "uke-control/packaging/fold-motion-spec.mjs",
-      "sha256": "b754c3555632db41009ec4d5ff28ddc18fdaf5338505527173015365899a478a"
+      "sha256": "15ac467e3c9c3b9bdf1bff3555f8ffd3166149a748f050058c5606b2d35e598a"
     },
     {
       "path": "uke-control/packaging/motion-assets.mjs",
@@ -377,7 +377,7 @@
     },
     {
       "path": "uke-control/packaging/prepare-control-motion.sh",
-      "sha256": "e530f4996fd767fd460c38d5490c0faa0aaf018670e4e433b54dfedc97774fe4"
+      "sha256": "31a0623ab8a469f666ae7e3fdf417357ecf9838e5c9caac15a6e659ea9de177b"
     },
     {
       "path": "uke-control/packaging/selinux/motion-policy.sh",
@@ -480,8 +480,8 @@
   },
   "source_epoch": 1794679674,
   "result": {
-    "nvr": "uke-control-2.17.0-18",
+    "nvr": "uke-control-2.17.0-19",
     "non_spec_sources": 66,
-    "spec_sha256": "e687d303ba5c29980fd250baba5038b7303b86d831d48241b0c1d310be497f6e"
+    "spec_sha256": "b9835d611beeabf905042d1e455fe6617ec5d9c31e40df4c6325473d98211f5c"
   }
 }

@@ -8,7 +8,7 @@ const contract = JSON.parse(fs.readFileSync(manifest));
 const before = fs.readFileSync(path, 'utf8');
 const digest = value => crypto.createHash('sha256').update(value).digest('hex');
 assert.equal(digest(before), contract.parent.spec_sha256);
-assert.equal(contract.release, 18);
+assert.equal(contract.release, 19);
 const release = contract.release;
 assert.equal(contract.production_admitted, false);
 assert.equal(contract.parent.nvr, 'uke-control-2.17.0-16');
@@ -118,8 +118,8 @@ for (const [old, value] of applied.toReversed()) {
 }
 inverse = inverse.replaceAll(`Release: ${release}%{?dist}`, 'Release: 16%{?dist}').replaceAll(`2.17.0-${release}`, '2.17.0-16');
 assert.equal(inverse+history, before, 'Unrelated Control16 recipe changed');
-const entry='* Sat Nov 14 2026 Uke contributors - 2.17.0-18\n- Add the demand-leased Motion1 interface within Control; keep production admission closed.\n- Preserve original sensor policy, private ownership and package rollback behavior.\n- Retain the complete Control16 source recipe and closed-cover health fix.\n\n';
+const entry='* Sat Nov 14 2026 Uke contributors - 2.17.0-19\n- Add the demand-leased Motion1 interface within Control; keep production admission closed.\n- Preserve original sensor policy, private ownership and package rollback behavior.\n- Retain the complete Control16 source recipe and closed-cover health fix.\n\n';
 const after = body+history.replace('%changelog\n', '%changelog\n'+entry);
 if (contract.result?.spec_sha256) assert.equal(digest(after), contract.result.spec_sha256);
 fs.writeFileSync(path, after);
-console.log('Control18: complete Control16 recipe inverse passes; '+applied.length+' declared additive integration blocks; SHA256 '+digest(after));
+console.log('Control19: complete Control16 recipe inverse passes; '+applied.length+' declared additive integration blocks; SHA256 '+digest(after));
