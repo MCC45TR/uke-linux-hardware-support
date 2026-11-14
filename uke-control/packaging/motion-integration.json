@@ -1,12 +1,338 @@
 {
   "schema": "org.uke.control.motion.integration.v1",
-  "release": 16,
+  "release": 17,
   "production_admitted": false,
   "parent": {
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-15.fc46.src.rpm",
-    "srpm_sha256": "d6be728b7fb2bb52497dbd91470249ff276e857d2de60db2d5e8659ca52bb71a",
-    "spec_sha256": "5a0b9d5236a9d071095e77ce0dbe6cb29b80a7f8968b972e3295327637723efc",
-    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+    "build": 11321859,
+    "nvr": "uke-control-2.17.0-16",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-16.fc46.src.rpm",
+    "srpm_sha256": "f1ef6c120692a8146cc288df70640c05b2be62321b60061f55103732566fada2",
+    "spec_sha256": "e370e5b0705f7d4f6cfbff34ecc915c3eeb3e6fd582405b0d2f9e238d452b3a9",
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca",
+    "non_spec_sources": 64,
+    "inherited_control15_sources": 63,
+    "inputs": [
+      {
+        "path": "60-uke-filelists.conf",
+        "size": 116,
+        "sha256": "91b03c50b6e1d458d73109e99e392367d61a4eda859aa18e8b1176763ee0d61f"
+      },
+      {
+        "path": "89-uke-native-proximity.rules",
+        "size": 369,
+        "sha256": "a71a599bf1313067040fbbe31d21bdfe1e556b64f65eb8323c4ecbb25ff5735e"
+      },
+      {
+        "path": "KERNEL-CONSOLIDATION.md",
+        "size": 6487,
+        "sha256": "139d701076676892b69290738392a88e656798009f0c2b92d16504c3b0df1cc4"
+      },
+      {
+        "path": "NATIVE-PROXIMITY-SELECTION.md",
+        "size": 1842,
+        "sha256": "962b87fcb0b4ea2fe848c0f0e19bb7d0a8fc97579e940974f6ffdc672196371f"
+      },
+      {
+        "path": "charge-fold-source.json",
+        "size": 11620,
+        "sha256": "9658fa1beeea329235f00dd6005989d1009fe696bd3b2844e15ae7bacb5c1607"
+      },
+      {
+        "path": "control-consolidated-spec.txt",
+        "size": 83945,
+        "sha256": "28fb1875d1318e6e4683b4d4b8b1db706c57608737243e01f4fc9bb348a40f7f"
+      },
+      {
+        "path": "control-version.hpp",
+        "size": 122,
+        "sha256": "29dd9bad119116fd58921f08e7c9d1759ae3ae28f0114a78f743216718b52795"
+      },
+      {
+        "path": "copr-control-brightness.sh",
+        "size": 2124,
+        "sha256": "813b3eb9c374d00f67a9e2779927c674ab6b8ce7b784a4bf5e2b6e0dcba7248a"
+      },
+      {
+        "path": "copr-control-charge-fold.sh",
+        "size": 5133,
+        "sha256": "0b72300e4159eaf4cd1554d4b0f4432feb1cd27573b4d7c44069d0d617856331"
+      },
+      {
+        "path": "copr-control-critical.sh",
+        "size": 2362,
+        "sha256": "ac4d543b20d847fdba40123edccf3bb79d65fb15e133f6f4031624844faccbd8"
+      },
+      {
+        "path": "copr-control-health.sh",
+        "size": 2620,
+        "sha256": "1f99d8e37b8f69297fcc0aaa01f9a45dadff12377af2271e4eb3db051380819e"
+      },
+      {
+        "path": "copr-control-kernel.sh",
+        "size": 7457,
+        "sha256": "cbeaf4da045804a1d56efef2c6413ebe9630ad0a90a280ca0c5ac37e481c1095"
+      },
+      {
+        "path": "copr-control-native-proximity.sh",
+        "size": 2326,
+        "sha256": "89bf18f7bffa2566e027f890e97176e9257a4039d347ef6ef5d965978270ec1d"
+      },
+      {
+        "path": "copr-control-nfc.sh",
+        "size": 2735,
+        "sha256": "819531752ba3b487025af903e7e8ba29c1499367a0c478c037e0a0d104b11dc0"
+      },
+      {
+        "path": "copr-control-session-fixes.sh",
+        "size": 2353,
+        "sha256": "1995feccfc4af85477705b3f9c642430c2798c1e285177dc1f576f511bc8d962"
+      },
+      {
+        "path": "copr-control-session.sh",
+        "size": 2629,
+        "sha256": "2c0c3d0f7fb03c3237b6cadd90f0347bd8daf948419e09389c7391ac1672a14d"
+      },
+      {
+        "path": "copr-control-speaker.sh",
+        "size": 2924,
+        "sha256": "89163b453d32e641c720b868d2130796be57076ac9e3acda8280bcbe0270185e"
+      },
+      {
+        "path": "copr-public-key.asc",
+        "size": 1034,
+        "sha256": "09612473936422a20ac218402142f6e40b903e42f78d6d9bc13c1812db435d50"
+      },
+      {
+        "path": "fold-brightness-spec.sh",
+        "size": 3616,
+        "sha256": "3c4278b95cc169e31ab06e944fd4c075131d2edd69a63ffd672122e74b1ec70a"
+      },
+      {
+        "path": "fold-charge-spec.sh",
+        "size": 6348,
+        "sha256": "c4b8916ed77f6b621531c245845e31306643a77ffa4673f7be736ae882ea7796"
+      },
+      {
+        "path": "fold-critical-spec.sh",
+        "size": 2005,
+        "sha256": "0777ab83ba7b8cfeb86040c78f46f806350c75ffc9ed83093de7a4ae3c973d9f"
+      },
+      {
+        "path": "fold-health-spec.sh",
+        "size": 2025,
+        "sha256": "0e31a4a4c1861e5e51bf4ad620a047486457b0253187ee72d358170831acfd89"
+      },
+      {
+        "path": "fold-native-proximity-spec.sh",
+        "size": 3186,
+        "sha256": "f5352e6a6e5d458f29bdf925643d530b3173da2bec25b14ae30c93b474e3f6da"
+      },
+      {
+        "path": "fold-nfc-spec.sh",
+        "size": 6032,
+        "sha256": "1a781adf61a8f9a4d8371b02ca34e642db3bebc88fd397841c7aa267473a2bfc"
+      },
+      {
+        "path": "fold-session-spec.sh",
+        "size": 3085,
+        "sha256": "68ac670261df598b2490d16c08f9682d627c68673171f733c7add9397f2ede15"
+      },
+      {
+        "path": "fold-speaker-spec.sh",
+        "size": 5646,
+        "sha256": "324a492fc9056faf1f94df4a0ca5fd3c8d00a86b087c5f2e9048a7eac1f38f15"
+      },
+      {
+        "path": "input.json",
+        "size": 887,
+        "sha256": "df2e368143dcb3001c855abef6b3d7e5e794c4f1983cc0e1b45e933a5fae10e9"
+      },
+      {
+        "path": "kernel-consolidation.sh",
+        "size": 3959,
+        "sha256": "845b4618caceb675ea19984fbec45e744f40ee32cf1edba71931044be3dca8f3"
+      },
+      {
+        "path": "merge-kernel-spec.cpp",
+        "size": 23723,
+        "sha256": "da84bc35985a68a76b00935fe91b98020e4842d37579600235304690a472d4ad"
+      },
+      {
+        "path": "native-proximity-source.json",
+        "size": 1002,
+        "sha256": "14d97fa46a0bb64d95ba0b042dc9cb36bb0b5fd79773b8fa80ebcff077141e24"
+      },
+      {
+        "path": "retained-battery-services-1.4.1-7.tar.xz",
+        "size": 111908,
+        "sha256": "ed9eddf7410203535c8145d740fcd2be6cb3be09609742064c691f9c22aad8f9"
+      },
+      {
+        "path": "retained-o82-color-0.7.0.tar.xz",
+        "size": 63736,
+        "sha256": "e2b5e036201811a3e610e0065fea62ea88fe171de3e69e555bfce92c97ab471c"
+      },
+      {
+        "path": "retained-speaker-runtime-0.4-3.tar.gz",
+        "size": 17625,
+        "sha256": "53d7c0e00184e7c9b2a5994078c218faf53899ac50f0ac41253e477cd08afd26"
+      },
+      {
+        "path": "runtime733-version.patch",
+        "size": 5438,
+        "sha256": "1337c07ffd282cc6602ef56a13b8f8926a97748608367e76574ef7647399ebdd"
+      },
+      {
+        "path": "uke-battery.conf",
+        "size": 43,
+        "sha256": "ffeb97031bf8fb2833fb6e3095fd1ffcb18217980f75dda5ce1205b7b6dc4ada"
+      },
+      {
+        "path": "uke-boot-integration-1.8.102.tar.xz",
+        "size": 284896,
+        "sha256": "d2d909b25ea9583c979a0c369050c9179eeb2bc41e39f8909dba34177c80a45e"
+      },
+      {
+        "path": "uke-control-2.8.1.tar.xz",
+        "size": 695268,
+        "sha256": "00bc896fb2b8bfe70c6444a412a8014c17c77af17cb1ab5587c062ae14d1efab"
+      },
+      {
+        "path": "uke-control-adaptive-services.tar.xz",
+        "size": 7784,
+        "sha256": "ded9e0e879aa85a83087b5cd42238c5962270631044311b86825352ace313e14"
+      },
+      {
+        "path": "uke-control-battery-services.tar.xz",
+        "size": 4900,
+        "sha256": "283272bdf4338ace1978b2edd13d041aba71ec3813a6650ed9e50b8e6b3d48c1"
+      },
+      {
+        "path": "uke-control-boot-health.tar.xz",
+        "size": 5860,
+        "sha256": "49a4bf657604742401a08067420f0efa43d979810b267c46ae834101fc6aeb49"
+      },
+      {
+        "path": "uke-control-brightness-curve.tar.xz",
+        "size": 11808,
+        "sha256": "905c455abac26c4e3068fa467ef9f70da09c8ddc53ddc29880f646ca7897d837"
+      },
+      {
+        "path": "uke-control-charge-wait.tar.xz",
+        "size": 7484,
+        "sha256": "ca681a48ea6dcca614a6c77fb12a55d2f9439d9e6c93a1da1a17c571179bf2c0"
+      },
+      {
+        "path": "uke-control-charge.tar.xz",
+        "size": 70492,
+        "sha256": "c7c0569a55fe2a136ba33f32ccc809d115c892393f08e5ae04caccdbcb5692be"
+      },
+      {
+        "path": "uke-control-closed-cover-health.tar.xz",
+        "size": 10632,
+        "sha256": "d66ea479b097c2ebf1b1ac13469014c15b692c1a0e526ec5927d4c79b79cde30"
+      },
+      {
+        "path": "uke-control-critical-rollback.tar.xz",
+        "size": 16168,
+        "sha256": "2cd318afa82f94a70161ee2b08d5214b0885b8e6a2c23d87ebb5626623c13929"
+      },
+      {
+        "path": "uke-control-fastrpc-provider.tar.xz",
+        "size": 20492,
+        "sha256": "1d3e6aa8be1b7674d17c67bc608a00bdd220f7a016fc93d30abf67728e4e0f59"
+      },
+      {
+        "path": "uke-control-frontend-contract.tar.xz",
+        "size": 4116,
+        "sha256": "1ae09ec9bbdb26acf05a52e1fbfd2e91f9dca36bd0e05bfff9b738e0c891c304"
+      },
+      {
+        "path": "uke-control-nfc.tar.xz",
+        "size": 16568,
+        "sha256": "05f65eb87fdc3ebcc537cadf52b23e85aeb095decdfb22ca00c14e65c51f423c"
+      },
+      {
+        "path": "uke-control-package-update.tar.xz",
+        "size": 59644,
+        "sha256": "d55773ac5bc0a166da3568ad05e2f9f0f4aafa77d804527f3a65a1551c207a89"
+      },
+      {
+        "path": "uke-control-pogo-integration.tar.xz",
+        "size": 6967180,
+        "sha256": "d7858cbf8933c8a8f50aa6794a622da80bfb730ec722fc90a9c0df95a18a3339"
+      },
+      {
+        "path": "uke-control-published-spec.txt",
+        "size": 55733,
+        "sha256": "af55dfe5446460d9f27feba4f4b9e5e4f31e96fb300d24f4fdabfee24bf30983"
+      },
+      {
+        "path": "uke-control-rollback.tar.xz",
+        "size": 10892,
+        "sha256": "9684cffda70c59b4f947cd06ece6a5ed70ece4fd166c1751d1dd082ad42d3938"
+      },
+      {
+        "path": "uke-control-selinux-integration.tar.xz",
+        "size": 6096,
+        "sha256": "0caa184b91fe1520a751cdd837a9eda840f20245db01f449ea888012436c1d27"
+      },
+      {
+        "path": "uke-control-session-bridge.tar.xz",
+        "size": 9708,
+        "sha256": "1a04bcf25a74e285df2b828339c92f4ffbe016acb00b295d5753d561ffb0ad2f"
+      },
+      {
+        "path": "uke-control-session-fixes.tar.xz",
+        "size": 12112,
+        "sha256": "195b70b9b4b7dc3eab7385d03b79fc1a4a948b78be67ba2eab6a1ac8729d75dd"
+      },
+      {
+        "path": "uke-control-speaker-runtime.tar.xz",
+        "size": 14384,
+        "sha256": "3bb66abb3798bbf3eecb9266018a41e75752b665bce564c6a78042d6a0caf8f0"
+      },
+      {
+        "path": "uke-control-speech-overlay.tar.gz",
+        "size": 46436,
+        "sha256": "f2faf284c0101203e1cb6f3590912a15189289fb401d4615f74aec2e543811ce"
+      },
+      {
+        "path": "uke-control-speech-parents.sha256",
+        "size": 821,
+        "sha256": "aa2820da24191017f53bfcca5efa9b4586ad30e5bb4f164380f735c0a7231240"
+      },
+      {
+        "path": "uke-control-ssc-services.tar.xz",
+        "size": 71888,
+        "sha256": "3bca239baf0b6e50f656c3110e4d77a021ef46e727c15e9ccb154bfdc466a8f9"
+      },
+      {
+        "path": "uke-fastrpc-files-1.tar.xz",
+        "size": 7384,
+        "sha256": "6947975a7d168ff6fe95d2b40e43f4b4430617f39947ac057cca5fea480b91e7"
+      },
+      {
+        "path": "uke-fastrpc-notify-check-1.tar.xz",
+        "size": 6432,
+        "sha256": "4181b277f27ddaf68eaa8efc56f88ce675958e3c89235b103d2a4d26614d1f5e"
+      },
+      {
+        "path": "uke-fastrpc-session-1.tar.xz",
+        "size": 11268,
+        "sha256": "2cb28c73e821871a07031a706375b7d173d40f8cd0d6b1294839287d2ab31da7"
+      },
+      {
+        "path": "unstable-release.cpp",
+        "size": 1241,
+        "sha256": "ef9872049a0b5f44adb118db66d76bc65182bd5c86a1c2efd520d1f1411efca4"
+      },
+      {
+        "path": "unstable-release.hpp",
+        "size": 1527,
+        "sha256": "60bf5d118bc5fc88629358118aafd3aa17dc98824ce3589f1214c94a0d719192"
+      }
+    ]
   },
   "source_assets": [
     {
@@ -31,11 +357,11 @@
     },
     {
       "path": "uke-control/packaging/selinux/uke_control_motion.fc",
-      "sha256": "27d4e57dc9f4dcaa68b488e634ca7b47f739fe70e57a472df8d0037a1474ae27"
+      "sha256": "a6f10b711f766f354347510a1e91e1b21f156e7730a117dbcb01942945da2e57"
     },
     {
       "path": "uke-control/packaging/selinux/uke_control_motion.te",
-      "sha256": "3a572c09146ee9698f872b592982513929fd0f3993d78f8a629e4ec9b3355589"
+      "sha256": "1a24d650126e5cf149e4bea51328fd4a046770a25225268490985c6399f823cd"
     },
     {
       "path": "uke-control/packaging/uke-control-motion.service",
@@ -86,6 +412,10 @@
       "sha256": "e516806130555f34ae3702f51b0d06e5f0fc3611f56f3f70b12846fe7bf6f24e"
     },
     {
+      "path": "uke-control/tests/motion-policy.sh",
+      "sha256": "28b9459627eb6274fce66d615873bf35f015dd236fa99e16ca109bd13cc1d6f7"
+    },
+    {
       "path": "uke-control/tests/motion-polkit.cpp",
       "sha256": "d58ca240418148a7d9429733d5bc32d60725fc657c9987ce2a9d0299eebada6e"
     },
@@ -97,5 +427,11 @@
       "path": "uke-control/tests/motion-watchdog.cpp",
       "sha256": "396c524cfbf9b72a758f7e4edc60d6f0c6b34186adb942efc6454436152bdfd8"
     }
-  ]
+  ],
+  "policy_fixture": {
+    "url": "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/aarch64/os/Packages/s/selinux-policy-targeted-45.24-1.fc46.noarch.rpm",
+    "sha256": "0aea7d66b16fbe9393f55353f169f08b45ac360b62c7896a08fe8be973f297c1",
+    "maximum_size": 8388608,
+    "runtime_payload": false
+  }
 }

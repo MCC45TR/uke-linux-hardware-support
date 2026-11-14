@@ -3,24 +3,30 @@ policy_module(uke_control_motion, 1.0)
 
 # Reuse the distribution sensor domain and its original IIO permissions.
 # Do not relabel shared sysfs attributes or grant raw devices to user domains.
-gen_require(`
-    type iiosensorproxy_t, iiosensorproxy_exec_t;
-    attribute userdomain;
-    class dbus { acquire_svc send_msg };
-')
-init_nnp_daemon_domain(iiosensorproxy_t)
-init_dgram_send(iiosensorproxy_t)
+type uke_motion_exec_t;
+corecmd_executable_file(uke_motion_exec_t)
 
 type uke_motion_runtime_t;
 files_pid_file(uke_motion_runtime_t)
-files_search_pids(iiosensorproxy_t)
-manage_dirs_pattern(iiosensorproxy_t, uke_motion_runtime_t, uke_motion_runtime_t)
-manage_files_pattern(iiosensorproxy_t, uke_motion_runtime_t, uke_motion_runtime_t)
-
-systemd_login_read_pid_files(iiosensorproxy_t)
-systemd_read_logind_sessions_files(iiosensorproxy_t)
-systemd_login_watch_session_dirs(iiosensorproxy_t)
-systemd_dbus_chat_logind(iiosensorproxy_t)
-allow iiosensorproxy_t self:dbus acquire_svc;
-allow iiosensorproxy_t userdomain:dbus send_msg;
-allow userdomain iiosensorproxy_t:dbus send_msg;
+optional_policy(`
+    gen_require(`
+        type iiosensorproxy_t;
+        attribute userdomain;
+        class dbus { acquire_svc send_msg };
+    ')
+    # No fallback domain when the original sensor module is disabled. Its type
+    # remains mandatory in the unit; these grants are simply omitted at link.
+    allow iiosensorproxy_t uke_motion_exec_t:file { getattr open read map execute entrypoint };
+    init_nnp_daemon_domain(iiosensorproxy_t)
+    init_dgram_send(iiosensorproxy_t)
+    files_search_pids(iiosensorproxy_t)
+    manage_dirs_pattern(iiosensorproxy_t, uke_motion_runtime_t, uke_motion_runtime_t)
+    manage_files_pattern(iiosensorproxy_t, uke_motion_runtime_t, uke_motion_runtime_t)
+    systemd_login_read_pid_files(iiosensorproxy_t)
+    systemd_read_logind_sessions_files(iiosensorproxy_t)
+    systemd_login_watch_session_dirs(iiosensorproxy_t)
+    systemd_dbus_chat_logind(iiosensorproxy_t)
+    allow iiosensorproxy_t self:dbus acquire_svc;
+    allow iiosensorproxy_t userdomain:dbus send_msg;
+    allow userdomain iiosensorproxy_t:dbus send_msg;
+')

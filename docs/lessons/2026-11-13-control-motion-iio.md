@@ -151,3 +151,26 @@ development package. Its new watchdog fixture then fails to compile because
 `<cstdint>` was missing; no fixture or Clang/sanitizer run occurred in this
 attempt. Add the explicit standard headers and rerun the same gates. This is
 not a runtime policy load or device result.
+
+## 14 November: resume from signed Control16 and optional policy fixture
+
+The tablet now runs Control/TUI16 and kernel26. The integration parent changes
+to signed Control16/11321859: SRPMf1ef6c120692a8146cc288df70640c05b2be62321b60061f55103732566fada2,
+recipee370e5b0705f7d4f6cfbff34ecc915c3eeb3e6fd582405b0d2f9e238d452b3a9,
+64 non-spec inputs. All63 inherited Control15 inputs remain identical; preserve
+the additional closed-cover health source and paired TUI. Prepare17, without
+editing the other workstream's boot/kernel sources or installing anything.
+
+Native5/11318772 previously passed all six GCC and Clang sanitizer groups,
+including the private bus, authorization, journal and simulated watchdog tests.
+It did not link the new module against the complete original policy store.
+The new policy makes sensor-domain grants optional while keeping its own exec
+and private-runtime types defined. The mandatory unit context still prevents
+fallback when the user disables original iiosensorproxy. A new private-root
+fixture links the unchanged Fedora45.24 original policy with that domain enabled
+and disabled, preserves all priority100 HLL bytes and disabled preferences, and
+checks removal of only the new types. This is prepared source, not native or
+systemd/device acceptance. Own-module-disabled upgrade and foreign ownership
+lifecycle checks still need package integration; this fixture does not claim them.
+Production motion admission remains false; kernel26's diagnostic counter does
+not establish the gravity mounting frame or measured acquisition clock mapping.
