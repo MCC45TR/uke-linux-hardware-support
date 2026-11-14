@@ -364,3 +364,62 @@ the loop state later. Use sd_event_get_exit_code to assert both absence of an
 exit request after unrelated loss and a zero exit request after owned release.
 The production broker and both required behaviors remain unchanged. No receipt
 SRPM, Clang suite or linked-store acceptance is claimed for11.
+
+Native12 / 11328157 at83064655 passes both six-group GCC/Clang sanitizer
+suites, including the production activation-grace and last-owner exit paths.
+The exact pre19 broker fails the new unrelated-peer assertion. The separately
+compiled missing-entry policy also fails the linked init-execute query. The
+original Fedora store passes enabled, owned-disabled and sensor-disabled
+permission checks plus the existing ownership, preference and removal cases.
+The signed7bab2566 artifact is only three text reports and the MIT license;
+its59-second ARM job packages a noarch receipt, not an ARM Motion executable.
+
+Full Control19 / 11328227 uses frozen83064655, all37 sealed Motion assets,
+manifestcf18beda, recipeb9835d61 and deterministic overlaye6d02d0d. The actual
+2,880-byte worker matches the reviewed script. Its unsigned source6084f22e has
+all67 reviewed header files, including every one of the64 signed16 parent
+inputs. These checks do not imply native or signed runtime acceptance. The
+full ARM job is live; the normal16 producer and installed16/39 remain unchanged.
+
+## Control19 native, package and actual unit qualification
+
+Full11328227 succeeds in1,557 seconds. Both six-group compiler suites, linked
+policy and missing-entry negative,21 private lifecycle cases and all inherited
+Control tests pass. Signed main52da9d8e, TUI7a19efcb, devel02e8bc15 and source
+18471e5b each have both trusted2204 signatures. All67 signed source inputs match
+the reviewed worker. The38 inherited ELF code/ABI/library contracts,251 data
+files,eight links and RGB policy equivalence remain unchanged; all six new
+text payloads equal their reviewed source.
+
+The actual signed DNF16 to19 transition changes only Control/TUI. Installed
+headers, full package set, preferences, existing unit states, PowerDevil,
+original policy HLL/preferences, warm noswap cache and accepted26/B policy
+comparisons pass. The first assumeno uses stale custom-repository metadata;
+a fresh metadata query resolves the two expected updates without modifying
+packages. This is an observer cache issue, not a missing built artifact.
+
+The packaged service starts through D-Bus in the mandatory original sensor
+domain with no capabilities. Root Claim is refused; a Claim from the actual
+user manager returns unknown data and the last caller's departure ends the
+service. No IIO descriptor or ownership journal is created. Freezing its event
+loop exercises the real systemd watchdog: the unit fails with watchdog status
+in2,220ms, the packaged recovery command succeeds and the main PID is gone.
+Resetting only that unit's failure leaves it static and inactive.
+
+The first unit fixture is too specific about busctl262's error rendering and
+uses setpriv as if changing UID entered the active desktop context. A scoped
+wire observation shows the broker receives the request, asks Polkit and honors
+its denial. The actual user-manager context is authorized with unchanged
+policy. The corrected fixture uses gdbus for the root error name/text and a
+collected transient user unit for the authorized call. These corrections do not
+relax application authorization. Actual numeric acquisition, frame/clock
+admission, held-IIO upgrade recovery and physical input remain unqualified.
+
+The supported DNF19 to16 downgrade also passes: only Control/TUI change, exact
+signed16 headers and the initial package set return, and the inherited state
+comparisons remain equal. The owned Motion module is removed by the packaged
+erase helper. The unit is not-found/inactive, its empty root0700 runtime
+directory is removed with guarded rmdir, and the privileged test shell is closed.
+The normal16 producer, keyboard39 and all boot/display/session choices remain.
+Normal publication and keyboard52 installation are still deferred until the
+numeric provider and running KWin dependencies are qualified.
