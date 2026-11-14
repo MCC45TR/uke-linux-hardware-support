@@ -192,3 +192,13 @@ original sensor-domain disable remains authoritative. Private fixtures call the
 actual helper and compare complete module/policy hashes after foreign refusal.
 Disabled-owned, competing-priority and same-priority foreign scenarios are new
 unqualified cases. No RPM scriptlet integration, runtime17 or physical claim yet.
+
+Policy7/11327657 at050bd431 passes all new actual-helper lifecycle cases plus
+the retained original-store checks.24 source assets, worker and original Fedora
+RPM hashes match. Both conflicting-priority and unmarked400 install/remove
+attempts refuse without changing any module or policy bytes. User-disabled own
+and distribution modules survive reinstall. Signed text receipt2b34292ad6914383
+has two trusted2204 signatures, valid digests, two text payloads, no scriptlets
+and only rpmlib requirements; its ARM worker packages a noarch receipt. Production
+C++ remains the prior native5 baseline. Full17 scriptlets/rollback/unit/ARM build
+and kernel frame/acquisition-time admission are still unqualified; no install.
