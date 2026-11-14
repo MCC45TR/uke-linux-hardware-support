@@ -33,9 +33,26 @@ run_semodule --list-modules=full > "$work/original.list"
 run_semodule -d bind
 run_semodule --list-modules=full > "$work/disabled.list"
 awk '$2=="bind"&&$NF=="disabled"{found=1}END{exit !found}' "$work/disabled.list"
+# Reproduce the real18 init_t execution denial in a separately compiled module.
+# A policy can link while lacking this edge; the linked-policy query must reject it.
+mkdir "$work/mutant"
+[[ $(grep -Fc 'init_daemon_domain(iiosensorproxy_t, uke_motion_exec_t)' packaging/selinux/uke_control_motion.te) == 1 ]]
+sed '/^[[:space:]]*init_daemon_domain(iiosensorproxy_t, uke_motion_exec_t)$/d' packaging/selinux/uke_control_motion.te > "$work/mutant/uke_control_motion.te"
+cp packaging/selinux/uke_control_motion.fc "$work/mutant/"
+make -C "$work/mutant" -f /usr/share/selinux/devel/Makefile uke_control_motion.pp
+{ printf '%s\n' '; uke-control managed Motion1 policy v1'; /usr/libexec/selinux/hll/pp < "$work/mutant/uke_control_motion.pp"; } > "$payload"
+bash "$helper" --root "$root" --profile targeted install
+compiled "$work/mutant.cil"
+if node tests/motion-policy-permissions.mjs enabled "$work/mutant.cil" > "$work/mutant-refusal" 2>&1;then
+    echo 'Missing init entry permission was accepted' >&2;exit 1
+fi
+grep -Fq 'Motion policy missing init_t -> uke_motion_exec_t:file execute' "$work/mutant-refusal"
+printf 'Linked-policy semantic negative: missing init executable permission refused.\n'
+cp -- "$module" "$payload"
 bash "$helper" --root "$root" --profile targeted install
 compiled "$work/installed.cil"
 for type in iiosensorproxy_t uke_motion_exec_t uke_motion_runtime_t;do has_type "$work/installed.cil" "$type";done
+node tests/motion-policy-permissions.mjs enabled "$work/installed.cil"
 # Source bytes at priority100 remain exactly the distribution's originals.
 hll_hashes > "$work/installed.sha256";cmp "$work/original.sha256" "$work/installed.sha256"
 # Reinstall preserves the user's own-module disable, too.
@@ -43,6 +60,7 @@ run_semodule -d uke_control_motion
 bash "$helper" --root "$root" --profile targeted install
 compiled "$work/own-disabled.cil"
 ! has_type "$work/own-disabled.cil" uke_motion_exec_t
+node tests/motion-policy-permissions.mjs disabled-owned "$work/own-disabled.cil"
 run_semodule --list-modules=full > "$work/own-disabled.list"
 awk '$2=="uke_control_motion"&&$NF=="disabled"{found=1}END{exit !found}' "$work/own-disabled.list"
 # Explicit fixture user action; the production helper never enables a module.
@@ -52,10 +70,12 @@ run_semodule -d iiosensorproxy
 compiled "$work/no-sensor.cil"
 ! has_type "$work/no-sensor.cil" iiosensorproxy_t
 for type in uke_motion_exec_t uke_motion_runtime_t;do has_type "$work/no-sensor.cil" "$type";done
+node tests/motion-policy-permissions.mjs disabled-sensor "$work/no-sensor.cil"
 bash "$helper" --root "$root" --profile targeted install
 compiled "$work/reinstalled.cil"
 ! has_type "$work/reinstalled.cil" iiosensorproxy_t
 for type in uke_motion_exec_t uke_motion_runtime_t;do has_type "$work/reinstalled.cil" "$type";done
+node tests/motion-policy-permissions.mjs disabled-sensor "$work/reinstalled.cil"
 run_semodule --list-modules=full > "$work/reinstalled.list"
 for name in bind iiosensorproxy;do awk -v name="$name" '$2==name&&$NF=="disabled"{found=1}END{exit !found}' "$work/reinstalled.list";done
 # Foreign priorities and unmarked same-priority modules must not be replaced

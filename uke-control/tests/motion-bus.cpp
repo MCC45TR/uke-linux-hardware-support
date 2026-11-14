@@ -63,11 +63,11 @@ struct Client {
 };
 struct Fixture {
     sd_event* event=nullptr;sd_bus* bus=nullptr;Auth auth;Sensor* sensor=nullptr;std::unique_ptr<Broker> broker;
-    Fixture(){
+    explicit Fixture(bool exit_when_unused=false){
         assert(sd_event_new(&event)>=0);assert(sd_bus_open_user(&bus)>=0);assert(sd_bus_attach_event(bus,event,0)>=0);
         broker=std::make_unique<Broker>(event,bus,auth,[this](auto notify){
             auto source=std::make_unique<Sensor>();source->notify=std::move(notify);sensor=source.get();return source;
-        },false);
+        },exit_when_unused);
         assert(sd_bus_request_name(bus,bus_name,0)>=0);
     }
     ~Fixture(){broker.reset();sd_bus_detach_event(bus);sd_bus_flush_close_unref(bus);sd_event_unref(event);}
@@ -125,5 +125,27 @@ void sleep_and_session() {
     f.broker->suspend(true);f.broker->suspend(false);assert(f.sensor->starts==2);
     f.auth.eligible=true;Answer pending;a.call("Claim",pending);f.until([&]{return !f.auth.waiting.empty();});f.broker->stop();f.until([&]{return pending.done;});assert(!pending.accepted&&f.auth.waiting.empty()&&f.auth.cancelled==1);
 }
+void activation_grace() {
+    Fixture f(true);Client claimant(f.event),noise(f.event);
+    const char* unique=nullptr;assert(sd_bus_get_unique_name(noise.bus,&unique)>=0);
+    struct Disappearance {std::string name;bool seen=false;} disappearance{unique};
+    sd_bus_slot* match=nullptr;
+    assert(sd_bus_match_signal(f.bus,&match,"org.freedesktop.DBus","/org/freedesktop/DBus",
+        "org.freedesktop.DBus","NameOwnerChanged",[](sd_bus_message* message,void* data,sd_bus_error*){
+            auto& state=*static_cast<Disappearance*>(data);const char *name=nullptr,*old=nullptr,*next=nullptr;
+            assert(sd_bus_message_read(message,"sss",&name,&old,&next)>0);
+            if(state.name==name&&old&&*old&&next&&!*next)state.seen=true;
+            return 0;
+        },&disappearance)>=0);
+    noise.close();f.until([&]{return disappearance.seen;});
+    const auto state=sd_event_get_state(f.event);
+    assert((state!=SD_EVENT_EXITING&&state!=SD_EVENT_FINISHED)&&"Unrelated peer loss must preserve activation grace");
+    assert(!f.sensor->starts&&f.auth.waiting.empty());
+    Answer answer;f.claim(claimant,answer);assert(f.sensor->running);
+    claimant.close();f.until([&]{return !f.sensor->running;});
+    assert(sd_event_get_state(f.event)==SD_EVENT_EXITING||sd_event_get_state(f.event)==SD_EVENT_FINISHED);
+    sd_bus_slot_unref(match);
+    std::cout<<"Actual activation grace survives unrelated peer loss; last owned lease still exits without sensor demand\n";
 }
-int main(){authorization();leases();repeated_pending();sleep_and_session();std::cout<<"Actual Motion1 broker: async authorization, idempotent/targeted leases, release/owner loss, suspend and session revocation passed; simulated source only\n";}
+}
+int main(){authorization();leases();repeated_pending();sleep_and_session();activation_grace();std::cout<<"Actual Motion1 broker: async authorization, idempotent/targeted leases, release/owner loss, suspend and session revocation passed; simulated source only\n";}

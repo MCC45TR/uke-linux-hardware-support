@@ -313,3 +313,38 @@ inverts to the complete signed16 parent. No 19 build is submitted. The actual
 18 unit, SELinux execution, DNF upgrade/rollback and frozen-loop watchdog tests
 remain open, as do numeric frame/time admission and physical keyboard acceptance.
 Normal producers and installed Control16/Uke39 remain unchanged.
+
+## Actual Control18 DNF transition and execution refusal
+
+The qualification tablet completes a signed DNF Control/TUI16 to18 transition
+and a supported downgrade back to16, with only those two packages changing.
+Installed headers match the audited artifacts; original preferences, input-method
+selection, PowerDevil PID/restarts, existing unit states, policy HLL/module
+preferences, warm noswap cache and accepted26/B policy are retained. The normal
+kernel trigger reports no slot update. The new module is removed by the packaged
+postun helper on downgrade. No sensor capture or keyboard update is performed.
+
+Actual bus activation fails at203/EXEC. Its AVC is init_t denied execute on the
+correctly labeled uke_motion_exec_t, before the broker starts; modes and parent
+search permissions are correct. The [original Fedora45.24 sensor policy](https://github.com/fedora-selinux/selinux-policy/blob/6610cea35b0821902deaf753fbda3863117b5e15/policy/modules/contrib/iiosensorproxy.te)
+binds its executable with init_daemon_domain. The same revision's init.if shows
+that init_nnp_daemon_domain grants only process2 NNP/nosuid transitions, not the
+new executable entry.19 adds the standard daemon binding for that extra entry,
+inside the existing optional block, without changing the original provider or
+relaxing global enforcement. A linked-policy permission query and a separately
+compiled missing-entry mutant are prepared; native acceptance is pending.
+
+A private acceptance fixture initially stopped before activation because the
+runtime WatchdogUSec property was infinity. Original [systemdv262 service code](https://github.com/systemd/systemd/blob/v262/src/core/service.c)
+initializes watchdog_original_usec to infinity and snapshots the configured
+interval at start; its service.h getter exposes that runtime value. The fixture
+now checks the configured2s before start and the actual runtime2s afterward.
+ServiceWatchdogs stays enabled; no systemd or watchdog setting is modified.
+
+Source review also finds an activation-grace gap: disappearance of an unrelated
+system-bus peer calls release/unused without owning any pending request or lease.
+19 restricts immediate idle exit to actual owners. A private-bus fixture uses the
+production exit-when-unused mode and verifies unrelated peer loss, a subsequent
+claim and last-owner release. An exact SHA-matched pre19 broker is the negative
+control. This case is not yet native-qualified and was not reached by the failed
+18 runtime activation. The tablet is restored to16; numeric admission remainsfalse.

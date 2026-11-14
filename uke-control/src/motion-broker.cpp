@@ -143,13 +143,17 @@ int Broker::relinquish(sd_bus_message* message,void* data,sd_bus_error*) {
     return result;
 }
 void Broker::release(const std::string& sender) {
+    bool removed_pending=false;
     if(auto node=m_pending.extract(sender);!node.empty()){
+        removed_pending=true;
         auto pending=std::move(node.mapped());m_authorizer.cancel(pending->authorization);
         for(auto* message:pending->messages)sd_bus_reply_method_errorf(message,SD_BUS_ERROR_DISCONNECTED,"Motion claim released");
     }
-    const bool last=m_leases.erase(sender)&&m_leases.empty();
-    if(last)m_source->stop();
-    unused();
+    const bool removed_lease=m_leases.erase(sender)>0;
+    if(removed_lease&&m_leases.empty())m_source->stop();
+    // Other system-bus clients may disappear between activation and Claim.
+    // They do not own a lease and must not end this service's startup grace.
+    if(removed_pending||removed_lease)unused();
 }
 void Broker::unused() {
     if(m_pending.empty()&&m_leases.empty()&&m_exit_unused){

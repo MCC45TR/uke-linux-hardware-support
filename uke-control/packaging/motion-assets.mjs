@@ -11,8 +11,9 @@ assets.push(...['motion.mk', 'motion-assets.mjs', 'uke-control-motion.service', 
     'org.senemos.Uke.Motion1.service', 'org.senemos.uke.motion.policy', 'selinux/uke_control_motion.te',
     'selinux/uke_control_motion.fc', 'selinux/motion-policy.sh', 'motion-lifecycle.sh',
     'fold-motion-spec.mjs', 'prepare-control-motion.sh', 'copr-control-motion.sh',
-    'check-motion-integration.sh'].map(name => prefix+'packaging/'+name));
+    'check-motion-integration.sh', 'check-motion-native.sh'].map(name => prefix+'packaging/'+name));
 assets.push(prefix+'docs/MOTION1.md');
+assets.push(prefix+'LICENSE');
 assets.push(...['ssc-unit-state.sh', 'ssc-refresh.sh', 'ssc-cache-postun.sh'].map(name => prefix+'tests/'+name));
 const entries = assets.sort().map(path => ({path, sha256: crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex')}));
 const path = prefix+'packaging/motion-integration.json';

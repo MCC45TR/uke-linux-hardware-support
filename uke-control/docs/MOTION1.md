@@ -1,9 +1,11 @@
 # Leased display inclination
 
 Status, 14 November 2026: Control18 passes complete ARM source, native and signed
-RPM qualification. Actual unit lifecycle, DNF transitions and numeric sensor
-admission remain unqualified. No Motion1 runtime has been delivered. Production
-IIO admission is explicitly false. Kernel 26 does not admit the fitted gravity frame or acquisition-clock
+RPM qualification, with a tested DNF upgrade and rollback. Actual activation
+fails at SELinux execution of its additional entry point. Candidate19 adds the
+standard Fedora daemon binding and linked-policy permission checks; its runtime
+and watchdog acceptance are pending. No normal Motion1 update is delivered.
+Production IIO admission is explicitly false. Kernel26 does not admit the fitted gravity frame or acquisition-clock
 mapping; an orientation label, rigid-body identifier, arrival timestamp or
 another sensor's matrix cannot substitute for that evidence.
 
