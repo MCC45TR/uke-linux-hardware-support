@@ -1,14 +1,14 @@
 # Leased display inclination
 
-Status,14 November2026: source and private fixtures are qualified in part.
+Status, 14 November 2026: source and private fixtures are qualified in part.
 No Motion1 runtime has been delivered. Production IIO admission is explicitly
-false. Kernel26 does not admit the fitted gravity frame or acquisition-clock
+false. Kernel 26 does not admit the fitted gravity frame or acquisition-clock
 mapping; an orientation label, rigid-body identifier, arrival timestamp or
 another sensor's matrix cannot substitute for that evidence.
 
 The numeric provider belongs inside the existing Control RPM. It is necessary
 because original SensorProxy exposes categorical orientation rather than the
-fresh screen-normal angle needed by the keyboard's45/40-degree policy. Hardware
+fresh screen-normal angle needed by the keyboard’s 45/40-degree policy. Hardware
 protocols, topology and timestamp semantics remain in the kernel and Device Tree.
 Original Fedora SensorProxy, SELinux policy and KDE packages remain installed.
 There is no additional hardware-bridge runtime RPM.
@@ -24,8 +24,8 @@ is `/org/senemos/Uke/Motion1`.
 | `Release` | none | none |
 | `PostureChanged` | directed to current claimers | the same boolean/double/uint64 tuple |
 
-Inclination is0 degrees when the outward display normal faces up,90 vertical
-and180 face down. The provider does not apply the keyboard's mode thresholds.
+Inclination is 0 degrees when the outward display normal faces up, 90 degrees when vertical,
+and 180 degrees when face down. The provider does not apply the keyboard's mode thresholds.
 Unknown observations contain no usable angle; clients revoke rather than keep
 a previous known value. Repeated claims/releases by one unique bus peer are
 idempotent. Caller disappearance, inactive sessions and suspend revoke demand.
@@ -41,7 +41,7 @@ Only an admitted gravity endpoint and its own standard mount transform may
 open acquisition. Scan layout, scale, timestamps, vector validity and generation
 are checked before publishing an angle. The source rejects samples older than
 1.5 seconds; it cannot refresh an old sample by changing its arrival timestamp.
-The keyboard independently validates delivery age and applies45/40 hysteresis.
+The keyboard independently validates delivery age and applies 45/40-degree hysteresis.
 
 A future admitted lease configures an exclusively owned buffer enable-last,
 journals reversible settings, and restores them on release or recovery. Closing
@@ -62,9 +62,9 @@ preferences survive reinstall; unmarked modules or conflicting priorities are
 refused. Private Fedora-policy-store fixtures qualify these source operations.
 Actual RPM scriptlet ordering, unit lifecycle and DNF rollback remain open.
 
-The next Control integration must derive from signed Control16/11321859, retaining
-all64 source inputs, the closed-cover health fix, paired TUI, existing payloads,
-SELinux kernel integration and persistent preferences. No fixed15 factory or
+The next Control integration must derive from signed Control 2.17.0-16 (COPR 11321859), retaining
+all 64 source inputs, the closed-cover health fix, paired TUI, existing payloads,
+SELinux kernel integration and persistent preferences. No fixed Control 15 factory or
 partial userspace rebuild may replace that parent. A complete ARM RPM build,
 upgrade/rollback checks and actual numeric sensor admission are required before
 keyboard delivery. The keyboard's source/native tests do not establish them.
