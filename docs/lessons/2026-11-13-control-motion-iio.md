@@ -174,3 +174,11 @@ systemd/device acceptance. Own-module-disabled upgrade and foreign ownership
 lifecycle checks still need package integration; this fixture does not claim them.
 Production motion admission remains false; kernel26's diagnostic counter does
 not establish the gravity mounting frame or measured acquisition clock mapping.
+
+Policy6/11327628 at92c9b9af passes the new private-store fixture. Actual worker,
+23 source assets and original Fedora RPM0aea7d66 match. Original priority100 HLL
+bytes, disabled bind/iiosensorproxy preferences and optional type removal all
+pass real semodule/checkpolicy operations. The source-worker report is an
+unsigned SRPM output with valid digests; signed final receipt admission is
+separate. No C++ group was rerun in this policy-only job (retain native5), and
+no ARM component, unit, ownership lifecycle, frame/time or device claim follows.
