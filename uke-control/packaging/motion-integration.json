@@ -437,7 +437,7 @@
     },
     {
       "path": "uke-control/tests/motion-bus.cpp",
-      "sha256": "3a8694d37f083f0fd24e923ce0559424dc0190e4e166565e222e0ec59a760631"
+      "sha256": "5e00a88435fbb26e616a4ab7aad8028054b79495243e6571ab4db8f0c54fd95b"
     },
     {
       "path": "uke-control/tests/motion-journal.cpp",

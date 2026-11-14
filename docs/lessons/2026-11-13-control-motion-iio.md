@@ -355,3 +355,12 @@ inside the M4-quoted optional_policy body terminates its quote; checkmodule
 reports an unrecognized trailing quote. Rewrite that comment without the quote,
 retaining exactly the same grant, and refresh all37 source seals. No device
 policy edit or runtime package change is used to bypass the failure.
+
+Native11 / 11328134 compiles the corrected policy and service, then passes the
+sample, ownership and journal cases. The new broker fixture fails its last-owner
+check because it expects SD_EVENT_EXITING immediately after sd_event_exit. Original
+libsystemd v262 sd-event.c sets exit_requested/exit_code first; dispatch changes
+the loop state later. Use sd_event_get_exit_code to assert both absence of an
+exit request after unrelated loss and a zero exit request after owned release.
+The production broker and both required behaviors remain unchanged. No receipt
+SRPM, Clang suite or linked-store acceptance is claimed for11.

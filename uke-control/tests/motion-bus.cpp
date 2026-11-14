@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "motion-broker.hpp"
 #include <cassert>
+#include <cerrno>
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
@@ -138,12 +139,11 @@ void activation_grace() {
             return 0;
         },&disappearance)>=0);
     noise.close();f.until([&]{return disappearance.seen;});
-    const auto state=sd_event_get_state(f.event);
-    assert((state!=SD_EVENT_EXITING&&state!=SD_EVENT_FINISHED)&&"Unrelated peer loss must preserve activation grace");
+    assert((sd_event_get_exit_code(f.event,nullptr)==-ENODATA)&&"Unrelated peer loss must preserve activation grace");
     assert(!f.sensor->starts&&f.auth.waiting.empty());
     Answer answer;f.claim(claimant,answer);assert(f.sensor->running);
     claimant.close();f.until([&]{return !f.sensor->running;});
-    assert(sd_event_get_state(f.event)==SD_EVENT_EXITING||sd_event_get_state(f.event)==SD_EVENT_FINISHED);
+    int exit_code=-1;assert(sd_event_get_exit_code(f.event,&exit_code)==0&&exit_code==0);
     sd_bus_slot_unref(match);
     std::cout<<"Actual activation grace survives unrelated peer loss; last owned lease still exits without sensor demand\n";
 }
