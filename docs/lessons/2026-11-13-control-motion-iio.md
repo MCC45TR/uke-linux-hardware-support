@@ -202,3 +202,31 @@ has two trusted2204 signatures, valid digests, two text payloads, no scriptlets
 and only rpmlib requirements; its ARM worker packages a noarch receipt. Production
 C++ remains the prior native5 baseline. Full17 scriptlets/rollback/unit/ARM build
 and kernel frame/acquisition-time admission are still unqualified; no install.
+
+## Control17 source assembly and package lifecycle preparation
+
+The new renderer derives only from signed Control16 recipee370e5b0. Its eleven
+additive blocks remove to reproduce the complete parent recipe byte for byte;
+three Release fields and twelve versioned package/dependency/provision tuples
+advance together. The first local guard expected six tuples and refused the
+parent; inspection established twelve metadata fields, all now retained. The
+rendered recipe is d1dffafd5be1e01c986d94f516f57a2ca7e27affb8347d3ef3239824fe09cd59.
+The inherited SSC state/refresh/postun data fixtures remain unchanged and pass.
+
+The transaction-only lifecycle records one owned unit privately, stops it before
+outgoing files disappear, and restores only an active, still-owned, unmasked
+incoming provider after the old package hooks finish. It never enables, unmasks
+or presets units. Erase/downgrade embeds the same tested policy ownership guard
+so cleanup does not depend on the removed helper file.21 preference/activity
+combinations plus initial install, downgrade/erase, new masks and malformed/link/
+foreign/actor-failure cases pass private recording actors, including the actual
+subshell/error-propagation wrapper. These are data/shell fixtures, not a real
+systemd, RPM transaction, IIO or device result.
+
+The prepared source factory checks all64 signed16 input names/sizes/digests,
+verifies its two signatures with the pinned public key, and appends only the
+Motion overlay and build-only original Fedora policy fixture. The archived
+parent16 URL was streamed and matched f1ef6c12 without retaining another copy.
+The31-source-asset packet and exactly three existing package names are prepared;
+COPR source parsing, complete ARM builds and actual service/rollback acceptance
+remain open. No original provider, device state or production admission changed.

@@ -5,7 +5,7 @@
   "parent": {
     "build": 11321859,
     "nvr": "uke-control-2.17.0-16",
-    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-16.fc46.src.rpm",
+    "url": "https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/uke-control-2.17.0-16.fc46.src.rpm",
     "srpm_sha256": "f1ef6c120692a8146cc288df70640c05b2be62321b60061f55103732566fada2",
     "spec_sha256": "e370e5b0705f7d4f6cfbff34ecc915c3eeb3e6fd582405b0d2f9e238d452b3a9",
     "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca",
@@ -336,8 +336,28 @@
   },
   "source_assets": [
     {
+      "path": "uke-control/docs/MOTION1.md",
+      "sha256": "ec42bd93d718622859ec7ad2d2b409768bc2f96dce46f61f4f92961a91867619"
+    },
+    {
+      "path": "uke-control/packaging/check-motion-integration.sh",
+      "sha256": "d86af7f4588af9f5a5593628cc9538a698b893b9e0093c9ed3abfdf39fe5efc2"
+    },
+    {
+      "path": "uke-control/packaging/copr-control-motion.sh",
+      "sha256": "9dd0959be212f573d39ef89d91b1ab96988a6065b42be02bb5371808fb2ad066"
+    },
+    {
+      "path": "uke-control/packaging/fold-motion-spec.mjs",
+      "sha256": "ca572ce86900253b77d547943377d93328c6e5a8c0378809b54dde6bb3d76fdb"
+    },
+    {
       "path": "uke-control/packaging/motion-assets.mjs",
-      "sha256": "ee0b84a6916d1f357b3586119e4b8461cb1e135e2690935c7d5ad558d2303c1b"
+      "sha256": "f36c1268feb1a89078382dca9e66d9fae242d7fc093639a84bfbbaebbc84fe17"
+    },
+    {
+      "path": "uke-control/packaging/motion-lifecycle.sh",
+      "sha256": "e6d225cb1d26fd8d1925de8132da6969750ef0a8fefa305467573dc1efc526e4"
     },
     {
       "path": "uke-control/packaging/motion.mk",
@@ -354,6 +374,10 @@
     {
       "path": "uke-control/packaging/org.senemos.uke.motion.policy",
       "sha256": "04f86ea2e2dae343a7fc1124f6ec04356c69dded8f6efd535ead3477981d67c8"
+    },
+    {
+      "path": "uke-control/packaging/prepare-control-motion.sh",
+      "sha256": "7534551e4406e3efb637db1df4c2d0d6e0642e7829763ecc796769fb39894b87"
     },
     {
       "path": "uke-control/packaging/selinux/motion-policy.sh",
@@ -412,6 +436,10 @@
       "sha256": "929d0d8b830a821b107b9534743f5f6608ac9c44841307d87025c053de9faee8"
     },
     {
+      "path": "uke-control/tests/motion-lifecycle.sh",
+      "sha256": "a75cb81b9cb604b5a92687c7b044df07ba1d1fbff5c8f6d57e7e1ce76c781d4e"
+    },
+    {
       "path": "uke-control/tests/motion-ownership.cpp",
       "sha256": "e516806130555f34ae3702f51b0d06e5f0fc3611f56f3f70b12846fe7bf6f24e"
     },
@@ -437,5 +465,11 @@
     "sha256": "0aea7d66b16fbe9393f55353f169f08b45ac360b62c7896a08fe8be973f297c1",
     "maximum_size": 8388608,
     "runtime_payload": false
+  },
+  "source_epoch": 1794679674,
+  "result": {
+    "nvr": "uke-control-2.17.0-17",
+    "non_spec_sources": 66,
+    "spec_sha256": "d1dffafd5be1e01c986d94f516f57a2ca7e27affb8347d3ef3239824fe09cd59"
   }
 }
