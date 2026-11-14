@@ -397,7 +397,7 @@
     },
     {
       "path": "uke-control/packaging/selinux/uke_control_motion.te",
-      "sha256": "d9241b6691c34bb3f68060f8c326f46aa4d9b04a59292ec3cefa23f5cb278240"
+      "sha256": "74008815b0852b010f07246ff2061022d9abd0125a32b5d07306cfdc57a22f06"
     },
     {
       "path": "uke-control/packaging/uke-control-motion.service",

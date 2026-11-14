@@ -16,7 +16,7 @@ optional_policy(`
     ')
     # No fallback domain when the original sensor module is disabled. Its type
     # remains mandatory in the unit; these grants are simply omitted at link.
-    # Bind the additional entry point through Fedora's existing daemon interface.
+    # Bind the additional entry point through the existing Fedora daemon interface.
     # The NNP permission alone does not let init_t execute the new file type.
     init_daemon_domain(iiosensorproxy_t, uke_motion_exec_t)
     allow iiosensorproxy_t uke_motion_exec_t:file { getattr open read map execute entrypoint };

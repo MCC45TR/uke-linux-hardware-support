@@ -348,3 +348,10 @@ production exit-when-unused mode and verifies unrelated peer loss, a subsequent
 claim and last-owner release. An exact SHA-matched pre19 broker is the negative
 control. This case is not yet native-qualified and was not reached by the failed
 18 runtime activation. The tablet is restored to16; numeric admission remainsfalse.
+
+Native source check10 / 11328124 stops while compiling the policy, before the
+six-group tests or a receipt SRPM are produced. An apostrophe in the new comment
+inside the M4-quoted optional_policy body terminates its quote; checkmodule
+reports an unrecognized trailing quote. Rewrite that comment without the quote,
+retaining exactly the same grant, and refresh all37 source seals. No device
+policy edit or runtime package change is used to bypass the failure.
