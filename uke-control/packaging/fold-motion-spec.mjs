@@ -8,7 +8,8 @@ const contract = JSON.parse(fs.readFileSync(manifest));
 const before = fs.readFileSync(path, 'utf8');
 const digest = value => crypto.createHash('sha256').update(value).digest('hex');
 assert.equal(digest(before), contract.parent.spec_sha256);
-assert.equal(contract.release, 17);
+assert.equal(contract.release, 18);
+const release = contract.release;
 assert.equal(contract.production_admitted, false);
 assert.equal(contract.parent.nvr, 'uke-control-2.17.0-16');
 assert.equal(contract.parent.non_spec_sources, 64);
@@ -26,7 +27,7 @@ const tuples = body.split('\n').filter(line => line.includes('2.17.0-16'));
 assert.equal(tuples.length, 12);
 assert(tuples.every(line => /^(Requires|Recommends|Provides|Obsoletes):/.test(line)));
 assert(!body.includes('Source64:') && !body.includes('Source65:'));
-body = body.replaceAll('Release: 16%{?dist}', 'Release: 17%{?dist}').replaceAll('2.17.0-16', '2.17.0-17');
+body = body.replaceAll('Release: 16%{?dist}', `Release: ${release}%{?dist}`).replaceAll('2.17.0-16', `2.17.0-${release}`);
 change('Source63: uke-control-closed-cover-health.tar.xz\n', `Source63: uke-control-closed-cover-health.tar.xz
 Source64: uke-control-motion.tar.xz
 Source65: original-fedora-motion-policy.rpm
@@ -115,10 +116,10 @@ for (const [old, value] of applied.toReversed()) {
     assert.equal(inverse.split(value).length, 2, 'Ambiguous Motion recipe inverse');
     inverse = inverse.replace(value, () => old);
 }
-inverse = inverse.replaceAll('Release: 17%{?dist}', 'Release: 16%{?dist}').replaceAll('2.17.0-17', '2.17.0-16');
+inverse = inverse.replaceAll(`Release: ${release}%{?dist}`, 'Release: 16%{?dist}').replaceAll(`2.17.0-${release}`, '2.17.0-16');
 assert.equal(inverse+history, before, 'Unrelated Control16 recipe changed');
-const entry='* Sat Nov 14 2026 Uke contributors - 2.17.0-17\n- Add the demand-leased Motion1 interface within Control; keep production admission closed.\n- Preserve original sensor policy, private ownership and package rollback behavior.\n- Retain the complete Control16 source recipe and closed-cover health fix.\n\n';
+const entry='* Sat Nov 14 2026 Uke contributors - 2.17.0-18\n- Add the demand-leased Motion1 interface within Control; keep production admission closed.\n- Preserve original sensor policy, private ownership and package rollback behavior.\n- Retain the complete Control16 source recipe and closed-cover health fix.\n\n';
 const after = body+history.replace('%changelog\n', '%changelog\n'+entry);
 if (contract.result?.spec_sha256) assert.equal(digest(after), contract.result.spec_sha256);
 fs.writeFileSync(path, after);
-console.log('Control17: complete Control16 recipe inverse passes; '+applied.length+' declared additive integration blocks; SHA256 '+digest(after));
+console.log('Control18: complete Control16 recipe inverse passes; '+applied.length+' declared additive integration blocks; SHA256 '+digest(after));

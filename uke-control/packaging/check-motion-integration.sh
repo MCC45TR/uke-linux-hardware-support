@@ -7,6 +7,8 @@ export LC_ALL=C
 source=$(realpath -e -- "$1")
 payload=$(realpath -e -- "$2")
 spec=$(realpath -e -- "$3")
+work=$(mktemp -d)
+trap 'rm -rf -- "$work"' EXIT
 for entry in \
  'packaging/uke-control-motion.service usr/lib/systemd/system/uke-control-motion.service' \
  'packaging/org.senemos.Uke.Motion1.service usr/share/dbus-1/system-services/org.senemos.Uke.Motion1.service' \
@@ -18,15 +20,21 @@ for entry in \
  read -r input output <<< "$entry"
  cmp "$source/$input" "$payload/$output"
 done
-cmp "$source/build/motion/motion" "$payload/usr/libexec/uke-control/motion"
+# %check runs after Fedora's build-root policy strips debug/comment/LTO data.
+# Replay those exact tools on a private copy, retaining a byte-for-byte check
+# of the resulting executable instead of comparing the unstripped ELF header.
+mkdir "$work/expected"
+cp -- "$source/build/motion/motion" "$work/expected/motion"
+RPM_BUILD_ROOT="$work/expected" /usr/lib/rpm/brp-strip /usr/bin/strip
+RPM_BUILD_ROOT="$work/expected" /usr/lib/rpm/brp-strip-comment-note /usr/bin/strip /usr/bin/objdump
+RPM_BUILD_ROOT="$work/expected" /usr/lib/rpm/redhat/brp-strip-lto /usr/bin/strip
+cmp "$work/expected/motion" "$payload/usr/libexec/uke-control/motion"
 [[ -x $payload/usr/libexec/uke-control/motion && -x $payload/usr/libexec/uke-control/motion-policy ]]
 readelf -h "$payload/usr/libexec/uke-control/motion" | grep -Eq 'Machine:[[:space:]]+AArch64'
 [[ $(head -n 1 "$payload/usr/share/selinux/packages/uke_control_motion.cil") == '; uke-control managed Motion1 policy v1' ]]
 ! find "$payload" -type f -name original-fedora-motion-policy.rpm -print | read -r _
 # The parsed scriptlet embeds the exact same ownership guard used by the
 # tested install helper, so erasure works after its file has been removed.
-work=$(mktemp -d)
-trap 'rm -rf -- "$work"' EXIT
 rpmspec -P "$spec" > "$work/spec"
 awk '
  /^UKE_MOTION_POLICY_ERASE$/ {copy=0;done++;next}

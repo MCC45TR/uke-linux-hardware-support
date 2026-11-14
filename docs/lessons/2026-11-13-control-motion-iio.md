@@ -254,3 +254,24 @@ native package was imported. The corrected adapter extracts the already-verified
 candidate into67 flat files and checks all64 parent inputs and spec again. Frozen
 9c31cc3e, reciped1dffafd and overlay20a40ae0 remain identical; no production code,
 acceptance gate, default producer or device state changes for this correction.
+
+Corrected full build11327855 imports the expected Control2.17.0-17 source and
+starts the Rawhide ARM worker. Published source a139d67ab8a7b5ca174bfdf872025f3726140d2602be5cf47764eae64bfa7d53
+has67 header files: all64 inherited inputs retain names, sizes and hashes;
+recipe d1dffafd, Motion archive20a40ae0 and the original build-only policy fixture
+match the source qualification. The default producer is independently unchanged
+after submission (script53087127, auto_rebuild=false). This establishes source
+delivery only; native checks, signed runtime packages, DNF and real unit/IIO
+acceptance remain separate. No local compilation, installation or boot change.
+
+The ARM job11327855 fails after536 seconds at the new payload check. Both six-
+group GCC and Clang sanitizer suites and the original-policy ownership fixture
+pass first. The check incorrectly compares the unstripped build ELF with the
+installed ELF after Fedora's brp-strip, brp-strip-comment-note and brp-strip-lto;
+their section-table offsets differ. No runtime RPM is published and the inherited
+checks after this new check have not run. Candidate18 retains the exact same
+production C++, unit, policy and lifecycle hooks, but replays those same three
+Fedora tools on a private copy before requiring byte-for-byte executable equality.
+It still derives from signed16 and preserves all64 inputs and the complete recipe
+inverse. A new release avoids reusing the published17 source identity. Native
+qualification of this correction and real unit/DNF acceptance remain open.
