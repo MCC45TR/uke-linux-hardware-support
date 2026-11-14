@@ -237,3 +237,20 @@ missing ssc-unit-state.sh: the three retained SSC fixture dependencies were not
 in the downloaded packet. No candidate17 SRPM or native build was produced.
 Add those three unchanged fixture sources to the sealed34-asset packet; preserve
 all tests and the rendered recipe, policy, unit and production C++ bytes.
+
+Integration9/11327824 at9c31cc3e passes the complete34-asset source factory:
+all64 signed parent inputs, both signatures, full inverse, inherited SSC and
+new lifecycle actors, exactly three package names and67 SRPM header files.
+The Motion archive is20a40ae01ec2680b55df42ed51d6a4721ab4a76b53e8ba70448c1317ed1a0ba2.
+Signed text receipt6880f9ee has both trusted2204 signatures and explicitly states
+that no native component/unit qualification occurred. Default Control producer
+3266603 remains script53087127/auto=false; a fresh complete53-build inventory
+contained no17 or live Control build.
+
+Full17 attempt11327847 then finishes its worker but fails import with "no spec
+file available": this custom-source endpoint expects flat spec/sources rather
+than an SRPM-only result. Its source_package remains null; no runtime17 NVR or
+native package was imported. The corrected adapter extracts the already-verified
+candidate into67 flat files and checks all64 parent inputs and spec again. Frozen
+9c31cc3e, reciped1dffafd and overlay20a40ae0 remain identical; no production code,
+acceptance gate, default producer or device state changes for this correction.
