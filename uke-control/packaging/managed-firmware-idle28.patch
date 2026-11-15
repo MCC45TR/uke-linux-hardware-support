@@ -1,0 +1,60 @@
+--- a/uke-cdsp-pogo-firmware/src/managed.hpp
++++ b/uke-cdsp-pogo-firmware/src/managed.hpp
+@@ -54,7 +54,8 @@
+         {"7.3.1-11003-unstable","261d85e218906f78d37810db78a4aa80cd900067"},
+         {"7.3.1-12101-unstable","bba194e74ab97dcb848887fa62430c20f9d755d9"},
+         {"7.3.1-12203-unstable","45d8355e366e6b75e43f441ca99b517302adf522"},
+-        {"7.3.1-12204-unstable","de1bdf9ab531d772a8c02847c51b01ed4ffcd42f"}
++        {"7.3.1-12204-unstable","de1bdf9ab531d772a8c02847c51b01ed4ffcd42f"},
++        {"7.3.3-28-unstable","8eb8316d3af498f4bbd25e89896d648d0ba37202"}
+     };
+     const auto found=sources.find(profile.release);
+     return found!=sources.end()&&found->second==profile.source;
+--- a/uke-cdsp-pogo-firmware/tests/managed.cpp
++++ b/uke-cdsp-pogo-firmware/tests/managed.cpp
+@@ -80,6 +80,45 @@
+         assert(!prepare_managed(newer,current,firmware,families,active,true));
+     }
+     for(const auto &bad:{"7.3.3-0-unstable","7.3.3-01-unstable","7.03.3-1-unstable","7.3.3-4294967296-unstable","7.3.3-1/2-unstable"})assert(!unstable_revision(bad));
++    // The qualified full28 tuple permits fresh-root preparation only through
++    // the unchanged exact-profile and idle-consumer path. No version wildcard.
++    const std::string full28="7.3.3-28-unstable",commit28="8eb8316d3af498f4bbd25e89896d648d0ba37202";
++    const auto cohort28=root/"full28",profiles28=cohort28/"profiles",firmware28=cohort28/"firmware";
++    text(profiles28/full28/"source-commit",commit28+"\n");
++    text(profiles28/full28/"source-composition.json",composition(full28,commit28).dump());
++    const auto qualified28=*managed_profile(profiles28,full28);
++    assert(qualified_idle_source(qualified28));
++    unsigned idle28=0;const auto idle_check28=[&]{idle28++;};
++    auto wrong28=qualified28;wrong28.source=source;
++    assert(!qualified_idle_source(wrong28));
++    rejected([&]{prepare_managed(wrong28,full28,firmware28,families,idle_check28);});
++    assert(!fs::exists(firmware28)&&idle28==0);
++    for(const auto &release:{"7.3.3-27-unstable","7.3.3-29-unstable","7.3.4-2-unstable"}) {
++        wrong28=qualified28;wrong28.release=release;
++        assert(!qualified_idle_source(wrong28));
++        rejected([&]{prepare_managed(wrong28,release,firmware28,families,idle_check28);});
++        assert(!fs::exists(firmware28)&&idle28==0);
++    }
++    rejected([&]{prepare_managed(qualified28,full28,firmware28,families,active);});
++    assert(!fs::exists(firmware28));
++    rejected([&]{prepare_managed(qualified28,full28,firmware28,families,idle_check28,true);});
++    assert(!fs::exists(firmware28)&&idle28==0);
++    assert(prepare_managed(qualified28,full28,firmware28,families,idle_check28)&&idle28==4);
++    assert(!prepare_managed(qualified28,full28,firmware28,families,active));
++    assert(!prepare_managed(qualified28,full28,firmware28,families,active,true));
++    const auto saved28=file(firmware28/full28/"qcom/uke/cdsp/cdsp.mdt");
++    assert(saved28==before&&idle28==4);
++    // The planned newer ABI is still an inactive target, never a running-source
++    // admission. Existing future-target ordering needs no734 parser extension.
++    const std::string future734="7.3.4-2-unstable";
++    text(profiles28/future734/"source-commit",source+"\n");
++    text(profiles28/future734/"source-composition.json",composition(future734,source).dump());
++    fs::create_directories(cohort28/"modules"/full28);
++    fs::create_directories(cohort28/"modules"/future734);
++    const auto selected28=managed_targets(profiles28,cohort28/"modules",full28);
++    assert(selected28.size()==2&&selected28[0].release==full28&&selected28[1].release==future734);
++    assert(prepare_managed(selected28[1],full28,firmware28,families,active));
++    assert(file(firmware28/full28/"qcom/uke/cdsp/cdsp.mdt")==saved28&&idle28==4);
+     fs::remove_all(root);
+     std::cout<<"PASS: actual managed profile selection/admission, exact idle-current source, active refusal, verify-only, additive no-replace publication and future inactive targets; synthetic only; complete semantic-version ordering retains newer revision1\n";
+ }
