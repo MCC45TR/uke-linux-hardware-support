@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-USB-API-OUTPUT-20261116: budget the consolidated capability list](2026-11-16-usb-api-output-budget.md)
+
 - [UKE-FIRMWARE-IDLE28-20261116: qualify current-source additive preparation](2026-11-16-firmware-full28-idle-admission.md)
 
 - [UKE-RGB-CHARGE-20261115: accept native charge status in the existing reader](2026-11-15-kernel-rgb-charge-reader.md)

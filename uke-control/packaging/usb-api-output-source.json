@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-16",
+  "release": 21,
+  "parent": {
+    "build": 11331625,
+    "nvr": "uke-control-2.17.0-20.fc46",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-20.fc46.src.rpm",
+    "srpm_sha256": "2784af69acbc11132abb82efbc442200bfa2685c67d403da21fca5f888eac0c1",
+    "spec_sha256": "9d9062968ca9b95cedd7a002525ab7582bf47cb82db8efba32aa60d521f760c1",
+    "source_count": 68,
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca",
+    "runtime_url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-20.fc46.aarch64.rpm",
+    "runtime_sha256": "b2ef6aa646aacfc0a1d00a4de2eb2f66d6cb9d92a25576f0711c913768db05ef"
+  },
+  "patch_sha256": "cca020b3df891f43c885c506e7b06d9a6b1609db565d26c13dca73eb19d5176e",
+  "fixture_sha256": "768dd4c5e67241f3ee5f1974c263409f78320f92b4bec0ec21d9885077abc89e",
+  "old_output_limit": 4096,
+  "new_output_limit": 65536,
+  "observed_target_rpm_query_bytes": 4225,
+  "time_limit_seconds": 5,
+  "new_runtime_packages": 0,
+  "changes_usb_policy": false,
+  "changes_firmware_ownership": false,
+  "native_qualified": false,
+  "installed_on_target": false
+}

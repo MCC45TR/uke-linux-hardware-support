@@ -1,0 +1,35 @@
+diff --git a/src/backend.cpp b/src/backend.cpp
+index 68f7f6ad..471fd975 100644
+--- a/src/backend.cpp
++++ b/src/backend.cpp
+@@ -438,7 +438,7 @@ static void cdc_validate() {
+     auto marker=read("/sys/firmware/devicetree/base/chosen/senemos,usb-profile",64);
+     while(!marker.empty()&&(marker.back()=='\n'||marker.back()=='\0'))marker.pop_back();
+     need(marker=="typec-v1","Manual CDC requires the matched full Type-C boot/root profile");
+-    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-manual-cdc-api"},5,4096);
++    auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-manual-cdc-api"},5,65536);
+     need(api.status==0&&rpm_api_matches(api.output,"uke-usb-manual-cdc-api","2"),"Install the matched one-shot manual CDC support package");
+     const char *helper="/usr/libexec/senemos-uke/uke-usb-network";
+     struct stat st{};
+diff --git a/src/usb-request.cpp b/src/usb-request.cpp
+index bbc44a87..7c0d7601 100644
+--- a/src/usb-request.cpp
++++ b/src/usb-request.cpp
+@@ -325,7 +325,7 @@ Result request_display_profile(const std::string& profile) {
+             need(!first.state.storage,"USB_STORAGE_ATTACHED");
+             need(!first.state.network,"USB_NETWORK_IN_USE");
+             need(!first.state.gadget,"GADGET_REQUIRES_OWNED_TEARDOWN");
+-            const auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-gadget-ownership-api"},5,4096);
++            const auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-gadget-ownership-api"},5,65536);
+             need(api.status==0&&rpm_api_matches(api.output,"uke-usb-gadget-ownership-api","2"),"GADGET_OWNERSHIP_API2_REQUIRED");
+             GadgetLock lock;Inhibit inhibit;
+             auto current=graph();
+@@ -377,7 +377,7 @@ Result request_data(const std::string& desired) {
+         noop=first.state.typec_role==desired&&first.state.controller_role==desired;
+         if(noop) {observed=true;status=0;after_typec=before_typec;after_controller=before_controller;}
+         else {
+-            const auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-gadget-ownership-api"},5,4096);
++            const auto api=execute({"/usr/bin/rpm","-q","--whatprovides","--qf","[%{PROVIDENAME}\\t%{PROVIDEVERSION}\\n]","uke-usb-gadget-ownership-api"},5,65536);
+             need(api.status==0&&rpm_api_matches(api.output,"uke-usb-gadget-ownership-api","2"),"GADGET_OWNERSHIP_API2_REQUIRED");
+             GadgetLock lock;Inhibit inhibit;
+             auto current=graph();need(same_partner(first,current),"ATTACHMENT_CHANGED");
