@@ -70,10 +70,16 @@ int main() {
         int r=color?sd_bus_call_method(bus,uke::rgb::bus_name,uke::rgb::object_path,uke::rgb::interface,method,&error,&reply,"su",color,percent):
             sd_bus_call_method(bus,uke::rgb::bus_name,uke::rgb::object_path,uke::rgb::interface,method,&error,&reply,"");
         assert((r>=0)==accept);
-        if(accept){const char* text=nullptr;assert(sd_bus_message_read(reply,"s",&text)>0 && std::string(text).find("org.uke.control.rgb.v1")!=std::string::npos);}
+        if(accept){const char* text=nullptr;assert(sd_bus_message_read(reply,"s",&text)>0 && std::string(text).find("org.uke.control.rgb.v1")!=std::string::npos);
+            if(fake_status.mode==UKE_RGB_CHARGE_COMPLETE)assert(std::string(text).find("\"mode\":\"charge-complete\"")!=std::string::npos);}
         sd_bus_error_free(&error);sd_bus_message_unref(reply);
     };
     call("Status",nullptr,0,true);
+    const auto initial_status=fake_status;
+    fake_status.mode=UKE_RGB_CHARGE_COMPLETE;fake_status.rgb=0x0000ff;fake_status.brightness=UKE_RGB_LIMIT;
+    call("Status",nullptr,0,true);
+    fake_status.mode=UKE_RGB_CHARGE_COMPLETE+1;call("Status",nullptr,0,false);
+    fake_status=initial_status;
     fake_status.abi=99;call("Status",nullptr,0,false);fake_status.abi=UKE_RGB_ABI;
     fake_status.brightness=9;call("Status",nullptr,0,false);fake_status.brightness=0;
     fake_status.last_io_error=-4096;call("Status",nullptr,0,false);fake_status.last_io_error=0;

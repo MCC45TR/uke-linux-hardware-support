@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-15",
+  "parent": {
+    "build": 11328227,
+    "nvr": "uke-control-2.17.0-19.fc46",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable:custom:motion/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-19.fc46.src.rpm",
+    "srpm_sha256": "18471e5b9b2a2e8078fce7a96ddcc4f22d00787b7e619d46ca24d2467ed3f1ef",
+    "spec_sha256": "b9835d611beeabf905042d1e455fe6617ec5d9c31e40df4c6325473d98211f5c",
+    "source_count": 66,
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+  },
+  "release": 20,
+  "patch_sha256": "a3b44af9b3bacdaf77210b8cd431fde0488dad6e7009a60e5245dabf6f8152eb",
+  "files": [
+    {"path":"shared/uke-rgb.h","before_sha256":"8d1b9c749eab51f340e3f8b3a634e64fa6c95933a44d370ba80a9e8829886cc2","after_sha256":"d58c6e1c8313e1f65116fecebe83e62d1b5ec4cfaacd22c6a7d6241cb2968c50"},
+    {"path":"src/rgb-service.cpp","before_sha256":"c53782bd3145a15d8d065893d106db4ed3bdb045ca2081d250dff2c801a1e9e4","after_sha256":"58b4dc6d67f83ae508fae3723c0cd04a2d7a814709b0b9eaa558c75a0ab7437e"},
+    {"path":"tests/rgb-bus.cpp","before_sha256":"6a8d4f370274a779553e197bdd65ebd9ece883571166fe9b19b0e185ef3a50b2","after_sha256":"6acb73f9bfda6e9630de68abc84fd8898f0e1b4aaffb34b64042be892841beb6"}
+  ],
+  "kernel_status_mode": 6,
+  "kernel_abi_unchanged": true,
+  "hardware_policy_in_kernel": true,
+  "new_runtime_packages": 0,
+  "motion19_sources_retained": true,
+  "native_qualified": false,
+  "installed_on_target": false
+}

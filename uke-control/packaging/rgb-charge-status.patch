@@ -1,0 +1,56 @@
+diff --git a/shared/uke-rgb.h b/shared/uke-rgb.h
+index 4a1c80a3..35eb9400 100644
+--- a/shared/uke-rgb.h
++++ b/shared/uke-rgb.h
+@@ -10,6 +10,7 @@
+ enum uke_rgb_mode {
+ 	UKE_RGB_OFF, UKE_RGB_MANUAL, UKE_RGB_LOW_BATTERY,
+ 	UKE_RGB_CRITICAL_BATTERY, UKE_RGB_FRONT_CAMERA, UKE_RGB_TEST,
++	UKE_RGB_CHARGE_COMPLETE,
+ };
+ struct uke_rgb_color {
+ 	__u32 abi, rgb, brightness_percent, reserved;
+diff --git a/src/rgb-service.cpp b/src/rgb-service.cpp
+index 10cd6142..c49cc6da 100644
+--- a/src/rgb-service.cpp
++++ b/src/rgb-service.cpp
+@@ -24,14 +24,14 @@ struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;};
+ volatile sig_atomic_t stopping=0;
+ void stop(int){stopping=1;}
+ const char* mode_name(unsigned n) {
+-    static const char* names[]={"off","manual","low-battery","critical-battery","front-camera","test"};
+-    need(n<=UKE_RGB_TEST,"Invalid kernel RGB mode");return names[n];
++    static const char* names[]={"off","manual","low-battery","critical-battery","front-camera","test","charge-complete"};
++    need(n<=UKE_RGB_CHARGE_COMPLETE,"Invalid kernel RGB mode");return names[n];
+ }
+ std::string status(State& state) {
+     if(state.torch)return state.torch->status();
+     uke_rgb_status value{};
+     need(::ioctl(state.fd,UKE_RGB_STATUS,&value)==0,"Kernel RGB status unavailable");
+-    need(value.abi==UKE_RGB_ABI && value.mode<=UKE_RGB_TEST && value.rgb<=0xffffff &&
++    need(value.abi==UKE_RGB_ABI && value.mode<=UKE_RGB_CHARGE_COMPLETE && value.rgb<=0xffffff &&
+          value.brightness_limit==UKE_RGB_LIMIT && value.brightness<=UKE_RGB_LIMIT &&
+          value.requested_rgb<=0xffffff && value.requested_percent<=100 && value.battery_valid<=1 &&
+          (!value.battery_valid || value.battery_percent<=100) && value.test_remaining_ms<=UKE_RGB_TEST_MS &&
+diff --git a/tests/rgb-bus.cpp b/tests/rgb-bus.cpp
+index a16778e3..ad015a3f 100644
+--- a/tests/rgb-bus.cpp
++++ b/tests/rgb-bus.cpp
+@@ -70,10 +70,16 @@ int main() {
+         int r=color?sd_bus_call_method(bus,uke::rgb::bus_name,uke::rgb::object_path,uke::rgb::interface,method,&error,&reply,"su",color,percent):
+             sd_bus_call_method(bus,uke::rgb::bus_name,uke::rgb::object_path,uke::rgb::interface,method,&error,&reply,"");
+         assert((r>=0)==accept);
+-        if(accept){const char* text=nullptr;assert(sd_bus_message_read(reply,"s",&text)>0 && std::string(text).find("org.uke.control.rgb.v1")!=std::string::npos);}
++        if(accept){const char* text=nullptr;assert(sd_bus_message_read(reply,"s",&text)>0 && std::string(text).find("org.uke.control.rgb.v1")!=std::string::npos);
++            if(fake_status.mode==UKE_RGB_CHARGE_COMPLETE)assert(std::string(text).find("\"mode\":\"charge-complete\"")!=std::string::npos);}
+         sd_bus_error_free(&error);sd_bus_message_unref(reply);
+     };
+     call("Status",nullptr,0,true);
++    const auto initial_status=fake_status;
++    fake_status.mode=UKE_RGB_CHARGE_COMPLETE;fake_status.rgb=0x0000ff;fake_status.brightness=UKE_RGB_LIMIT;
++    call("Status",nullptr,0,true);
++    fake_status.mode=UKE_RGB_CHARGE_COMPLETE+1;call("Status",nullptr,0,false);
++    fake_status=initial_status;
+     fake_status.abi=99;call("Status",nullptr,0,false);fake_status.abi=UKE_RGB_ABI;
+     fake_status.brightness=9;call("Status",nullptr,0,false);fake_status.brightness=0;
+     fake_status.last_io_error=-4096;call("Status",nullptr,0,false);fake_status.last_io_error=0;

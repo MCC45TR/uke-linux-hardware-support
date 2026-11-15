@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-RGB-CHARGE-20261115: accept native charge status in the existing reader](2026-11-15-kernel-rgb-charge-reader.md)
+
 - [UKE-CONTROL-MOTION-20261113: lease a proved IIO frame without polling](2026-11-13-control-motion-iio.md)
 
 - [UKE-CONTROL-POGO-20261112: consolidate helpers with original Fedora QCOMTEE](2026-11-12-control-pogo-ownership.md)

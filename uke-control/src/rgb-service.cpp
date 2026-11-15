@@ -24,14 +24,14 @@ struct State {int fd=-1;std::unique_ptr<uke::torch::Actuator> torch;};
 volatile sig_atomic_t stopping=0;
 void stop(int){stopping=1;}
 const char* mode_name(unsigned n) {
-    static const char* names[]={"off","manual","low-battery","critical-battery","front-camera","test"};
-    need(n<=UKE_RGB_TEST,"Invalid kernel RGB mode");return names[n];
+    static const char* names[]={"off","manual","low-battery","critical-battery","front-camera","test","charge-complete"};
+    need(n<=UKE_RGB_CHARGE_COMPLETE,"Invalid kernel RGB mode");return names[n];
 }
 std::string status(State& state) {
     if(state.torch)return state.torch->status();
     uke_rgb_status value{};
     need(::ioctl(state.fd,UKE_RGB_STATUS,&value)==0,"Kernel RGB status unavailable");
-    need(value.abi==UKE_RGB_ABI && value.mode<=UKE_RGB_TEST && value.rgb<=0xffffff &&
+    need(value.abi==UKE_RGB_ABI && value.mode<=UKE_RGB_CHARGE_COMPLETE && value.rgb<=0xffffff &&
          value.brightness_limit==UKE_RGB_LIMIT && value.brightness<=UKE_RGB_LIMIT &&
          value.requested_rgb<=0xffffff && value.requested_percent<=100 && value.battery_valid<=1 &&
          (!value.battery_valid || value.battery_percent<=100) && value.test_remaining_ms<=UKE_RGB_TEST_MS &&
