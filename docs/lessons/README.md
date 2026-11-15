@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-BOOT-IDENTITY-20261116: inspect the current kernel naming grammar](2026-11-16-boot-status-unstable.md)
+
 - [UKE-MCU-READER-20261116: verify packaged firmware before stock parsing](2026-11-16-mcu-source-before-super.md)
 
 - [UKE-USB-API-OUTPUT-20261116: budget the consolidated capability list](2026-11-16-usb-api-output-budget.md)

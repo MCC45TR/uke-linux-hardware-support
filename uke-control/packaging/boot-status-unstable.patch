@@ -1,0 +1,25 @@
+--- a/src/boot-status.cpp
++++ b/src/boot-status.cpp
+@@ -6,9 +6,11 @@
+ #include <string>
+ #include <chrono>
+ #include <thread>
++#include "unstable-release.hpp"
+ namespace fs = std::filesystem;
+ namespace {
+ bool selected_kernel(const std::string& release) {
++    if (release.size() < 128 && uke_release::unstable(release)) return true;
+     const auto dash = release.find('-');
+     if (release.size() < 128 && release.rfind("7.2.", 0) == 0 && dash > 4 && dash != std::string::npos) {
+         const auto patch = release.substr(4, dash - 4);
+--- a/tests/boot-status.sh
++++ b/tests/boot-status.sh
+@@ -2,7 +2,7 @@
+ set -Eeuo pipefail
+ cd "$(dirname "$0")/.."
+ mkdir -p build/tests
+-c++ -std=c++17 -Wall -Wextra -Werror -O2 src/boot-status.cpp -o build/tests/uke-boot-status
++c++ -std=c++20 -Wall -Wextra -Werror -O2 src/boot-status.cpp -o build/tests/uke-boot-status
+ fixture=$(mktemp -d build/tests/root.XXXXXX)
+ baseline=$fixture-baseline
+ trap 'rm -rf "$fixture" "$baseline"' EXIT
