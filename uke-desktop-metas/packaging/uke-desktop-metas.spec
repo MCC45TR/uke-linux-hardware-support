@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-desktop-metas
 Version: 1.0.0
-Release: 37%{?dist}
+Release: 40%{?dist}
 Summary: Explicit desktop package selections for the Uke development platform
 License: MIT
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -119,9 +119,9 @@ device hardware. It does not require the KDE selection or Qt Uke Control.
 
 %package -n uke-cutefish-meta
 Summary: Optional upstream Cutefish Wayland session selection
-Requires: cutefish-desktop >= 1.0^20261115
+Requires: cutefish-desktop >= 1.0^20261115-2
 Requires: uke-cutefish-firstboot >= 1.0.0-2
-Requires: uke-cutefish-session-config >= 1.0.0-1
+Requires: uke-cutefish-session-config >= 1.0.0-2
 
 %description -n uke-cutefish-meta
 Select the separately packaged upstream Cutefish desktop. This removable

@@ -22,3 +22,11 @@ Fedora Turkish locale, fonts and complete supplied translations remain required.
 Validation: metadata JSON, standalone spec parsing and source selection tests.
 Signed RPMs, full DNF closure, first-account success/interruption and physical
 Uke desktop acceptance require their own build and image records.
+
+Follow-up: standalone release 39 requires desktop release 2 and session-config
+release 2 after independent RPM ownership checks found the original routing
+path duplicated. The upstream portal owns that path; GTK supplies its fallback.
+The shared source spec advances to release 40 to avoid reusing either standalone
+Cutefish NEVRA. That shared KDE-bearing source has not been rebuilt here.
+Upstream advertises no Screenshot portal interface; native capture remains a
+separate physical acceptance item.

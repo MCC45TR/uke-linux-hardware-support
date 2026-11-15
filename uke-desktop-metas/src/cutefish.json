@@ -25,5 +25,12 @@
     "GNOME Shell",
     "GDM"
   ],
-  "upstream_turkish_ui_available": false
+  "upstream_turkish_ui_available": false,
+  "upstream_portal_interfaces": [
+    "Settings",
+    "FileChooser",
+    "Inhibit",
+    "ScreenCast"
+  ],
+  "upstream_screenshot_portal_available": false
 }
