@@ -1,0 +1,37 @@
+--- a/uke-cdsp-pogo-firmware/src/import.cpp
++++ b/uke-cdsp-pogo-firmware/src/import.cpp
+@@ -32,6 +32,12 @@
+            " elf_table_bytes="+std::to_string(end)+" elf_table_sha256="+digest(table);
+ }
+ static bool admit_mcu(const Bytes &b) {return b.size()==82740&&digest(b)==mcu_sha;}
++static inline std::optional<Bytes> factory_mcu(const fs::path &path="/usr/lib/firmware/qcom/uke/nanosic/MCU_Upgrade.bin") {
++    if(!path_present(path))return {};
++    auto bytes=file(path,82740);
++    need(admit_mcu(bytes),"Packaged MCU identity differs from the exact admitted Uke image");
++    return bytes;
++}
+ static Family cdsp_family(const Fat &fat) {
+     Family out;
+     for(const auto &item:std::array<std::pair<std::string,const char *>,2>{{{"cdsp",main_sha},{"cdsp_dtb",dtb_sha}}}) {
+@@ -88,6 +94,9 @@
+     return {std::move(fd),size,st.st_rdev,sys.parent_path()};
+ }
+ static Bytes mcu_image(Source &super) {
++    // A present but unsafe or altered factory file must fail closed. Only an
++    // absent source permits the original read-only stock acquisition fallback.
++    if(auto bytes=factory_mcu())return std::move(*bytes);
+     trusted("/usr/bin/debugfs");const auto parts=uke_video::partitions(super.fd.value,super.size);
+     for(const auto &label:{"odm_a","vendor_a"}) {
+         const auto found=parts.find(label);if(found==parts.end())continue;
+--- a/uke-cdsp-pogo-firmware/tests/contract.cpp
++++ b/uke-cdsp-pogo-firmware/tests/contract.cpp
+@@ -52,7 +52,9 @@
+     }
+     std::copy(entry.begin(),entry.end(),b.begin()+p+slots*32);
+ }
++#include "factory-mcu-test.hpp"
+ int main() {
++    check_factory_mcu();
+     Bytes auth_mdt(52+9*32);memcpy(auth_mdt.data(),"\177ELF",4);
+     auth_mdt[4]=auth_mdt[5]=auth_mdt[6]=1;put16(auth_mdt,18,183);
+     put32(auth_mdt,28,52);put16(auth_mdt,40,52);put16(auth_mdt,42,32);put16(auth_mdt,44,9);

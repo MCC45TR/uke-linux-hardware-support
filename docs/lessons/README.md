@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-MCU-READER-20261116: verify packaged firmware before stock parsing](2026-11-16-mcu-source-before-super.md)
+
 - [UKE-USB-API-OUTPUT-20261116: budget the consolidated capability list](2026-11-16-usb-api-output-budget.md)
 
 - [UKE-FIRMWARE-IDLE28-20261116: qualify current-source additive preparation](2026-11-16-firmware-full28-idle-admission.md)
