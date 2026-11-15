@@ -119,7 +119,9 @@ device hardware. It does not require the KDE selection or Qt Uke Control.
 
 %package -n uke-cutefish-meta
 Summary: Optional upstream Cutefish Wayland session selection
-Requires: cutefish-desktop >= 1.0^20261027
+Requires: cutefish-desktop >= 1.0^20261115
+Requires: uke-cutefish-firstboot >= 1.0.0-2
+Requires: uke-cutefish-session-config >= 1.0.0-1
 
 %description -n uke-cutefish-meta
 Select the separately packaged upstream Cutefish desktop. This removable

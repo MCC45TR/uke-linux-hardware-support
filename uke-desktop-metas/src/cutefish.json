@@ -6,8 +6,24 @@
   "session": "/usr/share/wayland-sessions/cutefish-wayland.desktop",
   "command": "/usr/bin/cutefish-wayland-session",
   "copr": "mcc45tr/cutefish",
-  "image_profile": "blocked: graphical login and first-account validation pending",
+  "image_profile": "experimental; build and physical acceptance recorded separately",
   "graphical_session_tested": false,
   "hardware_tested": false,
-  "automatic_session_or_display_configuration": false
+  "automatic_session_or_display_configuration": false,
+  "display_manager": "cutefish-dm",
+  "account_setup": "uke-cutefish-firstboot",
+  "credentials_included": false,
+  "channel": "unstable",
+  "release": "rawhide",
+  "upstream_packaging_commit": "ea2f0a3f387b9f2094dbc50c92bd7595037b69c5",
+  "required_integrations": [
+    "uke-cutefish-firstboot",
+    "uke-cutefish-session-config"
+  ],
+  "excluded_desktops": [
+    "KDE Plasma",
+    "GNOME Shell",
+    "GDM"
+  ],
+  "upstream_turkish_ui_available": false
 }
