@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "source_commit": "87f59fc5c2ef1ee04e494e5258853d36a3346059",
+  "source_repository": "https://github.com/Xiaomi-Pad-7-Pro-Resources/android_vendor_xiaomi_uke",
+  "source_path": "proprietary/odm/etc/acdbdata/Forte/Forte_acdb_cal.acdb",
+  "source_blob": "9b383b10bf88db3db611010fb69fea4dac617d45",
+  "bytes": 2838166,
+  "sha256": "bd3f9b8834b80c23f86241756e263e36ddf92b2b8993ed83ff71c310af952f3e",
+  "generic_design_data": true,
+  "unit_calibration_included": false,
+  "license": "LicenseRef-Proprietary",
+  "notice": "Existing OEM vendor/ODM notices retained; file-level redistribution review remains incomplete",
+  "runtime_owner": "Existing native protected speaker helper in uke-control",
+  "firmware_path": "/usr/lib/firmware/qcom/uke/audio/Forte_acdb_cal.acdb",
+  "compatibility_cache": "/var/cache/uke-speaker-runtime/Forte_acdb_cal.acdb",
+  "cache_copy": "Original systemd tmpfiles C, only if absent; no daemon or download",
+  "speaker_gain_ceiling": 223,
+  "reference_runtime_playback_audible": true,
+  "packaged_cold_boot_qualified": false
+}

@@ -1,5 +1,7 @@
 # Engineering lessons
 
+- [UKE-AUDIO-DATA-20261116: deliver generic speaker data before playback](2026-11-16-offline-generic-speaker-data.md)
+
 | ID | Date | Finding | Validation |
 |---|---|---|---|
 | UKE-INITIAL-001 | 2026-10-04 | Initial source/packaging scope established from the Nabu COPR inventory | Manifest checks only; package and physical validation open |
