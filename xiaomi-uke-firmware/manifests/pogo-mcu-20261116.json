@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/Xiaomi-Pad-7-Pro-Resources/android_vendor_xiaomi_sm8635-common",
+  "source_commit": "d4bf71b32fc8e82fbe6ee2dcbbdd4272f1036154",
+  "source_path": "proprietary/odm/firmware/MCU_Upgrade.bin",
+  "source_blob": "cec99c93b6593659387eda71ea34be96b547d3ea",
+  "bytes": 82740,
+  "sha256": "b17fa938cf5613dfa550179d6fc40cfbaa831d534a16a22282e2904e845fa7c4",
+  "matches_existing_exact_uke_mcu_admission": true,
+  "generic_firmware": true,
+  "unit_calibration_included": false,
+  "license": "LicenseRef-Proprietary",
+  "notice": "Original firmware package OEM notices retained; public repository has no top-level license and file-level redistribution review remains incomplete",
+  "firmware_path": "/usr/lib/firmware/qcom/uke/nanosic/MCU_Upgrade.bin",
+  "runtime_owner": "Existing managed firmware helper; exact whole-file identity and protected descriptor checks remain mandatory",
+  "starts_or_flashes_controller": false,
+  "super_independent_helper_qualified": false,
+  "physical_keyboard_qualified": false
+}

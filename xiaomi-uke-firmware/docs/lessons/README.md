@@ -1,5 +1,7 @@
 # Engineering lessons
 
+- [UKE-MCU-SUPER-20261116: retain firmware before repurposing super](2026-11-16-super-independent-mcu.md)
+
 - [UKE-AUDIO-DATA-20261116: deliver generic speaker data before playback](2026-11-16-offline-generic-speaker-data.md)
 
 | ID | Date | Finding | Validation |
