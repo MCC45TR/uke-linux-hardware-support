@@ -8,7 +8,7 @@ result=$(realpath -m "$1")
 [[ ! -e $result && ! -L $result ]]
 work=$(mktemp -d)
 trap 'find "$work" -depth -delete' EXIT
-mkdir "$result" "$work/sources" "$work/pubkeys" "$work/gnupg" "$work/top"
+mkdir "$result" "$work/sources" "$work/pubkeys" "$work/gnupg"
 curl -qfsSL --max-time 180 --max-filesize 25165824 "$(jq -er .parent.url "$contract")" -o "$work/parent.src.rpm"
 printf '%s  %s\n' "$(jq -er .parent.srpm_sha256 "$contract")" "$work/parent.src.rpm" | sha256sum -c --strict --quiet -
 rpm2cpio "$work/parent.src.rpm" | cpio -t --quiet > "$work/paths"
@@ -29,5 +29,7 @@ install -m644 "$owner/packaging/rgb-charge-status.patch" "$contract" "$work/sour
 [[ $(rpmspec --target aarch64 --define 'dist .fc46' -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$work/sources/uke-control.spec") == uke-control-2.17.0-20.fc46 ]]
 rpmspec --target aarch64 --define 'dist .fc46' -q --qf '%{NAME}\n' "$work/sources/uke-control.spec" | sort > "$work/names"
 printf '%s\n' uke-control uke-control-client-devel uke-control-tui | cmp - "$work/names"
-rpmbuild -bs --target aarch64 --define 'dist .fc46' --define "_topdir $work/top" \
- --define "_sourcedir $work/sources" --define "_srcrpmdir $result" "$work/sources/uke-control.spec"
+# The custom source method collects a spec and its inputs, then creates its
+# own source RPM. Returning only a prebuilt SRPM leaves it without a spec.
+cp -a "$work/sources/." "$result/"
+printf 'Control20: signed19 parent and every input retained; exact spec and68 sources ready for COPR source generation.\n'

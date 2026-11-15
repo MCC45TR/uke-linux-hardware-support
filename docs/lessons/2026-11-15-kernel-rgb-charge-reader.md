@@ -28,3 +28,10 @@ PC checks cover source identity, recipe inversion and text only. Native private
 bus/build tests, signed RPM output, DNF dependency resolution and actual device
 reader/LED behavior remain pending. A successful reader build cannot establish
 physical notification timing, charging cutoff or either camera.
+
+The first request11331618 passes trusted parent signatures, complete recipe
+inverse and source retention, then returns a prebuilt SRPM to the custom
+source method. The collector requires the spec and source inputs and reports
+no spec; its source_package remains null and no native build starts. Return
+the reviewed spec and68 sources directly. This fixes the source transport,
+without changing reader code or consuming a published Control20 version.
