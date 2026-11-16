@@ -24,6 +24,10 @@
   comparison passed. Four compiler/sanitizer modes against actual updater
   functions and the complete production CLI are required in COPR. Native and
   physical results remain pending at this checkpoint.
+- First native result: 11333999 prepared all three consumer postimages and the
+  whole inverse successfully. It stopped at the first synthetic image because
+  the fixture copied a 21-byte selector using a literal length of 20. The fixture
+  now uses the string size; production parsing and every refusal stay unchanged.
 - Limit: this is updater compatibility, not proof of rescue boot, logical swap,
   encryption, hibernation, hardware sealing or 256 GB firmware handoff. OEM slot
   injection differs between bootloaders; duplicate or invalid suffixes remain

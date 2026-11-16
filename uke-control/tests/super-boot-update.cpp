@@ -21,7 +21,8 @@ static void note(Bytes& b,size_t offset,uint32_t type,const std::string& descrip
 static Bytes sample(bool new_capability) {
     Bytes b(capacity);memcpy(b.data(),"ANDROID!",8);
     put(b,8,2048);put(b,20,1584);put(b,40,4);
-    memcpy(b.data()+44,"senemos.root=userdata",20);
+    const std::string selector="senemos.root=userdata";
+    memcpy(b.data()+44,selector.data(),selector.size());
     b[page]='M';b[page+1]='Z';put(b,page+16,2048);put(b,page+24,10);
     put(b,page+56,0x644d5241);put(b,page+60,64);put(b,page+64,0x4550);
     b[page+68]=0x64;b[page+69]=0xaa;
