@@ -109,7 +109,7 @@ void claim() {
     need(fd.n>=0,"Cannot create temporary CDC ownership");
     size_t stored=0;
     while(stored<3) {
-        const auto count=write(fd.n,"v1\n"+stored,3-stored);
+        const auto count=write(fd.n,&"v1\n"[stored],3-stored);
         if(count<0&&errno==EINTR)continue;
         if(count<=0){unlinkat(parent.n,"cdc-owned",0);throw std::runtime_error("Cannot record temporary CDC ownership");}
         stored+=size_t(count);
