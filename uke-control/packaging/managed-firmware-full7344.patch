@@ -1,0 +1,41 @@
+--- a/uke-cdsp-pogo-firmware/src/managed.hpp
++++ b/uke-cdsp-pogo-firmware/src/managed.hpp
+@@ -57,7 +57,8 @@
+         {"7.3.1-12204-unstable","de1bdf9ab531d772a8c02847c51b01ed4ffcd42f"},
+         {"7.3.3-28-unstable","8eb8316d3af498f4bbd25e89896d648d0ba37202"},
+         {"7.3.4-2-unstable","385b48931882104b35cda5fddd65affa5cbdef35"},
+-        {"7.3.4-3-unstable","44be649381405be367cfbc47af92447545b11a1d"}
++        {"7.3.4-3-unstable","44be649381405be367cfbc47af92447545b11a1d"},
++        {"7.3.4-4-unstable","4a424e96c528920d59541fa9cc2aa426a90f296e"}
+     };
+     const auto found=sources.find(profile.release);
+     return found!=sources.end()&&found->second==profile.source;
+--- a/uke-cdsp-pogo-firmware/tests/managed.cpp
++++ b/uke-cdsp-pogo-firmware/tests/managed.cpp
+@@ -159,6 +159,26 @@
+     assert(!prepare_managed(exact7343,full7343,firmware7343,families,active,true));
+     assert(file(firmware7343/full7343/"qcom/uke/cdsp/cdsp.mdt")==before&&idle7343==4);
+     assert(file(firmware734/future734/"qcom/uke/cdsp/cdsp.mdt")==before&&idle734==4);
++    const std::string full7344="7.3.4-4-unstable",commit7344="4a424e96c528920d59541fa9cc2aa426a90f296e";
++    const auto profiles7344=root/"full7344/profiles",firmware7344=root/"full7344/firmware";
++    text(profiles7344/full7344/"source-commit",commit7344+"\n");
++    text(profiles7344/full7344/"source-composition.json",composition(full7344,commit7344).dump());
++    const auto exact7344=*managed_profile(profiles7344,full7344);
++    assert(qualified_idle_source(exact7344));
++    auto bad7344=exact7344;bad7344.source=commit7343;
++    assert(!qualified_idle_source(bad7344));
++    auto unknown7344=exact7344;unknown7344.release="7.3.4-5-unstable";
++    assert(!qualified_idle_source(unknown7344));
++    unsigned idle7344=0;const auto idle_check7344=[&]{idle7344++;};
++    rejected([&]{prepare_managed(bad7344,full7344,firmware7344,families,idle_check7344);});
++    rejected([&]{prepare_managed(exact7344,full7344,firmware7344,families,active);});
++    rejected([&]{prepare_managed(exact7344,full7344,firmware7344,families,idle_check7344,true);});
++    assert(!fs::exists(firmware7344)&&idle7344==0);
++    assert(prepare_managed(exact7344,full7344,firmware7344,families,idle_check7344)&&idle7344==4);
++    assert(!prepare_managed(exact7344,full7344,firmware7344,families,active));
++    assert(!prepare_managed(exact7344,full7344,firmware7344,families,active,true));
++    assert(file(firmware7344/full7344/"qcom/uke/cdsp/cdsp.mdt")==before&&idle7344==4);
++    assert(file(firmware7343/full7343/"qcom/uke/cdsp/cdsp.mdt")==before&&idle7343==4);
+     fs::remove_all(root);
+     std::cout<<"PASS: actual managed profile selection/admission, exact idle-current source, active refusal, verify-only, additive no-replace publication and future inactive targets; synthetic only; complete semantic-version ordering retains newer revision1\n";
+ }

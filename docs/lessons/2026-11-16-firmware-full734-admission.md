@@ -20,3 +20,15 @@ idle checks and complete-family idempotence. Existing fixtures remain intact.
 PC checks cover source application and the complete recipe inverse only.
 Full-kernel success, native helper tests, signed DNF and first-boot operation
 remain separate results. This preparation starts no firmware or controller.
+# Full7344 follow-up
+
+Full7.3.4-4/11333980 succeeded from source
+`4a424e96c528920d59541fa9cc2aa426a90f296e`. Managed14 derives the exact
+managed13 source and complete recipe; all eight source inputs and previous
+admissions stay unchanged. The new source worker requires that actual full build
+to have succeeded and checks its recorded source worker before producing an
+admission. The two-file patch has complete header/test inverse checks. Native
+tests cover exact4, wrong/unknown source, active-consumer refusal, verify-only,
+additive publication, repeat/no-replace and retention of3. This checkpoint records
+source preparation only; COPR, signed DNF and current4 device validation remain
+pending. No DSP, MCU, TA or key operation is introduced.
