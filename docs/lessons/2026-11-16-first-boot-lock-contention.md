@@ -26,3 +26,9 @@
   Current normal-session success does not qualify the corrected first boot.
 - Next: verify actual COPR inputs and signed outputs, deliver through DNF without
   changing saved policy, and qualify the next fresh first-setup boot separately.
+
+COPR11336297 stops in source lint before producing an SRPM. ShellCheck flags
+the manifest output inside its traversed directory and an unquoted compiler
+option containing a comma. Generate the manifest outside the traversed tree,
+then install it, and quote the single compiler option. Keep lint and every
+native/runtime gate enabled. No Control26 package was published by this trial.

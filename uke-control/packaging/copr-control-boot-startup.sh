@@ -31,7 +31,8 @@ for path in tests/boot-lock.sh docs/BOOT-STARTUP.md;do
  install -Dm644 "$owner/$path" "$work/overlay/$path"
 done
 printf '%s  %s\n' "$(jq -er .patch_sha256 "$contract")" "$work/overlay/consumer.patch" | sha256sum -c --strict --quiet -
-(cd "$work/overlay";find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+(cd "$work/overlay";find . -type f -print0 | sort -z | xargs -0 sha256sum > "$work/overlay.sha256")
+install -m644 "$work/overlay.sha256" "$work/overlay/SHA256SUMS"
 tar --sort=name --mtime=@1794787200 --owner=0 --group=0 --numeric-owner -cJf "$result/boot-startup-overlay.tar.xz" -C "$work/overlay" .
 install -m644 "$contract" "$result/"
 (cd "$result";sha256sum -c --strict --quiet "$work/inputs.sha256")
