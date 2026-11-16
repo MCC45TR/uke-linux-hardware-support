@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-16",
+  "release": 23,
+  "parent": {
+    "build": 11332102,
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-22.fc46.src.rpm",
+    "srpm_sha256": "2aac26f1c368832631774877fe2804bdc3f7ff573f5ee8fdc405c373a3896708",
+    "spec_sha256": "5c19a9307a1c539f618b1c3839b3686307b310d0c5949d19d919239034e28139",
+    "source_count": 74,
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+  },
+  "native_proof": {
+    "build": 11332798,
+    "source_commit": "5468a4ae98261416220db31084ae5e70a5907e24",
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-setup-source-check-0.1-4.fc46.aarch64.rpm",
+    "sha256": "6ad9472b02fbcfc3871e4dc551335398194a457f84bb02203a30447fcedef5e4",
+    "compiler_modes": 4,
+    "synthetic_hardware": true
+  },
+  "new_runtime_packages": 0,
+  "new_runtime_elfs": 0,
+  "creates_current_root_marker": false,
+  "changes_saved_cdc_policy": false,
+  "device_first_setup_qualified": false
+}

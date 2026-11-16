@@ -25,7 +25,20 @@ JSON framing, fixed reboot arguments, completion and preference preservation;
 gadget, service and reboot actions use asserted stubs. The check package
 contains receipts only and is not a tablet runtime dependency.
 
-Only source/text checks have run on the PC. Native compilation, cumulative
-Control packaging, signed DNF, SELinux/unit execution, fresh-image startup,
-host reconnection, idle measurements and completion cleanup remain pending.
-The installed system and its USB policy are unchanged by this source work.
+COPR 11332798, source 5468a4ae, passed all four ARM64 compiler modes on
+16 November. Its text-only receipt has two verified repository signatures.
+The first trials exposed a fixture IPA boundary, strict Clang pointer syntax
+and a missing compiler-rt build dependency; warnings and sanitizers stayed
+enabled. These results supersede the initial source-only qualification.
+
+Prepared Control23 assembly derives from the complete signed Control22
+source package. A whole-recipe inverse preserves all earlier phases and
+74 inputs. It adds the setup code to the existing executable and reruns
+the four native modes against the actual prepared headers. Unit data stays
+disabled by default, and package installation creates no activation marker.
+
+Cumulative Control23 compilation, signed DNF, SELinux/unit execution,
+fresh-image startup, host reconnection, idle measurements and completion
+cleanup remain pending. The installed system and its USB policy are unchanged
+by this source work. Synthetic transport qualification is not a fresh-device
+acceptance result.
