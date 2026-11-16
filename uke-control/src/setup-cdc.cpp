@@ -52,7 +52,7 @@ bool exact_file(const char* path,const char* value,bool optional) {
     need(fd.n>=0&&!fstat(fd.n,&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&
         st.st_nlink==1&&!(st.st_mode&0022)&&st.st_size==off_t(bytes),"Untrusted setup state file");
     std::array<char,32> buffer{};
-    need(bytes<buffer.size()&&read(fd.n,buffer.data(),buffer.size())==ssize_t(bytes)&&
+    need(bytes<buffer.size()&&::read(fd.n,buffer.data(),buffer.size())==ssize_t(bytes)&&
         std::string_view(buffer.data(),bytes)==value,"Invalid setup state contents");
     return true;
 }
@@ -165,7 +165,7 @@ void wait_configured(int fd) {
     for(;;) {
         std::array<char,64> state{};
         need(lseek(fd,0,SEEK_SET)==0,"Cannot seek UDC state");
-        const auto bytes=read(fd,state.data(),state.size());
+        const auto bytes=::read(fd,state.data(),state.size());
         if(bytes<0&&errno==EINTR)continue;
         need(bytes>0&&size_t(bytes)<state.size(),"Cannot read UDC state");
         if(std::string_view(state.data(),size_t(bytes))=="configured\n")return;
@@ -204,7 +204,7 @@ int console() {
         if(result<0&&errno==EINTR)continue;
         need(result>0,"Cannot wait for setup input");
         if(input.revents&(POLLHUP|POLLERR|POLLNVAL))return 0;
-        const auto received=read(terminal.n,&byte,1);
+        const auto received=::read(terminal.n,&byte,1);
         if(received<0&&errno==EAGAIN)continue;
         if(received<0&&errno==EINTR)continue;
         if(received<=0)return 0;
