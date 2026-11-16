@@ -28,6 +28,11 @@
   whole inverse successfully. It stopped at the first synthetic image because
   the fixture copied a 21-byte selector using a literal length of 20. The fixture
   now uses the string size; production parsing and every refusal stay unchanged.
+- Next result: 11334005 passed all four native modes and production compilation,
+  then reached packaging. The new packaged-CLI check used `/usr/sbin`, which is
+  an alias on the running usrmerged system, while the actual RPM installs the
+  binary to `/usr/bin`. The buildroot has no such alias. The check now names the
+  package-owned path; its privilege refusal and all parent checks remain required.
 - Limit: this is updater compatibility, not proof of rescue boot, logical swap,
   encryption, hibernation, hardware sealing or 256 GB firmware handoff. OEM slot
   injection differs between bootloaders; duplicate or invalid suffixes remain

@@ -49,7 +49,7 @@ cat > "$work/check" <<'SPEC'
 (
 test "$(id -u)" != 0
 set +e
-output=$(%{buildroot}/usr/sbin/uke-kernel-update derive-slot-image /missing /missing a 2>&1)
+output=$(%{buildroot}/usr/bin/uke-kernel-update derive-slot-image /missing /missing a 2>&1)
 status=$?
 set -e
 test "$status" = 1
