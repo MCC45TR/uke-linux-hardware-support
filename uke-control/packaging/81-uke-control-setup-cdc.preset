@@ -1,0 +1,5 @@
+# The fresh Plasma image enables these explicitly after installing Control.
+disable uke-control-setup-cdc.service
+disable uke-control-setup-console.service
+disable uke-control-setup-cdc-finish.service
+disable uke-control-setup-cdc-finish.path

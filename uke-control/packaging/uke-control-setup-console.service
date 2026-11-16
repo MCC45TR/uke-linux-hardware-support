@@ -1,0 +1,28 @@
+[Unit]
+Description=Restricted Uke first-setup USB commands
+After=uke-control-setup-cdc.service
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/etc/uke-control/first-setup-cdc
+ConditionPathExists=!/etc/plasma-setup-done
+ConditionPathExists=/dev/ttyGS0
+StartLimitIntervalSec=30
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecCondition=/usr/bin/uke-control setup-cdc ready --json
+ExecStart=/usr/bin/uke-control setup-cdc console --json
+Restart=always
+RestartSec=2
+TimeoutStopSec=10
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+DevicePolicy=closed
+DeviceAllow=/dev/ttyGS0 rw

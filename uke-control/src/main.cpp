@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "backend.hpp"
+#include "setup-cdc.hpp"
 #include "overview.hpp"
 #include "client.hpp"
 #include "cli.hpp"
@@ -28,6 +29,7 @@ static int run(int argc,char** argv,bool as_json) {
         }
         if(const int result=uke::charge::policy_command(argc,argv,as_json);result>=0)return result;
         std::string command=argv[1];
+        if(command=="setup-cdc")return uke::setup_cdc::command(argc-2,argv+2);
         if(command=="microphone")return uke::microphone::command(argc-2,argv+2,as_json);
         if(command=="tui") {
             if(as_json)throw uke::cli::UsageError("tui requires a terminal; use actions --json for frontend metadata");

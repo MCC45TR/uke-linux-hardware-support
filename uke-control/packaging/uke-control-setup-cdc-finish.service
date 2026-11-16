@@ -1,0 +1,16 @@
+[Unit]
+Description=Restore the saved USB policy after Plasma setup
+After=uke-control-setup-cdc.service
+ConditionFirmware=device-tree-compatible(xiaomi,uke)
+ConditionPathExists=/etc/uke-control/first-setup-cdc
+ConditionPathExists=/etc/plasma-setup-done
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/uke-control setup-cdc finish --json
+TimeoutStartSec=45
+ProtectHome=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=-/run/uke-control-setup -/run/senemos-uke -/var/lib/uke-control -/etc/systemd/system

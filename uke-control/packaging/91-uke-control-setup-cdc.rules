@@ -1,0 +1,4 @@
+# A fresh image opts in. Completion prevents every subsequent automatic reopen.
+ACTION=="add|change|remove", SUBSYSTEM=="typec", TEST=="/etc/uke-control/first-setup-cdc", TEST!="/etc/plasma-setup-done", RUN+="/usr/bin/systemctl --no-block restart uke-control-setup-cdc.service"
+ACTION=="add|change|remove", SUBSYSTEM=="usb_role", TEST=="/etc/uke-control/first-setup-cdc", TEST!="/etc/plasma-setup-done", RUN+="/usr/bin/systemctl --no-block restart uke-control-setup-cdc.service"
+ACTION=="add|change", SUBSYSTEM=="udc", TEST=="/etc/uke-control/first-setup-cdc", TEST!="/etc/plasma-setup-done", RUN+="/usr/bin/systemctl --no-block restart uke-control-setup-cdc.service"
