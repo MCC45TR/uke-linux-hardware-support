@@ -227,7 +227,7 @@ int console() {
         }
         case Request::bootloader: {
             send("{\"requested\":\"reboot bootloader\"}");
-            const auto result=uke::execute_bounded({"/usr/bin/uke-reboot","bootloader"},8,4096);
+            const auto result=uke::execute_bounded({"/usr/bin/systemctl","--no-block","--reboot-argument=bootloader","reboot"},8,4096);
             if(result.status)send("{\"status\":"+std::to_string(result.status)+",\"error\":"+sysfs::quote(result.output)+"}");
             return result.status;
         }

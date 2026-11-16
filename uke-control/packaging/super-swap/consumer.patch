@@ -1,0 +1,77 @@
+diff --git a/uke-control/src/backend.cpp b/uke-control/src/backend.cpp
+index 471fd975..e748d6f4 100644
+--- a/uke-control/src/backend.cpp
++++ b/uke-control/src/backend.cpp
+@@ -268,6 +268,17 @@ static std::vector<Swap> active() {
+         need(bool(row>>s.path>>type>>s.size>>s.used>>priority),"Malformed active swap inventory");s.size*=1024;s.used*=1024;result.push_back(s);}
+     return result;
+ }
++
++static void super_swap_helper(const std::string& operation,const std::string& path={}) {
++    const std::string helper="/usr/libexec/uke-control/super-swap/prepare.sh";
++    struct stat st{};
++    need(lstat(helper.c_str(),&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),
++         "Install the reviewed logical swap integration from uke-control");
++    std::vector<std::string> args{helper,operation};
++    if(!path.empty())args.push_back(path);
++    auto result=execute(args);
++    need(result.status==0,"Logical swap admission failed; no swap file will be allocated: "+result.output);
++}
+ static std::set<std::string> partition_candidates() {
+     std::set<std::string> result;
+     auto labels=execute({"/usr/bin/lsblk","--raw","--noheadings","--output","PATH,PARTLABEL"});
+@@ -292,11 +303,16 @@ static std::string partition() {
+     auto candidates=partition_candidates();if(candidates.empty())return {};
+     const auto path=*candidates.begin();struct stat st{};
+     need(stat(path.c_str(),&st)==0&&S_ISBLK(st.st_mode),"linux_swap is not a block partition");
+-    need(fs::exists(fs::path("/sys/class/block")/fs::path(path).filename()/"partition"),"linux_swap must be a partition, not a whole disk");
++    if(!fs::exists(fs::path("/sys/class/block")/fs::path(path).filename()/"partition"))
++        super_swap_helper("--verify",path);
+     auto type=execute({"/usr/bin/blkid","-p","-s","TYPE","-o","value",path});
+     need(type.status==0&&type.output=="swap\n","linux_swap exists without a valid Linux swap signature; no partition will be formatted");
+     return path;
+ }
++static std::string prepared_partition() {
++    super_swap_helper("--prepare");
++    return partition();
++}
+ static bool own_file(const std::string& path) {
+     if(fs::path(path).parent_path()!=swaps)return false;
+     auto name=fs::path(path).filename().string();if(!name.starts_with("swap-"))return false;
+@@ -317,7 +333,7 @@ static void allocate_swap(int fd,uint64_t size,bool f2fs) {
+ }
+ static void apply_locked(const std::string& selected) {
+     board();
+-    const auto before=active();std::string target=partition();
++    const auto before=active();std::string target=prepared_partition();
+     const uint64_t size=swap_mib(selected,memory("MemTotal:"))*MiB;
+     if(target.empty()) {
+         directory(swaps);target=(swaps/("swap-"+std::to_string(size/MiB))).string();
+diff --git a/uke-control/src/setup-cdc.cpp b/uke-control/src/setup-cdc.cpp
+index 36ff5c0a..bba5229c 100644
+--- a/uke-control/src/setup-cdc.cpp
++++ b/uke-control/src/setup-cdc.cpp
+@@ -227,7 +227,7 @@ int console() {
+         }
+         case Request::bootloader: {
+             send("{\"requested\":\"reboot bootloader\"}");
+-            const auto result=uke::execute_bounded({"/usr/bin/uke-reboot","bootloader"},8,4096);
++            const auto result=uke::execute_bounded({"/usr/bin/systemctl","--no-block","--reboot-argument=bootloader","reboot"},8,4096);
+             if(result.status)send("{\"status\":"+std::to_string(result.status)+",\"error\":"+sysfs::quote(result.output)+"}");
+             return result.status;
+         }
+diff --git a/uke-control/tests/setup-cdc.cpp b/uke-control/tests/setup-cdc.cpp
+index 1a980cb9..132a90a0 100644
+--- a/uke-control/tests/setup-cdc.cpp
++++ b/uke-control/tests/setup-cdc.cpp
+@@ -88,8 +88,8 @@ ProcessResult execute_bounded(const std::vector<std::string>& args,unsigned seco
+         assert((args==std::vector<std::string>{"/usr/bin/journalctl","-b","-k","-n","128","--no-pager","-o","short-monotonic"}));
+         assert(seconds==5&&limit==16384);return {0,"line \"one\"\nline \\two\n"};
+     }
+-    if(args[0]=="/usr/bin/uke-reboot") {
+-        assert((args==std::vector<std::string>{"/usr/bin/uke-reboot","bootloader"}));
++    if(args.size()==4&&args[0]=="/usr/bin/systemctl"&&args[2]=="--reboot-argument=bootloader") {
++        assert((args==std::vector<std::string>{"/usr/bin/systemctl","--no-block","--reboot-argument=bootloader","reboot"}));
+         assert(seconds==8&&limit==4096);return {23,"synthetic reboot refusal"};
+     }
+     assert(args[0]=="/usr/bin/systemctl"&&seconds<=20&&limit==4096);

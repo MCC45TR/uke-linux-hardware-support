@@ -268,6 +268,17 @@ static std::vector<Swap> active() {
         need(bool(row>>s.path>>type>>s.size>>s.used>>priority),"Malformed active swap inventory");s.size*=1024;s.used*=1024;result.push_back(s);}
     return result;
 }
+
+static void super_swap_helper(const std::string& operation,const std::string& path={}) {
+    const std::string helper="/usr/libexec/uke-control/super-swap/prepare.sh";
+    struct stat st{};
+    need(lstat(helper.c_str(),&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&0022),
+         "Install the reviewed logical swap integration from uke-control");
+    std::vector<std::string> args{helper,operation};
+    if(!path.empty())args.push_back(path);
+    auto result=execute(args);
+    need(result.status==0,"Logical swap admission failed; no swap file will be allocated: "+result.output);
+}
 static std::set<std::string> partition_candidates() {
     std::set<std::string> result;
     auto labels=execute({"/usr/bin/lsblk","--raw","--noheadings","--output","PATH,PARTLABEL"});
@@ -292,10 +303,15 @@ static std::string partition() {
     auto candidates=partition_candidates();if(candidates.empty())return {};
     const auto path=*candidates.begin();struct stat st{};
     need(stat(path.c_str(),&st)==0&&S_ISBLK(st.st_mode),"linux_swap is not a block partition");
-    need(fs::exists(fs::path("/sys/class/block")/fs::path(path).filename()/"partition"),"linux_swap must be a partition, not a whole disk");
+    if(!fs::exists(fs::path("/sys/class/block")/fs::path(path).filename()/"partition"))
+        super_swap_helper("--verify",path);
     auto type=execute({"/usr/bin/blkid","-p","-s","TYPE","-o","value",path});
     need(type.status==0&&type.output=="swap\n","linux_swap exists without a valid Linux swap signature; no partition will be formatted");
     return path;
+}
+static std::string prepared_partition() {
+    super_swap_helper("--prepare");
+    return partition();
 }
 static bool own_file(const std::string& path) {
     if(fs::path(path).parent_path()!=swaps)return false;
@@ -317,7 +333,7 @@ static void allocate_swap(int fd,uint64_t size,bool f2fs) {
 }
 static void apply_locked(const std::string& selected) {
     board();
-    const auto before=active();std::string target=partition();
+    const auto before=active();std::string target=prepared_partition();
     const uint64_t size=swap_mib(selected,memory("MemTotal:"))*MiB;
     if(target.empty()) {
         directory(swaps);target=(swaps/("swap-"+std::to_string(size/MiB))).string();

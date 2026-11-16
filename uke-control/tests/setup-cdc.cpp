@@ -88,8 +88,8 @@ ProcessResult execute_bounded(const std::vector<std::string>& args,unsigned seco
         assert((args==std::vector<std::string>{"/usr/bin/journalctl","-b","-k","-n","128","--no-pager","-o","short-monotonic"}));
         assert(seconds==5&&limit==16384);return {0,"line \"one\"\nline \\two\n"};
     }
-    if(args[0]=="/usr/bin/uke-reboot") {
-        assert((args==std::vector<std::string>{"/usr/bin/uke-reboot","bootloader"}));
+    if(args.size()==4&&args[0]=="/usr/bin/systemctl"&&args[2]=="--reboot-argument=bootloader") {
+        assert((args==std::vector<std::string>{"/usr/bin/systemctl","--no-block","--reboot-argument=bootloader","reboot"}));
         assert(seconds==8&&limit==4096);return {23,"synthetic reboot refusal"};
     }
     assert(args[0]=="/usr/bin/systemctl"&&seconds<=20&&limit==4096);
