@@ -32,3 +32,11 @@ the manifest output inside its traversed directory and an unquoted compiler
 option containing a comma. Generate the manifest outside the traversed tree,
 then install it, and quote the single compiler option. Keep lint and every
 native/runtime gate enabled. No Control26 package was published by this trial.
+
+COPR11336307 passes source lint, then rejects the parent SRPM digest. The local
+source-worker copy precedes publication signing. The published parent has two
+valid signatures under2204A661EA630A5303500085538797E72A3E4ECA; all81 source
+files and the complete spec byte-match the source-worker copy. Pin the published
+signed wrapper digest9257a5ec..., retaining the source-worker digest separately.
+The signature, spec, per-input and whole-recipe guards are unchanged. This trial
+also produced no SRPM or runtime package.

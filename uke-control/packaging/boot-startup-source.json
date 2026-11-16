@@ -5,10 +5,11 @@
   "parent": {
     "build": 11334438,
     "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-25.fc46.src.rpm",
-    "srpm_sha256": "e36d36ea8670f48b4e5b4b4b054a2c8fce9d7883f98ac2a4f92db82d7774dcc8",
+    "srpm_sha256": "9257a5ecd8a47b67bfa6e10c8d7a21ea413fcde0765b0339f9034f7de6ed3343",
     "spec_sha256": "24ea20255433b265ad322481be2f0a82fe268b2935a7df25c6e99daad32e0333",
     "source_count": 81,
-    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca",
+    "source_worker_srpm_sha256": "e36d36ea8670f48b4e5b4b4b054a2c8fce9d7883f98ac2a4f92db82d7774dcc8"
   },
   "new_runtime_packages": 0,
   "new_runtime_elfs": 0,
