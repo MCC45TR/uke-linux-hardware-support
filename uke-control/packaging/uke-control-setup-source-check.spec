@@ -1,12 +1,12 @@
 Name: uke-control-setup-source-check
 Version: 0.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Native qualification of the temporary Uke first-setup USB protocol
 License: MIT
 Source0: setup-cdc.tar.xz
 ExclusiveArch: aarch64
 %global debug_package %{nil}
-BuildRequires: gcc-c++ clang pkgconfig(jsoncpp) binutils bash coreutils findutils tar xz
+BuildRequires: gcc-c++ clang compiler-rt pkgconfig(jsoncpp) binutils bash coreutils findutils tar xz
 
 %description
 Essential build-only qualification of the actual first-setup policy and USB
@@ -26,7 +26,7 @@ if ! bash tests/setup-cdc.sh "$PWD" > native-results.txt 2>&1; then
 fi
 cat native-results.txt
 sha256sum src/{setup-cdc.cpp,setup-cdc.hpp,backend.hpp,sysfs.hpp} tests/{setup-cdc.cpp,setup-cdc.sh} > qualified-source.sha256
-rpm -q gcc-c++ clang glibc jsoncpp-devel > distribution-tools.txt
+rpm -q gcc-c++ clang compiler-rt glibc jsoncpp-devel > distribution-tools.txt
 
 %check
 test "$(grep -c '^PASS: actual setup policy' native-results.txt)" = 4
@@ -42,6 +42,9 @@ install -Dm644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Mon Nov 16 2026 Uke contributors - 0.1-4
+- Declare the Clang sanitizer runtime explicitly; retain all four compiler modes.
+
 * Mon Nov 16 2026 Uke contributors - 0.1-3
 - Express the bounded claim write with explicit array indexing for strict Clang builds.
 

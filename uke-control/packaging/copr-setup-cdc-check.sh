@@ -15,4 +15,4 @@ done
 (cd "$work/setup-cdc";find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
 tar --sort=name --mtime=@1794787200 --owner=0 --group=0 --numeric-owner -cJf "$result/setup-cdc.tar.xz" -C "$work" setup-cdc
 install -m644 "$owner/packaging/uke-control-setup-source-check.spec" "$result/"
-[[ $(rpmspec --target aarch64 --define 'dist .fc46' -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$result/uke-control-setup-source-check.spec") == uke-control-setup-source-check-0.1-3.fc46 ]]
+[[ $(rpmspec --target aarch64 --define 'dist .fc46' -q --srpm --qf '%{NAME}-%{VERSION}-%{RELEASE}' "$result/uke-control-setup-source-check.spec") == uke-control-setup-source-check-0.1-4.fc46 ]]
