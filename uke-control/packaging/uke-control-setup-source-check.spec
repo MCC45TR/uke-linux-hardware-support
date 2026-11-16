@@ -1,6 +1,6 @@
 Name: uke-control-setup-source-check
 Version: 0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Native qualification of the temporary Uke first-setup USB protocol
 License: MIT
 Source0: setup-cdc.tar.xz
@@ -42,5 +42,8 @@ install -Dm644 LICENSE %{buildroot}%{_licensedir}/%{name}/LICENSE
 %license %{_licensedir}/%{name}/LICENSE
 
 %changelog
+* Mon Nov 16 2026 Uke contributors - 0.1-2
+- Retain the shared-library boundary in the GCC fixture without changing production code or warning enforcement.
+
 * Mon Nov 16 2026 Uke contributors - 0.1-1
 - Qualify exact commands, native PTY transport, ownership refusal, completion and preserved CDC intent without hardware operations.

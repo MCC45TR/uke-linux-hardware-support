@@ -77,6 +77,11 @@ Result cdc_set(bool enabled) {
     text(mapped("/sys/kernel/config/usb_gadget/uke_debug/UDC"),enabled?"fixture.udc\n":"\n");
     return {0,"{\"synthetic\":true}\n"};
 }
+// Preserve the real shared-library call boundary. GCC 16 AArch64 otherwise
+// misdiagnoses IPA of this fixture's asserted vector stub (as in cdc-policy).
+#if defined(__GNUC__) && !defined(__clang__)
+[[gnu::noipa]]
+#endif
 ProcessResult execute_bounded(const std::vector<std::string>& args,unsigned seconds,size_t limit) {
     assert(!args.empty());std::ofstream(fixture/"commands",std::ios::app)<<args[0]<<'\n';
     if(args[0]=="/usr/bin/journalctl") {
