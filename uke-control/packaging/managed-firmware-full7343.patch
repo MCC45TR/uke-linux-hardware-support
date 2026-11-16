@@ -1,0 +1,48 @@
+--- a/uke-cdsp-pogo-firmware/src/managed.hpp
++++ b/uke-cdsp-pogo-firmware/src/managed.hpp
+@@ -56,7 +56,8 @@
+         {"7.3.1-12203-unstable","45d8355e366e6b75e43f441ca99b517302adf522"},
+         {"7.3.1-12204-unstable","de1bdf9ab531d772a8c02847c51b01ed4ffcd42f"},
+         {"7.3.3-28-unstable","8eb8316d3af498f4bbd25e89896d648d0ba37202"},
+-        {"7.3.4-2-unstable","385b48931882104b35cda5fddd65affa5cbdef35"}
++        {"7.3.4-2-unstable","385b48931882104b35cda5fddd65affa5cbdef35"},
++        {"7.3.4-3-unstable","44be649381405be367cfbc47af92447545b11a1d"}
+     };
+     const auto found=sources.find(profile.release);
+     return found!=sources.end()&&found->second==profile.source;
+--- a/uke-cdsp-pogo-firmware/tests/managed.cpp
++++ b/uke-cdsp-pogo-firmware/tests/managed.cpp
+@@ -130,7 +130,7 @@
+     auto bad734=exact734;bad734.source=commit28;
+     assert(!qualified_idle_source(bad734));
+     rejected([&]{prepare_managed(bad734,future734,firmware734,families,idle_check734);});
+-    bad734=exact734;bad734.release="7.3.4-3-unstable";
++    bad734=exact734;bad734.release="7.3.4-4-unstable";
+     assert(!qualified_idle_source(bad734));
+     rejected([&]{prepare_managed(bad734,bad734.release,firmware734,families,idle_check734);});
+     rejected([&]{prepare_managed(exact734,future734,firmware734,families,active);});
+@@ -141,6 +141,24 @@
+     assert(!prepare_managed(exact734,future734,firmware734,families,active,true));
+     assert(file(firmware734/future734/"qcom/uke/cdsp/cdsp.mdt")==before&&idle734==4);
+     assert(file(firmware28/full28/"qcom/uke/cdsp/cdsp.mdt")==saved28&&idle28==4);
++    const std::string full7343="7.3.4-3-unstable",commit7343="44be649381405be367cfbc47af92447545b11a1d";
++    const auto profiles7343=root/"full7343/profiles",firmware7343=root/"full7343/firmware";
++    text(profiles7343/full7343/"source-commit",commit7343+"\n");
++    text(profiles7343/full7343/"source-composition.json",composition(full7343,commit7343).dump());
++    const auto exact7343=*managed_profile(profiles7343,full7343);
++    assert(qualified_idle_source(exact7343));
++    auto bad7343=exact7343;bad7343.source=commit734;
++    assert(!qualified_idle_source(bad7343));
++    unsigned idle7343=0;const auto idle_check7343=[&]{idle7343++;};
++    rejected([&]{prepare_managed(bad7343,full7343,firmware7343,families,idle_check7343);});
++    rejected([&]{prepare_managed(exact7343,full7343,firmware7343,families,active);});
++    rejected([&]{prepare_managed(exact7343,full7343,firmware7343,families,idle_check7343,true);});
++    assert(!fs::exists(firmware7343)&&idle7343==0);
++    assert(prepare_managed(exact7343,full7343,firmware7343,families,idle_check7343)&&idle7343==4);
++    assert(!prepare_managed(exact7343,full7343,firmware7343,families,active));
++    assert(!prepare_managed(exact7343,full7343,firmware7343,families,active,true));
++    assert(file(firmware7343/full7343/"qcom/uke/cdsp/cdsp.mdt")==before&&idle7343==4);
++    assert(file(firmware734/future734/"qcom/uke/cdsp/cdsp.mdt")==before&&idle734==4);
+     fs::remove_all(root);
+     std::cout<<"PASS: actual managed profile selection/admission, exact idle-current source, active refusal, verify-only, additive no-replace publication and future inactive targets; synthetic only; complete semantic-version ordering retains newer revision1\n";
+ }
