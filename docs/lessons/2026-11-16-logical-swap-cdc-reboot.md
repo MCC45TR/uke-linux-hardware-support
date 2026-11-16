@@ -19,3 +19,10 @@
   boot/control or the requested additional terminal reboot targets.
 - Next: qualify the actual prepared consumer and packaged files; deliver by
   signed DNF, preserve saved preferences and test first-setup USB cold boot.
+
+COPR11334341 passes the four new swap modes, four changed CDC modes, retained
+CDC source proof and production build, then fails the new packaged-script byte
+comparison. Fedora brp-mangle-shebangs converts `env bash` to `/usr/bin/bash`.
+The check now admits precisely that first-line normalization and still compares
+every other byte. No runtime, source or native gate is removed; release25 remains
+unused because this attempt failed before publication.

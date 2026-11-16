@@ -61,7 +61,11 @@ set -e
 test "$status" = 1
 printf '%s\n' "$output" | grep -Fx 'UKE_SUPER_SWAP_REJECTED: root required'
 cmp %{_builddir}/uke-control-super-swap/super-swap-results.txt %{buildroot}%{_docdir}/uke-control/super-swap-results.txt
-for file in %{_builddir}/uke-control-super-swap/runtime/*.sh;do cmp "$file" "%{buildroot}/usr/libexec/uke-control/super-swap/${file##*/}";done
+for file in %{_builddir}/uke-control-super-swap/runtime/*.sh;do
+ # Fedora brp-mangle-shebangs resolves env bash to the packaged /usr/bin/bash.
+ # Admit exactly that first-line transformation, comparing every other byte.
+ sed '1s|^#!/usr/bin/env bash$|#!/usr/bin/bash|' "$file" | cmp - "%{buildroot}/usr/libexec/uke-control/super-swap/${file##*/}"
+done
 )
 # UKE_SUPER_SWAP25_CHECK_END
 SPEC
