@@ -1,0 +1,180 @@
+--- a/src/kernel-update.cpp
++++ b/src/kernel-update.cpp
+@@ -6,6 +6,7 @@
+ #include "boot-health-report.hpp"
+ #include "o82-private-color.hpp"
+ #include "managed-firmware.hpp"
++#include "super-profile.hpp"
+ #include <openssl/evp.h>
+ #include <algorithm>
+ #include <array>
+@@ -151,8 +152,7 @@
+     const auto terminator=std::find(b.begin()+44,b.begin()+1580,0);
+     need(terminator!=b.begin()+1580,"Unterminated boot command line");
+     const std::string command(b.begin()+44,terminator);
+-    need(command.empty() || command=="senemos.root=userdata" ||
+-         command=="senemos.root=userdata msm.o82_vrr_test_min_hz=30","Unexpected boot command line");
++    const auto profile=uke_boot_profile::parse(command);
+     for(auto it=terminator;it!=b.begin()+page;++it)need(!*it,"Unexpected boot header data");
+     const size_t size=le32(b,8);
+     need(size>=64 && size<=b.size()-page,"Invalid kernel length");
+@@ -165,8 +165,18 @@
+     need(pe>=64 && pe<=size-24 && le32(kernel,pe)==0x4550 &&
+          kernel[pe+4]==0x64 && kernel[pe+5]==0xaa,"ARM64 EFI PE header required");
+     need(std::all_of(b.begin()+page+size,b.end(),[](auto v){return v==0;}),"Unexpected AVB/signature/trailing payload");
++    uke_boot_profile::admit(profile,kernel);
+     return kernel;
+ }
++[[maybe_unused]] static Bytes derive_slot_image(Bytes bytes,unsigned target) {
++    const auto kernel=boot_kernel(bytes);
++    auto profile=uke_boot_profile::parse(std::string(reinterpret_cast<const char*>(bytes.data()+44)));
++    need(profile.userdata,"Slot annotation requires a userdata boot profile");
++    profile.slot=target;
++    uke_boot_profile::set(bytes,profile,kernel);
++    need(boot_kernel(bytes)==kernel,"Slot annotation changed the package Image");
++    return bytes;
++}
+ static std::map<std::string,std::string> properties(const std::string &text) {
+     need(text.size()<8192,"Oversized update manifest");
+     std::map<std::string,std::string> result; std::istringstream input(text); std::string row;
+@@ -512,6 +522,17 @@
+ }
+ int main(int argc,char **argv) {
+     try {
++        if(argc>=2 && std::string_view(argv[1])=="derive-slot-image") {
++            need(argc==5 && (std::string_view(argv[4])=="a"||std::string_view(argv[4])=="b"),
++                 "Usage: uke-kernel-update derive-slot-image INPUT OUTPUT a|b");
++            need(geteuid()==0,"Root privileges are required");
++            // Regular root-owned files only, exclusive output; no device/GPT/firmware access.
++            const auto bytes=derive_slot_image(file(argv[2]),std::string_view(argv[4])=="b"?1:0);
++            save_new(argv[3],bytes);
++            need(file(argv[3])==bytes,"Derived boot file readback differs");
++            std::cout<<"Slot-specific boot file verified; kernel Image preserved; no device operation\n";
++            return 0;
++        }
+         if(argc>=2 && std::string_view(argv[1])=="rollback-policy") {
+             need((argc==3 && std::string_view(argv[2])=="status") ||
+                  (argc==4 && std::string_view(argv[2])=="set"),"Usage: uke-kernel-update rollback-policy status | set enforced|permissive|off");
+@@ -616,7 +637,8 @@
+         need(!flock(lock.value,LOCK_EX|LOCK_NB),"Another kernel update is active");
+         const auto inspect_userdata=[&](const fs::path &selected,const Bytes &bytes) {
+             const auto raw=file(selected/"manifest");
+-            (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
++            (void)userdata_vrr(bytes,vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem,
++                               uke_boot_profile::requested(read_text("/proc/cmdline")));
+             verify_early_firmware();
+         };
+         const auto boot_id=[&] {
+@@ -724,7 +746,9 @@
+             const std::array<Bytes,2> images{read_fd(other.value,capacity),previous};
+             require_current_b(read_text("/proc/cmdline"),images,file(fs::path("/usr/lib/modules")/current.release/"vmlinuz"));
+             const auto raw=file(bundle/"manifest");
+-            bytes=userdata_vrr(std::move(bytes),vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem);
++            const bool keep_super=uke_boot_profile::requested(read_text("/proc/cmdline")) &&
++                                  (!restore||uke_boot_profile::capable(boot_kernel(bytes)));
++            bytes=userdata_vrr(std::move(bytes),vrr_policy(),properties(std::string(raw.begin(),raw.end())),filesystem,keep_super,1);
+         }
+         if(previous==bytes){std::cout<<"boot_b already matches the verified installed bundle; no partition write\n";return 0;}
+         const auto raw=file(bundle/"manifest");const auto release=properties(std::string(raw.begin(),raw.end())).at("kernel_release");
+--- a/src/userdata-update.hpp
++++ b/src/userdata-update.hpp
+@@ -142,11 +142,16 @@
+ }
+ static unsigned identify_slot(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
+     std::array<bool,2> matches{};
+-    for(unsigned i=0;i<2;++i)try {
+-        const auto kernel=boot_kernel(images[i]);
+-        const std::string selector(reinterpret_cast<const char*>(images[i].data()+44));
+-        matches[i]=kernel==running && selector.starts_with("senemos.root=userdata");
+-    }catch(const std::runtime_error&){}
++    for(unsigned i=0;i<2;++i) {
++        std::optional<uke_boot_profile::Command> profile;
++        try {
++            const auto kernel=boot_kernel(images[i]);
++            profile=uke_boot_profile::parse(std::string(reinterpret_cast<const char*>(images[i].data()+44)));
++            matches[i]=kernel==running && profile->userdata;
++        }catch(const std::runtime_error&){}
++        // A valid but misplaced annotation must not silently turn into a hash guess.
++        if(profile)uke_boot_profile::slot_matches(*profile,i);
++    }
+     if(cmdline.find("androidboot.slot_suffix=")!=std::string::npos) {
+         const auto current=slot::current(cmdline);need(matches[current],"Bootloader slot differs from the running package Image");return current;
+     }
+@@ -180,7 +185,8 @@
+          target.filename()=="userdata.img" && token(target.parent_path().filename()),"Exact userdata profile link required");
+     return fs::path("/usr/lib/senemos")/target.parent_path();
+ }
+-static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest,const std::string &filesystem="f2fs") {
++static Bytes userdata_vrr(Bytes bytes,bool enabled,const std::map<std::string,std::string> &manifest,const std::string &filesystem="f2fs",
++                          bool super=false,std::optional<unsigned> target_slot=std::nullopt) {
+     const auto kernel=boot_kernel(bytes);
+     need(std::string(reinterpret_cast<const char*>(bytes.data()+44))=="senemos.root=userdata","Canonical installed userdata wrapper required");
+     need(uke_install::userdata_filesystem(filesystem),"Unsupported userdata filesystem");
+@@ -199,10 +205,12 @@
+              std::search(found+1,kernel.end(),note.begin(),note.end())==kernel.end(),
+              "Kernel lacks a unique aligned userdata root-selector capability note");
+     }
+-    if(enabled) {
+-        const std::string command="senemos.root=userdata msm.o82_vrr_test_min_hz=30";
+-        memcpy(bytes.data()+44,command.data(),command.size());
+-    }
++    // Old kernels keep their original wrappers. Forward super updates require cap3;
++    // explicit fallback selection derives the old slot's own retained profile.
++    uke_boot_profile::Command profile;
++    profile.userdata=true;profile.super=super;profile.vrr30=enabled;
++    if(target_slot&&uke_boot_profile::capable(kernel))profile.slot=target_slot;
++    uke_boot_profile::set(bytes,profile,kernel);
+     need(boot_kernel(bytes)==kernel,"Derived wrapper changed the signed package Image");return bytes;
+ }
+ static void require_current_b(const std::string &cmdline,const std::array<Bytes,2> &images,const Bytes &running) {
+@@ -498,6 +506,7 @@
+         if(action!="fallback")rollback_modules(rollback);
+     }
+     const auto running=identify_slot(read_text("/proc/cmdline"),images,running_image);
++    const bool keep_super=uke_boot_profile::requested(read_text("/proc/cmdline"));
+     auto bsg=ufs_bsg(controller);
+     const auto good_hash=digest(images[running]);
+     auto current_boot_id=read_text("/proc/sys/kernel/random/boot_id");need(current_boot_id.ends_with('\n'),"Missing current boot identity");current_boot_id.pop_back();
+@@ -536,7 +545,7 @@
+     if(std::any_of(disks.begin(),disks.end(),[](const auto &disk){return disk->gpt->needs_backup_crc_repair();}))verify_early_firmware();
+     if(replacing) {
+         const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+-        const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);
++        const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem,keep_super,0);
+         auto saved=replacement_trial(*prior,mode,running,release,good_hash,digest(images[1]),
+                                      manifest.at("kernel_release"),digest(bytes),current_boot_id);
+         const auto baseline_kernel=boot_kernel(images[1]);
+@@ -614,7 +623,7 @@
+             const auto next=manifest.at("kernel_release");
+             if(next!=prior->policy.candidate) {
+                 auto stable=superseded_trial(*prior,running,release,good_hash,current_boot_id,next);
+-                (void)userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);verify_early_firmware();
++                (void)userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem,keep_super,target);verify_early_firmware();
+                 need(action=="apply" || action=="check","Only a checked update can supersede an unbooted trial");
+                 if(action=="check") {
+                     std::cout<<"Unbooted trial can be superseded; accepted rollback verified; no hardware writes\n";return;
+@@ -812,9 +821,10 @@
+     auto saved=*prior;need(saved.good_image==good_hash,"Running boot bytes differ from the baseline");
+     need(saved.baseline_approved || mode!=RollbackMode::enforced,"Unapproved checkpoint requires off or permissive policy and complete installed rollback modules; approval remains separate");
+     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+-    const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem);const auto next=manifest.at("kernel_release");
++    const auto next=manifest.at("kernel_release");
+     const auto target=unsigned(uke_install::stage(saved.policy,static_cast<uke_install::Slot>(running),release,next,
+                                                rollback_retry(mode,explicit_request)));
++    const auto bytes=userdata_vrr(package_bytes,vrr_policy(),manifest,filesystem,keep_super,target);
+     saved.candidate_image=digest(bytes);
+     auto boot_id=read_text("/proc/sys/kernel/random/boot_id");need(boot_id.ends_with('\n'),"Missing staging boot identity");boot_id.pop_back();
+     need(valid_boot_id(boot_id),"Malformed staging boot identity");saved.staged_boot_id=boot_id;verify_early_firmware();
+--- a/src/select-existing-slot.hpp
++++ b/src/select-existing-slot.hpp
+@@ -51,7 +51,9 @@
+     const auto raw=file(bundle/"manifest");const auto manifest=properties(std::string(raw.begin(),raw.end()));
+     need(manifest.at("kernel_release")==expected_release &&
+          boot_kernel(images[target])==boot_kernel(package), "Target slot does not match the reviewed installed kernel");
+-    const auto expected=userdata_vrr(package,vrr_policy(),manifest,filesystem);
++    const auto profile=uke_boot_profile::parse(std::string(reinterpret_cast<const char*>(images[target].data()+44)));
++    uke_boot_profile::slot_matches(profile,target);
++    const auto expected=userdata_vrr(package,vrr_policy(),manifest,filesystem,profile.super,profile.slot);
+     need(images[target]==expected, "Target boot wrapper does not match the current userdata policy; install its admitted bundle first");
+     verify_early_firmware();
+     UserdataUpdate next=prior;next.policy=plan.state;

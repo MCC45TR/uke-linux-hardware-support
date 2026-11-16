@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-SUPER-BOOT-CONSUMER-20261116: preserve profiles and verify both-slot identity](2026-11-16-super-boot-consumer.md)
+
 - [UKE-FIRST-SETUP-USB-20261116: scope USB access to the setup lifecycle](2026-11-16-first-setup-usb-lifecycle.md)
 
 - [UKE-FIRMWARE-FULL734-20261116: bind fresh-root admission to a successful build](2026-11-16-firmware-full734-admission.md)

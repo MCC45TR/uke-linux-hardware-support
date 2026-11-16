@@ -1,0 +1,4 @@
+ff244e80b109b58765024afbbe4ace5ebf3f2f7722760cd5e4b6a27bc74ac07b  src/kernel-update.cpp
+9f6c6056e6ec701e2e38712e362c229ba47067308f3b5941c8ac8d55da1191de  src/userdata-update.hpp
+a2e2d29ccf9352a5a1a485a892cf570b4ec18764321eff73424fc5b8551139ea  src/select-existing-slot.hpp
+b72b8c1adb3a01a98444cca74ce694e633daf44898f66f82083c809bd00260bf  src/super-profile.hpp
