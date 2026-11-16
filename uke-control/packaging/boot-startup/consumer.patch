@@ -1,0 +1,73 @@
+diff --git a/uke-control/src/backend.cpp b/uke-control/src/backend.cpp
+index e748d6f4..2f47bdec 100644
+--- a/uke-control/src/backend.cpp
++++ b/uke-control/src/backend.cpp
+@@ -369,7 +369,7 @@ static void apply_locked(const std::string& selected) {
+     }
+ }
+ void swap_set(const std::string& selected) {Lock lock;(void)swap_mib(selected,memory("MemTotal:"));apply_locked(selected);atomic_file(state/"swap-policy",selected+"\n");}
+-void swap_apply(){Lock lock;apply_locked(policy());}
++void swap_apply(){Lock lock(true);apply_locked(policy());}
+ std::string inventory(bool save) {
+     if(save)root();
+     auto result=execute({"/usr/bin/lsblk","--json","--bytes","--output","NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,PARTLABEL,MOUNTPOINTS"});
+@@ -477,8 +477,8 @@ static Result cdc_change(bool enabled) {
+         ",\"effective_state\":\""+effective+'"'+
+         ",\"enumeration\":\"inspect_usb_status\",\"root_shell\":false,\"network_export\":false}\n"};
+ }
+-Result cdc_set(bool enabled) {
+-    Lock lock;
++Result cdc_set(bool enabled, bool wait) {
++    Lock lock(wait);
+     return cdc_change(enabled);
+ }
+ static bool cdc_saved() {
+diff --git a/uke-control/src/backend.hpp b/uke-control/src/backend.hpp
+index 0483d1ac..1d57d0e3 100644
+--- a/uke-control/src/backend.hpp
++++ b/uke-control/src/backend.hpp
+@@ -49,7 +49,7 @@ Result display_lane_limit(const std::string& lanes);
+ Result display_compression(const std::string& policy);
+ Result usb_power_set(const std::string& device,const std::string& policy);
+ Result ethernet_profile_set(const std::string& interface,const std::string& profile);
+-Result cdc_set(bool enabled);
++Result cdc_set(bool enabled, bool wait=false);
+ Result cdc_persistent(bool enabled);
+ Result cdc_apply();
+ std::string report();
+diff --git a/uke-control/src/setup-cdc.cpp b/uke-control/src/setup-cdc.cpp
+index bba5229c..c467c510 100644
+--- a/uke-control/src/setup-cdc.cpp
++++ b/uke-control/src/setup-cdc.cpp
+@@ -123,7 +123,7 @@ int finish() {
+         PolicyLock lock;
+         if(claimed()) {
+             if(!saved()) {
+-                const auto result=uke::cdc_set(false);
++                const auto result=uke::cdc_set(false,true);
+                 if(result.status){std::cerr<<result.output;return result.status;}
+             }
+             need(unlink("/run/uke-control-setup/cdc-owned")==0,"Cannot release setup CDC claim");
+@@ -140,7 +140,7 @@ int apply() {
+     if(complete())return finish();
+     PolicyLock lock;
+     if(!saved())claim();
+-    const auto result=uke::cdc_set(true);
++    const auto result=uke::cdc_set(true,true);
+     if(result.status==69) {
+         std::cout<<"{\"setup_cdc\":\"waiting_for_device_role\",\"saved_policy_changed\":false}\n";
+         return 0; // A later Type-C/UDC event retries; no polling worker.
+diff --git a/uke-control/tests/setup-cdc.cpp b/uke-control/tests/setup-cdc.cpp
+index 132a90a0..4e9e0ec6 100644
+--- a/uke-control/tests/setup-cdc.cpp
++++ b/uke-control/tests/setup-cdc.cpp
+@@ -70,7 +70,8 @@ std::string read(const std::string& path,size_t limit) {
+     std::ifstream in(mapped(path.c_str()),std::ios::binary);
+     std::string value{std::istreambuf_iterator<char>(in),{}};assert(value.size()<limit);return value;
+ }
+-Result cdc_set(bool enabled) {
++Result cdc_set(bool enabled,bool wait) {
++    assert(wait); // Setup entry and completion serialize with boot swap writers.
+     helper_calls++;if(helper_status)return {helper_status,"synthetic refusal"};
+     const auto profile=mapped("/run/senemos-uke/usb-gadget-profile");
+     if(enabled)text(profile,"manual-acm\n");else fs::remove(profile);

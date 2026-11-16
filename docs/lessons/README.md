@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-FIRST-BOOT-LOCK-20261116: serialize boot writers and prepare sandbox state](2026-11-16-first-boot-lock-contention.md)
+
 - [UKE-SUPER-BOOT-CONSUMER-20261116: preserve profiles and verify both-slot identity](2026-11-16-super-boot-consumer.md)
 
 - [UKE-FIRST-SETUP-USB-20261116: scope USB access to the setup lifecycle](2026-11-16-first-setup-usb-lifecycle.md)

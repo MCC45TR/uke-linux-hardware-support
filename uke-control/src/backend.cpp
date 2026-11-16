@@ -369,7 +369,7 @@ static void apply_locked(const std::string& selected) {
     }
 }
 void swap_set(const std::string& selected) {Lock lock;(void)swap_mib(selected,memory("MemTotal:"));apply_locked(selected);atomic_file(state/"swap-policy",selected+"\n");}
-void swap_apply(){Lock lock;apply_locked(policy());}
+void swap_apply(){Lock lock(true);apply_locked(policy());}
 std::string inventory(bool save) {
     if(save)root();
     auto result=execute({"/usr/bin/lsblk","--json","--bytes","--output","NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,PARTLABEL,MOUNTPOINTS"});
@@ -477,8 +477,8 @@ static Result cdc_change(bool enabled) {
         ",\"effective_state\":\""+effective+'"'+
         ",\"enumeration\":\"inspect_usb_status\",\"root_shell\":false,\"network_export\":false}\n"};
 }
-Result cdc_set(bool enabled) {
-    Lock lock;
+Result cdc_set(bool enabled, bool wait) {
+    Lock lock(wait);
     return cdc_change(enabled);
 }
 static bool cdc_saved() {

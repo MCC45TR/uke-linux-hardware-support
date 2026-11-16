@@ -49,7 +49,7 @@ Result display_lane_limit(const std::string& lanes);
 Result display_compression(const std::string& policy);
 Result usb_power_set(const std::string& device,const std::string& policy);
 Result ethernet_profile_set(const std::string& interface,const std::string& profile);
-Result cdc_set(bool enabled);
+Result cdc_set(bool enabled, bool wait=false);
 Result cdc_persistent(bool enabled);
 Result cdc_apply();
 std::string report();

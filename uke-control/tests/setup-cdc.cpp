@@ -70,7 +70,8 @@ std::string read(const std::string& path,size_t limit) {
     std::ifstream in(mapped(path.c_str()),std::ios::binary);
     std::string value{std::istreambuf_iterator<char>(in),{}};assert(value.size()<limit);return value;
 }
-Result cdc_set(bool enabled) {
+Result cdc_set(bool enabled,bool wait) {
+    assert(wait); // Setup entry and completion serialize with boot swap writers.
     helper_calls++;if(helper_status)return {helper_status,"synthetic refusal"};
     const auto profile=mapped("/run/senemos-uke/usb-gadget-profile");
     if(enabled)text(profile,"manual-acm\n");else fs::remove(profile);

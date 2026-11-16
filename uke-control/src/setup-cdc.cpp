@@ -123,7 +123,7 @@ int finish() {
         PolicyLock lock;
         if(claimed()) {
             if(!saved()) {
-                const auto result=uke::cdc_set(false);
+                const auto result=uke::cdc_set(false,true);
                 if(result.status){std::cerr<<result.output;return result.status;}
             }
             need(unlink("/run/uke-control-setup/cdc-owned")==0,"Cannot release setup CDC claim");
@@ -140,7 +140,7 @@ int apply() {
     if(complete())return finish();
     PolicyLock lock;
     if(!saved())claim();
-    const auto result=uke::cdc_set(true);
+    const auto result=uke::cdc_set(true,true);
     if(result.status==69) {
         std::cout<<"{\"setup_cdc\":\"waiting_for_device_role\",\"saved_policy_changed\":false}\n";
         return 0; // A later Type-C/UDC event retries; no polling worker.
