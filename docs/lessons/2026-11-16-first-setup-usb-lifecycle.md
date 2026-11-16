@@ -37,8 +37,23 @@ source package. A whole-recipe inverse preserves all earlier phases and
 the four native modes against the actual prepared headers. Unit data stays
 disabled by default, and package installation creates no activation marker.
 
-Cumulative Control23 compilation, signed DNF, SELinux/unit execution,
-fresh-image startup, host reconnection, idle measurements and completion
-cleanup remain pending. The installed system and its USB policy are unchanged
-by this source work. Synthetic transport qualification is not a fresh-device
-acceptance result.
+Cumulative Control23, COPR11332853/source028a382e, passed all retained checks
+and all four modes against its actual prepared headers. Three runtime RPMs
+and the signed source RPM had eight independently verified COPR signatures.
+The normal repository DNF upgrade succeeded; installed units passed the
+systemd parser, remained disabled and created no setup marker.
+
+On accepted7.3.4-2, a private mount-namespace diagnostic exercised the actual
+installed endpoint without reopening completed setup globally. The PC read
+status and an untruncated11323-byte kernel-log frame. The console blocked in
+poll with unchanged0/0 CPU ticks over a bounded two-second idle observation.
+Native finish unbound USB and preserved the saved-disabled preference. The
+diagnostic's explicit namespace unmount reported busy; namespace exit released
+the mounts, and global markers, claim absence and gadget cleanup were checked
+before its private temporary files were removed. This was not an original-unit
+sandbox or fresh-image startup test.
+
+Fresh-image startup, service-domain SELinux execution, host reconnection,
+longer idle/power measurements, USB bootloader transition and the original
+wizard completion path remain pending. Synthetic and namespace results do
+not establish that complete lifecycle.
