@@ -1,5 +1,7 @@
 # Integration lessons
 
+- [UKE-FIRMWARE-FULL734-20261116: bind fresh-root admission to a successful build](2026-11-16-firmware-full734-admission.md)
+
 - [UKE-BOOT-IDENTITY-20261116: inspect the current kernel naming grammar](2026-11-16-boot-status-unstable.md)
 
 - [UKE-MCU-READER-20261116: verify packaged firmware before stock parsing](2026-11-16-mcu-source-before-super.md)

@@ -1,0 +1,43 @@
+--- a/uke-cdsp-pogo-firmware/src/managed.hpp
++++ b/uke-cdsp-pogo-firmware/src/managed.hpp
+@@ -55,7 +55,8 @@
+         {"7.3.1-12101-unstable","bba194e74ab97dcb848887fa62430c20f9d755d9"},
+         {"7.3.1-12203-unstable","45d8355e366e6b75e43f441ca99b517302adf522"},
+         {"7.3.1-12204-unstable","de1bdf9ab531d772a8c02847c51b01ed4ffcd42f"},
+-        {"7.3.3-28-unstable","8eb8316d3af498f4bbd25e89896d648d0ba37202"}
++        {"7.3.3-28-unstable","8eb8316d3af498f4bbd25e89896d648d0ba37202"},
++        {"7.3.4-2-unstable","385b48931882104b35cda5fddd65affa5cbdef35"}
+     };
+     const auto found=sources.find(profile.release);
+     return found!=sources.end()&&found->second==profile.source;
+--- a/uke-cdsp-pogo-firmware/tests/managed.cpp
++++ b/uke-cdsp-pogo-firmware/tests/managed.cpp
+@@ -119,6 +119,28 @@
+     assert(selected28.size()==2&&selected28[0].release==full28&&selected28[1].release==future734);
+     assert(prepare_managed(selected28[1],full28,firmware28,families,active));
+     assert(file(firmware28/full28/"qcom/uke/cdsp/cdsp.mdt")==saved28&&idle28==4);
++    // Fresh roots on this exact full734 build retain all idle/current guards.
++    const std::string commit734="385b48931882104b35cda5fddd65affa5cbdef35";
++    const auto profiles734=root/"full734/profiles",firmware734=root/"full734/firmware";
++    text(profiles734/future734/"source-commit",commit734+"\n");
++    text(profiles734/future734/"source-composition.json",composition(future734,commit734).dump());
++    const auto exact734=*managed_profile(profiles734,future734);
++    assert(qualified_idle_source(exact734));
++    unsigned idle734=0;const auto idle_check734=[&]{idle734++;};
++    auto bad734=exact734;bad734.source=commit28;
++    assert(!qualified_idle_source(bad734));
++    rejected([&]{prepare_managed(bad734,future734,firmware734,families,idle_check734);});
++    bad734=exact734;bad734.release="7.3.4-3-unstable";
++    assert(!qualified_idle_source(bad734));
++    rejected([&]{prepare_managed(bad734,bad734.release,firmware734,families,idle_check734);});
++    rejected([&]{prepare_managed(exact734,future734,firmware734,families,active);});
++    rejected([&]{prepare_managed(exact734,future734,firmware734,families,idle_check734,true);});
++    assert(!fs::exists(firmware734)&&idle734==0);
++    assert(prepare_managed(exact734,future734,firmware734,families,idle_check734)&&idle734==4);
++    assert(!prepare_managed(exact734,future734,firmware734,families,active));
++    assert(!prepare_managed(exact734,future734,firmware734,families,active,true));
++    assert(file(firmware734/future734/"qcom/uke/cdsp/cdsp.mdt")==before&&idle734==4);
++    assert(file(firmware28/full28/"qcom/uke/cdsp/cdsp.mdt")==saved28&&idle28==4);
+     fs::remove_all(root);
+     std::cout<<"PASS: actual managed profile selection/admission, exact idle-current source, active refusal, verify-only, additive no-replace publication and future inactive targets; synthetic only; complete semantic-version ordering retains newer revision1\n";
+ }
