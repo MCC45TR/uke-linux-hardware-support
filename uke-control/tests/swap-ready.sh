@@ -131,7 +131,7 @@ CPP
 for compiler in g++ clang++;do
  for mode in plain sanitized;do
   flags=(-std=c++20 -O1 -g -UNDEBUG -Wall -Wextra -Werror)
-  [[ $mode != sanitized ]] || flags+=(-fsanitize=address,undefined -fno-omit-frame-pointer)
+  [[ $mode != sanitized ]] || flags+=("-fsanitize=address,undefined" -fno-omit-frame-pointer)
   "$compiler" "${flags[@]}" -I"$root/src" "$work/test.cpp" -o "$work/check"
   readelf -h "$work/check" | grep -F AArch64
   mkdir "$work/$compiler-$mode"

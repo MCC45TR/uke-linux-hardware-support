@@ -34,3 +34,8 @@ inverses and shell syntax pass. COPR native fault injection and runtime build,
 signed DNF delivery, measured boots and shutdown diagnosis remain pending.
 Only prior user-session shutdown logs are available, so no system shutdown
 bottleneck is established yet.
+
+The first source worker, 11342686, stops at ShellCheck before producing an
+SRPM: the comma in an unquoted sanitizer flag is mistaken for a shell array
+separator. The literal flag is now quoted, as in the retained native tests.
+Production code, test coverage and warning gates are unchanged.
