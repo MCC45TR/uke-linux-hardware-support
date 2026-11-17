@@ -39,3 +39,12 @@ The first source worker, 11342686, stops at ShellCheck before producing an
 SRPM: the comma in an unquoted sanitizer flag is mistaken for a shell array
 separator. The literal flag is now quoted, as in the retained native tests.
 Production code, test coverage and warning gates are unchanged.
+
+Build 11342692 reaches the actual prepared source and refuses the whole-file
+preimage. The older private reconstruction omitted the native91 charge bridge
+and Control21 USB output-budget changes. The replacement starts from the
+signed Source0 inner backend (`cbad1b41`), checks the charge overlay's exact
+`5286c6b2` postimage, then applies the retained USB21, swap25 and startup26
+patches. The final `ba6322dd` backend also matches the published parent branch.
+The new pre/post seals retain those earlier changes; the admission guard is
+unchanged. This corrects the reference, not a runtime failure or a device write.

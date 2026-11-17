@@ -10,12 +10,24 @@
     "source_count": 85,
     "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
   },
-  "patch_sha256": "0c4bb672d1f0fc8b9120ccb4f207f69a5d32b6821663ec7daf2a79f74f0e1780",
+  "patch_sha256": "ef0649b27cb3cfa6e7eccdab4540fbd7a29b8226ad77d91be450ba37271c122c",
   "new_runtime_packages": 0,
   "new_runtime_elfs": 0,
   "existing_service_adopted": "uke-swap-ready.service",
   "changes_persistent_preferences": false,
   "changes_storage_layout": false,
   "formats_existing_storage": false,
-  "physical_boot_speed_qualified": false
+  "physical_boot_speed_qualified": false,
+  "parent_backend_reconstruction": {
+    "signed_inner_before_sha256": "cbad1b414549be198c8d3b84c63443752e3a4b33382584108fa306d728bcaf4a",
+    "retained_charge_overlay_after_sha256": "5286c6b21f47d5e496813d743c125e4e059c649d0cff2b3e117b6e5dd6d26d3f",
+    "retained_layers": [
+      "charge native91",
+      "USB API output21",
+      "logical swap25",
+      "boot serialization26"
+    ],
+    "final_sha256": "ba6322ddd5f2024a3f11e51529c0bef42e5217289de514ee91237880bb9723cf",
+    "matches_published_parent_branch": true
+  }
 }
