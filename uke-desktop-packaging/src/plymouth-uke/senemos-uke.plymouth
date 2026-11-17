@@ -1,8 +1,7 @@
 [Plymouth Theme]
 Name=Senemos Uke
 Description=Xiaomi and Fedora boot, shutdown and update theme for Uke
-ModuleName=script
+ModuleName=uke-physical
 
-[script]
+[uke-physical]
 ImageDir=/usr/share/plymouth/themes/senemos-uke
-ScriptFile=/usr/share/plymouth/themes/senemos-uke/plymouth-uke.script

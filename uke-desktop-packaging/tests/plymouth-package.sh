@@ -39,8 +39,11 @@ theme="$PLYMOUTH_DATADIR/plymouth/themes/senemos-uke"
 for item in start:boot poweroff:shutdown reboot:reboot halt:shutdown; do
     unit=${item%%:*}; mode=${item#*:}
     config="$stage/payload/usr/lib/systemd/system/plymouth-$unit.service.d/50-uke-theme.conf"
-    grep -Fxq Environment=PLYMOUTH_FORCE_SCALE=1 "$config"
+    ! grep -q PLYMOUTH_FORCE_SCALE "$config"
     grep -Fxq "ExecStart=/usr/bin/plymouthd --mode=$mode --pid-file=/run/plymouth/pid --attach-to-session --graphical-boot" "$config"
 done
+grep -Fxq ModuleName=uke-physical "$theme/senemos-uke.plymouth"
+test "$(find "$stage/payload/usr" -name uke-physical.so | wc -l)" = 1
+grep -Fxq Wants=plymouth-start.service "$stage/payload/usr/lib/systemd/system/system-update.target.d/50-uke-plymouth.conf"
 ! rpm -qpl "$package" | grep -Eq '(^/boot/|[.]py[co]?$|/dev/|/dracut/|/nabu)'
 printf '%s\n' 'PASS: real RPM activation, upgrade/removal, custom-theme preservation, artwork and service modes.'

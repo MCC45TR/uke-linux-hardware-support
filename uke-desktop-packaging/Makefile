@@ -37,7 +37,7 @@ srpm: validate
 		cp manifests/material-decoration.json "$$top/SOURCES/material-decoration-source-lock.json"
 		cp packaging/material-decoration/*.patch "$$top/SOURCES/"
 	else
-		tar --sort=name --mtime=@1791158400 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-plymonth-1.0.2.tar.xz" --transform 's,^,uke-plymonth-1.0.2/,' LICENSE README.md src/plymouth-uke tests/plymouth-parser.cpp
+		tar --sort=name --mtime=@1794873600 --owner=0 --group=0 --numeric-owner -cJf "$$top/SOURCES/uke-plymonth-1.1.0.tar.xz" --transform 's,^,uke-plymonth-1.1.0/,' LICENSE README.md src/plymouth-uke tests/plymouth-physical.cpp
 	fi
 	cp "packaging/$(PACKAGE)/$(PACKAGE).spec" "$$top/SPECS/"
 	rpmbuild -bs --nodeps --target aarch64 --define "_topdir $$top" "$$top/SPECS/$(PACKAGE).spec"
