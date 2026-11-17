@@ -1,0 +1,115 @@
+--- a/uke-control/src/backend.cpp
++++ b/uke-control/src/backend.cpp
+@@ -1,5 +1,6 @@
+ // SPDX-License-Identifier: MIT
+ #include "backend.hpp"
++#include "swap-ready.hpp"
+ #include "report-context.hpp"
+ #include "report-budget.hpp"
+ #include "cli.hpp"
+@@ -31,6 +32,7 @@
+ #include <fcntl.h>
+ #include <linux/magic.h>
+ #include <linux/f2fs.h>
++#include <linux/fs.h>
+ #include <poll.h>
+ #include <selinux/selinux.h>
+ #include <sys/file.h>
+@@ -367,8 +369,75 @@
+         struct stat st{};if(lstat(path.c_str(),&st)==0&&S_ISREG(st.st_mode)&&st.st_uid==0&&st.st_nlink==1)fs::remove(path);
+     }
+ }
+-void swap_set(const std::string& selected) {Lock lock;(void)swap_mib(selected,memory("MemTotal:"));apply_locked(selected);atomic_file(state/"swap-policy",selected+"\n");}
+-void swap_apply(){Lock lock(true);apply_locked(policy());}
++static const fs::path swap_receipt="/run/uke-control-swap/admitted";
++static std::string swap_admission(const std::string& selected) {
++    const auto boot=read("/proc/sys/kernel/random/boot_id",128);
++    const auto parts=read("/proc/partitions",32768);
++    need(boot.size()==37&&boot.back()=='\n'&&parts.size()<32768&&parts.find("major minor")!=std::string::npos,
++         "Cannot identify this boot's block inventory");
++    return "uke-swap-ready-v1\n"+boot+selected+"\n"+parts;
++}
++static void invalidate_swap_admission() {
++    need(unlink(swap_receipt.c_str())==0||errno==ENOENT,"Cannot invalidate swap startup admission");
++}
++static void apply_swap_with_receipt(const std::string& selected) {
++    invalidate_swap_admission();
++    std::string before;
++    try {before=swap_admission(selected);}catch(const std::exception&){}
++    apply_locked(selected); // The complete existing three-slot/size/signature/uniqueness admission.
++    if(before.empty())return;
++    try {
++        if(before!=swap_admission(selected))return;
++        directory(swap_receipt.parent_path());atomic_file(swap_receipt,before);
++    } catch(const std::exception& error) {
++        // Failure to cache success must not turn working swap into a boot failure.
++        std::cerr<<"Swap startup reuse unavailable: "<<error.what()<<'\n';
++    }
++}
++void swap_set(const std::string& selected) {Lock lock;(void)swap_mib(selected,memory("MemTotal:"));invalidate_swap_admission();apply_locked(selected);atomic_file(state/"swap-policy",selected+"\n");}
++void swap_apply(){Lock lock(true);apply_swap_with_receipt(policy());}
++void swap_ready() {
++    Lock lock(true);board();const auto selected=policy();
++    try {
++        swap_startup::State observed;
++        struct stat receipt{},parent{},helper{},device{};
++        observed.admission_completed=lstat(swap_receipt.parent_path().c_str(),&parent)==0&&S_ISDIR(parent.st_mode)&&
++            parent.st_uid==0&&(parent.st_mode&0777)==0700&&
++            lstat(swap_receipt.c_str(),&receipt)==0&&S_ISREG(receipt.st_mode)&&receipt.st_uid==0&&
++            receipt.st_nlink==1&&(receipt.st_mode&0777)==0600&&receipt.st_size>0&&receipt.st_size<32768&&
++            read(swap_receipt.string(),32768)==swap_admission(selected);
++        observed.trusted_helper=lstat("/usr/libexec/uke-control/super-swap/prepare.sh",&helper)==0&&
++            S_ISREG(helper.st_mode)&&helper.st_uid==0&&!(helper.st_mode&0022);
++        if(observed.admission_completed&&observed.trusted_helper&&fs::exists("/dev/mapper/linux_swap")) {
++            const auto target=fs::canonical("/dev/mapper/linux_swap").string();
++            observed.block=stat(target.c_str(),&device)==0&&S_ISBLK(device.st_mode);
++            if(observed.block) {
++                observed.major=major(device.st_rdev);observed.minor=minor(device.st_rdev);
++                const auto node=fs::path("/sys/dev/block")/(std::to_string(observed.major)+":"+std::to_string(observed.minor));
++                observed.mapper_uuid=read((node/"dm/uuid").string(),128);
++                if(!observed.mapper_uuid.empty()&&observed.mapper_uuid.back()=='\n')observed.mapper_uuid.pop_back();
++                Fd fd{open(target.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW|O_NONBLOCK)};
++                struct stat opened{};
++                need(fd.n>=0&&fstat(fd.n,&opened)==0&&S_ISBLK(opened.st_mode)&&opened.st_rdev==device.st_rdev&&
++                     ioctl(fd.n,BLKGETSIZE64,&observed.capacity)==0,"Cannot verify active swap capacity");
++                observed.page_size=uint64_t(sysconf(_SC_PAGESIZE));
++                for(const auto& item:active()) {
++                    if(item.path==target)observed.active_bytes=item.size;
++                    if(own_file(item.path))observed.managed_file_active=true;
++                }
++                const auto info=execute({"/usr/sbin/dmsetup","info","-c","--noheadings","--separator",":",
++                                         "-o","uuid,major,minor,events","linux_swap"},5,512);
++                const auto type=execute({"/usr/bin/blkid","-p","-s","TYPE","-o","value",target},5,128);
++                const auto label=execute({"/usr/bin/blkid","-p","-s","LABEL","-o","value",target},5,128);
++                if(!info.status&&!type.status&&!label.status) {
++                    observed.mapper_info=info.output;observed.signature=type.output+label.output;
++                    if(swap_startup::reusable(observed))return;
++                }
++            }
++        }
++    } catch(const std::exception&){} // Unknown or changed state returns through full admission.
++    apply_swap_with_receipt(selected);
++}
+ std::string inventory(bool save) {
+     if(save)root();
+     auto result=execute({"/usr/bin/lsblk","--json","--bytes","--output","NAME,PATH,TYPE,SIZE,FSTYPE,LABEL,PARTLABEL,MOUNTPOINTS"});
+--- a/uke-control/src/backend.hpp
++++ b/uke-control/src/backend.hpp
+@@ -20,6 +20,7 @@
+ std::string inventory(bool save);
+ void swap_set(const std::string& policy);
+ void swap_apply();
++void swap_ready();
+ void boot();
+ std::string wake_status();
+ void wake_set(const std::string& source, bool enabled);
+--- a/uke-control/src/main.cpp
++++ b/uke-control/src/main.cpp
+@@ -160,6 +160,7 @@
+         if(command=="inventory"&&(argc==2||(argc==3&&std::string_view(argv[2])=="--refresh"))){uke::cli::print(uke::inventory(argc==3),as_json);return 0;}
+         if(command=="swap") {
+             if(argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::swap_status(),as_json);return 0;}
++            if(argc==3&&std::string_view(argv[2])=="ready"){uke::swap_ready();uke::cli::print(uke::swap_status(),as_json);return 0;}
+             if(argc==3&&std::string_view(argv[2])=="apply"){uke::swap_apply();uke::cli::print(uke::swap_status(),as_json);return 0;}
+             if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);uke::cli::print(uke::swap_status(),as_json);return 0;}
+         }

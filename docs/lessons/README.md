@@ -41,3 +41,5 @@
 - [UKE-UPDATE-INPUTS-20261117: retain OEM preparation after super migration](2026-11-17-super-independent-update-inputs.md)
 
 - [UKE-PHYSICAL-SPLASH-20261117: preserve physical size through original Plymouth APIs](2026-11-17-physical-plymouth.md)
+
+- [UKE-SWAP-STARTUP-20261117: reuse unchanged current-boot admission](2026-11-17-swap-startup-reuse.md)

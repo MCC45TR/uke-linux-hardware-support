@@ -167,6 +167,7 @@ static int run(int argc,char** argv,bool as_json) {
         if(command=="inventory"&&(argc==2||(argc==3&&std::string_view(argv[2])=="--refresh"))){uke::cli::print(uke::inventory(argc==3),as_json);return 0;}
         if(command=="swap") {
             if(argc==3&&std::string_view(argv[2])=="status"){uke::cli::print(uke::swap_status(),as_json);return 0;}
+            if(argc==3&&std::string_view(argv[2])=="ready"){uke::swap_ready();uke::cli::print(uke::swap_status(),as_json);return 0;}
             if(argc==3&&std::string_view(argv[2])=="apply"){uke::swap_apply();uke::cli::print(uke::swap_status(),as_json);return 0;}
             if(argc==4&&std::string_view(argv[2])=="set"){uke::swap_set(argv[3]);uke::cli::print(uke::swap_status(),as_json);return 0;}
         }

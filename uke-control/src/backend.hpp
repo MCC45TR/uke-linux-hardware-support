@@ -20,6 +20,7 @@ std::string swap_status();
 std::string inventory(bool save);
 void swap_set(const std::string& policy);
 void swap_apply();
+void swap_ready();
 void boot();
 std::string wake_status();
 void wake_set(const std::string& source, bool enabled);

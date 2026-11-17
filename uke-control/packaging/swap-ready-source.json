@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-17",
+  "release": 28,
+  "parent": {
+    "build": 11339089,
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-27.fc46.src.rpm",
+    "srpm_sha256": "89fa056553a69bc219d12ae58bf35204b920352339b8c84addeed2784d269536",
+    "spec_sha256": "28f5613e42c699c7e8b9007ab8229ccdc2b0698c72dfdcde047a5bdb2e0d4c49",
+    "source_count": 85,
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+  },
+  "patch_sha256": "0c4bb672d1f0fc8b9120ccb4f207f69a5d32b6821663ec7daf2a79f74f0e1780",
+  "new_runtime_packages": 0,
+  "new_runtime_elfs": 0,
+  "existing_service_adopted": "uke-swap-ready.service",
+  "changes_persistent_preferences": false,
+  "changes_storage_layout": false,
+  "formats_existing_storage": false,
+  "physical_boot_speed_qualified": false
+}

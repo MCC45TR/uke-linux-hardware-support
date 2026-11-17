@@ -1,0 +1,19 @@
+[Unit]
+Description=Prepare the Uke partition-first swap policy before user sessions
+Wants=uke-control.service
+After=local-fs.target uke-control.service
+RequiresMountsFor=/var/lib/uke-control
+Before=systemd-user-sessions.service display-manager.service plasma-setup.service
+ConditionPathExists=/sys/firmware/devicetree/base/compatible
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/uke-control swap ready
+RemainAfterExit=yes
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target
