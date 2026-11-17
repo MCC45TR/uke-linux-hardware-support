@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-plymonth
 Version: 1.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Summary: Senemos Uke boot and shutdown Plymouth theme
 License: MIT AND GPL-2.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-packaging
@@ -27,9 +27,9 @@ No initramfs, boot image, partition or boot-slot selection is changed.
 %prep
 %setup -q
 %build
-gcc %{build_cflags} -std=c11 -Wall -Wextra -Werror -fPIC -c src/plymouth-uke/label-bridge.c \
+gcc %{build_cflags} -std=c11 -Wall -Wextra -Werror -fvisibility=hidden -fPIC -c src/plymouth-uke/label-bridge.c \
     $(pkg-config --cflags ply-splash-graphics) -o label-bridge.o
-c++ %{build_cxxflags} -std=c++17 -Wall -Wextra -Werror -fPIC -shared \
+c++ %{build_cxxflags} -std=c++17 -Wall -Wextra -Werror -fvisibility=hidden -fPIC -shared \
     src/plymouth-uke/plugin.cpp label-bridge.o $(pkg-config --cflags --libs ply-splash-graphics libdrm) \
     %{build_ldflags} -Wl,-z,defs -o uke-physical.so
 %install
@@ -83,6 +83,7 @@ fi
 %files
 %license LICENSE
 %license src/plymouth-uke/LICENSE.Nabu
+%license src/plymouth-uke/LICENSE.plugin
 %doc README.md
 %{_datadir}/plymouth/themes/senemos-uke/
 %{_libdir}/plymouth/uke-physical.so
@@ -93,6 +94,10 @@ fi
 %{_unitdir}/system-update.target.d/50-uke-plymouth.conf
 
 %changelog
+* Tue Nov 17 2026 Uke contributors - 1.1.0-3
+- Give plugin member types consistent linkage and retain strict native fixture warnings.
+- Ship the plugin license text and export only the standard splash entry point.
+
 * Tue Nov 17 2026 Uke contributors - 1.1.0-2
 - Keep the unmodified SDK's C-only label header in a thin C ABI adapter.
 

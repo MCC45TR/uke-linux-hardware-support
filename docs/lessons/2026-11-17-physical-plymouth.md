@@ -44,3 +44,8 @@ Build 11342626 then reaches native compilation and rejects the original SDK's
 C-only enum forward declaration through ply-label.h. Release 2 isolates that
 header in a small C adapter; the theme stays C++, the SDK remains unchanged,
 and compiler diagnostics are retained.
+
+Build 11342653 compiles and links the production plugin, then GCC rejects
+anonymous member-type linkage when the fixture includes the implementation.
+Release 3 gives those types a named namespace and keeps the strict warning
+gate. Its dynamic entry point remains the original public splash interface.

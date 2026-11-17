@@ -8,6 +8,7 @@
 int main(int argc, char** argv) {
     assert(argc == 3);
     using namespace uke::splash;
+    using namespace uke_splash;
     const std::vector<Output> monitors{{3200,2136,237,158}, {3840,2160,952,536}};
     for (const auto& monitor : monitors) for (unsigned scale : {1u, 2u, 3u}) {
         const auto density = physical_density(monitor.width/scale, monitor.height/scale, scale, false, monitors);

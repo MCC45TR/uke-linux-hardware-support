@@ -19,7 +19,7 @@ extern "C" {
 #include <ply-renderer.h>
 }
 
-namespace {
+namespace uke_splash {
 struct ImageDeleter { void operator()(ply_image_t* image) const { if (image) ply_image_free(image); } };
 using Image = std::unique_ptr<ply_image_t, ImageDeleter>;
 Image load(const std::string& directory, const char* name) {
@@ -74,8 +74,8 @@ std::vector<uke::splash::Output> outputs(ply_renderer_t* renderer) {
 }
 
 struct _ply_boot_splash_plugin {
-    std::vector<std::unique_ptr<View>> views;
-    Image logo, fedora, track, cap, center;
+    std::vector<std::unique_ptr<uke_splash::View>> views;
+    uke_splash::Image logo, fedora, track, cap, center;
     ply_event_loop_t* loop{};
     ply_boot_splash_mode_t mode{PLY_BOOT_SPLASH_MODE_BOOT_UP};
     std::string message, prompt;
@@ -83,7 +83,7 @@ struct _ply_boot_splash_plugin {
     bool visible{}, timer{}, idle{};
 };
 
-namespace {
+namespace uke_splash {
 using Plugin = ply_boot_splash_plugin_t;
 bool updating(const Plugin* plugin) {
     return plugin->mode == PLY_BOOT_SPLASH_MODE_UPDATES || plugin->mode == PLY_BOOT_SPLASH_MODE_SYSTEM_UPGRADE ||
@@ -268,6 +268,7 @@ void boot_output(Plugin*, const char*, size_t) {} // The journal remains the dia
 
 extern "C" __attribute__((visibility("default")))
 ply_boot_splash_plugin_interface_t* ply_boot_splash_plugin_get_interface() {
+    using namespace uke_splash;
     static ply_boot_splash_plugin_interface_t interface{};
     interface.create_plugin = create; interface.destroy_plugin = destroy;
     interface.add_pixel_display = add; interface.remove_pixel_display = remove;
