@@ -10,7 +10,7 @@ for reader in color video;do
  if [[ $reader == color ]];then
   body=$color/o82-color-profile.cpp
   source=/usr/lib/firmware/qcom/uke/display/o82-42.json
-  defs=(-DUKE_FACTORY_COLOR)
+  defs=(-DUKE_FACTORY_COLOR "-Wl,--wrap=main")
   libs=(json-c lcms2 openssl)
  else
   body=$boot/src/kernel-update.cpp

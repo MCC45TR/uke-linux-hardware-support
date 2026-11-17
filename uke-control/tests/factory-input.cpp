@@ -2,12 +2,12 @@
 // COPR only: execute each actual reader with protected temporary inputs.
 #ifdef UKE_FACTORY_COLOR
 #define UKE_LOCAL_FW_TEST
-#define main retained_color_main
 #include UKE_FACTORY_BODY
-#undef main
+#define UKE_FACTORY_MAIN __wrap_main
 #else
 #define UKE_KERNEL_UPDATE_TEST
 #include UKE_FACTORY_BODY
+#define UKE_FACTORY_MAIN main
 #endif
 #include <cassert>
 #include <functional>
@@ -18,7 +18,7 @@ static void refused(const std::function<void()> &call) {
     assert(failed);
 }
 
-int main(int argc, char **argv) {
+extern "C" int UKE_FACTORY_MAIN(int argc, char **argv) {
     assert(argc == 2 && geteuid() != 0);
     const fs::path source = argv[1];
     char pattern[] = "/tmp/uke-factory-input-XXXXXX";
@@ -78,4 +78,5 @@ int main(int argc, char **argv) {
     refused([&] { uke_factory::read(input,[](const Bytes &) { return true; },output); });
     assert(output == sentinel && !chmod(root.c_str(),0700));
     std::cout << "PASS: actual factory input: protected owner/ancestor/mode, hardlink, symlink, missing, directory, altered, truncated, rejected and throwing admission; unchanged failed output; no device access\n";
+    return 0;
 }

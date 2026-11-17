@@ -25,3 +25,9 @@ checks of both full applications, RPM signing, DNF, inactive-slot readback and
 optical boot validation remain separate gates. The factory-source change does
 not itself fix the early gray screen; it enables delivery of the separately
 qualified kernel clock-handoff candidate. Camera activation is still open.
+
+The first native attempt11339056 passes exact prepared-source application and
+whole inverses, then stops at the color fixture. Renaming production main
+removed C++ main's implicit return rule and caused a return-type error. The
+fixture now uses the existing linker main wrapper pattern and an explicit test
+return. Production code and all warning/error checks remain unchanged.
