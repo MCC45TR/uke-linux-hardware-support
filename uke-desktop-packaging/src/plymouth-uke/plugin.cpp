@@ -15,7 +15,7 @@
 extern "C" {
 #include <ply-boot-splash-plugin.h>
 #include <ply-image.h>
-#include <ply-label.h>
+#include "label-bridge.h"
 #include <ply-renderer.h>
 }
 
@@ -29,12 +29,12 @@ Image load(const std::string& directory, const char* name) {
 }
 struct View {
     ply_pixel_display_t* display{};
-    ply_label_t* label{ply_label_new()};
+    uke_label_t* label{uke_label_new()};
     uke::splash::Layout position{};
     Image logo, fedora, track, cap, center;
     ~View() {
         ply_pixel_display_set_draw_handler(display, nullptr, nullptr);
-        if (label) { ply_label_hide(label); ply_label_free(label); }
+        if (label) { uke_label_hide(label); uke_label_free(label); }
     }
 };
 std::vector<uke::splash::Output> outputs(ply_renderer_t* renderer) {
@@ -120,7 +120,7 @@ void draw(void* data, ply_pixel_buffer_t* buffer, int x, int y, int width, int h
         }
         ply_pixel_buffer_pop_clip_area(buffer);
     }
-    if (view.label) ply_label_draw_area(view.label, buffer, x, y, width, height);
+    if (view.label) uke_label_draw_area(view.label, buffer, x, y, width, height);
 }
 void redraw(Plugin* plugin, bool full) {
     if (!plugin->visible) return;
@@ -138,15 +138,15 @@ void label(Plugin* plugin) {
     if (text.empty() && updating(plugin)) text = std::to_string(int(plugin->progress * 100)) + "%";
     for (auto& view : plugin->views) {
         if (!view->label) continue;
-        ply_label_hide(view->label);
-        ply_label_set_text(view->label, text.c_str());
-        ply_label_set_alignment(view->label, PLY_LABEL_ALIGN_CENTER);
-        ply_label_set_width(view->label, ply_pixel_display_get_width(view->display) * 4 / 5);
+        uke_label_hide(view->label);
+        uke_label_set_text(view->label, text.c_str());
+        uke_label_center(view->label);
+        uke_label_set_width(view->label, ply_pixel_display_get_width(view->display) * 4 / 5);
         const auto font = "Cantarell " + std::to_string(view->position.font_px) + "px";
-        ply_label_set_font(view->label, font.c_str());
-        ply_label_set_color(view->label, 0.82f, 0.82f, 0.82f, 1.0f);
+        uke_label_set_font(view->label, font.c_str());
+        uke_label_set_color(view->label, 0.82f, 0.82f, 0.82f, 1.0f);
         if (!text.empty() && plugin->visible)
-            ply_label_show(view->label, view->display, ply_pixel_display_get_width(view->display) / 10,
+            uke_label_show(view->label, view->display, ply_pixel_display_get_width(view->display) / 10,
                            view->position.message_y);
     }
     redraw(plugin, true);
@@ -203,7 +203,7 @@ Plugin* create(ply_key_file_t* key) {
 }
 void hide(Plugin* plugin, ply_event_loop_t*) {
     cancel_timer(plugin); plugin->visible = false;
-    for (auto& view : plugin->views) if (view->label) ply_label_hide(view->label);
+    for (auto& view : plugin->views) if (view->label) uke_label_hide(view->label);
     if (plugin->loop) ply_event_loop_stop_watching_for_exit(plugin->loop, loop_exit, plugin);
     plugin->loop = nullptr;
 }

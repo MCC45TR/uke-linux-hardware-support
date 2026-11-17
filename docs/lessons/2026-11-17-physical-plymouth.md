@@ -36,3 +36,11 @@ archive SHA-256 `6ee1068216c5047923fabf0f6aa583e9d77cab383077358df3fc22f2ee398bb
 `src/libply-splash-core/ply-{renderer,pixel-display,pixel-buffer}.h`,
 `src/plugins/renderers/drm/plugin.c`, and
 `src/libply-splash-core/ply-boot-splash-plugin.h`.
+
+COPR 11342617 stops in source export because custom-source builds require an
+exported recipe rather than a directory containing only an SRPM. The corrected
+worker extracts that generated SRPM without compiling on the PC or tablet.
+Build 11342626 then reaches native compilation and rejects the original SDK's
+C-only enum forward declaration through ply-label.h. Release 2 isolates that
+header in a small C adapter; the theme stays C++, the SDK remains unchanged,
+and compiler diagnostics are retained.

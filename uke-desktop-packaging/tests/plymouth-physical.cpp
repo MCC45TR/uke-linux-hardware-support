@@ -60,8 +60,8 @@ int main(int argc, char** argv) {
         api->hide_splash_screen(plugin,loop); assert(!plugin->visible && !plugin->timer && !plugin->loop);
     }
     api->destroy_plugin(plugin); ply_event_loop_free(loop); ply_key_file_free(key);
-    auto* label=ply_label_new(); assert(label); ply_label_set_font(label,"Cantarell 20px");
-    ply_label_set_text(label,"Offline update 73%");
-    assert(ply_label_get_width(label)>1 && ply_label_get_height(label)>1); ply_label_free(label);
+    auto* label=uke_label_new(); assert(label); uke_label_set_font(label,"Cantarell 20px");
+    uke_label_set_text(label,"Offline update 73%");
+    assert(uke_label_get_width(label)>1 && uke_label_get_height(label)>1); uke_label_free(label);
     std::puts("PASS: physical centimetres, rotation, device scaling, ambiguity, original artwork/text, update/password callbacks and timer cleanup");
 }

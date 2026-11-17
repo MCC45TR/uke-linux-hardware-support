@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 Name: uke-plymonth
 Version: 1.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Senemos Uke boot and shutdown Plymouth theme
 License: MIT AND GPL-2.0-or-later
 URL: https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-packaging
@@ -27,8 +27,10 @@ No initramfs, boot image, partition or boot-slot selection is changed.
 %prep
 %setup -q
 %build
+gcc %{build_cflags} -std=c11 -Wall -Wextra -Werror -fPIC -c src/plymouth-uke/label-bridge.c \
+    $(pkg-config --cflags ply-splash-graphics) -o label-bridge.o
 c++ %{build_cxxflags} -std=c++17 -Wall -Wextra -Werror -fPIC -shared \
-    src/plymouth-uke/plugin.cpp $(pkg-config --cflags --libs ply-splash-graphics libdrm) \
+    src/plymouth-uke/plugin.cpp label-bridge.o $(pkg-config --cflags --libs ply-splash-graphics libdrm) \
     %{build_ldflags} -Wl,-z,defs -o uke-physical.so
 %install
 install -d %{buildroot}%{_datadir}/plymouth/themes/senemos-uke
@@ -57,8 +59,11 @@ for compiler in g++ clang++; do
  for mode in plain sanitized; do
   flags=''
   if [ "$mode" = sanitized ]; then flags='-fsanitize=address,undefined -fno-omit-frame-pointer'; fi
+  case "$compiler" in g++) cc=gcc;; clang++) cc=clang;; esac
+  "$cc" -std=c11 -O1 -g -UNDEBUG -Wall -Wextra -Werror $flags \
+    -c src/plymouth-uke/label-bridge.c $(pkg-config --cflags ply-splash-graphics) -o test-label-bridge.o
   "$compiler" -std=c++17 -O1 -g -UNDEBUG -Wall -Wextra -Werror $flags \
-    tests/plymouth-physical.cpp $(pkg-config --cflags --libs ply-splash-graphics libdrm) -o physical-test
+    tests/plymouth-physical.cpp test-label-bridge.o $(pkg-config --cflags --libs ply-splash-graphics libdrm) -o physical-test
   ASAN_OPTIONS=detect_leaks=0 timeout --kill-after=2s 30s ./physical-test "$PWD/src/plymouth-uke" "$PWD/theme-test.conf"
  done
 done
@@ -88,6 +93,9 @@ fi
 %{_unitdir}/system-update.target.d/50-uke-plymouth.conf
 
 %changelog
+* Tue Nov 17 2026 Uke contributors - 1.1.0-2
+- Keep the unmodified SDK's C-only label header in a thin C ABI adapter.
+
 * Tue Nov 17 2026 Uke contributors - 1.1.0-1
 - Keep artwork physical size using cached per-display DRM dimensions and original Plymouth APIs.
 - Preserve password prompts and offline update progress; redraw only the shutdown bar at 8 Hz.
