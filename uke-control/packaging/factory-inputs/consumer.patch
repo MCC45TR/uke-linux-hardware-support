@@ -1,0 +1,44 @@
+--- a/boot/src/oem-video.hpp
++++ b/boot/src/oem-video.hpp
+@@ -9,6 +9,7 @@
+ #include <sys/syscall.h>
+ #include <chrono>
+ #include <limits>
++#include "factory-input.hpp"
+ namespace uke_video {
+ struct Extent {uint64_t offset,size;};
+ static inline uint32_t u32(const Bytes &b,size_t p) {
+@@ -194,6 +195,9 @@
+ }
+ #ifndef UKE_KERNEL_UPDATE_TEST
+ static inline Bytes load_local(const std::pair<std::string,dev_t> &super) {
++    Bytes retained;
++    if (uke_factory::read("/usr/lib/firmware/qcom/uke/video/vpu30_2v.mbn", admitted, retained))
++        return retained;
+     // Fedora's merged /usr/sbin is a symlink. Descriptor ancestry is checked
+     // on the real /usr/bin path, as for the updater's other trusted inputs.
+     trusted("/usr/bin/debugfs");
+--- a/color/o82-stock-profile.hpp
++++ b/color/o82-stock-profile.hpp
+@@ -11,6 +11,7 @@
+ #pragma GCC diagnostic ignored "-Wmisleading-indentation"
+ #include "stock-profile/local.hpp"
+ #pragma GCC diagnostic pop
++#include "factory-input.hpp"
+ 
+ namespace o82_stock {
+ inline std::string panel_name(unsigned panel) {
+@@ -99,6 +100,13 @@
+     return b ? 0x42 : 0x36;
+ }
+ inline Bytes acquire(unsigned panel) {
++    (void)panel_name(panel);
++    const auto factory = fs::path("/usr/lib/firmware/qcom/uke/display") /
++        (std::string("o82-") + (panel == 0x42 ? "42" : "36") + ".json");
++    Bytes retained;
++    if (uke_factory::read(factory, [panel](const Bytes &data) {
++            return digest(data) == input_hash(panel);
++        }, retained)) return retained;
+     const auto path = fs::canonical("/dev/disk/by-partlabel/super");
+     need(path.parent_path() == "/dev", "Unexpected stock super symlink target");
+     Fd source(open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));

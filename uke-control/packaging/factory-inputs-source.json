@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-17",
+  "release": 27,
+  "parent": {
+    "build": 11336376,
+    "url": "https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.17.0-26.fc46.src.rpm",
+    "srpm_sha256": "952bcb5f2ff68eacaa327406faffbbb47627e96e96c541ceb92087a739a52d57",
+    "spec_sha256": "c9bbb347021f3ba5560111ea75fe1b452320440fb5b62901950617995fabddf3",
+    "source_count": 83,
+    "signer_fingerprint": "2204a661ea630a5303500085538797e72a3e4eca"
+  },
+  "patch_sha256": "ff1a419a53ad0f4116f2ea17fbe2d25902693d5dbe169cbe3bcb687d90f12ed9",
+  "firmware_prerequisite_build": 11339021,
+  "firmware_capability": "uke-firmware(oem-display-inputs-v1)=1",
+  "new_runtime_packages": 0,
+  "new_runtime_elfs": 0,
+  "new_services": 0,
+  "expanded_firmware_admission": false,
+  "private_unit_data_included": false,
+  "changes_persistent_policy": false,
+  "changes_boot_slots_during_install": "Only the existing checked automatic staging flow may activate a fully admitted candidate",
+  "physical_gray_fix_qualified": false
+}
