@@ -31,3 +31,8 @@ whole inverses, then stops at the color fixture. Renaming production main
 removed C++ main's implicit return rule and caused a return-type error. The
 fixture now uses the existing linker main wrapper pattern and an explicit test
 return. Production code and all warning/error checks remain unchanged.
+
+Attempt11339074 passes all four color modes and both GCC video modes, then
+Clang refuses C linkage on the video fixture's actual main under Wmain. Only
+the color linker wrapper now has C linkage. Production code and diagnostics
+remain unchanged; the complete eight-mode qualification is still required.

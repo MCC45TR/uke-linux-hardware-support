@@ -18,7 +18,10 @@ static void refused(const std::function<void()> &call) {
     assert(failed);
 }
 
-extern "C" int UKE_FACTORY_MAIN(int argc, char **argv) {
+#ifdef UKE_FACTORY_COLOR
+extern "C"
+#endif
+int UKE_FACTORY_MAIN(int argc, char **argv) {
     assert(argc == 2 && geteuid() != 0);
     const fs::path source = argv[1];
     char pattern[] = "/tmp/uke-factory-input-XXXXXX";
