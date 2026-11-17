@@ -37,3 +37,5 @@
 - [UKE-UBUNTU-20261101: separate source packaging from device admission](2026-11-01-ubuntu-source-packaging.md)
 
 - [UKE-LOGICAL-SWAP-CDC-20261116: admit owned logical swap and use the installed CDC reboot owner](2026-11-16-logical-swap-cdc-reboot.md)
+
+- [UKE-UPDATE-INPUTS-20261117: retain OEM preparation after super migration](2026-11-17-super-independent-update-inputs.md)
