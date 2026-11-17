@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "generic_design_data": true,
+  "unit_calibration_included": false,
+  "runtime_execution": false,
+  "license": "LicenseRef-Proprietary",
+  "notice": "Retain the original OEM notices and existing firmware package licensing; no complete file-level redistribution review is claimed",
+  "inputs": [
+    {"name":"o82-36.json","repository":"Xiaomi-Pad-7-Pro-Resources/android_vendor_xiaomi_uke","commit":"87f59fc5c2ef1ee04e494e5258853d36a3346059","path":"proprietary/odm/etc/display/qdcm_calib_data_xiaomi_o82_36_02_0a_vid_mode_dualdsi_dsc_panel.json","bytes":12385898,"sha256":"bd88eb94134e5f62c05eebaa0a9e4b5267968363f72f440018b98a15d1bd9122","destination":"qcom/uke/display/o82-36.json"},
+    {"name":"o82-42.json","repository":"Xiaomi-Pad-7-Pro-Resources/android_vendor_xiaomi_uke","commit":"87f59fc5c2ef1ee04e494e5258853d36a3346059","path":"proprietary/odm/etc/display/qdcm_calib_data_xiaomi_o82_42_02_0b_vid_mode_dualdsi_dsc_panel.json","bytes":12383296,"sha256":"2b6442ce0e8fef6d1b008cdeca3838450282868d385f6e3056c0a4ce2b8949d8","destination":"qcom/uke/display/o82-42.json"},
+    {"name":"vpu30_2v.mbn","repository":"Xiaomi-Pad-7-Pro-Resources/android_vendor_xiaomi_sm8635-common","commit":"bf664e7ef94d4530ec0d2f7f4e3945fbe3ac10b5","path":"proprietary/odm/firmware/vpu30_2v.mbn","bytes":2331336,"sha256":"3a4cac666ed1cd1ab5cb55f975dc724fd3e10603713b382f390484c37548d231","destination":"qcom/uke/video/vpu30_2v.mbn"}
+  ],
+  "admission": "Every complete-file hash is already admitted by the existing Control26 reader. No firmware hash, ELF bound or private-profile format is expanded."
+}

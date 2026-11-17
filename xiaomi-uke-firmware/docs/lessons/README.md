@@ -34,3 +34,5 @@
 - Uncertainty: this result does not assert that no redistributable Uke firmware
   exists; it records the missing project evidence.
 - Next validation: identify and audit the exact payload and license for each file.
+
+- [UKE-DISPLAY-INPUTS-20261117: retain already admitted OEM update inputs](2026-11-17-super-independent-display-inputs.md)
