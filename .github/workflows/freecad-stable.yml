@@ -1,0 +1,57 @@
+name: Track stable FreeCAD releases
+on:
+  schedule:
+    - cron: '42 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/families/freecad/host/**'
+      - 'packaging/families/freecad/freecad.spec'
+      - 'packaging/families/freecad/source-lock.json'
+      - '.github/workflows/freecad-stable.yml'
+permissions:
+  contents: write
+concurrency:
+  group: freecad-stable-unstable-build
+  cancel-in-progress: false
+jobs:
+  stable:
+    if: github.repository == 'MCC45TR/uke-linux-hardware-support'
+    runs-on: ubuntu-24.04
+    container: registry.fedoraproject.org/fedora:rawhide
+    steps:
+      - name: Install host source-validation tools
+        run: dnf5 -y install git curl jq make rpm-build cmake-rpm-macros python3-rpm-macros tar gzip patch diffutils cpio findutils
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify automatic build access
+        env:
+          COPR_FREECAD_LOGIN: ${{ secrets.COPR_FREECAD_LOGIN }}
+          COPR_FREECAD_TOKEN: ${{ secrets.COPR_FREECAD_TOKEN }}
+        run: |
+          if [ -z "$COPR_FREECAD_LOGIN" ] || [ -z "$COPR_FREECAD_TOKEN" ]; then
+            echo '::error::Automatic FreeCAD dispatch is not configured. Add the existing COPR API login and token as COPR_FREECAD_LOGIN and COPR_FREECAD_TOKEN repository secrets. Do not put credentials in logs or source.'
+            exit 1
+          fi
+      - name: Verify the latest stable source before changing pins
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          bash packaging/families/freecad/host/track-stable.sh
+      - name: Commit only validated FreeCAD source changes
+        run: |
+          set -Eeuo pipefail
+          paths=(packaging/families/freecad/freecad.spec packaging/families/freecad/source-lock.json)
+          if git diff --quiet -- "${paths[@]}"; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -- "${paths[@]}"
+          git commit -m 'Track verified stable FreeCAD release sources'
+          git push origin HEAD:main
+      - name: Request one pinned unstable AArch64 build
+        env:
+          COPR_FREECAD_LOGIN: ${{ secrets.COPR_FREECAD_LOGIN }}
+          COPR_FREECAD_TOKEN: ${{ secrets.COPR_FREECAD_TOKEN }}
+        run: bash packaging/families/freecad/host/request-unstable.sh "$(git rev-parse HEAD)"

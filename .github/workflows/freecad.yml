@@ -18,13 +18,28 @@ concurrency:
   cancel-in-progress: false
 jobs:
   source-contracts:
-    runs-on: ubuntu-24.04
-    container: registry.fedoraproject.org/fedora:rawhide
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora: ['44', 'rawhide']
+        runner: ['ubuntu-24.04', 'ubuntu-24.04-arm']
+    runs-on: ${{ matrix.runner }}
+    container: registry.fedoraproject.org/fedora:${{ matrix.fedora }}
     steps:
       - name: Install source validation tools
-        run: dnf5 -y install make jq rpm-build cmake-rpm-macros python3-rpm-macros
+        run: dnf5 -y install make jq rpm-build cmake-rpm-macros python3-rpm-macros createrepo_c
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Check the isolated FreeCAD source family
         run: make -C packaging/families/freecad validate
+      - name: Check identity with a Mock-style user dist macro
+        run: |
+          printf '%%dist .copr_fixture\n' > "$HOME/.rpmmacros"
+          make -C packaging/families/freecad validate
+      - name: Check stable-update and dispatch refusal fixtures
+        run: make -C packaging/families/freecad test-automation
+      - name: Package and verify all license texts with RPM
+        run: make -C packaging/families/freecad test-packaging
+      - name: Solve Uke-filtered installs and upgrades with real RPM metadata
+        run: make -C packaging/families/freecad test-filtering
       - name: Record the native build boundary
         run: echo 'FreeCAD source contracts passed. Native RPM compilation and tests require a separate unstable-only COPR submission.' >> "$GITHUB_STEP_SUMMARY"

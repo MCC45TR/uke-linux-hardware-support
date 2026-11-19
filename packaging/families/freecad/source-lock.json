@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "family": "freecad",
-  "name": "freecad",
+  "name": "uke-freecad",
   "epoch": 1,
   "version": "1.1.4",
-  "release": 1,
+  "release": 4,
   "source_date_epoch": 1790603915,
   "upstream_release": "https://github.com/FreeCAD/FreeCAD/releases/tag/1.1.4",
   "upstream_commit": "4fd3bf320d9566a27e60069fc8387448aaa3a094",
@@ -41,6 +41,12 @@
       "url": "https://github.com/FreeCAD/FreeCAD/commit/8c8b7c1d8fa34fc3d11d593ce0a6d5f655f37f80.patch",
       "sha256": "53a3974548e2b6a313c30e54a8834df322dcb8c9114a26387f58db5be7608760",
       "purpose": "Isolate temporary files in parallel upstream FileInfo tests."
+    },
+    {
+      "filename": "636365fd4a30e017c76ef6a44cf045e77ec5e632.patch",
+      "url": "https://github.com/FreeCAD/FreeCAD/commit/636365fd4a30e017c76ef6a44cf045e77ec5e632.patch",
+      "sha256": "94ffa4a84f377001f72cd26508e53716b2e10c3de298d72d407b3b4a5aee9cf0",
+      "purpose": "Include the PyObjectWrapper declaration on PySide 6.12 while retaining earlier PySide support."
     },
     {
       "filename": "nlohmann-json-LICENSE.MIT",
