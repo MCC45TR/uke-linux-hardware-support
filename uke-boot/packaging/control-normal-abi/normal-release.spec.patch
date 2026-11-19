@@ -1,0 +1,19 @@
+--- uke-control.spec
++++ uke-control.spec
+@@ -29 +29 @@
+-Release: 48%{?dist}
++Release: 48.1%{?dist}
+@@ -446,0 +447,3 @@
++Source108: normal-abi.sh
++BuildRequires: perl-interpreter
++Provides: uke-control(normal-release-abi-v1) = 1
+@@ -462 +465 @@
+-Release: 48%{?dist}
++Release: 48.1%{?dist}
+@@ -1008,0 +1012,2 @@
++printf "%s  %s\n" d503c2014ad37ddc46efb7f0f1569a9d012ecd48babb83b7ec4b411031462530 %{SOURCE108} | sha256sum -c --strict --quiet -
++bash %{SOURCE108} "$boot" "%{_builddir}/uke-control-2.8.1/o82-build"
+@@ -4668,0 +4674,3 @@
++* Thu Nov 19 2026 Uke Linux Maintainers - 2.17.0-48.1
++- Admit the normal 7.4.5-senemos ABI with the same signed merged ownership and rollback checks.
++

@@ -1,0 +1,3 @@
+9d24f8856a11d5b77692565eb5182a2fbf44fb3df9669d049de66dbba4021875  normal-release.spec.patch
+785da08fad07abee0f30931fb11efb851a9180123303a44b739a17314ad5ccd6  boot-status-unstable.sh
+d503c2014ad37ddc46efb7f0f1569a9d012ecd48babb83b7ec4b411031462530  normal-abi.sh
