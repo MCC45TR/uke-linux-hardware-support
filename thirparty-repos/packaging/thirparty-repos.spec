@@ -1,6 +1,6 @@
 Name:           thirparty-repos
 Version:        1.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Optional third-party DNF repositories for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/thirparty-repos
@@ -64,7 +64,7 @@ Register Mullvad's signed Stable RPM repository.
 Summary:        1Password ARM64 repository for DNF
 
 %description 1password
-Register the signed 1Password Stable repository.
+Register the signed 1Password Stable repository, including the ARM64 CLI.
 
 %package fedora
 Summary:        Fedora Workstation third-party repository definitions
@@ -137,6 +137,9 @@ done
 %config(noreplace) %{_sysconfdir}/yum.repos.d/uke-orcaslicer.repo
 
 %changelog
+* Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-2
+- Include the 1Password CLI in the ARM64 repository scope.
+
 * Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-1
 - Add VS Code, Brave, Mullvad, 1Password, OrcaSlicer and Fedora third-party repositories.
 - Use Fedora Workstation’s Chrome repository default for the Stable package.
