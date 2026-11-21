@@ -1,0 +1,8 @@
+[uke-vscode]
+name=Visual Studio Code for Linux ARM64
+baseurl=https://packages.microsoft.com/yumrepos/vscode
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+skip_if_unavailable=True
+includepkgs=code,code-insiders
