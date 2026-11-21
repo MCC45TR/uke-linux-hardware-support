@@ -1,6 +1,6 @@
 Name:           thirparty-repos
 Version:        1.1.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Optional third-party DNF repositories for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/thirparty-repos
@@ -137,6 +137,9 @@ done
 %config(noreplace) %{_sysconfdir}/yum.repos.d/uke-orcaslicer.repo
 
 %changelog
+* Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-3
+- Include the Brave RPM signing keyring dependency.
+
 * Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-2
 - Include the 1Password CLI in the ARM64 repository scope.
 

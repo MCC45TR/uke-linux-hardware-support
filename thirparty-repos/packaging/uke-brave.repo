@@ -5,4 +5,4 @@ enabled=1
 gpgcheck=1
 gpgkey=https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 skip_if_unavailable=True
-includepkgs=brave-browser
+includepkgs=brave-browser,brave-keyring
