@@ -1,10 +1,9 @@
 # Uke desktop selections
 
-29 October 2026: `uke-cutefish-meta` selects the real `cutefish-desktop` RPM from
-the separate `mcc45tr/cutefish` upstream-packaging project. It enables no display
-manager, creates no account and requires no KDE meta package. This source-only
-selection is removable. Graphical login, image composition and tablet tests
-remain pending; package installation cannot establish those results.
+21 November 2026. On Fedora Rawhide AArch64, `uke-cutefish-meta` selects
+`cutefish-desktop` and the Uke session and first-account packages from
+`mcc45tr/uke-linux-unstable`. The removable selection requires no KDE meta package.
+Image composition controls display-manager activation and first-account setup.
 
 25 October 2026: release `1.0.0-19` recommends Chromium rather than requiring
 it. Default DNF weak-dependency handling installs it with KDE, while removing

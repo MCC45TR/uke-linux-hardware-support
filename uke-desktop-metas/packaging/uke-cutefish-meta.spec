@@ -1,6 +1,6 @@
 Name:           uke-cutefish-meta
 Version:        1.0.0
-Release:        39%{?dist}
+Release:        40%{?dist}
 Summary:        Independent Uke selection for the split Cutefish desktop
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/uke-desktop-metas
@@ -26,6 +26,9 @@ install -Dm644 %{SOURCE0} %{buildroot}%{_datadir}/senemos/uke/desktops/cutefish.
 %{_datadir}/senemos/uke/desktops/cutefish.json
 
 %changelog
+* Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-40
+- Declare the unified Uke Unstable repository for the Rawhide Cutefish selection.
+
 * Sun Nov 15 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.0.0-39
 - Require the corrected single-owner session data and complete portal selection.
 

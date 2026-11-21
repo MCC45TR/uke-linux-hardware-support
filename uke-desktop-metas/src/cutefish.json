@@ -5,7 +5,7 @@
   "upstream": "https://github.com/cutefishos",
   "session": "/usr/share/wayland-sessions/cutefish-wayland.desktop",
   "command": "/usr/bin/cutefish-wayland-session",
-  "copr": "mcc45tr/cutefish",
+  "copr": "mcc45tr/uke-linux-unstable",
   "image_profile": "experimental; build and physical acceptance recorded separately",
   "graphical_session_tested": false,
   "hardware_tested": false,
@@ -15,7 +15,7 @@
   "credentials_included": false,
   "channel": "unstable",
   "release": "rawhide",
-  "upstream_packaging_commit": "ea2f0a3f387b9f2094dbc50c92bd7595037b69c5",
+  "upstream_packaging_commit": "dbf5421ba38c1ef9cbf9c725febb782f8fd49a7e",
   "required_integrations": [
     "uke-cutefish-firstboot",
     "uke-cutefish-session-config"
