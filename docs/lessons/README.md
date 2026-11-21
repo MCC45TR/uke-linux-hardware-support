@@ -15,3 +15,5 @@
 - [UKE-UBUNTU-20261101: separate source packaging from device admission](2026-11-01-ubuntu-source-packaging.md)
 
 - [UKE-CUTEFISH-20261115: independent desktop selection](2026-11-15-cutefish-split-image-selection.md)
+
+- [UKE-THIRDPARTY-20261121: register signed Chrome and SolidCraft repositories](2026-11-21-third-party-repositories.md)
