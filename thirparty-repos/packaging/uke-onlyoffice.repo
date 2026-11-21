@@ -1,0 +1,8 @@
+[uke-onlyoffice]
+name=ONLYOFFICE Desktop Editors for Linux ARM64
+baseurl=https://download.onlyoffice.com/repo/centos/main/noarch/
+enabled=1
+gpgcheck=1
+gpgkey=https://download.onlyoffice.com/GPG-KEY-ONLYOFFICE
+skip_if_unavailable=True
+includepkgs=onlyoffice-desktopeditors

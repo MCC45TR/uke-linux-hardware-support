@@ -1,6 +1,6 @@
 Name:           thirparty-repos
-Version:        1.1.0
-Release:        3%{?dist}
+Version:        1.2.0
+Release:        1%{?dist}
 Summary:        Optional third-party DNF repositories for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/thirparty-repos
@@ -14,6 +14,8 @@ Source6:        uke-brave.repo
 Source7:        uke-mullvad.repo
 Source8:        uke-1password.repo
 Source9:        uke-orcaslicer.repo
+Source10:       uke-onlyoffice.repo
+Source11:       uke-rustdesk.repo
 ExclusiveArch:  aarch64
 Requires:       %{name}-google-chrome = %{version}-%{release}
 Requires:       %{name}-solidcraft = %{version}-%{release}
@@ -23,6 +25,8 @@ Requires:       %{name}-mullvad = %{version}-%{release}
 Requires:       %{name}-1password = %{version}-%{release}
 Requires:       %{name}-fedora = %{version}-%{release}
 Requires:       %{name}-orcaslicer = %{version}-%{release}
+Requires:       %{name}-onlyoffice = %{version}-%{release}
+Requires:       %{name}-rustdesk = %{version}-%{release}
 
 %description
 Select optional third-party RPM repositories on Fedora Rawhide AArch64.
@@ -80,6 +84,18 @@ Summary:        OrcaSlicer ARM64 repository for DNF
 %description orcaslicer
 Register the signed OrcaSlicer RPM directory in Uke Unstable.
 
+%package onlyoffice
+Summary:        ONLYOFFICE Desktop Editors ARM64 repository for DNF
+
+%description onlyoffice
+Register the publisher's signed ONLYOFFICE Desktop Editors RPM repository.
+
+%package rustdesk
+Summary:        RustDesk ARM64 repository for DNF
+
+%description rustdesk
+Register the signed RustDesk RPM directory in Uke Unstable.
+
 %prep
 cp %{SOURCE0} LICENSE
 cp %{SOURCE1} README.md
@@ -94,6 +110,8 @@ install -Dm0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-brave.repo
 install -Dm0644 %{SOURCE7} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-mullvad.repo
 install -Dm0644 %{SOURCE8} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-1password.repo
 install -Dm0644 %{SOURCE9} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-orcaslicer.repo
+install -Dm0644 %{SOURCE10} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-onlyoffice.repo
+install -Dm0644 %{SOURCE11} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-rustdesk.repo
 for channel in google-chrome-beta google-chrome-unstable google-chrome-canary; do
     install -Dm0644 %{SOURCE4} "%{buildroot}%{_sysconfdir}/default/$channel"
 done
@@ -136,7 +154,18 @@ done
 %license LICENSE
 %config(noreplace) %{_sysconfdir}/yum.repos.d/uke-orcaslicer.repo
 
+%files onlyoffice
+%license LICENSE
+%config(noreplace) %{_sysconfdir}/yum.repos.d/uke-onlyoffice.repo
+
+%files rustdesk
+%license LICENSE
+%config(noreplace) %{_sysconfdir}/yum.repos.d/uke-rustdesk.repo
+
 %changelog
+* Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.2.0-1
+- Add ONLYOFFICE Desktop Editors and RustDesk ARM64 repositories.
+
 * Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.1.0-3
 - Include the Brave RPM signing keyring dependency.
 
