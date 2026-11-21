@@ -4,11 +4,11 @@
 %global __brp_strip_comment_note %{nil}
 %global __brp_strip_lto %{nil}
 %global __provides_exclude_from ^%{_datadir}/rustdesk/lib/
-%global __requires_exclude ^lib(app|desktop_.*_plugin|file_selector_linux_plugin|flutter_.*|rustdesk|screen_retriever_plugin|texture_rgba_renderer_plugin|url_launcher_linux_plugin|window_.*_plugin)\.so\(\)\(64bit\)$
+%global __requires_exclude ^lib(app|desktop_.*_plugin|file_selector_linux_plugin|flutter_.*|rustdesk|screen_retriever_plugin|texture_rgba_renderer_plugin|url_launcher_linux_plugin|window_.*_plugin)[.]so[(][)][(]64bit[)]$
 
 Name:           rustdesk
 Version:        1.5.3
-Release:        1.uke%{?dist}
+Release:        2.uke%{?dist}
 Summary:        Remote desktop client for Linux AArch64
 License:        AGPL-3.0-only
 URL:            https://github.com/rustdesk/rustdesk
@@ -79,5 +79,8 @@ install -Dm0644 usr/share/rustdesk/files/rustdesk-link.desktop '%{buildroot}%{_d
 %{_datadir}/rustdesk/
 
 %changelog
+* Sun Nov 22 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.5.3-2.uke
+- Filter the bundled Flutter libraries from external RPM requirements.
+
 * Sat Nov 21 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.5.3-1.uke
 - Package the upstream AArch64 payload and honor Fedora service presets.
