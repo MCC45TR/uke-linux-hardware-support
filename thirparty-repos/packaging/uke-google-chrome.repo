@@ -1,0 +1,8 @@
+[uke-google-chrome]
+name=Google Chrome for Linux ARM64
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/aarch64/
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+skip_if_unavailable=True
+includepkgs=google-chrome-stable,google-chrome-beta,google-chrome-unstable,google-chrome-canary

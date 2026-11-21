@@ -1,0 +1,2 @@
+# Uke configures the Google repository for all four Chrome packages.
+repo_add_once="false"
