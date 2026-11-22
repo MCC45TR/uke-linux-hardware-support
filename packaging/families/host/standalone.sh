@@ -49,7 +49,7 @@ case $key in
         fi;;
 esac
 if [[ -n $component ]]; then
-    make -C "$component" "$target" "${args[@]}" outdir="$stage/input"
+    make -C "components/$component" "$target" "${args[@]}" outdir="$stage/input"
     # Fedora provenance SRPMs in SOURCES are inputs, not generated results.
     mapfile -t inputs < <(find "$stage/input" -type f -path '*/SRPMS/*.src.rpm' | LC_ALL=C sort)
     [[ ${#inputs[@]} == 1 ]] || { echo 'Expected one generated component SRPM' >&2; exit 1; }

@@ -4,5 +4,6 @@
 *.key
 *.pem
 .env*
+AGENTS.md
 /references/*
 !/references/README.md

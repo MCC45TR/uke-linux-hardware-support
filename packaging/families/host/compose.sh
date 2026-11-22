@@ -149,7 +149,7 @@ uke-additional)
     printf '%s\t%s\n' uke-vaapi-v4l2 "${backends[0]}" >"$stage/inputs";;
 uke-metas)
     for component in uke-core-meta uke-desktop-metas; do
-        make -C "$component" srpm outdir="$stage/$component" >"$stage/local.log"
+        make -C "components/$component" srpm outdir="$stage/$component" >"$stage/local.log"
         files=("$stage/$component/"*.src.rpm); [[ ${#files[@]} == 1 ]]
         printf '%s\t%s\n' "$component" "${files[0]}" >>"$stage/inputs"
     done;;
