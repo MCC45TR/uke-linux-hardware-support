@@ -18,7 +18,7 @@ This package registers the following signed RPM repositories.
 - 1Password CLI
 - ONLYOFFICE Desktop Editors
 - AnyDesk
-- Fedora Workstation's curated third-party repositories, with Fedora's opt-in settings
+- RPM Fusion NVIDIA Driver from Fedora Workstation, disabled by default
 - OpenAI's ChatGPT desktop preview, disabled by default
 
 Install applications in a separate DNF transaction.

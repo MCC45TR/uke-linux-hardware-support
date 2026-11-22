@@ -1,6 +1,6 @@
 Name:           thirparty-repos
 Version:        1.4.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Optional third-party DNF repositories for Uke
 License:        MIT
 URL:            https://github.com/MCC45TR/uke-linux-hardware-support/tree/main/components/third-party-repos
@@ -20,6 +20,7 @@ Source15:       warpdotdev.repo
 Source16:       AnyDesk-RPM.repo
 Source20:       uke-chatgpt-preview.repo
 Source21:       RPM-GPG-KEY-uke-chatgpt.asc
+Source22:       uke-rpmfusion-nvidia-driver.repo
 ExclusiveArch:  aarch64
 Requires:       %{name}-google-chrome = %{version}-%{release}
 Requires:       %{name}-vscode = %{version}-%{release}
@@ -47,7 +48,6 @@ Install applications through DNF after repository setup.
 
 %package google-chrome
 Summary:        Google Chrome ARM64 repository for DNF
-Requires:       fedora-workstation-repositories
 
 %description google-chrome
 Register Google's ARM64 repository for Chrome Stable, Beta,
@@ -78,12 +78,12 @@ Summary:        1Password ARM64 repository for DNF
 Register the signed 1Password Stable repository, including the ARM64 CLI.
 
 %package fedora
-Summary:        Fedora Workstation third-party repository definitions
-Requires:       fedora-workstation-repositories
+Summary:        Fedora Workstation RPM Fusion NVIDIA Driver repository
+Requires:       distribution-gpg-keys
 
 %description fedora
-Install Fedora Workstation's curated third-party repository definitions.
-Fedora manages the opt-in state for its repository collection.
+Register the RPM Fusion NVIDIA Driver repository from Fedora Workstation.
+This repository is disabled by default.
 
 %package onlyoffice
 Summary:        ONLYOFFICE Desktop Editors ARM64 repository for DNF
@@ -147,7 +147,8 @@ install -Dm0644 %{SOURCE15} %{buildroot}%{_sysconfdir}/yum.repos.d/warpdotdev.re
 install -Dm0644 %{SOURCE16} %{buildroot}%{_sysconfdir}/yum.repos.d/AnyDesk-RPM.repo
 install -Dm0644 %{SOURCE20} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-chatgpt-preview.repo
 install -Dm0644 %{SOURCE21} %{buildroot}%{_sysconfdir}/pki/rpm-gpg/RPM-GPG-KEY-uke-chatgpt.asc
-for channel in google-chrome-beta google-chrome-unstable google-chrome-canary; do
+install -Dm0644 %{SOURCE22} %{buildroot}%{_sysconfdir}/yum.repos.d/uke-rpmfusion-nvidia-driver.repo
+for channel in google-chrome google-chrome-beta google-chrome-unstable google-chrome-canary; do
     install -Dm0644 %{SOURCE4} "%{buildroot}%{_sysconfdir}/default/$channel"
 done
 
@@ -158,6 +159,7 @@ done
 %files google-chrome
 %license LICENSE
 %config(noreplace) %{_sysconfdir}/yum.repos.d/uke-google-chrome.repo
+%config(noreplace) %{_sysconfdir}/default/google-chrome
 %config(noreplace) %{_sysconfdir}/default/google-chrome-beta
 %config(noreplace) %{_sysconfdir}/default/google-chrome-unstable
 %config(noreplace) %{_sysconfdir}/default/google-chrome-canary
@@ -180,6 +182,7 @@ done
 
 %files fedora
 %license LICENSE
+%config(noreplace) %{_sysconfdir}/yum.repos.d/uke-rpmfusion-nvidia-driver.repo
 
 %files onlyoffice
 %license LICENSE
@@ -211,6 +214,9 @@ done
 %{_sysconfdir}/pki/rpm-gpg/RPM-GPG-KEY-uke-chatgpt.asc
 
 %changelog
+* Sun Nov 22 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-2
+- Register the AArch64 Fedora Workstation repositories without the Fedora opt-in tool dependency.
+
 * Sun Nov 22 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - 1.4.0-1
 - Retain publisher repositories and retire the six Uke application repository definitions.
 
