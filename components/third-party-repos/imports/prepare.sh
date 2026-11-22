@@ -4,6 +4,7 @@ set -Eeuo pipefail
 name=${1:?application name required}
 out=${2:?result directory required}
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+release=2
 
 case "$name" in
     bruno)
@@ -29,6 +30,7 @@ case "$name" in
         summary='Trilium Notes for Linux AArch64'
         app_dir=/usr/lib/trilium
         alternatives=0
+        release=3
         ;;
     ferdium)
         repo=ferdium/ferdium-app
@@ -64,6 +66,7 @@ files=$(rpm -qpl "$asset" | awk '/^\/usr\/share\// {print}')
 {
     printf '%%global app_name %s\n' "$name"
     printf '%%global app_version %s\n' "$version"
+    printf '%%global app_release %s\n' "$release"
     printf '%%global app_summary %s\n' "$summary"
     printf '%%global app_license %s\n' "$license"
     printf '%%global app_upstream %s\n' "$upstream"

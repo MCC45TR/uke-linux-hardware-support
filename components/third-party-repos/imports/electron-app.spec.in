@@ -7,7 +7,7 @@
 
 Name:           %{app_name}
 Version:        %{app_version}
-Release:        2.uke%{?dist}
+Release:        %{app_release}.uke%{?dist}
 Summary:        %{app_summary}
 License:        %{app_license}
 URL:            %{app_upstream}
@@ -17,6 +17,9 @@ ExclusiveArch:  aarch64
 BuildRequires:  binutils
 BuildRequires:  cpio
 BuildRequires:  rpm
+%if "%{app_name}" == "trilium"
+BuildRequires:  chrpath
+%endif
 AutoReqProv:    no
 @APP_REQUIRES@
 %if %{app_alternatives}
@@ -48,6 +51,11 @@ set -o pipefail
 )
 # Fedora uses the Chromium namespace sandbox for these clients.
 chmod 0755 '%{buildroot}%{app_dir}/chrome-sandbox'
+%if "%{app_name}" == "trilium"
+# The speech add-on carries a build-directory search path after its private path.
+addon='%{buildroot}%{app_dir}/resources/app.asar.unpacked/node_modules/sherpa-onnx-linux-arm64/sherpa-onnx.node'
+chrpath --replace '$ORIGIN' "$addon"
+%endif
 
 %check
 LC_ALL=C readelf -h '%{buildroot}%{app_dir}/%{name}' | grep -Eq 'Machine: *AArch64'
@@ -76,5 +84,5 @@ fi
 @APP_FILES@
 
 %changelog
-* Sun Nov 22 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - %{version}-2.uke
+* Sun Nov 22 2026 MCC45TR <75160848+MCC45TR@users.noreply.github.com> - %{version}-%{app_release}.uke
 - Package the official AArch64 release payload for signed COPR delivery.
