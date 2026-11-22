@@ -1,8 +1,0 @@
-[uke-rustdesk]
-name=RustDesk for Fedora Rawhide ARM64
-baseurl=https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable:custom:rustdesk/fedora-rawhide-aarch64/
-enabled=1
-gpgcheck=1
-gpgkey=https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/pubkey.gpg
-skip_if_unavailable=True
-includepkgs=rustdesk
