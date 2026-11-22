@@ -1,0 +1,45 @@
+name: Build Uke Mesa from Fedora Rawhide
+on:
+  schedule:
+    - cron: '32 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      retry_failed:
+        description: Retry a failed or canceled build for the current Fedora source
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: mesa-rawhide
+  cancel-in-progress: false
+jobs:
+  source:
+    if: github.repository == 'MCC45TR/uke-linux-hardware-support' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    container: registry.fedoraproject.org/fedora:rawhide
+    steps:
+      - name: Install Fedora source and COPR tools
+        shell: bash
+        run: >-
+          dnf5 -y install git copr-cli curl jq make rpm-build rpm-sign cpio tar xz
+          gawk pkgconf-pkg-config fedora-gpg-keys fedora-release redhat-rpm-config
+          kf6-rpm-macros systemd-rpm-macros firewalld-filesystem libxml2
+          cmake-rpm-macros meson gettext python3-rpm-macros cargo-rpm-macros gcc-c++
+          alsa-lib-devel alsa-utils
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Prepare verified source RPM
+        shell: bash
+        env:
+          RETRY_FAILED: ${{ inputs.retry_failed }}
+        run: bash packaging/families/mesa-rawhide/scripts/prepare.sh
+      - name: Submit the source to the existing Uke Mesa producer
+        shell: bash
+        env:
+          COPR_CONFIG: ${{ secrets.COPR_MESA_CONFIG }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash packaging/families/mesa-rawhide/scripts/submit.sh

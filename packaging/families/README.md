@@ -1,5 +1,8 @@
 # COPR source families
 
+The [Mesa Rawhide workflow](mesa-rawhide/README.md) builds the combined
+`uke-mesa` runtime for Uke Unstable from signed Fedora sources.
+
 11 November 2026: the [native ownership inventory and source guard](consolidation/NATIVE-MIGRATION.md)
 cover all current unstable producers, installed project sources and same-name
 rebuilds. Coverage is separate from functional parity and retirement acceptance.

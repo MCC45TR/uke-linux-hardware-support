@@ -1,0 +1,20 @@
+From: Senemos Maintainers <75160848+MCC45TR@users.noreply.github.com>
+Subject: [PATCH] freedreno: identify Adreno 732 and accept its fuse-id wildcard
+
+The inspected Uke GPU reports 0x43030b00. Keep Mesa's existing exact-chip
+three-CCU profile; correct its name and accept the kernel's fuse-id encoding.
+No GPU properties or neighboring device identities are changed.
+
+---
+--- a/src/freedreno/common/freedreno_devices.py
++++ b/src/freedreno/common/freedreno_devices.py
+@@ -1204,7 +1204,8 @@
+ 
+ add_gpus([
+         GPUId(chip_id=0xffff43030c00, name="Adreno X1-45"),
+-        GPUId(chip_id=0xffff43030B00, name="FD735"),
++        GPUId(chip_id=0x43030b00, name="FD732"),
++        GPUId(chip_id=0xffff43030b00, name="FD732"),
+         GPUId(chip_id=0xffff43030E01, name="Adreno (TM) 735"),
+     ], A6xxGPUInfo(
+         CHIP.A7XX,
