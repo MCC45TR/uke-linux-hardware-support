@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // COPR source worker only; actual published RPMs, no downloaded payload execution.
 #define UKE_PACKAGES_TEST
-#include "../../../uke-control/src/packages.cpp"
+#include "../../../components/uke-control/src/packages.cpp"
 #include <cassert>
 using namespace uke::packages;
 int main(int argc,char** argv) {

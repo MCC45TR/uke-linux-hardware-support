@@ -7,7 +7,7 @@ set -Eeuo pipefail
 [[ $(rpm --eval '%{_host_cpu}') == aarch64 && $(rpm --eval '%{fedora}') == 46 ]]
 test ! -e /etc/senemos/kernel-update.conf
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
-cache=$root/uke-desktop-packaging/referances/fedora-returns-20261101
+cache=$root/components/uke-desktop-packaging/references/fedora-returns-20261101
 fixture=$(mktemp -d)
 trap 'rm -rf -- "$fixture"' EXIT
 mkdir -p "$fixture"/{baseline,current,candidate,originals,kernel,roots,cache,keys}
@@ -56,7 +56,7 @@ cp "$fixture/kernel/"*.rpm "$fixture/baseline/"
 cp "$fixture/kernel/"*.rpm "$fixture/candidate/"
 for repo in baseline candidate originals; do createrepo_c --quiet "$fixture/$repo"; done
 c++ -std=c++20 -O2 -UNDEBUG -Wall -Wextra -Werror $(pkg-config --cflags libdnf5 rpm libsystemd) \
-    "$root/packaging/families/tests/published-fedora-returns.cpp" "$root/uke-control/src/cli.cpp" -I"$root/uke-control/src" -o "$fixture/solver" $(pkg-config --libs libdnf5 rpm libsystemd)
+    "$root/packaging/families/tests/published-fedora-returns.cpp" "$root/components/uke-control/src/cli.cpp" -I"$root/components/uke-control/src" -o "$fixture/solver" $(pkg-config --libs libdnf5 rpm libsystemd)
 for selection in core kde all; do
     for mode in fresh upgrade mixed reverse weak-off desktop-upgrade; do
         target=$fixture/roots/$selection-$mode

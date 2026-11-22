@@ -3,7 +3,7 @@
 Recorded 1 November 2026. Publication decisions apply to exact files, not to a
 device, source archive or package family as a whole.
 
-The shared `xiaomi-uke-firmware/manifests/firmware-notice-review-20261030.json`
+The shared `components/xiaomi-uke-firmware/manifests/firmware-notice-review-20261030.json`
 records 217 firmware/configuration files. Only seven have exact notice mappings;
 74 original notice paths are missing and 136 named paths remain unmatched.
 Its `redistribution_review_complete` and `firmware_blob_package_ready` fields

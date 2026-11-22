@@ -6,11 +6,11 @@ jq -e '.schema==1 and ([.families[].name]|(length==9) and (unique|length==9))' p
 jq -e '.schema==1 and .fedora==46 and (.families|length==7) and ([.families[].sources[].name]|length==14 and (unique|length)==14) and all(.families[]; (.name=="uke-control" or (.name|test("^uke-(meta|power|sensor|audio|video|desktop-extras)-integration$"))) and all(.sources[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|(startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/srpm-builds/") or startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-consolidation-archive-20261101/")))))' packaging/families/integrations.json >/dev/null
 jq -e '.families[]|select(.name=="uke-audio-integration")|.version=="1.1.0" and .sources==[] and .local_sources==[] and .runtime_production==false and .folded_into=="uke-control" and (.retired_sources|length==3)' packaging/families/integrations.json >/dev/null
 jq -e 'all(.families[]|select(has("debug_owner")); . as $family|any(.sources[];.name==$family.debug_owner))' packaging/families/integrations.json >/dev/null
-jq -e '.families[]|select(.name=="uke-additional")|(.suggests|index("uke-vaapi-v4l2")!=null) and (.watch_paths|index("uke-video/packaging")!=null)' packaging/families/families.json >/dev/null
-[[ $(rpmspec --target aarch64 -q --srpm --qf '%{NAME}' uke-video/packaging/uke-vaapi-v4l2.spec) == uke-vaapi-v4l2 ]]
+jq -e '.families[]|select(.name=="uke-additional")|(.suggests|index("uke-vaapi-v4l2")!=null) and (.watch_paths|index("components/uke-video/packaging")!=null)' packaging/families/families.json >/dev/null
+[[ $(rpmspec --target aarch64 -q --srpm --qf '%{NAME}' components/uke-video/packaging/uke-vaapi-v4l2.spec) == uke-vaapi-v4l2 ]]
 jq -e 'all(.[]; (.sha256|test("^[a-f0-9]{64}$")) and (.url|(startswith("https://download.copr.fedorainfracloud.org/results/mcc45tr/") or (startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/") and endswith(".src.rpm")))))' packaging/families/source-inputs.json >/dev/null
-jq -e '(.packages|length==5) and all(.packages[]; .name!="uke-power-profile-backend" and (.sha256|test("^[a-f0-9]{64}$")) and (.signed_mirror_sha256|test("^[a-f0-9]{64}$")) and (.source_payload_sha256|test("^[a-f0-9]{64}$")) and (.family|test("^uke-(additional|power|sensors)$"))) and any(.withdrawn_packages[]; .name=="uke-power-profile-backend" and .automatic_build==false and .target_admitted==false)' uke-desktop-packaging/manifests/native-runtime.json >/dev/null
-jq -e '. as $catalog | ["at-spi2-core","gstreamer1","libwacom","libstdcxx-uke-runtime"] | all(.[];. as $name | ($catalog.packages|map(.name)|index($name))==null and any($catalog.withdrawn_packages[];.name==$name and .automatic_build==false and .target_admitted==false))' uke-desktop-packaging/manifests/native-runtime.json >/dev/null
+jq -e '(.packages|length==5) and all(.packages[]; .name!="uke-power-profile-backend" and (.sha256|test("^[a-f0-9]{64}$")) and (.signed_mirror_sha256|test("^[a-f0-9]{64}$")) and (.source_payload_sha256|test("^[a-f0-9]{64}$")) and (.family|test("^uke-(additional|power|sensors)$"))) and any(.withdrawn_packages[]; .name=="uke-power-profile-backend" and .automatic_build==false and .target_admitted==false)' components/uke-desktop-packaging/manifests/native-runtime.json >/dev/null
+jq -e '. as $catalog | ["at-spi2-core","gstreamer1","libwacom","libstdcxx-uke-runtime"] | all(.[];. as $name | ($catalog.packages|map(.name)|index($name))==null and any($catalog.withdrawn_packages[];.name==$name and .automatic_build==false and .target_admitted==false))' components/uke-desktop-packaging/manifests/native-runtime.json >/dev/null
 jq -e 'any(.[]; .name=="material-decoration" and .family=="uke-extras")' packaging/families/source-inputs.json >/dev/null
 jq -e 'any(.[]; .name=="uke-mesa-libclc22-spirv" and .family=="uke-additional" and (.url|startswith("https://github.com/MCC45TR/uke-linux-hardware-support/releases/download/copr-migration-archive-20261020/")))' packaging/families/source-inputs.json >/dev/null
 jq -e '.rename["material-decoration"]=="uke-material-decoration" and (.exceptions|length)==4' packaging/families/families.json >/dev/null
@@ -41,8 +41,8 @@ if [[ -f $power_spec ]]; then
     grep -Fxq 'old=uke-power-profile-backend; new=uke-power; unit=power-profiles-daemon.service; phase=save' "$power_spec"
     grep -Fxq 'old=uke-power-profile-backend; new=uke-power; unit=power-profiles-daemon.service; phase=restore' "$power_spec"
 fi
-[[ ! -e uke-desktop-packaging/packaging/fastfetch ]]
-boot_spec=uke-boot/packaging/uke-boot-integration.spec
+[[ ! -e components/uke-desktop-packaging/packaging/fastfetch ]]
+boot_spec=components/uke-boot/packaging/uke-boot-integration.spec
 if rpmspec --target aarch64 -q --qf '%{NAME}\n' "$boot_spec" | grep -Fxq uke-wifi-factory; then exit 1; fi
 rpmspec --target aarch64 -q --qf '[%{PROVIDENAME}\n]' "$boot_spec" | grep -Fx 'uke-boot-integration(factory-wlan-v1)'
 if rpmspec --target aarch64 -q --qf '%{NAME}\n' "$boot_spec" | grep -Fxq uke-bluetooth; then exit 1; fi
@@ -51,19 +51,19 @@ jq -e 'all(.[]; .name!="uke-bluetooth")' packaging/families/source-inputs.json >
 jq -e 'all(.[]; .name!="uke-touchscreen")' packaging/families/source-inputs.json >/dev/null
 rpmspec --target aarch64 -q --qf '[%{PROVIDENAME}\n]' "$boot_spec" | grep -Fx 'uke-boot-integration(touch-runtime-v1)'
 if rpmspec --target aarch64 -q --qf '%{NAME}\n' "$boot_spec" | grep -Fxq uke-touchscreen; then exit 1; fi
-[[ ! -e uke-desktop-packaging/src/fastfetch/config.jsonc && ! -e uke-boot/src/profiles/fastfetch.jsonc ]]
+[[ ! -e components/uke-desktop-packaging/src/fastfetch/config.jsonc && ! -e components/uke-boot/src/profiles/fastfetch.jsonc ]]
 jq -e '.families[]|select(.name=="uke-hw")|(.requires|index("fastfetch")!=null) and all(.requires[]; (startswith("uke-fastfetch-config")|not))' packaging/families/families.json >/dev/null
 if [[ -f $hw_spec ]]; then
     ! rpmspec --target aarch64 -q --qf '%{NAME}\n' "$hw_spec" | grep -Fxq uke-fastfetch-config
     rpmspec --target aarch64 -q --qf '[%{OBSOLETENAME}\t%{OBSOLETEVERSION}\n]' "$hw_spec" | grep -Fxq $'uke-fastfetch-config\t1.0.1-4.fc46'
     ! grep -Fq /etc/fastfetch/ "$hw_spec"
 fi
-grep -Fx "Version: $(jq -er '.families[]|select(.name=="uke-core")|.version' packaging/families/families.json)" uke-control/packaging/uke-control.spec
-grep -Fx 'Version: 1.0.16' uke-desktop-integration/packaging/uke-adaptive-display.spec
-grep -Fx 'Name: uke-plymonth' uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
+grep -Fx "Version: $(jq -er '.families[]|select(.name=="uke-core")|.version' packaging/families/families.json)" components/uke-control/packaging/uke-control.spec
+grep -Fx 'Version: 1.0.16' components/uke-desktop-integration/packaging/uke-adaptive-display.spec
+grep -Fx 'Name: uke-plymonth' components/uke-desktop-packaging/packaging/plymouth-uke/plymouth-uke.spec
 if [[ -e packaging/families/build/uke-additional/SPECS/uke-additional.spec ]]; then
     rpmspec --target aarch64 -q --qf '%{NAME}\n' packaging/families/build/uke-additional/SPECS/uke-additional.spec | grep -Fxq uke-vaapi-v4l2
     rpmspec --target aarch64 -q --qf '%{NAME}\n' packaging/families/build/uke-additional/SPECS/uke-additional.spec | grep -Fxq uke-mesa-libclc22-spirv
-    grep -Fx "BuildRequires: llvm-devel = $(jq -er '.build_tools["llvm-devel"]' uke-desktop-packaging/manifests/native-runtime.json)" packaging/families/build/uke-additional/SPECS/uke-additional.spec
+    grep -Fx "BuildRequires: llvm-devel = $(jq -er '.build_tools["llvm-devel"]' components/uke-desktop-packaging/manifests/native-runtime.json)" packaging/families/build/uke-additional/SPECS/uke-additional.spec
 fi
 printf '%s\n' 'PASS: family/source identity, prefix, pinned inputs, native versions and no Fastfetch fork.'

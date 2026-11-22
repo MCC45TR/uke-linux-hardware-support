@@ -103,7 +103,7 @@ debhelper and its dependencies. Downloads are source bytes checked against
 `upstreams.tsv` and release manifests; no downloaded code is executed.
 Recovery downloads existing Android artifacts as opaque delivery data, not
 Ubuntu image inputs. Archives live under the owning
-component's `referances/`. Existing upstream Debian metadata is retained under
+component's `references/`. Existing upstream Debian metadata is retained under
 `uke/upstream-debian` for review before applying the active overlay.
 
 Source preparation emits original and Debian tarballs, unsigned `.dsc`, source

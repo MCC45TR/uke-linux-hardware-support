@@ -23,7 +23,7 @@ dispatch performs the same check.
 An inherited `.fc45` release can remain the newest Rawhide build. The repository
 query establishes currency; the distribution suffix alone does not.
 
-[`native-runtime.json`](../../uke-desktop-packaging/manifests/native-runtime.json)
+[`native-runtime.json`](../../components/uke-desktop-packaging/manifests/native-runtime.json)
 records immutable source identities and hashes. The watcher verifies each
 matching signed Fedora source RPM in an isolated database containing only the
 checked-in Fedora 45/46 public keys, then compares its complete decompressed

@@ -12,7 +12,7 @@ new="$top/SPECS/uke-control.spec"
 # The imported nested archives contain the existing DNF/boot/device behavior.
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
-rpm2cpio referances/uke-control-2.8.1-5.fc46.src.rpm > "$stage/source.cpio"
+rpm2cpio references/uke-control-2.8.1-5.fc46.src.rpm > "$stage/source.cpio"
 (cd "$stage"; cpio -idm --quiet --no-absolute-filenames < source.cpio)
 cmp "$stage/uke-control-2.8.1.tar.xz" "$top/SOURCES/uke-control-2.8.1.tar.xz"
 cmp "$stage/uke-control.spec" "$old"
@@ -52,15 +52,15 @@ grep -Fx 'Requires: uke-control(aarch-64) = 2.8.1-13.fc46' "$new"
 grep -Fx 'Recommends: uke-control-tui(aarch-64) = 2.8.1-13.fc46' "$new"
 mkdir "$stage/overlay"
 tar -xJf "$top/SOURCES/uke-control-package-update.tar.xz" -C "$stage/overlay"
-cmp "$stage/overlay/src/packages.cpp" "$here/../../../uke-control/src/packages.cpp"
-cmp "$stage/overlay/src/package-operation.hpp" "$here/../../../uke-control/src/package-operation.hpp"
-cmp "$stage/overlay/tests/packages.cpp" "$here/../../../uke-control/tests/packages.cpp"
-cmp "$stage/overlay/src/cli.cpp" "$here/../../../uke-control/src/cli.cpp"
-cmp "$stage/overlay/src/client-catalog.cpp" "$here/../../../uke-control/src/client-catalog.cpp"
-for fixture in package-operation.cpp package-policy.cpp package-policy.sh package-policy.mk; do cmp "$stage/overlay/tests/$fixture" "$here/../../../uke-control/tests/$fixture"; done
-for source in update-status.cpp update-status-command.hpp set-slot.cpp; do cmp "$stage/overlay/src/$source" "$here/../../../uke-control/src/$source"; done
-for source in update-status.cpp update-status.mk; do cmp "$stage/overlay/tests/$source" "$here/../../../uke-control/tests/$source"; done
-cmp "$stage/overlay/packaging/org.senemos.uke.update-status.policy" "$here/../../../uke-control/packaging/org.senemos.uke.update-status.policy"
+cmp "$stage/overlay/src/packages.cpp" "$here/../../../components/uke-control/src/packages.cpp"
+cmp "$stage/overlay/src/package-operation.hpp" "$here/../../../components/uke-control/src/package-operation.hpp"
+cmp "$stage/overlay/tests/packages.cpp" "$here/../../../components/uke-control/tests/packages.cpp"
+cmp "$stage/overlay/src/cli.cpp" "$here/../../../components/uke-control/src/cli.cpp"
+cmp "$stage/overlay/src/client-catalog.cpp" "$here/../../../components/uke-control/src/client-catalog.cpp"
+for fixture in package-operation.cpp package-policy.cpp package-policy.sh package-policy.mk; do cmp "$stage/overlay/tests/$fixture" "$here/../../../components/uke-control/tests/$fixture"; done
+for source in update-status.cpp update-status-command.hpp set-slot.cpp; do cmp "$stage/overlay/src/$source" "$here/../../../components/uke-control/src/$source"; done
+for source in update-status.cpp update-status.mk; do cmp "$stage/overlay/tests/$source" "$here/../../../components/uke-control/tests/$source"; done
+cmp "$stage/overlay/packaging/org.senemos.uke.update-status.policy" "$here/../../../components/uke-control/packaging/org.senemos.uke.update-status.policy"
 for rpm in "$top"/SRPMS/*.src.rpm "$metatop"/SRPMS/*.src.rpm; do
     rpm2cpio "$rpm" | cpio -t --quiet > "$stage/generated-members"
     [[ $(grep -c '[.]spec$' "$stage/generated-members") == 1 ]]

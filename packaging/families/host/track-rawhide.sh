@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 cd "$root"
-manifest=uke-desktop-packaging/manifests/native-runtime.json
+manifest=components/uke-desktop-packaging/manifests/native-runtime.json
 families=packaging/families/families.json
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
@@ -35,7 +35,7 @@ query() {
 }
 cp "$manifest" "$stage/new.json"
 jq -er '.packages[]|[.name,(.source_name // .name),.binary_name]|@tsv' "$manifest" >"$stage/packages"
-cache="$root/uke-desktop-packaging/referances/fedora-srpms"
+cache="$root/components/uke-desktop-packaging/references/fedora-srpms"
 mkdir -p "$cache"
 while IFS=$'\t' read -r name source_name package; do
     query "$package"
@@ -97,7 +97,7 @@ while IFS=$'\t' read -r name source_name package; do
         readelf -h "$stage/libstdc++.so" | grep -Eq 'Machine:[[:space:]]+AArch64'
         nm -D --defined-only "$stage/libstdc++.so" | awk '{print $3}' | grep '@' | LC_ALL=C sort -u >"$stage/symbols.new"
         # A newer source cannot silently drop the previously admitted public ABI.
-        LC_ALL=C comm -23 uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt "$stage/symbols.new" >"$stage/missing-symbols"
+        LC_ALL=C comm -23 components/uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt "$stage/symbols.new" >"$stage/missing-symbols"
         [[ ! -s $stage/missing-symbols ]]
         jq --arg package "libstdc++-$version-$release.aarch64" --arg file "${library##*/}" \
            --arg hash "$(sha256sum "$stage/symbols.new" | cut -d' ' -f1)" --argjson count "$(wc -l <"$stage/symbols.new")" \
@@ -142,5 +142,5 @@ done
 # No partial source lock is committed when any acquisition or signature fails.
 cp "$stage/new.json" "$manifest"
 cp "$stage/families.json" "$families"
-if [[ -f $stage/symbols.new ]]; then cp "$stage/symbols.new" uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt; fi
+if [[ -f $stage/symbols.new ]]; then cp "$stage/symbols.new" components/uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt; fi
 printf '%s\n' 'Rawhide source and host-tool locks refreshed; validation and native COPR builds remain separate.'

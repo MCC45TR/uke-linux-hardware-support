@@ -16,7 +16,7 @@ digest=$(jq -er .sha256 "$manifest")
 expected=$(jq -er .source_evr "$manifest")
 [[ $url == https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u/uke-control-2.8.1-5.fc46.src.rpm ]]
 [[ $digest =~ ^[a-f0-9]{64}$ ]]
-input="$here/referances/uke-control-2.8.1-5.fc46.src.rpm"
+input="$here/references/uke-control-2.8.1-5.fc46.src.rpm"
 mkdir -p "$(dirname "$input")"
 if [[ ! -s $input ]]; then
     curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' --max-time 180 "$url" -o "$input.part"
@@ -50,14 +50,14 @@ cp "$stage/input/uke-control-2.8.1.tar.xz" "$top/SOURCES/"
 cp "$stage/input/uke-control.spec" "$top/SOURCES/uke-control-published-spec.txt"
 cp "$manifest" "$here/copr-public-key.asc" "$top/SOURCES/"
 mkdir "$stage/contract"
-cp "$root/uke-control/src/"{frontend.hpp,frontend-request.cpp,client.hpp} "$stage/contract/"
-cp "$root/uke-desktop-metas/src/gnome.json" "$stage/contract/"
+cp "$root/components/uke-control/src/"{frontend.hpp,frontend-request.cpp,client.hpp} "$stage/contract/"
+cp "$root/components/uke-desktop-metas/src/gnome.json" "$stage/contract/"
 tar --sort=name --mtime=@1793577600 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-frontend-contract.tar.xz" -C "$stage/contract" .
 mkdir -p "$stage/packages/src" "$stage/packages/tests" "$stage/packages/packaging"
-cp "$root/uke-control/src/"{packages.cpp,package-operation.hpp,cli.cpp,client-catalog.cpp,update-status.cpp,update-status-command.hpp,set-slot.cpp} "$stage/packages/src/"
-cp "$root/uke-control/tests/"{packages.cpp,package-operation.cpp,package-policy.cpp,package-policy.sh,package-policy.mk} "$stage/packages/tests/"
-cp "$root/uke-control/tests/"{update-status.cpp,update-status.mk} "$stage/packages/tests/"
-cp "$root/uke-control/packaging/org.senemos.uke.update-status.policy" "$stage/packages/packaging/"
+cp "$root/components/uke-control/src/"{packages.cpp,package-operation.hpp,cli.cpp,client-catalog.cpp,update-status.cpp,update-status-command.hpp,set-slot.cpp} "$stage/packages/src/"
+cp "$root/components/uke-control/tests/"{packages.cpp,package-operation.cpp,package-policy.cpp,package-policy.sh,package-policy.mk} "$stage/packages/tests/"
+cp "$root/components/uke-control/tests/"{update-status.cpp,update-status.mk} "$stage/packages/tests/"
+cp "$root/components/uke-control/packaging/org.senemos.uke.update-status.policy" "$stage/packages/packaging/"
 tar --sort=name --mtime=@1793664000 --owner=0 --group=0 --numeric-owner -cJf "$top/SOURCES/uke-control-package-update.tar.xz" -C "$stage/packages" .
 package=uke-control
 if [[ $phase == metas ]]; then package=uke-desktop-metas; fi

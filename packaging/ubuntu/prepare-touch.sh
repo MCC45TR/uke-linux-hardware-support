@@ -1,6 +1,6 @@
 #!/bin/bash
 # Source-only import: apply the shared geometry/assignment fixes, never run donor code.
-reference=$root/uke-sensors/referances/nt36532-thp
+reference=$root/components/uke-sensors/references/nt36532-thp
 while IFS=$'\t' read -r path hash; do
  printf '%s  %s\n' "$hash" "$reference/$path" | sha256sum -c -
 done < "$root/packaging/ubuntu/touch-inputs.tsv"

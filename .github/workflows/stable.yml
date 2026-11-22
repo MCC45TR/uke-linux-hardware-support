@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq curl make rpm xz-utils lz4 cpio binutils ripgrep unzip
       - name: Verify eligible stable sources
         run: |
-          make -C uke-desktop-packaging track-stable
+          make -C components/uke-desktop-packaging track-stable
           make validate
       - name: Publish changed source pins and request their COPR builds
         env:
@@ -25,12 +25,12 @@ jobs:
         run: |
           set -Eeuo pipefail
           changed=()
-          git diff --quiet -- uke-desktop-packaging/manifests/material-decoration.json || changed+=(material-decoration)
+          git diff --quiet -- components/uke-desktop-packaging/manifests/material-decoration.json || changed+=(material-decoration)
           if ((${#changed[@]} == 0)); then exit 0; fi
           test -n "$COPR_SUPPORT_BUILD_HOOK_BASE"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add uke-desktop-packaging/manifests/material-decoration.json uke-desktop-packaging/packaging/material-decoration/material-decoration.spec
+          git add components/uke-desktop-packaging/manifests/material-decoration.json components/uke-desktop-packaging/packaging/material-decoration/material-decoration.spec
           git commit -m 'Track verified stable hardware support source releases'
           git push origin HEAD:main
           for package in "${changed[@]}"; do

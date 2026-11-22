@@ -19,7 +19,7 @@ srpm:
 		install -m644 "$$stage/$$package-$$evr.src.rpm" "$(outdir)/"
 		exit 0
 	fi
-	if [[ "$$subdir" == packaging/families/control-gui-check || "$$subdir" == uke-nfc-ir ]]; then
+	if [[ "$$subdir" == packaging/families/control-gui-check || "$$subdir" == components/uke-nfc-ir ]]; then
 		dnf -y --setopt=install_weak_deps=False install make tar gzip rpm-build coreutils bash systemd-rpm-macros
 		stage="$$root/$$subdir/build/copr-source"
 		$(MAKE) -C "$$root/$$subdir" srpm outdir="$$stage"
@@ -27,7 +27,7 @@ srpm:
 		install -m644 "$$stage/"*.src.rpm "$(outdir)/"
 		exit 0
 	fi
-	if [[ "$$subdir" == uke-control-qt || "$$subdir" == uke-control-gtk ]]; then
+	if [[ "$$subdir" == components/uke-control-qt || "$$subdir" == components/uke-control-gtk ]]; then
 		dnf -y --setopt=install_weak_deps=False install make tar gzip rpm-build coreutils bash cmake-rpm-macros
 		stage="$$root/$$subdir/build/copr-source"
 		$(MAKE) -C "$$root/$$subdir" srpm outdir="$$stage"
@@ -57,11 +57,11 @@ srpm:
 		exit 0
 	fi
 	case "$$subdir" in
-		uke-core-meta|uke-desktop-metas|uke-orangefox-packaging|uke-boot|uke-desktop-integration|uke-control) component="$$subdir"; package=;;
-		uke-sensors/packaging/libssc|uke-sensors/packaging/iio-sensor-proxy|uke-sensors/packaging/uke-ssc-fileservice)
-			component=uke-sensors; package="$${subdir##*/}";;
-		uke-desktop-packaging/packaging/*)
-			component=uke-desktop-packaging; package="$${subdir##*/}"
+		components/uke-core-meta|components/uke-desktop-metas|components/uke-orangefox-packaging|components/uke-boot|components/uke-desktop-integration|components/uke-control) component="$$subdir"; package=;;
+		components/uke-sensors/packaging/libssc|components/uke-sensors/packaging/iio-sensor-proxy|components/uke-sensors/packaging/uke-ssc-fileservice)
+			component=components/uke-sensors; package="$${subdir##*/}";;
+		components/uke-desktop-packaging/packaging/*)
+			component=components/uke-desktop-packaging; package="$${subdir##*/}"
 			case "$$package" in material-decoration|plymouth-uke|at-spi2-core|gstreamer1|libaccounts-glib|libwacom|libstdcxx-uke-runtime|mesa) ;; *) echo 'Unreviewed or withdrawn source package' >&2; exit 1;; esac;;
 		*) echo 'Unreviewed component or source directory' >&2; exit 1;;
 	esac

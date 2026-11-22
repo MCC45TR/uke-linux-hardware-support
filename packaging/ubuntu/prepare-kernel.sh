@@ -1,7 +1,7 @@
 #!/bin/bash
 # Stage exact emitted experimental release-1006 sources only. Never execute its
 # native preparer, tests, compiler, RPM worker or boot/image producers here.
-archive=$root/uke-kernel-packaging/referances/source-reconciliation/kernel-1006.src.rpm
+archive=$root/components/uke-kernel-packaging/references/source-reconciliation/kernel-1006.src.rpm
 printf '%s  %s\n' 70f151855f727c9d83c3bedc35ff52dd60cb222b2d741818472dced458bcd60c "$archive" | sha256sum -c -
 mkdir "$stage/inputs"
 for member in linux-7.3.1.tar.xz linux-7.3.1.tar.sign linux-stable.asc senemos-uke-adaptation-7.3.1.tar.xz senemos-native-profile-7.3.1.tar.xz senemos-uke-boot-recipe.tar.xz; do

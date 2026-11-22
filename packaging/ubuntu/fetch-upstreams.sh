@@ -29,7 +29,7 @@ while IFS=$'\t' read -r package archive url hash member source_hash; do
  fi
  printf '%s  %s\n' "$hash" "$root/$archive" | sha256sum -c -
 done < <(cat "$root/packaging/ubuntu/release-sources.tsv" "$root/packaging/ubuntu/release-overrides.tsv" "$root/packaging/ubuntu/external-components.tsv" "$root/packaging/ubuntu/kernel-inputs.tsv")
-touch_root=$root/uke-sensors/referances/nt36532-thp
+touch_root=$root/components/uke-sensors/references/nt36532-thp
 if [[ $selected != all && $selected != uke-touchscreen ]]; then exit 0; fi
 while IFS=$'\t' read -r path hash; do
  if [[ ! -s $touch_root/$path ]]; then

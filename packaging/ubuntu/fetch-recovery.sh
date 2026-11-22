@@ -3,8 +3,8 @@
 set -euo pipefail
 root=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 revision=cbecc441059ebffa97497e736edd2e0b0b0546a5
-lock=$(git -C "$root" show "$revision:uke-orangefox-packaging/manifests/release-lock.json")
-cache=$root/uke-orangefox-packaging/referances/releases/R12.0-uke-modded-v003
+lock=$(git -C "$root" show "$revision:components/uke-orangefox-packaging/manifests/release-lock.json")
+cache=$root/components/uke-orangefox-packaging/references/releases/R12.0-uke-modded-v003
 mkdir -p "$cache"
 while IFS=$'\t' read -r name url hash bytes; do
  [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]

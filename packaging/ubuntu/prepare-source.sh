@@ -48,7 +48,7 @@ if [[ $pkg == uke-linux-kernel ]]; then
  bash "$root/packaging/ubuntu/export-kernel-security.sh" "$stage/debian/kernel-security"
 fi
 if [[ $pkg == uke-speaker-firmware ]]; then
- cp "$root/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$stage/debian/audit-speaker-source"
+ cp "$root/components/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$stage/debian/audit-speaker-source"
 fi
 find "$stage/debian" -type d -exec chmod 0755 {} +
 find "$stage/debian" -type f -perm /111 -exec chmod 0755 {} +

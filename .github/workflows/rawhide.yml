@@ -30,7 +30,7 @@ jobs:
           GH_REPOSITORY: ${{ github.repository }}
         run: |
           set -Eeuo pipefail
-          paths=(uke-desktop-packaging/manifests/native-runtime.json uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt packaging/families/families.json)
+          paths=(components/uke-desktop-packaging/manifests/native-runtime.json components/uke-desktop-packaging/src/native-runtime/fedora-exported-symbols.txt packaging/families/families.json)
           if git diff --quiet -- "${paths[@]}"; then
             # A newer source may have waited behind an older in-flight build.
             pending=false
@@ -44,7 +44,7 @@ jobs:
               pending=true
             done
             if [[ $pending == false ]]; then echo 'Rawhide locks unchanged; no unrequested family revision'; exit 0; fi
-            lock_commit=$(git log -1 --format=%H -- uke-desktop-packaging/manifests/native-runtime.json)
+            lock_commit=$(git log -1 --format=%H -- components/uke-desktop-packaging/manifests/native-runtime.json)
             before=$(git rev-parse "$lock_commit^")
           else
             before=$(git rev-parse HEAD)

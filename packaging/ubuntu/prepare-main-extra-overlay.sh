@@ -76,7 +76,7 @@ RULES
  uke-orangefox-recovery)
   sed -e '/^override_dh_auto_configure:/a\	 bash debian/verify-main-inputs' \
       -e '/^override_dh_auto_clean:/a\	 bash debian/verify-main-inputs' \
-      -e 's|release|source/referances/releases/R12.0-uke-modded-v003|g' "$canonical/rules" > "$output/rules";;
+      -e 's|release|source/references/releases/R12.0-uke-modded-v003|g' "$canonical/rules" > "$output/rules";;
 esac
 source_url=$(awk -F '\t' -v p="$package" '$1==p{print $6}' "$root/packaging/ubuntu/main-upstreams.tsv")
 [[ -n $source_url ]] || source_url=https://github.com/MCC45TR/uke-linux-hardware-support
@@ -84,7 +84,7 @@ sed -e "s|^Source: See.*$|Source: $source_url|" \
     -e 's|^Files: uke/src/|Files: source/src/|' \
     -e 's|^Files: uke/\* debian/\*|Files: source/src/* source/packaging/* source/manifests/* source/tests/* source/docs/* debian/*|' \
     -e 's|^Files: src/upstream/|Files: source/src/upstream/|' \
-    -e 's| release/| source/referances/releases/R12.0-uke-modded-v003/|g' "$canonical/copyright" > "$output/copyright"
+    -e 's| release/| source/references/releases/R12.0-uke-modded-v003/|g' "$canonical/copyright" > "$output/copyright"
 cat >> "$output/copyright" <<'COPYRIGHT'
 
 Files: AGENTS.md README.md LICENSE debian/*
@@ -94,7 +94,7 @@ COPYRIGHT
 if [[ $package == uke-battery-observer ]]; then
  cat >> "$output/copyright" <<'COPYRIGHT'
 
-Files: source/referances/upower/* source/patches/upower/*
+Files: source/references/upower/* source/patches/upower/*
 Copyright: UPower contributors; see retained upstream notices
 License: GPL-2+
  The full GNU General Public License version 2 is available in

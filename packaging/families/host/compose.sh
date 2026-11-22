@@ -52,7 +52,7 @@ if [[ $integration == true ]]; then
 elif [[ -z $standalone ]]; then
     while IFS= read -r source_key; do
         bash "$root/packaging/families/host/check-source-retirement.sh" "$source_key"
-    done < <(jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' uke-desktop-packaging/manifests/native-runtime.json;
+    done < <(jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' components/uke-desktop-packaging/manifests/native-runtime.json;
         jq -r --arg family "$family" '.[]|select(.family==$family)|.name' packaging/families/source-inputs.json)
 fi
 if [[ $integration == true && $family == uke-control ]];then
@@ -75,8 +75,8 @@ printf '%s\n' '20 October 2026. Source-family packaging; device acceptance remai
 cp packaging/families/{families.json,source-inputs.json} "$bundle/"
 cp LICENSE "$bundle/LICENSE"
 if [[ $integration == true && $family == uke-meta-integration ]];then
-    cp uke-core-meta/src/profile.json "$bundle/core-profile.json"
-    cp uke-desktop-metas/src/profile.json "$bundle/desktops-profile.json"
+    cp components/uke-core-meta/src/profile.json "$bundle/core-profile.json"
+    cp components/uke-desktop-metas/src/profile.json "$bundle/desktops-profile.json"
 fi
 cp packaging/families/{migrations.json,host/service-rename.sh} "$bundle/"
 jq -r '.rename|to_entries[]|[.key,.value]|@tsv' packaging/families/families.json >"$stage/rename"
@@ -89,7 +89,7 @@ if [[ $integration == true ]]; then
             *) echo 'Unreviewed integration source URL' >&2; exit 1;;
         esac
         [[ $hash =~ ^[a-f0-9]{64}$ ]]
-        input="$root/packaging/families/referances/integrations/$key.src.rpm"
+        input="$root/packaging/families/references/integrations/$key.src.rpm"
         mkdir -p "$(dirname "$input")"
         if [[ ! -s $input ]]; then
             curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' --max-time 240 "$url" -o "$input.part"
@@ -105,45 +105,45 @@ elif [[ -n $standalone ]]; then
 else
 case $family in
 uke-sound)
-    make -C uke-desktop-integration speaker-controls-srpm outdir="$stage/speaker-controls" >"$stage/local.log"
+    make -C components/uke-desktop-integration speaker-controls-srpm outdir="$stage/speaker-controls" >"$stage/local.log"
     controls=("$stage/speaker-controls/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
     printf '%s\t%s\n' uke-speaker-controls "${controls[0]}" >"$stage/inputs"
-    make -C uke-desktop-integration displayport-audio-srpm outdir="$stage/audio-policy" >>"$stage/local.log"
+    make -C components/uke-desktop-integration displayport-audio-srpm outdir="$stage/audio-policy" >>"$stage/local.log"
     policies=("$stage/audio-policy/"*.src.rpm); [[ ${#policies[@]} == 1 && -f ${policies[0]} ]]
     printf '%s\t%s\n' uke-displayport-audio "${policies[0]}" >>"$stage/inputs";;
 uke-hw)
-    make -C uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
+    make -C components/uke-boot srpm outdir="$stage/boot" >"$stage/local.log"
     boots=("$stage/boot/"*.src.rpm); [[ ${#boots[@]} == 1 && -f ${boots[0]} ]]
     printf '%s\t%s\n' uke-boot-integration "${boots[0]}" >"$stage/inputs";;
 uke-core)
-    make -C uke-control srpm outdir="$stage/control" >"$stage/local.log"
+    make -C components/uke-control srpm outdir="$stage/control" >"$stage/local.log"
     controls=("$stage/control/"*.src.rpm); [[ ${#controls[@]} == 1 && -f ${controls[0]} ]]
     printf '%s\t%s\n' uke-control "${controls[0]}" >"$stage/inputs";;
 uke-sensors)
-    make -C uke-sensors proximity-capture-srpm outdir="$stage/proximity-capture" >"$stage/local.log"
+    make -C components/uke-sensors proximity-capture-srpm outdir="$stage/proximity-capture" >"$stage/local.log"
     captures=("$stage/proximity-capture/SRPMS/"*.src.rpm); [[ ${#captures[@]} == 1 && -s ${captures[0]} ]]
     printf '%s\t%s\n' uke-proximity-capture "${captures[0]}" >"$stage/inputs"
-    make -C uke-sensors front-color-srpm outdir="$stage/front-color" >>"$stage/local.log"
+    make -C components/uke-sensors front-color-srpm outdir="$stage/front-color" >>"$stage/local.log"
     colors=("$stage/front-color/SRPMS/"*.src.rpm); [[ ${#colors[@]} == 1 && -s ${colors[0]} ]]
     printf '%s\t%s\n' uke-front-color "${colors[0]}" >>"$stage/inputs"
-    make -C uke-sensors srpm PACKAGE=libssc outdir="$stage/libssc" >"$stage/local.log"
+    make -C components/uke-sensors srpm PACKAGE=libssc outdir="$stage/libssc" >"$stage/local.log"
     libraries=("$stage/libssc/"*.src.rpm); [[ ${#libraries[@]} == 1 && -f ${libraries[0]} ]]
     printf '%s\t%s\n' libssc "${libraries[0]}" >>"$stage/inputs"
-    make -C uke-sensors srpm PACKAGE=uke-ssc-fileservice outdir="$stage/ssc" >>"$stage/local.log"
+    make -C components/uke-sensors srpm PACKAGE=uke-ssc-fileservice outdir="$stage/ssc" >>"$stage/local.log"
     services=("$stage/ssc/"*.src.rpm); [[ ${#services[@]} == 1 && -f ${services[0]} ]]
     printf '%s\t%s\n' uke-ssc-fileservice "${services[0]}" >>"$stage/inputs";;
 uke-power)
-    make -C uke-desktop-integration srpm outdir="$root/uke-desktop-integration/build/srpm" >"$stage/local.log"
-    make -C uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
-    printf '%s\t%s\n' uke-adaptive-display "$root/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.16-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
+    make -C components/uke-desktop-integration srpm outdir="$root/components/uke-desktop-integration/build/srpm" >"$stage/local.log"
+    make -C components/uke-platform-runtime srpm outdir="$stage/battery" >>"$stage/local.log"
+    printf '%s\t%s\n' uke-adaptive-display "$root/components/uke-desktop-integration/build/srpm/uke-adaptive-display-1.0.16-1$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs"
     batteries=("$stage/battery/rpmbuild/SRPMS/"*.src.rpm)
     [[ ${#batteries[@]} == 1 && -f ${batteries[0]} ]]
     printf '%s\t%s\n' uke-battery-observer "${batteries[0]}" >>"$stage/inputs";;
 uke-extras)
-    make -C uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
-    printf '%s\t%s\n' uke-plymonth "$root/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-4$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
+    make -C components/uke-desktop-packaging srpm PACKAGE=plymouth-uke outdir="$root/components/uke-desktop-packaging/build/srpm/plymouth-uke" >"$stage/local.log"
+    printf '%s\t%s\n' uke-plymonth "$root/components/uke-desktop-packaging/build/srpm/plymouth-uke/uke-plymonth-1.0.2-4$(rpm --eval '%{?dist}').src.rpm" >"$stage/inputs";;
 uke-additional)
-    make -C uke-video srpm outdir="$stage/video" >"$stage/local.log"
+    make -C components/uke-video srpm outdir="$stage/video" >"$stage/local.log"
     backends=("$stage/video/SRPMS/"*.src.rpm)
     [[ ${#backends[@]} == 1 && -s ${backends[0]} ]]
     printf '%s\t%s\n' uke-vaapi-v4l2 "${backends[0]}" >"$stage/inputs";;
@@ -156,15 +156,15 @@ uke-metas)
 esac
 touch "$stage/inputs"
 # Fedora variants are regenerated from the current verified Rawhide source lock.
-jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' uke-desktop-packaging/manifests/native-runtime.json >"$stage/native-packages"
+jq -r --arg family "$family" '.packages[]|select(.family==$family)|.name' components/uke-desktop-packaging/manifests/native-runtime.json >"$stage/native-packages"
 while IFS= read -r package; do
-    make -C uke-desktop-packaging srpm PACKAGE="$package" outdir="$stage/native/$package" >"$stage/native-$package.log"
+    make -C components/uke-desktop-packaging srpm PACKAGE="$package" outdir="$stage/native/$package" >"$stage/native-$package.log"
     files=("$stage/native/$package/"*.src.rpm)
     [[ ${#files[@]} == 1 && -s ${files[0]} ]]
     printf '%s\t%s\n' "$package" "${files[0]}" >>"$stage/inputs"
 done <"$stage/native-packages"
 while IFS=$'\t' read -r key url hash; do
-    input="$root/packaging/families/referances/inputs/$key.src.rpm"
+    input="$root/packaging/families/references/inputs/$key.src.rpm"
     mkdir -p "$(dirname "$input")"
     if [[ ! -s $input ]]; then
         case "$key:$url" in
@@ -192,7 +192,7 @@ while IFS=$'\t' read -r key input; do
     (cd "$source"; cpio -idm --quiet --no-absolute-filenames <"$part/source.cpio")
     if [[ $key == uke-front-color && $integration == false ]]; then
         for path in src/front-color.cpp src/front-color-state.hpp src/front-color-file.hpp src/ssc-discovery.cpp src/ssc-sample.cpp tests/front-color.cpp; do
-            cmp "$root/uke-sensors/$path" <(tar -xOf "$source/uke-front-color-0.1.0.tar.gz" "uke-front-color-0.1.0/$path")
+            cmp "$root/components/uke-sensors/$path" <(tar -xOf "$source/uke-front-color-0.1.0.tar.gz" "uke-front-color-0.1.0/$path")
         done
     fi
     specs=("$source/"*.spec); [[ ${#specs[@]} == 1 ]]

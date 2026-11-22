@@ -13,14 +13,14 @@ for package in uke-ssc-fileservice iio-sensor-proxy upower uke-vaapi-v4l2 uke-im
   stage=$work/$package/$scenario
   mkdir -p "$stage/debian" "$stage/source/$(dirname "$archive")"
   cp "$root/packaging/ubuntu/main-upstreams.tsv" "$stage/debian/"
-  cp "$root/$component/$archive" "$stage/source/$archive"
+  cp "$root/components/$component/$archive" "$stage/source/$archive"
   if [[ $count != 0 ]]; then
-   cp -a "$root/$component/patches" "$stage/source/"
+   cp -a "$root/components/$component/patches" "$stage/source/"
    patches=("$stage/source/patches/$patchset/"*.patch)
   fi
   if [[ $package == iio-sensor-proxy ]]; then
    mkdir "$stage/source/src"
-   cp "$root/$component/src/dual-light.h" "$stage/source/src/"
+   cp "$root/components/$component/src/dual-light.h" "$stage/source/src/"
   fi
   case $scenario in
    corrupt) printf corruption >> "$stage/source/$archive";;
@@ -38,12 +38,12 @@ for package in uke-ssc-fileservice iio-sensor-proxy upower uke-vaapi-v4l2 uke-im
 done
 for scenario in valid bad-license; do
  stage=$work/touch/$scenario
- mkdir -p "$stage/source/referances" "$stage/source/src" "$stage/debian"
+ mkdir -p "$stage/source/references" "$stage/source/src" "$stage/debian"
  cp "$root/packaging/ubuntu/touch-inputs.tsv" "$stage/debian/main-touch-inputs.tsv"
- cp -a "$root/uke-sensors/referances/nt36532-thp" "$stage/source/referances/"
- cp -a "$root/uke-sensors/patches" "$stage/source/"
- cp "$root/uke-sensors/src/prepare-touch-core.sh" "$stage/source/src/"
- [[ $scenario != bad-license ]] || printf corruption >> "$stage/source/referances/nt36532-thp/LICENSE"
+ cp -a "$root/components/uke-sensors/references/nt36532-thp" "$stage/source/references/"
+ cp -a "$root/components/uke-sensors/patches" "$stage/source/"
+ cp "$root/components/uke-sensors/src/prepare-touch-core.sh" "$stage/source/src/"
+ [[ $scenario != bad-license ]] || printf corruption >> "$stage/source/references/nt36532-thp/LICENSE"
  if (cd "$stage"; bash "$root/packaging/ubuntu/prepare-main-upstream.sh" uke-touchscreen) > "$stage/log" 2>&1; then
   [[ $scenario == valid ]]
   printf '%s  %s\n' 7619b12a440be1f64cacb47b4b617fcfcf4486853822323f8d143c6e73aba9b1 "$stage/source/src/upstream/nt36532-thp/nvt_touch_core.cpp" | sha256sum -c -
@@ -51,6 +51,6 @@ for scenario in valid bad-license; do
   [[ $scenario == bad-license && ! -e $stage/source/src/upstream ]]
  fi
 done
-(cd "$root/uke-platform-runtime"; sha256sum -c manifests/released-source-1.4.1.sha256) > "$work/battery.log"
-(cd "$root/uke-orangefox-packaging/referances/releases/R12.0-uke-modded-v003"; sha256sum -c PACKAGE-SHA256SUMS) > "$work/recovery.log"
+(cd "$root/components/uke-platform-runtime"; sha256sum -c manifests/released-source-1.4.1.sha256) > "$work/battery.log"
+(cd "$root/components/uke-orangefox-packaging/references/releases/R12.0-uke-modded-v003"; sha256sum -c PACKAGE-SHA256SUMS) > "$work/recovery.log"
 echo 'Remaining main source/patch/license admission fixtures and exact released payload hashes passed.'

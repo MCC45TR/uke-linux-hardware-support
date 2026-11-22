@@ -7,9 +7,9 @@ trap 'rm -rf -- "$work"' EXIT
 package=uke-speaker-firmware
 bash "$root/packaging/ubuntu/prepare-main-overlay.sh" "$package" "$work/overlay"
 diff -ru "$work/overlay" "$root/packaging/ubuntu/main-recipes/$package/debian"
-inputs=$root/xiaomi-uke-firmware/referances/speaker-preset-3.0.304.0
-metadata=$root/xiaomi-uke-firmware/packaging/speaker-firmware
-bash "$root/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$inputs/fs19xx.fsm" "$inputs/odm-NOTICE.xml.gz" "$metadata"
+inputs=$root/components/xiaomi-uke-firmware/references/speaker-preset-3.0.304.0
+metadata=$root/components/xiaomi-uke-firmware/packaging/speaker-firmware
+bash "$root/components/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$inputs/fs19xx.fsm" "$inputs/odm-NOTICE.xml.gz" "$metadata"
 mkdir "$work/tree" "$work/tree/debian"
 cp "$work/overlay/verify-main-inputs" "$work/tree/debian/"
 revision=0123456789012345678901234567890123456789
@@ -25,7 +25,7 @@ if (cd "$work/tree"; bash debian/verify-main-inputs) >/dev/null 2>&1; then
 fi
 cp "$inputs/fs19xx.fsm" "$work/changed.fsm"
 echo corruption >> "$work/changed.fsm"
-if bash "$root/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$work/changed.fsm" "$inputs/odm-NOTICE.xml.gz" "$metadata" >/dev/null 2>&1; then
+if bash "$root/components/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$work/changed.fsm" "$inputs/odm-NOTICE.xml.gz" "$metadata" >/dev/null 2>&1; then
  echo 'Changed canonical preset was admitted' >&2; exit 1
 fi
 version=$(dpkg-parsechangelog --file "$work/overlay/changelog" -SVersion)

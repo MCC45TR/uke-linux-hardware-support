@@ -7,11 +7,11 @@ trap 'rm -rf -- "$work"' EXIT
 bash "$root/packaging/ubuntu/tests/sensor-build-architecture.sh"
 for scenario in valid corrupt missing-patch broken-patch; do
  stage=$work/$scenario
- mkdir -p "$stage/source/referances/libssc" "$stage/source/patches"
- cp "$root/uke-sensors/referances/libssc/libssc-v0.4.4.tar.gz" "$stage/source/referances/libssc/"
- cp -a "$root/uke-sensors/patches/libssc" "$stage/source/patches/"
+ mkdir -p "$stage/source/references/libssc" "$stage/source/patches"
+ cp "$root/components/uke-sensors/references/libssc/libssc-v0.4.4.tar.gz" "$stage/source/references/libssc/"
+ cp -a "$root/components/uke-sensors/patches/libssc" "$stage/source/patches/"
  case $scenario in
-  corrupt) printf corruption >> "$stage/source/referances/libssc/libssc-v0.4.4.tar.gz";;
+  corrupt) printf corruption >> "$stage/source/references/libssc/libssc-v0.4.4.tar.gz";;
   missing-patch) rm "$stage/source/patches/libssc/0007-reject-invalid-proximity-values.patch";;
   broken-patch) printf 'invalid patch fixture\n' > "$stage/source/patches/libssc/0007-reject-invalid-proximity-values.patch";;
  esac

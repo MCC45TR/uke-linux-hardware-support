@@ -11,7 +11,7 @@ with only `fedora-rawhide-aarch64` enabled. The existing
 definitions, for 43 rows in total. The nine umbrella recipes and earlier
 observations below remain the legacy stable/test path.
 
-27 October 2026: the [hardware update cohort](../../docs/DNF-UPDATE-20261027.md)
+27 October 2026: the hardware update cohort
 joins Core `1.15.1-3`, hardware `1.8.5-1`, power `1.3.3-4`, sensors `1.0.9-5`,
 extras `1.0.4-2`, additional `1.0.0-13`, metas `1.4.0-4`, camera `1.0.0-3`
 and sound `1.0.5-1`. Non-kernel children now all use the `uke-` prefix.
@@ -116,7 +116,7 @@ client, with a native launcher for a client supplied by the running kernel's
 module package. The separate `uke-touchscreen` child is no longer built.
 Private data remains separate. Native source generation, host boot/update/USB
 fixtures and source-family checks pass; COPR and tablet migration are pending.
-See [touch runtime migration](../../uke-boot/docs/TOUCH-RUNTIME.md).
+See [touch runtime migration](../../components/uke-boot/docs/TOUCH-RUNTIME.md).
 
 23 October 2026: sensors `1.0.5` builds the front-color publisher from its
 current owning source instead of the archived release-2 source RPM. It retains

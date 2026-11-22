@@ -1,6 +1,6 @@
 #!/bin/bash
 # Source-stage existing data delivery, not a new Android or Ubuntu image build.
-cache=$root/uke-orangefox-packaging/referances/releases/R12.0-uke-modded-v003
+cache=$root/components/uke-orangefox-packaging/references/releases/R12.0-uke-modded-v003
 mkdir "$stage/release"
 while IFS=$'\t' read -r name hash bytes; do
  [[ $name =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]

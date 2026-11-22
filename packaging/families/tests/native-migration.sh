@@ -56,7 +56,7 @@ for entry in standalone compose; do
     grep -Fq 'Retired project rebuild' "$stage/entry.err"
 done
 status=0
-bash "$root/uke-desktop-packaging/src/native-runtime/prepare-source.sh" libstdcxx-uke-runtime "$stage/out" "$root/uke-desktop-packaging" 2>"$stage/direct.err" || status=$?
+bash "$root/components/uke-desktop-packaging/src/native-runtime/prepare-source.sh" libstdcxx-uke-runtime "$stage/out" "$root/components/uke-desktop-packaging" 2>"$stage/direct.err" || status=$?
 [[ $status == 2 && ! -e $stage/out ]]
 # An umbrella must not revive the same fork from a pinned archived SRPM.
 # All build/download tools are stubs, so this fixture cannot compile locally.

@@ -30,13 +30,13 @@ case $key in
     uke-speaker-controls) group=uke-sound; component=uke-desktop-integration; target=speaker-controls-srpm;;
     uke-displayport-audio) group=uke-sound; component=uke-desktop-integration; target=displayport-audio-srpm;;
     *)
-        group=$(jq -er --arg key "$key" '.packages[]|select(.name==$key)|.family' uke-desktop-packaging/manifests/native-runtime.json) || group=
+        group=$(jq -er --arg key "$key" '.packages[]|select(.name==$key)|.family' components/uke-desktop-packaging/manifests/native-runtime.json) || group=
         if [[ -n $group ]]; then
             component=uke-desktop-packaging; args=("PACKAGE=$key")
         else
             entry=$(jq -ce --arg key "$key" '.[]|select(.name==$key)' packaging/families/source-inputs.json)
             group=$(jq -er .family <<<"$entry")
-            input="$root/packaging/families/referances/inputs/$key.src.rpm"
+            input="$root/packaging/families/references/inputs/$key.src.rpm"
             mkdir -p "$(dirname "$input")"
             url=$(jq -er .url <<<"$entry")
             case $url in
@@ -61,7 +61,7 @@ mapfile -t results < <(find "$stage/output/SRPMS" -maxdepth 1 -type f -name '*.s
 name=$(rpm -qp --qf '%{NAME}' "${results[0]}")
 [[ $name != "$group" ]]
 if [[ $key == uke-boot-integration ]]; then
-    expected=$(awk '$1=="Version:" {print $2; exit}' uke-boot/packaging/uke-boot-integration.spec)
+    expected=$(awk '$1=="Version:" {print $2; exit}' components/uke-boot/packaging/uke-boot-integration.spec)
     [[ $(rpm -qp --qf '%{VERSION}' "${results[0]}") == "$expected" ]] || {
         echo 'Boot source version differs from the owning component; update native_versions' >&2; exit 1;
     }

@@ -5,7 +5,7 @@ and updates preserve newer installed versions and unavailable extras. Exact
 version reconciliation remains in `channel sync`. The source overlay includes
 matching help/catalog text and signed offline solver fixtures. An unchanged
 normal update skips RPM, journal and boot work. COPR/device results are tracked
-in the [channel-policy record](../../../docs/lessons/2026-11-04-channel-policy.md).
+in the channel-policy record.
 The follow-up also prevents internal scriptlet pipe errors from terminating a
 completed transaction and truncating its buffered JSON receipt.
 
@@ -33,7 +33,7 @@ Rawhide AArch64 compilation and the retained native tests. DNF installation,
 real update progress, repeated empty updates and normal-alias inference passed
 on POCO Pad X1 with Linux 7.3.1-1500. Stable/test transitions still refuse their
 eight missing installed components before mutation; full transition acceptance
-remains open. See the [dated verification record](../../../docs/lessons/2026-11-04-control-update.md).
+remains open. See the dated verification record.
 
 This source recipe preserves the signed published `uke-control-2.8.1-5.fc46`
 cohort, including its DNF fixes, and advances the native backend to

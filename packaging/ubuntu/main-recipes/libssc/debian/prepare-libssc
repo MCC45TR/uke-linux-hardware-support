@@ -3,7 +3,7 @@
 # upstream build/test program runs here. Invoke from the recipe source root.
 set -euo pipefail
 export LC_ALL=C
-archive=source/referances/libssc/libssc-v0.4.4.tar.gz
+archive=source/references/libssc/libssc-v0.4.4.tar.gz
 printf '%s  %s\n' 716d6bd6b34d2d753060c6b54c9a87e34fae75b724c763bf9ef487efa3621587 "$archive" | sha256sum -c -
 [[ ! -e upstream ]]
 work=$(mktemp -d .main-libssc.XXXXXX)

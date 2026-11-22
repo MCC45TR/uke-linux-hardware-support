@@ -4,7 +4,7 @@ set -Eeuo pipefail
 root=$(cd -- "$(dirname -- "$0")/../../.."; pwd)
 stage=$(mktemp -d)
 trap 'rm -rf -- "$stage"' EXIT
-mkdir -p "$stage/repo/packaging/families/host" "$stage/repo/packaging/families/keys" "$stage/repo/uke-desktop-packaging/manifests" "$stage/bin"
+mkdir -p "$stage/repo/packaging/families/host" "$stage/repo/packaging/families/keys" "$stage/repo/components/uke-desktop-packaging/manifests" "$stage/bin"
 cp "$root/packaging/families/host/track-rawhide.sh" "$stage/repo/packaging/families/host/"
 touch "$stage/repo/packaging/families/keys/fedora-46.asc"
 cat >"$stage/base.json" <<'JSON'
@@ -55,7 +55,7 @@ SH
 printf '#!/usr/bin/env bash\ncat "${!#}"\n' >"$stage/bin/rpm2cpio"
 chmod +x "$stage/bin/"*
 export PATH="$stage/bin:$PATH"
-manifest="$stage/repo/uke-desktop-packaging/manifests/native-runtime.json"
+manifest="$stage/repo/components/uke-desktop-packaging/manifests/native-runtime.json"
 families="$stage/repo/packaging/families/families.json"
 reset_fixture() { cp "$stage/base.json" "$manifest"; cp "$stage/families.json" "$families"; }
 watcher="$stage/repo/packaging/families/host/track-rawhide.sh"

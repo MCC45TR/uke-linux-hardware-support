@@ -3,7 +3,7 @@ Upstream-Name: OrangeFox recovery for Uke
 Source: https://github.com/MCC45TR/orangefox_device_xiaomi_uke
 Comment: Existing published v003 artifacts, not newly compiled recovery.
  Exact source identities, original notices and license texts are retained in
- source/referances/releases/R12.0-uke-modded-v003/ORANGEFOX-SOURCE-PINS.xml, source/referances/releases/R12.0-uke-modded-v003/SOURCE-OFFER.md and source/referances/releases/R12.0-uke-modded-v003/licenses/.
+ source/references/releases/R12.0-uke-modded-v003/ORANGEFOX-SOURCE-PINS.xml, source/references/releases/R12.0-uke-modded-v003/SOURCE-OFFER.md and source/references/releases/R12.0-uke-modded-v003/licenses/.
  The delivery package does not establish binary reproducibility.
 
 Files: *

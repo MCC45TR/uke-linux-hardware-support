@@ -36,7 +36,7 @@ The unmodified `ag-account.c` still passes `priv->services` instead of
 `priv->changes` to `_ag_account_changes_free`; the original spec declares no
 patch for this. Uke applies upstream commit
 `270a66d5efe1453a2be4bad10894b947fdd2923e` through
-`uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch`.
+`components/uke-desktop-packaging/packaging/libaccounts-glib/0001-fix-uncommitted-changes-cleanup.patch`.
 The extracted original source file hashes to
 `b5c79b0f02019d3ddc4728d5c71379e0671a8e31b7fd08952f506d470cdb0f92`.
 Returning to that Fedora build would lose a real correction. A newer signed

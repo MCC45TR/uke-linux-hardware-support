@@ -31,7 +31,7 @@ Files: AGENTS.md README.md LICENSE debian/*
 Copyright: 2026 MCC45TR
 License: MIT
 
-Files: source/referances/upower/* source/patches/upower/*
+Files: source/references/upower/* source/patches/upower/*
 Copyright: UPower contributors; see retained upstream notices
 License: GPL-2+
  The full GNU General Public License version 2 is available in

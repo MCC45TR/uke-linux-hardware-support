@@ -39,5 +39,5 @@ jobs:
           set -Eeuo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           for family in $(jq -r '.families[].name' packaging/families/families.json); do
-            UKE_COPR_FAMILY="$family" bash uke-control/host/request-copr.sh
+            UKE_COPR_FAMILY="$family" bash components/uke-control/host/request-copr.sh
           done

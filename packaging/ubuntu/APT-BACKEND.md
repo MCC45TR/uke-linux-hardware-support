@@ -1,6 +1,6 @@
 # APT/dpkg backend implementation status
 
-Recorded 1 November 2026. `uke-control/src/apt-policy.hpp` implements bounded,
+Recorded 1 November 2026. `components/uke-control/src/apt-policy.hpp` implements bounded,
 read-only policy parsing and preliminary transaction exclusions. The Fedora
 libdnf5 backend remains the active backend. No Debian Control package or APT
 capability is advertised yet.

@@ -104,7 +104,7 @@ version=$(dpkg-parsechangelog --file "$canonical/changelog" -SVersion)
 snapshot=${version/-0ubuntu/+uke0ubuntu}
 mkdir -p "$output"
 cp -a "$canonical/." "$output/"
-cp "$root/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$output/audit-speaker-source"
+cp "$root/components/xiaomi-uke-firmware/src/audit-speaker-source.sh" "$output/audit-speaker-source"
 printf '3.0 (native)\n' > "$output/source/format"
 sed "1s/($version)/($snapshot)/" "$canonical/changelog" > "$output/changelog"
 sed '/^Files:/,$d' "$canonical/copyright" > "$output/copyright"
