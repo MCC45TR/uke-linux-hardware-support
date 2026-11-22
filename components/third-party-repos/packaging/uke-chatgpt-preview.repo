@@ -1,0 +1,9 @@
+[uke-chatgpt-preview]
+name=ChatGPT Desktop Preview for Linux ARM64
+baseurl=https://persistent.oaistatic.com/codex-app-prod/linux/rpm/$basearch
+enabled=0
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-uke-chatgpt.asc
+skip_if_unavailable=True
+includepkgs=chatgpt

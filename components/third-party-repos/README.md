@@ -9,6 +9,8 @@ sudo dnf install thirparty-repos
 sudo dnf install code code-insiders brave-browser mullvad-vpn 1password-cli
 sudo dnf install solidcraft orca-slicer prusa-slicer
 sudo dnf install onlyoffice-desktopeditors rustdesk
+sudo dnf install brave-browser-nightly vivaldi-stable cursor warp-terminal
+sudo dnf install anydesk bruno trilium ferdium
 sudo dnf install google-chrome-stable google-chrome-beta google-chrome-unstable google-chrome-canary
 ```
 
@@ -33,6 +35,15 @@ sudo dnf install google-chrome-stable google-chrome-beta google-chrome-unstable 
   The background service follows Fedora's systemd presets. Fedora disables
   it on a fresh installation. Wayland screen capture uses the desktop portal.
   [RustDesk v1.5.3 release](https://github.com/rustdesk/rustdesk/releases/tag/1.5.3)
+- Brave Nightly, Vivaldi Stable, Cursor, Warp Terminal and AnyDesk use
+  their publishers' signed ARM64 RPM repositories.
+- Bruno, Trilium Notes and Ferdium use the official ARM64 release payloads
+  in COPR-signed RPMs. [Bruno releases](https://github.com/usebruno/bruno/releases),
+  [Trilium Notes releases](https://github.com/TriliumNext/Trilium/releases) and
+  [Ferdium releases](https://github.com/ferdium/ferdium-app/releases).
+- OpenAI's ChatGPT desktop preview repository is disabled by default.
+  The vendor RPM includes Python setup code, and official Linux support
+  covers specific Fedora releases. [ChatGPT Linux preview](https://learn.chatgpt.com/docs/linux/linux-app)
 
 Check the upstream digest and architecture when importing new application
 releases. Repository definitions and application RPMs are

@@ -1,0 +1,8 @@
+[brave-browser-nightly]
+name=Brave Browser Nightly for Linux ARM64
+baseurl=https://brave-browser-rpm-nightly.s3.brave.com/aarch64
+enabled=1
+gpgcheck=1
+gpgkey=https://brave-browser-rpm-nightly.s3.brave.com/brave-core-nightly.asc
+skip_if_unavailable=True
+includepkgs=brave-browser-nightly,brave-keyring

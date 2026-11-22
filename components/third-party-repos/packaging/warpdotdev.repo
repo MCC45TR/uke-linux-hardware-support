@@ -1,0 +1,8 @@
+[warpdotdev]
+name=Warp Terminal for Linux ARM64
+baseurl=https://releases.warp.dev/linux/rpm/stable
+enabled=1
+gpgcheck=1
+gpgkey=https://releases.warp.dev/linux/keys/warp.asc
+skip_if_unavailable=True
+includepkgs=warp-terminal

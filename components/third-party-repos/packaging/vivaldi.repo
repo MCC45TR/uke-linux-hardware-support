@@ -1,0 +1,8 @@
+[vivaldi]
+name=Vivaldi Stable for Linux ARM64
+baseurl=https://repo.vivaldi.com/archive/rpm/aarch64
+enabled=1
+gpgcheck=1
+gpgkey=https://repo.vivaldi.com/archive/linux_signing_key.pub
+skip_if_unavailable=True
+includepkgs=vivaldi-stable
