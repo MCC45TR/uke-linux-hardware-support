@@ -246,7 +246,7 @@ QString Settings::summary(int area)const {
 QVariantList Settings::information()const {
   QVariantList out;if(!topic_)return out;
   for(const auto &id:topic_->reads) {
-    if(id=="channel.repositories")continue;
+    if(id=="channel.status")continue;
     if(id=="update.status"&&!bootReport().isEmpty())continue;
     const bool kernel=id.startsWith("kernel.");
     const bool cached=data_.contains(id);
@@ -537,11 +537,6 @@ void Settings::next() {
   if(!topic_||queue_.isEmpty()){current_.clear();emit changed();return;}
   current_=queue_.takeFirst();emit changed();
   try {
-    if(current_=="channel.repositories") {
-      if(fixture_.enabled)simulated_.start(fixture_.delay(current_.toStdString()));
-      else readCommand("/usr/bin/dnf5",{"--cacheonly","--quiet","repo","info","--enabled","--json"},8000);
-      return;
-    }
     if(current_.startsWith("kernel.")) {
       if(fixture_.enabled)simulated_.start(fixture_.delay(current_.toStdString()));
       else readKernel(current_.mid(7));
@@ -557,11 +552,10 @@ void Settings::finish(const Result &r) {
   if(current_.isEmpty()||QString::fromStdString(r.action_id)!=current_)return;
   const auto id=current_;
   QJsonParseError e;const auto document=QJsonDocument::fromJson(QByteArray::fromStdString(r.output),&e);
-  const bool repoList=id=="channel.repositories" && document.isArray();
-  const auto d=repoList ? QJsonObject{{"repositories",document.array()}} : document.object();
-  if(r.exit_status||r.cancelled||r.timed_out||r.truncated||e.error!=QJsonParseError::NoError||(!repoList&&!document.isObject())) {
+  const auto d=document.object();
+  if(r.exit_status||r.cancelled||r.timed_out||r.truncated||e.error!=QJsonParseError::NoError||!document.isObject()) {
     errors_[id]=i18n("The provider could not return usable information. Refresh to try again.");
-    if(id!="channel.repositories") notice_=errors_.value(id);
+    notice_=errors_.value(id);
   } else {
     data_[id]=id.startsWith("kernel.")&&d.value("schema").toString()=="org.uke.qt.kernel-information.v1"?d.value("data").toObject():d;errors_.remove(id);updated_=QDateTime::currentDateTime().toString(QLocale().timeFormat(QLocale::ShortFormat));stamps_[id]=updated_;
   }

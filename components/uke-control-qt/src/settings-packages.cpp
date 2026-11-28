@@ -1,37 +1,24 @@
 // SPDX-License-Identifier: MIT
 #include "settings.hpp"
 #include <KLocalizedString>
-#include <QSet>
 #include <algorithm>
 #include <memory>
 
 namespace uq {
 QVariantMap Settings::updateChannel() const {
   const auto status=data_.value("channel.status");
-  const auto saved=status.value("selected").toString();
+  const auto selected=status.value("selected").toString();
   const QStringList channels{"stable","test","unstable"};
-  const bool configured=status.value("schema").toString()=="org.uke.control.channel.v1" &&
-      !errors_.contains("channel.status") && channels.contains(saved);
-  const auto repositories=data_.value("channel.repositories").value("repositories");
-  const bool known=repositories.isArray() && !errors_.contains("channel.repositories");
-  static const QMap<QString,QString> projects{{"uke-linux","stable"},
-      {"uke-linux-test","test"},{"uke-linux-unstable","unstable"}};
-  QSet<QString> activeChannels;
-  if (known) {
-    for (const auto &entry : repositories.toArray()) {
-      for (const auto &value : entry.toObject().value("base_url").toArray()) {
-        const QUrl url(value.toString());
-        if (url.scheme()!="https" || url.host()!="download.copr.fedorainfracloud.org") continue;
-        const auto path=url.path().split('/');
-        if (path.size()<5 || path[1]!="results" || path[2]!="mcc45tr") continue;
-        const auto channel=projects.value(path[3]);
-        if (!channel.isEmpty()) activeChannels.insert(channel);
-      }
-    }
-  }
-  const auto active=activeChannels.size()==1 ? *activeChannels.cbegin() : QString();
-  return {{"active",active},{"configured",configured?saved:QString()},{"known",known},
-          {"multiple",activeChannels.size()>1},{"ready",configured && active==saved},
+  const auto report=status.value("repositories");
+  const bool known=status.value("schema").toString()=="org.uke.control.channel.v1" &&
+      report.isArray() && !errors_.contains("channel.status");
+  const auto repositories=report.toArray();
+  const auto enabled=std::count_if(repositories.cbegin(),repositories.cend(),[](const auto &repo) {
+    return repo.toObject().value("enabled").toBool();
+  });
+  const auto active=known && enabled>0 && channels.contains(selected) ? selected : QString();
+  return {{"active",active},{"known",known},
+          {"multiple",known && enabled>1 && active.isEmpty()},{"ready",!active.isEmpty()},
           {"kernel",safe(status.value("running_kernel").toString().left(120).toStdString())}};
 }
 

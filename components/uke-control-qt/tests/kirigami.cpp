@@ -28,9 +28,8 @@ static QQuickItem *visualItem(QQuickItem *parent, const QString &name) {
       return found;
   return nullptr;
 }
-static QJsonObject coprRepository(const QString &project) {
-  return {{"id","uke-selected"},{"base_url",QJsonArray{
-      "https://download.copr.fedorainfracloud.org/results/mcc45tr/"+project+"/fedora-rawhide-aarch64/"}}};
+static QJsonObject coprRepository(const QString &id, bool enabled=true) {
+  return {{"id",id},{"enabled",enabled}};
 }
 class KirigamiTests : public QObject {
   Q_OBJECT
@@ -252,24 +251,32 @@ private slots:
   }
   void enabledCoprChannel() {
     auto sample=fixture;
-    sample.results["channel.status"]=QJsonObject{{"data",QJsonObject{
-        {"schema","org.uke.control.channel.v1"},{"selected","stable"}}}};
-    sample.results["channel.repositories"]=QJsonObject{{"data",QJsonArray{
-        coprRepository("uke-linux-unstable"),coprRepository("uke-linux:custom:orcaslicer")}}};
-    Settings staleChoice(sample);
-    QVERIFY(staleChoice.open("updates"));
-    QTRY_VERIFY(!staleChoice.busy());
-    QCOMPARE(staleChoice.updateChannel().value("active").toString(),QString("unstable"));
-    QCOMPARE(staleChoice.updateChannel().value("configured").toString(),QString("stable"));
-    QVERIFY(!staleChoice.updateChannel().value("ready").toBool());
+    const auto channelReport=[](QJsonValue selected, QJsonArray repos) {
+      return QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.channel.v1"},
+        {"selected",selected},{"repositories",repos}}}};
+    };
+    sample.results["channel.status"]=channelReport("unstable",{
+        coprRepository("uke-linux-unstable"),coprRepository("uke-selected",false)});
+    Settings freshChoice(sample);
+    QVERIFY(freshChoice.open("updates"));
+    QTRY_VERIFY(!freshChoice.busy());
+    QCOMPARE(freshChoice.updateChannel().value("active").toString(),QString("unstable"));
+    QVERIFY(freshChoice.updateChannel().value("ready").toBool());
 
-    sample.results["channel.repositories"]=QJsonObject{{"data",QJsonArray{
-        coprRepository("uke-linux-test"),coprRepository("uke-linux")}}};
+    sample.results["channel.status"]=channelReport(QJsonValue::Null,{
+        coprRepository("uke-linux-test"),coprRepository("uke-linux")});
     Settings multiple(sample);
     QVERIFY(multiple.open("updates"));
     QTRY_VERIFY(!multiple.busy());
     QVERIFY(multiple.updateChannel().value("multiple").toBool());
     QVERIFY(multiple.updateChannel().value("active").toString().isEmpty());
+
+    sample.results["channel.status"]=channelReport("stable",{coprRepository("uke-selected",false)});
+    Settings disabled(sample);
+    QVERIFY(disabled.open("updates"));
+    QTRY_VERIFY(!disabled.busy());
+    QVERIFY(disabled.updateChannel().value("known").toBool());
+    QVERIFY(!disabled.updateChannel().value("ready").toBool());
   }
   void kernelInformationAndNdef() {
     const QJsonObject dock{{"kernel_managed",true},{"ports",QJsonArray{QJsonObject{{"name","port0"},{"data_role","[host] device"},{"power_role","source [sink]"},{"partner",true}}}},
@@ -365,9 +372,8 @@ private slots:
     rich.results["battery.cells"]=QJsonObject{{"data",QJsonObject{{"provider_verified",true},{"snapshot_coherent",true}}}};
     rich.results["flashlight.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.lights.v1"},
       {"flashlight",QJsonObject{{"available",true},{"on",false},{"requested_percent",50},{"brightness_step_percent",50}}}}}};
-    rich.results["channel.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.channel.v1"},{"selected","stable"}}}};
-    rich.results["channel.repositories"]=QJsonObject{{"data",QJsonArray{
-        coprRepository("uke-linux"),coprRepository("uke-linux-unstable:custom:orcaslicer")}}};
+    rich.results["channel.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.channel.v1"},
+        {"selected","stable"},{"repositories",QJsonArray{coprRepository("uke-linux")}}}}};
     const QJsonObject identity{
         {"board","POCO Pad X1"},{"processor","Snapdragon 7+ Gen 3"},{"ram_type","LPDDR5X"}};
     const QJsonArray cameras{QJsonObject{{"name","Camera A"}},QJsonObject{{"name","Camera B"}}};
