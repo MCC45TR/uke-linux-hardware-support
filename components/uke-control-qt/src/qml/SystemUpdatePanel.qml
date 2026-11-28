@@ -10,13 +10,17 @@ ColumnLayout {
     required property var settings
     readonly property var channels: settings.actionChoices("channel.set", "channel")
     readonly property var operation: settings.packageOperation
-    readonly property bool canRequest: !backend.readOnly && !backend.simulation && !operation.running
+    readonly property var updateChannel: settings.updateChannel
+    readonly property bool canRequest: !backend.readOnly && !backend.simulation && !operation.running && !settings.busy
     readonly property var cadence: ({
         stable: i18n("Stable is updated about once a month. Problems are rare."),
         test: i18n("Test is updated about once a week. It includes new features and can be less stable."),
         unstable: i18n("Unstable can receive daily or hourly updates. This channel is not stable.")
     })
     property var selected: ({})
+    function channelTitle(value) {
+        return channels.find(channel => channel.value === value)?.title || ""
+    }
     spacing: Kirigami.Units.largeSpacing
 
     TileGrid {
@@ -27,12 +31,12 @@ ColumnLayout {
             FormCard.FormButtonDelegate {
                 objectName: "updateSystem"
                 text: i18n("Update system")
-                enabled: panel.canRequest
+                enabled: panel.canRequest && panel.updateChannel.ready
                 onClicked: panel.settings.runPackageOperation("update")
             }
             FormCard.FormButtonDelegate {
                 text: i18n("Check for updates")
-                enabled: panel.canRequest
+                enabled: panel.canRequest && panel.updateChannel.ready
                 onClicked: panel.settings.runPackageOperation("check")
             }
             Controls.ProgressBar {
@@ -51,7 +55,6 @@ ColumnLayout {
 
         SettingsSection {
             heading: i18n("Update channel")
-            Controls.ButtonGroup { id: channels }
             Repeater {
                 model: panel.channels
                 delegate: Controls.RadioButton {
@@ -63,19 +66,29 @@ ColumnLayout {
                     Layout.leftMargin: Kirigami.Units.largeSpacing
                     Layout.rightMargin: Kirigami.Units.largeSpacing
                     text: modelData.title
-                    checked: panel.settings.currentChannel === modelData.value
-                    enabled: panel.canRequest && panel.settings.currentChannel.length > 0
-                    Controls.ButtonGroup.group: channels
+                    checked: panel.updateChannel.active === modelData.value
+                    enabled: panel.canRequest
+                    autoExclusive: false
                     onClicked: {
                         panel.selected = modelData
-                        checked = Qt.binding(() => panel.settings.currentChannel === modelData.value)
+                        checked = Qt.binding(() => panel.updateChannel.active === modelData.value)
                         channelDetails.open()
                     }
                 }
             }
             SettingsNote {
-                visible: panel.settings.currentChannel.length === 0 && !panel.settings.busy
-                text: i18n("The current channel could not be read.")
+                objectName: "updateChannelStatus"
+                visible: text.length > 0 && !panel.settings.busy
+                text: {
+                    const channel = panel.updateChannel
+                    if (!channel.known) return i18n("The enabled software repository could not be read.")
+                    if (channel.multiple) return i18n("Several Uke channels are enabled. Choose one to continue.")
+                    if (!channel.active) return i18n("No Uke update channel is enabled. Choose one to continue.")
+                    if (!channel.configured) return i18n("Choose a channel to save it for system updates.")
+                    if (!channel.ready) return i18n("Enabled: %1. Saved: %2. Choose a channel to continue.",
+                        panel.channelTitle(channel.active), panel.channelTitle(channel.configured))
+                    return ""
+                }
             }
         }
     }
@@ -102,7 +115,7 @@ ColumnLayout {
         }
         FormCard.FormButtonDelegate {
             text: i18n("Change channel")
-            enabled: panel.canRequest && panel.selected.value !== panel.settings.currentChannel
+            enabled: panel.canRequest && (!panel.updateChannel.ready || panel.selected.value !== panel.updateChannel.active)
             onClicked: {
                 channelDetails.close()
                 panel.settings.runPackageOperation("channel", panel.selected.value)

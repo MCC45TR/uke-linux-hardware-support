@@ -80,32 +80,30 @@ ColumnLayout {
             }
         }
     }
-    TileGrid {
+    TileColumns {
         minimumTileWidth: Kirigami.Units.gridUnit * 24
-        Repeater {
-            model: view.manager.state.sections || []
-            delegate: SettingsSection {
-                id: section
-                required property var modelData
-                property bool expanded: false
-                heading: view.readingLabel(modelData.title)
-                Repeater {
-                    model: section.modelData.rows
-                    delegate: SafeText {
-                        required property var modelData
-                        required property int index
-                        visible: index < 3 || section.expanded
-                        text: view.readingLabel(modelData.title)
-                        description: view.readingLabel(modelData.value || i18n("Not reported"))
-                                     + (modelData.status === "available" ? "" : "\n" + view.status(modelData.status))
-                    }
+        items: view.manager.state.sections || []
+        tile: SettingsSection {
+            id: section
+            readonly property var reading: tileData
+            property bool expanded: false
+            heading: view.readingLabel(reading.title)
+            Repeater {
+                model: section.reading.rows
+                delegate: SafeText {
+                    required property var modelData
+                    required property int index
+                    visible: index < 3 || section.expanded
+                    text: view.readingLabel(modelData.title)
+                    description: view.readingLabel(modelData.value || i18n("Not reported"))
+                                 + (modelData.status === "available" ? "" : "\n" + view.status(modelData.status))
                 }
-                FormCard.FormButtonDelegate {
-                    visible: section.modelData.rows.length > 3
-                    text: section.expanded ? i18n("Show less") : i18n("Show all %1 readings", section.modelData.rows.length)
-                    icon.name: themeIcons.names["view-list-details"]
-                    onClicked: section.expanded = !section.expanded
-                }
+            }
+            FormCard.FormButtonDelegate {
+                visible: section.reading.rows.length > 3
+                text: section.expanded ? i18n("Show less") : i18n("Show all %1 readings", section.reading.rows.length)
+                icon.name: themeIcons.names["view-list-details"]
+                onClicked: section.expanded = !section.expanded
             }
         }
     }

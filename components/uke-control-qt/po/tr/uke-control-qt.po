@@ -2768,3 +2768,63 @@ msgstr "Işık titreşimi"
 
 msgid "Magnetic heading"
 msgstr "Manyetik yön"
+
+msgid "The enabled software repository could not be read."
+msgstr "Etkin yazılım deposu okunamadı."
+
+msgid "Several Uke channels are enabled. Choose one to continue."
+msgstr "Birden fazla Uke kanalı etkin. Devam etmek için bir kanal seçin."
+
+msgid "No Uke update channel is enabled. Choose one to continue."
+msgstr "Etkin Uke güncelleme kanalı bulunamadı. Devam etmek için bir kanal seçin."
+
+msgid "Choose a channel to save it for system updates."
+msgstr "Sistem güncellemeleri için bir kanal seçin."
+
+msgid "Enabled: %1. Saved: %2. Choose a channel to continue."
+msgstr "Etkin kanal %1. Kayıtlı kanal %2. Devam etmek için bir kanal seçin."
+
+msgid "Function"
+msgstr "İşlev"
+
+msgid "Device"
+msgstr "Cihaz"
+
+msgid "Hardware"
+msgstr "Donanım"
+
+msgid "Display panel"
+msgstr "Ekran paneli"
+
+msgid "Internal UFS storage"
+msgstr "Dahili UFS depolama"
+
+msgid "Capacity"
+msgstr "Kapasite"
+
+msgid "Wi-Fi adapter"
+msgstr "Wi-Fi bağdaştırıcısı"
+
+msgid "Bluetooth adapter"
+msgstr "Bluetooth bağdaştırıcısı"
+
+msgid "RAM"
+msgstr "RAM"
+
+msgid "Chipset"
+msgstr "Yonga seti"
+
+msgid "Audio component"
+msgstr "Ses bileşeni"
+
+msgid "Video codec"
+msgstr "Video kodeği"
+
+msgid "Camera"
+msgstr "Kamera"
+
+msgid "Compatible accessories"
+msgstr "Uyumlu aksesuarlar"
+
+msgid "Temperature sensors"
+msgstr "Sıcaklık sensörleri"

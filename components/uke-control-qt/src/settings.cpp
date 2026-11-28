@@ -11,9 +11,9 @@
 #include <algorithm>
 #include <cmath>
 namespace uq {
-QVariantList platformBoardInformation();
+QVariantMap platformBoardInformation();
 QVariantList platformComponentInformation();
-QVariantList platformSensorInformation();
+QVariantMap platformSensorInformation();
 namespace {
 QString unknown() { return i18n("Not reported"); }
 QString value(const QJsonValue &v) {
@@ -238,6 +238,7 @@ QString Settings::summary(int area)const {
 QVariantList Settings::information()const {
   QVariantList out;if(!topic_)return out;
   for(const auto &id:topic_->reads) {
+    if(id=="channel.repositories")continue;
     if(id=="update.status"&&!bootReport().isEmpty())continue;
     const bool kernel=id.startsWith("kernel.");
     const bool cached=data_.contains(id);
@@ -318,12 +319,6 @@ QVariantList Settings::chargingBands() const {
     return left.toMap().value("start").toInt()<right.toMap().value("start").toInt();
   });
   return bands;
-}
-QString Settings::currentChannel() const {
-  const auto data=data_.value("channel.status");
-  if(data.value("schema").toString()!="org.uke.control.channel.v1" || errors_.contains("channel.status"))
-    return {};
-  return data.value("selected").toString();
 }
 QVariantList Settings::actionChoices(const QString &id,const QString &key) const {
   QVariantList choices;
@@ -508,6 +503,11 @@ void Settings::next() {
   if(!topic_||queue_.isEmpty()){current_.clear();emit changed();return;}
   current_=queue_.takeFirst();emit changed();
   try {
+    if(current_=="channel.repositories") {
+      if(fixture_.enabled)simulated_.start(fixture_.delay(current_.toStdString()));
+      else readCommand("/usr/bin/dnf5",{"--cacheonly","--quiet","repo","info","--enabled","--json"},8000);
+      return;
+    }
     if(current_.startsWith("kernel.")) {
       if(fixture_.enabled)simulated_.start(fixture_.delay(current_.toStdString()));
       else readKernel(current_.mid(7));
@@ -523,16 +523,25 @@ void Settings::finish(const Result &r) {
   if(current_.isEmpty()||QString::fromStdString(r.action_id)!=current_)return;
   const auto id=current_;
   QJsonParseError e;const auto document=QJsonDocument::fromJson(QByteArray::fromStdString(r.output),&e);
-  const auto d=document.object();
-  if(r.exit_status||r.cancelled||r.timed_out||r.truncated||e.error!=QJsonParseError::NoError||!document.isObject()) {
+  const bool repoList=id=="channel.repositories" && document.isArray();
+  const auto d=repoList ? QJsonObject{{"repositories",document.array()}} : document.object();
+  if(r.exit_status||r.cancelled||r.timed_out||r.truncated||e.error!=QJsonParseError::NoError||(!repoList&&!document.isObject())) {
     errors_[id]=i18n("The provider could not return usable information. Refresh to try again.");
-    notice_=errors_.value(id);
+    if(id!="channel.repositories") notice_=errors_.value(id);
   } else {
     data_[id]=id.startsWith("kernel.")&&d.value("schema").toString()=="org.uke.qt.kernel-information.v1"?d.value("data").toObject():d;errors_.remove(id);updated_=QDateTime::currentDateTime().toString(QLocale().timeFormat(QLocale::ShortFormat));stamps_[id]=updated_;
   }
-  current_.clear();emit changed();QTimer::singleShot(0,this,&Settings::next);
+  current_.clear();
+  if (id=="hardware.status") emit deviceInformationChanged();
+  emit changed();
+  QTimer::singleShot(0,this,&Settings::next);
 }
 void Settings::readKernel(const QString &kind) {
+  const QString helper="/usr/libexec/uke-control-qt/kernel-information";
+  if(kind=="charging"||kind=="tag")readCommand("/usr/bin/pkexec",{helper,kind},20000);
+  else readCommand(helper,{kind},20000);
+}
+void Settings::readCommand(const QString &program,const QStringList &arguments,int timeout) {
   auto *p=new QProcess(this);kernel_=p;kernelOutput_.clear();
   const auto id=current_;
   connect(p,&QProcess::readyReadStandardOutput,this,[this,p]{
@@ -547,10 +556,9 @@ void Settings::readKernel(const QString &kind) {
   connect(p,&QProcess::errorOccurred,this,[this,p,id](QProcess::ProcessError error){
     if(error!=QProcess::FailedToStart||kernel_!=p)return;kernelTimeout_.stop();kernel_=nullptr;p->deleteLater();Result r;r.action_id=id.toStdString();r.exit_status=69;finish(r);
   });
-  const QString helper="/usr/libexec/uke-control-qt/kernel-information";
-  if(kind=="charging"||kind=="tag")p->start("/usr/bin/pkexec",{helper,kind});
-  else p->start(helper,{kind});
-  kernelTimeout_.start(20000);
+  p->setStandardErrorFile(QProcess::nullDevice());
+  p->start(program,arguments);
+  kernelTimeout_.start(timeout);
 }
 QVariantMap Settings::usbPolicy()const {
   const auto d=data_.value("kernel.dock");

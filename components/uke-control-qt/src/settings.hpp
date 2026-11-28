@@ -33,10 +33,10 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantMap infrared READ infrared NOTIFY changed)
   Q_PROPERTY(QVariantMap desktopDisplay READ desktopDisplay NOTIFY changed)
   Q_PROPERTY(QVariantMap packageOperation READ packageOperation NOTIFY changed)
-  Q_PROPERTY(QVariantList deviceInformation READ deviceInformation NOTIFY changed)
+  Q_PROPERTY(QVariantList deviceInformation READ deviceInformation NOTIFY deviceInformationChanged)
   Q_PROPERTY(QVariantMap displayLink READ displayLink NOTIFY changed)
   Q_PROPERTY(QVariantList linuxPartitions READ linuxPartitions NOTIFY changed)
-  Q_PROPERTY(QString currentChannel READ currentChannel NOTIFY changed)
+  Q_PROPERTY(QVariantMap updateChannel READ updateChannel NOTIFY changed)
   Q_PROPERTY(bool busy READ busy NOTIFY changed)
   Q_PROPERTY(QString notice READ notice NOTIFY changed)
   Q_PROPERTY(QString updated READ updated NOTIFY changed)
@@ -77,6 +77,7 @@ class Settings : public QObject {
   unsigned brightnessGeneration_ = 0;
   void readScreenBrightness();
   void readKernel(const QString &kind);
+  void readCommand(const QString &program,const QStringList &arguments,int timeout);
   void next();
   void finish(const Result &result);
   void call(const QString &path, const QString &interface, const QString &method,
@@ -101,7 +102,7 @@ public:
   QVariantList deviceInformation() const;
   QVariantMap displayLink() const;
   QVariantList linuxPartitions() const;
-  QString currentChannel() const;
+  QVariantMap updateChannel() const;
   QObject *nfc() { return &nfc_; }
   QObject *manager() { return &manager_; }
   QVariantMap usbPolicy() const;
@@ -134,6 +135,7 @@ private slots:
 signals:
   void changed();
   void historyChanged();
+  void deviceInformationChanged();
 };
 class HistoryPlot : public QQuickPaintedItem {
   Q_OBJECT

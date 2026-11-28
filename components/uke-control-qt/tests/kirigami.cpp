@@ -28,6 +28,10 @@ static QQuickItem *visualItem(QQuickItem *parent, const QString &name) {
       return found;
   return nullptr;
 }
+static QJsonObject coprRepository(const QString &project) {
+  return {{"id","uke-selected"},{"base_url",QJsonArray{
+      "https://download.copr.fedorainfracloud.org/results/mcc45tr/"+project+"/fedora-rawhide-aarch64/"}}};
+}
 class KirigamiTests : public QObject {
   Q_OBJECT
   Fixture fixture;
@@ -246,6 +250,27 @@ private slots:
     QVERIFY(bridge.openAction("flashlight.level"));
     QCOMPARE(bridge.guide().value("parameters").toList().first().toMap().value("choices").toList().size(),3);
   }
+  void enabledCoprChannel() {
+    auto sample=fixture;
+    sample.results["channel.status"]=QJsonObject{{"data",QJsonObject{
+        {"schema","org.uke.control.channel.v1"},{"selected","stable"}}}};
+    sample.results["channel.repositories"]=QJsonObject{{"data",QJsonArray{
+        coprRepository("uke-linux-unstable"),coprRepository("uke-linux:custom:orcaslicer")}}};
+    Settings staleChoice(sample);
+    QVERIFY(staleChoice.open("updates"));
+    QTRY_VERIFY(!staleChoice.busy());
+    QCOMPARE(staleChoice.updateChannel().value("active").toString(),QString("unstable"));
+    QCOMPARE(staleChoice.updateChannel().value("configured").toString(),QString("stable"));
+    QVERIFY(!staleChoice.updateChannel().value("ready").toBool());
+
+    sample.results["channel.repositories"]=QJsonObject{{"data",QJsonArray{
+        coprRepository("uke-linux-test"),coprRepository("uke-linux")}}};
+    Settings multiple(sample);
+    QVERIFY(multiple.open("updates"));
+    QTRY_VERIFY(!multiple.busy());
+    QVERIFY(multiple.updateChannel().value("multiple").toBool());
+    QVERIFY(multiple.updateChannel().value("active").toString().isEmpty());
+  }
   void kernelInformationAndNdef() {
     const QJsonObject dock{{"kernel_managed",true},{"ports",QJsonArray{QJsonObject{{"name","port0"},{"data_role","[host] device"},{"power_role","source [sink]"},{"partner",true}}}},
       {"devices",QJsonArray{QJsonObject{{"name","2-1"},{"product","USB hub"},{"speed","5000"},{"version","3.20"}}}},
@@ -341,6 +366,13 @@ private slots:
     rich.results["flashlight.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.lights.v1"},
       {"flashlight",QJsonObject{{"available",true},{"on",false},{"requested_percent",50},{"brightness_step_percent",50}}}}}};
     rich.results["channel.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.channel.v1"},{"selected","stable"}}}};
+    rich.results["channel.repositories"]=QJsonObject{{"data",QJsonArray{
+        coprRepository("uke-linux"),coprRepository("uke-linux-unstable:custom:orcaslicer")}}};
+    const QJsonObject identity{
+        {"board","POCO Pad X1"},{"processor","Snapdragon 7+ Gen 3"},{"ram_type","LPDDR5X"}};
+    const QJsonArray cameras{QJsonObject{{"name","Camera A"}},QJsonObject{{"name","Camera B"}}};
+    const QJsonObject hardware{{"identity",identity},{"media",QJsonObject{{"devices",cameras}}}};
+    rich.results["hardware.status"]=QJsonObject{{"data",hardware}};
     Bridge bridge(rich,false);
     QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);
     engine.rootContext()->setContextProperty("backend",&bridge);
@@ -416,6 +448,16 @@ private slots:
         QTRY_VERIFY((stable=visualItem(page,"selection_stable")));
         QVERIFY(stable->property("checked").toBool());
       }
+      if(topic.id=="about") {
+        QVERIFY(visualItem(page,"informationCard_mainboard"));
+        auto *processor=visualItem(page,"informationCard_soc");
+        auto *memory=visualItem(page,"informationCard_memory");
+        QVERIFY(processor && memory);
+        QCOMPARE(processor->property("text").toString(),QString("Snapdragon 7+ Gen 3"));
+        QCOMPARE(memory->property("text").toString(),QString("LPDDR5X"));
+        QVERIFY(visualItem(page,"informationCard_media-Camera A"));
+        QVERIFY(visualItem(page,"informationCard_media-Camera B"));
+      }
       if(topic.id=="kernel")snapshot(window,"settings-kernel");
       if(topic.id=="nfc") {QVERIFY(visualItem(window->contentItem(),"nfcInspect"));snapshot(window,"settings-nfc");}
       if(topic.id=="usb") {QVERIFY(visualItem(window->contentItem(),"usbAutomatic"));snapshot(window,"settings-dock");}
@@ -476,18 +518,33 @@ private slots:
     QTRY_VERIFY((power = visualItem(grid, "topic_display")));
     QTRY_VERIFY((display = visualItem(grid, "topic_flashlight")));
     QTRY_COMPARE(grid->property("columns").toInt(), 1);
-    QTRY_VERIFY(display->y() >= power->y() + power->height());
+    const auto position=[grid](QQuickItem *item){return item->mapToItem(grid,QPointF());};
+    QTRY_VERIFY(position(display).y() >= position(power).y() + power->height());
     QCOMPARE(power->width(), display->width());
     snapshot(window, "tiles-narrow");
 
     window->resize(1440, 900);
     QTRY_VERIFY(grid->property("columns").toInt() >= 3);
-    QTRY_VERIFY(display->x() >= power->x() + power->width());
-    QCOMPARE(power->y(), display->y());
+    QTRY_VERIFY((power = visualItem(grid, "topic_display")));
+    QTRY_VERIFY((display = visualItem(grid, "topic_flashlight")));
+    QTRY_VERIFY(position(display).x() >= position(power).x() + power->width());
+    QCOMPARE(position(power).y(), position(display).y());
     snapshot(window, "tiles-wide");
+
+    QVERIFY(grid->setProperty("maximumColumns",2));
+    QTRY_COMPARE(grid->property("columns").toInt(),2);
+    QTRY_VERIFY((power = visualItem(grid, "topic_display")));
+    QTRY_VERIFY((display = visualItem(grid, "topic_flashlight")));
+    QQuickItem *light=nullptr;
+    QTRY_VERIFY((light = visualItem(grid, "topic_led")));
+    display->setProperty("description",QString("Line of explanatory text.\n").repeated(12));
+    QTRY_VERIFY(position(light).y() >= position(power).y() + power->height());
+    QTRY_VERIFY(position(light).y() < position(display).y() + display->height());
+    QCOMPARE(position(light).x(),position(power).x());
 
     window->resize(480, 760);
     QTRY_COMPARE(grid->property("columns").toInt(), 1);
+    QTRY_VERIFY((power = visualItem(grid, "topic_display")));
     power->forceActiveFocus(Qt::TabFocusReason);
     QTRY_VERIFY(power->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Return);

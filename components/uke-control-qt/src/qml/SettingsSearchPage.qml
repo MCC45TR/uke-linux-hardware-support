@@ -35,17 +35,14 @@ FormCard.FormCardPage {
             Accessible.name: i18n("Search settings")
         }
 
-        TileGrid {
+        TileColumns {
             visible: page.matches.length > 0
-            Repeater {
-                model: page.matches
-                delegate: SettingsTile {
-                    required property var modelData
-                    text: modelData.title
-                    description: modelData.description
-                    icon.name: themeIcons.names[modelData.icon]
-                    onClicked: page.appWindow.openTopic(modelData.id)
-                }
+            items: page.matches
+            tile: SettingsTile {
+                text: tileData.title
+                description: tileData.description
+                icon.name: themeIcons.names[tileData.icon]
+                onClicked: page.appWindow.openTopic(tileData.id)
             }
         }
 

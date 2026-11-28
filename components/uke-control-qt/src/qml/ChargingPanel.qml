@@ -178,7 +178,6 @@ ColumnLayout {
         Layout.maximumWidth: Number.POSITIVE_INFINITY
         Layout.margins: 0
         sections: panel.information.filter(section => section.id.startsWith("battery."))
-        stretchTiles: true
     }
     BatteryHistoryView {}
     InformationGrid {

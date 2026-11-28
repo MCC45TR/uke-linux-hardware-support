@@ -1,22 +1,54 @@
 // SPDX-License-Identifier: MIT
 #include "settings.hpp"
 #include <KLocalizedString>
+#include <QSet>
 #include <algorithm>
 #include <memory>
 
 namespace uq {
+QVariantMap Settings::updateChannel() const {
+  const auto status=data_.value("channel.status");
+  const auto saved=status.value("selected").toString();
+  const QStringList channels{"stable","test","unstable"};
+  const bool configured=status.value("schema").toString()=="org.uke.control.channel.v1" &&
+      !errors_.contains("channel.status") && channels.contains(saved);
+  const auto repositories=data_.value("channel.repositories").value("repositories");
+  const bool known=repositories.isArray() && !errors_.contains("channel.repositories");
+  static const QMap<QString,QString> projects{{"uke-linux","stable"},
+      {"uke-linux-test","test"},{"uke-linux-unstable","unstable"}};
+  QSet<QString> activeChannels;
+  if (known) {
+    for (const auto &entry : repositories.toArray()) {
+      for (const auto &value : entry.toObject().value("base_url").toArray()) {
+        const QUrl url(value.toString());
+        if (url.scheme()!="https" || url.host()!="download.copr.fedorainfracloud.org") continue;
+        const auto path=url.path().split('/');
+        if (path.size()<5 || path[1]!="results" || path[2]!="mcc45tr") continue;
+        const auto channel=projects.value(path[3]);
+        if (!channel.isEmpty()) activeChannels.insert(channel);
+      }
+    }
+  }
+  const auto active=activeChannels.size()==1 ? *activeChannels.cbegin() : QString();
+  return {{"active",active},{"configured",configured?saved:QString()},{"known",known},
+          {"multiple",activeChannels.size()>1},{"ready",configured && active==saved}};
+}
+
 void Settings::runPackageOperation(const QString &operation,const QString &channel) {
-  if (fixture_.enabled || restricted_ || packageProcess_ || !topic_ || topic_->id!="updates")
+  if (fixture_.enabled || restricted_ || packageProcess_ || !topic_ || topic_->id!="updates" || busy())
     return;
   const bool preview=operation=="check";
   const bool switchChannel=operation=="channel";
+  const auto selection=updateChannel();
   if (switchChannel) {
     const auto choices=actionChoices("channel.set","channel");
     const auto valid=std::any_of(choices.cbegin(),choices.cend(),[&](const auto &choice){
       return choice.toMap().value("value").toString()==channel;
     });
-    if (!valid || channel==currentChannel()) return;
+    if (!valid || (selection.value("ready").toBool() && selection.value("active").toString()==channel)) return;
   } else if ((!preview && operation!="update") || !channel.isEmpty()) {
+    return;
+  } else if (!selection.value("ready").toBool()) {
     return;
   }
   auto *process=new QProcess(this);

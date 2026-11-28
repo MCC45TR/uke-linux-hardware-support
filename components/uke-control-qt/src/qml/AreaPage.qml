@@ -48,34 +48,38 @@ FormCard.FormCardPage {
                     text: group.modelData.title
                     wrapMode: Text.Wrap
                 }
-                TileGrid {
+                TileColumns {
                     objectName: "topicTiles_" + group.modelData.id
-                    Repeater {
-                        model: backend.settings.topics(group.modelData.index)
-                        delegate: SettingsTile {
-                            required property var modelData
-                            objectName: "topic_" + modelData.id
-                            text: modelData.title
-                            description: modelData.description
-                            icon.name: themeIcons.names[modelData.icon]
-                            onClicked: page.appWindow.openTopic(modelData.id)
+                    items: {
+                        const topics = backend.settings.topics(group.modelData.index)
+                        if (group.modelData.index === 6)
+                            return topics.concat({
+                                id: "openWaydroidInstaller",
+                                title: i18n("Android applications"),
+                                description: i18n("Install and open Waydroid with Google Play or without Google services"),
+                                icon: "system-software-install"
+                            })
+                        if (group.modelData.index === 8)
+                            return topics.concat({
+                                id: "browseAllActions",
+                                title: i18n("Expert action catalog"),
+                                description: i18n("All installed technical actions, including diagnostics and maintenance"),
+                                icon: "utilities-terminal"
+                            })
+                        return topics
+                    }
+                    tile: SettingsTile {
+                        readonly property var topic: tileData
+                        objectName: ["openWaydroidInstaller", "browseAllActions"].includes(topic.id)
+                                    ? topic.id : "topic_" + topic.id
+                        text: topic.title
+                        description: topic.description
+                        icon.name: themeIcons.names[topic.icon]
+                        onClicked: {
+                            if (topic.id === "openWaydroidInstaller") page.appWindow.openWaydroid()
+                            else if (topic.id === "browseAllActions") page.appWindow.openCatalog(-1)
+                            else page.appWindow.openTopic(topic.id)
                         }
-                    }
-                    SettingsTile {
-                        objectName: "openWaydroidInstaller"
-                        visible: group.modelData.index === 6
-                        text: i18n("Android applications")
-                        description: i18n("Install and open Waydroid with Google Play or without Google services")
-                        icon.name: themeIcons.names["system-software-install"]
-                        onClicked: page.appWindow.openWaydroid()
-                    }
-                    SettingsTile {
-                        objectName: "browseAllActions"
-                        visible: group.modelData.index === 8
-                        text: i18n("Expert action catalog")
-                        description: i18n("All installed technical actions, including diagnostics and maintenance")
-                        icon.name: themeIcons.names["utilities-terminal"]
-                        onClicked: page.appWindow.openCatalog(-1)
                     }
                 }
             }
@@ -88,17 +92,15 @@ FormCard.FormCardPage {
 
             Kirigami.Heading { level: 3; text: i18n("More") }
 
-            TileGrid {
-                Repeater {
-                    model: page.overview ? backend.areas.filter(a => a.secondary) : []
-                    delegate: SettingsTile {
-                        required property var modelData
-                        objectName: "category_" + modelData.id
-                        text: modelData.title
-                        description: modelData.caption
-                        icon.name: themeIcons.names[modelData.icon]
-                        onClicked: page.appWindow.showArea(modelData.index)
-                    }
+            TileColumns {
+                items: page.overview ? backend.areas.filter(a => a.secondary) : []
+                tile: SettingsTile {
+                    readonly property var category: tileData
+                    objectName: "category_" + category.id
+                    text: category.title
+                    description: category.caption
+                    icon.name: themeIcons.names[category.icon]
+                    onClicked: page.appWindow.showArea(category.index)
                 }
             }
         }
@@ -110,16 +112,13 @@ FormCard.FormCardPage {
 
             Kirigami.Heading { level: 3; text: i18n("KDE System Settings") }
 
-            TileGrid {
-                Repeater {
-                    model: page.nativeLinks
-                    delegate: SettingsTile {
-                        required property var modelData
-                        text: modelData.title
-                        icon.name: themeIcons.names["preferences-system"]
-                        enabled: !backend.simulation && !backend.readOnly
-                        onClicked: backend.settings.openNative(modelData.id)
-                    }
+            TileColumns {
+                items: page.nativeLinks
+                tile: SettingsTile {
+                    text: tileData.title
+                    icon.name: themeIcons.names["preferences-system"]
+                    enabled: !backend.simulation && !backend.readOnly
+                    onClicked: backend.settings.openNative(tileData.id)
                 }
             }
         }

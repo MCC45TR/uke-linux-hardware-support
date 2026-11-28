@@ -110,12 +110,31 @@ FormCard.FormCardPage {
     PagePanel {
         active: page.topicId === "about"
         sourceComponent: Component {
-            InformationGrid {
-                maximumColumns: 2
-                Layout.maximumWidth: Number.POSITIVE_INFINITY
-                Layout.margins: 0
-                expandedKeys: ["mainboard", "components"]
-                sections: page.settings.deviceInformation
+            ColumnLayout {
+                spacing: Kirigami.Units.largeSpacing
+
+                Repeater {
+                    model: page.settings.deviceInformation
+                    delegate: ColumnLayout {
+                        id: inventoryGroup
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: Kirigami.Units.mediumSpacing
+
+                        Kirigami.Heading {
+                            Layout.fillWidth: true
+                            level: 3
+                            text: inventoryGroup.modelData.title
+                            wrapMode: Text.Wrap
+                        }
+                        InformationGrid {
+                            Layout.maximumWidth: Number.POSITIVE_INFINITY
+                            Layout.margins: 0
+                            minimumTileWidth: Kirigami.Units.gridUnit * 14
+                            sections: inventoryGroup.modelData.cards
+                        }
+                    }
+                }
             }
         }
     }

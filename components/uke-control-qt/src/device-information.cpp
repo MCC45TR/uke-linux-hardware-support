@@ -24,13 +24,25 @@ QVariantMap fact(const QString &label,const QString &value) {
 QVariantMap card(const QString &key,const QString &title,const QVariantList &rows) {
   return {{"key",key},{"title",title},{"rows",rows}};
 }
+QVariantMap componentCard(const QString &key,const QString &model,const QString &role,QVariantList rows={}) {
+  if (model.isEmpty()) return card(key,role,{fact(i18n("Model"),{})});
+  rows.prepend(fact(i18n("Function"),role));
+  return card(key,model,rows);
 }
-QVariantList platformBoardInformation() {
+QVariantMap group(const QString &title,const QVariantList &cards) {
+  return {{"title",title},{"cards",cards}};
+}
+}
+QVariantMap platformBoardInformation() {
   const QString dt="/sys/firmware/devicetree/base";
-  QVariantList rows;
-  rows<<fact(i18n("Model"),name(dt+"/model"))
-      <<fact(i18n("Device code name"),name(dt+"/compatible").section(',',-1))
-      <<fact(i18n("Device Tree identifiers"),safe(read(dt+"/compatible",512).trimmed().replace('\0',' ').simplified().toStdString()));
+  const auto compatible=read(dt+"/compatible",512).split('\0');
+  const auto identifier=[&](const char *prefix) {
+    for (const auto &part : compatible)
+      if (part.startsWith(prefix)) return safe(part.mid(qstrlen(prefix)).toStdString());
+    return QString();
+  };
+  QVariantMap identity{{"model",name(dt+"/model")},{"codename",identifier("xiaomi,")},
+                       {"soc",identifier("qcom,").toUpper()}};
   const auto memory=read(dt+"/memory/reg",1024);
   const auto addressCells=read(dt+"/#address-cells",4),sizeCells=read(dt+"/#size-cells",4);
   quint64 total=0;
@@ -40,8 +52,8 @@ QVariantList platformBoardInformation() {
       total+=qFromBigEndian<quint64>(memory.constData()+position);
   }
   if (total>0 && total<(1ULL<<43))
-    rows<<fact(i18n("Memory in the Device Tree"),QLocale().formattedDataSize(qint64(total)));
-  return rows;
+    identity["memory"]=QLocale().formattedDataSize(qint64(total));
+  return identity;
 }
 QVariantList platformComponentInformation() {
   const QString dt="/sys/firmware/devicetree/base";
@@ -78,18 +90,40 @@ QVariantList platformComponentInformation() {
     const auto count=read(path+"/size",64).trimmed().toULongLong();
     if (count<(1ULL<<36)) sectors+=count;
   }
-  return {fact(i18n("Panel identifier"),panel),fact(i18n("Panel manufacturer"),manufacturer),
-          fact(i18n("Touch controller"),touch),fact(i18n("UFS model"),ufs),
-          fact(i18n("Internal storage capacity"),sectors>0?QLocale().formattedDataSize(qint64(sectors*512)):QString())};
+  QVariantList cards;
+  cards<<componentCard("display-panel",panel,i18n("Display panel"),{fact(i18n("Manufacturer"),manufacturer)})
+       <<componentCard("touch-controller",touch,i18n("Touch controller"))
+       <<componentCard("ufs-storage",ufs,i18n("Internal UFS storage"),
+          {fact(i18n("Capacity"),sectors>0?QLocale().formattedDataSize(qint64(sectors*512)):QString())});
+
+  const auto wirelessCard=[&](const QString &base,const QStringList &pattern,const QString &key,const QString &role) {
+    const QDir devices(base);
+    for (const auto &entry : devices.entryList(pattern,QDir::Dirs | QDir::NoDotAndDotDot)) {
+      if (key=="wifi" && !QFileInfo::exists(devices.filePath(entry+"/phy80211"))) continue;
+      const auto file=devices.filePath(entry+"/device/of_node/compatible");
+      // Several boards export both a board-specific and a chipset-compatible identifier.
+      for (const auto &id : read(file,256).split('\0')) {
+        if (!id.startsWith("qcom,")) continue;
+        cards<<componentCard(key,safe(id.toStdString()),role);
+        return;
+      }
+      const auto compatible=name(file);
+      if (!compatible.isEmpty()) {
+        cards<<componentCard(key,compatible,role);
+        return;
+      }
+    }
+  };
+  wirelessCard("/sys/class/net",{"*"},"wifi",i18n("Wi-Fi adapter"));
+  wirelessCard("/sys/class/bluetooth",{"hci*"},"bluetooth",i18n("Bluetooth adapter"));
+  return cards;
 }
-QVariantList platformSensorInformation() {
-  QVariantList rows;
-  QSet<QPair<QString,QString>> seen;
+QVariantMap platformSensorInformation() {
+  QMap<QString,QStringList> sensors;
   auto add=[&](const QString &model,const QString &function) {
-    const auto key=qMakePair(model,function);
-    if (model.isEmpty() || seen.contains(key) || rows.size()>=256) return;
-    seen.insert(key);
-    rows<<fact(model,function);
+    if (model.isEmpty() || (!sensors.contains(model) && sensors.size()>=256)) return;
+    auto &functions=sensors[model];
+    if (!functions.contains(function)) functions<<function;
   };
   const QList<QPair<QString,QString>> types{
       {"in_accel_",i18n("Acceleration")},{"in_anglvel_",i18n("Angular velocity")},
@@ -119,7 +153,8 @@ QVariantList platformSensorInformation() {
         typed=true;
       }
     }
-    if (!typed) add(model,i18n("Sensor reading"));
+    if (!typed && model.contains("thermal-sensor")) add(model,i18n("Temperature"));
+    else if (!typed) add(model,i18n("Sensor reading"));
   }
   const QDir hwmon("/sys/class/hwmon");
   for (const auto &entry : hwmon.entryList({"hwmon*"},QDir::Dirs | QDir::NoDotAndDotDot)) {
@@ -132,34 +167,58 @@ QVariantList platformSensorInformation() {
   const QDir thermal("/sys/class/thermal");
   for (const auto &entry : thermal.entryList({"thermal_zone*"},QDir::Dirs | QDir::NoDotAndDotDot))
     add(name(thermal.filePath(entry+"/type")),i18n("Temperature"));
-  return rows;
+  QVariantList other, temperatures;
+  for (const auto &[model,functions] : sensors.asKeyValueRange()) {
+    auto &cards=functions==QStringList{i18n("Temperature")} ? temperatures : other;
+    cards<<componentCard("sensor-"+model,model,QLocale().createSeparatedList(functions));
+  }
+  return {{"sensors",other},{"temperatures",temperatures}};
 }
 QVariantList Settings::deviceInformation() const {
-  QVariantList board=deviceBoard_.value(0).toList();
+  const auto board=deviceBoard_.value(0).toMap();
   const auto data=data_.value("hardware.status");
   const auto identity=data.value("identity").toObject();
-  for (const auto &[key,label] : QMap<QString,QString>{{"processor",i18n("Processor")},{"ram_type",i18n("Memory type")},
-      {"pen_model",i18n("Compatible pen")},{"keyboard_model",i18n("Compatible keyboard")}}.asKeyValueRange()) {
-    const auto item=identity.value(key).toString();
-    if (!item.isEmpty()) board<<fact(label,safe(item.left(128).toStdString()));
-  }
-
-  QVariantList cameras;
-  auto sensors=deviceBoard_.value(2).toList();
-  QSet<QString> cameraNames;
-  for (const auto &item : data.value("media").toObject().value("devices").toArray()) {
-    const auto device=item.toObject();
-    const auto label=device.value("name").toString();
-    if (!label.isEmpty() && !cameraNames.contains(label)) {
-      cameraNames.insert(label);
-      cameras<<fact(i18n("Camera device"),safe(label.left(128).toStdString()));
+  const auto identified=[&](const QString &key) {return safe(identity.value(key).toString().left(128).toStdString());};
+  const auto model=board.value("model",identified("board")).toString();
+  const auto soc=board.value("soc").toString();
+  const auto processor=identified("processor");
+  QVariantList parts=deviceBoard_.value(1).toList();
+  parts.prepend(componentCard("memory",identified("ram_type"),i18n("RAM"),
+      {fact(i18n("Memory in the Device Tree"),board.value("memory").toString())}));
+  parts.prepend(componentCard("soc",processor.isEmpty()?soc:processor,i18n("Processor"),
+      soc.isEmpty()?QVariantList{}:QVariantList{fact(i18n("Chipset"),soc)}));
+  const auto appendDevices=[&](const QString &category,const QString &field,const QString &role) {
+    QSet<QString> seen;
+    for (const auto &item : data.value(category).toObject().value("devices").toArray()) {
+      const auto label=safe(item.toObject().value(field).toString().left(128).toStdString());
+      if (label.isEmpty() || seen.contains(label) || seen.size()>=32) continue;
+      seen.insert(label);
+      parts<<componentCard(category+"-"+label,label,role);
     }
-  }
-  if (cameras.isEmpty()) cameras<<fact(i18n("Camera sensor model"),QString());
-  if (sensors.isEmpty()) sensors<<fact(i18n("Sensors"),QString());
-  return {card("mainboard",i18n("Device and specifications"),board),
-          card("components",i18n("Display and storage hardware"),deviceBoard_.value(1).toList()),
-          card("camera",i18n("Cameras"),cameras),
-          card("sensors",i18n("Sensor inventory"),sensors)};
+    return !seen.isEmpty();
+  };
+  appendDevices("soundwire","driver",i18n("Audio component"));
+  appendDevices("video","driver",i18n("Video codec"));
+  if (!appendDevices("media","name",i18n("Camera device")))
+    parts<<card("camera",i18n("Camera"),
+        {fact(i18n("Camera sensor model"),{})});
+
+  parts.prepend(card("mainboard",model.isEmpty()?i18n("Device"):model,
+      {fact(i18n("Device code name"),board.value("codename").toString())}));
+  QVariantList groups{group(i18n("Hardware"),parts)};
+  const auto inventory=deviceBoard_.value(2).toMap();
+  const auto sensors=inventory.value("sensors").toList();
+  const auto temperatures=inventory.value("temperatures").toList();
+  if (!sensors.isEmpty())
+    groups<<group(i18n("Sensors"),sensors);
+  if (!temperatures.isEmpty())
+    groups<<group(i18n("Temperature sensors"),temperatures);
+  QVariantList accessories;
+  const auto pen=identified("pen_model");
+  const auto keyboard=identified("keyboard_model");
+  if (!pen.isEmpty()) accessories<<componentCard("pen",pen,i18n("Compatible pen"));
+  if (!keyboard.isEmpty()) accessories<<componentCard("keyboard",keyboard,i18n("Compatible keyboard"));
+  if (!accessories.isEmpty()) groups<<group(i18n("Compatible accessories"),accessories);
+  return groups;
 }
 }

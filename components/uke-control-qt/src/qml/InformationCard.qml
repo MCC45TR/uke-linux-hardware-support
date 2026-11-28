@@ -143,9 +143,5 @@ Kirigami.AbstractCard {
                 }
             }
         }
-        Item {
-            visible: card.Layout.fillHeight
-            Layout.fillHeight: true
-        }
     }
 }
