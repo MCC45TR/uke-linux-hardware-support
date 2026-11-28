@@ -10,6 +10,7 @@ ColumnLayout {
     default property alias rows: card.delegates
     Layout.fillWidth: true
     Layout.minimumWidth: 0
+    Layout.alignment: Qt.AlignTop
     spacing: Kirigami.Units.smallSpacing
 
     children: [

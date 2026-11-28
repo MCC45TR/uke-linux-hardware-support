@@ -33,6 +33,14 @@ FormCard.FormCardPage {
     }
     Component.onCompleted: Qt.callLater(showSinglePreference)
     Connections { target: page.settings; function onChanged() { page.showSinglePreference() } }
+    component PagePanel: Loader {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.maximumWidth: page.readingColumnWidth
+        Layout.alignment: Qt.AlignHCenter
+        Layout.margins: Kirigami.Units.largeSpacing
+        visible: active
+    }
     title: settings.topic.title || ""
     actions: [
         Kirigami.Action { text: i18n("Refresh"); icon.name: themeIcons.names["view-refresh"]; enabled: !settings.busy; onTriggered: { backend.cancelReview(); backend.cancelRead(); settings.refresh() } },
@@ -83,8 +91,7 @@ FormCard.FormCardPage {
         type: Kirigami.MessageType.Warning
         text: settings.notice
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: page.topicId === "storage"
         sourceComponent: Component { StoragePartitions { settings: page.settings } }
     }
@@ -93,27 +100,16 @@ FormCard.FormCardPage {
         active: ["cpu", "gpu", "sensors", "manager-overview", "memory", "storage", "thermal", "profiles", "diagnostics"].includes(page.topicId)
         sourceComponent: Component { KernelManagerView { mode: page.topicId; appWindow: page.appWindow; currentPage: page.appWindow.pageStack.currentItem === page && settings.topic.id === page.topicId } }
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: Object.keys(settings.bootReport).length > 0
         sourceComponent: Component { UpdateStatusView { report: settings.bootReport } }
     }
-    Loader {
-        Layout.fillWidth: true
-        Layout.maximumWidth: page.readingColumnWidth
-        Layout.alignment: Qt.AlignHCenter
-        Layout.margins: Kirigami.Units.largeSpacing
+    PagePanel {
         active: page.topicId === "kernel" && Object.keys(settings.bootReport).length > 0
-        visible: active
         sourceComponent: Component { BootSelection { settings: page.settings } }
     }
-    Loader {
-        Layout.fillWidth: true
-        Layout.maximumWidth: page.readingColumnWidth
-        Layout.alignment: Qt.AlignHCenter
-        Layout.margins: Kirigami.Units.largeSpacing
+    PagePanel {
         active: page.topicId === "updates"
-        visible: active
         sourceComponent: Component { SystemUpdatePanel { settings: page.settings; appWindow: page.appWindow } }
     }
     Loader {
@@ -126,24 +122,16 @@ FormCard.FormCardPage {
         active: page.topicId === "nfc"
         sourceComponent: Component { NfcView {} }
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: page.topicId === "flashlight"
         sourceComponent: Component { FlashlightPanel { settings: page.settings } }
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: page.topicId === "external"
         sourceComponent: Component { DisplayLinkPanel { settings: page.settings; appWindow: page.appWindow } }
     }
-    Loader {
-        Layout.fillWidth: true
-        Layout.maximumWidth: page.readingColumnWidth
-        Layout.alignment: Qt.AlignHCenter
-        Layout.leftMargin: Kirigami.Units.largeSpacing
-        Layout.rightMargin: Kirigami.Units.largeSpacing
+    PagePanel {
         active: page.isCharging
-        visible: active
         sourceComponent: Component { ChargingPanel { settings: page.settings; information: page.information } }
     }
     Component {

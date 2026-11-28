@@ -5,29 +5,28 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 
-FormCard.FormCard {
+SettingsSection {
     id: panel
     required property var settings
     required property var appWindow
     readonly property var link: settings.displayLink
     readonly property var actions: settings.topic.changes || []
+    heading: i18n("DisplayPort link speed")
 
     SafeText {
-        text: i18n("DisplayPort link speed")
+        text: i18n("Current link")
         description: panel.link.rate && panel.link.lanes > 0
                      ? i18n("%1 · %2 lanes · %3 bits per pixel", panel.link.rate, panel.link.lanes, panel.link.bitsPerPixel)
                      : i18n("No negotiated link speed reported")
     }
-    FormCard.FormSectionText {
+    SettingsNote {
         text: panel.link.stale ? i18n("Showing the last available reading.") :
               i18n("The driver negotiates the link speed automatically. This driver has no manual HBR2 or HBR3 selector.")
-        textFormat: Text.PlainText
     }
-    ColumnLayout {
-        Layout.fillWidth: true
+    TileGrid {
+        minimumTileWidth: Kirigami.Units.gridUnit * 11
         Layout.leftMargin: Kirigami.Units.largeSpacing
         Layout.rightMargin: Kirigami.Units.largeSpacing
-        spacing: Kirigami.Units.smallSpacing
         Controls.RadioButton {
             Layout.fillWidth: true
             text: i18n("Automatic")
@@ -39,7 +38,7 @@ FormCard.FormCard {
     }
     FormCard.FormButtonDelegate {
         visible: panel.actions.some(action => action.id === "display.lanes")
-        enabled: (panel.link.canSetLanes || false) && !backend.readOnly
+        enabled: (panel.link.canSetLanes || false) && !panel.link.stale && !backend.readOnly
         text: i18n("DisplayPort lane limit")
         description: panel.link.ceiling ? i18n("Current ceiling: %1 lanes. Disconnect the display before applying a change.", panel.link.ceiling)
                                          : i18n("Disconnect the display before applying a change.")

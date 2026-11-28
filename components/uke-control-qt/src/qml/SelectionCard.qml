@@ -37,10 +37,9 @@ SettingsSection {
             }
         }
     }
-    FormCard.FormSectionText {
+    SettingsNote {
         visible: panel.help.length > 0
         text: panel.help
-        textFormat: Text.PlainText
     }
     FormCard.FormButtonDelegate {
         text: panel.reviewLabel

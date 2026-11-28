@@ -2444,3 +2444,12 @@ msgstr "Doğrulanmış hücre düzeni"
 msgctxt "charging threshold name and percentage"
 msgid "%1, %2"
 msgstr "%1, %2"
+
+msgid "Current link"
+msgstr "Geçerli bağlantı"
+
+msgid "Use accepted slot %1 on next boot"
+msgstr "Sonraki açılışta onaylı %1 slotunu kullan"
+
+msgid "Variable refresh rate settings"
+msgstr "Değişken yenileme hızı ayarları"

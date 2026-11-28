@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 
-FormCard.FormCard {
+SettingsSection {
     id: panel
     required property var settings
     readonly property var torch: settings.flashlight
@@ -18,14 +18,13 @@ FormCard.FormCard {
         enabled: panel.available
         onToggled: panel.settings.setFlashlight(checked)
     }
-    FormCard.FormSectionText {
+    SettingsNote {
         text: i18n("Brightness")
     }
-    ColumnLayout {
-        Layout.fillWidth: true
+    TileGrid {
+        minimumTileWidth: Kirigami.Units.gridUnit * 12
         Layout.leftMargin: Kirigami.Units.largeSpacing
         Layout.rightMargin: Kirigami.Units.largeSpacing
-        spacing: Kirigami.Units.smallSpacing
         Controls.ButtonGroup { id: levels }
         Repeater {
             model: [50, 100]
@@ -42,10 +41,9 @@ FormCard.FormCard {
             }
         }
     }
-    FormCard.FormSectionText {
+    SettingsNote {
         text: panel.torch.error || (panel.settings.busy ? i18n("Reading…") :
                panel.torch.available ? i18n("Selecting a brightness level turns on the flashlight.") :
                i18n("Flashlight status is currently unavailable."))
-        textFormat: Text.PlainText
     }
 }
