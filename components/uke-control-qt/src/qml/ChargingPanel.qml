@@ -8,6 +8,11 @@ ColumnLayout {
     id: panel
     required property var settings
     required property var information
+    property bool currentPage: false
+    readonly property var charger: settings.chargeTelemetry.state
+    onCurrentPageChanged: settings.setChargingVisible(currentPage)
+    Component.onCompleted: settings.setChargingVisible(currentPage)
+    Component.onDestruction: if (currentPage) settings.setChargingVisible(false)
     readonly property var snapshot: settings.chargingThresholds
     readonly property var bands: settings.chargingBands
     readonly property var savedBand: ({
@@ -174,16 +179,31 @@ ColumnLayout {
     }
 
     InformationGrid {
+        Layout.maximumWidth: Number.POSITIVE_INFINITY
+        Layout.margins: 0
+        sections: [{
+            key: "live-adapter",
+            title: i18n("Battery and adapter telemetry"),
+            previewCount: 4,
+            message: panel.charger.message || "",
+            rows: panel.charger.rows || [],
+            note: panel.settings.supportedChargeProtocols.length
+                ? i18n("Protocols listed by the manufacturer: %1", panel.settings.supportedChargeProtocols.join(", "))
+                : ""
+        }]
+    }
+
+    InformationGrid {
         objectName: "informationTiles"
         Layout.maximumWidth: Number.POSITIVE_INFINITY
         Layout.margins: 0
-        sections: panel.information.filter(section => section.id.startsWith("battery."))
+        sections: panel.information.filter(section => section.id.startsWith("battery.") && section.id !== "battery.protocol")
     }
     BatteryHistoryView {}
     InformationGrid {
         Layout.maximumWidth: Number.POSITIVE_INFINITY
         Layout.margins: 0
         sections: panel.information.filter(section =>
-            ["charge.protocols", "overview.sleep", "wake.status"].includes(section.id))
+            ["overview.sleep", "wake.status"].includes(section.id))
     }
 }

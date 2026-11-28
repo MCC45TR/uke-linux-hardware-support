@@ -4,7 +4,7 @@
 %global sdk_base https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        23%{?dist}
+Release:        24%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -19,6 +19,7 @@ BuildRequires:  zlib-devel
 BuildRequires:  cmake
 BuildRequires:  make
 BuildRequires:  gettext
+BuildRequires:  layer-shell-qt-devel pkgconfig(libdrm)
 BuildRequires:  qt6-qtbase-devel
 BuildRequires:  qt6-qtdeclarative-devel
 BuildRequires:  qt6-qtconnectivity-devel

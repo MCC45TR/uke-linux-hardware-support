@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "settings.hpp"
+#include <QtConcurrentRun>
 #include <KLocalizedString>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
@@ -175,6 +176,11 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
   walk(d,0);return rows;
 }
 Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fixture_(std::move(f)),restricted_(restricted),nfc_(fixture_.enabled,this,restricted),manager_(fixture_,this,restricted) {
+  watchDisplayOverlay();
+  connect(&deviceInventory_,&QFutureWatcher<QVariantList>::finished,this,[this] {
+    deviceBoard_=deviceInventory_.result();
+    emit deviceInformationChanged();
+  });
   kernelTimeout_.setSingleShot(true);
   connect(&kernelTimeout_,&QTimer::timeout,this,[this]{if(kernel_)kernel_->kill();});
   poll_.setInterval(50);
@@ -210,7 +216,7 @@ QVariantMap Settings::topic()const {
 QVariantList Settings::topics(int area,const QString &search)const {
   QVariantList out;
   for(const auto &t:settingTopics()) {
-    if(area>=0&&t.area!=area)continue;
+    if(area>=0&&(t.area!=area || t.id=="changelog"))continue;
     bool matches=true;
     for(const auto &word:search.simplified().split(' ',Qt::SkipEmptyParts)) {
       QString hay=t.id+" "+t.title+" "+t.subtitle;
@@ -285,6 +291,20 @@ QVariantMap Settings::bootReport()const {
   report["stale"]=errors_.contains("update.status");
   report["stamp"]=stamps_.value("update.status");
   return report;
+}
+void Settings::setChargingVisible(bool visible) {
+  chargeTelemetry_.setActive(visible && !fixture_.enabled && topic_ && topic_->id=="charging");
+}
+QStringList Settings::supportedChargeProtocols() const {
+  QStringList protocols;
+  const auto declared=data_.value("charge.protocols").value("manufacturer_tablet_protocols").toArray();
+  for (const auto &entry : declared) {
+    const auto protocol=entry.toObject();
+    const auto name=protocol.value("protocol").toString();
+    if (protocol.value("manufacturer_declared").toBool() && !name.isEmpty() && name.size()<=24)
+      protocols<<safe(name.toStdString());
+  }
+  return protocols;
 }
 QVariantMap Settings::chargingThresholds() const {
   const auto data=data_.value("kernel.charging");
@@ -468,6 +488,7 @@ bool Settings::open(const QString &id) {
   close();for(const auto &t:settingTopics())if(t.id==name){
     topic_=&t;emit changed();refresh();
     if(name=="display") readScreenBrightness();
+    if(name=="changelog") loadChangelog();
     return true;
   }return false;
 }
@@ -475,14 +496,20 @@ void Settings::refresh() {
   stop();notice_.clear();flashlightError_.clear();if(!topic_)return;
   queue_=topic_->reads;
   if(topic_->id=="about"){
-    if(deviceBoard_.isEmpty() && !fixture_.enabled)
-      deviceBoard_={platformBoardInformation(),platformComponentInformation(),platformSensorInformation()};
+    if(!fixture_.enabled) {
+      queue_.clear();
+      if(deviceBoard_.isEmpty() && !deviceInventory_.isRunning())
+        deviceInventory_.setFuture(QtConcurrent::run([] {
+          return QVariantList{platformBoardInformation(),platformComponentInformation(),platformSensorInformation()};
+        }));
+    }
     queue_.removeIf([this](const QString &id){return data_.contains(id);});
   }
   next();
   if(QStringList{"cpu","gpu","sensors","manager-overview","memory","storage","thermal","profiles","diagnostics"}.contains(topic_->id))manager_.open(topic_->id);
 }
 void Settings::stop() {
+  chargeTelemetry_.setActive(false);
   manager_.pause();
   if(!current_.isEmpty())errors_[current_]=i18n("Read stopped. Use Refresh to try again.");
   poll_.stop();simulated_.stop();queue_.clear();
@@ -538,7 +565,7 @@ void Settings::finish(const Result &r) {
 }
 void Settings::readKernel(const QString &kind) {
   const QString helper="/usr/libexec/uke-control-qt/kernel-information";
-  if(kind=="charging"||kind=="tag")readCommand("/usr/bin/pkexec",{helper,kind},20000);
+  if(kind=="charging"||kind=="tag"||kind=="display-resources")readCommand("/usr/bin/pkexec",{helper,kind},20000);
   else readCommand(helper,{kind},20000);
 }
 void Settings::readCommand(const QString &program,const QStringList &arguments,int timeout) {

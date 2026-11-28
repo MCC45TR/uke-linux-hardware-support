@@ -1,0 +1,34 @@
+{
+  "schema": "org.uke.control.changelog.v1",
+  "entries": [
+    {
+      "version": "Uke Control 1.6.0-24",
+      "date": "2026-11-28",
+      "summary": "Charging and display at a glance",
+      "changes": [
+        "See live adapter power, voltage, current, and the charging technology reported by the device.",
+        "Switch the software repository separately from installing updates.",
+        "Open hardware cards and resource views in a layout that adapts to the window."
+      ]
+    },
+    {
+      "version": "Uke Control 1.6.0-23",
+      "date": "2026-11-28",
+      "summary": "Easier to scan device information",
+      "changes": [
+        "See the enabled software repository in Software Updates.",
+        "Find the names and functions of individual components and sensor endpoints."
+      ]
+    },
+    {
+      "version": "Uke Control 1.6.0-22",
+      "date": "2026-11-27",
+      "summary": "Related controls in one place",
+      "changes": [
+        "Find charge thresholds, battery health, and battery history on one page.",
+        "Manage USB accessories and external displays together.",
+        "Try the notification light with a live colour preview."
+      ]
+    }
+  ]
+}

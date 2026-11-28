@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
+#include <QMap>
 #include <cerrno>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -76,6 +77,54 @@ QJsonObject dock() {
     out["kernel_managed"]=out["usb_profile"].toString()=="typec-v1"&&ports.size()==1&&ports.first().toObject()["owner"].toString()=="ucsi_glink.pmic_glink_ucsi";
     return out;
 }
+QJsonObject displayResources() {
+    static const QRegularExpression internal(R"(^card(\d+)-DSI-\d+$)");
+    static const QRegularExpression crtcLine(R"(^crtc\[(\d+)\]: (crtc-\d+)$)");
+    static const QRegularExpression connectorLine(R"(^connector\[\d+\]: ([\w-]{1,48})$)");
+    static const QRegularExpression resourceLine(R"(^\s*(dsc|mixer)=([0-9# \-]+)$)");
+    for (const auto &entry : QDir("/sys/class/drm").entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const auto match=internal.match(entry);
+        if (!match.hasMatch()) continue;
+        QFile source("/sys/kernel/debug/dri/"+match.captured(1)+"/state");
+        if (!source.open(QIODevice::ReadOnly)) continue;
+        const auto data=source.read(65537);
+        if (data.size()>65536) continue;
+        const auto lines=QString::fromUtf8(data).split('\n');
+        QMap<int,QString> crtcs;
+        QMap<QString,QStringList> connectors;
+        QString connector;
+        QJsonArray resources;
+        bool mapping=false;
+        for (const auto &line : lines) {
+            const auto crtc=crtcLine.match(line), output=connectorLine.match(line);
+            if (crtc.hasMatch()) crtcs.insert(crtc.captured(1).toInt(),crtc.captured(2));
+            if (output.hasMatch()) connector=output.captured(1);
+            if (!connector.isEmpty() && line.trimmed().startsWith("crtc=")) {
+                const auto name=line.trimmed().mid(5);
+                if (name.startsWith("crtc-")) connectors[name]<<connector;
+                connector.clear();
+            }
+            if (line=="resource mapping:") mapping=true;
+            if (!mapping) continue;
+            const auto resource=resourceLine.match(line);
+            if (!resource.hasMatch()) continue;
+            const auto resourceSlots=resource.captured(2).simplified().split(' ',Qt::SkipEmptyParts);
+            if (resourceSlots.size()>32) continue;
+            for (qsizetype i=0;i<resourceSlots.size();++i) {
+                if (resourceSlots[i]=="-") continue;
+                bool occupied=false;
+                const auto owner=resourceSlots[i].toInt(&occupied);
+                if (resourceSlots[i]!="#" && (!occupied || !crtcs.contains(owner))) continue;
+                QJsonArray outputs;
+                for (const auto &name : connectors.value(crtcs.value(owner))) outputs<<name;
+                resources<<QJsonObject{{"type",resource.captured(1)},{"index",int(i)},
+                    {"occupied",occupied},{"crtc",crtcs.value(owner)},{"outputs",outputs}};
+            }
+        }
+        if (!resources.isEmpty()) return {{"available",true},{"resources",resources}};
+    }
+    return {{"available",false}};
+}
 QJsonObject tag() {
     QJsonObject out;const auto device=QFileInfo("/sys/class/misc/fm-ntag/device").canonicalFilePath();
     out["present"]=!device.isEmpty();out["driver"]=device.isEmpty()?QString():driver(device);
@@ -96,10 +145,11 @@ QJsonObject tag() {
 int main(int argc,char **argv) {
     alarm(18);
     QCoreApplication app(argc,argv);const auto args=app.arguments();
-    if(args.size()!=2||!QStringList{"dock","charging","tag"}.contains(args[1]))return 64;
+    if(args.size()!=2||!QStringList{"dock","charging","tag","display-resources"}.contains(args[1]))return 64;
     QJsonObject out{{"schema","org.uke.qt.kernel-information.v1"}};
     if(args[1]=="dock")out["data"]=dock();
     else if(args[1]=="tag")out["data"]=tag();
+    else if(args[1]=="display-resources")out["data"]=displayResources();
     else {if(geteuid()!=0)return 77;out["data"]=QJsonObject{{"admission",command("admission")},{"settings",command("settings")},{"status",command("status")}};}
     QFile output;output.open(STDOUT_FILENO,QIODevice::WriteOnly);output.write(QJsonDocument(out).toJson(QJsonDocument::Compact));output.write("\n");return 0;
 }

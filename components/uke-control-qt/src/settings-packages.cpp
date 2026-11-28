@@ -31,7 +31,8 @@ QVariantMap Settings::updateChannel() const {
   }
   const auto active=activeChannels.size()==1 ? *activeChannels.cbegin() : QString();
   return {{"active",active},{"configured",configured?saved:QString()},{"known",known},
-          {"multiple",activeChannels.size()>1},{"ready",configured && active==saved}};
+          {"multiple",activeChannels.size()>1},{"ready",configured && active==saved},
+          {"kernel",safe(status.value("running_kernel").toString().left(120).toStdString())}};
 }
 
 void Settings::runPackageOperation(const QString &operation,const QString &channel) {
@@ -62,7 +63,7 @@ void Settings::runPackageOperation(const QString &operation,const QString &chann
   };
   connect(process,&QProcess::readyReadStandardOutput,this,drain);
   process->setStandardErrorFile(QProcess::nullDevice());
-  const auto finish=[this,process,buffer,drain,preview](bool ok) {
+  const auto finish=[this,process,buffer,drain,preview,switchChannel](bool ok) {
     if (packageProcess_!=process) return;
     drain();
     packageProcess_=nullptr;
@@ -81,9 +82,13 @@ void Settings::runPackageOperation(const QString &operation,const QString &chann
         packages<<safe(item.value("package").toString().left(240).toStdString());
       }
     }
-    const auto detail=report.value("error").toObject().value("message").toString().section('\n',0,0).left(240);
+    auto detail=report.value("error").toObject().value("message").toString().trimmed().left(750);
+    if (!confirmed && detail.isEmpty()) detail=i18n("Administrator authorization was cancelled or the update service could not start.");
+    if (detail.contains("thirparty-repos-orcaslicer") && detail.contains("obsoletes"))
+      detail=i18n("The new repository package conflicts with an older OrcaSlicer repository package. The system update is paused.");
     const auto message=confirmed ? (preview ? (packages.isEmpty()?i18n("The system is up to date."):i18n("Updates are available.")) :
-        i18n("System update complete.")) : i18n("The update task could not be completed.");
+        switchChannel?i18n("Update channel changed."):i18n("System update complete.")) :
+        switchChannel?i18n("Could not change the update channel."):i18n("The update task could not be completed.");
     packageOperation_={{"running",false},{"error",!confirmed},{"message",message},
                        {"packages",packages},{"detail",confirmed?QString():safe(detail.toStdString())}};
     if (confirmed && !preview && topic_ && topic_->id=="updates") refresh();

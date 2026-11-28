@@ -2828,3 +2828,246 @@ msgstr "Uyumlu aksesuarlar"
 
 msgid "Temperature sensors"
 msgstr "Sıcaklık sensörleri"
+
+msgid "The ADSP crashed. Charging readings are unavailable."
+msgstr "ADSP çöktü. Şarj ölçümleri şu anda okunamıyor."
+
+msgid "The ADSP is offline. Charging readings are unavailable."
+msgstr "ADSP çevrimdışı. Şarj ölçümleri şu anda okunamıyor."
+
+msgid "The battery is full."
+msgstr "Pil dolu."
+
+msgid "The battery is charging."
+msgstr "Pil şarj oluyor."
+
+msgid "External power is connected. The battery is not charging."
+msgstr "Adaptör bağlı. Pil şarj olmuyor."
+
+msgid "External power is connected. The battery driver has not reported a charging state."
+msgstr "Adaptör bağlı. Pil sürücüsü şarj durumunu henüz bildirmedi."
+
+msgid "No power adapter is connected. The device is not charging."
+msgstr "Adaptör takılı değil. Cihaz şarj olmuyor."
+
+msgid "The charging driver could not report whether a power adapter is connected."
+msgstr "Şarj sürücüsü adaptör bağlantısını bildiremedi."
+
+msgid "Adapter input power"
+msgstr "Adaptör giriş gücü"
+
+msgid "Input voltage"
+msgstr "Giriş voltajı"
+
+msgid "Input current"
+msgstr "Giriş akımı"
+
+msgid "Input current limit"
+msgstr "Giriş akımı sınırı"
+
+msgid "Adapter current limit"
+msgstr "Adaptör akım sınırı"
+
+msgid "Adapter voltage limit"
+msgstr "Adaptör voltaj sınırı"
+
+msgid "Battery power"
+msgstr "Pil gücü"
+
+msgid "Standard USB port"
+msgstr "Standart USB bağlantı noktası"
+
+msgid "USB charging port"
+msgstr "Şarj destekli USB bağlantı noktası"
+
+msgid "Dedicated USB charger"
+msgstr "USB şarj adaptörü"
+
+msgid "Charging technology"
+msgstr "Şarj teknolojisi"
+
+msgid "Wireless charging"
+msgstr "Kablosuz şarj"
+
+msgid "USB accessory charger"
+msgstr "USB aksesuar şarjı"
+
+msgid "The adapter has not reported a charging technology."
+msgstr "Adaptör şarj teknolojisini bildirmedi."
+
+msgid "The adapter did not provide a complete voltage and current reading."
+msgstr "Adaptör voltaj ve akım ölçümlerini birlikte bildirmedi."
+
+msgid "Power adapter disconnected."
+msgstr "Adaptör çıkarıldı."
+
+msgid "Battery and adapter telemetry"
+msgstr "Pil ve adaptör ölçümleri"
+
+msgid "Protocols listed by the manufacturer: %1"
+msgstr "Üreticinin listelediği protokoller: %1"
+
+msgid "Charge stage"
+msgstr "Şarj evresi"
+
+msgid "Fast charging"
+msgstr "Hızlı şarj"
+
+msgid "Trickle charging"
+msgstr "Düşük akımla şarj"
+
+msgid "Standard charging"
+msgstr "Standart şarj"
+
+msgid "What’s new"
+msgstr "Yenilikler"
+
+msgid "Release highlights for Uke"
+msgstr "Uke sürümlerindeki öne çıkan değişiklikler"
+
+msgid "Read the highlights from recent Uke releases."
+msgstr "Son Uke sürümlerindeki başlıca değişiklikleri okuyun."
+
+msgid "Showing the change log included with Uke Control. GitHub could not be read."
+msgstr "GitHub’a ulaşılamadı. Uke Control ile gelen sürüm notları gösteriliyor."
+
+msgid "Enabled repository: %1"
+msgstr "Etkin depo: %1"
+
+msgid "Changes the software repository. Updates are installed when you choose Update system."
+msgstr "Yazılım deposunu değiştirir. Paketler Sistemi güncelle seçildiğinde kurulur."
+
+msgid "Administrator authorization was cancelled or the update service could not start."
+msgstr "Yönetici yetkisi alınamadı veya güncelleme hizmeti başlatılamadı."
+
+msgid "The new repository package conflicts with an older OrcaSlicer repository package. The system update is paused."
+msgstr "Yeni depo paketi, eski OrcaSlicer depo paketiyle çakışıyor. Sistem güncellemesi durduruldu."
+
+msgid "Update channel changed."
+msgstr "Güncelleme kanalı değiştirildi."
+
+msgid "Could not change the update channel."
+msgstr "Güncelleme kanalı değiştirilemedi."
+
+msgid "Display performance"
+msgstr "Ekran performansı"
+
+msgid "FPS and refresh overlay"
+msgstr "FPS ve yenileme hızı göstergesi"
+
+msgid "Show KWin frame rate and measured DPU refresh over other windows."
+msgstr "KWin kare hızını ve ölçülen DPU yenileme hızını diğer pencerelerin üzerinde göster."
+
+msgid "The floating display monitor is available in Plasma Wayland."
+msgstr "Üstte kayan ekran göstergesi Plasma Wayland oturumunda kullanılabilir."
+
+msgid "Read display engine resources"
+msgstr "Ekran motoru kaynaklarını oku"
+
+msgid "The display driver did not expose a resource map."
+msgstr "Ekran sürücüsü kaynak haritasını sunmadı."
+
+msgid "Layer mixer %1"
+msgstr "Katman karıştırıcı %1"
+
+msgid "Ambient colour profiles"
+msgstr "Ortam rengi profilleri"
+
+msgid "Factory P3 · D65"
+msgstr "Fabrika P3 · D65"
+
+msgid "Use the panel’s built-in colour profile with ambient white balance. Applies immediately."
+msgstr "Panelin yerleşik renk profilini ortam beyaz dengesiyle kullanır. Anında uygulanır."
+
+msgid "This display does not expose a factory profile with ambient colour support."
+msgstr "Ekran, ortam rengiyle çalışan bir fabrika profili sunmuyor."
+
+msgid "Experiments"
+msgstr "Deneysel"
+
+msgid "Share DSC slots with DisplayPort when the cover is closed"
+msgstr "Kılıf kapalıyken DSC yuvalarını DisplayPort ile paylaş"
+
+msgid "Enabled in the driver. The built-in display must be inactive before DisplayPort can claim its slots."
+msgstr "Sürücüde etkin. DisplayPort’un DSC yuvalarını kullanabilmesi için dahili ekran kapalı olmalıdır."
+
+msgid "This kernel controls DSC sharing at module load. A live switch requires a driver interface."
+msgstr "Bu çekirdekte DSC paylaşımı modül yüklenirken ayarlanır. Anlık geçiş için sürücü desteği gerekir."
+
+msgid "Change the driver’s refresh floor while the display is running."
+msgstr "Ekran çalışırken sürücünün yenileme alt sınırını değiştirir."
+
+msgid "DPU display monitor"
+msgstr "DPU ekran göstergesi"
+
+msgid "DPU timing is unavailable"
+msgstr "DPU zamanlaması okunamıyor"
+
+msgid "Waiting for DPU frames…"
+msgstr "DPU kareleri bekleniyor…"
+
+msgid "Wake the built-in display to measure its refresh rate."
+msgstr "Yenileme hızını ölçmek için dahili ekranı uyandırın."
+
+msgid "The display driver stopped delivering frame events."
+msgstr "Ekran sürücüsü kare olaylarını göndermeyi bıraktı."
+
+msgid "DPU measurement paused"
+msgstr "DPU ölçümü duraklatıldı"
+
+msgid "The built-in display is inactive."
+msgstr "Dahili ekran etkin değil."
+
+msgid "VRR on · up to %1 Hz"
+msgstr "VRR açık · en fazla %1 Hz"
+
+msgid "VRR is on"
+msgstr "VRR açık"
+
+msgid "VRR off · mode %1 Hz"
+msgstr "VRR kapalı · kip %1 Hz"
+
+msgid "VRR is off"
+msgstr "VRR kapalı"
+
+msgid "Configured mode %1 Hz"
+msgstr "Ayarlanan kip %1 Hz"
+
+msgid "The driver did not report VRR."
+msgstr "Sürücü VRR durumunu bildirmedi."
+
+msgid "The display overlay could not start."
+msgstr "Ekran göstergesi başlatılamadı."
+
+msgid "KWin could not change the display overlay in this session."
+msgstr "KWin bu oturumda ekran göstergesi ayarını değiştiremedi."
+
+msgid "Graphics processor"
+msgstr "Grafik işlemci"
+
+msgid "USB-C audio routing"
+msgstr "USB-C ses yönlendirmesi"
+
+msgid "Primary backlight driver"
+msgstr "Birincil arka aydınlatma sürücüsü"
+
+msgid "Secondary backlight driver"
+msgstr "İkincil arka aydınlatma sürücüsü"
+
+msgid "Speaker amplifier"
+msgstr "Hoparlör yükselteci"
+
+msgid "Camera sensor"
+msgstr "Kamera sensörü"
+
+msgid "Monitoring"
+msgstr "İzleme"
+
+msgid "Current performance"
+msgstr "Anlık performans"
+
+msgid "Sensor selection"
+msgstr "Sensör seçimi"
+
+msgid "Current profile limits"
+msgstr "Geçerli profil sınırları"

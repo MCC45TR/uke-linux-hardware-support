@@ -71,13 +71,76 @@ TileGrid {
         }
         FormCard.FormButtonDelegate {
             text: i18n("Minimum variable refresh rate")
-            description: i18n("The current display driver applies the saved minimum on the next boot.")
+            description: panel.reading.liveVrr ? i18n("Change the driver’s refresh floor while the display is running.")
+                                               : i18n("The current display driver applies the saved minimum on the next boot.")
             enabled: !backend.readOnly && (panel.settings.topic.changes || []).some(item => item.id === "display.vrr-set")
             onClicked: panel.appWindow.openGuide("display.vrr-set")
         }
         SettingsNote {
             visible: panel.reading.message.length > 0
             text: panel.reading.message
+        }
+    }
+
+    SettingsSection {
+        heading: i18n("Display performance")
+        FormCard.FormSwitchDelegate {
+            objectName: "displayOverlay"
+            text: i18n("FPS and refresh overlay")
+            description: i18n("Show KWin frame rate and measured DPU refresh over other windows.")
+            checked: panel.reading.overlayActive === true
+            enabled: panel.canChange && panel.reading.overlayAvailable && !panel.reading.overlayPending
+            onToggled: panel.settings.setDisplayOverlay(checked)
+        }
+        SettingsNote {
+            visible: !panel.reading.overlayAvailable
+            text: i18n("The floating display monitor is available in Plasma Wayland.")
+        }
+        FormCard.FormButtonDelegate {
+            objectName: "readDisplayResources"
+            text: i18n("Read display engine resources")
+            enabled: panel.canChange && !panel.settings.busy
+            onClicked: panel.settings.readDisplayResources()
+        }
+        SettingsNote {
+            visible: panel.settings.displayResources.read && !panel.settings.displayResources.available
+            text: i18n("The display driver did not expose a resource map.")
+        }
+        Repeater {
+            model: panel.settings.displayResources.available ? panel.settings.displayResources.resources : []
+            delegate: SafeText {
+                required property var modelData
+                text: modelData.type === "dsc" ? i18n("DSC %1", modelData.index) : i18n("Layer mixer %1", modelData.index)
+                description: modelData.occupied
+                    ? (modelData.outputs.length ? modelData.outputs.join(", ") : modelData.crtc)
+                    : i18n("Available")
+            }
+        }
+    }
+
+    SettingsSection {
+        heading: i18n("Ambient colour profiles")
+        FormCard.FormButtonDelegate {
+            objectName: "selectAmbientP3"
+            visible: panel.reading.ambientP3 === true
+            text: i18n("Factory P3 · D65")
+            description: i18n("Use the panel’s built-in colour profile with ambient white balance. Applies immediately.")
+            enabled: panel.canChange
+            onClicked: panel.settings.setDisplayPreference("display.ambient-color", "factory-p3")
+        }
+        SettingsNote {
+            visible: !panel.reading.ambientP3
+            text: i18n("This display does not expose a factory profile with ambient colour support.")
+        }
+    }
+
+    SettingsSection {
+        heading: i18n("Experiments")
+        SafeText {
+            text: i18n("Share DSC slots with DisplayPort when the cover is closed")
+            description: panel.reading.dscSharing
+                ? i18n("Enabled in the driver. The built-in display must be inactive before DisplayPort can claim its slots.")
+                : i18n("This kernel controls DSC sharing at module load. A live switch requires a driver interface.")
         }
     }
 }

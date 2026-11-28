@@ -15,7 +15,7 @@ validate:
 srpm: validate
 	top="$$(realpath -m "$(outdir)/rpmbuild")"
 	mkdir -p "$$top"/{BUILD,BUILDROOT,RPMS,SRPMS,SOURCES,SPECS}
-	tar --sort=name --mtime=@$(SOURCE_DATE_EPOCH) --owner=0 --group=0 --numeric-owner -czf "$$top/SOURCES/$(package)-$(version).tar.gz" --transform 's,^,$(package)-$(version)/,' LICENSE README.md CMakeLists.txt Makefile src tests data packaging po
+	tar --sort=name --mtime=@$(SOURCE_DATE_EPOCH) --owner=0 --group=0 --numeric-owner -czf "$$top/SOURCES/$(package)-$(version).tar.gz" --transform 's,^,$(package)-$(version)/,' LICENSE README.md CMakeLists.txt Makefile src tests data packaging po changelog
 	if [[ "$(TARGET_ARCH)" == aarch64 ]]; then
 	  install -m644 "$(CONTROL_SDK_DIR)/uke-control-2.17.0-64.fc46.aarch64.rpm" \
 	    "$(CONTROL_SDK_DIR)/uke-control-client-devel-2.17.0-64.fc46.aarch64.rpm" "$$top/SOURCES/"

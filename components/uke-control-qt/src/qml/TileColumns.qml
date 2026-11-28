@@ -8,6 +8,8 @@ RowLayout {
     required property var items
     required property Component tile
     property int maximumColumns: 0
+    property real tileHeight: -1
+    property bool asynchronousTiles: false
     property real minimumTileWidth: Kirigami.Units.gridUnit * 16
     readonly property int fittingColumns: Math.max(1,
         Math.floor((width + spacing) / (minimumTileWidth + spacing)))
@@ -36,6 +38,8 @@ RowLayout {
                     readonly property var tileData: tiles.items[index * tiles.columns + column.index]
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
+                    Layout.preferredHeight: tiles.tileHeight
+                    asynchronous: tiles.asynchronousTiles
                     active: tileData !== undefined
                     sourceComponent: tiles.tile
                 }

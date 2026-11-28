@@ -44,7 +44,7 @@ ColumnLayout {
         return names[value] || value
     }
     Layout.fillWidth: true
-    spacing: mode === "storage" ? Kirigami.Units.mediumSpacing : 0
+    spacing: Kirigami.Units.largeSpacing
     FormCard.FormCard {
         Layout.fillWidth: true
         visible: !!(view.manager.state.powerProfile || "")
@@ -112,16 +112,18 @@ ColumnLayout {
         visible: (view.manager.state.controls || []).length > 0
         FormCard.FormSwitchDelegate { text: i18n("Advanced kernel controls"); description: i18n("Show governor tuning, memory experiments and queue details, including unavailable interfaces."); checked: view.advanced; onToggled: view.advanced = checked }
     }
-    Repeater {
-        model: view.manager.state.controls || []
-        delegate: FormCard.FormCard {
+    TileColumns {
+        minimumTileWidth: Kirigami.Units.gridUnit * 25
+        items: (view.manager.state.controls || []).filter(item =>
+            view.advanced || (item.status === "available" && item.writable
+                && ["memory.swappiness", "storage.scheduler", "storage.read-ahead"].includes(item.id)))
+        tile: SettingsSection {
             id: control
-            required property var modelData
+            readonly property var modelData: tileData
             readonly property string requested: view.drafts[modelData.id] === undefined ? modelData.value : view.drafts[modelData.id]
             readonly property bool available: modelData.status === "available" && modelData.writable
-            visible: view.advanced || (control.available && ["memory.swappiness", "storage.scheduler", "storage.read-ahead"].includes(modelData.id))
-            Layout.fillWidth: true
-            SafeText { text: control.modelData.title; description: i18n("Current: %1 %2", control.modelData.value || i18n("Not reported"), control.modelData.unit) }
+            heading: control.modelData.title
+            SafeText { text: i18n("Current value"); description: i18n("Current: %1 %2", control.modelData.value || i18n("Not reported"), control.modelData.unit) }
             SafeText { visible: view.help(control.modelData.id).length > 0; text: i18n("What this setting does"); description: view.help(control.modelData.id) }
             SafeText { visible: !control.available; text: i18n("Control unavailable"); description: view.status(control.modelData.status) }
             FormCard.FormComboBoxDelegate {

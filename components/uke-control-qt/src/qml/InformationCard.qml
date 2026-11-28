@@ -14,7 +14,7 @@ Kirigami.AbstractCard {
     readonly property var rows: section.rows || []
     readonly property var primary: rows.find(row => row.primary)
     readonly property var supportingFacts: rows.filter(row => !row.primary && !row.detail)
-    readonly property int previewCount: section.compact ? 1 : 2
+    readonly property int previewCount: section.previewCount || (section.compact ? 1 : 2)
     readonly property var details: supportingFacts.slice(previewCount).concat(rows.filter(row => !row.primary && row.detail))
     readonly property string message: {
         if (section.stale)
@@ -127,18 +127,30 @@ Kirigami.AbstractCard {
             onClicked: card.toggleDetails()
         }
 
-        Loader {
-            objectName: "informationDetailRows"
+        Item {
+            id: disclosure
             Layout.fillWidth: true
-            active: card.expanded && card.details.length > 0
-            sourceComponent: ColumnLayout {
-                spacing: Kirigami.Units.mediumSpacing
-                Kirigami.Separator { Layout.fillWidth: true }
-                Repeater {
-                    model: card.details
-                    delegate: InformationFact {
-                        required property var modelData
-                        fact: modelData
+            Layout.preferredHeight: card.expanded ? detailsLoader.implicitHeight : 0
+            visible: height > 0 || card.expanded
+            clip: true
+            Behavior on Layout.preferredHeight {
+                NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.InOutCubic }
+            }
+            Loader {
+                id: detailsLoader
+                objectName: "informationDetailRows"
+                width: parent.width
+                active: disclosure.visible && card.details.length > 0
+                enabled: card.expanded
+                sourceComponent: ColumnLayout {
+                    spacing: Kirigami.Units.mediumSpacing
+                    Kirigami.Separator { Layout.fillWidth: true }
+                    Repeater {
+                        model: card.details
+                        delegate: InformationFact {
+                            required property var modelData
+                            fact: modelData
+                        }
                     }
                 }
             }

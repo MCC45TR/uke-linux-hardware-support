@@ -15,9 +15,9 @@ ColumnLayout {
     readonly property var device: targets.length > selected ? targets[selected] : ({})
     readonly property var reading: manager.state.values ? (manager.state.values[device.id] || {}) : ({})
     Layout.fillWidth: true
-    spacing: 0
-    FormCard.FormCard {
-        Layout.fillWidth: true
+    spacing: Kirigami.Units.largeSpacing
+    SettingsSection {
+        heading: i18n("Current performance")
         FormCard.FormComboBoxDelegate {
             objectName: "frequencyDevice"
             visible: view.targets.length > 1
@@ -41,31 +41,29 @@ ColumnLayout {
         }
         FormCard.FormButtonDelegate { text: view.details ? i18n("Less information") : i18n("More information"); icon.name: themeIcons.names["view-list-details"]; onClicked: view.details = !view.details }
     }
-    GridLayout {
-        Layout.fillWidth: true
-        columns: width > Kirigami.Units.gridUnit * 45 ? 2 : 1
+    TileGrid {
+        maximumColumns: 2
+        minimumTileWidth: Kirigami.Units.gridUnit * 24
         MetricChart { manager: view.manager; metric: (view.device.id || "") + "/frequency"; heading: i18n("Frequency history"); unit: "MHz"; seconds: view.seconds; maximum: view.device.frequencies && view.device.frequencies.length ? Math.max(...view.device.frequencies.map(Number)) / (view.mode === "cpu" ? 1000 : 1000000) : 0 }
         MetricChart { manager: view.manager; metric: view.mode === "cpu" ? (view.device.id || "") + "/load" : "gpuTemperature"; heading: view.mode === "cpu" ? i18n("CPU load history") : i18n("GPU temperature history"); unit: view.mode === "cpu" ? "%" : "°C"; seconds: view.seconds; maximum: view.mode === "cpu" ? 100 : 0 }
     }
-    FormCard.FormHeader { visible: view.mode === "cpu"; title: i18n("CPU cores") }
-    FormCard.FormCard {
-        visible: view.mode === "cpu"
-        Layout.fillWidth: true
-        Repeater {
-            model: view.manager.state.cores || []
-            delegate: ColumnLayout {
-                required property var modelData
-                Layout.fillWidth: true
-                SafeText { text: modelData.id; description: view.manager.format(modelData.load, "%") }
+    SettingsSection {
+        visible: view.mode === "cpu" && (view.manager.state.cores || []).length > 0
+        heading: i18n("CPU cores")
+        TileColumns {
+            Layout.margins: Kirigami.Units.largeSpacing
+            minimumTileWidth: Kirigami.Units.gridUnit * 13
+            items: view.mode === "cpu" ? view.manager.state.cores || [] : []
+            tile: ColumnLayout {
+                readonly property var core: tileData
+                Controls.Label { text: core.id; font.weight: Font.DemiBold }
                 Controls.ProgressBar {
                     Layout.fillWidth: true
-                    Layout.leftMargin: Kirigami.Units.largeSpacing
-                    Layout.rightMargin: Kirigami.Units.largeSpacing
-                    Layout.bottomMargin: Kirigami.Units.smallSpacing
-                    visible: modelData.load !== null && modelData.load !== undefined
-                    value: visible ? modelData.load / 100 : 0
-                    Accessible.name: modelData.id
+                    visible: core.load !== null && core.load !== undefined
+                    value: visible ? core.load / 100 : 0
+                    Accessible.name: core.id + " " + view.manager.format(core.load, "%")
                 }
+                Controls.Label { text: view.manager.format(core.load, "%") }
             }
         }
     }

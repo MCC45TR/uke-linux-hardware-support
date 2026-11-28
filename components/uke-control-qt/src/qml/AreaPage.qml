@@ -11,6 +11,7 @@ FormCard.FormCardPage {
     property int areaIndex: 0
     readonly property var area: backend.areas[areaIndex]
     readonly property bool overview: areaIndex === 0
+    readonly property real overviewTileHeight: Kirigami.Units.gridUnit * 6
     readonly property var nativeLinks: backend.settings.nativeLinks(areaIndex)
 
     title: area.title
@@ -49,7 +50,8 @@ FormCard.FormCardPage {
                     wrapMode: Text.Wrap
                 }
                 TileColumns {
-                    objectName: "topicTiles_" + group.modelData.id
+                    tileHeight: page.overview ? page.overviewTileHeight : -1
+                    objectName: (page.overview ? "topicTiles_" : "areaTopicTiles_") + group.modelData.id
                     items: {
                         const topics = backend.settings.topics(group.modelData.index)
                         if (group.modelData.index === 6)
@@ -69,6 +71,7 @@ FormCard.FormCardPage {
                         return topics
                     }
                     tile: SettingsTile {
+                        compactText: page.overview
                         readonly property var topic: tileData
                         objectName: ["openWaydroidInstaller", "browseAllActions"].includes(topic.id)
                                     ? topic.id : "topic_" + topic.id
@@ -93,8 +96,10 @@ FormCard.FormCardPage {
             Kirigami.Heading { level: 3; text: i18n("More") }
 
             TileColumns {
+                tileHeight: page.overviewTileHeight
                 items: page.overview ? backend.areas.filter(a => a.secondary) : []
                 tile: SettingsTile {
+                    compactText: true
                     readonly property var category: tileData
                     objectName: "category_" + category.id
                     text: category.title
@@ -113,6 +118,7 @@ FormCard.FormCardPage {
             Kirigami.Heading { level: 3; text: i18n("KDE System Settings") }
 
             TileColumns {
+                tileHeight: page.overview ? page.overviewTileHeight : -1
                 items: page.nativeLinks
                 tile: SettingsTile {
                     text: tileData.title

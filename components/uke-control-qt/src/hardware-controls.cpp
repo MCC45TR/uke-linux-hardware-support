@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 #include "settings.hpp"
+#include "display-overlay.hpp"
 #include <KLocalizedString>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QDBusVariant>
+#include <QDBusConnectionInterface>
+#include <QDBusServiceWatcher>
+#include <QCoreApplication>
+#include <QGuiApplication>
 #include <memory>
 #include <QDir>
 #include <QFile>
@@ -118,22 +123,96 @@ void Settings::sendInfrared(const QString &code) {
   QTimer::singleShot(5000,process,[process]{if(process->state()!=QProcess::NotRunning)process->kill();});
   emit changed();
 }
+void Settings::watchDisplayOverlay() {
+  if (fixture_.enabled) return;
+  auto *watcher=new QDBusServiceWatcher(displayOverlayBusName,QDBusConnection::sessionBus(),
+      QDBusServiceWatcher::WatchForOwnerChange,this);
+  connect(watcher,&QDBusServiceWatcher::serviceOwnerChanged,this,[this] {
+    overlayPending_=false;
+    emit changed();
+  });
+}
+
+void Settings::setDisplayOverlay(bool enabled) {
+  if (fixture_.enabled || restricted_ || overlayPending_ || !topic_ || topic_->id!="display") return;
+  if (!desktopDisplay().value("overlayAvailable").toBool()) return;
+  auto bus=QDBusConnection::sessionBus();
+  if (enabled==desktopDisplay().value("overlayActive").toBool()) return;
+  overlayPending_=true;
+  displayMessage_.clear();
+  if (enabled) {
+    if (!QProcess::startDetached(QCoreApplication::applicationFilePath(),{"--display-overlay"}))
+      displayMessage_=i18n("The display overlay could not start.");
+  } else {
+    bus.asyncCall(QDBusMessage::createMethodCall(displayOverlayBusName,displayOverlayBusPath,
+        displayOverlayBusInterface,"Quit"),1500);
+  }
+  QTimer::singleShot(3000,this,[this,enabled] {
+    if (!overlayPending_) return;
+    overlayPending_=false;
+    if (desktopDisplay().value("overlayActive").toBool()!=enabled)
+      displayMessage_=i18n("KWin could not change the display overlay in this session.");
+    emit changed();
+  });
+  emit changed();
+}
+
+QVariantMap Settings::displayResources() const {
+  const QString id="kernel.display-resources";
+  const auto data=data_.value(id);
+  return {{"read",data_.contains(id)},{"available",data.value("available").toBool() && !errors_.contains(id)},
+          {"resources",data.value("resources").toArray().toVariantList()}};
+}
+
+void Settings::readDisplayResources() {
+  if (fixture_.enabled || restricted_ || busy() || !topic_ || topic_->id!="display") return;
+  queue_<<QStringLiteral("kernel.display-resources");
+  next();
+}
+
 QVariantMap Settings::desktopDisplay() const {
   const auto data=data_.value("desktop.plasma");
+  auto *bus=QDBusConnection::sessionBus().interface();
+  const bool wayland=!fixture_.enabled && QGuiApplication::platformName().startsWith("wayland");
+  const bool overlayAvailable=wayland && bus && bus->isServiceRegistered("org.kde.KWin").value();
+  const bool overlayActive=overlayAvailable && bus->isServiceRegistered(displayOverlayBusName).value();
+  const auto parameter=[](const QString &path) {
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.read(16).trimmed() : QByteArray();
+  };
+  const auto ambient=wayland ? parameter("/sys/module/panel_xiaomi_o82/parameters/ambient_white_balance") : QByteArray();
+  const auto sharing=fixture_.enabled ? QByteArray() : parameter("/sys/module/msm/parameters/uke_dsi_dsc_sharing");
+  bool profile=false;
+  if (ambient=="Y") {
+    const QDir panels("/sys/bus/mipi-dsi/devices");
+    for (const auto &entry:panels.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+      if (parameter(panels.filePath(entry+"/factory_color_profile_p3_d65")).startsWith("O82 Factory")) {
+        profile=true;
+        break;
+      }
+  }
   return {{"brightness",data.value("automatic_brightness").toVariant()},
           {"rotation",data.value("rotation").toVariant()},
           {"manualBrightness",brightnessMaximum_>0 && brightness_>=0 ? qRound(brightness_*100./brightnessMaximum_) : -1},
           {"output",data.value("output").toVariant()},
           {"available",data.value("schema").toString()=="org.uke.control.plasma.v1" &&
                        data.value("output").isString() && !errors_.contains("desktop.plasma")},
+          {"overlayAvailable",overlayAvailable},{"overlayActive",overlayActive},{"overlayPending",overlayPending_},
+          {"ambientP3",profile},{"dscSharing",sharing=="Y"},{"dscSharingKnown",sharing=="Y" || sharing=="N"},
+          {"liveVrr",!fixture_.enabled && parameter("/sys/module/msm/parameters/o82_vrr_floor_api")=="1"},
           {"busy",displayProcess_!=nullptr},{"message",displayMessage_},{"error",displayFailed_}};
 }
 void Settings::setDisplayPreference(const QString &id,const QString &value) {
   if (fixture_.enabled || restricted_ || displayProcess_ || !topic_ || topic_->id!="display" ||
-      !desktopDisplay().value("available").toBool())
+      (id!="display.ambient-color" && !desktopDisplay().value("available").toBool()))
     return;
   QStringList args;
-  try {
+  QString program="/usr/bin/uke-control";
+  if (id=="display.ambient-color") {
+    if (value!="factory-p3" || !desktopDisplay().value("ambientP3").toBool()) return;
+    program="/usr/bin/kscreen-doctor";
+    args<<QStringLiteral("output.DSI-1.colorProfileSource.EDID");
+  } else try {
     if (id!="desktop.brightness" && id!="desktop.rotation") return;
     const auto &descriptor=action(id.toStdString());
     if (descriptor.access!=Access::user || descriptor.effect!=Effect::device || descriptor.parameters.size()!=1)
@@ -163,7 +242,7 @@ void Settings::setDisplayPreference(const QString &id,const QString &value) {
   connect(process,&QProcess::errorOccurred,this,[done](QProcess::ProcessError error){if(error==QProcess::FailedToStart)done(false);});
   process->setStandardOutputFile(QProcess::nullDevice());
   process->setStandardErrorFile(QProcess::nullDevice());
-  process->start("/usr/bin/uke-control",args);
+  process->start(program,args);
   QTimer::singleShot(15000,process,[process]{if(process->state()!=QProcess::NotRunning)process->kill();});
   emit changed();
 }

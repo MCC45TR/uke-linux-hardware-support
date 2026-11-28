@@ -79,7 +79,11 @@ FormCard.FormCardPage {
     }
     PagePanel {
         active: page.topicId === "updates"
-        sourceComponent: Component { SystemUpdatePanel { settings: page.settings } }
+        sourceComponent: Component { SystemUpdatePanel { settings: page.settings; appWindow: page.appWindow } }
+    }
+    PagePanel {
+        active: page.topicId === "changelog"
+        sourceComponent: Component { ChangelogView { settings: page.settings } }
     }
     PagePanel {
         active: page.topicId === "usb"
@@ -113,6 +117,11 @@ FormCard.FormCardPage {
             ColumnLayout {
                 spacing: Kirigami.Units.largeSpacing
 
+                Controls.BusyIndicator {
+                    Layout.alignment: Qt.AlignHCenter
+                    running: page.settings.deviceInformation.length === 0
+                    visible: running
+                }
                 Repeater {
                     model: page.settings.deviceInformation
                     delegate: ColumnLayout {
@@ -131,6 +140,7 @@ FormCard.FormCardPage {
                             Layout.maximumWidth: Number.POSITIVE_INFINITY
                             Layout.margins: 0
                             minimumTileWidth: Kirigami.Units.gridUnit * 14
+                            loadAsynchronously: !backend.simulation
                             sections: inventoryGroup.modelData.cards
                         }
                     }
@@ -148,7 +158,11 @@ FormCard.FormCardPage {
     }
     PagePanel {
         active: page.isCharging
-        sourceComponent: Component { ChargingPanel { settings: page.settings; information: page.information } }
+        sourceComponent: Component { ChargingPanel {
+                settings: page.settings
+                information: page.information
+                currentPage: page.appWindow.pageStack.currentItem === page && settings.topic.id === page.topicId
+            } }
     }
     Component {
         id: informationPanel

@@ -21,9 +21,9 @@ ColumnLayout {
     onSelectedIdChanged: if (currentPage && selectedId.length) manager.selectSensor(selectedId)
     onCurrentPageChanged: if (currentPage && selectedId.length) manager.selectSensor(selectedId)
     Layout.fillWidth: true
-    spacing: 0
-    FormCard.FormCard {
-        Layout.fillWidth: true
+    spacing: Kirigami.Units.largeSpacing
+    SettingsSection {
+        heading: i18n("Sensor selection")
         SafeText { visible: view.details; text: i18n("Sensor observations"); description: i18n("Kernel thermal, hwmon and IIO readings are shown with their source units. Desktop light and motion values may be cached; source sample age can be unknown. A missing reading is never replaced with zero.") }
         FormCard.FormComboBoxDelegate {
             text: i18n("Sensor group")
@@ -47,16 +47,22 @@ ColumnLayout {
         FormCard.FormButtonDelegate { text: view.details ? i18n("Less information") : i18n("More information"); icon.name: themeIcons.names["view-list-details"]; onClicked: view.details = !view.details }
     }
     MetricChart { manager: view.manager; metric: "sensor:" + view.selectedId; heading: view.descriptor.title || i18n("Sensor history"); unit: view.descriptor.unit || ""; seconds: view.seconds }
-    FormCard.FormHeader { title: i18n("Readings · %1", view.catalog.length) }
-    Repeater {
-        model: view.catalog.slice(0, view.shown)
-        delegate: FormCard.FormCard {
-            required property var modelData
-            readonly property var reading: view.manager.state.sensorValues ? (view.manager.state.sensorValues[modelData.id] || {}) : ({})
-            Layout.fillWidth: true
-            SafeText { text: modelData.title; description: reading.value !== null && reading.value !== undefined ? view.manager.format(reading.value, modelData.unit) : reading.text || i18n("Not reported") }
-            SafeText { text: i18n("Source state"); description: reading.status || i18n("Not reported") }
-        }
+    Kirigami.Heading { level: 3; text: i18n("Readings · %1", view.catalog.length) }
+    InformationGrid {
+        Layout.maximumWidth: Number.POSITIVE_INFINITY
+        Layout.margins: 0
+        minimumTileWidth: Kirigami.Units.gridUnit * 16
+        sections: view.catalog.slice(0, view.shown).map(sensor => {
+            const reading = (view.manager.state.sensorValues || {})[sensor.id] || {}
+            const value = reading.value !== null && reading.value !== undefined
+                ? view.manager.format(reading.value, sensor.unit) : reading.text || ""
+            return {
+                key: sensor.id,
+                title: sensor.title,
+                rows: value ? [{title: i18n("Current value"), value: value}] : [],
+                note: reading.status || i18n("Waiting to read…")
+            }
+        })
     }
     FormCard.FormCard {
         visible: view.catalog.length > view.shown

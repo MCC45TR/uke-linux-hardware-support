@@ -12,7 +12,7 @@ int main(int argc,char **argv) {
     execl(control,control,"--json","update","--yes",static_cast<const char *>(nullptr));
   else if (argc==3 && is("channel") &&
            (std::strcmp(argv[2],"stable")==0 || std::strcmp(argv[2],"test")==0 || std::strcmp(argv[2],"unstable")==0))
-    execl(control,control,"--json","channel","set",argv[2],"--yes",static_cast<const char *>(nullptr));
+    execl(control,control,"--json","channel","select",argv[2],"--yes",static_cast<const char *>(nullptr));
   else
     return 64;
   return 69;

@@ -458,6 +458,10 @@ private slots:
         QVERIFY(visualItem(page,"informationCard_media-Camera A"));
         QVERIFY(visualItem(page,"informationCard_media-Camera B"));
       }
+      if(topic.id=="changelog") {
+        QVERIFY(!settings->changelog().value("entries").toList().isEmpty());
+        QVERIFY(visualItem(page,"informationCard_Uke Control 1.6.0-24-2026-11-28"));
+      }
       if(topic.id=="kernel")snapshot(window,"settings-kernel");
       if(topic.id=="nfc") {QVERIFY(visualItem(window->contentItem(),"nfcInspect"));snapshot(window,"settings-nfc");}
       if(topic.id=="usb") {QVERIFY(visualItem(window->contentItem(),"usbAutomatic"));snapshot(window,"settings-dock");}
@@ -518,7 +522,7 @@ private slots:
     QTRY_VERIFY((power = visualItem(grid, "topic_display")));
     QTRY_VERIFY((display = visualItem(grid, "topic_flashlight")));
     QTRY_COMPARE(grid->property("columns").toInt(), 1);
-    const auto position=[grid](QQuickItem *item){return item->mapToItem(grid,QPointF());};
+    const auto position=[&grid](QQuickItem *item){return item->mapToItem(grid,QPointF());};
     QTRY_VERIFY(position(display).y() >= position(power).y() + power->height());
     QCOMPARE(power->width(), display->width());
     snapshot(window, "tiles-narrow");
@@ -529,8 +533,11 @@ private slots:
     QTRY_VERIFY((display = visualItem(grid, "topic_flashlight")));
     QTRY_VERIFY(position(display).x() >= position(power).x() + power->width());
     QCOMPARE(position(power).y(), position(display).y());
+    QCOMPARE(power->height(),display->height());
     snapshot(window, "tiles-wide");
 
+    QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,2)));
+    QTRY_VERIFY((grid=visualItem(content,"areaTopicTiles_display")) && grid->property("tileHeight").toDouble()<0);
     QVERIFY(grid->setProperty("maximumColumns",2));
     QTRY_COMPARE(grid->property("columns").toInt(),2);
     QTRY_VERIFY((power = visualItem(grid, "topic_display")));

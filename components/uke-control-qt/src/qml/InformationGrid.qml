@@ -7,6 +7,8 @@ TileColumns {
     id: grid
     required property var sections
     property var expandedKeys: []
+    property bool loadAsynchronously: false
+    asynchronousTiles: loadAsynchronously
 
     Layout.maximumWidth: Kirigami.Units.gridUnit * (sections.length > 1 ? 48 : 30)
     Layout.alignment: Qt.AlignHCenter

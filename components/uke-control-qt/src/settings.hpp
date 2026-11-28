@@ -8,7 +8,11 @@
 #include <functional>
 #include <QProcess>
 #include "nfc-reader.hpp"
+#include "charge-telemetry.hpp"
 #include "kernel-manager.hpp"
+class QNetworkAccessManager;
+class QNetworkReply;
+
 namespace uq {
 struct Topic {
   QString id, title, subtitle, icon;
@@ -26,12 +30,16 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantList information READ information NOTIFY changed)
   Q_PROPERTY(QVariantMap history READ history NOTIFY historyChanged)
   Q_PROPERTY(QVariantMap bootReport READ bootReport NOTIFY changed)
+  Q_PROPERTY(QObject* chargeTelemetry READ chargeTelemetry CONSTANT)
+  Q_PROPERTY(QStringList supportedChargeProtocols READ supportedChargeProtocols NOTIFY changed)
   Q_PROPERTY(QVariantMap chargingThresholds READ chargingThresholds NOTIFY changed)
   Q_PROPERTY(QVariantList chargingBands READ chargingBands CONSTANT)
   Q_PROPERTY(QVariantMap flashlight READ flashlight NOTIFY changed)
   Q_PROPERTY(QVariantMap notificationLed READ notificationLed NOTIFY changed)
   Q_PROPERTY(QVariantMap infrared READ infrared NOTIFY changed)
+  Q_PROPERTY(QVariantMap displayResources READ displayResources NOTIFY changed)
   Q_PROPERTY(QVariantMap desktopDisplay READ desktopDisplay NOTIFY changed)
+  Q_PROPERTY(QVariantMap changelog READ changelog NOTIFY changelogChanged)
   Q_PROPERTY(QVariantMap packageOperation READ packageOperation NOTIFY changed)
   Q_PROPERTY(QVariantList deviceInformation READ deviceInformation NOTIFY deviceInformationChanged)
   Q_PROPERTY(QVariantMap displayLink READ displayLink NOTIFY changed)
@@ -55,6 +63,7 @@ class Settings : public QObject {
   QVariantMap history_;
   unsigned historyGeneration_ = 0;
   NfcReader nfc_;
+  ChargeTelemetry chargeTelemetry_;
   KernelManager manager_;
   QProcess *kernel_ = nullptr;
   QTimer kernelTimeout_;
@@ -69,9 +78,17 @@ class Settings : public QObject {
   QProcess *irProcess_ = nullptr, *displayProcess_ = nullptr;
   QString irMessage_, displayMessage_;
   bool irFailed_ = false, displayFailed_ = false;
+  bool overlayPending_ = false;
+  void watchDisplayOverlay();
   QProcess *packageProcess_ = nullptr;
   QVariantMap packageOperation_;
+  QVariantMap changelog_{{"message",QString()}};
+  QNetworkAccessManager *changelogNetwork_ = nullptr;
+  QNetworkReply *changelogReply_ = nullptr;
+  bool changelogOnline_ = false;
+  void loadChangelog();
   QVariantList deviceBoard_;
+  QFutureWatcher<QVariantList> deviceInventory_;
   QString screenBrightnessId_;
   int brightness_ = -1, brightnessMaximum_ = 0;
   unsigned brightnessGeneration_ = 0;
@@ -92,12 +109,19 @@ public:
   QVariantList information() const;
   QVariantMap history() const { return history_; }
   QVariantMap bootReport() const;
+  QObject *chargeTelemetry() { return &chargeTelemetry_; }
+  QStringList supportedChargeProtocols() const;
+  Q_INVOKABLE void setChargingVisible(bool visible);
   QVariantMap chargingThresholds() const;
   QVariantList chargingBands() const;
   QVariantMap flashlight() const;
   QVariantMap notificationLed() const;
   QVariantMap infrared() const;
   QVariantMap desktopDisplay() const;
+  QVariantMap displayResources() const;
+  Q_INVOKABLE void readDisplayResources();
+  Q_INVOKABLE void setDisplayOverlay(bool enabled);
+  QVariantMap changelog() const { return changelog_; }
   QVariantMap packageOperation() const { return packageOperation_; }
   QVariantList deviceInformation() const;
   QVariantMap displayLink() const;
@@ -135,6 +159,7 @@ private slots:
 signals:
   void changed();
   void historyChanged();
+  void changelogChanged();
   void deviceInformationChanged();
 };
 class HistoryPlot : public QQuickPaintedItem {

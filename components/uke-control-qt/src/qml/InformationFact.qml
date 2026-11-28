@@ -10,7 +10,7 @@ GridLayout {
 
     Layout.fillWidth: true
     Layout.minimumWidth: 0
-    columns: width >= Kirigami.Units.gridUnit * 15 && fact.value.length <= 36 ? 2 : 1
+    columns: fact.value.length > 0 && width >= Kirigami.Units.gridUnit * 15 && fact.value.length <= 36 ? 2 : 1
     uniformCellWidths: true
     columnSpacing: Kirigami.Units.mediumSpacing
     rowSpacing: 0
@@ -21,11 +21,12 @@ GridLayout {
         text: row.fact.title
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
-        Accessible.ignored: true
+        Accessible.ignored: row.fact.value.length > 0
     }
     Controls.Label {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignTop
+        visible: text.length > 0
         text: row.fact.value
         textFormat: Text.PlainText
         wrapMode: Text.Wrap

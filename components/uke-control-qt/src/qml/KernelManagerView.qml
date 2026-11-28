@@ -22,19 +22,25 @@ ColumnLayout {
             manager.pause()
     }
     Layout.fillWidth: true
-    spacing: 0
-    FormCard.FormHeader { visible: view.mode !== "storage"; title: i18n("Senemos Kernel Manager") }
-    FormCard.FormCard {
+    spacing: Kirigami.Units.largeSpacing
+
+    TileColumns {
         visible: view.mode === "manager-overview"
-        Layout.fillWidth: true
-        Repeater {
-            model: [{id:"cpu",title:i18n("CPU"),icon:"cpu"},{id:"gpu",title:i18n("GPU"),icon:"video-display"},{id:"memory",title:i18n("Memory and swap"),icon:"cpu"},{id:"storage",title:i18n("Storage"),icon:"drive-harddisk"},{id:"thermal",title:i18n("Thermal and sleep"),icon:"preferences-system-power-management"},{id:"profiles",title:i18n("Application profiles"),icon:"configure"},{id:"diagnostics",title:i18n("Diagnostics"),icon:"utilities-system-monitor"}]
-            delegate: FormCard.FormButtonDelegate { required property var modelData; text: modelData.title; icon.name: themeIcons.names[modelData.icon]; onClicked: if (view.appWindow) view.appWindow.openTopic(modelData.id) }
+        items: visible ? backend.settings.topics(9).filter(topic => topic.id !== "manager-overview")
+                         .concat(backend.settings.topics(5)) : []
+        tileHeight: Kirigami.Units.gridUnit * 6
+        tile: SettingsTile {
+            compactText: true
+            text: tileData.title
+            description: tileData.description
+            icon.name: themeIcons.names[tileData.icon]
+            onClicked: if (view.appWindow) view.appWindow.openTopic(tileData.id)
         }
     }
+
     SettingsSection {
         Layout.fillWidth: true
-        heading: view.mode === "storage" ? i18n("Storage activity") : ""
+        heading: i18n("Monitoring")
         SafeText { visible: view.optionsExpanded; text: i18n("Session observations"); description: i18n("Graphs contain observations from this session only. Collection pauses when leaving this page or switching away from the application.") }
         FormCard.FormSwitchDelegate {
             objectName: "kernelMonitoring"
@@ -61,7 +67,6 @@ ColumnLayout {
             onActivated: index => view.seconds = model[index].value
         }
         FormCard.FormButtonDelegate { text: i18n("Monitoring options"); icon.name: themeIcons.names["configure"]; onClicked: view.optionsExpanded = !view.optionsExpanded }
-        SafeText { visible: view.optionsExpanded; text: i18n("Last observation"); description: view.manager.state.sampledAt || i18n("Not read yet") }
         FormCard.FormButtonDelegate { visible: view.optionsExpanded; text: i18n("Save session report"); description: i18n("Save a bounded text report locally. No files are uploaded."); icon.name: themeIcons.names["document-export"]; onClicked: reportFile.open() }
         FormCard.FormButtonDelegate { visible: !view.manager.active; text: i18n("Read once"); icon.name: themeIcons.names["view-refresh"]; enabled: !view.manager.busy; onClicked: view.manager.refresh() }
     }

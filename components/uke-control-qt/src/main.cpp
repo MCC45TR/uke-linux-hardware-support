@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "bridge.hpp"
+#include "display-overlay.hpp"
 #include "theme-icons.hpp"
 #include <KIconTheme>
 #include <KLocalizedQmlContext>
@@ -41,7 +42,9 @@ int main(int argc, char **argv) {
                     "Print actual Qt/KDE appearance metadata without "
                     "opening a window or querying devices."});
   parser.addOption({"waydroid", "Open the Waydroid installer without starting installation."});
+  parser.addOption(QCommandLineOption("display-overlay",QStringLiteral("Run the composited display timing overlay")));
   parser.process(app);
+  if (parser.isSet("display-overlay")) return uq::runDisplayOverlay();
   uq::ThemeIcons themeIcons;
   QString notice;
   const auto styles = QStyleFactory::keys();

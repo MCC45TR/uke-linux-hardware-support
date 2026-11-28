@@ -16,9 +16,8 @@ ColumnLayout {
     Connections { target: editor.manager; function onDevicesChanged() { if (!editor.dirty) editor.reset() } }
     Layout.fillWidth: true
     spacing: 0
-    FormCard.FormHeader { title: i18n("Frequency policy") }
-    FormCard.FormCard {
-        Layout.fillWidth: true
+    SettingsSection {
+        heading: i18n("Frequency policy")
         SafeText { text: i18n("Current limits"); description: {
             let revision = editor.manager.revision
             const unit = editor.deviceId.startsWith("cpu:") ? 1000 : 1000000

@@ -7,6 +7,7 @@ import org.kde.kirigami as Kirigami
 Kirigami.AbstractCard {
     id: tile
 
+    property bool compactText: false
     property string description: ""
     property string status: ""
     Layout.fillWidth: true
@@ -45,6 +46,8 @@ Kirigami.AbstractCard {
                 text: tile.text
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
+                maximumLineCount: tile.compactText ? 2 : 2147483647
+                elide: tile.compactText ? Text.ElideRight : Text.ElideNone
                 Accessible.ignored: true
             }
 
@@ -54,6 +57,8 @@ Kirigami.AbstractCard {
                 text: tile.description
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
+                maximumLineCount: tile.compactText ? 3 : 2147483647
+                elide: tile.compactText ? Text.ElideRight : Text.ElideNone
                 Accessible.ignored: true
             }
 
