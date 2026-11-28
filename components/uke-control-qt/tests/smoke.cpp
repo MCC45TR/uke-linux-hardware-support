@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "../src/ui.hpp"
 #include <QtTest>
+#include <KLocalizedString>
 #include <unistd.h>
 using namespace uq;
 class Smoke : public QObject {
@@ -8,7 +9,8 @@ class Smoke : public QObject {
   Fixture fixture;
 private slots:
   void initTestCase() {
-    fixture = Fixture::load(FIXTURE_PATH);
+    KLocalizedString::setApplicationDomain("uke-control-qt");
+    fixture = Fixture::load(qEnvironmentVariable("UKE_QT_TEST_FIXTURE", FIXTURE_PATH));
     QVERIFY(fixture.enabled);
   }
   void fixtureValidation() {
@@ -19,7 +21,8 @@ private slots:
     bad.close();
     QVERIFY_EXCEPTION_THROWN(Fixture::load(bad.fileName()), std::exception);
     auto link = dir.filePath("link.json");
-    QVERIFY(::symlink(FIXTURE_PATH, QFile::encodeName(link).constData()) == 0);
+    const auto source = QFile::encodeName(qEnvironmentVariable("UKE_QT_TEST_FIXTURE", FIXTURE_PATH));
+    QVERIFY(::symlink(source.constData(), QFile::encodeName(link).constData()) == 0);
     QVERIFY_EXCEPTION_THROWN(Fixture::load(link), std::exception);
     QCOMPARE(fixture.result("battery.health").exit_status, 69);
   }

@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MIT
+[Unit]
+Description=Install the selected official Waydroid image
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemd-inhibit --what=shutdown:sleep --mode=block --who=UkeControl "--why=Waydroid installation is in progress" /usr/libexec/uke-control-qt/waydroid-installer worker %i
+TimeoutStartSec=infinity
+TimeoutStopSec=15min
+UMask=0022
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+Environment=LC_ALL=C

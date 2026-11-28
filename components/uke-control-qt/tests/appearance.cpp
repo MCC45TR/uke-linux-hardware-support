@@ -35,9 +35,19 @@ class Appearance : public QObject {
                                                          QFile::WriteOwner |
                                                          QFile::ExeOwner);
     environment.insert("XDG_CONFIG_HOME", state.filePath("config"));
+    environment.insert("XDG_CONFIG_DIRS", state.filePath("config"));
     environment.insert("XDG_CACHE_HOME", state.filePath("cache"));
     environment.insert("XDG_DATA_HOME", state.filePath("data"));
     environment.insert("XDG_RUNTIME_DIR", state.filePath("runtime"));
+    // A deliberately incomplete third-party theme exercises inheritance and
+    // the platform fallback without altering the session's real settings.
+    QDir().mkpath(state.filePath("data/icons/uke-test-sparse/32/actions"));
+    QFile theme(state.filePath("data/icons/uke-test-sparse/index.theme"));
+    if (!theme.open(QIODevice::WriteOnly))
+      return {};
+    theme.write("[Icon Theme]\nName=Uke test sparse\nInherits=breeze\n"
+                "Directories=32/actions\n[32/actions]\nSize=32\nType=Fixed\nContext=Actions\n");
+    theme.close();
     for (auto it = requestedEnvironment.begin();
          it != requestedEnvironment.end(); ++it)
       environment.insert(it.key(), it.value());
@@ -83,7 +93,7 @@ private slots:
     const auto icons = result.data.value("icons").toObject();
     QCOMPARE(icons.value("resolvedTheme").toString(), QString("breeze"));
     const auto available = icons.value("available").toObject();
-    QVERIFY(!available.isEmpty());
+    QVERIFY(available.size() >= 40);
     for (auto it = available.begin(); it != available.end(); ++it)
       QVERIFY2(it.value().toBool(), qPrintable(it.key()));
     const auto font = result.data.value("font").toObject();
@@ -119,6 +129,26 @@ private slots:
     QCOMPARE(
         result.data.value("icons").toObject().value("resolvedTheme").toString(),
         QString("breeze-dark"));
+  }
+  void alternativeIconThemes_data() {
+    QTest::addColumn<QString>("theme");
+    QTest::newRow("breeze-dark") << QStringLiteral("breeze-dark");
+    QTest::newRow("adwaita") << QStringLiteral("Adwaita");
+    QTest::newRow("sparse-inherited") << QStringLiteral("uke-test-sparse");
+    QTest::newRow("missing-theme-fallback") << QStringLiteral("uke-theme-does-not-exist");
+  }
+  void alternativeIconThemes() {
+    QFETCH(QString, theme);
+    const auto result = probe({}, "[Icons]\nTheme=" + theme + "\n");
+    QVERIFY2(result.finished, result.stderrText.constData());
+    QCOMPARE(result.exit, 0);
+    const auto icons = result.data.value("icons").toObject();
+    if (theme != "uke-theme-does-not-exist")
+      QCOMPARE(icons.value("resolvedTheme").toString(), theme);
+    const auto available = icons.value("available").toObject();
+    QVERIFY(available.size() >= 40);
+    for (auto it = available.begin(); it != available.end(); ++it)
+      QVERIFY2(it.value().toBool(), qPrintable(theme + ": " + it.key()));
   }
   void kdePlatformFontAndPaletteRemainRespected() {
     const QDir themes(QLibraryInfo::path(QLibraryInfo::PluginsPath) +
