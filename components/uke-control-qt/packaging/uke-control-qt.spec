@@ -1,11 +1,17 @@
 %global debug_package %{nil}
 %global source_name uke-control-qt
+%global sdk_evr 2.17.0-64.fc46
+%global sdk_base https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        10%{?dist}
+Release:        11%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
+%ifarch aarch64
+Source1:        %{sdk_base}/uke-control-%{sdk_evr}.aarch64.rpm
+Source2:        %{sdk_base}/uke-control-client-devel-%{sdk_evr}.aarch64.rpm
+%endif
 Provides:       uke-control-qt = %{version}-%{release}
 Obsoletes:      uke-control-qt < 1.0.0-3
 BuildRequires:  gcc-c++
@@ -28,10 +34,17 @@ BuildRequires:  cmake(KF6ConfigWidgets) >= 6.6
 BuildRequires:  desktop-file-utils
 BuildRequires:  plasma-breeze-qt6 plasma-integration breeze-icon-theme
 BuildRequires:  adwaita-icon-theme
+%ifarch aarch64
+# The Rawhide quic-teec build currently requires an unpublished libcbor SONAME.
+# Use the exact signed Control SDK payload without installing the Control RPM.
+BuildRequires:  cpio
+BuildRequires:  jsoncpp
+%else
 BuildRequires:  pkgconfig(uke-control-client) >= 2.8.0
 BuildRequires:  uke-control-client-devel >= 2.8.1-23
 BuildRequires:  %{_includedir}/uke-control/frontend.hpp
 BuildRequires:  uke-control(frontend-sdk-v1) >= 1
+%endif
 Requires:       uke-control >= 2.8.1-23
 Requires:       uke-control(update-status-v1) >= 1
 Requires:       uke-control(slot-selection-v1) >= 1
@@ -72,9 +85,28 @@ The interface also includes its native Waydroid installer.
 
 %prep
 %autosetup -n %{source_name}-%{version}
+%ifarch aarch64
+sha256sum -c <<EOF
+8268a5540b41324ce3b2f19a08592522bf51a026f16c9dcb078889df8edcfff7  %{SOURCE1}
+150888ae153fda7133f9a37b8dd17361339577e58aeda799f891495bd76c8c2d  %{SOURCE2}
+EOF
+mkdir -p .control-sdk/{payload,src,build}
+(
+    set -o pipefail
+    cd .control-sdk/payload
+    rpm2cpio %{SOURCE1} | cpio -id --quiet './usr/lib64/libuke-control-client.so.1'
+    rpm2cpio %{SOURCE2} | cpio -id --quiet './usr/include/uke-control/client.hpp' './usr/include/uke-control/frontend.hpp'
+)
+mv .control-sdk/payload/usr/include/uke-control/{client,frontend}.hpp .control-sdk/src/
+mv .control-sdk/payload/usr/lib64/libuke-control-client.so.1 .control-sdk/build/
+%endif
 
 %build
+%ifarch aarch64
+%cmake -DBUILD_TESTING=ON -DUKE_CONTROL_SOURCE="$PWD/.control-sdk"
+%else
 %cmake -DBUILD_TESTING=ON
+%endif
 %cmake_build
 
 %install
@@ -109,9 +141,10 @@ done
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
-* Fri Nov 27 2026 Uke contributors - 1.6.0-10
+* Fri Nov 27 2026 Uke contributors - 1.6.0-11
 - Use responsive settings cards and native controls for reviewed preferences.
 - Explain the available flashlight levels and percentage requests in English and Turkish.
+- Use the signed Control SDK during AArch64 builds while Rawhide repairs its TEE dependency.
 
 * Thu Nov 19 2026 Uke contributors - 1.6.0-8
 - Ship the existing Waydroid installer with its Qt frontend.
