@@ -18,7 +18,7 @@ const QList<Topic> &settingTopics() {
     {"memory",i18n("Memory and swap"),i18n("Pressure, reclaim, swap activity and allocation policy"),"cpu",5,{"overview.workload","swap.status"},{"swap.set","swap.apply"}},
     {"updates",i18n("Software updates"),i18n("Selected channel, available updates and installation"),"system-software-update",6,{"channel.status"},{"update.preview","update.apply","channel.set"}},
     {"kernel",i18n("Kernel and boot slots"),i18n("Running kernel, approval and next boot selection"),"system-reboot",9,{"update.status"},{"boot.set-slot"}},
-    {"about",i18n("Device information"),i18n("Hardware, cameras, sensors and firmware"),"dialog-information",6,{"hardware.status","sensors.list"},{}},
+    {"about",i18n("Device information"),i18n("Hardware, cameras, sensors and firmware"),"dialog-information",6,{"hardware.status"},{}},
     {"about-uke",i18n("About Uke Control"),i18n("Application version and license"),"dialog-information",6,{},{}},
     {"support",i18n("Logs and support files"),i18n("Collect a focused local report"),"document-save",7,{}, {"diagnostics.collect","report.collect","support.export"}},
     {"snapshots",i18n("Saved observations"),i18n("Save or compare component snapshots"),"document-properties",7,{}, {"snapshot.save","snapshot.save-all","snapshot.compare"}},

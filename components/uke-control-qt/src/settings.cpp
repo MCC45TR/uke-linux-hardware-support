@@ -13,6 +13,7 @@
 namespace uq {
 QVariantList platformBoardInformation();
 QVariantList platformComponentInformation();
+QVariantList platformSensorInformation();
 namespace {
 QString unknown() { return i18n("Not reported"); }
 QString value(const QJsonValue &v) {
@@ -480,7 +481,7 @@ void Settings::refresh() {
   queue_=topic_->reads;
   if(topic_->id=="about"){
     if(deviceBoard_.isEmpty() && !fixture_.enabled)
-      deviceBoard_={platformBoardInformation(),platformComponentInformation()};
+      deviceBoard_={platformBoardInformation(),platformComponentInformation(),platformSensorInformation()};
     queue_.removeIf([this](const QString &id){return data_.contains(id);});
   }
   next();

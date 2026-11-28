@@ -2750,3 +2750,12 @@ msgstr "Yeni güncellemeler var."
 
 msgid "Version %1"
 msgstr "Sürüm %1"
+
+msgid "Gravity"
+msgstr "Yerçekimi"
+
+msgid "Voltage"
+msgstr "Gerilim"
+
+msgid "Current"
+msgstr "Akım"

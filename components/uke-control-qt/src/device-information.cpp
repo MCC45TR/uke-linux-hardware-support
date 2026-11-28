@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QSet>
 #include <QtEndian>
+#include <algorithm>
 
 namespace uq {
 namespace {
@@ -22,17 +23,6 @@ QVariantMap fact(const QString &label,const QString &value) {
 }
 QVariantMap card(const QString &key,const QString &title,const QVariantList &rows) {
   return {{"key",key},{"title",title},{"rows",rows}};
-}
-QString sensorKind(const QString &source,const QString &label,const QString &unit) {
-  const auto text=(source+" "+label).toLower();
-  if (text.contains("temp") || text.contains("thermal") || unit=="°C") return i18n("Temperature");
-  if (text.contains("accel")) return i18n("Acceleration");
-  if (text.contains("anglvel") || text.contains("gyro")) return i18n("Angular velocity");
-  if (text.contains("magn") || text.contains("compass")) return i18n("Magnetic field");
-  if (text.contains("prox")) return i18n("Proximity");
-  if (text.contains("illuminance") || text.contains("ambient") || unit=="lux") return i18n("Ambient light");
-  if (text.contains("pressure")) return i18n("Pressure");
-  return unit.isEmpty()?i18n("Sensor reading"):safe(unit.left(40).toStdString());
 }
 }
 QVariantList platformBoardInformation() {
@@ -92,6 +82,48 @@ QVariantList platformComponentInformation() {
           fact(i18n("Touch controller"),touch),fact(i18n("UFS model"),ufs),
           fact(i18n("Internal storage capacity"),sectors>0?QLocale().formattedDataSize(qint64(sectors*512)):QString())};
 }
+QVariantList platformSensorInformation() {
+  QVariantList rows;
+  QSet<QPair<QString,QString>> seen;
+  auto add=[&](const QString &model,const QString &function) {
+    const auto key=qMakePair(model,function);
+    if (model.isEmpty() || seen.contains(key) || rows.size()>=256) return;
+    seen.insert(key);
+    rows<<fact(model,function);
+  };
+  const QList<QPair<QString,QString>> types{
+      {"in_accel_",i18n("Acceleration")},{"in_anglvel_",i18n("Angular velocity")},
+      {"in_magn_",i18n("Magnetic field")},{"in_proximity",i18n("Proximity")},
+      {"in_illuminance",i18n("Ambient light")},{"in_pressure",i18n("Pressure")},
+      {"in_temp",i18n("Temperature")},{"in_gravity_",i18n("Gravity")},
+      {"in_rot_",i18n("Orientation")}};
+  const QDir iio("/sys/bus/iio/devices");
+  for (const auto &entry : iio.entryList({"iio:device*"},QDir::Dirs | QDir::NoDotAndDotDot)) {
+    const QDir device(iio.filePath(entry));
+    const auto model=name(device.filePath("name"));
+    const auto attributes=device.entryList({"in_*"},QDir::Files);
+    bool typed=false;
+    for (const auto &[prefix,function] : types) {
+      if (std::any_of(attributes.cbegin(),attributes.cend(),[&](const auto &attribute){return attribute.startsWith(prefix);})) {
+        add(model,function);
+        typed=true;
+      }
+    }
+    if (!typed) add(model,i18n("Sensor reading"));
+  }
+  const QDir hwmon("/sys/class/hwmon");
+  for (const auto &entry : hwmon.entryList({"hwmon*"},QDir::Dirs | QDir::NoDotAndDotDot)) {
+    const QDir device(hwmon.filePath(entry));
+    const auto model=name(device.filePath("name"));
+    if (!device.entryList({"temp*_input"},QDir::Files).isEmpty()) add(model,i18n("Temperature"));
+    if (!device.entryList({"in*_input"},QDir::Files).isEmpty()) add(model,i18n("Voltage"));
+    if (!device.entryList({"curr*_input"},QDir::Files).isEmpty()) add(model,i18n("Current"));
+  }
+  const QDir thermal("/sys/class/thermal");
+  for (const auto &entry : thermal.entryList({"thermal_zone*"},QDir::Dirs | QDir::NoDotAndDotDot))
+    add(name(thermal.filePath(entry+"/type")),i18n("Temperature"));
+  return rows;
+}
 QVariantList Settings::deviceInformation() const {
   QVariantList board=deviceBoard_.value(0).toList();
   const auto data=data_.value("hardware.status");
@@ -102,8 +134,9 @@ QVariantList Settings::deviceInformation() const {
     if (!item.isEmpty()) board<<fact(label,safe(item.left(128).toStdString()));
   }
 
-  QVariantList cameras,sensors;
-  QSet<QString> cameraNames,sensorNames;
+  QVariantList cameras;
+  auto sensors=deviceBoard_.value(2).toList();
+  QSet<QString> cameraNames;
   for (const auto &item : data.value("media").toObject().value("devices").toArray()) {
     const auto device=item.toObject();
     const auto label=device.value("name").toString();
@@ -111,14 +144,6 @@ QVariantList Settings::deviceInformation() const {
       cameraNames.insert(label);
       cameras<<fact(i18n("Camera device"),safe(label.left(128).toStdString()));
     }
-  }
-  for (const auto &item : data_.value("sensors.list").value("readings").toArray()) {
-    const auto reading=item.toObject();
-    const auto label=reading.value("label").toString();
-    if (label.isEmpty() || sensorNames.contains(label)) continue;
-    sensorNames.insert(label);
-    sensors<<fact(safe(label.left(120).toStdString()),sensorKind(reading.value("source").toString(),label,reading.value("unit").toString()));
-    if (sensors.size()>=256) break;
   }
   if (cameras.isEmpty()) cameras<<fact(i18n("Camera sensor model"),QString());
   if (sensors.isEmpty()) sensors<<fact(i18n("Sensors"),QString());

@@ -114,6 +114,7 @@ FormCard.FormCardPage {
                 maximumColumns: 2
                 Layout.maximumWidth: Number.POSITIVE_INFINITY
                 Layout.margins: 0
+                expandedKeys: ["mainboard", "components"]
                 sections: page.settings.deviceInformation
             }
         }
