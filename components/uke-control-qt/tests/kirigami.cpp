@@ -353,6 +353,23 @@ private slots:
       QVERIFY(bridge.review().isEmpty());
       if(topic.id=="battery") {
         settings->loadHistory();QVERIFY(settings->history().value("available").toBool());
+        const auto findCard = [&] { return visualItem(window->contentItem(),"informationCard_battery.status"); };
+        QQuickItem *card = nullptr;
+        QTRY_VERIFY((card = findCard()));
+        auto *primary = visualItem(card,"primaryValue");
+        QVERIFY(primary);
+        QVERIFY(primary->property("text").toString().startsWith("72"));
+        QVERIFY(!card->property("expanded").toBool());
+        auto *details = visualItem(card,"informationDetails");
+        QVERIFY(details);
+        QVERIFY(QMetaObject::invokeMethod(details,"clicked"));
+        QTRY_VERIFY(findCard() && findCard()->property("expanded").toBool());
+        settings->refresh();
+        settings->stop();
+        QTRY_VERIFY(findCard() && findCard()->property("expanded").toBool());
+        QVERIFY(settings->information().first().toMap().value("stale").toBool());
+        auto *detailRows = visualItem(findCard(),"informationDetailRows");
+        QVERIFY(detailRows && detailRows->property("active").toBool());
         snapshot(window,"settings-battery");
       }
       if(topic.id=="flashlight") {
@@ -790,11 +807,15 @@ private slots:
     bridge.submit();
     QTRY_VERIFY(!bridge.observation().value("running").toBool());
     QQuickItem *bootCurrent = nullptr;
-    QTRY_VERIFY((bootCurrent = visualItem(window->contentItem(), "bootCurrent")));
-    QVERIFY(bootCurrent->property("description").toString().contains("Slot B"));
-    auto *pending = visualItem(window->contentItem(), "bootPending");
+    QTRY_VERIFY((bootCurrent = visualItem(window->contentItem(), "informationCard_runningBoot")));
+    auto *slot = visualItem(bootCurrent,"primaryValue");
+    QVERIFY(slot);
+    QCOMPARE(slot->property("text").toString(), QString("Slot B"));
+    auto *nextBoot = visualItem(window->contentItem(), "informationCard_nextBoot");
+    QVERIFY(nextBoot);
+    auto *pending = visualItem(nextBoot,"primaryLabel");
     QVERIFY(pending);
-    QCOMPARE(pending->property("description").toString(), QString("No"));
+    QCOMPARE(pending->property("text").toString(), QString("No slot change is pending"));
     snapshot(window, "kernel-slot-status");
     QVERIFY(QMetaObject::invokeMethod(window, "openGuide", Q_ARG(QVariant, QString("boot.set-slot"))));
     QCoreApplication::processEvents();

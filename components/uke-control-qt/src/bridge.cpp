@@ -162,7 +162,7 @@ bool Bridge::openAction(const QString &id) {
       if (percentSlider) {
         if (a.id == "flashlight.level") {
           title = i18n("Brightness level");
-          description = i18n("The flashlight has two brightness levels. Review the selected level before applying it.");
+          description = i18n("Low uses 50% brightness. High uses 100%.");
         } else if (a.id == "charge.limit") {
           title = i18n("Charge limit (%)");
           description = i18n("Choose the percentage at which charging should stop. The charging provider decides which values can be applied.");

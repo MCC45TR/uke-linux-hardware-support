@@ -23,9 +23,11 @@ ColumnLayout {
 
     FormCard.FormHeader { title: backend.guide.title || "" }
     FormCard.FormCard {
-        SafeText {
+        FormCard.FormSectionText {
             visible: text.length > 0
             text: backend.guide.description || ""
+            textFormat: Text.PlainText
+            Layout.bottomMargin: 0
         }
         RequestFields { Layout.fillWidth: true }
 

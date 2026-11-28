@@ -6,7 +6,7 @@ ColumnLayout {
     required property var topicPage
     Layout.fillWidth: true
     spacing: 0
-    FormCard.FormHeader { title: i18n("Host mode and automatic handling") }
+    FormCard.FormHeader { title: i18n("USB data role") }
     FormCard.FormCard {
         Layout.fillWidth: true
         SafeText {
@@ -15,8 +15,8 @@ ColumnLayout {
         }
         FormCard.FormButtonDelegate {
             objectName: "usbAutomatic"
-            text: i18n("Automatic")
-            description: i18n("Check kernel management and current roles. Keeps the attached connection intact.")
+            text: i18n("Check current USB connection")
+            description: i18n("Read the current role and connection status.")
             icon.name: themeIcons.names["view-refresh"]
             enabled: !backend.settings.busy
             onClicked: backend.settings.refresh()

@@ -75,6 +75,7 @@ Kirigami.ApplicationWindow {
     }
     function openSearch() {
         if (pageStack.currentItem && pageStack.currentItem.objectName === "settingsSearchPage") {
+            if (globalDrawer.modal) globalDrawer.close()
             pageStack.currentItem.focusSearch()
             return
         }

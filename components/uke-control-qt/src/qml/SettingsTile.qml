@@ -41,6 +41,7 @@ Kirigami.AbstractCard {
             Kirigami.Heading {
                 Layout.fillWidth: true
                 level: 4
+                font.weight: Font.DemiBold
                 text: tile.text
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap

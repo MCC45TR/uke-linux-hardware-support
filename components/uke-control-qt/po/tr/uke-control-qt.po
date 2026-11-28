@@ -2148,3 +2148,91 @@ msgstr "Etki: %1"
 
 msgid "Access: %1"
 msgstr "Erişim: %1"
+
+msgid "Reported information"
+msgstr "Cihazın bildirdiği bilgiler"
+
+msgid "Showing the last available reading from %1."
+msgstr "%1 saatindeki son okuma gösteriliyor."
+
+msgid "Showing the last available reading."
+msgstr "Alınabilen son okuma gösteriliyor."
+
+msgid "Waiting to read…"
+msgstr "Okuma sırası bekleniyor…"
+
+msgid "No summary available. Open Technical Tools for the original output."
+msgstr "Özet bulunamadı. Özgün çıktıyı görmek için Teknik Araçlar’ı açın."
+
+msgid "Read stopped. Use Refresh to try again."
+msgstr "Okuma durduruldu. Tekrar denemek için Yenile’yi seçin."
+
+msgid "Show details"
+msgstr "Ayrıntıları göster"
+
+msgid "Hide details"
+msgstr "Ayrıntıları gizle"
+
+msgctxt "measurement label and value for screen readers"
+msgid "%1, %2"
+msgstr "%1, %2"
+
+msgid "%1: %2"
+msgstr "%1: %2"
+
+msgid "Saved charge limit"
+msgstr "Kayıtlı şarj sınırı"
+
+msgid "Saved stop threshold"
+msgstr "Kayıtlı şarj bitiş eşiği"
+
+msgid "These settings come from the firmware. A charging measurement is needed to verify when charging stops."
+msgstr "Bu ayarlar aygıt yazılımından okunur. Şarjın ne zaman durduğunu doğrulamak için ölçüm gerekir."
+
+msgid "Charge limit can be changed"
+msgstr "Şarj sınırı değiştirilebilir"
+
+msgid "Automatic control available"
+msgstr "Otomatik denetim kullanılabilir"
+
+msgid "Disconnected"
+msgstr "Bağlı değil"
+
+msgid "The link speed shows what each accessory negotiated. A file transfer can run at a different speed."
+msgstr "Bağlantı hızı, aksesuarın bağlantı kurarken seçtiği hızı gösterir. Dosya aktarım hızı farklı olabilir."
+
+msgid "Slot %1"
+msgstr "Yuva %1"
+
+msgid "Slot unknown"
+msgstr "Yuva bilinmiyor"
+
+msgid "Next boot"
+msgstr "Sonraki açılış"
+
+msgid "A slot change is pending"
+msgstr "Yuva değişikliği bekliyor"
+
+msgid "No slot change is pending"
+msgstr "Bekleyen yuva değişikliği yok"
+
+msgid "Pending change unknown"
+msgstr "Bekleyen değişiklik durumu bilinmiyor"
+
+msgid "Stored kernels"
+msgstr "Kayıtlı çekirdekler"
+
+msgid "Kernel approval record"
+msgstr "Çekirdek onay kaydı"
+
+msgid "USB data role"
+msgstr "USB veri rolü"
+
+msgid "Check current USB connection"
+msgstr "USB bağlantısını denetle"
+
+msgid "Read the current role and connection status."
+msgstr "Geçerli rolü ve bağlantı durumunu okur."
+
+msgid "Low uses 50% brightness. High uses 100%."
+msgstr "Düşük kademe %50, yüksek kademe %100 parlaklık kullanır."

@@ -5,6 +5,7 @@
 #include <QStorageInfo>
 #include <QLibraryInfo>
 #include <QProcess>
+#include <QSet>
 #include <cmath>
 namespace uq {
 namespace {
@@ -19,8 +20,8 @@ QString value(const QJsonValue &v) {
   }
   return unknown();
 }
-QVariantMap row(const QString &name,const QString &text,double progress=-1) {
-  return {{"title",name},{"value",text},{"progress",progress}};
+QVariantMap row(const QString &name,const QString &text,double progress=-1,bool primary=false) {
+  return {{"title",name},{"value",text},{"progress",progress},{"primary",primary||progress>=0}};
 }
 QString bytes(double n) { return QLocale().formattedDataSize(qint64(n)); }
 QJsonObject component(const QJsonObject &data) {
@@ -37,9 +38,9 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
     auto measure=[&](const char *key,const QString &title,const char *unit,double scale,const QString &suffix,bool level=false) {
       const auto r=readings.value(key).toObject();const auto v=r.value("value");
       const auto validity=r.value("validity").toString();
-      const bool valid=coherent && validity!="stale" && validity!="invalid" && validity!="unavailable" && r.value("errno").toInt(-1)==0 && r.value("unit").toString()==unit && v.isDouble() && std::isfinite(v.toDouble());
       const auto n=v.toDouble()/scale;
-      rows << row(title,valid?QLocale().toString(n,'f',scale==1?0:1)+suffix:unknown(),valid&&level&&n>=0&&n<=100?n/100:-1);
+      const bool valid=coherent && validity!="stale" && validity!="invalid" && validity!="unavailable" && r.value("errno").toInt(-1)==0 && r.value("unit").toString()==unit && v.isDouble() && std::isfinite(n) && (!level||(n>=0&&n<=100));
+      rows << row(title,valid?QLocale().toString(n,'f',scale==1?0:1)+suffix:unknown(),valid&&level?n/100:-1);
     };
     if(id=="battery.status") {
       measure("battery.capacity",i18n("Battery level"),"percent",1," %",true);
@@ -66,9 +67,9 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
   }
   if(id=="flashlight.status") {
     const auto f=data.value("flashlight").toObject();
-    rows<<row(i18n("Available"),value(f.value("available")));
-    rows<<row(i18n("Flashlight"),f.value("on").isBool()?(f.value("on").toBool()?i18n("On"):i18n("Off")):unknown());
+    rows<<row(i18n("Current state"),f.value("on").isBool()?(f.value("on").toBool()?i18n("On"):i18n("Off")):unknown(),-1,f.value("on").isBool());
     rows<<row(i18n("Applied brightness"),f.value("brightness_percent").isDouble()?value(f.value("brightness_percent"))+" %":unknown());
+    rows<<row(i18n("Available"),value(f.value("available")));
     return rows;
   }
   if(id=="battery.protocol") {
@@ -132,13 +133,19 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
     {"current_slot",i18n("Running slot")},{"next_boot_slot",i18n("Next boot slot")},
     {"microphone",i18n("Microphone")},{"label",i18n("Label")},{"connected",i18n("Connected")}
   };
+  QSet<QPair<QString,QString>> shown;
   std::function<void(const QJsonValue &,int)> walk=[&](const QJsonValue &v,int depth) {
     if(depth>6||rows.size()>=24)return;
     if(v.isObject()) {
       const auto o=v.toObject();
       for(auto it=o.begin();it!=o.end()&&rows.size()<24;++it) {
-        if(labels.contains(it.key())&&(it.value().isNull()||it.value().isBool()||it.value().isDouble()||it.value().isString()))
-          rows << row(labels.value(it.key()),value(it.value()));
+        if(labels.contains(it.key())&&(it.value().isNull()||it.value().isBool()||it.value().isDouble()||it.value().isString())) {
+          const auto fact=qMakePair(labels.value(it.key()),value(it.value()));
+          if(!shown.contains(fact)) {
+            shown.insert(fact);
+            rows << row(fact.first,fact.second);
+          }
+        }
         else if(it.value().isObject()||it.value().isArray()) walk(it.value(),depth+1);
       }
     } else if(v.isArray()) {int count=0;for(const auto &item:v.toArray()) {if(++count>16)break;walk(item,depth+1);}}
@@ -191,35 +198,61 @@ QVariantList Settings::topics(int area,const QString &search)const {
 }
 QString Settings::summary(int area)const {
   for(const auto &t:settingTopics())if(t.area==area)
-    for(const auto &id:t.reads)if(data_.contains(id)) {
+    for(const auto &id:t.reads)if(data_.contains(id)&&!errors_.contains(id)) {
       const auto rows=informationRows(id,data_.value(id));
-      if(!rows.isEmpty()) {const auto r=rows.first().toMap();return r.value("title").toString()+": "+r.value("value").toString()+" · "+i18n("Read at %1",stamps_.value(id));}
+      if(!rows.isEmpty()) {
+        const auto r=rows.first().toMap();
+        if (r.value("primary").toBool())
+          return i18n("%1: %2",r.value("title").toString(),r.value("value").toString());
+      }
     }
   return {};
 }
 QVariantList Settings::information()const {
   QVariantList out;if(!topic_)return out;
   for(const auto &id:topic_->reads) {
-    if(id.startsWith("kernel.")) {
-      if(data_.contains(id)) {
-        auto sections=kernelInformationSections(id,data_.value(id));
-        for(auto &section:sections){auto s=section.toMap();s["id"]=id;s["stale"]=errors_.contains(id);s["stamp"]=stamps_.value(id);out<<s;}
-      } else out<<QVariantMap{{"title",i18n("Kernel information")},{"rows",QVariantList{row(i18n("Status"),errors_.contains(id)?errors_.value(id):i18n("Reading…"))}}};
-      continue;
-    }
     if(id=="update.status"&&!bootReport().isEmpty())continue;
-    QString title=id;try{title=friendlyTitle(action(id.toStdString()));}catch(const std::exception &){}
-    auto rows=informationRows(id,data_.value(id));
-    if(rows.isEmpty())rows<<row(i18n("Information"),errors_.contains(id)?i18n("Unavailable"):current_==id?i18n("Reading…"):data_.contains(id)?i18n("No supported summary fields were reported. Technical tools contain the original output."):i18n("Not checked"));
-    out<<QVariantMap{{"id",id},{"title",title},{"rows",rows},{"error",errors_.value(id)},
-                    {"stale",errors_.contains(id)&&data_.contains(id)},{"stamp",stamps_.value(id)}};
+    const bool kernel=id.startsWith("kernel.");
+    const bool cached=data_.contains(id);
+    const bool failed=errors_.contains(id);
+    const bool loading=current_==id;
+    QString title=topic_->title;
+    if(!kernel) {
+      try { title=friendlyTitle(action(id.toStdString())); } catch(const std::exception &) {}
+    }
+    QVariantList sections;
+    if(cached && kernel)
+      sections=kernelInformationSections(id,data_.value(id));
+    if(sections.isEmpty()) {
+      auto rows=cached && !kernel ? informationRows(id,data_.value(id)) : QVariantList{};
+      QVariantMap card{{"key",id},{"title",title},{"rows",rows}};
+      if(rows.isEmpty()) {
+        card["message"]=loading?i18n("Reading…"):failed?errors_.value(id):
+                        queue_.contains(id)?i18n("Waiting to read…"):cached?i18n("No summary available. Open Technical Tools for the original output."):i18n("Not checked");
+      }
+      sections<<card;
+    }
+    for(const auto &section:sections) {
+      auto card=section.toMap();
+      card["id"]=id;
+      card["stamp"]=stamps_.value(id);
+      card["stale"]=failed && cached && !card.value("rows").toList().isEmpty();
+      card["failed"]=failed;
+      card["loading"]=loading && !cached;
+      out<<card;
+    }
   }
   return out;
 }
 QVariantMap Settings::bootReport()const {
   if(!topic_||topic_->id!="kernel")return {};
   const auto d=data_.value("update.status");
-  return d.value("schema").toString()=="org.uke.control.update-status.v1"&&d.value("available").toBool()?d.toVariantMap():QVariantMap{};
+  if(d.value("schema").toString()!="org.uke.control.update-status.v1"||!d.value("available").toBool())
+    return {};
+  auto report=d.toVariantMap();
+  report["stale"]=errors_.contains("update.status");
+  report["stamp"]=stamps_.value("update.status");
+  return report;
 }
 bool Settings::open(const QString &id) {
   close();for(const auto &t:settingTopics())if(t.id==id){topic_=&t;emit changed();refresh();return true;}return false;
@@ -231,7 +264,7 @@ void Settings::refresh() {
 }
 void Settings::stop() {
   manager_.pause();
-  if(!current_.isEmpty())errors_[current_]=i18n("Read stopped; previous information may be out of date");
+  if(!current_.isEmpty())errors_[current_]=i18n("Read stopped. Use Refresh to try again.");
   poll_.stop();simulated_.stop();queue_.clear();
   kernelTimeout_.stop();if(kernel_){
     auto *p=kernel_;kernel_=nullptr;p->disconnect(this);

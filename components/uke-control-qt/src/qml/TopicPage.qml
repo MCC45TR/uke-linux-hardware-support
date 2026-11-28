@@ -11,6 +11,9 @@ FormCard.FormCardPage {
     required property var appWindow
     required property string topicId
     readonly property var settings: backend.settings
+    readonly property var information: settings.information
+    readonly property bool showConnectionsFirst: topicId === "usb" || topicId === "nfc"
+    readonly property real readingColumnWidth: Kirigami.Units.gridUnit * (information.length > 1 || topicId === "kernel" ? 48 : 30)
     property string editAction: ""
     readonly property bool editing: editAction.length > 0 && backend.guide.id === editAction
     readonly property var topicActions: (settings.topic.changes || []).filter(action => action.id !== "usb.role")
@@ -34,13 +37,16 @@ FormCard.FormCardPage {
     ]
     Kirigami.InlineMessage {
         Layout.fillWidth: true
+        Layout.maximumWidth: page.readingColumnWidth
+        Layout.alignment: Qt.AlignHCenter
+        Layout.margins: Kirigami.Units.largeSpacing
         visible: backend.simulation || backend.readOnly
         type: Kirigami.MessageType.Information
         text: backend.simulation ? i18n("Simulation — sample data only. Changes are disabled.") : i18n("Read-only session")
     }
     RowLayout {
         Layout.fillWidth: true
-        Layout.maximumWidth: Kirigami.Units.gridUnit * 30
+        Layout.maximumWidth: page.readingColumnWidth
         Layout.alignment: Qt.AlignHCenter
         Layout.leftMargin: Kirigami.Units.largeSpacing
         Layout.rightMargin: Kirigami.Units.largeSpacing
@@ -90,6 +96,30 @@ FormCard.FormCardPage {
         active: page.topicId === "nfc"
         sourceComponent: Component { NfcView {} }
     }
+    Component {
+        id: informationPanel
+        ColumnLayout {
+            Layout.fillWidth: true
+            Kirigami.Heading {
+                visible: page.topicActions.length > 0
+                Layout.fillWidth: true
+                Layout.maximumWidth: readings.width
+                Layout.alignment: Qt.AlignHCenter
+                level: 3
+                text: i18n("Reported information")
+            }
+            InformationGrid {
+                id: readings
+                objectName: "informationTiles"
+                sections: page.information
+            }
+        }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: !page.showConnectionsFirst && page.information.length > 0
+        sourceComponent: informationPanel
+    }
     FormCard.FormHeader {
         visible: actionList.visible
         title: i18n("Settings and actions")
@@ -121,60 +151,10 @@ FormCard.FormCardPage {
         active: page.editing && page.appWindow.pageStack.currentItem === page
         sourceComponent: Component { PreferenceEditor {} }
     }
-    TileGrid {
-        objectName: "informationTiles"
-        visible: settings.information.length > 0
-        Layout.maximumWidth: settings.information.length > 1 && page.width >= minimumTileWidth * 2 + columnSpacing * 3
-            ? Kirigami.Units.gridUnit * 62 : Kirigami.Units.gridUnit * 30
-        Layout.alignment: Qt.AlignHCenter
-        Layout.margins: Kirigami.Units.largeSpacing
-        maximumColumns: 2
-        minimumTileWidth: Kirigami.Units.gridUnit * 22
-        Repeater {
-            model: settings.information
-            delegate: ColumnLayout {
-                id: informationSection
-                required property var modelData
-                property bool expanded: false
-                readonly property int previewRows: modelData.compact ? 2 : 6
-                Layout.fillWidth: true
-                Layout.minimumWidth: 0
-                Layout.alignment: Qt.AlignTop
-                spacing: 0
-                FormCard.FormHeader { title: modelData.title }
-                FormCard.FormCard {
-                    Layout.fillWidth: true
-                    Repeater {
-                        model: modelData.rows
-                        delegate: ColumnLayout {
-                            required property var modelData
-                            required property int index
-                            Layout.fillWidth: true
-                            visible: informationSection.expanded || (!modelData.detail && index < informationSection.previewRows)
-                            spacing: 0
-                            SafeText { Layout.fillWidth: true; text: modelData.title; description: modelData.value }
-                            Controls.ProgressBar {
-                                Layout.fillWidth: true
-                                Layout.leftMargin: Kirigami.Units.largeSpacing
-                                Layout.rightMargin: Kirigami.Units.largeSpacing
-                                Layout.bottomMargin: Kirigami.Units.largeSpacing
-                                visible: modelData.progress >= 0
-                                value: modelData.progress >= 0 ? modelData.progress : 0
-                                Accessible.name: modelData.title
-                            }
-                        }
-                    }
-                    FormCard.FormButtonDelegate {
-                        visible: informationSection.modelData.rows.length > informationSection.previewRows || informationSection.modelData.rows.some(r => r.detail)
-                        text: informationSection.expanded ? i18n("Less information") : i18n("More information")
-                        icon.name: themeIcons.names["view-list-details"]
-                        Accessible.name: text
-                        onClicked: informationSection.expanded = !informationSection.expanded
-                    }
-                    SafeText { visible: modelData.stale || false; text: i18n("Previous information — refresh failed"); description: modelData.stamp || "" }
-                }
-            }
-        }
+    Loader {
+        Layout.fillWidth: true
+        active: page.showConnectionsFirst && page.information.length > 0
+        sourceComponent: informationPanel
     }
     Loader {
         Layout.fillWidth: true
@@ -182,6 +162,7 @@ FormCard.FormCardPage {
         sourceComponent: Component { BatteryHistoryView {} }
     }
     FormCard.FormCard {
+        maximumWidth: page.readingColumnWidth
         FormCard.FormButtonDelegate {
             text: i18n("Technical tools")
             description: i18n("Additional observations and expert actions")
