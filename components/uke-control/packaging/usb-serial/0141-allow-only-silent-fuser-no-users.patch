@@ -1,0 +1,21 @@
+--- a/src/uke-usb-network.sh
++++ b/src/uke-usb-network.sh
+@@ -328,12 +328,15 @@
+     fi
+     [ ! -c "/dev/$line" ] && return 0
+     result=0
+-    timeout --kill-after=1s 3s fuser -s -- "/dev/$line" || result=$?
++    # The validated absolute TTY path cannot be parsed as an option.
++    fuser_output=$(timeout --kill-after=1s 3s fuser -s "/dev/$line" 2>&1) || result=$?
+     case $result in
+         0) printf 'USB serial port %s still has local users\n' "$line" >&2; return 1;;
+-        1) return 0;;
+-        *) return 1;;
++        1) [ -n "$fuser_output" ] || return 0;;
+     esac
++    printf 'Could not verify users of USB serial port %s (status %s)\n' "$line" "$result" >&2
++    [ -z "$fuser_output" ] || printf '%s\n' "$fuser_output" >&2
++    return 1
+ )
+ start_configured_acm_getty() (
+     [ -d /run/systemd/system ] && [ -d "$g/functions/acm.gs0" ] || return 0
