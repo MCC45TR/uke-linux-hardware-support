@@ -746,6 +746,10 @@ private slots:
     QTRY_VERIFY((categoryCard = visualItem(window->contentItem(), "topic_charging")));
     QVERIFY(QMetaObject::invokeMethod(categoryCard, "clicked"));
     QCOMPARE(bridge.settings()->property("topic").toMap().value("id").toString(),QString("charging"));
+    QQuickItem *chargingPage = nullptr;
+    QTRY_VERIFY((chargingPage = visualItem(window->contentItem(), "topicPage")) &&
+                chargingPage->window() == window && chargingPage->isEnabled());
+    QTRY_VERIFY(!bridge.settings()->property("busy").toBool());
     QVERIFY(QMetaObject::invokeMethod(window, "openCatalog", Q_ARG(QVariant, -1)));
     QCoreApplication::processEvents();
     QQuickItem *catalog = nullptr;
@@ -867,12 +871,13 @@ private slots:
     bridge.cancelRead();
     // PageRow creates a page under its nonvisual pagesLogic object before
     // inserting it into ColumnView (upstream PageRow::initPage). Qt may warn
-    // about that temporary parent. Every guide above must actually enter this
+    // about that temporary parent. The topic and each guide must enter this
     // window's scene; all other QML warnings remain failures.
     warnings.removeIf([](const QString &warning) {
       return warning.contains("Main.qml:") &&
              (warning.contains("QML GuidePage:") ||
               warning.contains("QML AreaPage:") ||
+              warning.contains("QML TopicPage:") ||
               warning.contains("QML CatalogPage:")) &&
              warning.endsWith("Created graphical object was not placed in the "
                               "graphics scene.");

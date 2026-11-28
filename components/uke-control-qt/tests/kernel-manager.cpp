@@ -47,10 +47,11 @@ private slots:
     void simulationIsolationAndCombinedState() {
         Fixture f;f.enabled=true;f.results["manager.sample"]=QJsonObject{{"data",managerSample()}};f.results["sensors.once"]=QJsonObject{{"data",managerSensors()}};
         KernelManager manager(f);manager.open("cpu");
-        QCOMPARE(manager.devices().size(),2);QVERIFY(manager.active());
+        QCOMPARE(manager.devices().size(),2);QVERIFY(!manager.active());
         QCOMPARE(manager.state().value("values").toMap().value("cpu:policy0").toMap().value("frequency").toDouble(),200.);
         QCOMPARE(manager.current("cpu:policy0","maximum"),QString("300000"));
         QCOMPARE(manager.choices("cpu:policy0","governor").size(),2);
+        manager.start();QVERIFY(manager.active());
         QVERIFY(manager.prepare("cpu:policy0","maximum","200000"));
         QVERIFY(manager.review().value("blocked").toBool());QVERIFY(!manager.apply(manager.review().value("token").toString()));
         manager.open("sensors");QVERIFY(manager.review().isEmpty());QVERIFY(!manager.active());QCOMPARE(manager.sensors().size(),3);
