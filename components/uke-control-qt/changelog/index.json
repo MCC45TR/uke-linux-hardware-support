@@ -2,6 +2,16 @@
   "schema": "org.uke.control.changelog.v1",
   "entries": [
     {
+      "version": "Uke Control 1.6.0-25",
+      "date": "2026-11-28",
+      "summary": "Clearer charging and display details",
+      "changes": [
+        "See the current input limit beside live adapter measurements.",
+        "See why MI FC2.0 turbo charging is unavailable on this Uke version.",
+        "Identify which display or capture output is using each display engine slot."
+      ]
+    },
+    {
       "version": "Uke Control 1.6.0-24",
       "date": "2026-11-28",
       "summary": "Charging and display at a glance",

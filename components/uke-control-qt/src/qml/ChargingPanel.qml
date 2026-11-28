@@ -184,12 +184,17 @@ ColumnLayout {
         sections: [{
             key: "live-adapter",
             title: i18n("Battery and adapter telemetry"),
-            previewCount: 4,
+            previewCount: 5,
             message: panel.charger.message || "",
             rows: panel.charger.rows || [],
-            note: panel.settings.supportedChargeProtocols.length
-                ? i18n("Protocols listed by the manufacturer: %1", panel.settings.supportedChargeProtocols.join(", "))
-                : ""
+            note: [
+                panel.settings.supportedChargeProtocols.length
+                    ? i18n("Protocols listed by the manufacturer: %1", panel.settings.supportedChargeProtocols.join(", "))
+                    : "",
+                panel.charger.wired && panel.settings.chargeMiFc2Unavailable
+                    ? i18n("This Uke version lacks the authentication support required for MI FC2.0 turbo charging.")
+                    : ""
+            ].filter(Boolean).join("\n")
         }]
     }
 
@@ -197,7 +202,11 @@ ColumnLayout {
         objectName: "informationTiles"
         Layout.maximumWidth: Number.POSITIVE_INFINITY
         Layout.margins: 0
-        sections: panel.information.filter(section => section.id.startsWith("battery.") && section.id !== "battery.protocol")
+        sections: panel.information
+            .filter(section => section.id.startsWith("battery.") && section.id !== "battery.protocol")
+            .map(section => section.id === "battery.status"
+                ? Object.assign({}, section, {rows: section.rows.filter(row => row.key !== "battery-state")})
+                : section)
     }
     BatteryHistoryView {}
     InformationGrid {

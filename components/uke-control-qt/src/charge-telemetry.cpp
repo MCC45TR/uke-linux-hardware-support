@@ -103,7 +103,7 @@ QVariantMap readChargeState(bool previouslyConnected) {
     if (integer(readField(source,"online"),0,1) == 0)
       return {{"connected",false},{"message",i18n("Power adapter disconnected.")}};
   }
-  return {{"connected",connected},{"retry",!usbOnline && !wirelessOnline && previouslyConnected},
+  return {{"connected",connected},{"wired",wired},{"retry",!usbOnline && !wirelessOnline && previouslyConnected},
           {"message",message},{"rows",rows}};
 }
 }

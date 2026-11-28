@@ -122,6 +122,9 @@ QVariantList platformComponentInformation() {
   };
   wirelessCard("/sys/class/net",{"*"},"wifi",i18n("Wi-Fi adapter"));
   wirelessCard("/sys/class/bluetooth",{"hci*"},"bluetooth",i18n("Bluetooth adapter"));
+  const auto battery=name("/sys/class/power_supply/qcom-battmgr-bat/model_name");
+  if (!battery.isEmpty() && battery.compare("Unknown",Qt::CaseInsensitive)!=0)
+    cards<<componentCard("battery-pack",battery,i18n("Battery pack"));
   const QDir drm("/sys/class/drm");
   for (const auto &entry : drm.entryList({"card[0-9]*"},QDir::Dirs | QDir::NoDotAndDotDot)) {
     if (entry.contains('-')) continue;

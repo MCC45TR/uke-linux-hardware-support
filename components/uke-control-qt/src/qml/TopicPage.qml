@@ -228,7 +228,7 @@ FormCard.FormCardPage {
         sourceComponent: informationPanel
     }
     FormCard.FormCard {
-        visible: page.topicId !== "about-uke"
+        visible: !["about-uke", "changelog"].includes(page.topicId)
         maximumWidth: page.readingColumnWidth
         Repeater {
             model: page.isCharging ? page.topicActions : []

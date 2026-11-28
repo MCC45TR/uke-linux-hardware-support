@@ -3071,3 +3071,21 @@ msgstr "Sensör seçimi"
 
 msgid "Current profile limits"
 msgstr "Geçerli profil sınırları"
+
+msgid "This Uke version lacks the authentication support required for MI FC2.0 turbo charging."
+msgstr "Bu Uke sürümünde MI FC2.0 turbo şarjın gerektirdiği kimlik doğrulama desteği eksik."
+
+msgid "Built-in display · %1"
+msgstr "Dahili ekran · %1"
+
+msgid "Screen capture · %1"
+msgstr "Ekran yakalama · %1"
+
+msgid "Battery pack"
+msgstr "Pil paketi"
+
+msgid "Pressure, reclaim, swap activity and allocation policy"
+msgstr "Bellek baskısı, geri kazanım, swap etkinliği ve ayırma politikası"
+
+msgid "Profile, control and pressure changes are recorded while these pages are being observed. The list holds at most 100 events and is not a background recorder."
+msgstr "Bu sayfalar izlenirken profil, ayar ve kaynak baskısı değişiklikleri kaydedilir. Liste en fazla 100 olay tutar."

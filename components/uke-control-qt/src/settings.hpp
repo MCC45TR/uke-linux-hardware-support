@@ -31,6 +31,7 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantMap history READ history NOTIFY historyChanged)
   Q_PROPERTY(QVariantMap bootReport READ bootReport NOTIFY changed)
   Q_PROPERTY(QObject* chargeTelemetry READ chargeTelemetry CONSTANT)
+  Q_PROPERTY(bool chargeMiFc2Unavailable READ chargeMiFc2Unavailable NOTIFY changed)
   Q_PROPERTY(QStringList supportedChargeProtocols READ supportedChargeProtocols NOTIFY changed)
   Q_PROPERTY(QVariantMap chargingThresholds READ chargingThresholds NOTIFY changed)
   Q_PROPERTY(QVariantList chargingBands READ chargingBands CONSTANT)
@@ -111,6 +112,7 @@ public:
   QVariantMap bootReport() const;
   QObject *chargeTelemetry() { return &chargeTelemetry_; }
   QStringList supportedChargeProtocols() const;
+  bool chargeMiFc2Unavailable() const;
   Q_INVOKABLE void setChargingVisible(bool visible);
   QVariantMap chargingThresholds() const;
   QVariantList chargingBands() const;

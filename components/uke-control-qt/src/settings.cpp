@@ -67,7 +67,9 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
     };
     if(id=="battery.status") {
       measure("battery.capacity",i18n("Battery level"),"percent",1," %",true);
-      rows << row(i18n("Reported battery state"),coherent?value(readings.value("battery.status").toObject().value("value")):unknown());
+      auto state=row(i18n("Reported battery state"),coherent?value(readings.value("battery.status").toObject().value("value")):unknown());
+      state["key"]="battery-state";
+      rows<<state;
       measure("battery.temp",i18n("Temperature"),"deciC",10," °C");
       measure("battery.current_now",i18n("Battery current"),"uA_positive_into_battery",1000," mA");
       measure("battery.voltage_now",i18n("Battery voltage"),"uV",1000000," V");
@@ -294,6 +296,11 @@ QVariantMap Settings::bootReport()const {
 }
 void Settings::setChargingVisible(bool visible) {
   chargeTelemetry_.setActive(visible && !fixture_.enabled && topic_ && topic_->id=="charging");
+}
+bool Settings::chargeMiFc2Unavailable() const {
+  const auto data=data_.value("charge.protocols");
+  return !errors_.contains("charge.protocols") &&
+      data.value("mi_fc2_authentication_reason").toString()=="genuine_native_authentication_and_session_backend_missing";
 }
 QStringList Settings::supportedChargeProtocols() const {
   QStringList protocols;

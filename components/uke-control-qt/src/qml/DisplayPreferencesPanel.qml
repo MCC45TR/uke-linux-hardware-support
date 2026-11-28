@@ -11,6 +11,15 @@ TileGrid {
     required property var appWindow
     readonly property var reading: settings.desktopDisplay
     readonly property bool canChange: !backend.readOnly && !backend.simulation && !reading.busy
+    function outputDescription(name) {
+        if (name.startsWith("DSI-") || name.startsWith("eDP-"))
+            return i18n("Built-in display · %1", name)
+        if (name.startsWith("DP-") || name.startsWith("HDMI-"))
+            return i18n("External display · %1", name)
+        if (name.startsWith("Writeback-"))
+            return i18n("Screen capture · %1", name)
+        return name
+    }
     minimumTileWidth: Kirigami.Units.gridUnit * 25
 
     SettingsSection {
@@ -112,7 +121,7 @@ TileGrid {
                 required property var modelData
                 text: modelData.type === "dsc" ? i18n("DSC %1", modelData.index) : i18n("Layer mixer %1", modelData.index)
                 description: modelData.occupied
-                    ? (modelData.outputs.length ? modelData.outputs.join(", ") : modelData.crtc)
+                    ? (modelData.outputs.length ? modelData.outputs.map(name => panel.outputDescription(name)).join(", ") : modelData.crtc)
                     : i18n("Available")
             }
         }
