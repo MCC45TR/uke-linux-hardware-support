@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   KIconTheme::initTheme();
   QApplication app(argc, argv);
   QCoreApplication::setApplicationName("uke-control-qt");
-  QCoreApplication::setApplicationVersion("1.6.0");
+  QCoreApplication::setApplicationVersion(QStringLiteral(UKE_CONTROL_QT_VERSION));
   qmlRegisterType<uq::HistoryPlot>("org.uke.settings", 1, 0, "HistoryPlot");
   qmlRegisterType<uq::TimePlot>("org.uke.settings", 1, 0, "TimePlot");
   QCoreApplication::setOrganizationName("Uke");

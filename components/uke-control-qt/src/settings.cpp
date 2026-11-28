@@ -43,19 +43,18 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
     const auto readings=data.value("readings").toObject();
     const bool coherent=data.value("provider_verified").toBool() && data.value("snapshot_coherent").toBool();
     if(id=="battery.cells") {
-      if(!coherent)
+      if(!coherent) {
+        rows<<row(i18n("Cell readings"),i18n("Battery telemetry is currently unavailable"));
         return rows;
+      }
       const auto topology=data.value("reported_cell_topology").toObject();
-      rows<<row(i18n("Readings per cell"),i18n("Individual cell voltage and health are not reported"));
+      rows<<row(i18n("Cell readings"),i18n("The battery driver reports pack voltage only"));
       if(!topology.value("qualified").toBool())
         return rows;
       const auto series=topology.value("series_cells").toInt();
       const auto parallel=topology.value("parallel_cells").toInt();
       if(series>0 && parallel>0)
         rows<<row(i18n("Verified cell configuration"),i18n("%1 series × %2 parallel",series,parallel));
-      const auto average=topology.value("average_series_cell_voltage_uv").toDouble();
-      if(average>0 && std::isfinite(average))
-        rows<<row(i18n("Calculated average per series cell"),i18n("%1 V",QLocale().toString(average/1000000,'f',3)));
       return rows;
     }
     auto measure=[&](const char *key,const QString &title,const char *unit,double scale,const QString &suffix,bool level=false) {
@@ -72,7 +71,7 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
       rows<<state;
       measure("battery.temp",i18n("Temperature"),"deciC",10," °C");
       measure("battery.current_now",i18n("Battery current"),"uA_positive_into_battery",1000," mA");
-      measure("battery.voltage_now",i18n("Battery voltage"),"uV",1000000," V");
+      measure("battery.voltage_now",i18n("Battery pack voltage"),"uV",1000000," V");
       rows << row(i18n("Measurement basis"),i18n("Reported by the battery provider; sample age may be unknown"));
       for(int i=3;i<rows.size();++i){auto r=rows[i].toMap();r["detail"]=true;rows[i]=r;}
     } else {
@@ -247,7 +246,7 @@ QString Settings::summary(int area)const {
 QVariantList Settings::information()const {
   QVariantList out;if(!topic_)return out;
   for(const auto &id:topic_->reads) {
-    if(id=="channel.status")continue;
+    if(id=="channel.status"||id=="usb.status")continue;
     if(id=="update.status"&&!bootReport().isEmpty())continue;
     const bool kernel=id.startsWith("kernel.");
     const bool cached=data_.contains(id);
@@ -326,6 +325,8 @@ QVariantMap Settings::chargingThresholds() const {
   return {
       {"available",valid}, {"start",start}, {"stop",stop},
       {"enabled",saved.value("reported_enabled").toVariant()},
+      {"physicalStopVerified",saved.value("physical_charge_stopped").isBool() &&
+                              saved.value("physical_charge_stopped").toBool()},
       {"stale",stale}, {"stamp",stamps_.value("kernel.charging")},
       {"profileUnqualified",admission.value("reason").toString()=="control_profile_unqualified"},
       {"admitted",valid && !stale && !busy() && admission.value("threshold_admission_ready").toBool()}
@@ -492,11 +493,12 @@ QVariantList Settings::linuxPartitions() const {
 }
 bool Settings::open(const QString &id) {
   const auto name=QStringList{"battery","health","charger","sleep"}.contains(id)?QStringLiteral("charging"):
-      id=="external"?QStringLiteral("usb"):id=="display-expert"?QStringLiteral("display"):id;
+      id=="external"||id=="serial"?QStringLiteral("usb"):id=="display-expert"?QStringLiteral("display"):id;
   close();for(const auto &t:settingTopics())if(t.id==name){
     topic_=&t;emit changed();refresh();
     if(name=="display") readScreenBrightness();
     if(name=="changelog") loadChangelog();
+    if(name=="system-errors" && systemErrors_.isEmpty()) scanSystemErrors();
     return true;
   }return false;
 }
@@ -564,6 +566,7 @@ void Settings::finish(const Result &r) {
     data_[id]=id.startsWith("kernel.")&&d.value("schema").toString()=="org.uke.qt.kernel-information.v1"?d.value("data").toObject():d;errors_.remove(id);updated_=QDateTime::currentDateTime().toString(QLocale().timeFormat(QLocale::ShortFormat));stamps_[id]=updated_;
   }
   current_.clear();
+  if (id=="desktop.plasma" && topic_ && topic_->id=="display") readDisplayProfile();
   if (id=="hardware.status") emit deviceInformationChanged();
   emit changed();
   QTimer::singleShot(0,this,&Settings::next);
@@ -601,6 +604,66 @@ QVariantMap Settings::usbPolicy()const {
           {"role",currentRole},
           {"automatic",d.value("kernel_managed").toBool()},
           {"message",i18n("Automatic connection handling belongs to the kernel Type-C controller. Host and Device request a role for the attached partner; they do not save a forced mode. Reconnecting negotiates the role again.")}};
+}
+QVariantMap Settings::usbDeveloper() const {
+  const auto status = data_.value("usb.status");
+  const bool available = !errors_.contains("usb.status") &&
+      status.value("schema").toString() == "org.uke.control.usb.v1" &&
+      status.value("boot_profile").toString() == "typec-v1";
+  const auto controllers = status.value("role_switches").toArray();
+  const bool deviceRole = controllers.size() == 1 &&
+      controllers.first().toObject().value("role").toString() == "device";
+  const auto typec = status.value("typec").toArray();
+  const bool partnerAttached = std::any_of(typec.cbegin(), typec.cend(), [](const QJsonValue &entry) {
+    return entry.toObject().value("name").toString() == "port0-partner";
+  });
+  return {{"available", available}, {"readyToStart", deviceRole && partnerAttached},
+          {"busy", usbDeveloperProcess_ != nullptr}, {"message", usbDeveloperMessage_},
+          {"failed", usbDeveloperFailed_}};
+}
+
+void Settings::setUsbDeveloper(bool enabled) {
+  if (fixture_.enabled || restricted_ || usbDeveloperProcess_ || !topic_ || topic_->id != "usb")
+    return;
+  const auto state = usbDeveloper();
+  if (!state.value("available").toBool() || (enabled && !state.value("readyToStart").toBool()))
+    return;
+
+  auto *process = new QProcess(this);
+  usbDeveloperProcess_ = process;
+  usbDeveloperMessage_.clear();
+  usbDeveloperFailed_ = false;
+  const auto done = [this, process, enabled](int code) {
+    if (usbDeveloperProcess_ != process)
+      return;
+    usbDeveloperProcess_ = nullptr;
+    const auto reply = QJsonDocument::fromJson(process->readAllStandardOutput()).object();
+    process->deleteLater();
+    const bool confirmed = code == 0 && reply.value("request_converged").toBool() &&
+        reply.value("scope").toString() == "project_manual_acm" &&
+        reply.value("gadget_bound_observed").isBool() &&
+        reply.value("gadget_bound_observed").toBool() == enabled;
+    usbDeveloperFailed_ = !confirmed;
+    if (confirmed)
+      usbDeveloperMessage_ = enabled ? i18n("The USB serial port is ready. Open it on the connected computer.")
+                                     : i18n("The USB developer connection is off.");
+    else if (code == 126)
+      usbDeveloperMessage_ = i18n("Administrator approval was cancelled.");
+    else
+      usbDeveloperMessage_ = i18n("The serial connection could not be changed. Check the USB role and close any active serial session.");
+    if (topic_ && topic_->id == "usb")
+      refresh();
+    emit changed();
+  };
+  connect(process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this,
+          [done](int code, QProcess::ExitStatus status) { done(status == QProcess::NormalExit ? code : 70); });
+  connect(process, &QProcess::errorOccurred, this, [done](QProcess::ProcessError error) {
+    if (error == QProcess::FailedToStart)
+      done(69);
+  });
+  process->setStandardErrorFile(QProcess::nullDevice());
+  process->start("/usr/bin/pkexec", {"--disable-internal-agent", "/usr/bin/uke-control", "--json", "cdc", enabled ? "on" : "off"});
+  emit changed();
 }
 QVariantList Settings::choices(const QString &kind)const {
   QVariantList out;

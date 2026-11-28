@@ -10,6 +10,8 @@ TileGrid {
     required property var settings
     required property var appWindow
     readonly property var reading: settings.desktopDisplay
+    readonly property var policy: settings.hardwarePolicies ?? ({})
+    readonly property var profiles: reading.ambientProfiles ?? []
     readonly property bool canChange: !backend.readOnly && !backend.simulation && !reading.busy
     function outputDescription(name) {
         if (name.startsWith("DSI-") || name.startsWith("eDP-"))
@@ -62,6 +64,21 @@ TileGrid {
     }
 
     SettingsSection {
+        visible: panel.reading.wetTouchAvailable === true
+        heading: i18n("Touchscreen")
+        FormCard.FormSwitchDelegate {
+            objectName: "wetTouchFilter"
+            text: i18n("Wet touch filter")
+            description: i18n("Reduce accidental touches when the screen is wet.")
+            enabled: panel.canChange
+            checked: panel.reading.wetTouchEnabled === true
+            onToggled: if (enabled) panel.settings.setDisplayPreference("touch.wet-filter", checked ? "1" : "0")
+            Accessible.onPressAction: if (enabled) panel.settings.setDisplayPreference("touch.wet-filter", checked ? "0" : "1")
+            Accessible.onToggleAction: if (enabled) panel.settings.setDisplayPreference("touch.wet-filter", checked ? "0" : "1")
+        }
+    }
+
+    SettingsSection {
         heading: i18n("Orientation and refresh rate")
         FormCard.FormSwitchDelegate {
             text: i18n("Automatic rotation")
@@ -84,10 +101,6 @@ TileGrid {
                                                : i18n("The current display driver applies the saved minimum on the next boot.")
             enabled: !backend.readOnly && (panel.settings.topic.changes || []).some(item => item.id === "display.vrr-set")
             onClicked: panel.appWindow.openGuide("display.vrr-set")
-        }
-        SettingsNote {
-            visible: panel.reading.message.length > 0
-            text: panel.reading.message
         }
     }
 
@@ -129,27 +142,47 @@ TileGrid {
 
     SettingsSection {
         heading: i18n("Ambient colour profiles")
-        FormCard.FormButtonDelegate {
-            objectName: "selectAmbientP3"
-            visible: panel.reading.ambientP3 === true
-            text: i18n("Factory P3 · D65")
-            description: i18n("Use the panel’s built-in colour profile with ambient white balance. Applies immediately.")
-            enabled: panel.canChange
-            onClicked: panel.settings.setDisplayPreference("display.ambient-color", "factory-p3")
+        SettingsNote {
+            visible: panel.profiles.length > 0
+            text: i18n("Select a profile for the built-in display. The ambient sensor continues adjusting white balance when the driver can use it.")
+        }
+        Repeater {
+            model: panel.profiles
+            delegate: FormCard.FormButtonDelegate {
+                required property var modelData
+                objectName: "ambientProfile_" + modelData.id
+                text: modelData.title
+                description: panel.reading.ambientProfile === modelData.id ? i18n("Active in Plasma") : ""
+                enabled: panel.canChange && !panel.reading.ambientReading
+                onClicked: panel.settings.setDisplayPreference("display.ambient-color", modelData.id)
+            }
         }
         SettingsNote {
-            visible: !panel.reading.ambientP3
-            text: i18n("This display does not expose a factory profile with ambient colour support.")
+            visible: panel.profiles.length === 0
+            text: panel.settings.busy ? i18n("Reading the built-in display…")
+                                      : i18n("The built-in display with active ambient white balance was not detected in this Plasma session.")
+        }
+        SettingsNote {
+            visible: panel.reading.message.length > 0
+            text: panel.reading.message
         }
     }
 
     SettingsSection {
         heading: i18n("Experiments")
-        SafeText {
+        FormCard.FormSwitchDelegate {
+            objectName: "dscSharing"
             text: i18n("Share DSC slots with DisplayPort when the cover is closed")
-            description: panel.reading.dscSharing
-                ? i18n("Enabled in the driver. The built-in display must be inactive before DisplayPort can claim its slots.")
-                : i18n("This kernel controls DSC sharing at module load. A live switch requires a driver interface.")
+            description: i18n("Lets DisplayPort use the compression slots after the built-in display turns off. Saved for the next boot.")
+            checked: panel.policy.dscEnabled === true
+            enabled: panel.canChange && panel.policy.dscAvailable === true && !panel.policy.busy
+            onToggled: panel.settings.setHardwarePolicy("dsc", checked)
+        }
+        SettingsNote {
+            visible: panel.policy.dscPending || !panel.policy.dscAvailable || (panel.policy.error ?? "").length > 0
+            text: panel.policy.error || (panel.policy.dscAvailable
+                ? i18n("The saved setting will take effect after restarting.")
+                : i18n("This kernel and Uke Control version do not expose the experiment control."))
         }
     }
 }

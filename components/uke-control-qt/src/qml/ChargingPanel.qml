@@ -157,7 +157,9 @@ ColumnLayout {
             Controls.Label {
                 Layout.fillWidth: true
                 visible: panel.snapshot.available && typeof panel.snapshot.enabled === "boolean"
-                text: panel.snapshot.enabled ? i18n("Charging thresholds are active.") : i18n("Charging thresholds are inactive.")
+                text: panel.snapshot.physicalStopVerified ? i18n("Charging stopped at the threshold.")
+                    : panel.snapshot.enabled ? i18n("The firmware reports thresholds enabled. Physical cutoff has yet to be verified.")
+                    : i18n("The firmware reports thresholds disabled.")
                 font: Kirigami.Theme.smallFont
                 wrapMode: Text.Wrap
             }

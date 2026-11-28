@@ -493,7 +493,14 @@ private slots:
       }
       if(topic.id=="kernel")snapshot(window,"settings-kernel");
       if(topic.id=="nfc") {QVERIFY(visualItem(window->contentItem(),"nfcInspect"));snapshot(window,"settings-nfc");}
-      if(topic.id=="usb") {QVERIFY(visualItem(window->contentItem(),"usbAutomatic"));snapshot(window,"settings-dock");}
+      if(topic.id=="usb") {
+        QVERIFY(visualItem(window->contentItem(),"usbAutomatic"));
+        for (const auto *name : {"usbDeveloperStart", "usbDeveloperStop"}) {
+          auto *button = visualItem(window->contentItem(), name);
+          QVERIFY(button && !button->isEnabled());
+        }
+        snapshot(window,"settings-dock");
+      }
       if(topic.id=="cpu"||topic.id=="gpu"||topic.id=="sensors") {
         QVERIFY(visualItem(window->contentItem(),"kernelMonitoring"));
         snapshot(window,"settings-"+topic.id);

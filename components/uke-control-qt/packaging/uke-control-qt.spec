@@ -3,8 +3,8 @@
 %global sdk_evr 2.17.0-64.fc46
 %global sdk_base https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u
 Name:           uke-control-gui-qt
-Version:        1.6.0
-Release:        27%{?dist}
+Version:        1.7.1
+Release:        1%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -46,7 +46,7 @@ BuildRequires:  uke-control-client-devel >= 2.8.1-23
 BuildRequires:  %{_includedir}/uke-control/frontend.hpp
 BuildRequires:  uke-control(frontend-sdk-v1) >= 1
 %endif
-Requires:       uke-control >= 2.17.0-69
+Requires:       uke-control >= 2.17.2
 Requires:       uke-control(update-status-v1) >= 1
 Requires:       uke-control(slot-selection-v1) >= 1
 Requires:       uke-control(frontend-v1) >= 1
@@ -130,10 +130,12 @@ done
 %{_libexecdir}/uke-control-qt/kernel-information
 %{_libexecdir}/uke-control-qt/package-task
 %{_libexecdir}/uke-control-qt/frequency-control
+%{_libexecdir}/uke-control-qt/wet-touch-filter
 %{_libexecdir}/uke-control-qt/resource-control
 %{_libexecdir}/uke-control-qt/application-control
 %{_datadir}/polkit-1/actions/org.senemos.uke.resource-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.frequency-control.policy
+%{_datadir}/polkit-1/actions/org.senemos.uke.wet-touch-filter.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.qt-kernel-information.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.qt-package-task.policy
 %{_datadir}/applications/org.uke.ControlQt.desktop
@@ -144,6 +146,19 @@ done
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Sat Nov 28 2026 Uke Linux Maintainers - 1.7.1-1
+- Report the compiled product version and check the attached USB partner for developer sessions.
+
+* Sat Nov 28 2026 Uke Linux Maintainers - 1.7.0-2
+- Add USB developer serial-session controls to USB Management.
+
+* Sat Nov 28 2026 Uke contributors - 1.6.0-29
+- Add system journal findings, kernel highlights and live factory profiles.
+- Expose sleep CPU hotplug and the next-boot DSC experiment.
+
+* Sat Nov 28 2026 Uke contributors - 1.6.0-28
+- Expose the wet touch filter when the fitted driver provides it.
+
 * Fri Nov 27 2026 Uke contributors - 1.6.0-22
 - Read sensor identities and functions without taking live samples.
 - Show the principal device specifications when opening the inventory.

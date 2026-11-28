@@ -7,6 +7,154 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+msgid "System errors"
+msgstr "Sistem hataları"
+
+msgid "Find kernel and service warnings from the last three boots"
+msgstr "Son üç açılıştaki çekirdek ve servis uyarılarını bul"
+
+msgid "System journal"
+msgstr "Sistem günlüğü"
+
+msgid "Boot"
+msgstr "Açılış"
+
+msgid "Severity"
+msgstr "Önem derecesi"
+
+msgid "All findings"
+msgstr "Tüm bulgular"
+
+msgid "Errors"
+msgstr "Hatalar"
+
+msgid "Warnings"
+msgstr "Uyarılar"
+
+msgid "Error text in other messages"
+msgstr "Diğer iletilerdeki hata ifadeleri"
+
+msgid "Search messages or services"
+msgstr "İleti veya servis ara"
+
+msgid "Search currently covers the loaded findings. You can read older records below."
+msgstr "Arama yüklenen bulguları tarıyor. Daha eski kayıtları aşağıdan okuyabilirsiniz."
+
+msgid "Read older findings"
+msgstr "Daha eski bulguları oku"
+
+msgid "Scan again"
+msgstr "Yeniden tara"
+
+msgid "No matching errors or warnings."
+msgstr "Eşleşen hata veya uyarı yok."
+
+msgid "Current boot"
+msgstr "Geçerli açılış"
+
+msgid "Boot %1"
+msgstr "Açılış %1"
+
+msgid "Message unavailable in the journal"
+msgstr "İleti günlükte okunamadı"
+
+msgid "The scan was incomplete. Some journal entries could not be read."
+msgstr "Tarama tamamlanamadı. Bazı günlük kayıtları okunamadı."
+
+msgid "No system journal was readable. Check this account’s journal access."
+msgstr "Sistem günlüğü okunamadı. Bu hesabın günlük erişimini kontrol edin."
+
+msgid "Kernel changes"
+msgstr "Çekirdek değişiklikleri"
+
+msgid "Uke Control changes"
+msgstr "Uke Control değişiklikleri"
+
+msgid "Built-in display profile (EDID)"
+msgstr "Yerleşik ekran profili (EDID)"
+
+msgid "Factory sRGB · D65"
+msgstr "Fabrika sRGB · D65"
+
+msgid "Factory Display P3 · D65"
+msgstr "Fabrika Display P3 · D65"
+
+msgid "Active in Plasma"
+msgstr "Plasma’da etkin"
+
+msgid "Display profile applied."
+msgstr "Ekran profili uygulandı."
+
+msgid "Plasma did not confirm the selected display profile."
+msgstr "Plasma seçilen ekran profilini doğrulamadı."
+
+msgid "The fitted panel’s factory profile could not be opened."
+msgstr "Takılı panelin fabrika profili açılamadı."
+
+msgid "Select a profile for the built-in display. The ambient sensor continues adjusting white balance when the driver can use it."
+msgstr "Yerleşik ekran için bir profil seçin. Sürücü desteklediğinde ortam sensörü beyaz dengesini ayarlamaya devam eder."
+
+msgid "Reading the built-in display…"
+msgstr "Yerleşik ekran okunuyor…"
+
+msgid "The built-in display with active ambient white balance was not detected in this Plasma session."
+msgstr "Bu Plasma oturumunda ortam beyaz dengesi etkin olan yerleşik ekran bulunamadı."
+
+msgid "Sleep CPU hotplug"
+msgstr "Uykuda CPU çekirdekleri"
+
+msgid "Turn off performance cores during sleep"
+msgstr "Uykuda performans çekirdeklerini kapat"
+
+msgid "Keep efficiency cores online and bring the other cores back on wake."
+msgstr "Verimlilik çekirdekleri açık kalır. Diğer çekirdekler uyanınca geri açılır."
+
+msgid "This kernel and Uke Control version do not expose sleep hotplug."
+msgstr "Bu çekirdek ve Uke Control sürümü uykuda çekirdek kapatma desteği sunmuyor."
+
+msgid "Lets DisplayPort use the compression slots after the built-in display turns off. Saved for the next boot."
+msgstr "Yerleşik ekran kapandığında DisplayPort sıkıştırma yuvalarını kullanabilir. Ayar bir sonraki açılış için kaydedilir."
+
+msgid "The saved setting will take effect after restarting."
+msgstr "Kaydedilen ayar yeniden başlattıktan sonra uygulanacak."
+
+msgid "This kernel and Uke Control version do not expose the experiment control."
+msgstr "Bu çekirdek ve Uke Control sürümü deneysel denetimi sunmuyor."
+
+msgid "The hardware preference could not be saved."
+msgstr "Donanım ayarı kaydedilemedi."
+
+msgid "Cell readings"
+msgstr "Hücre ölçümleri"
+
+msgid "The battery driver reports pack voltage only"
+msgstr "Pil sürücüsü yalnızca paket gerilimini bildiriyor"
+
+msgid "Battery telemetry is currently unavailable"
+msgstr "Pil telemetrisi şu anda alınamıyor"
+
+msgid "Battery pack voltage"
+msgstr "Pil paketi gerilimi"
+
+msgid "Charging stopped at the threshold."
+msgstr "Şarj eşikte durdu."
+
+msgid "The firmware reports thresholds enabled. Physical cutoff has yet to be verified."
+msgstr "Ürün yazılımı eşikleri etkin bildiriyor. Şarjın eşikte durduğu henüz doğrulanmadı."
+
+msgid "The firmware reports thresholds disabled."
+msgstr "Ürün yazılımı eşikleri devre dışı bildiriyor."
+
+msgid "One boot is available in the journal."
+msgid_plural "%1 boots are available in the journal."
+msgstr[0] "Günlükte %1 açılış var."
+msgstr[1] "Günlükte %1 açılış var."
+
+msgid "One finding"
+msgid_plural "%1 findings"
+msgstr[0] "%1 bulgu"
+msgstr[1] "%1 bulgu"
+
 msgid "Settings"
 msgstr "Ayarlar"
 
@@ -3092,3 +3240,51 @@ msgstr "Bellek baskısı, geri kazanım, swap etkinliği ve ayırma politikası"
 
 msgid "Profile, control and pressure changes are recorded while these pages are being observed. The list holds at most 100 events and is not a background recorder."
 msgstr "Bu sayfalar izlenirken profil, ayar ve kaynak baskısı değişiklikleri kaydedilir. Liste en fazla 100 olay tutar."
+
+msgid "Touchscreen"
+msgstr "Dokunmatik ekran"
+
+msgid "Wet touch filter"
+msgstr "Islak dokunma filtresi"
+
+msgid "Reduce accidental touches when the screen is wet."
+msgstr "Ekran ıslakken yanlış dokunuşları azalt."
+
+msgid "The wet touch filter could not be changed."
+msgstr "Islak dokunma filtresi değiştirilemedi."
+
+msgid "USB devices, docks, external displays and developer connections"
+msgstr "USB aygıtları, bağlantı istasyonları, harici ekranlar ve geliştirici bağlantıları"
+
+msgid "USB developer mode"
+msgstr "USB geliştirici modu"
+
+msgid "USB serial connection"
+msgstr "USB seri bağlantısı"
+
+msgid "Use a USB cable to connect a computer to the tablet’s serial port. Sign in with your Linux account if a serial login prompt is configured."
+msgstr "Bilgisayarı USB kablosuyla tabletin seri portuna bağlayın. Seri oturum açma istemi yapılandırılmışsa Linux hesabınızla giriş yapın."
+
+msgid "This boot profile does not currently report USB developer support."
+msgstr "Bu açılış profilinde USB geliştirici desteği kullanılamıyor."
+
+msgid "Connect the tablet in USB Device mode to start a serial session."
+msgstr "Seri oturum başlatmak için tableti USB Aygıt modunda bağlayın."
+
+msgid "Start serial session"
+msgstr "Seri oturumu başlat"
+
+msgid "Stop serial session"
+msgstr "Seri oturumu kapat"
+
+msgid "The USB serial port is ready. Open it on the connected computer."
+msgstr "USB seri portu hazır. Bağlı bilgisayarda seri portu açın."
+
+msgid "The USB developer connection is off."
+msgstr "USB geliştirici bağlantısı kapalı."
+
+msgid "Administrator approval was cancelled."
+msgstr "Yönetici onayı iptal edildi."
+
+msgid "The serial connection could not be changed. Check the USB role and close any active serial session."
+msgstr "Seri bağlantı değiştirilemedi. USB rolünü kontrol edin ve açık seri oturumu kapatın."

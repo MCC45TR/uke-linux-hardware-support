@@ -4,7 +4,11 @@ set -euo pipefail
 app=${1:?application path required}
 export QT_QPA_PLATFORM=offscreen
 "$app" --help >/dev/null
-"$app" --version >/dev/null
+version=$("$app" --version)
+if [[ $# == 2 && $version != "uke-control-qt $2" ]]; then
+    printf 'The compiled version differs from the project version\n' >&2
+    exit 1
+fi
 set +e
 "$app" --fixture /dev/null >/dev/null 2>&1
 status=$?

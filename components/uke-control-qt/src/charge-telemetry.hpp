@@ -30,6 +30,8 @@ private:
   QSocketNotifier *events_ = nullptr;
   int socket_ = -1;
   bool active_ = false;
+  enum class Sample { Idle, Reading, ReadAgain, Discard };
+  Sample sample_ = Sample::Idle;
   QVariantMap state_;
 };
 } // namespace uq

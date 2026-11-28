@@ -9,6 +9,8 @@
 #include <linux/netlink.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <cerrno>
+#include <utility>
 #include <optional>
 
 namespace uq {
@@ -109,15 +111,29 @@ QVariantMap readChargeState(bool previouslyConnected) {
 }
 
 ChargeTelemetry::ChargeTelemetry(QObject *parent) : QObject(parent) {
-  timer_.setInterval(1000);
-  connect(&timer_,&QTimer::timeout,this,&ChargeTelemetry::sample);
-  connect(&watcher_,&QFutureWatcher<QVariantMap>::finished,this,[this] {
+  timer_.setSingleShot(true);
+  connect(&timer_, &QTimer::timeout, this, &ChargeTelemetry::sample);
+  connect(&watcher_, &QFutureWatcher<QVariantMap>::finished, this, [this] {
+    const auto completed = std::exchange(sample_, Sample::Idle);
     if (!active_) return;
+    if (completed == Sample::Discard) {
+      sample();
+      return;
+    }
+
     const auto next = watcher_.result();
-    if (next != state_) { state_ = next; emit changed(); }
-    if (state_.value("connected").toBool() || state_.value("retry").toBool()) {
-      if (!timer_.isActive()) timer_.start();
-    } else timer_.stop();
+    if (next != state_) {
+      state_ = next;
+      emit changed();
+    }
+    if (!active_ || sample_ != Sample::Idle) return;
+    if (completed == Sample::ReadAgain) {
+      sample();
+    } else if (state_.value("connected").toBool() || state_.value("retry").toBool()) {
+      timer_.start(1000);
+    } else if (!events_) {
+      timer_.start(3000);
+    }
   });
 }
 
@@ -127,19 +143,22 @@ void ChargeTelemetry::setActive(bool active) {
   if (active_ == active) return;
   active_ = active;
   if (!active_) {
+    if (sample_ != Sample::Idle) sample_ = Sample::Discard;
     timer_.stop();
     releaseSocket();
     return;
   }
-  socket_ = socket(AF_NETLINK,SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC,NETLINK_KOBJECT_UEVENT);
+  socket_ = socket(AF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_KOBJECT_UEVENT);
   if (socket_ >= 0) {
     sockaddr_nl address{};
     address.nl_family = AF_NETLINK;
     address.nl_groups = 1;
-    if (bind(socket_,reinterpret_cast<sockaddr *>(&address),sizeof(address)) == 0) {
-      events_ = new QSocketNotifier(socket_,QSocketNotifier::Read,this);
-      connect(events_,&QSocketNotifier::activated,this,&ChargeTelemetry::handlePowerEvents);
-    } else releaseSocket();
+    if (bind(socket_, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0) {
+      events_ = new QSocketNotifier(socket_, QSocketNotifier::Read, this);
+      connect(events_, &QSocketNotifier::activated, this, &ChargeTelemetry::handlePowerEvents);
+    } else {
+      releaseSocket();
+    }
   }
   sample();
 }
@@ -152,25 +171,39 @@ void ChargeTelemetry::releaseSocket() {
 }
 
 void ChargeTelemetry::sample() {
-  if (active_ && !watcher_.isRunning())
-    watcher_.setFuture(QtConcurrent::run(readChargeState,state_.value("connected").toBool()));
+  if (!active_) return;
+  if (sample_ == Sample::Reading) sample_ = Sample::ReadAgain;
+  if (sample_ != Sample::Idle) return;
+  timer_.stop();
+  sample_ = Sample::Reading;
+  watcher_.setFuture(QtConcurrent::run(readChargeState, state_.value("connected").toBool()));
 }
 
 void ChargeTelemetry::handlePowerEvents() {
   char buffer[4096];
-  bool changed = false;
-  for (int i=0; i<32; ++i) {
+  bool needsRead = false;
+  for (int i = 0; i < 32; ++i) {
     sockaddr_nl sender{};
     socklen_t length = sizeof(sender);
-    const auto bytes = recvfrom(socket_,buffer,sizeof(buffer),MSG_DONTWAIT,
-        reinterpret_cast<sockaddr *>(&sender),&length);
-    if (bytes <= 0) break;
+    const auto bytes = recvfrom(socket_, buffer, sizeof(buffer), MSG_DONTWAIT,
+        reinterpret_cast<sockaddr *>(&sender), &length);
+    if (bytes < 0) {
+      if (errno == EINTR) continue;
+      if (errno == ENOBUFS) {
+        needsRead = true;
+      } else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+        releaseSocket();
+        needsRead = true;
+      }
+      break;
+    }
+    if (bytes == 0) break;
     if (sender.nl_pid != 0) continue;
-    const QByteArrayView message(buffer,bytes);
-    if (message.contains(QByteArrayView("\0SUBSYSTEM=power_supply\0",24)) &&
-        (!timer_.isActive() || message.contains(QByteArrayView("\0POWER_SUPPLY_ONLINE=0\0",23))))
-      changed = true;
+    const QByteArrayView message(buffer, bytes);
+    if (message.contains(QByteArrayView("\0SUBSYSTEM=power_supply\0", 24)) ||
+        message.contains(QByteArrayView("\0SUBSYSTEM=remoteproc\0", 22)))
+      needsRead = true;
   }
-  if (changed) sample();
+  if (needsRead) sample();
 }
 } // namespace uq

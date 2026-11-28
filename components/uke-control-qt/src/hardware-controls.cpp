@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "settings.hpp"
 #include "display-overlay.hpp"
+#include "wet-touch-filter.hpp"
 #include <KLocalizedString>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
@@ -13,10 +14,69 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSaveFile>
+#include <QStandardPaths>
+#include <QtEndian>
+#include <algorithm>
 #include <sys/stat.h>
 
 namespace uq {
 namespace {
+QByteArray displayAttribute(const QString &path, qsizetype limit=64) {
+  QFile file(path);
+  return file.open(QIODevice::ReadOnly) ? file.read(limit) : QByteArray();
+}
+
+QString fittedColourPanel() {
+  const QDir panels("/sys/bus/mipi-dsi/devices");
+  QString panel;
+  for (const auto &entry : panels.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+    const auto path = panels.filePath(entry);
+    if (!QFileInfo::exists(path+"/factory_color_profile")) continue;
+    if (!panel.isEmpty()) return {};
+    panel=path;
+  }
+  return panel;
+}
+
+QString storedProfilePath(const QString &profile) {
+  const auto directory=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+  return directory.isEmpty() ? QString() : directory+"/display/"+profile+".icc";
+}
+
+QString retainFactoryProfile(const QString &panel,const QString &profile) {
+  if (panel.isEmpty()) return {};
+  const auto path=storedProfilePath(profile);
+  const auto attribute=profile=="factory-p3" ? "/factory_icc_p3_d65" : "/factory_icc";
+  const auto data=displayAttribute(panel+attribute,4*1024*1024+1);
+  if (path.isEmpty() || data.size()<132 || data.size()>4*1024*1024 ||
+      qFromBigEndian<quint32>(data.constData())!=data.size() ||
+      data.mid(12,4)!="mntr" || data.mid(36,4)!="acsp")
+    return {};
+  if (displayAttribute(path,data.size()+1)==data) return path;
+  if (!QDir().mkpath(QFileInfo(path).absolutePath())) return {};
+  QSaveFile file(path);
+  if (!file.open(QIODevice::WriteOnly) ||
+      !file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner) ||
+      file.write(data)!=data.size() || !file.commit())
+    return {};
+  return path;
+}
+
+QString internalConnector(const QJsonObject &data) {
+  static const QRegularExpression internal("^(?:DSI|eDP)-[0-9]{1,4}$");
+  const auto name=data.value("output").toString();
+  return internal.match(name).hasMatch() ? name : QString();
+}
+
+void startKScreen(QProcess *process,const QStringList &arguments) {
+  auto environment=QProcessEnvironment::systemEnvironment();
+  environment.insert("QT_QPA_PLATFORM","wayland");
+  environment.insert("LC_ALL","C");
+  process->setProcessEnvironment(environment);
+  process->start("/usr/bin/kscreen-doctor",arguments);
+}
+
 QString infraredDevice() {
   QString result;
   for (const auto &name : QDir("/sys/class/lirc").entryList({"lirc*"},QDir::Dirs | QDir::NoDotAndDotDot)) {
@@ -35,6 +95,52 @@ QString infraredDevice() {
   return result;
 }
 }
+QVariantMap Settings::hardwarePolicies() const {
+  const QString helper="/usr/libexec/uke-control/hardware-policy";
+  const auto compatible=displayAttribute("/sys/firmware/devicetree/base/compatible",4096).split('\0');
+  const bool available=!fixture_.enabled && QFileInfo(helper).isExecutable() &&
+      compatible.contains("xiaomi,uke") && compatible.contains("qcom,sm7675");
+  const auto active=displayAttribute("/sys/module/msm/parameters/uke_dsi_dsc_sharing").trimmed();
+  const bool dscAvailable=available && (active=="N" || active=="Y");
+  const auto savedDsc=displayAttribute("/etc/uke-control/dsi-dsc-sharing").trimmed();
+  const bool dscEnabled=savedDsc=="on" || (savedDsc!="off" && active=="Y");
+  const bool cpuAvailable=available &&
+      displayAttribute("/sys/devices/system/cpu/cpu0/online").trimmed()=="1" &&
+      QFileInfo::exists("/sys/devices/system/cpu/cpu3/cpu_capacity") &&
+      QFileInfo::exists("/sys/devices/system/cpu/cpu3/online");
+  return {{"dscAvailable",dscAvailable},{"dscActive",active=="Y"},{"dscEnabled",dscEnabled},
+      {"dscPending",dscAvailable && dscEnabled!=(active=="Y")},
+      {"cpuAvailable",cpuAvailable},{"cpuEnabled",displayAttribute("/etc/uke-control/cpu-sleep").trimmed()=="on"},
+      {"busy",hardwarePolicyProcess_!=nullptr},{"error",hardwarePolicyError_}};
+}
+
+void Settings::setHardwarePolicy(const QString &kind,bool enabled) {
+  if (fixture_.enabled || restricted_ || hardwarePolicyProcess_ || !topic_) return;
+  const auto policy=hardwarePolicies();
+  if ((kind=="dsc" && (topic_->id!="display" || !policy.value("dscAvailable").toBool())) ||
+      (kind=="cpu" && (topic_->id!="cpu" || !policy.value("cpuAvailable").toBool())) ||
+      (kind!="cpu" && kind!="dsc")) return;
+  auto *process=new QProcess(this);
+  hardwarePolicyProcess_=process;
+  hardwarePolicyError_.clear();
+  const auto done=[this,process,kind,enabled](bool ok) {
+    if (hardwarePolicyProcess_!=process) return;
+    hardwarePolicyProcess_=nullptr;
+    process->deleteLater();
+    const auto key=kind=="cpu" ? "cpuEnabled" : "dscEnabled";
+    if (!ok || hardwarePolicies().value(key).toBool()!=enabled)
+      hardwarePolicyError_=i18n("The hardware preference could not be saved.");
+    emit changed();
+  };
+  connect(process,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,
+          [done](int code,QProcess::ExitStatus status){done(status==QProcess::NormalExit && code==0);});
+  connect(process,&QProcess::errorOccurred,this,[done](QProcess::ProcessError error){if(error==QProcess::FailedToStart)done(false);});
+  process->setStandardOutputFile(QProcess::nullDevice());
+  process->setStandardErrorFile(QProcess::nullDevice());
+  process->start("/usr/bin/pkexec",{"/usr/libexec/uke-control/hardware-policy",kind,enabled?"on":"off"});
+  emit changed();
+}
+
 QVariantMap Settings::notificationLed() const {
   const auto data=data_.value("led.status");
   const bool available=data.value("schema").toString()=="org.uke.control.rgb.v1" &&
@@ -176,20 +282,17 @@ QVariantMap Settings::desktopDisplay() const {
   const bool wayland=!fixture_.enabled && QGuiApplication::platformName().startsWith("wayland");
   const bool overlayAvailable=wayland && bus && bus->isServiceRegistered("org.kde.KWin").value();
   const bool overlayActive=overlayAvailable && bus->isServiceRegistered(displayOverlayBusName).value();
-  const auto parameter=[](const QString &path) {
-    QFile file(path);
-    return file.open(QIODevice::ReadOnly) ? file.read(16).trimmed() : QByteArray();
-  };
+  const auto parameter=[](const QString &path) { return displayAttribute(path).trimmed(); };
   const auto ambient=wayland ? parameter("/sys/module/panel_xiaomi_o82/parameters/ambient_white_balance") : QByteArray();
-  const auto sharing=fixture_.enabled ? QByteArray() : parameter("/sys/module/msm/parameters/uke_dsi_dsc_sharing");
-  bool profile=false;
-  if (ambient=="Y") {
-    const QDir panels("/sys/bus/mipi-dsi/devices");
-    for (const auto &entry:panels.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-      if (parameter(panels.filePath(entry+"/factory_color_profile_p3_d65")).startsWith("O82 Factory")) {
-        profile=true;
-        break;
-      }
+  const auto wetTouch=fixture_.enabled ? QByteArray() : wetTouchFilterValue(wetTouchFilterPath());
+  const auto panel=ambient=="Y" ? fittedColourPanel() : QString();
+  QVariantList profiles;
+  if (!panel.isEmpty() && !internalConnector(data).isEmpty()) {
+    profiles<<QVariantMap{{"id","edid"},{"title",i18n("Built-in display profile (EDID)")}};
+    if (parameter(panel+"/factory_color_profile")=="O82 Factory sRGB D65")
+      profiles<<QVariantMap{{"id","factory-srgb"},{"title",i18n("Factory sRGB · D65")}};
+    if (parameter(panel+"/factory_color_profile_p3_d65")=="O82 Factory Display P3 D65")
+      profiles<<QVariantMap{{"id","factory-p3"},{"title",i18n("Factory Display P3 · D65")}};
   }
   return {{"brightness",data.value("automatic_brightness").toVariant()},
           {"rotation",data.value("rotation").toVariant()},
@@ -198,20 +301,87 @@ QVariantMap Settings::desktopDisplay() const {
           {"available",data.value("schema").toString()=="org.uke.control.plasma.v1" &&
                        data.value("output").isString() && !errors_.contains("desktop.plasma")},
           {"overlayAvailable",overlayAvailable},{"overlayActive",overlayActive},{"overlayPending",overlayPending_},
-          {"ambientP3",profile},{"dscSharing",sharing=="Y"},{"dscSharingKnown",sharing=="Y" || sharing=="N"},
+          {"ambientProfiles",profiles},{"ambientProfile",displayProfile_},{"ambientReading",displayProfileProbe_!=nullptr},
+          {"wetTouchAvailable",!wetTouch.isEmpty()},{"wetTouchEnabled",wetTouch=="1"},
           {"liveVrr",!fixture_.enabled && parameter("/sys/module/msm/parameters/o82_vrr_floor_api")=="1"},
           {"busy",displayProcess_!=nullptr},{"message",displayMessage_},{"error",displayFailed_}};
 }
+void Settings::readDisplayProfile(const QString &expected) {
+  if (fixture_.enabled || displayProfileProbe_ || desktopDisplay().value("ambientProfiles").toList().isEmpty()) return;
+  const auto connector=internalConnector(data_.value("desktop.plasma"));
+  auto *process=new QProcess(this);
+  displayProfileProbe_=process;
+  const auto done=[this,process,connector,expected](bool ok) {
+    if (displayProfileProbe_!=process) return;
+    displayProfileProbe_=nullptr;
+    auto output=QString::fromUtf8(process->readAllStandardOutput());
+    process->deleteLater();
+    output.remove(QRegularExpression(QString(QChar(0x1b))+R"(\[[0-9;]*m)"));
+    QString source,icc;
+    bool internal=false;
+    static const QRegularExpression header(R"(^Output:\s+\d+\s+(\S+))");
+    if (ok) for (const auto &line : output.split('\n')) {
+      const auto match=header.match(line);
+      if (match.hasMatch()) internal=match.captured(1)==connector;
+      if (!internal) continue;
+      const auto field=line.trimmed();
+      if (field.startsWith("Color profile source:")) source=field.sliced(21).trimmed();
+      if (field.startsWith("ICC profile:")) icc=field.sliced(12).trimmed();
+    }
+    displayProfile_.clear();
+    if (source=="EDID") displayProfile_="edid";
+    if (source=="ICC") {
+      for (const auto &profile : {QStringLiteral("factory-srgb"),QStringLiteral("factory-p3")})
+        if (icc==storedProfilePath(profile)) displayProfile_=profile;
+    }
+    if (!expected.isEmpty()) {
+      displayFailed_=displayProfile_!=expected;
+      displayMessage_=displayFailed_ ? i18n("Plasma did not confirm the selected display profile.")
+                                     : i18n("Display profile applied.");
+    }
+    emit changed();
+  };
+  connect(process,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,
+          [done](int code,QProcess::ExitStatus status){done(status==QProcess::NormalExit && code==0);});
+  connect(process,&QProcess::errorOccurred,this,[done](QProcess::ProcessError error){if(error==QProcess::FailedToStart)done(false);});
+  process->setStandardErrorFile(QProcess::nullDevice());
+  startKScreen(process,{"--outputs"});
+  QTimer::singleShot(5000,process,[process]{if(process->state()!=QProcess::NotRunning)process->kill();});
+  emit changed();
+}
+
 void Settings::setDisplayPreference(const QString &id,const QString &value) {
+  const bool wetTouch = id == "touch.wet-filter";
   if (fixture_.enabled || restricted_ || displayProcess_ || !topic_ || topic_->id!="display" ||
-      (id!="display.ambient-color" && !desktopDisplay().value("available").toBool()))
+      (!wetTouch && id!="display.ambient-color" && !desktopDisplay().value("available").toBool()))
     return;
   QStringList args;
   QString program="/usr/bin/uke-control";
-  if (id=="display.ambient-color") {
-    if (value!="factory-p3" || !desktopDisplay().value("ambientP3").toBool()) return;
+  const bool colour=id=="display.ambient-color";
+  if (wetTouch) {
+    if ((value!="0" && value!="1") || !desktopDisplay().value("wetTouchAvailable").toBool()) return;
+    program="/usr/bin/pkexec";
+    args << QStringLiteral("/usr/libexec/uke-control-qt/wet-touch-filter") << value;
+  } else if (colour) {
+    if (displayProfileProbe_) return;
+    const auto profiles=desktopDisplay().value("ambientProfiles").toList();
+    if (std::none_of(profiles.begin(),profiles.end(),[&](const auto &profile){
+          return profile.toMap().value("id").toString()==value;
+        })) return;
+    const auto output="output."+internalConnector(data_.value("desktop.plasma"))+'.';
     program="/usr/bin/kscreen-doctor";
-    args<<QStringLiteral("output.DSI-1.colorProfileSource.EDID");
+    if (value=="edid") {
+      args<<output+"colorProfileSource.EDID";
+    } else {
+      const auto path=retainFactoryProfile(fittedColourPanel(),value);
+      if (path.isEmpty()) {
+        displayFailed_=true;
+        displayMessage_=i18n("The fitted panel’s factory profile could not be opened.");
+        emit changed();
+        return;
+      }
+      args<<output+"iccprofile."+path<<output+"colorProfileSource.ICC";
+    }
   } else try {
     if (id!="desktop.brightness" && id!="desktop.rotation") return;
     const auto &descriptor=action(id.toStdString());
@@ -228,13 +398,15 @@ void Settings::setDisplayPreference(const QString &id,const QString &value) {
   displayFailed_=false;
   auto *process=new QProcess(this);
   displayProcess_=process;
-  const auto done=[this,process](bool ok) {
+  const auto done=[this,process,colour,value,wetTouch](bool ok) {
     if (displayProcess_!=process) return;
     displayProcess_=nullptr;
     process->deleteLater();
     displayFailed_=!ok;
-    displayMessage_=ok?QString():i18n("The desktop could not apply this preference.");
-    if (topic_ && topic_->id=="display") refresh();
+    displayMessage_=ok ? QString() : wetTouch ? i18n("The wet touch filter could not be changed.")
+                                             : i18n("The desktop could not apply this preference.");
+    if (colour && ok) readDisplayProfile(value);
+    else if (!colour && topic_ && topic_->id=="display") refresh();
     else emit changed();
   };
   connect(process,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,
@@ -242,8 +414,10 @@ void Settings::setDisplayPreference(const QString &id,const QString &value) {
   connect(process,&QProcess::errorOccurred,this,[done](QProcess::ProcessError error){if(error==QProcess::FailedToStart)done(false);});
   process->setStandardOutputFile(QProcess::nullDevice());
   process->setStandardErrorFile(QProcess::nullDevice());
-  process->start(program,args);
-  QTimer::singleShot(15000,process,[process]{if(process->state()!=QProcess::NotRunning)process->kill();});
+  if (colour) startKScreen(process,args);
+  else process->start(program,args);
+  QTimer::singleShot(wetTouch ? 90000 : 15000, process,
+      [process]{if(process->state()!=QProcess::NotRunning)process->kill();});
   emit changed();
 }
 void Settings::readScreenBrightness() {

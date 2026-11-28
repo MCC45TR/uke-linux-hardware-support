@@ -40,7 +40,9 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantMap infrared READ infrared NOTIFY changed)
   Q_PROPERTY(QVariantMap displayResources READ displayResources NOTIFY changed)
   Q_PROPERTY(QVariantMap desktopDisplay READ desktopDisplay NOTIFY changed)
+  Q_PROPERTY(QVariantMap hardwarePolicies READ hardwarePolicies NOTIFY changed)
   Q_PROPERTY(QVariantMap changelog READ changelog NOTIFY changelogChanged)
+  Q_PROPERTY(QVariantMap systemErrors READ systemErrors NOTIFY systemErrorsChanged)
   Q_PROPERTY(QVariantMap packageOperation READ packageOperation NOTIFY changed)
   Q_PROPERTY(QVariantList deviceInformation READ deviceInformation NOTIFY deviceInformationChanged)
   Q_PROPERTY(bool deviceInventoryLoading READ deviceInventoryLoading NOTIFY deviceInformationChanged)
@@ -52,6 +54,7 @@ class Settings : public QObject {
   Q_PROPERTY(QString updated READ updated NOTIFY changed)
   Q_PROPERTY(QObject* nfc READ nfc CONSTANT)
   Q_PROPERTY(QVariantMap usbPolicy READ usbPolicy NOTIFY changed)
+  Q_PROPERTY(QVariantMap usbDeveloper READ usbDeveloper NOTIFY changed)
   Q_PROPERTY(QObject* manager READ manager CONSTANT)
   Fixture fixture_;
   bool restricted_ = false;
@@ -78,6 +81,14 @@ class Settings : public QObject {
   QVariantList ledArguments_;
   void sendLed();
   QProcess *irProcess_ = nullptr, *displayProcess_ = nullptr;
+  QProcess *displayProfileProbe_ = nullptr;
+  QProcess *hardwarePolicyProcess_ = nullptr;
+  QString hardwarePolicyError_;
+  QProcess *usbDeveloperProcess_ = nullptr;
+  QString usbDeveloperMessage_;
+  bool usbDeveloperFailed_ = false;
+  QString displayProfile_;
+  void readDisplayProfile(const QString &expected = {});
   QString irMessage_, displayMessage_;
   bool irFailed_ = false, displayFailed_ = false;
   bool overlayPending_ = false;
@@ -89,6 +100,8 @@ class Settings : public QObject {
   QNetworkReply *changelogReply_ = nullptr;
   bool changelogOnline_ = false;
   void loadChangelog();
+  QFutureWatcher<QVariantMap> systemErrorsScan_;
+  QVariantMap systemErrors_;
   QVariantList deviceBoard_;
   QFutureWatcher<QVariantList> deviceInventory_;
   bool deviceInventoryLoading_ = false;
@@ -122,10 +135,14 @@ public:
   QVariantMap notificationLed() const;
   QVariantMap infrared() const;
   QVariantMap desktopDisplay() const;
+  QVariantMap hardwarePolicies() const;
+  Q_INVOKABLE void setHardwarePolicy(const QString &kind,bool enabled);
   QVariantMap displayResources() const;
   Q_INVOKABLE void readDisplayResources();
   Q_INVOKABLE void setDisplayOverlay(bool enabled);
   QVariantMap changelog() const { return changelog_; }
+  QVariantMap systemErrors() const { return systemErrors_; }
+  Q_INVOKABLE void scanSystemErrors(int olderBoot = -1);
   QVariantMap packageOperation() const { return packageOperation_; }
   QVariantList deviceInformation() const;
   bool deviceInventoryLoading() const { return deviceInventoryLoading_; }
@@ -135,6 +152,8 @@ public:
   QObject *nfc() { return &nfc_; }
   QObject *manager() { return &manager_; }
   QVariantMap usbPolicy() const;
+  QVariantMap usbDeveloper() const;
+  Q_INVOKABLE void setUsbDeveloper(bool enabled);
   bool busy() const { return !current_.isEmpty() || !queue_.isEmpty(); }
   QString notice() const { return notice_; }
   QString updated() const { return updated_; }
@@ -165,6 +184,7 @@ signals:
   void changed();
   void historyChanged();
   void changelogChanged();
+  void systemErrorsChanged();
   void deviceInformationChanged();
 };
 class HistoryPlot : public QQuickPaintedItem {

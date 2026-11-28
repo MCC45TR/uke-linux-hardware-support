@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN" "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+  <vendor>Senemos</vendor>
+  <action id="org.senemos.uke.wet-touch-filter">
+    <description>Change the touchscreen’s wet touch filter</description>
+    <description xml:lang="tr">Islak dokunma filtresini değiştir</description>
+    <message>Authentication is required to change the wet touch filter.</message>
+    <message xml:lang="tr">Islak dokunma filtresini değiştirmek için kimlik doğrulaması gerekiyor.</message>
+    <defaults><allow_any>no</allow_any><allow_inactive>no</allow_inactive><allow_active>auth_admin_keep</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/uke-control-qt/wet-touch-filter</annotate>
+  </action>
+</policyconfig>

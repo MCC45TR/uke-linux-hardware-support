@@ -66,6 +66,27 @@ FormCard.FormCardPage {
         sourceComponent: Component { StoragePartitions { settings: page.settings } }
     }
     PagePanel {
+        active: page.topicId === "cpu"
+        sourceComponent: Component {
+            SettingsSection {
+                readonly property var policy: page.settings.hardwarePolicies
+                heading: i18n("Sleep CPU hotplug")
+                FormCard.FormSwitchDelegate {
+                    objectName: "cpuSleepHotplug"
+                    text: i18n("Turn off performance cores during sleep")
+                    description: i18n("Keep efficiency cores online and bring the other cores back on wake.")
+                    checked: policy.cpuEnabled === true
+                    enabled: !backend.readOnly && policy.cpuAvailable && !policy.busy
+                    onToggled: page.settings.setHardwarePolicy("cpu", checked)
+                }
+                SettingsNote {
+                    visible: !policy.cpuAvailable || policy.error.length > 0
+                    text: policy.error || i18n("This kernel and Uke Control version do not expose sleep hotplug.")
+                }
+            }
+        }
+    }
+    PagePanel {
         active: ["cpu", "gpu", "sensors", "manager-overview", "memory", "storage", "thermal", "profiles", "diagnostics"].includes(page.topicId)
         sourceComponent: Component { KernelManagerView { mode: page.topicId; appWindow: page.appWindow; currentPage: page.appWindow.pageStack.currentItem === page && settings.topic.id === page.topicId } }
     }
@@ -86,11 +107,52 @@ FormCard.FormCardPage {
         sourceComponent: Component { ChangelogView { settings: page.settings } }
     }
     PagePanel {
+        active: page.topicId === "system-errors"
+        sourceComponent: Component { SystemErrorsView { settings: page.settings } }
+    }
+    PagePanel {
         active: page.topicId === "usb"
         sourceComponent: Component {
             TileGrid {
                 minimumTileWidth: Kirigami.Units.gridUnit * 25
                 UsbRoleView { topicPage: page }
+                SettingsSection {
+                    id: developerPanel
+                    readonly property var developer: page.settings.usbDeveloper
+                    heading: i18n("USB developer mode")
+                    SafeText {
+                        text: i18n("USB serial connection")
+                        description: i18n("Use a USB cable to connect a computer to the tablet’s serial port. Sign in with your Linux account if a serial login prompt is configured.")
+                    }
+                    SettingsNote {
+                        visible: !developerPanel.developer.available || !developerPanel.developer.readyToStart
+                        text: !developerPanel.developer.available ? i18n("This boot profile does not currently report USB developer support.")
+                                                   : i18n("Connect the tablet in USB Device mode to start a serial session.")
+                    }
+                    FormCard.FormButtonDelegate {
+                        objectName: "usbDeveloperStart"
+                        text: i18n("Start serial session")
+                        enabled: developerPanel.developer.available && developerPanel.developer.readyToStart && !developerPanel.developer.busy && !backend.readOnly
+                        onClicked: page.settings.setUsbDeveloper(true)
+                    }
+                    FormCard.FormButtonDelegate {
+                        objectName: "usbDeveloperStop"
+                        text: i18n("Stop serial session")
+                        enabled: developerPanel.developer.available && !developerPanel.developer.busy && !backend.readOnly
+                        onClicked: page.settings.setUsbDeveloper(false)
+                    }
+                    Controls.BusyIndicator {
+                        Layout.alignment: Qt.AlignHCenter
+                        running: developerPanel.developer.busy
+                        visible: running
+                    }
+                    Kirigami.InlineMessage {
+                        Layout.fillWidth: true
+                        visible: developerPanel.developer.message.length > 0
+                        text: developerPanel.developer.message
+                        type: developerPanel.developer.failed ? Kirigami.MessageType.Warning : Kirigami.MessageType.Positive
+                    }
+                }
                 DisplayLinkPanel { settings: page.settings; appWindow: page.appWindow }
             }
         }
@@ -234,7 +296,7 @@ FormCard.FormCardPage {
         sourceComponent: informationPanel
     }
     FormCard.FormCard {
-        visible: !["about-uke", "changelog"].includes(page.topicId)
+        visible: !["about-uke", "changelog", "system-errors"].includes(page.topicId)
         maximumWidth: page.readingColumnWidth
         Repeater {
             model: page.isCharging ? page.topicActions : []
