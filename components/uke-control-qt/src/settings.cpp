@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 #include "settings.hpp"
 #include <KLocalizedString>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QNetworkInterface>
 #include <QStorageInfo>
 #include <QLibraryInfo>
 #include <QProcess>
 #include <QSet>
+#include <algorithm>
 #include <cmath>
 namespace uq {
 namespace {
@@ -35,6 +38,22 @@ QVariantList informationRows(const QString &id,const QJsonObject &data) {
   if(id.startsWith("battery.") && id!="battery.protocol") {
     const auto readings=data.value("readings").toObject();
     const bool coherent=data.value("provider_verified").toBool() && data.value("snapshot_coherent").toBool();
+    if(id=="battery.cells") {
+      if(!coherent)
+        return rows;
+      const auto topology=data.value("reported_cell_topology").toObject();
+      rows<<row(i18n("Readings per cell"),i18n("Individual cell voltage and health are not reported"));
+      if(!topology.value("qualified").toBool())
+        return rows;
+      const auto series=topology.value("series_cells").toInt();
+      const auto parallel=topology.value("parallel_cells").toInt();
+      if(series>0 && parallel>0)
+        rows<<row(i18n("Verified cell configuration"),i18n("%1 series × %2 parallel",series,parallel));
+      const auto average=topology.value("average_series_cell_voltage_uv").toDouble();
+      if(average>0 && std::isfinite(average))
+        rows<<row(i18n("Calculated average per series cell"),i18n("%1 V",QLocale().toString(average/1000000,'f',3)));
+      return rows;
+    }
     auto measure=[&](const char *key,const QString &title,const char *unit,double scale,const QString &suffix,bool level=false) {
       const auto r=readings.value(key).toObject();const auto v=r.value("value");
       const auto validity=r.value("validity").toString();
@@ -217,7 +236,11 @@ QVariantList Settings::information()const {
     const bool failed=errors_.contains(id);
     const bool loading=current_==id;
     QString title=topic_->title;
-    if(!kernel) {
+    if(id=="battery.cells")
+      title=i18n("Battery cells");
+    else if(id=="battery.status" && topic_->id=="charging")
+      title=i18n("Battery status");
+    else if(!kernel) {
       try { title=friendlyTitle(action(id.toStdString())); } catch(const std::exception &) {}
     }
     QVariantList sections;
@@ -254,11 +277,193 @@ QVariantMap Settings::bootReport()const {
   report["stamp"]=stamps_.value("update.status");
   return report;
 }
+QVariantMap Settings::chargingThresholds() const {
+  const auto data=data_.value("kernel.charging");
+  const auto saved=data.value("settings").toObject();
+  const auto admission=data.value("admission").toObject();
+  const int start=saved.value("reported_start_percent").toInt(-1);
+  const int stop=saved.value("reported_end_percent").toInt(-1);
+  const bool valid=saved.value("firmware_get_complete").toBool() &&
+      saved.value("exit_status").toInt(-1)==0 && start>=0 && start<stop && stop<=100;
+  const bool stale=errors_.contains("kernel.charging") && valid;
+  return {
+      {"available",valid}, {"start",start}, {"stop",stop},
+      {"enabled",saved.value("reported_enabled").toVariant()},
+      {"stale",stale}, {"stamp",stamps_.value("kernel.charging")},
+      {"profileUnqualified",admission.value("reason").toString()=="control_profile_unqualified"},
+      {"admitted",valid && !stale && !busy() && admission.value("threshold_admission_ready").toBool()}
+  };
+}
+QVariantList Settings::chargingBands() const {
+  static const QRegularExpression bandId("^hold([0-9]{2})-([0-9]{2,3})$");
+  QVariantList bands;
+  for(const auto &choice:actionChoices("charge.mode","mode")) {
+    const auto name=choice.toMap().value("value").toString();
+    const auto match=bandId.match(name);
+    if(!match.hasMatch())continue;
+    const int start=match.captured(1).toInt();
+    const int stop=match.captured(2).toInt();
+    if(start<stop && stop<=100)
+      bands<<QVariantMap{{"mode",name},{"start",start},{"stop",stop}};
+  }
+  std::sort(bands.begin(),bands.end(),[](const QVariant &left,const QVariant &right) {
+    return left.toMap().value("start").toInt()<right.toMap().value("start").toInt();
+  });
+  return bands;
+}
+QString Settings::currentChannel() const {
+  const auto data=data_.value("channel.status");
+  if(data.value("schema").toString()!="org.uke.control.channel.v1" || errors_.contains("channel.status"))
+    return {};
+  return data.value("selected").toString();
+}
+QVariantList Settings::actionChoices(const QString &id,const QString &key) const {
+  QVariantList choices;
+  const bool turkish=QLocale().language()==QLocale::Turkish;
+  try {
+    for(const auto &parameter:action(id.toStdString()).parameters) {
+      if(QString::fromStdString(parameter.id)!=key)continue;
+      for(const auto &choice:parameter.choices)
+        choices<<QVariantMap{{"title",QString::fromStdString(turkish?choice.title.tr:choice.title.en)},
+                            {"value",QString::fromStdString(choice.value)}};
+    }
+  } catch(const std::exception &) {
+    return {};
+  }
+  return choices;
+}
+QVariantMap Settings::flashlight() const {
+  const auto data=data_.value("flashlight.status");
+  const auto torch=data.value("flashlight").toObject();
+  const bool available=data.value("schema").toString()=="org.uke.control.lights.v1" &&
+      torch.value("available").toBool() && torch.value("on").isBool() &&
+      !errors_.contains("flashlight.status");
+  const int requested=torch.value("requested_percent").toInt(-1);
+  const int step=torch.value("brightness_step_percent").toInt();
+  return {
+      {"available",available}, {"on",available && torch.value("on").toBool()},
+      {"level",requested>=1 && requested<=100 && step==50 ? (requested==100 ? 100 : 50) : 0},
+      {"twoLevels",step==50}, {"pending",flashlightPending_}, {"error",flashlightError_}
+  };
+}
+void Settings::setFlashlight(bool enabled) {
+  requestFlashlight("SetEnabled",enabled);
+}
+void Settings::setFlashlightBrightness(int percent) {
+  if((percent==50 || percent==100) && flashlight().value("twoLevels").toBool())
+    requestFlashlight("SetBrightness",static_cast<uint>(percent));
+}
+void Settings::requestFlashlight(const QString &method,const QVariant &argument) {
+  const QString id="flashlight.status";
+  if(fixture_.enabled || restricted_ || !topic_ || topic_->id!="flashlight" || busy() ||
+     flashlightPending_ || !flashlight().value("available").toBool())
+    return;
+  auto message=QDBusMessage::createMethodCall("org.senemos.Uke.Torch","/org/senemos/Uke/Torch",
+                                               "org.senemos.Uke.Torch1",method);
+  message.setArguments({argument});
+  message.setInteractiveAuthorizationAllowed(false);
+  flashlightError_.clear();
+  flashlightPending_=true;
+  emit changed();
+  auto *watcher=new QDBusPendingCallWatcher(QDBusConnection::systemBus().asyncCall(message,3000),this);
+  connect(watcher,&QDBusPendingCallWatcher::finished,this,[this,watcher,id] {
+    const QDBusPendingReply<QString> reply=*watcher;
+    QJsonObject result;
+    if(!reply.isError() && reply.value().size()<=65536)
+      result=QJsonDocument::fromJson(reply.value().toUtf8()).object();
+    if(reply.error().type()==QDBusError::AccessDenied) {
+      flashlightError_=i18n("Flashlight controls require an active local session.");
+    } else if(result.value("schema").toString()=="org.uke.control.lights.v1" &&
+              result.value("flashlight").isObject()) {
+      if(current_==id)stop();
+      data_[id]=result;
+      errors_.remove(id);
+      updated_=QDateTime::currentDateTime().toString(QLocale().timeFormat(QLocale::ShortFormat));
+      stamps_[id]=updated_;
+    } else {
+      flashlightError_=i18n("The flashlight service did not confirm the change. Refresh to check its state.");
+      errors_[id]=flashlightError_;
+    }
+    flashlightPending_=false;
+    watcher->deleteLater();
+    emit changed();
+  });
+}
+QVariantMap Settings::displayLink() const {
+  const QString id="display.profiles";
+  const auto data=data_.value(id);
+  if(data.value("schema").toString()!="org.uke.control.display.profiles.v1")
+    return {};
+  const auto link=data.value("observed_link").toObject();
+  const auto ceiling=data.value("training_ceiling").toObject();
+  const int rate=link.value("rate_khz").toInt();
+  const int lanes=link.value("lanes").toInt();
+  const int bpp=link.value("bpp").toInt();
+  const auto dsc=data_.value("display.compression");
+  const QMap<int,QString> rates{{162000,"RBR"},{270000,"HBR"},{540000,"HBR2"},{810000,"HBR3"}};
+  return {
+      {"rate",rates.value(rate)}, {"lanes",lanes}, {"bitsPerPixel",bpp},
+      {"ceiling",ceiling.value("current").toString()}, {"canSetLanes",ceiling.value("available").toBool()},
+      {"canSetCompression",dsc.value("control_available").toBool() && !errors_.contains("display.compression")},
+      {"stale",errors_.contains(id)}
+  };
+}
+QVariantList Settings::linuxPartitions() const {
+  const QString id="overview.storage";
+  const auto snapshot=data_.value(id);
+  const auto inventory=component(snapshot).value("blockdevices").toArray();
+  static const QRegularExpression diskName("^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,79}$");
+  QVariantList mounted, others;
+  const auto hasMount=[](const QJsonObject &node,const QString &path,const auto &visit)->bool {
+    if(node.value("mountpoints").toArray().contains(path))
+      return true;
+    for(const auto &child:node.value("children").toArray())
+      if(visit(child.toObject(),path,visit))
+        return true;
+    return false;
+  };
+  bool usesUserdata=false;
+  for(const auto &drive:inventory)
+    for(const auto &item:drive.toObject().value("children").toArray()) {
+      const auto part=item.toObject();
+      if(part.value("type").toString()=="part" && part.value("partlabel").toString()=="userdata" && hasMount(part,"/",hasMount))
+        usesUserdata=true;
+    }
+  const QMap<QString,QString> linuxLabels{{"linux",i18n("Linux root volume")},{"linux2",i18n("Second Linux volume")},
+      {"linux_boot",i18n("Linux boot volume")},{"linux_swap",i18n("Linux swap")},{"esp",i18n("EFI system partition")}};
+  for(const auto &drive:inventory)
+    for(const auto &item:drive.toObject().value("children").toArray()) {
+      const auto part=item.toObject();
+      const auto name=part.value("name").toString();
+      if(part.value("type").toString()!="part" || !diskName.match(name).hasMatch())
+        continue;
+      const auto label=part.value("partlabel").toString();
+      const auto filesystem=part.value("fstype").toString();
+      const bool root=hasMount(part,"/",hasMount);
+      QString role;
+      if(root)role=i18n("Running Linux system");
+      else if(hasMount(part,"/boot/efi",hasMount))role=i18n("EFI system partition");
+      else if(hasMount(part,"/boot",hasMount))role=i18n("Linux boot volume");
+      else if(usesUserdata && (label=="boot_a" || label=="boot_b"))
+        role=label=="boot_a"?i18n("Boot slot A"):i18n("Boot slot B");
+      else if(!filesystem.isEmpty())role=linuxLabels.value(label);
+      if(role.isEmpty())continue;
+      const auto size=part.value("size").toDouble();
+      const bool encrypted=filesystem=="crypto_LUKS";
+      (root?mounted:others)<<QVariantMap{
+          {"title",role}, {"device","/dev/"+name},
+          {"filesystem",encrypted?QStringLiteral("LUKS"):safe(filesystem.left(24).toStdString())},
+          {"size",size>0 && std::isfinite(size)?bytes(size):QString()},
+          {"root",root}, {"encrypted",encrypted}, {"stale",errors_.contains(id)}
+      };
+    }
+  return mounted+others;
+}
 bool Settings::open(const QString &id) {
   close();for(const auto &t:settingTopics())if(t.id==id){topic_=&t;emit changed();refresh();return true;}return false;
 }
 void Settings::refresh() {
-  stop();notice_.clear();if(!topic_)return;
+  stop();notice_.clear();flashlightError_.clear();if(!topic_)return;
   queue_=topic_->reads;next();
   if(QStringList{"cpu","gpu","sensors","manager-overview","memory","storage","thermal","profiles","diagnostics"}.contains(topic_->id))manager_.open(topic_->id);
 }

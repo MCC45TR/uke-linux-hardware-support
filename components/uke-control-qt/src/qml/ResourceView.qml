@@ -10,11 +10,15 @@ ColumnLayout {
     required property string mode
     required property int seconds
     property var drafts: ({})
-    property int firstChart: mode === "storage" ? 1 : 0
-    property int secondChart: ["memory", "storage", "manager-overview"].includes(mode) ? 2 : 1
+    property string firstMetric: mode === "storage" ? "io/read" : ""
+    property string secondMetric: mode === "storage" ? "io/write" : ""
     property bool graphOptions: false
     property bool advanced: false
     readonly property var charts: manager.state.charts || []
+    function chartIndex(metric, fallback) {
+        const index = charts.findIndex(chart => chart.id === metric)
+        return index >= 0 ? index : Math.min(fallback, charts.length - 1)
+    }
     function draft(id, value) { const copy = Object.assign({}, drafts); copy[id] = value; drafts = copy }
     function help(id) {
         const names = {"memory.swappiness":i18n("Controls the preference for reclaiming anonymous memory into swap. This is not a RAM capacity limit."),"memory.ksm":i18n("Scans eligible memory for identical pages. It can save memory while adding CPU work."),"memory.thp":i18n("Choose whether large transparent pages are used always, on application advice, or never."),"memory.mglru":i18n("0 disables MGLRU, 1 enables the basic mechanism, and 7 enables all supported aging features. Availability depends on the running kernel.")}
@@ -37,21 +41,28 @@ ColumnLayout {
         visible: view.charts.length > 1
         Layout.fillWidth: true
         FormCard.FormButtonDelegate { text: i18n("Choose graphs"); icon.name: themeIcons.names["configure"]; onClicked: view.graphOptions = !view.graphOptions }
-        FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("First graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.firstChart, view.charts.length - 1); onActivated: index => view.firstChart = index }
-        FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("Second graph"); model: view.charts; textRole: "title"; currentIndex: Math.min(view.secondChart, view.charts.length - 1); onActivated: index => view.secondChart = index }
+        FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("First graph"); model: view.charts; textRole: "title"; currentIndex: view.chartIndex(view.firstMetric, 0); onActivated: index => view.firstMetric = view.charts[index].id }
+        FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("Second graph"); model: view.charts; textRole: "title"; currentIndex: view.chartIndex(view.secondMetric, 1); onActivated: index => view.secondMetric = view.charts[index].id }
     }
-    GridLayout {
-        Layout.fillWidth: true
-        columns: width > Kirigami.Units.gridUnit * 45 ? 2 : 1
+    TileGrid {
+        maximumColumns: 2
+        minimumTileWidth: Kirigami.Units.gridUnit * 24
         visible: view.charts.length > 0
         Repeater {
-            model: view.charts.length ? [view.charts[Math.min(view.firstChart, view.charts.length - 1)], view.charts[Math.min(view.secondChart, view.charts.length - 1)]] : []
-            delegate: ColumnLayout {
-                required property var modelData
+            model: 2
+            delegate: MetricChart {
                 required property int index
-                visible: index === 0 || view.charts.length > 1
+                readonly property var chart: view.charts[view.chartIndex(index === 0 ? view.firstMetric : view.secondMetric, index)]
+                visible: chart !== undefined && (index === 0 || view.charts.length > 1)
                 Layout.fillWidth: true
-                MetricChart { manager: view.manager; metric: modelData.id; heading: modelData.title; currentReading: view.manager.format((view.manager.state.metrics || {})[modelData.id], modelData.unit); unit: modelData.unit; maximum: modelData.maximum; seconds: view.seconds }
+                Layout.minimumWidth: 0
+                manager: view.manager
+                metric: chart ? chart.id : ""
+                heading: chart ? chart.title : ""
+                currentReading: chart ? view.manager.format((view.manager.state.metrics || {})[metric], unit) : ""
+                unit: chart ? chart.unit : ""
+                maximum: chart ? chart.maximum : 0
+                seconds: view.seconds
             }
         }
     }

@@ -2236,3 +2236,211 @@ msgstr "Geçerli rolü ve bağlantı durumunu okur."
 
 msgid "Low uses 50% brightness. High uses 100%."
 msgstr "Düşük kademe %50, yüksek kademe %100 parlaklık kullanır."
+
+msgid "%1 V"
+msgstr "%1 V"
+
+msgid "%1 series × %2 parallel"
+msgstr "%1 seri × %2 paralel"
+
+msgid "%1 · %2 lanes · %3 bits per pixel"
+msgstr "%1 · %2 hat · piksel başına %3 bit"
+
+msgid "Automatic recovery during a kernel trial"
+msgstr "Çekirdek denemesinde otomatik geri dönüş"
+
+msgid "Battery cells"
+msgstr "Pil hücreleri"
+
+msgid "Battery status"
+msgstr "Pil durumu"
+
+msgid "Boot fallback"
+msgstr "Önyükleme geri dönüşü"
+
+msgid "Boot slot A"
+msgstr "Önyükleme slotu A"
+
+msgid "Boot slot B"
+msgstr "Önyükleme slotu B"
+
+msgid "Calculated average per series cell"
+msgstr "Seri hücre başına hesaplanan ortalama"
+
+msgid "Changes take effect on the next restart."
+msgstr "Değişiklik bir sonraki yeniden başlatmada geçerli olur."
+
+msgid "Charging can pause when the battery reaches this level."
+msgstr "Pil bu seviyeye ulaştığında şarj duraklayabilir."
+
+msgid "Charging can resume as the battery drops to this level."
+msgstr "Pil bu seviyeye düştüğünde şarj yeniden başlayabilir."
+
+msgid "Charging thresholds are active."
+msgstr "Şarj eşikleri etkin."
+
+msgid "Charging thresholds are inactive."
+msgstr "Şarj eşikleri kapalı."
+
+msgid "Charging thresholds"
+msgstr "Şarj eşikleri"
+
+msgid "Current ceiling: %1 lanes. Disconnect the display before applying a change."
+msgstr "Mevcut üst sınır %1 hat. Değişikliği uygulamadan önce ekranı ayırın."
+
+msgid "Disconnect the display before applying a change."
+msgstr "Değişikliği uygulamadan önce ekranı ayırın."
+
+msgid "Display stream compression"
+msgstr "Görüntü akışı sıkıştırması"
+
+msgid "DisplayPort lane limit"
+msgstr "DisplayPort hat sınırı"
+
+msgid "DisplayPort link speed"
+msgstr "DisplayPort bağlantı hızı"
+
+msgid "EFI system partition"
+msgstr "EFI sistem bölümü"
+
+msgid "Encrypting this system volume requires a supported offline migration and recovery setup. This installation has no verified conversion path."
+msgstr "Sistem bölümünü şifrelemek için çevrimdışı geçiş ve bir kurtarma ortamı gerekir. Bu kurulum için doğrulanmış bir geçiş yolu bulunmuyor."
+
+msgid "Encryption options"
+msgstr "Şifreleme seçenekleri"
+
+msgid "Flashlight controls require an active local session."
+msgstr "Feneri ayarlamak için etkin yerel oturum gerekir."
+
+msgid "Flashlight status is currently unavailable."
+msgstr "Fener durumu şu anda okunamıyor."
+
+msgid "High (%1%)"
+msgstr "Yüksek (%%1)"
+
+msgid "Individual cell voltage and health are not reported"
+msgstr "Hücre başına gerilim ve sağlık bilgisi bildirilmiyor"
+
+msgid "Linux boot volume"
+msgstr "Linux önyükleme bölümü"
+
+msgid "Linux partitions"
+msgstr "Linux bölümleri"
+
+msgid "Linux root volume"
+msgstr "Linux kök bölümü"
+
+msgid "Linux swap"
+msgstr "Linux takas bölümü"
+
+msgid "Low (%1%)"
+msgstr "Düşük (%%1)"
+
+msgid "No Linux partitions could be identified."
+msgstr "Linux bölümleri belirlenemedi."
+
+msgid "No negotiated link speed reported"
+msgstr "Anlaşılan bağlantı hızı bildirilmedi"
+
+msgid "Other charging policies"
+msgstr "Diğer şarj politikaları"
+
+msgid "Pause charging"
+msgstr "Şarjı duraklat"
+
+msgid "Preview available updates"
+msgstr "Mevcut güncellemeleri önizle"
+
+msgid "Readings per cell"
+msgstr "Hücre başına ölçüm"
+
+msgid "Resume charging"
+msgstr "Şarjı yeniden başlat"
+
+msgid "Review a compression change before applying it with the display disconnected."
+msgstr "Ekran ayrıyken uygulanacak sıkıştırma ayarını inceleyin."
+
+msgid "Review channel change"
+msgstr "Kanal değişikliğini incele"
+
+msgid "Review next boot slot"
+msgstr "Sonraki açılış slotunu incele"
+
+msgid "Review signed updates for the selected channel."
+msgstr "Seçili kanalın imzalı güncellemelerini inceleyin."
+
+msgid "Review thresholds"
+msgstr "Eşikleri incele"
+
+msgid "Root encryption status is unavailable."
+msgstr "Kök bölümün şifreleme durumu okunamadı."
+
+msgid "Running Linux system"
+msgstr "Çalışan Linux sistemi"
+
+msgid "Second Linux volume"
+msgstr "İkinci Linux bölümü"
+
+msgid "Selecting a brightness level turns on the flashlight."
+msgstr "Bir parlaklık kademesi seçtiğinizde fener açılır."
+
+msgid "Set when charging resumes and pauses, and view battery readings"
+msgstr "Şarjın başlama ve durma seviyelerini ayarlayın, pil ölçümlerini görün"
+
+msgid "Stop threshold only"
+msgstr "Yalnızca durma eşiği"
+
+msgid "Storage encryption"
+msgstr "Depolama şifrelemesi"
+
+msgid "System update"
+msgstr "Sistem güncellemesi"
+
+msgid "The available charging bands move both thresholds together."
+msgstr "Desteklenen şarj aralıkları iki eşiği birlikte değiştirir."
+
+msgid "The boot service manages fallback to the accepted kernel. The current provider has no manual fallback mode switch."
+msgstr "Onaylı çekirdeğe dönüşü önyükleme servisi yönetir. Bu sürümde elle geri dönüş modu seçilemiyor."
+
+msgid "The charging profile for this kernel only allows viewing saved thresholds."
+msgstr "Bu çekirdeğin şarj profili yalnızca kayıtlı eşikleri okumaya izin veriyor."
+
+msgid "The current channel is unavailable. Refresh to check it."
+msgstr "Geçerli kanal okunamadı. Tekrar kontrol etmek için yenileyin."
+
+msgid "The device did not report saved charging thresholds."
+msgstr "Cihaz kayıtlı şarj eşiklerini bildirmedi."
+
+msgid "The driver negotiates the link speed automatically. This driver has no manual HBR2 or HBR3 selector."
+msgstr "Sürücü bağlantı hızını otomatik belirler. HBR2 ve HBR3 elle seçilemiyor."
+
+msgid "The flashlight service did not confirm the change. Refresh to check its state."
+msgstr "Fener servisi değişikliği doğrulamadı. Durumu kontrol etmek için yenileyin."
+
+msgid "The running system has no reported LUKS layer."
+msgstr "Çalışan sistem için LUKS katmanı bildirilmedi."
+
+msgid "The running system uses LUKS."
+msgstr "Çalışan sistem LUKS kullanıyor."
+
+msgid "There are no other supported threshold pairs."
+msgstr "Desteklenen başka bir eşik çifti bulunamadı."
+
+msgid "This device currently allows you to view saved thresholds only."
+msgstr "Cihaz şu anda yalnızca kayıtlı eşiklerin okunmasına izin veriyor."
+
+msgid "This volume already uses LUKS. Keep an independent recovery key and a current backup."
+msgstr "Bu bölüm zaten LUKS kullanıyor. Ayrı bir kurtarma anahtarı ve güncel bir yedek saklayın."
+
+msgid "Update channel"
+msgstr "Güncelleme kanalı"
+
+msgid "Update system"
+msgstr "Sistemi güncelle"
+
+msgid "Verified cell configuration"
+msgstr "Doğrulanmış hücre düzeni"
+
+msgctxt "charging threshold name and percentage"
+msgid "%1, %2"
+msgstr "%1, %2"

@@ -4,13 +4,14 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
 GridLayout {
-    property int maximumColumns: 3
+    property int maximumColumns: 0
     property real minimumTileWidth: Kirigami.Units.gridUnit * 16
+    readonly property int fittingColumns: Math.max(1,
+        Math.floor((width + columnSpacing) / (minimumTileWidth + columnSpacing)))
 
     Layout.fillWidth: true
     Layout.minimumWidth: 0
-    columns: Math.max(1, Math.min(maximumColumns,
-        Math.floor((width + columnSpacing) / (minimumTileWidth + columnSpacing))))
+    columns: maximumColumns > 0 ? Math.min(maximumColumns, fittingColumns) : fittingColumns
     uniformCellWidths: true
     columnSpacing: Kirigami.Units.largeSpacing
     rowSpacing: Kirigami.Units.largeSpacing

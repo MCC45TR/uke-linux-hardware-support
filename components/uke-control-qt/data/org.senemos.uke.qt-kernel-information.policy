@@ -5,7 +5,7 @@
   <action id="org.senemos.uke.qt-kernel-information">
     <description>Read Uke charging and NFC driver information</description>
     <message>Authentication is required to read Uke driver information.</message>
-    <defaults><allow_any>auth_admin</allow_any><allow_inactive>auth_admin</allow_inactive><allow_active>yes</allow_active></defaults>
+    <defaults><allow_any>no</allow_any><allow_inactive>no</allow_inactive><allow_active>yes</allow_active></defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/uke-control-qt/kernel-information</annotate>
   </action>
 </policyconfig>

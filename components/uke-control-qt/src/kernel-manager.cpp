@@ -61,7 +61,7 @@ void KernelManager::open(const QString &mode) {
     if(!QStringList{"cpu","gpu","sensors","manager-overview","memory","storage","thermal","profiles","diagnostics"}.contains(mode))return;
     if(mode_!=mode){pause();++generation_;dismissReview();mode_=mode;outcome_.clear();message_.clear();history_.clear();previousTicks_={};previousCounters_={};previousSample_=0;state_={};devices_.clear();sensors_.clear();selectedSensor_.clear();interval_=mode=="sensors"?5:2;emit devicesChanged();}
     requested_=true;
-    if(mode=="sensors"){interval_=5;timer_.setInterval(5000);refresh();}else start();
+    refresh();
 }
 void KernelManager::start(){if(mode_.isEmpty()||write_)return;active_=true;timer_.start(interval_*1000);deadline_.start(600000);refresh();emit changed();}
 void KernelManager::pause(){active_=false;requested_=false;previousCounters_={};previousSample_=0;previousTicks_={};timer_.stop();deadline_.stop();queryPoll_.stop();if(query_){query_->cancel();query_.reset();}for(auto it=history_.begin();it!=history_.end();++it)add(it.key(),QVariant());emit changed();}
@@ -199,7 +199,9 @@ QVariantMap KernelManager::plot(const QString &metric,int seconds,double maximum
         segment<<QVariantMap{{"time",p.time},{"value",n}};
     }
     flush();if(!points){minimum=0;high=1;}
-    if(maximum>0){minimum=0;high=maximum;}else{const auto pad=std::max(1.,(high-minimum)*.15);minimum-=pad;high+=pad;}
+    if(maximum>0){minimum=0;high=maximum;}
+    else if(metric.startsWith("io/")){minimum=0;high=std::max(.01,high*1.12);}
+    else{const auto pad=std::max(1.,(high-minimum)*.15);minimum-=pad;high+=pad;}
     return {{"segments",segments},{"start",start},{"end",std::max(start+1.,end)},{"minimum",minimum},{"maximum",high},{"points",points},{"available",points>=2}};
 }
 void KernelManager::dismissReview(){review_.clear();emit reviewChanged();}

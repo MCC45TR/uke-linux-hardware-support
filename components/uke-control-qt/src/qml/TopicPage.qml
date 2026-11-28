@@ -12,11 +12,14 @@ FormCard.FormCardPage {
     required property string topicId
     readonly property var settings: backend.settings
     readonly property var information: settings.information
+    readonly property bool isCharging: topicId === "charging"
     readonly property bool showConnectionsFirst: topicId === "usb" || topicId === "nfc"
-    readonly property real readingColumnWidth: Kirigami.Units.gridUnit * (information.length > 1 || topicId === "kernel" ? 48 : 30)
+    readonly property real readingColumnWidth: Kirigami.Units.gridUnit * 64
+    readonly property bool dedicatedActions: isCharging || topicId === "updates" || topicId === "kernel"
     property string editAction: ""
     readonly property bool editing: editAction.length > 0 && backend.guide.id === editAction
-    readonly property var topicActions: (settings.topic.changes || []).filter(action => action.id !== "usb.role")
+    readonly property var topicActions: (settings.topic.changes || []).filter(action =>
+        !["usb.role", "display.lanes", "display.compression-set"].includes(action.id))
     function edit(id, submitWithoutOptions = false) {
         if (backend.openAction(id)) {
             editAction = id
@@ -24,8 +27,8 @@ FormCard.FormCardPage {
         }
     }
     function showSinglePreference() {
-        if (page.appWindow.changingPage || page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false) return
-        const choices = settings.topic.changes || []
+        if (page.appWindow.changingPage || page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false || dedicatedActions || topicId === "external") return
+        const choices = page.topicActions
         if (choices.length === 1 && !editing) edit(choices[0].id)
     }
     Component.onCompleted: Qt.callLater(showSinglePreference)
@@ -72,9 +75,18 @@ FormCard.FormCardPage {
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
+        Layout.maximumWidth: page.isCharging ? page.readingColumnWidth : Number.POSITIVE_INFINITY
+        Layout.alignment: Qt.AlignHCenter
+        Layout.leftMargin: page.isCharging ? Kirigami.Units.largeSpacing : 0
+        Layout.rightMargin: Layout.leftMargin
         visible: settings.notice.length > 0
         type: Kirigami.MessageType.Warning
         text: settings.notice
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "storage"
+        sourceComponent: Component { StoragePartitions { settings: page.settings } }
     }
     Loader {
         Layout.fillWidth: true
@@ -88,6 +100,24 @@ FormCard.FormCardPage {
     }
     Loader {
         Layout.fillWidth: true
+        Layout.maximumWidth: page.readingColumnWidth
+        Layout.alignment: Qt.AlignHCenter
+        Layout.margins: Kirigami.Units.largeSpacing
+        active: page.topicId === "kernel" && Object.keys(settings.bootReport).length > 0
+        visible: active
+        sourceComponent: Component { BootSelection { settings: page.settings } }
+    }
+    Loader {
+        Layout.fillWidth: true
+        Layout.maximumWidth: page.readingColumnWidth
+        Layout.alignment: Qt.AlignHCenter
+        Layout.margins: Kirigami.Units.largeSpacing
+        active: page.topicId === "updates"
+        visible: active
+        sourceComponent: Component { SystemUpdatePanel { settings: page.settings; appWindow: page.appWindow } }
+    }
+    Loader {
+        Layout.fillWidth: true
         active: page.topicId === "usb"
         sourceComponent: Component { UsbRoleView { topicPage: page } }
     }
@@ -96,12 +126,32 @@ FormCard.FormCardPage {
         active: page.topicId === "nfc"
         sourceComponent: Component { NfcView {} }
     }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "flashlight"
+        sourceComponent: Component { FlashlightPanel { settings: page.settings } }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: page.topicId === "external"
+        sourceComponent: Component { DisplayLinkPanel { settings: page.settings; appWindow: page.appWindow } }
+    }
+    Loader {
+        Layout.fillWidth: true
+        Layout.maximumWidth: page.readingColumnWidth
+        Layout.alignment: Qt.AlignHCenter
+        Layout.leftMargin: Kirigami.Units.largeSpacing
+        Layout.rightMargin: Kirigami.Units.largeSpacing
+        active: page.isCharging
+        visible: active
+        sourceComponent: Component { ChargingPanel { settings: page.settings; information: page.information } }
+    }
     Component {
         id: informationPanel
         ColumnLayout {
             Layout.fillWidth: true
             Kirigami.Heading {
-                visible: page.topicActions.length > 0
+                visible: page.topicActions.length > 0 && !page.dedicatedActions
                 Layout.fillWidth: true
                 Layout.maximumWidth: readings.width
                 Layout.alignment: Qt.AlignHCenter
@@ -111,13 +161,14 @@ FormCard.FormCardPage {
             InformationGrid {
                 id: readings
                 objectName: "informationTiles"
+                Layout.maximumWidth: page.readingColumnWidth
                 sections: page.information
             }
         }
     }
     Loader {
         Layout.fillWidth: true
-        active: !page.showConnectionsFirst && page.information.length > 0
+        active: !page.isCharging && !page.showConnectionsFirst && page.topicId !== "flashlight" && page.topicId !== "updates" && page.information.length > 0
         sourceComponent: informationPanel
     }
     FormCard.FormHeader {
@@ -126,13 +177,13 @@ FormCard.FormCardPage {
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
-        visible: !settings.busy && settings.topic.canApply === false
+        visible: !page.isCharging && !settings.busy && settings.topic.canApply === false
         type: Kirigami.MessageType.Information
         text: settings.topic.blockedReason || ""
     }
     FormCard.FormCard {
         id: actionList
-        visible: page.topicActions.length > 1 || (page.topicActions.length === 1 && !page.editing)
+        visible: !page.dedicatedActions && (page.topicActions.length > 1 || (page.topicActions.length === 1 && !page.editing))
         Repeater {
             model: page.topicActions
             delegate: FormCard.FormButtonDelegate {
@@ -163,6 +214,15 @@ FormCard.FormCardPage {
     }
     FormCard.FormCard {
         maximumWidth: page.readingColumnWidth
+        Repeater {
+            model: page.isCharging ? page.topicActions : []
+            delegate: FormCard.FormButtonDelegate {
+                required property var modelData
+                text: modelData.id === "charge.mode" ? i18n("Other charging policies") : i18n("Stop threshold only")
+                enabled: settings.topic.canApply !== false && !backend.readOnly
+                onClicked: page.appWindow.openGuide(modelData.id)
+            }
+        }
         FormCard.FormButtonDelegate {
             text: i18n("Technical tools")
             description: i18n("Additional observations and expert actions")

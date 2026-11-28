@@ -34,53 +34,50 @@ FormCard.FormCardPage {
             text: backend.simulation ? i18n("Simulation — sample data only. Changes are disabled.") : i18n("Read-only session")
         }
 
-        TileGrid {
-            objectName: "areaTiles"
-
-            Repeater {
-                model: page.overview ? backend.areas.filter(a => !a.secondary && a.index > 0) : []
-                delegate: SettingsTile {
-                    required property var modelData
-                    objectName: "category_" + modelData.id
-                    text: modelData.title
-                    description: modelData.caption
-                    status: {
-                        const updated = backend.settings.updated
-                        return backend.settings.summary(modelData.index)
+        Repeater {
+            model: page.overview ? backend.areas.filter(area => !area.secondary && area.index > 0) : [page.area]
+            delegate: ColumnLayout {
+                id: group
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.mediumSpacing
+                Kirigami.Heading {
+                    visible: page.overview
+                    Layout.fillWidth: true
+                    level: 3
+                    text: group.modelData.title
+                    wrapMode: Text.Wrap
+                }
+                TileGrid {
+                    objectName: "topicTiles_" + group.modelData.id
+                    Repeater {
+                        model: backend.settings.topics(group.modelData.index)
+                        delegate: SettingsTile {
+                            required property var modelData
+                            objectName: "topic_" + modelData.id
+                            text: modelData.title
+                            description: modelData.description
+                            icon.name: themeIcons.names[modelData.icon]
+                            onClicked: page.appWindow.openTopic(modelData.id)
+                        }
                     }
-                    icon.name: themeIcons.names[modelData.icon]
-                    onClicked: page.appWindow.showArea(modelData.index)
+                    SettingsTile {
+                        objectName: "openWaydroidInstaller"
+                        visible: group.modelData.index === 6
+                        text: i18n("Android applications")
+                        description: i18n("Install and open Waydroid with Google Play or without Google services")
+                        icon.name: themeIcons.names["system-software-install"]
+                        onClicked: page.appWindow.openWaydroid()
+                    }
+                    SettingsTile {
+                        objectName: "browseAllActions"
+                        visible: group.modelData.index === 8
+                        text: i18n("Expert action catalog")
+                        description: i18n("All installed technical actions, including diagnostics and maintenance")
+                        icon.name: themeIcons.names["utilities-terminal"]
+                        onClicked: page.appWindow.openCatalog(-1)
+                    }
                 }
-            }
-
-            Repeater {
-                model: page.overview ? [] : backend.settings.topics(page.areaIndex)
-                delegate: SettingsTile {
-                    required property var modelData
-                    objectName: "topic_" + modelData.id
-                    text: modelData.title
-                    description: modelData.description
-                    icon.name: themeIcons.names[modelData.icon]
-                    onClicked: page.appWindow.openTopic(modelData.id)
-                }
-            }
-
-            SettingsTile {
-                objectName: "openWaydroidInstaller"
-                visible: page.overview || page.areaIndex === 6
-                text: i18n("Android applications")
-                description: i18n("Install and open Waydroid with Google Play or without Google services")
-                icon.name: themeIcons.names["system-software-install"]
-                onClicked: page.appWindow.openWaydroid()
-            }
-
-            SettingsTile {
-                objectName: "browseAllActions"
-                visible: page.areaIndex === 8
-                text: i18n("Expert action catalog")
-                description: i18n("All installed technical actions, including diagnostics and maintenance")
-                icon.name: themeIcons.names["utilities-terminal"]
-                onClicked: page.appWindow.openCatalog(-1)
             }
         }
 

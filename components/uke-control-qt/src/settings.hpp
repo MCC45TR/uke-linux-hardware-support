@@ -26,6 +26,12 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantList information READ information NOTIFY changed)
   Q_PROPERTY(QVariantMap history READ history NOTIFY historyChanged)
   Q_PROPERTY(QVariantMap bootReport READ bootReport NOTIFY changed)
+  Q_PROPERTY(QVariantMap chargingThresholds READ chargingThresholds NOTIFY changed)
+  Q_PROPERTY(QVariantList chargingBands READ chargingBands CONSTANT)
+  Q_PROPERTY(QVariantMap flashlight READ flashlight NOTIFY changed)
+  Q_PROPERTY(QVariantMap displayLink READ displayLink NOTIFY changed)
+  Q_PROPERTY(QVariantList linuxPartitions READ linuxPartitions NOTIFY changed)
+  Q_PROPERTY(QString currentChannel READ currentChannel NOTIFY changed)
   Q_PROPERTY(bool busy READ busy NOTIFY changed)
   Q_PROPERTY(QString notice READ notice NOTIFY changed)
   Q_PROPERTY(QString updated READ updated NOTIFY changed)
@@ -48,6 +54,9 @@ class Settings : public QObject {
   QProcess *kernel_ = nullptr;
   QTimer kernelTimeout_;
   QByteArray kernelOutput_;
+  bool flashlightPending_ = false;
+  QString flashlightError_;
+  void requestFlashlight(const QString &method, const QVariant &argument);
   void readKernel(const QString &kind);
   void next();
   void finish(const Result &result);
@@ -63,10 +72,16 @@ public:
   QVariantList information() const;
   QVariantMap history() const { return history_; }
   QVariantMap bootReport() const;
+  QVariantMap chargingThresholds() const;
+  QVariantList chargingBands() const;
+  QVariantMap flashlight() const;
+  QVariantMap displayLink() const;
+  QVariantList linuxPartitions() const;
+  QString currentChannel() const;
   QObject *nfc() { return &nfc_; }
   QObject *manager() { return &manager_; }
   QVariantMap usbPolicy() const;
-  bool busy() const { return !current_.isEmpty(); }
+  bool busy() const { return !current_.isEmpty() || !queue_.isEmpty(); }
   QString notice() const { return notice_; }
   QString updated() const { return updated_; }
   Q_INVOKABLE QVariantList topics(int area, const QString &search = {}) const;
@@ -80,6 +95,9 @@ public:
   Q_INVOKABLE QString localPath(const QUrl &url) const;
   Q_INVOKABLE QVariantList nativeLinks(int area) const;
   Q_INVOKABLE bool openNative(const QString &id);
+  Q_INVOKABLE void setFlashlight(bool enabled);
+  Q_INVOKABLE void setFlashlightBrightness(int percent);
+  Q_INVOKABLE QVariantList actionChoices(const QString &id, const QString &key) const;
 signals:
   void changed();
   void historyChanged();

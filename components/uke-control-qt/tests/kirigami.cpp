@@ -331,7 +331,16 @@ private slots:
       {"readings",QJsonObject{{"battery.capacity",QJsonObject{{"value",72},{"unit","percent"},{"errno",0}}}}},
       {"history_end",10000},{"history",QJsonArray{QJsonArray{1000,80,2},QJsonArray{1300,78,2},QJsonArray{1400,0,0},QJsonArray{1600,77,2},QJsonArray{1900,76,2}}}};
     rich.results["battery.status"]=QJsonObject{{"data",battery}};
-    rich.results["charge.status"]=QJsonObject{{"data",QJsonObject{{"reported_start_percent",70},{"reported_end_percent",80},{"configuration_readback_verified",true}}}};
+    rich.results["kernel.charging"]=QJsonObject{{"data",QJsonObject{
+      {"schema","org.uke.qt.kernel-information.v1"},{"data",QJsonObject{
+        {"settings",QJsonObject{{"firmware_get_complete",true},{"exit_status",0},{"reported_enabled",true},{"reported_start_percent",70},{"reported_end_percent",80}}},
+        {"admission",QJsonObject{{"threshold_admission_ready",true}}}
+      }}
+    }}};
+    rich.results["battery.cells"]=QJsonObject{{"data",QJsonObject{{"provider_verified",true},{"snapshot_coherent",true}}}};
+    rich.results["flashlight.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.lights.v1"},
+      {"flashlight",QJsonObject{{"available",true},{"on",false},{"requested_percent",50},{"brightness_step_percent",50}}}}}};
+    rich.results["channel.status"]=QJsonObject{{"data",QJsonObject{{"schema","org.uke.control.channel.v1"},{"selected","stable"}}}};
     Bridge bridge(rich,false);
     QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);
     engine.rootContext()->setContextProperty("backend",&bridge);
@@ -342,7 +351,8 @@ private slots:
     engine.loadFromModule("org.uke.ControlQtTest","Main");
     QVERIFY2(!engine.rootObjects().isEmpty(),qPrintable(warnings.join('\n')));
     auto *window=qobject_cast<QQuickWindow *>(engine.rootObjects().first());QVERIFY(window);
-    window->resize(480,800);window->show();
+    window->resize(480,800);window->show();window->requestActivate();
+    QTRY_VERIFY(window->isActive());
     auto *settings=qobject_cast<Settings *>(bridge.settings());
     for(const auto &topic:settingTopics()) {
       QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,topic.area)));
@@ -373,9 +383,38 @@ private slots:
         snapshot(window,"settings-battery");
       }
       if(topic.id=="flashlight") {
-        QTRY_VERIFY(visualItem(window->contentItem(),"parameter_percent"));
-        QVERIFY(!visualItem(window->contentItem(),"topicAction_flashlight.level"));
+        QQuickItem *toggle=nullptr;
+        QTRY_VERIFY((toggle=visualItem(page,"flashlightSwitch")));
+        QVERIFY(!toggle->isEnabled());
+        QVERIFY(visualItem(page,"flashlightLevel50"));
+        settings->setFlashlight(true);
+        QVERIFY(!settings->flashlight().value("pending").toBool());
         snapshot(window,"settings-flashlight");
+      }
+      if(topic.id=="charging") {
+        QQuickItem *slider=nullptr;
+        QTRY_VERIFY((slider=visualItem(page,"chargeSlider_start")) && slider->isEnabled());
+        auto *stop=visualItem(page,"chargePercent_stop");
+        QVERIFY(stop);
+        QVERIFY(stop->property("text").toString().contains("80"));
+        QVERIFY(visualItem(page,"informationCard_battery.cells"));
+        slider->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window,Qt::Key_Right);
+        QTRY_VERIFY(stop->property("text").toString().contains("90"));
+        QVERIFY(bridge.review().isEmpty());
+        auto *review=visualItem(page,"reviewChargingThresholds");
+        QVERIFY(review && review->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(review,"clicked"));
+        QCOMPARE(bridge.draftValues().value("mode").toString(),QString("hold80-90"));
+        QVERIFY(bridge.review().value("blocked").toBool());
+        bridge.cancelReview();
+        snapshot(window,"settings-charging");
+      }
+      if(topic.id=="updates") {
+        QVERIFY(visualItem(page,"updateSystem"));
+        QQuickItem *stable=nullptr;
+        QTRY_VERIFY((stable=visualItem(page,"selection_stable")));
+        QVERIFY(stable->property("checked").toBool());
       }
       if(topic.id=="kernel")snapshot(window,"settings-kernel");
       if(topic.id=="nfc") {QVERIFY(visualItem(window->contentItem(),"nfcInspect"));snapshot(window,"settings-nfc");}
@@ -433,16 +472,16 @@ private slots:
     QQuickItem *grid = nullptr;
     QQuickItem *power = nullptr;
     QQuickItem *display = nullptr;
-    QTRY_VERIFY((grid = visualItem(content, "areaTiles")));
-    QTRY_VERIFY((power = visualItem(grid, "category_power")));
-    QTRY_VERIFY((display = visualItem(grid, "category_display")));
+    QTRY_VERIFY((grid = visualItem(content, "topicTiles_power")));
+    QTRY_VERIFY((power = visualItem(grid, "topic_battery")));
+    QTRY_VERIFY((display = visualItem(grid, "topic_charging")));
     QTRY_COMPARE(grid->property("columns").toInt(), 1);
     QTRY_VERIFY(display->y() >= power->y() + power->height());
     QCOMPARE(power->width(), display->width());
     snapshot(window, "tiles-narrow");
 
     window->resize(1440, 900);
-    QTRY_COMPARE(grid->property("columns").toInt(), 3);
+    QTRY_VERIFY(grid->property("columns").toInt() >= 3);
     QTRY_VERIFY(display->x() >= power->x() + power->width());
     QCOMPARE(power->y(), display->y());
     snapshot(window, "tiles-wide");
@@ -452,7 +491,7 @@ private slots:
     power->forceActiveFocus(Qt::TabFocusReason);
     QTRY_VERIFY(power->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Return);
-    QTRY_COMPARE(bridge.section(), 1);
+    QTRY_COMPARE(bridge.settings()->property("topic").toMap().value("id").toString(),QString("battery"));
 
     QVERIFY(QMetaObject::invokeMethod(window, "openGuide",
                                       Q_ARG(QVariant, QString("flashlight.level"))));
@@ -704,9 +743,9 @@ private slots:
     QVERIFY(QMetaObject::invokeMethod(window, "showArea", Q_ARG(QVariant, 0)));
     QCoreApplication::processEvents();
     QQuickItem *categoryCard = nullptr;
-    QTRY_VERIFY((categoryCard = visualItem(window->contentItem(), "category_power")));
+    QTRY_VERIFY((categoryCard = visualItem(window->contentItem(), "topic_charging")));
     QVERIFY(QMetaObject::invokeMethod(categoryCard, "clicked"));
-    QCOMPARE(bridge.section(), 1);
+    QCOMPARE(bridge.settings()->property("topic").toMap().value("id").toString(),QString("charging"));
     QVERIFY(QMetaObject::invokeMethod(window, "openCatalog", Q_ARG(QVariant, -1)));
     QCoreApplication::processEvents();
     QQuickItem *catalog = nullptr;

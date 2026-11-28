@@ -36,6 +36,7 @@ int main(int argc, char **argv) {
   parser.addOption({"read-only", "Disable mutations and local file creation."});
   parser.addOption({"start", "Open a known action guide without executing it.",
                     "action-id"});
+  parser.addOption({"topic", "Open a settings page.", "topic-id"});
   parser.addOption({"appearance-info",
                     "Print actual Qt/KDE appearance metadata without "
                     "opening a window or querying devices."});
@@ -132,6 +133,9 @@ int main(int argc, char **argv) {
     engine.loadFromModule("org.uke.ControlQt", "Main");
     if (engine.rootObjects().isEmpty())
       return 70;
+    if (parser.isSet("topic"))
+      QMetaObject::invokeMethod(engine.rootObjects().first(), "openTopic", Qt::QueuedConnection,
+                                Q_ARG(QVariant, parser.value("topic")));
     if (parser.isSet("waydroid"))
       QMetaObject::invokeMethod(engine.rootObjects().first(), "openWaydroid", Qt::QueuedConnection);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &backend,

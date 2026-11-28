@@ -7,11 +7,11 @@ TileGrid {
     id: grid
     required property var sections
     property var expandedKeys: []
+    property bool stretchTiles: false
 
     Layout.maximumWidth: Kirigami.Units.gridUnit * (sections.length > 1 ? 48 : 30)
     Layout.alignment: Qt.AlignHCenter
     Layout.margins: Kirigami.Units.largeSpacing
-    maximumColumns: 2
     minimumTileWidth: Kirigami.Units.gridUnit * 21
     visible: sections.length > 0
 
@@ -22,6 +22,7 @@ TileGrid {
             section: modelData
             objectName: "informationCard_" + section.key
             expanded: grid.expandedKeys.includes(section.key)
+            Layout.fillHeight: grid.stretchTiles && grid.columns > 1 && grid.expandedKeys.length === 0
             onToggleDetails: {
                 const key = section.key
                 grid.expandedKeys = expanded ? grid.expandedKeys.filter(item => item !== key)
