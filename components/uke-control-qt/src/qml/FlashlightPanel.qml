@@ -24,32 +24,45 @@ SettingsSection {
         Accessible.onPressAction: panel.toggleFlashlight()
         Accessible.onToggleAction: panel.toggleFlashlight()
     }
-    SettingsNote {
-        text: i18n("Brightness")
-    }
-    TileGrid {
-        minimumTileWidth: Kirigami.Units.gridUnit * 12
-        Layout.leftMargin: Kirigami.Units.largeSpacing
-        Layout.rightMargin: Kirigami.Units.largeSpacing
-        Controls.ButtonGroup { id: levels }
-        Repeater {
-            model: [50, 100]
-            delegate: Controls.RadioButton {
-                required property int modelData
-                objectName: "flashlightLevel" + modelData
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.margins: Kirigami.Units.largeSpacing
+        spacing: Kirigami.Units.smallSpacing
+
+        RowLayout {
+            Layout.fillWidth: true
+            Controls.Label {
                 Layout.fillWidth: true
-                Layout.minimumHeight: Kirigami.Units.gridUnit * 2
-                text: modelData === 50 ? i18n("Low (%1%)", modelData) : i18n("High (%1%)", modelData)
-                Controls.ButtonGroup.group: levels
-                checked: panel.torch.level === modelData
-                enabled: panel.available && panel.torch.twoLevels
-                onClicked: panel.settings.setFlashlightBrightness(modelData)
+                text: i18n("Brightness level")
+                wrapMode: Text.Wrap
+            }
+            Controls.Label {
+                text: panel.torch.level > 0 ? i18nc("percentage", "%1%", Math.round(level.value)) : i18n("Not reported")
             }
         }
+        Controls.Slider {
+            id: level
+            objectName: "flashlightLevel"
+            Layout.fillWidth: true
+            Layout.minimumHeight: Kirigami.Units.gridUnit * 2
+            enabled: panel.available && panel.torch.step > 0
+            from: panel.torch.step || 50
+            to: 100
+            stepSize: from
+            snapMode: Controls.Slider.SnapAlways
+            value: panel.torch.level || from
+            Accessible.name: i18n("Brightness level")
+            onPressedChanged: if (!pressed && enabled && value !== panel.torch.level)
+                panel.settings.setFlashlightBrightness(Math.round(value))
+            onMoved: if (!pressed && enabled)
+                panel.settings.setFlashlightBrightness(Math.round(value))
+        }
     }
+
     SettingsNote {
         text: panel.torch.error || (panel.settings.busy ? i18n("Reading…") :
-               panel.torch.available ? i18n("Selecting a brightness level turns on the flashlight.") :
-               i18n("Flashlight status is currently unavailable."))
+              panel.torch.available && panel.torch.step ? i18n("Switching brightness turns the flashlight on. This device provides two brightness levels.") :
+              i18n("Flashlight status is currently unavailable."))
     }
 }

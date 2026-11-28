@@ -15,6 +15,7 @@ Kirigami.ApplicationWindow {
     property bool initialized: false
     property bool changingPage: false
     property bool browsingCatalog: false
+    property bool closingAfterLight: false
     property var navigationActions: []
     pageStack.columnView.columnResizeMode: Kirigami.ColumnView.SingleColumn
     pageStack.onCurrentItemChanged: {
@@ -39,7 +40,11 @@ Kirigami.ApplicationWindow {
             backend.selectArea(index)
             pageStack.clear()
             pageStack.push(areaPage, {areaIndex: 0})
-            if (index > 0) pageStack.push(areaPage, {areaIndex: index})
+            if (index === 1) {
+                if (backend.settings.open("charging")) pageStack.push(topicPage, {topicId: "charging"})
+            } else if (index > 0) {
+                pageStack.push(areaPage, {areaIndex: index})
+            }
             if (globalDrawer.modal) globalDrawer.close()
         } finally { changingPage = false }
     }
@@ -70,7 +75,7 @@ Kirigami.ApplicationWindow {
         try {
             backend.leaveGuide()
             backend.waydroid.close()
-            if (backend.settings.open(id)) pageStack.push(topicPage, {topicId: id})
+            if (backend.settings.open(id)) pageStack.push(topicPage, {topicId: backend.settings.topic.id})
         } finally { changingPage = false }
     }
     function openSearch() {
@@ -146,10 +151,34 @@ Kirigami.ApplicationWindow {
             else reviewSheet.close()
         }
     }
+    Connections {
+        target: backend.settings
+        function onChanged() {
+            if (root.closingAfterLight && !(backend.settings.notificationLed || {}).settling) {
+                root.closingAfterLight = false
+                root.close()
+            }
+        }
+    }
     Shortcut { sequence: StandardKey.Quit; onActivated: root.close() }
     Shortcut { sequence: "Ctrl+K"; onActivated: root.openSearch() }
     Shortcut { sequence: "Alt+Left"; enabled: pageStack.depth > 1; onActivated: pageStack.pop() }
-    onClosing: { backend.cancelRead(); backend.settings.close(); backend.waydroid.close() }
+    onClosing: event => {
+        if ((backend.settings.packageOperation || {}).running) {
+            event.accepted = false
+            return
+        }
+        const led = backend.settings.notificationLed || {}
+        if (led.testing || led.settling) {
+            event.accepted = false
+            closingAfterLight = true
+            backend.settings.stopLedPreview()
+            return
+        }
+        backend.cancelRead()
+        backend.settings.close()
+        backend.waydroid.close()
+    }
     Component.onCompleted: {
         let items = []
         for (let area of backend.areas) items.push(navigationAction.createObject(root, {areaIndex: area.index}))

@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cmath>
 namespace uq {
+QVariantList platformBoardInformation();
+QVariantList platformComponentInformation();
 namespace {
 QString unknown() { return i18n("Not reported"); }
 QString value(const QJsonValue &v) {
@@ -181,6 +183,11 @@ Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fi
   });
   simulated_.setSingleShot(true);
   connect(&simulated_,&QTimer::timeout,this,[this] {finish(fixture_.result(current_.toStdString()));});
+  auto session=QDBusConnection::sessionBus();
+  session.connect("org.kde.ScreenBrightness","/org/kde/ScreenBrightness","org.kde.ScreenBrightness","BrightnessChanged",
+                  this,SLOT(screenBrightnessChanged(QString,int,QString,QString)));
+  session.connect("org.kde.ScreenBrightness","/org/kde/ScreenBrightness","org.kde.ScreenBrightness","BrightnessRangeChanged",
+                  this,SLOT(screenBrightnessRangeChanged(QString,int,int)));
 }
 Settings::~Settings(){stop();}
 QVariantMap Settings::topic()const {
@@ -206,7 +213,7 @@ QVariantList Settings::topics(int area,const QString &search)const {
     bool matches=true;
     for(const auto &word:search.simplified().split(' ',Qt::SkipEmptyParts)) {
       QString hay=t.id+" "+t.title+" "+t.subtitle;
-      const QMap<QString,QString> aliases{{"battery","pil batarya güç geçmiş"},{"charging","şarj sınır politika"},{"health","sağlık döngü kapasite"},{"kernel","çekirdek slot açılış"},{"updates","güncelleme yazılım kanal"},{"storage","depolama alan"},{"memory","bellek ram"},{"flashlight","fener ışık"},{"sound","ses mikrofon"},{"display","ekran parlaklık döndürme"}};
+      const QMap<QString,QString> aliases{{"battery","pil batarya güç geçmiş"},{"charging","pil batarya güç geçmiş sağlık şarj sınır politika uyku"},{"health","sağlık döngü kapasite"},{"kernel","çekirdek slot açılış"},{"updates","güncelleme yazılım kanal"},{"storage","depolama alan"},{"memory","bellek ram"},{"flashlight","fener ışık"},{"sound","ses mikrofon"},{"display","ekran parlaklık döndürme"}};
       hay+=' '+aliases.value(t.id);
       for(const auto &id:t.reads+t.changes)try{const auto &a=action(id.toStdString());hay+=' '+QString::fromStdString(a.id+" "+a.title.en+" "+a.title.tr+" "+a.description.en+" "+a.description.tr);}catch(const std::exception &){}
       if(!hay.contains(word,Qt::CaseInsensitive))matches=false;
@@ -343,14 +350,14 @@ QVariantMap Settings::flashlight() const {
   return {
       {"available",available}, {"on",available && torch.value("on").toBool()},
       {"level",requested>=1 && requested<=100 && step==50 ? (requested==100 ? 100 : 50) : 0},
-      {"twoLevels",step==50}, {"pending",flashlightPending_}, {"error",flashlightError_}
+      {"step",step==50?50:0}, {"pending",flashlightPending_}, {"error",flashlightError_}
   };
 }
 void Settings::setFlashlight(bool enabled) {
   requestFlashlight("SetEnabled",enabled);
 }
 void Settings::setFlashlightBrightness(int percent) {
-  if((percent==50 || percent==100) && flashlight().value("twoLevels").toBool())
+  if((percent==50 || percent==100) && flashlight().value("step").toInt()==50)
     requestFlashlight("SetBrightness",static_cast<uint>(percent));
 }
 void Settings::requestFlashlight(const QString &method,const QVariant &argument) {
@@ -460,11 +467,23 @@ QVariantList Settings::linuxPartitions() const {
   return mounted+others;
 }
 bool Settings::open(const QString &id) {
-  close();for(const auto &t:settingTopics())if(t.id==id){topic_=&t;emit changed();refresh();return true;}return false;
+  const auto name=QStringList{"battery","health","charger","sleep"}.contains(id)?QStringLiteral("charging"):
+      id=="external"?QStringLiteral("usb"):id=="display-expert"?QStringLiteral("display"):id;
+  close();for(const auto &t:settingTopics())if(t.id==name){
+    topic_=&t;emit changed();refresh();
+    if(name=="display") readScreenBrightness();
+    return true;
+  }return false;
 }
 void Settings::refresh() {
   stop();notice_.clear();flashlightError_.clear();if(!topic_)return;
-  queue_=topic_->reads;next();
+  queue_=topic_->reads;
+  if(topic_->id=="about"){
+    if(deviceBoard_.isEmpty() && !fixture_.enabled)
+      deviceBoard_={platformBoardInformation(),platformComponentInformation()};
+    queue_.removeIf([this](const QString &id){return data_.contains(id);});
+  }
+  next();
   if(QStringList{"cpu","gpu","sensors","manager-overview","memory","storage","thermal","profiles","diagnostics"}.contains(topic_->id))manager_.open(topic_->id);
 }
 void Settings::stop() {
@@ -482,7 +501,7 @@ void Settings::stop() {
   ++historyGeneration_;if(history_.value("busy").toBool()){history_["busy"]=false;history_["message"]=i18n("History read stopped");emit historyChanged();}
   emit changed();
 }
-void Settings::close(){stop();manager_.close();nfc_.clear();topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
+void Settings::close(){stopLedPreview();stop();manager_.close();nfc_.clear();++brightnessGeneration_;screenBrightnessId_.clear();brightness_=-1;brightnessMaximum_=0;topic_=nullptr;notice_.clear();updated_.clear();emit changed();}
 void Settings::next() {
   if(!current_.isEmpty())return;
   if(!topic_||queue_.isEmpty()){current_.clear();emit changed();return;}

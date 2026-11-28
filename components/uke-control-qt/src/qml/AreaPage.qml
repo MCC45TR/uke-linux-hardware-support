@@ -42,7 +42,7 @@ FormCard.FormCardPage {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.mediumSpacing
                 Kirigami.Heading {
-                    visible: page.overview
+                    visible: page.overview && group.modelData.index !== 1
                     Layout.fillWidth: true
                     level: 3
                     text: group.modelData.title

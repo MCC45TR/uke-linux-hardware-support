@@ -15,7 +15,7 @@ FormCard.FormCardPage {
     readonly property bool isCharging: topicId === "charging"
     readonly property bool showConnectionsFirst: topicId === "usb" || topicId === "nfc"
     readonly property real readingColumnWidth: Kirigami.Units.gridUnit * 64
-    readonly property bool dedicatedActions: isCharging || topicId === "updates" || topicId === "kernel"
+    readonly property bool dedicatedActions: isCharging || ["updates", "kernel", "display", "led"].includes(topicId)
     property string editAction: ""
     readonly property bool editing: editAction.length > 0 && backend.guide.id === editAction
     readonly property var topicActions: (settings.topic.changes || []).filter(action =>
@@ -27,7 +27,7 @@ FormCard.FormCardPage {
         }
     }
     function showSinglePreference() {
-        if (page.appWindow.changingPage || page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false || dedicatedActions || topicId === "external") return
+        if (page.appWindow.changingPage || page.appWindow.pageStack.currentItem !== page || settings.topic.id !== topicId || backend.readOnly || settings.topic.canApply === false || dedicatedActions) return
         const choices = page.topicActions
         if (choices.length === 1 && !editing) edit(choices[0].id)
     }
@@ -42,10 +42,6 @@ FormCard.FormCardPage {
         visible: active
     }
     title: settings.topic.title || ""
-    actions: [
-        Kirigami.Action { text: i18n("Refresh"); icon.name: themeIcons.names["view-refresh"]; enabled: !settings.busy; onTriggered: { backend.cancelReview(); backend.cancelRead(); settings.refresh() } },
-        Kirigami.Action { text: i18n("Stop"); icon.name: themeIcons.names["media-playback-stop"]; enabled: settings.busy || settings.history.busy || settings.manager.active || settings.manager.busy || false; onTriggered: settings.stop() }
-    ]
     Kirigami.InlineMessage {
         Layout.fillWidth: true
         Layout.maximumWidth: page.readingColumnWidth
@@ -54,32 +50,6 @@ FormCard.FormCardPage {
         visible: backend.simulation || backend.readOnly
         type: Kirigami.MessageType.Information
         text: backend.simulation ? i18n("Simulation — sample data only. Changes are disabled.") : i18n("Read-only session")
-    }
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.maximumWidth: page.readingColumnWidth
-        Layout.alignment: Qt.AlignHCenter
-        Layout.leftMargin: Kirigami.Units.largeSpacing
-        Layout.rightMargin: Kirigami.Units.largeSpacing
-        Layout.topMargin: Kirigami.Units.mediumSpacing
-        Layout.bottomMargin: Kirigami.Units.mediumSpacing
-        Controls.BusyIndicator { visible: settings.busy; running: visible }
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Kirigami.Units.smallSpacing
-            Controls.Label {
-                Layout.fillWidth: true
-                text: page.settings.topic.description || ""
-                wrapMode: Text.Wrap
-            }
-            Controls.Label {
-                Layout.fillWidth: true
-                visible: text.length > 0
-                text: page.settings.busy ? i18n("Reading…") : page.settings.updated.length ? i18n("Read at %1", page.settings.updated) : ""
-                font: Kirigami.Theme.smallFont
-                wrapMode: Text.Wrap
-            }
-        }
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
@@ -109,25 +79,52 @@ FormCard.FormCardPage {
     }
     PagePanel {
         active: page.topicId === "updates"
-        sourceComponent: Component { SystemUpdatePanel { settings: page.settings; appWindow: page.appWindow } }
+        sourceComponent: Component { SystemUpdatePanel { settings: page.settings } }
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: page.topicId === "usb"
-        sourceComponent: Component { UsbRoleView { topicPage: page } }
+        sourceComponent: Component {
+            TileGrid {
+                minimumTileWidth: Kirigami.Units.gridUnit * 25
+                UsbRoleView { topicPage: page }
+                DisplayLinkPanel { settings: page.settings; appWindow: page.appWindow }
+            }
+        }
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: page.topicId === "nfc"
         sourceComponent: Component { NfcView {} }
     }
     PagePanel {
-        active: page.topicId === "flashlight"
-        sourceComponent: Component { FlashlightPanel { settings: page.settings } }
+        active: page.topicId === "infrared"
+        sourceComponent: Component { InfraredPanel { settings: page.settings } }
     }
     PagePanel {
-        active: page.topicId === "external"
-        sourceComponent: Component { DisplayLinkPanel { settings: page.settings; appWindow: page.appWindow } }
+        active: page.topicId === "led"
+        sourceComponent: Component { NotificationLedPanel { settings: page.settings } }
+    }
+    PagePanel {
+        active: page.topicId === "display"
+        sourceComponent: Component { DisplayPreferencesPanel { settings: page.settings; appWindow: page.appWindow } }
+    }
+    PagePanel {
+        active: page.topicId === "about"
+        sourceComponent: Component {
+            InformationGrid {
+                maximumColumns: 2
+                Layout.maximumWidth: Number.POSITIVE_INFINITY
+                Layout.margins: 0
+                sections: page.settings.deviceInformation
+            }
+        }
+    }
+    PagePanel {
+        active: page.topicId === "about-uke"
+        sourceComponent: Component { AboutUke {} }
+    }
+    PagePanel {
+        active: page.topicId === "flashlight"
+        sourceComponent: Component { FlashlightPanel { settings: page.settings } }
     }
     PagePanel {
         active: page.isCharging
@@ -155,7 +152,9 @@ FormCard.FormCardPage {
     }
     Loader {
         Layout.fillWidth: true
-        active: !page.isCharging && !page.showConnectionsFirst && page.topicId !== "flashlight" && page.topicId !== "updates" && page.information.length > 0
+        active: !page.isCharging && !page.showConnectionsFirst &&
+                !["flashlight", "updates", "about", "display", "led"].includes(page.topicId) &&
+                page.information.length > 0
         sourceComponent: informationPanel
     }
     FormCard.FormHeader {
@@ -194,19 +193,16 @@ FormCard.FormCardPage {
         active: page.showConnectionsFirst && page.information.length > 0
         sourceComponent: informationPanel
     }
-    Loader {
-        Layout.fillWidth: true
-        active: page.topicId === "battery"
-        sourceComponent: Component { BatteryHistoryView {} }
-    }
     FormCard.FormCard {
+        visible: page.topicId !== "about-uke"
         maximumWidth: page.readingColumnWidth
         Repeater {
             model: page.isCharging ? page.topicActions : []
             delegate: FormCard.FormButtonDelegate {
                 required property var modelData
-                text: modelData.id === "charge.mode" ? i18n("Other charging policies") : i18n("Stop threshold only")
-                enabled: settings.topic.canApply !== false && !backend.readOnly
+                text: modelData.id === "charge.mode" ? i18n("Other charging policies")
+                    : modelData.id === "charge.limit" ? i18n("Stop threshold only") : modelData.title
+                enabled: !backend.readOnly && (modelData.id.startsWith("wake.") || settings.topic.canApply !== false)
                 onClicked: page.appWindow.openGuide(modelData.id)
             }
         }

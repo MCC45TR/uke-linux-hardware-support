@@ -177,7 +177,14 @@ ColumnLayout {
         objectName: "informationTiles"
         Layout.maximumWidth: Number.POSITIVE_INFINITY
         Layout.margins: 0
-        sections: panel.information.filter(section => section.id === "battery.status" || section.id === "battery.cells")
+        sections: panel.information.filter(section => section.id.startsWith("battery."))
         stretchTiles: true
+    }
+    BatteryHistoryView {}
+    InformationGrid {
+        Layout.maximumWidth: Number.POSITIVE_INFINITY
+        Layout.margins: 0
+        sections: panel.information.filter(section =>
+            ["charge.protocols", "overview.sleep", "wake.status"].includes(section.id))
     }
 }

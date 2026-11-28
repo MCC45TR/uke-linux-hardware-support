@@ -48,7 +48,7 @@ void Settings::call(const QString &path,const QString &interface,const QString &
   });
 }
 void Settings::loadHistory(unsigned seconds) {
-  if(!topic_||topic_->id!="battery"||(seconds!=3600&&seconds!=86400))return;
+  if(!topic_||topic_->id!="charging"||(seconds!=3600&&seconds!=86400))return;
   const auto generation=++historyGeneration_;
   history_={{"busy",true},{"available",false},{"message",i18n("Reading existing battery history…")}};emit historyChanged();
   const auto end=QDateTime::currentSecsSinceEpoch();

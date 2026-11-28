@@ -5,15 +5,12 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 import org.uke.settings 1.0
-ColumnLayout {
+SettingsSection {
     id: view
     readonly property var report: backend.settings.history
     Layout.fillWidth: true
-    spacing: 0
+    heading: i18n("Battery history")
     Component.onCompleted: backend.settings.loadHistory(86400)
-    FormCard.FormHeader { title: i18n("Battery history") }
-    FormCard.FormCard {
-        Layout.fillWidth: true
         FormCard.FormComboBoxDelegate {
             id: range
             text: i18n("Time range")
@@ -33,9 +30,9 @@ ColumnLayout {
             onClicked: backend.settings.loadHistory(range.currentValue)
         }
         Controls.BusyIndicator { Layout.alignment: Qt.AlignHCenter; running: view.report.busy || false; visible: running }
-        SafeText {
-            text: view.report.message || i18n("History is read from the existing power service. No additional recording service is started.")
-            description: view.report.available ? i18n("%1 valid points · %2 gaps", view.report.points, view.report.gaps) : ""
+        SettingsNote {
+            visible: text.length > 0
+            text: view.report.message || ""
         }
         HistoryPlot {
             objectName: "batteryHistoryPlot"
@@ -51,14 +48,4 @@ ColumnLayout {
             Accessible.name: i18n("Recorded battery percentage over time")
             Accessible.description: view.report.message || ""
         }
-        Repeater {
-            model: view.report.segments || []
-            delegate: SafeText {
-                required property var modelData
-                visible: !view.report.available
-                text: i18n("Recorded observations")
-                description: modelData.length.toString()
-            }
-        }
-    }
 }

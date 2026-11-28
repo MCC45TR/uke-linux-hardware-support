@@ -29,6 +29,11 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantMap chargingThresholds READ chargingThresholds NOTIFY changed)
   Q_PROPERTY(QVariantList chargingBands READ chargingBands CONSTANT)
   Q_PROPERTY(QVariantMap flashlight READ flashlight NOTIFY changed)
+  Q_PROPERTY(QVariantMap notificationLed READ notificationLed NOTIFY changed)
+  Q_PROPERTY(QVariantMap infrared READ infrared NOTIFY changed)
+  Q_PROPERTY(QVariantMap desktopDisplay READ desktopDisplay NOTIFY changed)
+  Q_PROPERTY(QVariantMap packageOperation READ packageOperation NOTIFY changed)
+  Q_PROPERTY(QVariantList deviceInformation READ deviceInformation NOTIFY changed)
   Q_PROPERTY(QVariantMap displayLink READ displayLink NOTIFY changed)
   Q_PROPERTY(QVariantList linuxPartitions READ linuxPartitions NOTIFY changed)
   Q_PROPERTY(QString currentChannel READ currentChannel NOTIFY changed)
@@ -57,6 +62,20 @@ class Settings : public QObject {
   bool flashlightPending_ = false;
   QString flashlightError_;
   void requestFlashlight(const QString &method, const QVariant &argument);
+  bool ledPending_ = false, ledTesting_ = false;
+  QString ledMethod_, ledError_;
+  QVariantList ledArguments_;
+  void sendLed();
+  QProcess *irProcess_ = nullptr, *displayProcess_ = nullptr;
+  QString irMessage_, displayMessage_;
+  bool irFailed_ = false, displayFailed_ = false;
+  QProcess *packageProcess_ = nullptr;
+  QVariantMap packageOperation_;
+  QVariantList deviceBoard_;
+  QString screenBrightnessId_;
+  int brightness_ = -1, brightnessMaximum_ = 0;
+  unsigned brightnessGeneration_ = 0;
+  void readScreenBrightness();
   void readKernel(const QString &kind);
   void next();
   void finish(const Result &result);
@@ -75,6 +94,11 @@ public:
   QVariantMap chargingThresholds() const;
   QVariantList chargingBands() const;
   QVariantMap flashlight() const;
+  QVariantMap notificationLed() const;
+  QVariantMap infrared() const;
+  QVariantMap desktopDisplay() const;
+  QVariantMap packageOperation() const { return packageOperation_; }
+  QVariantList deviceInformation() const;
   QVariantMap displayLink() const;
   QVariantList linuxPartitions() const;
   QString currentChannel() const;
@@ -97,7 +121,16 @@ public:
   Q_INVOKABLE bool openNative(const QString &id);
   Q_INVOKABLE void setFlashlight(bool enabled);
   Q_INVOKABLE void setFlashlightBrightness(int percent);
+  Q_INVOKABLE void previewLed(const QColor &color,int percent);
+  Q_INVOKABLE void stopLedPreview();
+  Q_INVOKABLE void sendInfrared(const QString &code);
+  Q_INVOKABLE void setDisplayPreference(const QString &id,const QString &value);
+  Q_INVOKABLE void setScreenBrightness(int percent);
+  Q_INVOKABLE void runPackageOperation(const QString &operation,const QString &channel = {});
   Q_INVOKABLE QVariantList actionChoices(const QString &id, const QString &key) const;
+private slots:
+  void screenBrightnessChanged(const QString &id,int value,const QString &,const QString &);
+  void screenBrightnessRangeChanged(const QString &id,int value,int maximum);
 signals:
   void changed();
   void historyChanged();

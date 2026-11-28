@@ -4,7 +4,7 @@
 %global sdk_base https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        18%{?dist}
+Release:        20%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -127,12 +127,14 @@ done
 %{_bindir}/uke-control-qt
 %{_bindir}/uke-kernel-status
 %{_libexecdir}/uke-control-qt/kernel-information
+%{_libexecdir}/uke-control-qt/package-task
 %{_libexecdir}/uke-control-qt/frequency-control
 %{_libexecdir}/uke-control-qt/resource-control
 %{_libexecdir}/uke-control-qt/application-control
 %{_datadir}/polkit-1/actions/org.senemos.uke.resource-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.frequency-control.policy
 %{_datadir}/polkit-1/actions/org.senemos.uke.qt-kernel-information.policy
+%{_datadir}/polkit-1/actions/org.senemos.uke.qt-package-task.policy
 %{_datadir}/applications/org.uke.ControlQt.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.uke.ControlQt.svg
 %{_datadir}/locale/*/LC_MESSAGES/uke-control-qt.mo
@@ -141,6 +143,10 @@ done
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Fri Nov 27 2026 Uke contributors - 1.6.0-20
+- Consolidate battery and USB settings and add local light, display and infrared controls.
+- Add a graphical update flow and a cached device inventory.
+
 * Fri Nov 27 2026 Uke contributors - 1.6.0-18
 - Send accessibility switch actions through the confirmed flashlight state.
 - Align storage monitoring panels and scale the graphs to recorded samples.

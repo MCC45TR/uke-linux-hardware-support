@@ -2492,3 +2492,261 @@ msgstr "Bu kuyruğu kullanan tüm bölümler ve uygulamalar"
 
 msgid "Filesystem space, I/O pressure, latency and queue policy"
 msgstr "Disk alanı, girdi/çıktı baskısı, gecikme ve kuyruk ayarları"
+
+msgid "A supported infrared transmitter was not found."
+msgstr "Desteklenen bir kızılötesi verici bulunamadı."
+
+msgid "About Uke Control"
+msgstr "Uke Control hakkında"
+
+msgid "Acceleration"
+msgstr "İvme"
+
+msgid "Adjust brightness to the light around you."
+msgstr "Ekran parlaklığını ortam ışığına göre ayarlar."
+
+msgid "Aim the tablet at the receiver and enter its four-digit hexadecimal NEC code."
+msgstr "Tableti alıcıya doğrultun ve alıcının dört basamaklı onaltılık NEC kodunu girin."
+
+msgid "Angular velocity"
+msgstr "Açısal hız"
+
+msgid "Application version and license"
+msgstr "Uygulama sürümü ve lisansı"
+
+msgid "Automatic brightness, rotation and refresh rate"
+msgstr "Otomatik parlaklık, döndürme ve yenileme hızı"
+
+msgid "Automatic light rules"
+msgstr "Otomatik ışık kuralları"
+
+msgid "Blue light during camera use"
+msgstr "Kamera kullanılırken mavi ışık"
+
+msgid "Built-in display brightness"
+msgstr "Yerleşik ekran parlaklığı"
+
+msgid "Camera device"
+msgstr "Kamera aygıtı"
+
+msgid "Camera sensor model"
+msgstr "Kamera sensörünün modeli"
+
+msgid "Cameras"
+msgstr "Kameralar"
+
+msgid "Change channel"
+msgstr "Kanalı değiştir"
+
+msgid "Changing the update channel…"
+msgstr "Güncelleme kanalı değiştiriliyor…"
+
+msgid "Charging thresholds, battery health, history and sleep"
+msgstr "Şarj eşikleri, pil sağlığı, geçmiş ve uyku ayarları"
+
+msgid "Check for updates"
+msgstr "Güncellemeleri kontrol et"
+
+msgid "Checking for updates…"
+msgstr "Güncellemeler kontrol ediliyor…"
+
+msgid "Choose a colour"
+msgstr "Renk seç"
+
+msgid "Compatible keyboard"
+msgstr "Uyumlu klavye"
+
+msgid "Compatible pen"
+msgstr "Uyumlu kalem"
+
+msgid "Connect an external NFC reader and hold a tag near it."
+msgstr "Harici NFC okuyucuyu bağlayın ve etiketi okuyucuya yaklaştırın."
+
+msgid "Device Tree identifiers"
+msgstr "Aygıt ağacı kimlikleri"
+
+msgid "Device and specifications"
+msgstr "Cihaz ve teknik özellikler"
+
+msgid "Device code name"
+msgstr "Cihaz kod adı"
+
+msgid "Display and storage hardware"
+msgstr "Ekran ve depolama donanımı"
+
+msgid "Drag on the wheel to try the colour on the tablet."
+msgstr "Tablette rengi denemek için renk çemberinde sürükleyin."
+
+msgid "Infrared transmitter"
+msgstr "Kızılötesi verici"
+
+msgid "Installing system updates…"
+msgstr "Sistem güncellemeleri yükleniyor…"
+
+msgid "Internal storage capacity"
+msgstr "Dahili depolama kapasitesi"
+
+msgid "License: MIT"
+msgstr "Lisans MIT"
+
+msgid "Light for notifications"
+msgstr "Bildirimlerde ışık"
+
+msgid "Light test"
+msgstr "Işık testi"
+
+msgid "Light when the battery is low"
+msgstr "Pil azaldığında ışık"
+
+msgid "Magnetic field"
+msgstr "Manyetik alan"
+
+msgid "Manage Uke hardware, battery, connected devices and system updates from Plasma."
+msgstr "Uke donanımını, pili, bağlı aygıtları ve sistem güncellemelerini Plasma’dan yönetin."
+
+msgid "Managed by the camera driver."
+msgstr "Kamera sürücüsü yönetir."
+
+msgid "Memory in the Device Tree"
+msgstr "Aygıt ağacında bildirilen bellek"
+
+msgid "Memory type"
+msgstr "Bellek türü"
+
+msgid "Minimum variable refresh rate"
+msgstr "En düşük değişken yenileme hızı"
+
+msgid "Model"
+msgstr "Model"
+
+msgid "NEC code"
+msgstr "NEC kodu"
+
+msgid "NEC test signal"
+msgstr "NEC test sinyali"
+
+msgid "Open the KDE display settings."
+msgstr "KDE ekran ayarlarını açar."
+
+msgid "Orientation and refresh rate"
+msgstr "Ekran yönü ve yenileme hızı"
+
+msgid "Panel identifier"
+msgstr "Panel kimliği"
+
+msgid "Panel manufacturer"
+msgstr "Panel üreticisi"
+
+msgid "Pending updates"
+msgstr "Bekleyen güncellemeler"
+
+msgid "Pressure"
+msgstr "Basınç"
+
+msgid "Processor"
+msgstr "İşlemci"
+
+msgid "Proximity"
+msgstr "Yakınlık"
+
+msgid "RGB hexadecimal colour"
+msgstr "Onaltılık RGB rengi"
+
+msgid "Resolution, refresh rate and scaling"
+msgstr "Çözünürlük, yenileme hızı ve ölçek"
+
+msgid "Rotate the display when you turn the tablet."
+msgstr "Tableti çevirdiğinizde ekranı döndürür."
+
+msgid "Screen brightness"
+msgstr "Ekran parlaklığı"
+
+msgid "Send a single NEC test signal"
+msgstr "Tek bir NEC test sinyali gönder"
+
+msgid "Send test signal"
+msgstr "Test sinyali gönder"
+
+msgid "Sensor inventory"
+msgstr "Sensör listesi"
+
+msgid "Sensor reading"
+msgstr "Sensör ölçümü"
+
+msgid "Signal sent. Check the target device."
+msgstr "Sinyal gönderildi. Alıcı cihazı kontrol edin."
+
+msgid "Stable is updated about once a month. Problems are rare."
+msgstr "Kararlı kanal yaklaşık ayda bir güncellenir. Hatalar nadirdir."
+
+msgid "Start reading"
+msgstr "Okumaya başla"
+
+msgid "Switching brightness turns the flashlight on. This device provides two brightness levels."
+msgstr "Parlaklığı değiştirmek feneri açar. Bu cihaz iki parlaklık kademesi sunar."
+
+msgid "System update complete."
+msgstr "Sistem güncellemesi tamamlandı."
+
+msgid "Test is updated about once a week. It includes new features and can be less stable."
+msgstr "Test kanalı yaklaşık haftada bir güncellenir. Yeni özellikler içerir ve kararlılığı daha düşük olabilir."
+
+msgid "Test notification light"
+msgstr "Bildirim ışığını dene"
+
+msgid "The battery warning light is managed by the kernel."
+msgstr "Düşük pil uyarı ışığını çekirdek yönetir."
+
+msgid "The camera driver has not reported an indicator."
+msgstr "Kamera sürücüsü ışık göstergesi bildirmedi."
+
+msgid "The current channel could not be read."
+msgstr "Geçerli güncelleme kanalı okunamadı."
+
+msgid "The current display driver applies the saved minimum on the next boot."
+msgstr "Mevcut ekran sürücüsü kayıtlı alt sınırı bir sonraki açılışta uygular."
+
+msgid "The desktop could not apply this preference."
+msgstr "Masaüstü bu ayarı uygulayamadı."
+
+msgid "The desktop has no notification light rule for this device."
+msgstr "Masaüstünde bu cihaz için bildirim ışığı kuralı bulunmuyor."
+
+msgid "The notification light did not confirm the change."
+msgstr "Bildirim ışığının rengi doğrulanamadı."
+
+msgid "The notification light is unavailable."
+msgstr "Bildirim ışığı şu anda kullanılamıyor."
+
+msgid "The system is up to date."
+msgstr "Sistem güncel."
+
+msgid "The transmitter could not send the signal in this session."
+msgstr "Bu oturumda test sinyali gönderilemedi."
+
+msgid "The update task could not be completed."
+msgstr "Güncelleme işlemi tamamlanamadı."
+
+msgid "Touch controller"
+msgstr "Dokunmatik denetleyici"
+
+msgid "UFS model"
+msgstr "UFS modeli"
+
+msgid "USB devices, ports, docks and external displays"
+msgstr "USB aygıtları, bağlantı noktaları, dock ve harici ekranlar"
+
+msgid "USB management"
+msgstr "USB yönetimi"
+
+msgid "Uke Control"
+msgstr "Uke Control"
+
+msgid "Unstable can receive daily or hourly updates. This channel is not stable."
+msgstr "Kararsız kanala günlük veya saatlik güncellemeler gelebilir. Bu kanal kararlı değildir."
+
+msgid "Updates are available."
+msgstr "Yeni güncellemeler var."
+
+msgid "Version %1"
+msgstr "Sürüm %1"

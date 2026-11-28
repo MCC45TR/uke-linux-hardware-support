@@ -2,13 +2,10 @@
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigamiaddons.formcard as FormCard
-ColumnLayout {
+SettingsSection {
     required property var topicPage
     Layout.fillWidth: true
-    spacing: 0
-    FormCard.FormHeader { title: i18n("USB data role") }
-    FormCard.FormCard {
-        Layout.fillWidth: true
+    heading: i18n("USB data role")
         SafeText {
             text: backend.settings.usbPolicy.known && backend.settings.usbPolicy.automatic ? i18n("Automatic handling is active") : i18n("Automatic handling has not been verified")
             description: backend.settings.usbPolicy.message
@@ -29,5 +26,4 @@ ColumnLayout {
             enabled: !backend.readOnly
             onClicked: topicPage.edit("usb.role")
         }
-    }
 }

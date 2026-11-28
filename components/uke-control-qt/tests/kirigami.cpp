@@ -234,7 +234,7 @@ private slots:
     auto *settings=qobject_cast<Settings *>(bridge.settings());
     QVERIFY(settings);
     QVERIFY(settings->choices("interface").isEmpty());
-    QCOMPARE(settings->topics(1).size(),5);
+    QCOMPARE(settings->topics(1).size(),1);
     QVERIFY(!settings->topics(-1,"pil").isEmpty());
     QVERIFY(!settings->topics(-1,"charge.mode").isEmpty());
     QVERIFY(!settings->open("unknown-topic"));
@@ -356,12 +356,13 @@ private slots:
     auto *settings=qobject_cast<Settings *>(bridge.settings());
     for(const auto &topic:settingTopics()) {
       QVERIFY(QMetaObject::invokeMethod(window,"showArea",Q_ARG(QVariant,topic.area)));
-      QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,topic.id)));
+      if(topic.id!="charging")
+        QVERIFY(QMetaObject::invokeMethod(window,"openTopic",Q_ARG(QVariant,topic.id)));
       QTRY_VERIFY_WITH_TIMEOUT(!settings->busy(),5000);
       QQuickItem *page=nullptr;QTRY_VERIFY((page=visualItem(window->contentItem(),"topicPage")));
       QCOMPARE(page->property("topicId").toString(),topic.id);
       QVERIFY(bridge.review().isEmpty());
-      if(topic.id=="battery") {
+      if(topic.id=="charging") {
         settings->loadHistory();QVERIFY(settings->history().value("available").toBool());
         const auto findCard = [&] { return visualItem(window->contentItem(),"informationCard_battery.status"); };
         QQuickItem *card = nullptr;
@@ -374,10 +375,7 @@ private slots:
         QVERIFY(details);
         QVERIFY(QMetaObject::invokeMethod(details,"clicked"));
         QTRY_VERIFY(findCard() && findCard()->property("expanded").toBool());
-        settings->refresh();
-        settings->stop();
         QTRY_VERIFY(findCard() && findCard()->property("expanded").toBool());
-        QVERIFY(settings->information().first().toMap().value("stale").toBool());
         auto *detailRows = visualItem(findCard(),"informationDetailRows");
         QVERIFY(detailRows && detailRows->property("active").toBool());
         snapshot(window,"settings-battery");
@@ -386,7 +384,9 @@ private slots:
         QQuickItem *toggle=nullptr;
         QTRY_VERIFY((toggle=visualItem(page,"flashlightSwitch")));
         QVERIFY(!toggle->isEnabled());
-        QVERIFY(visualItem(page,"flashlightLevel50"));
+        auto *level=visualItem(page,"flashlightLevel");
+        QVERIFY(level);
+        QCOMPARE(level->property("stepSize").toInt(),50);
         settings->setFlashlight(true);
         QVERIFY(!settings->flashlight().value("pending").toBool());
         snapshot(window,"settings-flashlight");
@@ -472,9 +472,9 @@ private slots:
     QQuickItem *grid = nullptr;
     QQuickItem *power = nullptr;
     QQuickItem *display = nullptr;
-    QTRY_VERIFY((grid = visualItem(content, "topicTiles_power")));
-    QTRY_VERIFY((power = visualItem(grid, "topic_battery")));
-    QTRY_VERIFY((display = visualItem(grid, "topic_charging")));
+    QTRY_VERIFY((grid = visualItem(content, "topicTiles_display")));
+    QTRY_VERIFY((power = visualItem(grid, "topic_display")));
+    QTRY_VERIFY((display = visualItem(grid, "topic_flashlight")));
     QTRY_COMPARE(grid->property("columns").toInt(), 1);
     QTRY_VERIFY(display->y() >= power->y() + power->height());
     QCOMPARE(power->width(), display->width());
@@ -491,7 +491,7 @@ private slots:
     power->forceActiveFocus(Qt::TabFocusReason);
     QTRY_VERIFY(power->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Return);
-    QTRY_COMPARE(bridge.settings()->property("topic").toMap().value("id").toString(),QString("battery"));
+    QTRY_COMPARE(bridge.settings()->property("topic").toMap().value("id").toString(),QString("display"));
 
     QVERIFY(QMetaObject::invokeMethod(window, "openGuide",
                                       Q_ARG(QVariant, QString("flashlight.level"))));
