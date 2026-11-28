@@ -396,6 +396,76 @@ private slots:
     warnings.removeIf([](const QString &w){return w.contains("Main.qml:")&&w.endsWith("Created graphical object was not placed in the graphics scene.");});
     QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join('\n')));
   }
+  void responsiveTilesAndSteppedInput() {
+    Bridge bridge(fixture, false);
+    QQmlApplicationEngine engine;
+    KLocalization::setupLocalizedContext(&engine);
+    engine.rootContext()->setContextProperty("backend", &bridge);
+    engine.rootContext()->setContextProperty("themeIcons", &themeIcons);
+    engine.rootContext()->setContextProperty("styleNotice", QString());
+    engine.loadFromModule("org.uke.ControlQtTest", "Main");
+    QVERIFY(!engine.rootObjects().isEmpty());
+    auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+    QVERIFY(window);
+    window->resize(480, 760);
+    window->show();
+    window->requestActivate();
+    QTRY_VERIFY(window->isActive());
+
+    auto *content = window->contentItem();
+    QQuickItem *grid = nullptr;
+    QQuickItem *power = nullptr;
+    QQuickItem *display = nullptr;
+    QTRY_VERIFY((grid = visualItem(content, "areaTiles")));
+    QTRY_VERIFY((power = visualItem(grid, "category_power")));
+    QTRY_VERIFY((display = visualItem(grid, "category_display")));
+    QTRY_COMPARE(grid->property("columns").toInt(), 1);
+    QTRY_VERIFY(display->y() >= power->y() + power->height());
+    QCOMPARE(power->width(), display->width());
+    snapshot(window, "tiles-narrow");
+
+    window->resize(1440, 900);
+    QTRY_COMPARE(grid->property("columns").toInt(), 3);
+    QTRY_VERIFY(display->x() >= power->x() + power->width());
+    QCOMPARE(power->y(), display->y());
+    snapshot(window, "tiles-wide");
+
+    window->resize(480, 760);
+    QTRY_COMPARE(grid->property("columns").toInt(), 1);
+    power->forceActiveFocus(Qt::TabFocusReason);
+    QTRY_VERIFY(power->hasActiveFocus());
+    QTest::keyClick(window, Qt::Key_Return);
+    QTRY_COMPARE(bridge.section(), 1);
+
+    QVERIFY(QMetaObject::invokeMethod(window, "openGuide",
+                                      Q_ARG(QVariant, QString("flashlight.level"))));
+    QQuickItem *slider = nullptr;
+    QTRY_VERIFY((slider = visualItem(content, "slider_percent")) && slider->isEnabled());
+    slider->forceActiveFocus(Qt::TabFocusReason);
+    QCOMPARE(slider->property("value").toInt(), 1);
+    QTest::keyClick(window, Qt::Key_Left);
+    QTRY_COMPARE(bridge.draftValues().value("percent").toString(), QString("0"));
+    QTest::keyClick(window, Qt::Key_Right);
+    QTRY_COMPARE(bridge.draftValues().value("percent").toString(), QString("50"));
+    QTest::keyClick(window, Qt::Key_Right);
+    QTRY_COMPARE(bridge.draftValues().value("percent").toString(), QString("100"));
+    QVERIFY(bridge.review().isEmpty());
+
+    QVERIFY(QMetaObject::invokeMethod(window, "openGuide",
+                                      Q_ARG(QVariant, QString("charge.limit"))));
+    QQuickItem *exact = nullptr;
+    QTRY_VERIFY((exact = visualItem(content, "exact_percent")) && exact->isEnabled());
+    QTRY_VERIFY((slider = visualItem(content, "slider_percent")) && slider->isEnabled());
+    bridge.setDraft("percent", "63");
+    QTRY_COMPARE(slider->property("value").toInt(), 63);
+    QTRY_COMPARE(exact->property("value").toInt(), 63);
+    slider->forceActiveFocus(Qt::TabFocusReason);
+    QTest::keyClick(window, Qt::Key_Right);
+    QTRY_COMPARE(exact->property("value").toInt(), 64);
+    QTRY_COMPARE(bridge.draftValues().value("percent").toString(), QString("64"));
+    QVERIFY(bridge.review().isEmpty());
+    window->close();
+  }
   void optionalResourceReads() {
     if(!qEnvironmentVariableIsSet("UKE_QT_TEST_RESOURCE_READS"))QSKIP("Actual resource reads require explicit opt-in");
     Bridge bridge({},true);QQmlApplicationEngine engine;KLocalization::setupLocalizedContext(&engine);

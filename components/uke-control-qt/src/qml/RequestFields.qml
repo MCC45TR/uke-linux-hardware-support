@@ -7,7 +7,6 @@ import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 ColumnLayout {
     id: fields
-    required property real pageWidth
     spacing: 0
     Repeater {
         model: backend.guide.parameters || []
@@ -15,17 +14,30 @@ ColumnLayout {
             id: fieldRow
             required property var modelData
             readonly property string selectedValue: backend.draftValues[modelData.key] || ""
+            readonly property bool deviceChoice: ["interface", "usb_device", "input_device"].includes(modelData.kind)
             Layout.fillWidth: true
             spacing: 0
             Loader {
                 Layout.fillWidth: true
-                sourceComponent: fieldRow.modelData.choices.length > 0
-                    ? (fieldRow.modelData.choices.length <= 3 ? radioField : choiceField)
+                sourceComponent: fieldRow.modelData.slider ? sliderField
+                    : fieldRow.modelData.choices.length > 0
+                    ? (!fieldRow.deviceChoice && fieldRow.modelData.choices.length <= 3 ? radioField : choiceField)
                     : fieldRow.modelData.kind === "color" ? colorField
                     : fieldRow.modelData.kind === "path" ? fileField
                     : fieldRow.modelData.kind === "directory" ? folderField
-                    : ["interface", "usb_device", "input_device"].includes(fieldRow.modelData.kind) ? missingDevice
+                    : fieldRow.deviceChoice ? missingDevice
                     : fieldRow.modelData.integer ? integerField : textField
+                Component {
+                    id: sliderField
+                    ColumnLayout {
+                        objectName: "parameter_" + fieldRow.modelData.key
+                        SliderField {
+                            parameter: fieldRow.modelData
+                            draft: fieldRow.selectedValue
+                            onEdited: value => backend.setDraft(fieldRow.modelData.key, value)
+                        }
+                    }
+                }
                 Component {
                     id: radioField
                     ColumnLayout {
@@ -43,6 +55,7 @@ ColumnLayout {
                                 text: modelData.title
                                 description: modelData.description || ""
                                 Accessible.name: text
+                                Accessible.description: description
                                 Controls.ButtonGroup.group: options
                                 checked: fieldRow.selectedValue === modelData.value
                                 onClicked: backend.setDraft(fieldRow.modelData.key, modelData.value)
@@ -80,7 +93,7 @@ ColumnLayout {
                         textRole: "title"
                         valueRole: "value"
                         description: currentIndex >= 0 ? (model[currentIndex].description || "") : ""
-                        displayMode: fields.pageWidth < Kirigami.Units.gridUnit * 35 ? FormCard.FormComboBoxDelegate.Dialog : FormCard.FormComboBoxDelegate.ComboBox
+                        displayMode: width < Kirigami.Units.gridUnit * 30 ? FormCard.FormComboBoxDelegate.Dialog : FormCard.FormComboBoxDelegate.ComboBox
                         currentIndex: {
                             for (let i = 0; i < model.length; ++i) if (model[i].value === fieldRow.selectedValue) return i
                             return -1
@@ -130,6 +143,12 @@ ColumnLayout {
                         onTextEdited: backend.setDraft(fieldRow.modelData.key, text)
                     }
                 }
+            }
+            FormCard.FormSectionText {
+                visible: !fieldRow.modelData.slider && !(fieldRow.deviceChoice && !fieldRow.modelData.choices.length) && text.length > 0
+                text: fieldRow.modelData.description || ""
+                textFormat: Text.PlainText
+                Layout.topMargin: 0
             }
             SafeText {
                 visible: fieldRow.modelData.kind === "path" || fieldRow.modelData.kind === "directory"

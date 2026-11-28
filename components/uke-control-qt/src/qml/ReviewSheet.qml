@@ -11,7 +11,7 @@ FormCard.FormCardDialog {
     width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 32)
     height: Math.min(implicitHeight, parent.height - Kirigami.Units.largeSpacing * 2)
     standardButtons: Controls.Dialog.Cancel
-    onOpened: { consent.checked = false; confirmation.text = "" }
+    onOpened: { consent.checked = false; confirmation.text = ""; exact.visible = false }
     onRejected: backend.cancelReview()
     SafeText {
         text: backend.review.title || ""
@@ -56,7 +56,7 @@ FormCard.FormCardDialog {
         description: backend.review.reason || ""
     }
     FormCard.FormButtonDelegate {
-            Accessible.name: text
+        Accessible.name: text
         text: i18n("Command details")
         icon.name: themeIcons.names["document-properties"]
         Accessible.description: exact.visible ? "Arguments expanded" : "Arguments collapsed"
@@ -69,7 +69,7 @@ FormCard.FormCardDialog {
         description: backend.review.command || ""
     }
     FormCard.FormButtonDelegate {
-            Accessible.name: text
+        Accessible.name: text
         objectName: "launchTerminal"
         text: i18n("Continue in terminal")
         description: i18n("The terminal requests any required authentication and shows the operation's result.")

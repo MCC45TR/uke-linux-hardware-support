@@ -2023,3 +2023,128 @@ msgstr "Büyük sayfaların her zaman, uygulama önerdiğinde veya hiçbir zaman
 
 msgid "0 disables MGLRU, 1 enables the basic mechanism, and 7 enables all supported aging features. Availability depends on the running kernel."
 msgstr "0 MGLRU'yu kapatır, 1 temel mekanizmayı, 7 desteklenen tüm yaşlandırma özelliklerini açar. Kullanılabilirlik çalışan çekirdeğe bağlıdır."
+
+msgid "KDE System Settings"
+msgstr "KDE Sistem Ayarları"
+
+msgid "Settings and actions"
+msgstr "Ayarlar ve işlemler"
+
+msgid "The flashlight has two brightness levels. Review the selected level before applying it."
+msgstr "Fenerin iki parlaklık kademesi vardır. Uygulamadan önce seçtiğiniz kademeyi gözden geçirin."
+
+msgid "Charge limit (%)"
+msgstr "Şarj sınırı (%)"
+
+msgid "Choose the percentage at which charging should stop. The charging provider decides which values can be applied."
+msgstr "Şarjın durmasını istediğiniz yüzdeyi seçin. Hangi değerlerin uygulanabileceğini şarj sağlayıcısı belirler."
+
+msgid "Brightness (%)"
+msgstr "Parlaklık (%)"
+
+msgid "Choose the requested brightness. The device applies the hardware step it supports."
+msgstr "İstediğiniz parlaklığı seçin. Cihaz, donanımın desteklediği kademeyi uygular."
+
+msgctxt "percentage"
+msgid "%1%"
+msgstr "%%1"
+
+msgctxt "setting and its selected value"
+msgid "%1 · %2"
+msgstr "%1 · %2"
+
+msgid "Enter a percentage from %1 to %2."
+msgstr "%1 ile %2 arasında bir yüzde girin."
+
+msgid "Review your choices before applying them in the terminal."
+msgstr "Seçimlerinizi terminalde uygulamadan önce gözden geçirin."
+
+msgid "With Google Play"
+msgstr "Google Play ile"
+
+msgid "Use Google Play to install apps. Signing in requires a Google account."
+msgstr "Google Play’den uygulama yükleyin. Oturum açmak için Google hesabı gerekir."
+
+msgid "Without Google services"
+msgstr "Google hizmetleri olmadan"
+
+msgid "Install apps from other sources with the Vanilla edition."
+msgstr "Vanilla sürümüyle başka kaynaklardan uygulama yükleyin."
+
+msgid "Open navigation"
+msgstr "Gezinmeyi aç"
+
+msgid "Close navigation"
+msgstr "Gezinmeyi kapat"
+
+msgid "Review terminal access…"
+msgstr "Terminal erişimini gözden geçir…"
+
+msgid "Review slot selection…"
+msgstr "Yuva seçimini gözden geçir…"
+
+msgid "Review diagnostic…"
+msgstr "Tanı işlemini gözden geçir…"
+
+msgid "Review channel change…"
+msgstr "Kanal değişikliğini gözden geçir…"
+
+msgid "Review installation…"
+msgstr "Kurulumu gözden geçir…"
+
+msgid "Review software operation…"
+msgstr "Yazılım işlemini gözden geçir…"
+
+msgid "Review maintenance…"
+msgstr "Bakım işlemini gözden geçir…"
+
+msgid "Review publication…"
+msgstr "Yayımlama işlemini gözden geçir…"
+
+msgid "Review file request…"
+msgstr "Dosya isteğini gözden geçir…"
+
+msgid "Review preference…"
+msgstr "Tercihi gözden geçir…"
+
+msgid "Review access before reading in the terminal."
+msgstr "Terminalde okumadan önce erişim koşullarını gözden geçirin."
+
+msgid "The terminal handles authentication and shows the result."
+msgstr "Terminal kimlik doğrulamayı yapar ve sonucu gösterir."
+
+msgid "Current state"
+msgstr "Mevcut durum"
+
+msgid "Inspect in terminal…"
+msgstr "Terminalde incele…"
+
+msgid "Read current state"
+msgstr "Mevcut durumu oku"
+
+msgid "Read options"
+msgstr "Okuma seçenekleri"
+
+msgid "Requested values"
+msgstr "İstenen değerler"
+
+msgid "Review"
+msgstr "Gözden geçirme"
+
+msgid "Preview in terminal…"
+msgstr "Terminalde önizle…"
+
+msgid "Preview requested values"
+msgstr "İstenen değerleri önizle"
+
+msgid "Details expanded"
+msgstr "Ayrıntılar açık"
+
+msgid "Details collapsed"
+msgstr "Ayrıntılar kapalı"
+
+msgid "Effect: %1"
+msgstr "Etki: %1"
+
+msgid "Access: %1"
+msgstr "Erişim: %1"

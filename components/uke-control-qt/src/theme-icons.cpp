@@ -18,7 +18,7 @@ void ThemeIcons::refresh() {
       "dialog-information", "dialog-warning", "dialog-error", "dialog-ok",
       "battery", "battery-charging", "video-display", "network-wired",
       "network-wireless", "audio-card", "audio-input-microphone",
-      "system-software-update", "preferences-system", "preferences-desktop",
+      "system-software-update", "system-software-install", "preferences-system", "preferences-desktop",
       "preferences-desktop-display", "preferences-system-power-management",
       "preferences-system-time", "preferences-desktop-color", "camera-photo",
       "camera-flash", "drive-harddisk", "drive-removable-media-usb", "cpu",

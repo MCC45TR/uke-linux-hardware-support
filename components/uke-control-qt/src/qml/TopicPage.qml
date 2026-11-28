@@ -13,10 +13,11 @@ FormCard.FormCardPage {
     readonly property var settings: backend.settings
     property string editAction: ""
     readonly property bool editing: editAction.length > 0 && backend.guide.id === editAction
-    function edit(id) {
+    readonly property var topicActions: (settings.topic.changes || []).filter(action => action.id !== "usb.role")
+    function edit(id, submitWithoutOptions = false) {
         if (backend.openAction(id)) {
             editAction = id
-            if ((backend.guide.parameters || []).length === 0) backend.submit()
+            if (submitWithoutOptions && (backend.guide.parameters || []).length === 0) backend.submit()
         }
     }
     function showSinglePreference() {
@@ -39,13 +40,28 @@ FormCard.FormCardPage {
     }
     RowLayout {
         Layout.fillWidth: true
+        Layout.maximumWidth: Kirigami.Units.gridUnit * 30
+        Layout.alignment: Qt.AlignHCenter
         Layout.leftMargin: Kirigami.Units.largeSpacing
         Layout.rightMargin: Kirigami.Units.largeSpacing
+        Layout.topMargin: Kirigami.Units.mediumSpacing
+        Layout.bottomMargin: Kirigami.Units.mediumSpacing
         Controls.BusyIndicator { visible: settings.busy; running: visible }
-        Controls.Label {
+        ColumnLayout {
             Layout.fillWidth: true
-            text: settings.busy ? i18n("Reading…") : settings.updated.length ? i18n("Read at %1", settings.updated) : settings.topic.description || ""
-            wrapMode: Text.WordWrap
+            spacing: Kirigami.Units.smallSpacing
+            Controls.Label {
+                Layout.fillWidth: true
+                text: page.settings.topic.description || ""
+                wrapMode: Text.Wrap
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                visible: text.length > 0
+                text: page.settings.busy ? i18n("Reading…") : page.settings.updated.length ? i18n("Read at %1", page.settings.updated) : ""
+                font: Kirigami.Theme.smallFont
+                wrapMode: Text.Wrap
+            }
         }
     }
     Kirigami.InlineMessage {
@@ -74,46 +90,89 @@ FormCard.FormCardPage {
         active: page.topicId === "nfc"
         sourceComponent: Component { NfcView {} }
     }
-    Repeater {
-        model: settings.information
-        delegate: ColumnLayout {
-            id: informationSection
-            required property var modelData
-            property bool expanded: false
-            readonly property int previewRows: modelData.compact ? 2 : 6
-            Layout.fillWidth: true
-            spacing: 0
-            FormCard.FormHeader { title: modelData.title }
-            FormCard.FormCard {
+    FormCard.FormHeader {
+        visible: actionList.visible
+        title: i18n("Settings and actions")
+    }
+    Kirigami.InlineMessage {
+        Layout.fillWidth: true
+        visible: !settings.busy && settings.topic.canApply === false
+        type: Kirigami.MessageType.Information
+        text: settings.topic.blockedReason || ""
+    }
+    FormCard.FormCard {
+        id: actionList
+        visible: page.topicActions.length > 1 || (page.topicActions.length === 1 && !page.editing)
+        Repeater {
+            model: page.topicActions
+            delegate: FormCard.FormButtonDelegate {
+                required property var modelData
+                objectName: "topicAction_" + modelData.id
+                text: modelData.title
+                highlighted: page.editing && page.editAction === modelData.id
+                enabled: settings.topic.canApply !== false && (!backend.readOnly || modelData.read)
+                Accessible.name: text
+                onClicked: { settings.stop(); page.edit(modelData.id, true) }
+            }
+        }
+    }
+    Loader {
+        Layout.fillWidth: true
+        active: page.editing && page.appWindow.pageStack.currentItem === page
+        sourceComponent: Component { PreferenceEditor {} }
+    }
+    TileGrid {
+        objectName: "informationTiles"
+        visible: settings.information.length > 0
+        Layout.maximumWidth: settings.information.length > 1 && page.width >= minimumTileWidth * 2 + columnSpacing * 3
+            ? Kirigami.Units.gridUnit * 62 : Kirigami.Units.gridUnit * 30
+        Layout.alignment: Qt.AlignHCenter
+        Layout.margins: Kirigami.Units.largeSpacing
+        maximumColumns: 2
+        minimumTileWidth: Kirigami.Units.gridUnit * 22
+        Repeater {
+            model: settings.information
+            delegate: ColumnLayout {
+                id: informationSection
+                required property var modelData
+                property bool expanded: false
+                readonly property int previewRows: modelData.compact ? 2 : 6
                 Layout.fillWidth: true
-                Repeater {
-                    model: modelData.rows
-                    delegate: ColumnLayout {
-                        required property var modelData
-                        required property int index
-                        Layout.fillWidth: true
-                        visible: informationSection.expanded || (!modelData.detail && index < informationSection.previewRows)
-                        spacing: 0
-                        SafeText { Layout.fillWidth: true; text: modelData.title; description: modelData.value }
-                        Controls.ProgressBar {
+                Layout.minimumWidth: 0
+                Layout.alignment: Qt.AlignTop
+                spacing: 0
+                FormCard.FormHeader { title: modelData.title }
+                FormCard.FormCard {
+                    Layout.fillWidth: true
+                    Repeater {
+                        model: modelData.rows
+                        delegate: ColumnLayout {
+                            required property var modelData
+                            required property int index
                             Layout.fillWidth: true
-                            Layout.leftMargin: Kirigami.Units.largeSpacing
-                            Layout.rightMargin: Kirigami.Units.largeSpacing
-                            Layout.bottomMargin: Kirigami.Units.largeSpacing
-                            visible: modelData.progress >= 0
-                            value: modelData.progress >= 0 ? modelData.progress : 0
-                            Accessible.name: modelData.title
+                            visible: informationSection.expanded || (!modelData.detail && index < informationSection.previewRows)
+                            spacing: 0
+                            SafeText { Layout.fillWidth: true; text: modelData.title; description: modelData.value }
+                            Controls.ProgressBar {
+                                Layout.fillWidth: true
+                                Layout.leftMargin: Kirigami.Units.largeSpacing
+                                Layout.rightMargin: Kirigami.Units.largeSpacing
+                                Layout.bottomMargin: Kirigami.Units.largeSpacing
+                                visible: modelData.progress >= 0
+                                value: modelData.progress >= 0 ? modelData.progress : 0
+                                Accessible.name: modelData.title
+                            }
                         }
                     }
+                    FormCard.FormButtonDelegate {
+                        visible: informationSection.modelData.rows.length > informationSection.previewRows || informationSection.modelData.rows.some(r => r.detail)
+                        text: informationSection.expanded ? i18n("Less information") : i18n("More information")
+                        icon.name: themeIcons.names["view-list-details"]
+                        Accessible.name: text
+                        onClicked: informationSection.expanded = !informationSection.expanded
+                    }
+                    SafeText { visible: modelData.stale || false; text: i18n("Previous information — refresh failed"); description: modelData.stamp || "" }
                 }
-                FormCard.FormButtonDelegate {
-                    visible: informationSection.modelData.rows.length > informationSection.previewRows || informationSection.modelData.rows.some(r => r.detail)
-                    text: informationSection.expanded ? i18n("Less information") : i18n("More information")
-                    icon.name: themeIcons.names["view-list-details"]
-                    Accessible.name: text
-                    onClicked: informationSection.expanded = !informationSection.expanded
-                }
-                SafeText { visible: modelData.stale || false; text: i18n("Previous information — refresh failed"); description: modelData.stamp || "" }
             }
         }
     }
@@ -121,34 +180,6 @@ FormCard.FormCardPage {
         Layout.fillWidth: true
         active: page.topicId === "battery"
         sourceComponent: Component { BatteryHistoryView {} }
-    }
-    FormCard.FormHeader { visible: (settings.topic.changes || []).length > 1; title: i18n("Preferences and actions") }
-    Kirigami.InlineMessage {
-        Layout.fillWidth: true
-        visible: settings.topic.canApply === false
-        type: Kirigami.MessageType.Information
-        text: settings.topic.blockedReason || ""
-    }
-    FormCard.FormCard {
-        visible: (settings.topic.changes || []).length > 1 || ((settings.topic.changes || []).length === 1 && !page.editing)
-        Repeater {
-            model: settings.topic.changes || []
-            delegate: FormCard.FormButtonDelegate {
-                required property var modelData
-                objectName: "topicAction_" + modelData.id
-                visible: modelData.id !== "usb.role"
-                text: modelData.title
-                icon.name: themeIcons.names["configure"]
-                Accessible.name: text
-                enabled: settings.topic.canApply !== false
-                onClicked: { settings.stop(); page.edit(modelData.id) }
-            }
-        }
-    }
-    Loader {
-        Layout.fillWidth: true
-        active: page.editing
-        sourceComponent: Component { PreferenceEditor { pageWidth: page.width } }
     }
     FormCard.FormCard {
         FormCard.FormButtonDelegate {

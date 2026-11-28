@@ -31,14 +31,31 @@ FormCard.FormCardPage {
             text: i18n("Android applications on your desktop")
             description: i18n("Install Waydroid automatically, then open Android and run its applications in separate desktop windows.")
         }
-        FormCard.FormComboBoxDelegate {
-            id: edition
+        ColumnLayout {
             objectName: "waydroidEdition"
-            text: i18n("Android edition")
-            model: [i18n("GAPPS — Google Play included"), i18n("Vanilla — without Google services")]
+            Layout.fillWidth: true
+            visible: !installer.state.initialized
             enabled: !installer.busy && !installer.state.initialized && !installer.state.variant && !installer.blocked
-            currentIndex: page.selectedEdition === "VANILLA" ? 1 : 0
-            onActivated: index => page.selectedEdition = index === 1 ? "VANILLA" : "GAPPS"
+            spacing: 0
+
+            SafeText { text: i18n("Android edition") }
+            Controls.ButtonGroup { id: editions }
+            FormCard.FormRadioDelegate {
+                text: i18n("With Google Play")
+                description: i18n("Use Google Play to install apps. Signing in requires a Google account.")
+                Controls.ButtonGroup.group: editions
+                checked: page.selectedEdition === "GAPPS"
+                Accessible.description: description
+                onClicked: page.selectedEdition = "GAPPS"
+            }
+            FormCard.FormRadioDelegate {
+                text: i18n("Without Google services")
+                description: i18n("Install apps from other sources with the Vanilla edition.")
+                Controls.ButtonGroup.group: editions
+                checked: page.selectedEdition === "VANILLA"
+                Accessible.description: description
+                onClicked: page.selectedEdition = "VANILLA"
+            }
         }
         FormCard.FormTextDelegate {
             visible: !!installer.state.initialized

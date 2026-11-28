@@ -2,7 +2,7 @@
 %global source_name uke-control-qt
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        8%{?dist}
+Release:        10%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -109,6 +109,10 @@ done
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
+* Fri Nov 27 2026 Uke contributors - 1.6.0-10
+- Use responsive settings cards and native controls for reviewed preferences.
+- Explain the available flashlight levels and percentage requests in English and Turkish.
+
 * Thu Nov 19 2026 Uke contributors - 1.6.0-8
 - Ship the existing Waydroid installer with its Qt frontend.
 - Keep the versioned capabilities, unit, authorization and native checks.

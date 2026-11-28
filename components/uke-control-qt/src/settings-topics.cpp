@@ -40,7 +40,10 @@ const QList<Topic> &settingTopics() {
 QVariantMap topicMap(const Topic &t) {
   QVariantList changes;
   for(const auto &id:t.changes) {
-    try { const auto &a=action(id.toStdString()); changes << QVariantMap{{"id",id},{"title",friendlyTitle(a)}}; }
+    try {
+      const auto &a=action(id.toStdString());
+      changes << QVariantMap{{"id",id},{"title",friendlyTitle(a)},{"read",a.effect==Effect::read}};
+    }
     catch(const std::exception &) {} // An older installed SDK does not invent a command.
   }
   return {{"id",t.id},{"title",t.title},{"description",t.subtitle},{"icon",t.icon},{"area",t.area},{"changes",changes}};

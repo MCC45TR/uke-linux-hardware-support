@@ -74,8 +74,18 @@ Kirigami.ApplicationWindow {
         } finally { changingPage = false }
     }
     function openSearch() {
+        if (pageStack.currentItem && pageStack.currentItem.objectName === "settingsSearchPage") {
+            pageStack.currentItem.focusSearch()
+            return
+        }
         changingPage = true
-        try { backend.leaveGuide(); backend.settings.stop(); backend.waydroid.close(); pageStack.push(searchPage) }
+        try {
+            backend.leaveGuide()
+            backend.settings.stop()
+            backend.waydroid.close()
+            pageStack.push(searchPage)
+            if (globalDrawer.modal) globalDrawer.close()
+        }
         finally { changingPage = false }
     }
     function openWaydroid() {
@@ -113,8 +123,8 @@ Kirigami.ApplicationWindow {
         titleIcon: themeIcons.names["preferences-system"]
         handleClosedIcon.name: themeIcons.names["application-menu"]
         handleOpenIcon.name: themeIcons.names["window-close"]
-        handleClosedToolTip: "Open navigation"
-        handleOpenToolTip: "Close navigation"
+        handleClosedToolTip: i18n("Open navigation")
+        handleOpenToolTip: i18n("Close navigation")
         isMenu: false
         modal: !root.wideScreen
         drawerOpen: !modal

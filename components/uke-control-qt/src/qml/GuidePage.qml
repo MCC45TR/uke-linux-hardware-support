@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 import QtQuick
-import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
@@ -11,23 +10,22 @@ FormCard.FormCardPage {
     required property var appWindow
     readonly property bool hasOptions: (backend.guide.parameters || []).length > 0
     readonly property bool hasInspection: Boolean(backend.guide.inspect && !backend.guide.read)
-    readonly property int reviewStep: 1 + (hasInspection ? 1 : 0) + (hasOptions ? 1 : 0)
     readonly property string submitText: {
-        if (backend.guide.read) return backend.guide.capture ? "Read information" : "Review terminal access…"
-        if (backend.guide.id === "boot.set-slot") return "Review slot selection…"
-        if (backend.guide.diagnostic) return "Review diagnostic…"
-        if (backend.guide.id === "channel.set") return "Review channel change…"
-        if (backend.guide.id === "update.apply") return "Review installation…"
+        if (backend.guide.read) return backend.guide.capture ? i18n("Read information") : i18n("Review terminal access…")
+        if (backend.guide.id === "boot.set-slot") return i18n("Review slot selection…")
+        if (backend.guide.diagnostic) return i18n("Review diagnostic…")
+        if (backend.guide.id === "channel.set") return i18n("Review channel change…")
+        if (backend.guide.id === "update.apply") return i18n("Review installation…")
         switch (backend.guide.effect) {
-        case "packages": return "Review software operation…"
-        case "maintenance": return "Review maintenance…"
-        case "publish": return "Review publication…"
-        case "local_file": return "Review file request…"
-        default: return "Review preference…"
+        case "packages": return i18n("Review software operation…")
+        case "maintenance": return i18n("Review maintenance…")
+        case "publish": return i18n("Review publication…")
+        case "local_file": return i18n("Review file request…")
+        default: return i18n("Review preference…")
         }
     }
     readonly property string submitIcon: backend.guide.read && backend.guide.capture ? "view-refresh" : "document-preview"
-    title: backend.guide.title || "Device settings"
+    title: backend.guide.title || i18n("Settings")
     actions: [
         Kirigami.Action {
             text: page.submitText
@@ -41,7 +39,7 @@ FormCard.FormCardPage {
         Layout.fillWidth: true
         visible: backend.simulation || backend.readOnly
         type: backend.simulation ? Kirigami.MessageType.Warning : Kirigami.MessageType.Information
-        text: backend.simulation ? "Simulation — sample data only. Device commands and changes are disabled." : "Read-only session. Changes are disabled."
+        text: backend.simulation ? i18n("Simulation — sample data only. Changes are disabled.") : i18n("Read-only session")
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
@@ -56,15 +54,15 @@ FormCard.FormCardPage {
     }
     FormCard.FormSectionText {
         visible: !backend.guide.capture || backend.guide.administrator || false
-        text: (backend.guide.accessLabel || "") + ". " + (backend.guide.read ? "This observation opens in a terminal after you review access." : "The final step opens a terminal for authentication and the operation's result.")
+        text: backend.guide.read ? i18n("Review access before reading in the terminal.")
+                                 : i18n("The terminal handles authentication and shows the result.")
     }
-    FormCard.FormHeader { visible: page.hasInspection; title: "1. Check current state" }
+    FormCard.FormHeader { visible: page.hasInspection; title: i18n("Current state") }
     FormCard.FormCard {
         visible: page.hasInspection
         FormCard.FormButtonDelegate {
             objectName: "inspectCurrent"
-            text: backend.guide.inspectTerminal ? "Inspect in terminal…" : "Read current state"
-            description: backend.guide.inspectTerminal ? "Review access to the current state before choosing a preference." : "Read the reported state to compare with your requested values."
+            text: backend.guide.inspectTerminal ? i18n("Inspect in terminal…") : i18n("Read current state")
             Accessible.name: text
             icon.name: themeIcons.names["view-list-details"]
             enabled: !backend.observation.running
@@ -78,26 +76,21 @@ FormCard.FormCardPage {
     }
     FormCard.FormHeader {
         visible: page.hasOptions
-        title: backend.guide.read ? "Read options" : (page.hasInspection ? "2. " : "1. ") + "Choose your preference"
+        title: backend.guide.read ? i18n("Read options") : i18n("Requested values")
     }
     FormCard.FormCard {
         visible: page.hasOptions
-        SafeText {
-            text: backend.guide.read ? "Choose what to inspect" : "Requested values"
-            description: backend.guide.read ? "The result will identify the options used for the read." : "These are draft values. Use the current-state check to see the device's reported settings."
-        }
-        RequestFields { Layout.fillWidth: true; pageWidth: page.width }
+        RequestFields { Layout.fillWidth: true }
     }
     FormCard.FormHeader {
         visible: !backend.guide.read
-        title: page.reviewStep + ". Preview & review"
+        title: i18n("Review")
     }
     FormCard.FormCard {
         visible: backend.guide.preview || false
         FormCard.FormButtonDelegate {
             objectName: "previewRequest"
-            text: backend.guide.previewTerminal ? "Preview in terminal…" : "Preview requested values"
-            description: backend.guide.previewTerminal ? "Review access, then inspect the plan in the terminal before applying." : "Check the requested values before applying a change."
+            text: backend.guide.previewTerminal ? i18n("Preview in terminal…") : i18n("Preview requested values")
             Accessible.name: text
             icon.name: themeIcons.names["document-preview"]
             enabled: !backend.observation.running
@@ -113,7 +106,6 @@ FormCard.FormCardPage {
         FormCard.FormButtonDelegate {
             objectName: "submitRequest"
             text: page.submitText
-            description: backend.guide.read && backend.guide.capture ? "Show the reported information below." : "Review the request, values and access requirements before continuing."
             Accessible.name: text
             icon.name: themeIcons.names[page.submitIcon]
             enabled: !backend.observation.running
@@ -132,14 +124,16 @@ FormCard.FormCardPage {
             text: i18n("Technical details & requirements")
             icon.name: themeIcons.names["dialog-information"]
             Accessible.name: text
-            Accessible.description: details.visible ? "Details expanded" : "Details collapsed"
+            Accessible.description: details.visible ? i18n("Details expanded") : i18n("Details collapsed")
             onClicked: details.visible = !details.visible
         }
         SafeText {
             id: details
             visible: false
             text: backend.guide.id || ""
-            description: (backend.guide.details || "") + "\n\nEffect: " + (backend.guide.role || "") + "\nAccess: " + (backend.guide.accessLabel || "")
+            description: (backend.guide.details || "") + "\n\n"
+                + i18n("Effect: %1", backend.guide.role || "") + "\n"
+                + i18n("Access: %1", backend.guide.accessLabel || "")
         }
     }
 }
