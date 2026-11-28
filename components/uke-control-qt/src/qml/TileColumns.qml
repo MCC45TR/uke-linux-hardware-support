@@ -3,32 +3,34 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-RowLayout {
+Item {
     id: tiles
     required property var items
     required property Component tile
     property int maximumColumns: 0
     property real tileHeight: -1
-    property bool asynchronousTiles: false
+    property real spacing: Kirigami.Units.largeSpacing
     property real minimumTileWidth: Kirigami.Units.gridUnit * 16
     readonly property int fittingColumns: Math.max(1,
         Math.floor((width + spacing) / (minimumTileWidth + spacing)))
     readonly property int columns: Math.max(1, Math.min(items.length, fittingColumns,
         maximumColumns > 0 ? maximumColumns : fittingColumns))
+    readonly property real columnWidth: Math.max(0, (width - spacing * (columns - 1)) / columns)
 
     Layout.fillWidth: true
     Layout.minimumWidth: 0
-    uniformCellSizes: true
-    spacing: Kirigami.Units.largeSpacing
+    implicitWidth: minimumTileWidth
+    implicitHeight: childrenRect.height
 
     Repeater {
         model: tiles.columns
         delegate: ColumnLayout {
             id: column
             required property int index
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            Layout.alignment: Qt.AlignTop
+            x: (tiles.LayoutMirroring.enabled ? tiles.columns - 1 - index : index)
+               * (tiles.columnWidth + tiles.spacing)
+            width: tiles.columnWidth
+            height: implicitHeight
             spacing: tiles.spacing
 
             Repeater {
@@ -39,7 +41,6 @@ RowLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredHeight: tiles.tileHeight
-                    asynchronous: tiles.asynchronousTiles
                     active: tileData !== undefined
                     sourceComponent: tiles.tile
                 }

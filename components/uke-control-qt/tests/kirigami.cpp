@@ -8,6 +8,7 @@
 #include <KStyleManager>
 #include <QAccessible>
 #include <QApplication>
+#include <QElapsedTimer>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickItem>
@@ -376,7 +377,9 @@ private slots:
         {"selected","stable"},{"repositories",QJsonArray{coprRepository("uke-linux")}}}}};
     const QJsonObject identity{
         {"board","POCO Pad X1"},{"processor","Snapdragon 7+ Gen 3"},{"ram_type","LPDDR5X"}};
-    const QJsonArray cameras{QJsonObject{{"name","Camera A"}},QJsonObject{{"name","Camera B"}}};
+    QJsonArray cameras{QJsonObject{{"name","Camera A"}},QJsonObject{{"name","Camera B"}}};
+    for (int i=1;i<=16;++i)
+        cameras.append(QJsonObject{{"name",QString("Additional camera device %1").arg(i)}});
     const QJsonObject hardware{{"identity",identity},{"media",QJsonObject{{"devices",cameras}}}};
     rich.results["hardware.status"]=QJsonObject{{"data",hardware}};
     Bridge bridge(rich,false);
@@ -463,6 +466,26 @@ private slots:
         QCOMPARE(memory->property("text").toString(),QString("LPDDR5X"));
         QVERIFY(visualItem(page,"informationCard_media-Camera A"));
         QVERIFY(visualItem(page,"informationCard_media-Camera B"));
+        QVERIFY(!visualItem(page,"emptyDeviceInformation"));
+        for (int width : {1280,990,480}) {
+          window->resize(width,800);
+          QQuickItem *heldCard=nullptr;
+          qreal heldWidth=0;
+          QElapsedTimer unchanged;
+          unchanged.start();
+          const auto layoutSettled=[&] {
+            auto *card=visualItem(page,"informationCard_mainboard");
+            if (!card || card->width()<=0 || card!=heldCard || card->width()!=heldWidth) {
+              heldCard=card;
+              heldWidth=card?card->width():0;
+              unchanged.restart();
+            }
+            return unchanged.elapsed()>=450;
+          };
+          QTRY_VERIFY_WITH_TIMEOUT(layoutSettled(),4000);
+          auto *last=visualItem(page,"informationCard_media-Additional camera device 16");
+          QVERIFY(last && last->height()>0);
+        }
       }
       if(topic.id=="changelog") {
         QVERIFY(!settings->changelog().value("entries").toList().isEmpty());

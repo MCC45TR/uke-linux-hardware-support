@@ -181,6 +181,7 @@ Settings::Settings(Fixture f,QObject *parent,bool restricted):QObject(parent),fi
   watchDisplayOverlay();
   connect(&deviceInventory_,&QFutureWatcher<QVariantList>::finished,this,[this] {
     deviceBoard_=deviceInventory_.result();
+    deviceInventoryLoading_=false;
     emit deviceInformationChanged();
   });
   kernelTimeout_.setSingleShot(true);
@@ -505,10 +506,13 @@ void Settings::refresh() {
   if(topic_->id=="about"){
     if(!fixture_.enabled) {
       queue_.clear();
-      if(deviceBoard_.isEmpty() && !deviceInventory_.isRunning())
+      if(deviceBoard_.isEmpty() && !deviceInventoryLoading_) {
+        deviceInventoryLoading_=true;
         deviceInventory_.setFuture(QtConcurrent::run([] {
           return QVariantList{platformBoardInformation(),platformComponentInformation(),platformSensorInformation()};
         }));
+        emit deviceInformationChanged();
+      }
     }
     queue_.removeIf([this](const QString &id){return data_.contains(id);});
   }

@@ -119,8 +119,15 @@ FormCard.FormCardPage {
 
                 Controls.BusyIndicator {
                     Layout.alignment: Qt.AlignHCenter
-                    running: page.settings.deviceInformation.length === 0
+                    running: page.settings.deviceInventoryLoading || page.settings.busy
                     visible: running
+                }
+                Kirigami.PlaceholderMessage {
+                    objectName: "emptyDeviceInformation"
+                    Layout.fillWidth: true
+                    visible: !page.settings.deviceInventoryLoading && !page.settings.busy
+                             && page.settings.deviceInformation.length === 0
+                    text: i18n("No hardware names could be read.")
                 }
                 Repeater {
                     model: page.settings.deviceInformation
@@ -140,7 +147,6 @@ FormCard.FormCardPage {
                             Layout.maximumWidth: Number.POSITIVE_INFINITY
                             Layout.margins: 0
                             minimumTileWidth: Kirigami.Units.gridUnit * 14
-                            loadAsynchronously: !backend.simulation
                             sections: inventoryGroup.modelData.cards
                         }
                     }

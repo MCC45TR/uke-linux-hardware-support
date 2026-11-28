@@ -43,6 +43,7 @@ class Settings : public QObject {
   Q_PROPERTY(QVariantMap changelog READ changelog NOTIFY changelogChanged)
   Q_PROPERTY(QVariantMap packageOperation READ packageOperation NOTIFY changed)
   Q_PROPERTY(QVariantList deviceInformation READ deviceInformation NOTIFY deviceInformationChanged)
+  Q_PROPERTY(bool deviceInventoryLoading READ deviceInventoryLoading NOTIFY deviceInformationChanged)
   Q_PROPERTY(QVariantMap displayLink READ displayLink NOTIFY changed)
   Q_PROPERTY(QVariantList linuxPartitions READ linuxPartitions NOTIFY changed)
   Q_PROPERTY(QVariantMap updateChannel READ updateChannel NOTIFY changed)
@@ -90,6 +91,7 @@ class Settings : public QObject {
   void loadChangelog();
   QVariantList deviceBoard_;
   QFutureWatcher<QVariantList> deviceInventory_;
+  bool deviceInventoryLoading_ = false;
   QString screenBrightnessId_;
   int brightness_ = -1, brightnessMaximum_ = 0;
   unsigned brightnessGeneration_ = 0;
@@ -126,6 +128,7 @@ public:
   QVariantMap changelog() const { return changelog_; }
   QVariantMap packageOperation() const { return packageOperation_; }
   QVariantList deviceInformation() const;
+  bool deviceInventoryLoading() const { return deviceInventoryLoading_; }
   QVariantMap displayLink() const;
   QVariantList linuxPartitions() const;
   QVariantMap updateChannel() const;

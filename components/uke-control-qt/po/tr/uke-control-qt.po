@@ -2934,6 +2934,9 @@ msgstr "GitHub’a ulaşılamadı. Uke Control ile gelen sürüm notları göste
 msgid "Enabled repository: %1"
 msgstr "Etkin depo: %1"
 
+msgid "No hardware names could be read."
+msgstr "Donanım adları okunamadı."
+
 msgid "Changes the software repository. Updates are installed when you choose Update system."
 msgstr "Yazılım deposunu değiştirir. Paketler Sistemi güncelle seçildiğinde kurulur."
 
