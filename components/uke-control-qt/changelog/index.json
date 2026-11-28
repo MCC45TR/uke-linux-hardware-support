@@ -1,5 +1,16 @@
 {
   "schema": "org.uke.control.changelog.v1",
+  "kernel_releases": [
+    {
+      "version": "7.3.5 → 7.3.6",
+      "date": "2026-11-28",
+      "summary": "Built-in display and dock modes",
+      "changes": [
+        "Use the built-in display at its native 3200 × 2136 resolution and up to 144 Hz.",
+        "Use a tested 4K 60 Hz external display alongside the built-in panel."
+      ]
+    }
+  ],
   "entries": [
     {
       "version": "Uke Control 1.6.0-26",
