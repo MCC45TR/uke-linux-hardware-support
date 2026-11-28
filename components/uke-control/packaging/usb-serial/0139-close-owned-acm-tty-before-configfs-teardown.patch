@@ -1,0 +1,57 @@
+--- a/src/uke-usb-network.sh
++++ b/src/uke-usb-network.sh
+@@ -309,11 +309,48 @@
+         [ "$(readlink -f "$link")" = "$g/functions/${link##*/}" ] || return 1
+     done
+ }
++acm_line() {
++    number=$(cat "$g/functions/acm.gs0/port_num") || return 1
++    case $number in [0-7]) printf 'ttyGS%s\n' "$number";; *) return 1;; esac
++}
++quiesce_acm() (
++    [ -d "$g/functions/acm.gs0" ] || return 0
++    line=$(acm_line) || return 1
++    if [ -d /run/systemd/system ]; then
++        unit=serial-getty@$line.service
++        active=$(timeout --kill-after=1s 4s systemctl show --value --property=ActiveState "$unit") || return 1
++        case $active in
++            inactive|failed) ;;
++            active|activating|deactivating|reloading|refreshing)
++                timeout --kill-after=1s 6s systemctl stop "$unit" || return 1;;
++            *) return 1;;
++        esac
++    fi
++    [ ! -c "/dev/$line" ] && return 0
++    result=0
++    timeout --kill-after=1s 3s fuser -s -- "/dev/$line" || result=$?
++    case $result in
++        0) printf 'USB serial port %s still has local users\n' "$line" >&2; return 1;;
++        1) return 0;;
++        *) return 1;;
++    esac
++)
++start_configured_acm_getty() (
++    [ -d /run/systemd/system ] && [ -d "$g/functions/acm.gs0" ] || return 0
++    line=$(acm_line) || return 1
++    unit=serial-getty@$line.service
++    setting=$(systemctl is-enabled "$unit" 2>/dev/null) || return 0
++    case $setting in
++        enabled|enabled-runtime) systemctl --no-block start "$unit";;
++    esac
++)
+ cleanup() {
+     validate_owned || return 1
+     if [ -e "$g/UDC" ] && [ -n "$(cat "$g/UDC")" ]; then
+         printf '\n' > "$g/UDC" || return 1
+     fi
++    # Configfs waits for the local TTY to close before freeing the ACM function.
++    quiesce_acm || return 1
+     for function in acm.gs0 ecm.usb0; do
+         link=$g/configs/c.1/$function
+         if [ -L "$link" ]; then
+@@ -480,4 +517,5 @@
+ esac
+ printf '%s\n' "$udc" > UDC
+ trap - EXIT
++start_configured_acm_getty || echo 'Could not start the configured USB serial login prompt' >&2
+ [ "$profile" != manual-acm ] || auto_status MANUAL_ACM_BOUND_NOT_HOST_VERIFIED
