@@ -96,12 +96,22 @@ QVariantList platformSensorInformation() {
       {"in_magn_",i18n("Magnetic field")},{"in_proximity",i18n("Proximity")},
       {"in_illuminance",i18n("Ambient light")},{"in_pressure",i18n("Pressure")},
       {"in_temp",i18n("Temperature")},{"in_gravity_",i18n("Gravity")},
-      {"in_rot_",i18n("Orientation")}};
+      {"in_rot_",i18n("Orientation")},{"in_voltage",i18n("Voltage")},
+      {"in_current",i18n("Current")}};
+  const QMap<QString,QString> namedFunctions{
+      {"uke-ssc-front-color",i18n("Ambient colour")},
+      {"uke-ssc-flicker",i18n("Light flicker")},
+      {"uke-ssc-magnetic-heading",i18n("Magnetic heading")}};
   const QDir iio("/sys/bus/iio/devices");
   for (const auto &entry : iio.entryList({"iio:device*"},QDir::Dirs | QDir::NoDotAndDotDot)) {
     const QDir device(iio.filePath(entry));
     const auto model=name(device.filePath("name"));
     const auto attributes=device.entryList({"in_*"},QDir::Files);
+    const auto named=namedFunctions.value(model);
+    if (!named.isEmpty()) {
+      add(model,named);
+      continue;
+    }
     bool typed=false;
     for (const auto &[prefix,function] : types) {
       if (std::any_of(attributes.cbegin(),attributes.cend(),[&](const auto &attribute){return attribute.startsWith(prefix);})) {

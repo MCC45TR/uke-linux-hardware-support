@@ -4,7 +4,7 @@
 %global sdk_base https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        21%{?dist}
+Release:        22%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -143,7 +143,7 @@ done
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
-* Fri Nov 27 2026 Uke contributors - 1.6.0-21
+* Fri Nov 27 2026 Uke contributors - 1.6.0-22
 - Read sensor identities and functions without taking live samples.
 - Show the principal device specifications when opening the inventory.
 

@@ -2759,3 +2759,12 @@ msgstr "Gerilim"
 
 msgid "Current"
 msgstr "Akım"
+
+msgid "Ambient colour"
+msgstr "Ortam ışığının rengi"
+
+msgid "Light flicker"
+msgstr "Işık titreşimi"
+
+msgid "Magnetic heading"
+msgstr "Manyetik yön"
