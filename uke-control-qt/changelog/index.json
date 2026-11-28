@@ -2,6 +2,14 @@
   "schema": "org.uke.control.changelog.v1",
   "entries": [
     {
+      "version": "Uke Control 1.6.0-26",
+      "date": "2026-11-28",
+      "summary": "Update channel changes appear immediately",
+      "changes": [
+        "See the active update channel immediately after switching, even before the first update check."
+      ]
+    },
+    {
       "version": "Uke Control 1.6.0-25",
       "date": "2026-11-28",
       "summary": "Clearer charging and display details",
