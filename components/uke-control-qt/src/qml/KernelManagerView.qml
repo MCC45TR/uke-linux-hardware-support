@@ -13,9 +13,17 @@ ColumnLayout {
     readonly property var manager: backend.settings.manager
     property int seconds: 120
     property bool optionsExpanded: false
+    function setMonitoring(enabled) {
+        if (!currentPage)
+            return
+        if (enabled)
+            manager.start()
+        else
+            manager.pause()
+    }
     Layout.fillWidth: true
     spacing: 0
-    FormCard.FormHeader { title: i18n("Senemos Kernel Manager") }
+    FormCard.FormHeader { visible: view.mode !== "storage"; title: i18n("Senemos Kernel Manager") }
     FormCard.FormCard {
         visible: view.mode === "manager-overview"
         Layout.fillWidth: true
@@ -24,14 +32,17 @@ ColumnLayout {
             delegate: FormCard.FormButtonDelegate { required property var modelData; text: modelData.title; icon.name: themeIcons.names[modelData.icon]; onClicked: if (view.appWindow) view.appWindow.openTopic(modelData.id) }
         }
     }
-    FormCard.FormCard {
+    SettingsSection {
         Layout.fillWidth: true
+        heading: view.mode === "storage" ? i18n("Storage activity") : ""
         SafeText { visible: view.optionsExpanded; text: i18n("Session observations"); description: i18n("Graphs contain observations from this session only. Collection pauses when leaving this page or switching away from the application.") }
         FormCard.FormSwitchDelegate {
             objectName: "kernelMonitoring"
             text: i18n("Live monitoring")
             checked: view.manager.active
-            onToggled: { if (view.currentPage) { if (checked) view.manager.start(); else view.manager.pause() } }
+            onToggled: view.setMonitoring(checked)
+            Accessible.onPressAction: view.setMonitoring(!view.manager.active)
+            Accessible.onToggleAction: view.setMonitoring(!view.manager.active)
         }
         FormCard.FormComboBoxDelegate {
             visible: view.optionsExpanded

@@ -15,6 +15,7 @@ FormCard.FormCard {
     property real maximum: 0
     property string currentReading: ""
     Layout.fillWidth: true
+    maximumWidth: Math.max(0, width - 1)
     SafeText { text: card.heading; description: card.currentReading.length ? card.currentReading : card.unit }
     TimePlot {
         id: plot

@@ -14,10 +14,25 @@ ColumnLayout {
     property string secondMetric: mode === "storage" ? "io/write" : ""
     property bool graphOptions: false
     property bool advanced: false
-    readonly property var charts: manager.state.charts || []
+    readonly property var storageLabels: ({
+        "io/read": i18n("Storage reads"), "io/write": i18n("Storage writes"),
+        "io/read-latency": i18n("Mean read completion time"), "io/write-latency": i18n("Mean write completion time"),
+        "psi/io/some": i18n("I/O pressure"), "io pressure": i18n("I/O pressure"),
+        "Root filesystem I/O": i18n("Root filesystem I/O"), "UFS controller": i18n("UFS controller"),
+        "Backing queue": i18n("Backing queue"), "Scope": i18n("Scope"),
+        "some / last 10 seconds": i18n("Some tasks stalled over the last 10 seconds"),
+        "full / last 10 seconds": i18n("All tasks stalled over the last 10 seconds"),
+        "All partitions and applications using this queue": i18n("All partitions and applications using this queue")
+    })
+    readonly property var charts: (manager.state.charts || []).map(chart => ({
+        id: chart.id, title: storageLabels[chart.id] || chart.title, unit: chart.unit, maximum: chart.maximum
+    }))
     function chartIndex(metric, fallback) {
         const index = charts.findIndex(chart => chart.id === metric)
         return index >= 0 ? index : Math.min(fallback, charts.length - 1)
+    }
+    function readingLabel(text) {
+        return mode === "storage" ? storageLabels[text] || text : text
     }
     function draft(id, value) { const copy = Object.assign({}, drafts); copy[id] = value; drafts = copy }
     function help(id) {
@@ -29,17 +44,16 @@ ColumnLayout {
         return names[value] || value
     }
     Layout.fillWidth: true
-    spacing: 0
+    spacing: mode === "storage" ? Kirigami.Units.mediumSpacing : 0
     FormCard.FormCard {
         Layout.fillWidth: true
         visible: !!(view.manager.state.powerProfile || "")
         SafeText { text: i18n("System power profile"); description: view.manager.state.powerProfile || "" }
         SafeText { text: i18n("Who controls frequency?"); description: i18n("The desktop power profile, frequency governor and thermal policy can all constrain frequency. A requested limit does not prove that a particular hardware clock was reached.") }
     }
-    FormCard.FormHeader { visible: view.charts.length > 0; title: i18n("Live measurements") }
-    FormCard.FormCard {
+    SettingsSection {
         visible: view.charts.length > 1
-        Layout.fillWidth: true
+        heading: i18n("Live measurements")
         FormCard.FormButtonDelegate { text: i18n("Choose graphs"); icon.name: themeIcons.names["configure"]; onClicked: view.graphOptions = !view.graphOptions }
         FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("First graph"); model: view.charts; textRole: "title"; currentIndex: view.chartIndex(view.firstMetric, 0); onActivated: index => view.firstMetric = view.charts[index].id }
         FormCard.FormComboBoxDelegate { visible: view.graphOptions; text: i18n("Second graph"); model: view.charts; textRole: "title"; currentIndex: view.chartIndex(view.secondMetric, 1); onActivated: index => view.secondMetric = view.charts[index].id }
@@ -66,25 +80,24 @@ ColumnLayout {
             }
         }
     }
-    Repeater {
-        model: view.manager.state.sections || []
-        delegate: ColumnLayout {
-            id: section
-            required property var modelData
-            property bool expanded: false
-            Layout.fillWidth: true
-            spacing: 0
-            FormCard.FormHeader { title: section.modelData.title }
-            FormCard.FormCard {
-                Layout.fillWidth: true
+    TileGrid {
+        minimumTileWidth: Kirigami.Units.gridUnit * 24
+        Repeater {
+            model: view.manager.state.sections || []
+            delegate: SettingsSection {
+                id: section
+                required property var modelData
+                property bool expanded: false
+                heading: view.readingLabel(modelData.title)
                 Repeater {
                     model: section.modelData.rows
                     delegate: SafeText {
                         required property var modelData
                         required property int index
                         visible: index < 3 || section.expanded
-                        text: modelData.title
-                        description: (modelData.value || i18n("Not reported")) + (modelData.status === "available" ? "" : "\n" + view.status(modelData.status))
+                        text: view.readingLabel(modelData.title)
+                        description: view.readingLabel(modelData.value || i18n("Not reported"))
+                                     + (modelData.status === "available" ? "" : "\n" + view.status(modelData.status))
                     }
                 }
                 FormCard.FormButtonDelegate {
@@ -96,9 +109,8 @@ ColumnLayout {
             }
         }
     }
-    FormCard.FormHeader { visible: (view.manager.state.controls || []).length > 0; title: i18n("Runtime controls") }
-    FormCard.FormCard {
-        Layout.fillWidth: true
+    SettingsSection {
+        heading: i18n("Runtime controls")
         visible: (view.manager.state.controls || []).length > 0
         FormCard.FormSwitchDelegate { text: i18n("Advanced kernel controls"); description: i18n("Show governor tuning, memory experiments and queue details, including unavailable interfaces."); checked: view.advanced; onToggled: view.advanced = checked }
     }
@@ -145,9 +157,8 @@ ColumnLayout {
             }
         }
     }
-    FormCard.FormHeader { title: i18n("Session events") }
-    FormCard.FormCard {
-        Layout.fillWidth: true
+    SettingsSection {
+        heading: i18n("Session events")
         SafeText { visible: !(view.manager.state.events || []).length; text: i18n("No changes recorded"); description: i18n("Profile, control and pressure changes are recorded while these pages are being observed. The list holds at most 100 events and is not a background recorder.") }
         Repeater { model: (view.manager.state.events || []).slice(0, 12); delegate: SafeText { required property var modelData; text: modelData.time + " · " + modelData.title; description: modelData.value } }
     }

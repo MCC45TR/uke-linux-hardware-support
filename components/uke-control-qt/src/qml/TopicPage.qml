@@ -95,8 +95,7 @@ FormCard.FormCardPage {
         active: page.topicId === "storage"
         sourceComponent: Component { StoragePartitions { settings: page.settings } }
     }
-    Loader {
-        Layout.fillWidth: true
+    PagePanel {
         active: ["cpu", "gpu", "sensors", "manager-overview", "memory", "storage", "thermal", "profiles", "diagnostics"].includes(page.topicId)
         sourceComponent: Component { KernelManagerView { mode: page.topicId; appWindow: page.appWindow; currentPage: page.appWindow.pageStack.currentItem === page && settings.topic.id === page.topicId } }
     }

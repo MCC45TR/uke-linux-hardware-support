@@ -4,7 +4,7 @@
 %global sdk_base https://download.copr.fedorainfracloud.org/results/mcc45tr/uke-linux-unstable/fedora-rawhide-aarch64/Packages/u
 Name:           uke-control-gui-qt
 Version:        1.6.0
-Release:        17%{?dist}
+Release:        18%{?dist}
 Summary:        Native Kirigami interface for Uke Control
 License:        MIT
 Source0:        %{source_name}-%{version}.tar.gz
@@ -141,8 +141,9 @@ done
 %{_prefix}/lib/systemd/system/uke-waydroid-install@.service
 
 %changelog
-* Fri Nov 27 2026 Uke contributors - 1.6.0-17
+* Fri Nov 27 2026 Uke contributors - 1.6.0-18
 - Send accessibility switch actions through the confirmed flashlight state.
+- Align storage monitoring panels and scale the graphs to recorded samples.
 
 * Fri Nov 27 2026 Uke contributors - 1.6.0-16
 - Group daily settings on the overview and align charging thresholds and battery readings.

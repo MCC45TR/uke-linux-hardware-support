@@ -188,19 +188,22 @@ QVariantList KernelManager::choices(const QString &id,const QString &field)const
     }return out;
 }
 QVariantMap KernelManager::plot(const QString &metric,int seconds,double maximum)const {
-    seconds=std::clamp(seconds,30,600);const auto end=clock_.elapsed()/1000.,start=std::max(0.,end-seconds);
+    seconds=std::clamp(seconds,30,600);const auto end=clock_.elapsed()/1000.;
+    auto start=std::max(0.,end-seconds);
+    const bool storageMetric=metric.startsWith("io/");
     QVariantList segments,segment;double minimum=std::numeric_limits<double>::max(),high=-minimum,previous=-1;int points=0;
     auto flush=[&]{if(!segment.isEmpty())segments<<QVariant(segment);segment.clear();};
     for(const auto &p:history_.value(metric)) {
         if(p.time<start)continue;
         if(!p.value.isValid()||!std::isfinite(p.value.toDouble())){flush();previous=p.time;continue;}
         if(previous>=0&&p.time-previous>std::max(3.,interval_*2.5))flush();previous=p.time;
+        if(storageMetric && !points)start=std::max(start,std::min(p.time,end-1.));
         const auto n=p.value.toDouble();minimum=std::min(minimum,n);high=std::max(high,n);++points;
         segment<<QVariantMap{{"time",p.time},{"value",n}};
     }
     flush();if(!points){minimum=0;high=1;}
     if(maximum>0){minimum=0;high=maximum;}
-    else if(metric.startsWith("io/")){minimum=0;high=std::max(.01,high*1.12);}
+    else if(storageMetric){minimum=0;high=std::max(.01,high*1.12);}
     else{const auto pad=std::max(1.,(high-minimum)*.15);minimum-=pad;high+=pad;}
     return {{"segments",segments},{"start",start},{"end",std::max(start+1.,end)},{"minimum",minimum},{"maximum",high},{"points",points},{"available",points>=2}};
 }

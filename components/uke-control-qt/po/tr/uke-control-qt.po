@@ -2453,3 +2453,42 @@ msgstr "Sonraki açılışta onaylı %1 slotunu kullan"
 
 msgid "Variable refresh rate settings"
 msgstr "Değişken yenileme hızı ayarları"
+
+msgid "Storage activity"
+msgstr "Depolama etkinliği"
+
+msgid "Storage reads"
+msgstr "Depolama okuma hızı"
+
+msgid "Storage writes"
+msgstr "Depolama yazma hızı"
+
+msgid "Mean read completion time"
+msgstr "Ortalama okuma gecikmesi"
+
+msgid "Mean write completion time"
+msgstr "Ortalama yazma gecikmesi"
+
+msgid "I/O pressure"
+msgstr "Girdi/çıktı baskısı"
+
+msgid "Root filesystem I/O"
+msgstr "Kök dosya sistemi girdi/çıktısı"
+
+msgid "UFS controller"
+msgstr "UFS denetleyicisi"
+
+msgid "Backing queue"
+msgstr "Girdi/çıktı kuyruğu"
+
+msgid "Some tasks stalled over the last 10 seconds"
+msgstr "Son 10 saniyede bazı görevlerin beklediği süre"
+
+msgid "All tasks stalled over the last 10 seconds"
+msgstr "Son 10 saniyede tüm görevlerin beklediği süre"
+
+msgid "All partitions and applications using this queue"
+msgstr "Bu kuyruğu kullanan tüm bölümler ve uygulamalar"
+
+msgid "Filesystem space, I/O pressure, latency and queue policy"
+msgstr "Disk alanı, girdi/çıktı baskısı, gecikme ve kuyruk ayarları"
