@@ -10,6 +10,10 @@ SettingsSection {
     required property var settings
     readonly property var torch: settings.flashlight
     readonly property bool available: torch.available && !torch.pending && !settings.busy && !backend.readOnly && !backend.simulation
+    function toggleFlashlight() {
+        if (available)
+            settings.setFlashlight(!torch.on)
+    }
 
     FormCard.FormSwitchDelegate {
         objectName: "flashlightSwitch"
@@ -17,6 +21,8 @@ SettingsSection {
         checked: panel.torch.on
         enabled: panel.available
         onToggled: panel.settings.setFlashlight(checked)
+        Accessible.onPressAction: panel.toggleFlashlight()
+        Accessible.onToggleAction: panel.toggleFlashlight()
     }
     SettingsNote {
         text: i18n("Brightness")
